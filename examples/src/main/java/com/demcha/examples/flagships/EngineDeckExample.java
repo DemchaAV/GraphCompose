@@ -39,15 +39,12 @@ import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -154,7 +151,7 @@ public final class EngineDeckExample {
      * Page size and margin live on the session builder (see {@code generate()}).
      */
     static void compose(DocumentSession document) {
-        BenchRun bench = loadBench();
+        EngineDeckData.BenchRun bench = EngineDeckData.loadBench();
         document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose " + VERSION + " — " + CODENAME)
                     .author("GraphCompose")
@@ -202,25 +199,20 @@ public final class EngineDeckExample {
                                     .lineSpacing(1.55)))
                     .addRow("Pipeline", row -> {
                         row.spacing(8).weights(1, 0.14, 1, 0.14, 1, 0.14, 1);
-                        pipelineStep(row, "1", "dsl", "AUTHOR", "Fluent DSL describes intent.");
-                        pipeArrow(row);
-                        pipelineStep(row, "2", "layout", "MEASURE", "Two-pass geometry, every node.");
-                        pipeArrow(row);
-                        pipelineStep(row, "3", "page-break", "PAGINATE", "Split the flow across pages.");
-                        pipeArrow(row);
-                        pipelineStep(row, "4", "pdf-file", "RENDER", "PDFBox writes the bytes.");
+                        List<EngineDeckData.PipelineStep> steps = EngineDeckData.pipeline();
+                        for (int i = 0; i < steps.size(); i++) {
+                            EngineDeckData.PipelineStep st = steps.get(i);
+                            pipelineStep(row, st.number(), st.icon(), st.title(), st.desc());
+                            if (i < steps.size() - 1) {
+                                pipeArrow(row);
+                            }
+                        }
                     })
                     .addRow("Proof", row -> {
                         row.spacing(16).evenWeights();
-                        proofCard(row, "Deterministic",
-                                "The same input renders the same bytes on every machine — layout is reproducible, "
-                                        + "not best-effort.");
-                        proofCard(row, "Regression-tested",
-                                "layoutSnapshot() diffs the geometry and PdfVisualRegression pixel-tests fonts and "
-                                        + "colour, right in your pull requests.");
-                        proofCard(row, "Production-ready",
-                                "An isolated PDFBox backend streams straight to an HTTP response — no temp files, "
-                                        + "no manual coordinates.");
+                        for (EngineDeckData.Proof p : EngineDeckData.proof()) {
+                            proofCard(row, p.title(), p.desc());
+                        }
                     })
 
                     // ═════════ PAGE 3 — measured comparison (real data) ═════════
@@ -317,10 +309,9 @@ public final class EngineDeckExample {
                 .addShape(sh -> sh.size(749, 1.2).fillColor(RULE_DARK).margin(DocumentInsets.top(6)))
                 .addRow("BannerChips", row -> {
                     row.spacing(22).evenWeights();
-                    chip(row, "github", "Open Source");
-                    chip(row, "maven", "Maven Central");
-                    chip(row, "java", "Java 17+");
-                    chip(row, "license", "MIT License");
+                    for (EngineDeckData.IconLabel c : EngineDeckData.capabilities()) {
+                        chip(row, c.icon(), c.label());
+                    }
                 });
     }
 
@@ -404,12 +395,8 @@ public final class EngineDeckExample {
     }
 
     private static DocumentNode engineGrid() {
-        // Pipeline order, top → bottom: Layout first, DSL last.
-        String[][] items = {
-                {"layout", "Layout"}, {"page-break", "Pagination"},
-                {"themes", "Themes"}, {"code", "Components"},
-                {"testing", "Snapshot Tests"}, {"dsl", "DSL"},
-        };
+        // Pipeline order, top → bottom: Layout first, DSL last (from the data layer).
+        List<EngineDeckData.IconLabel> items = EngineDeckData.engineCapabilities();
         // pad keeps each card's outline off the container edge — the grid box
         // clips children to its bounds, which would otherwise shave the outer
         // strokes (top row top, bottom row bottom, right column right).
@@ -419,10 +406,11 @@ public final class EngineDeckExample {
         // Column-major: each column reads top→bottom as the pipeline, so the
         // left column is Layout→Pagination→Themes and the right is
         // Components→Snapshot Tests→DSL (Layout top, DSL bottom).
-        for (int i = 0; i < items.length; i++) {
+        for (int i = 0; i < items.size(); i++) {
             double x = pad + (i / 3) * (cardW + gapX);
             double y = pad + (i % 3) * (cardH + gapY);
-            g.position(engineCard(items[i][0], items[i][1], cardW, cardH), x, y, LayerAlign.TOP_LEFT);
+            g.position(engineCard(items.get(i).icon(), items.get(i).label(), cardW, cardH),
+                    x, y, LayerAlign.TOP_LEFT);
         }
         return g.build();
     }
@@ -442,9 +430,9 @@ public final class EngineDeckExample {
     private static void stepBackends(SectionBuilder s) {
         s.spacing(10);
         colHeader(s, "3", "Output Backends");
-        s.add(backendCard("pdf-file", "PDFBox 3.0", "Production backend", true));
-        s.add(backendCard("docx", "DOCX export", "Semantic export", false));
-        s.add(backendCard("ppt-file", "PPTX", "Planned", false));
+        for (EngineDeckData.Backend b : EngineDeckData.backends()) {
+            s.add(backendCard(b.icon(), b.title(), b.sub(), b.live()));
+        }
     }
 
     private static DocumentNode backendCard(String iconName, String title, String sub, boolean live) {
@@ -618,58 +606,13 @@ public final class EngineDeckExample {
                 .chart(spec, style);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Real benchmark data — loaded at render time from the bundled result file
-    // (a snapshot of target/benchmarks/comparative/latest.json). The point: this
-    // PDF reads a real benchmark file and the engine draws the table and charts
-    // below from it. Refresh: run scripts/run-benchmarks.ps1, then copy
-    // target/benchmarks/comparative/latest.json to resources/benchmarks/.
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private static final String[] LIBS = {"GraphCompose", "iText 9", "JasperReports"};
-    private static final int[] SIZES = {40, 200, 1000};
-
-    /** A comparative benchmark run: metadata plus per-scenario time/heap. */
-    private record BenchRun(String timestamp, int warmup, int measure, Map<String, double[]> rows) {
-        double timeMs(String label) {
-            return rows.get(label)[0];
-        }
-
-        double heapMb(String label) {
-            return rows.get(label)[1];
-        }
-
-        double timeMs(String lib, int size) {
-            return timeMs(lib + " (" + size + " rows)");
-        }
-
-        double heapMb(String lib, int size) {
-            return heapMb(lib + " (" + size + " rows)");
-        }
-    }
-
-    private static BenchRun loadBench() {
-        try (InputStream in = Objects.requireNonNull(
-                EngineDeckExample.class.getResourceAsStream("/benchmarks/comparative.json"),
-                "benchmark data missing: /benchmarks/comparative.json")) {
-            JsonNode root = new ObjectMapper().readTree(in);
-            Map<String, double[]> rows = new LinkedHashMap<>();
-            for (JsonNode r : root.get("libraries")) {
-                rows.put(r.get("library").asText(),
-                        new double[]{r.get("avgTimeMs").asDouble(), r.get("avgHeapMb").asDouble()});
-            }
-            return new BenchRun(root.get("timestamp").asText(),
-                    root.get("warmupIterations").asInt(),
-                    root.get("measurementIterations").asInt(),
-                    rows);
-        } catch (Exception e) {
-            throw new IllegalStateException("failed to load benchmark data", e);
-        }
-    }
+    // The benchmark data and the deck's structured content live in the data
+    // layer (EngineDeckData); the methods below only turn that data into the
+    // table and charts.
 
     // ── Page 3 — measured comparison ──────────────────────────────────────────
 
-    private static void benchTable(BenchRun b, com.demcha.compose.document.dsl.TableBuilder table) {
+    private static void benchTable(EngineDeckData.BenchRun b, com.demcha.compose.document.dsl.TableBuilder table) {
         table.name("BenchTable")
                 .columns(
                         DocumentTableColumn.fixed(120),
@@ -693,7 +636,7 @@ public final class EngineDeckExample {
                 .zebra(DocumentColor.WHITE, SURFACE)
                 .row("1 page · 3 lines",
                         cell(b, "GraphCompose Canonical"), cell(b, "iText 9"), cell(b, "JasperReports"));
-        for (int size : SIZES) {
+        for (int size : EngineDeckData.SIZES) {
             table.row(size + " rows",
                     cell(b, "GraphCompose (" + size + " rows)"),
                     cell(b, "iText 9 (" + size + " rows)"),
@@ -701,12 +644,12 @@ public final class EngineDeckExample {
         }
     }
 
-    private static String cell(BenchRun b, String label) {
+    private static String cell(EngineDeckData.BenchRun b, String label) {
         return String.format(Locale.ROOT, "%.1f ms · %.1f MB", b.timeMs(label), b.heapMb(label));
     }
 
     /** Three coloured bars (one per library) at the 1000-row scenario. */
-    private static ChartSpec timeChart(BenchRun b) {
+    private static ChartSpec timeChart(EngineDeckData.BenchRun b) {
         return ChartSpec.bar()
                 .data(ChartData.builder()
                         .categories("1000-row report")
@@ -722,7 +665,7 @@ public final class EngineDeckExample {
                 .build();
     }
 
-    private static ChartSpec memoryChart(BenchRun b) {
+    private static ChartSpec memoryChart(EngineDeckData.BenchRun b) {
         return ChartSpec.bar()
                 .data(ChartData.builder()
                         .categories("1000-row report")
@@ -741,19 +684,19 @@ public final class EngineDeckExample {
     // ── Page 4 — scaling (real data) ──────────────────────────────────────────
 
     /** One series per library across the 40 / 200 / 1000-row sweep. */
-    private static ChartData bySize(BenchRun b, boolean time) {
+    private static ChartData bySize(EngineDeckData.BenchRun b, boolean time) {
         var d = ChartData.builder().categories("40", "200", "1000");
-        for (String lib : LIBS) {
-            double[] v = new double[SIZES.length];
-            for (int i = 0; i < SIZES.length; i++) {
-                v[i] = time ? b.timeMs(lib, SIZES[i]) : b.heapMb(lib, SIZES[i]);
+        for (String lib : EngineDeckData.LIBS) {
+            double[] v = new double[EngineDeckData.SIZES.length];
+            for (int i = 0; i < EngineDeckData.SIZES.length; i++) {
+                v[i] = time ? b.timeMs(lib, EngineDeckData.SIZES[i]) : b.heapMb(lib, EngineDeckData.SIZES[i]);
             }
             d = d.series(lib, v);
         }
         return d.build();
     }
 
-    private static ChartSpec scalingLineChart(BenchRun b) {
+    private static ChartSpec scalingLineChart(EngineDeckData.BenchRun b) {
         return ChartSpec.line()
                 .data(bySize(b, true))
                 .valueAxis(AxisSpec.builder().baselineAtZero(true)
@@ -763,7 +706,7 @@ public final class EngineDeckExample {
                 .build();
     }
 
-    private static ChartSpec memoryAreaChart(BenchRun b) {
+    private static ChartSpec memoryAreaChart(EngineDeckData.BenchRun b) {
         return ChartSpec.line()
                 .data(bySize(b, false))
                 .smooth(true)
@@ -775,7 +718,7 @@ public final class EngineDeckExample {
                 .build();
     }
 
-    private static ChartSpec memoryShareDonut(BenchRun b) {
+    private static ChartSpec memoryShareDonut(EngineDeckData.BenchRun b) {
         return ChartSpec.pie()
                 .data(ChartData.builder()
                         .categories("GraphCompose", "iText 9", "JasperReports")
@@ -792,7 +735,7 @@ public final class EngineDeckExample {
                 .build();
     }
 
-    private static ChartSpec throughputChart(BenchRun b) {
+    private static ChartSpec throughputChart(EngineDeckData.BenchRun b) {
         return ChartSpec.bar()
                 .data(ChartData.builder()
                         .categories("docs / sec")

@@ -209,4 +209,52 @@ class BenchmarkMedianToolTest {
         assertThat(aggregate.path("libraries").get(1).path("avgHeapMb").asDouble()).isEqualTo(0.25);
     }
 
+    @Test
+    void shouldMedianStagesWhenSourceRunsCarryThem() throws Exception {
+        System.setProperty("graphcompose.benchmark.root", tempDir.toString());
+
+        Path suiteDir = Files.createDirectories(tempDir.resolve("current-speed"));
+        // Three runs whose render stage is 10 / 20 / 30 (median 20) and total
+        // 13 / 23 / 33 (median 23); compose/layout are constant (median 1 / 2).
+        double[] renders = {10.0, 20.0, 30.0};
+        String[] paths = new String[renders.length];
+        for (int i = 0; i < renders.length; i++) {
+            double render = renders[i];
+            double total = render + 3.0;
+            Path run = suiteDir.resolve("run-20260415-2200" + i + "0.json");
+            Files.writeString(run, """
+                    {
+                      "profile": "full",
+                      "warmupIterations": 12,
+                      "measurementIterations": 40,
+                      "docsPerThread": 12,
+                      "threadCounts": [1],
+                      "latency": [
+                        {"scenario": "invoice-template", "description": "Invoice", "avgMillis": %1$s,
+                         "p50Millis": 0.0, "p95Millis": 0.0, "maxMillis": 0.0, "docsPerSecond": 0.0,
+                         "avgKilobytes": 0.0, "peakHeapMb": 0.0}
+                      ],
+                      "stages": [
+                        {"scenario": "invoice-template", "composeMillis": 1.0, "layoutMillis": 2.0,
+                         "renderMillis": %1$s, "totalMillis": %2$s}
+                      ],
+                      "throughput": [],
+                      "totalBytes": 1000
+                    }
+                    """.formatted(render, total));
+            paths[i] = run.toString();
+        }
+
+        BenchmarkMedianTool.main(new String[]{"current-speed", paths[0], paths[1], paths[2]});
+
+        JsonNode aggregate = JSON.readTree(
+                Files.readAllBytes(tempDir.resolve("aggregates/current-speed/full/latest.json")));
+
+        JsonNode stage = aggregate.path("stages").get(0);
+        assertThat(stage.path("scenario").asText()).isEqualTo("invoice-template");
+        assertThat(stage.path("composeMillis").asDouble()).isEqualTo(1.0);
+        assertThat(stage.path("renderMillis").asDouble()).isEqualTo(20.0);
+        assertThat(stage.path("totalMillis").asDouble()).isEqualTo(23.0);
+    }
+
 }

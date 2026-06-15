@@ -208,6 +208,12 @@ jobs:
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
 
+      - name: Run deterministic benchmark gates
+        # Fast, machine-independent unit/gate tests (image-cache reuse,
+        # render-operator coalescing, scenario/threshold coverage, diff tooling).
+        # Catches structural regressions the timing smoke run cannot.
+        run: ./mvnw -B -ntp -f benchmarks/pom.xml test
+
       - name: Run coarse performance smoke benchmark
         run: |
           ./mvnw -B -ntp -f benchmarks/pom.xml -DskipTests \
@@ -221,6 +227,14 @@ jobs:
         with:
           name: benchmark-smoke-${{ github.run_id }}
           path: benchmarks/target/benchmarks/current-speed/**
+          if-no-files-found: ignore
+
+      - name: Upload benchmark gate reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-gate-reports-${{ github.run_id }}
+          path: benchmarks/target/surefire-reports/**
           if-no-files-found: ignore
 
   benchmark-diff:

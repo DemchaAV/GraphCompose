@@ -204,6 +204,8 @@ public final class BenchmarkMedianTool {
         for (ReportFile reportFile : reportFiles) {
             Map<String, JsonNode> currentByScenario = indexBy(iterable(reportFile.report().path("stages")), "scenario");
             if (!firstByScenario.keySet().equals(currentByScenario.keySet())) {
+                System.out.println("Note: stages omitted from the median aggregate — "
+                        + "the stage-breakdown scenario set differs across the source runs.");
                 return List.of();
             }
         }

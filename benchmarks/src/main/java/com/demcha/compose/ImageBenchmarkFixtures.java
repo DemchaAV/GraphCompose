@@ -76,6 +76,14 @@ public final class ImageBenchmarkFixtures {
             g.setPaint(new Color(196, 153, 76));
             g.setStroke(new BasicStroke(6f));
             g.drawLine(0, 170, NATIVE_WIDTH_PX, 110 - (seed % 40));
+            // A seed-positioned 1px marker guarantees byte-distinct content per
+            // seed — the modular gradient/line colours above can repeat at large
+            // seeds, but a unique x keeps distinctImage(i) fingerprints distinct
+            // for i in [0, NATIVE_WIDTH_PX - 1].
+            if (seed < NATIVE_WIDTH_PX) {
+                g.setPaint(new Color(0, 0, 0));
+                g.fillRect(seed, 0, 1, 6);
+            }
         } finally {
             g.dispose();
         }

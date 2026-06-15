@@ -371,7 +371,8 @@ Entries land here as they merge.
   `ImageJmhBenchmark`, with `ImageCacheGateTest` pinning `PdfImageCache` reuse), a
   single-shot cold-start render bench (`ColdStartJmhBenchmark`), a multi-page
   "report" tier in `ComparativeBenchmark` (equivalent content across GraphCompose /
-  iText / JasperReports, plus a post-run sample-PDF dump per library/scenario), a
+  iText 9 / JasperReports — iText upgraded from the EOL 5.5.x to current 9.x — plus
+  a post-run sample-PDF dump per library/scenario), a
   production-scale `LargeTableJmhBenchmark`, an allocation-rate / GC-pressure probe
   (`AllocationRateProbe`), and an accented-Latin measurement scenario.
 - **Deterministic benchmark gates run on every PR (not shipped).** The benchmarks

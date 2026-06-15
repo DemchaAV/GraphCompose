@@ -8,10 +8,13 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.UnitValue;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import net.sf.jasperreports.engine.design.*;
@@ -81,14 +84,14 @@ public class ComparativeBenchmark {
         System.out.println("Scenario: small invoice (single page, ~3 lines)");
         printTableHeader();
         rows.add(runBenchmark("GraphCompose Canonical", ComparativeBenchmark::benchmarkGraphComposeCanonical));
-        rows.add(runBenchmark("iText 5 (Old)", ComparativeBenchmark::benchmarkIText));
+        rows.add(runBenchmark("iText 9", ComparativeBenchmark::benchmarkIText));
         rows.add(runBenchmark("JasperReports", ComparativeBenchmark::benchmarkJasper));
 
         System.out.println();
         System.out.println("Scenario: business report (multi-page: title + " + REPORT_ROWS + "-row table + prose)");
         printTableHeader();
         rows.add(runBenchmark("GraphCompose (report)", ComparativeBenchmark::benchmarkGraphComposeReport));
-        rows.add(runBenchmark("iText 5 (report)", ComparativeBenchmark::benchmarkITextReport));
+        rows.add(runBenchmark("iText 9 (report)", ComparativeBenchmark::benchmarkITextReport));
         rows.add(runBenchmark("JasperReports (report)", ComparativeBenchmark::benchmarkJasperReport));
 
         BenchmarkReportWriter.BenchmarkArtifacts artifacts = BenchmarkReportWriter.prepare("comparative");
@@ -235,19 +238,15 @@ public class ComparativeBenchmark {
      */
     private static byte[] benchmarkIText() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document();
-        PdfWriter.getInstance(document, baos);
-        document.open();
-
-        // Используем таблицу, чтобы iText делал расчет ширины (как GraphCompose)
-        PdfPTable table = new PdfPTable(1);
-        table.setWidthPercentage(100);
-        table.addCell(new Paragraph("INVOICE #12345"));
-        table.addCell(new Paragraph("Customer: John Doe"));
-        table.addCell(new Paragraph("Amount: $1,000.00"));
-
-        document.add(table);
-        document.close();
+        // iText 9 (kernel + layout). A full-width 1-column table makes iText do
+        // the same width calculation GraphCompose does.
+        try (Document document = new Document(new PdfDocument(new PdfWriter(baos)))) {
+            Table table = new Table(UnitValue.createPercentArray(new float[]{1})).useAllAvailableWidth();
+            table.addCell(new Cell().add(new Paragraph("INVOICE #12345")));
+            table.addCell(new Cell().add(new Paragraph("Customer: John Doe")));
+            table.addCell(new Cell().add(new Paragraph("Amount: $1,000.00")));
+            document.add(table);
+        }
         return baos.toByteArray();
     }
 
@@ -257,27 +256,23 @@ public class ComparativeBenchmark {
      */
     private static byte[] benchmarkITextReport() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document();
-        PdfWriter.getInstance(document, baos);
-        document.open();
-        document.add(new Paragraph("Quarterly Business Report"));
-        document.add(new Paragraph(REPORT_PROSE));
+        try (Document document = new Document(new PdfDocument(new PdfWriter(baos)))) {
+            document.add(new Paragraph("Quarterly Business Report"));
+            document.add(new Paragraph(REPORT_PROSE));
 
-        PdfPTable table = new PdfPTable(4);
-        table.setWidthPercentage(100);
-        table.setHeaderRows(1);
-        for (String header : new String[]{"Item", "Qty", "Unit", "Total"}) {
-            table.addCell(new Paragraph(header));
+            Table table = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1})).useAllAvailableWidth();
+            for (String header : new String[]{"Item", "Qty", "Unit", "Total"}) {
+                table.addHeaderCell(new Cell().add(new Paragraph(header)));
+            }
+            for (int r = 1; r <= REPORT_ROWS; r++) {
+                table.addCell(new Cell().add(new Paragraph("Line item " + r)));
+                table.addCell(new Cell().add(new Paragraph("3")));
+                table.addCell(new Cell().add(new Paragraph("ea")));
+                table.addCell(new Cell().add(new Paragraph("38.75")));
+            }
+            document.add(table);
+            document.add(new Paragraph(REPORT_PROSE));
         }
-        for (int r = 1; r <= REPORT_ROWS; r++) {
-            table.addCell(new Paragraph("Line item " + r));
-            table.addCell(new Paragraph("3"));
-            table.addCell(new Paragraph("ea"));
-            table.addCell(new Paragraph("38.75"));
-        }
-        document.add(table);
-        document.add(new Paragraph(REPORT_PROSE));
-        document.close();
         return baos.toByteArray();
     }
 

@@ -61,6 +61,10 @@
   PDF export with the design compiled once outside the loop, while the
   GraphCompose and iText figures include per-iteration document
   construction — so the Jasper number excludes work the other two pay.
+  `openHTMLtoPDF` is intentionally absent: its current release (1.0.10)
+  targets PDFBox 2.x and fails at runtime against the PDFBox 3.x this
+  project uses (no PDFBox-3-compatible openhtmltopdf release exists yet),
+  so it cannot share GraphCompose's classpath.
 
 ## Files in this module
 

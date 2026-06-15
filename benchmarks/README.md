@@ -23,7 +23,7 @@
 ## When to use the harness
 
 - **Smoke check before a release** — `CurrentSpeedBenchmark -Dgraphcompose.benchmark.profile=smoke`
-  takes ~15 s, exercises the canonical render path through 5 fixture
+  takes ~15 s, exercises the canonical render path through 7 fixture
   scenarios, and prints a single-page latency / throughput table.
   CI runs this on every PR (the `perf-smoke` job); the goal is "did
   this PR make a representative render visibly slower?" — *not* "is
@@ -158,10 +158,13 @@ render benches (`CanonicalRender`, `TemplateCv`, `Chart`, `ChartVariant`, `Image
 `SparklineRamp`, `PaginatedDocument`, `VectorPaint`), the SVG-import micro-benches
 (`Svg`), and a single-shot cold-start bench (`ColdStart`).
 
-Every JMH bench uses `@Fork(1)` with a 3×2s warmup / 5×2s measurement window — a
-deliberately fast default for on-demand local iteration (a single fork, so the
-reported `Error` column is blank). For a number you intend to quote, pass more
-forks on the CLI (e.g. `-f 5`) to get a cross-fork error estimate.
+Every steady-state JMH bench uses `@Fork(1)` with a 3×2s warmup / 5×2s measurement
+window — a deliberately fast default for on-demand local iteration (a single fork,
+so the reported `Error` column is blank). For a number you intend to quote, pass
+more forks on the CLI (e.g. `-f 5`) for a cross-fork error estimate. The exception
+is `ColdStart`, which is single-shot (`Mode.SingleShotTime`, `@Warmup(0)`,
+`@Fork(10)`) — it deliberately measures the JIT-cold first render across ten fresh
+JVMs.
 
 The measured region differs per benchmark: `TemplateCv` hoists fixture
 construction into `@Setup` and times the render only, while `CanonicalRender` and

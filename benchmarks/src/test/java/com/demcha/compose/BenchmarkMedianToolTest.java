@@ -148,6 +148,11 @@ class BenchmarkMedianToolTest {
         assertThat(aggregate.path("latency").get(0).path("peakHeapMb").asDouble()).isEqualTo(120.0);
         assertThat(aggregate.path("throughput").get(0).path("docsPerSecond").asDouble()).isEqualTo(40.0);
         assertThat(aggregate.path("totalBytes").asLong()).isEqualTo(2000L);
+        // None of these runs carried a stages[] (smoke < 20 iters emits none), so the
+        // lenient aggregation must omit stages without throwing.
+        assertThat(aggregate.path("stages").isEmpty())
+                .as("median omits stages when no source run carries them")
+                .isTrue();
     }
 
     @Test

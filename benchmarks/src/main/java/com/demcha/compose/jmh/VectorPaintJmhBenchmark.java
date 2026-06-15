@@ -15,6 +15,7 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
@@ -50,6 +51,19 @@ public class VectorPaintJmhBenchmark {
     @Param({"flat", "gradient", "alpha"})
     public String paint;
 
+    private DocumentPaint gradient;
+    private DocumentColor flat;
+    private DocumentColor translucent;
+
+    /** Paint objects built once per trial, outside the measured render. */
+    @Setup
+    public void setUp() {
+        gradient = DocumentPaint.linear(
+                DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217));
+        flat = DocumentColor.rgb(40, 90, 160);
+        translucent = DocumentColor.rgb(40, 90, 160).withOpacity(0.5);
+    }
+
     /**
      * Renders {@code PATHS} blob paths in the parameterized paint mode to PDF bytes.
      *
@@ -58,10 +72,6 @@ public class VectorPaintJmhBenchmark {
      */
     @Benchmark
     public void renderVectorPaint(Blackhole blackhole) throws Exception {
-        DocumentPaint gradient = DocumentPaint.linear(
-                DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217));
-        DocumentColor flat = DocumentColor.rgb(40, 90, 160);
-        DocumentColor translucent = DocumentColor.rgb(40, 90, 160).withOpacity(0.5);
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
                 .margin(DocumentInsets.of(28))

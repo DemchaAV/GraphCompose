@@ -50,6 +50,8 @@ import java.util.function.Function;
  *     <li>the built-in CV template</li>
  *     <li>a longer multi-page proposal template</li>
  *     <li>a feature-rich document with QR/barcode, watermark, page break, and footer</li>
+ *     <li>long unbreakable tokens forcing character-level wrap</li>
+ *     <li>a v1.8 vector-rich document (bar/pie charts, SVG icons, gradient path)</li>
  * </ul>
  */
 public final class CurrentSpeedBenchmark {

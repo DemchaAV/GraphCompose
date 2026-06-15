@@ -366,6 +366,24 @@ Entries land here as they merge.
   shipped).** The `long-token` scenario previously had no SMOKE threshold and
   silently escaped the gate; it now has one, and `CurrentSpeedScenarioGateTest`
   fails the build if any scenario lacks a threshold.
+- **Benchmark coverage for the render hot paths (not shipped).** Added an image
+  embed/scale gate (`ImageCacheOperatorProbe` + `ImageBenchmarkFixtures` +
+  `ImageJmhBenchmark`, with `ImageCacheGateTest` pinning `PdfImageCache` reuse), a
+  single-shot cold-start render bench (`ColdStartJmhBenchmark`), a multi-page
+  "report" tier in `ComparativeBenchmark` (equivalent content across GraphCompose /
+  iText / JasperReports, plus a post-run sample-PDF dump per library/scenario), a
+  production-scale `LargeTableJmhBenchmark`, an allocation-rate / GC-pressure probe
+  (`AllocationRateProbe`), and an accented-Latin measurement scenario.
+- **Deterministic benchmark gates run on every PR (not shipped).** The benchmarks
+  module's tests never ran in CI; the `perf-smoke` job now runs them, so the
+  image-cache, render-operator (F5 coalescing), vector-paint (flat / gradient /
+  alpha / stroked / dashed operator structure), and scenario-coverage gates fail a
+  PR on a structural regression. A `vector-rich` scenario (charts + SVG icons +
+  gradient) joins the gated current-speed harness; `BenchmarkMedianTool` carries the
+  stage breakdown into its aggregate; and the smoke gate's GC-noisy `peakHeapMb`
+  check is now advisory (fails only on average latency). Chart-layout variants
+  (horizontal / stacked / donut / value-axis-min), a sparkline ramp, and a
+  per-paint-mode vector render bench round out the JMH suite.
 - **Removed the `java.awt.*` / `java.util.*` co-wildcard in four files.**
   `InvoiceTemplateComposer`, `ProposalTemplateComposer`,
   `WeeklyScheduleTemplateComposer`, and the engine `PdfRenderingSystemECS`

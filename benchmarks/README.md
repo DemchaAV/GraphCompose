@@ -51,18 +51,48 @@
   layout-pass count) and reason about it; the harness is a sanity
   check after you've already chosen, not a decision tool before.
 - For **comparing GraphCompose to another PDF library** —
-  `ComparativeBenchmark` does render the same fixture through iText /
-  openHTMLToPDF / JasperReports for rough sizing, but the comparison
-  is a manual smoke test: each library has different defaults
-  (compression, font embedding, image resampling) and reading too much
-  into a single number is the wrong call.
+  `ComparativeBenchmark` does render equivalent content through iText /
+  JasperReports for rough sizing (two tiers: a tiny single-page invoice
+  for fixed overhead, and a multi-page report — title + 40-row table +
+  prose — for realistic work), but the comparison is a manual smoke test:
+  each library has different defaults (compression, font embedding, image
+  resampling) and reading too much into a single number is the wrong call.
+  Note one boundary asymmetry: the JasperReports figure measures fill +
+  PDF export with the design compiled once outside the loop, while the
+  GraphCompose and iText figures include per-iteration document
+  construction — so the Jasper number excludes work the other two pay.
+  `openHTMLtoPDF` is intentionally absent: its current release (1.0.10)
+  targets PDFBox 2.x and fails at runtime against the PDFBox 3.x this
+  project uses (no PDFBox-3-compatible openhtmltopdf release exists yet),
+  so it cannot share GraphCompose's classpath.
+
+## What runs on a PR — and what is on-demand (by design)
+
+The per-PR CI gate is deliberately light and deterministic:
+
+- **`perf-smoke` job** — `CurrentSpeedBenchmark` in the `smoke` profile with
+  absolute latency / heap thresholds (a gross-regression tripwire), plus the
+  module's deterministic gate tests (`mvnw -f benchmarks/pom.xml test`:
+  image-cache reuse, render-operator coalescing, scenario/threshold coverage).
+
+These are intentionally **not** on the per-PR path:
+
+- **The JMH benches** (`*JmhBenchmark`) are full / on-demand only. A forked,
+  warmed JMH run of the whole suite takes minutes; running it per PR is too
+  expensive for the signal. Run them by hand (or on a schedule) before a release
+  and quote those numbers for rigorous claims.
+- **The relative `BenchmarkVerdictTool` gate** (±% vs a committed baseline) runs
+  locally only, and no static `smoke` baseline is committed: absolute timings are
+  machine-specific, so a baseline captured on one machine would false-positive on
+  another. Use a local same-machine A/B (a `-Repeat` median before/after) for
+  relative comparison; the absolute smoke thresholds are the CI safety net.
 
 ## Files in this module
 
 | File | Role |
 |---|---|
 | `CurrentSpeedBenchmark` | Default scenario runner — what CI's `perf-smoke` job exercises. Takes a `-Dgraphcompose.benchmark.profile=smoke\|full\|stress` switch. |
-| `ComparativeBenchmark` | Renders the same fixtures through GraphCompose, iText, openHTMLToPDF, JasperReports. **Rough local comparison only** — see "When not to use" above. |
+| `ComparativeBenchmark` | Renders equivalent content through GraphCompose, iText, JasperReports — two tiers (small invoice + multi-page report), and dumps a sample PDF per library/scenario. **Rough local comparison only** — see "When not to use" above. |
 | `CanonicalBenchmarkSupport`, `BenchmarkSupport` | Shared fixture builders + measurement helpers. |
 | `BenchmarkReportWriter` | Writes JSON / CSV / text reports under `benchmarks/target/benchmarks/`. |
 | `BenchmarkDiffTool` | Compares two JSON reports and prints a delta table. Useful for pre/post comparisons. |

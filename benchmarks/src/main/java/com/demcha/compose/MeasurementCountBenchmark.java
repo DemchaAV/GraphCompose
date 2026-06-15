@@ -70,6 +70,16 @@ public final class MeasurementCountBenchmark {
             "Prefix text before an unbreakable token " + "x".repeat(600)
                     + " and several trailing words that must still wrap onto the following lines here.";
 
+    // High-glyph-diversity accented-Latin (Latin-1) passage: many distinct
+    // diacritic glyphs and varied words, unlike the single repeated ASCII
+    // sentence above, so distinctWidthRequests / repeat-rate reflect a non-ASCII,
+    // high-diversity workload. Standard-14 Helvetica covers Latin-1; true
+    // CJK / Cyrillic would need an embedded font and is out of scope here.
+    private static final String ACCENTED_LATIN_PARAGRAPH =
+            ("Le café à Genève - résumé naïve, façon piñata. Über die Größe schön: "
+                    + "coração São, mañana señor. Déjà brûlée crème, fjörð Århus Tromsø "
+                    + "Köln Zürich Besançon, garçon élève hôtel. ").repeat(40);
+
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
         new MeasurementCountBenchmark().run();
@@ -87,6 +97,8 @@ public final class MeasurementCountBenchmark {
                 flow.addParagraph(p -> p.text(LONG_PARAGRAPH).textStyle(BODY_STYLE));
         Consumer<PageFlowBuilder> longToken = flow ->
                 flow.addParagraph(p -> p.text(LONG_TOKEN_PARAGRAPH).textStyle(BODY_STYLE));
+        Consumer<PageFlowBuilder> accentedText = flow ->
+                flow.addParagraph(p -> p.text(ACCENTED_LATIN_PARAGRAPH).textStyle(BODY_STYLE));
         Consumer<PageFlowBuilder> largeTable = MeasurementCountBenchmark::authorLargeTable;
 
         // Warm up the JVM (class loading + JIT) BEFORE the allocation window so the
@@ -98,12 +110,14 @@ public final class MeasurementCountBenchmark {
         for (int warmup = 0; warmup < 5; warmup++) {
             measureScenario("warmup", longText);
             measureScenario("warmup", longToken);
+            measureScenario("warmup", accentedText);
             measureScenario("warmup", largeTable);
         }
 
         List<Result> results = new ArrayList<>();
         results.add(measureScenario("long-text", longText));
         results.add(measureScenario("long-token", longToken));
+        results.add(measureScenario("accented-latin", accentedText));
         results.add(measureScenario("large-table", largeTable));
 
         System.out.printf("%-14s | %11s | %9s | %9s | %11s | %8s | %11s | %10s | %6s%n",

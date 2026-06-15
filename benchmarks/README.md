@@ -51,11 +51,16 @@
   layout-pass count) and reason about it; the harness is a sanity
   check after you've already chosen, not a decision tool before.
 - For **comparing GraphCompose to another PDF library** —
-  `ComparativeBenchmark` does render the same fixture through iText /
-  openHTMLToPDF / JasperReports for rough sizing, but the comparison
-  is a manual smoke test: each library has different defaults
-  (compression, font embedding, image resampling) and reading too much
-  into a single number is the wrong call.
+  `ComparativeBenchmark` does render equivalent content through iText /
+  JasperReports for rough sizing (two tiers: a tiny single-page invoice
+  for fixed overhead, and a multi-page report — title + 40-row table +
+  prose — for realistic work), but the comparison is a manual smoke test:
+  each library has different defaults (compression, font embedding, image
+  resampling) and reading too much into a single number is the wrong call.
+  Note one boundary asymmetry: the JasperReports figure measures fill +
+  PDF export with the design compiled once outside the loop, while the
+  GraphCompose and iText figures include per-iteration document
+  construction — so the Jasper number excludes work the other two pay.
 
 ## Files in this module
 

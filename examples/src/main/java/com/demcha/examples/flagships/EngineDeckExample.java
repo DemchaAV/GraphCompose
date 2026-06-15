@@ -158,7 +158,7 @@ public final class EngineDeckExample {
                     .subject("What the GraphCompose document engine is — rendered by the engine itself")
                     .keywords("graphcompose, pdf, java, dsl, charts, svg, showcase, " + VERSION)
                     .creator("GraphCompose Examples")
-                    .producer("GraphCompose")
+                    .producer("GraphCompose (PDFBox 3.0)")
                     .build());
 
             document.footer(DocumentHeaderFooter.builder()

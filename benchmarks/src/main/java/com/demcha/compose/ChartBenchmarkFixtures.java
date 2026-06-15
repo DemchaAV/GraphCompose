@@ -1,6 +1,7 @@
 package com.demcha.compose;
 
 import com.demcha.compose.document.chart.AxisSpec;
+import com.demcha.compose.document.chart.BarGrouping;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.ChartSize;
 import com.demcha.compose.document.chart.ChartSpec;
@@ -84,6 +85,48 @@ public final class ChartBenchmarkFixtures {
     public static ChartSpec pieSpec() {
         return ChartSpec.pie()
                 .data(regionShare())
+                .sliceLabels(SliceLabelMode.CATEGORY_PERCENT)
+                .size(ChartSize.fixedHeight(190))
+                .build();
+    }
+
+    /** Horizontal grouped bar — exercises the transposed (category-on-Y) layout branch. */
+    public static ChartSpec horizontalBarSpec() {
+        return ChartSpec.bar()
+                .data(monthlySeries())
+                .horizontal(true)
+                .valueAxis(AxisSpec.builder().baselineAtZero(true).build())
+                .legend(LegendPosition.BOTTOM)
+                .size(ChartSize.aspectRatio(16, 9))
+                .build();
+    }
+
+    /** Stacked bar — exercises the cumulative-stacking layout branch. */
+    public static ChartSpec stackedBarSpec() {
+        return ChartSpec.bar()
+                .data(monthlySeries())
+                .grouping(BarGrouping.STACKED)
+                .valueAxis(AxisSpec.builder().baselineAtZero(true).build())
+                .legend(LegendPosition.BOTTOM)
+                .size(ChartSize.aspectRatio(16, 7))
+                .build();
+    }
+
+    /** Bar with a non-zero value-axis minimum — exercises the lifted-baseline branch. */
+    public static ChartSpec axisMinBarSpec() {
+        return ChartSpec.bar()
+                .data(monthlySeries())
+                .valueAxis(AxisSpec.builder().min(8.0).build())
+                .legend(LegendPosition.BOTTOM)
+                .size(ChartSize.aspectRatio(16, 7))
+                .build();
+    }
+
+    /** Donut — exercises the pie's donut-ratio (inner-radius) branch. */
+    public static ChartSpec donutSpec() {
+        return ChartSpec.pie()
+                .data(regionShare())
+                .donutRatio(0.55)
                 .sliceLabels(SliceLabelMode.CATEGORY_PERCENT)
                 .size(ChartSize.fixedHeight(190))
                 .build();

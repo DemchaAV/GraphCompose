@@ -67,7 +67,7 @@
 | File | Role |
 |---|---|
 | `CurrentSpeedBenchmark` | Default scenario runner — what CI's `perf-smoke` job exercises. Takes a `-Dgraphcompose.benchmark.profile=smoke\|full\|stress` switch. |
-| `ComparativeBenchmark` | Renders the same fixtures through GraphCompose, iText, openHTMLToPDF, JasperReports. **Rough local comparison only** — see "When not to use" above. |
+| `ComparativeBenchmark` | Renders equivalent content through GraphCompose, iText, JasperReports — two tiers (small invoice + multi-page report), and dumps a sample PDF per library/scenario. **Rough local comparison only** — see "When not to use" above. |
 | `FullCvBenchmark`, `ScalabilityBenchmark` | Fixture-specific runners for CV and table-heavy scenarios. |
 | `CanonicalBenchmarkSupport`, `BenchmarkSupport` | Shared fixture builders + measurement helpers. |
 | `BenchmarkReportWriter` | Writes JSON / CSV / text reports under `benchmarks/target/benchmarks/`. |

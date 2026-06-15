@@ -406,7 +406,7 @@ public class ComparativeBenchmark {
             JRDesignStaticText cell = new JRDesignStaticText();
             cell.setX(i * 138);
             cell.setY(0);
-            cell.setWidth(138);
+            cell.setWidth(i == headers.length - 1 ? 555 - i * 138 : 138);
             cell.setHeight(18);
             cell.setText(headers[i]);
             columnHeader.addElement(cell);
@@ -420,7 +420,7 @@ public class ComparativeBenchmark {
             JRDesignTextField cell = new JRDesignTextField();
             cell.setX(i * 138);
             cell.setY(0);
-            cell.setWidth(138);
+            cell.setWidth(i == fields.length - 1 ? 555 - i * 138 : 138);
             cell.setHeight(16);
             JRDesignExpression expression = new JRDesignExpression();
             expression.setText("$F{" + fields[i] + "}");

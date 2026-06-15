@@ -138,14 +138,24 @@ public final class EngineDeckExample {
      */
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "engine-deck.pdf");
-        BenchRun bench = loadBench();
-
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4.landscape())
                 .margin(16, 16, 30, 16)
                 .create()) {
+            compose(document);
+            document.buildPdf();
+        }
+        return outputFile;
+    }
 
-            document.metadata(DocumentMetadata.builder()
+    /**
+     * Composes the four deck pages onto a session — shared by {@link #generate()}
+     * and the layout snapshot test, so the test guards the very layout we ship.
+     * Page size and margin live on the session builder (see {@code generate()}).
+     */
+    static void compose(DocumentSession document) {
+        BenchRun bench = loadBench();
+        document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose " + VERSION + " — " + CODENAME)
                     .author("GraphCompose")
                     .subject("What the GraphCompose document engine is — rendered by the engine itself")
@@ -274,11 +284,6 @@ public final class EngineDeckExample {
                                 throughputChart(bench), groupedStyle()));
                     })
                     .build();
-
-            document.buildPdf();
-        }
-
-        return outputFile;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -1,18 +1,30 @@
 package com.demcha.examples.flagships;
 
+import static com.demcha.examples.flagships.EngineDeckTheme.BODY;
+import static com.demcha.examples.flagships.EngineDeckTheme.CARD_DARK;
+import static com.demcha.examples.flagships.EngineDeckTheme.CODE_BG;
+import static com.demcha.examples.flagships.EngineDeckTheme.CODE_FN;
+import static com.demcha.examples.flagships.EngineDeckTheme.CODE_STR;
+import static com.demcha.examples.flagships.EngineDeckTheme.CODE_TXT;
+import static com.demcha.examples.flagships.EngineDeckTheme.GREEN;
+import static com.demcha.examples.flagships.EngineDeckTheme.HERO_BG;
+import static com.demcha.examples.flagships.EngineDeckTheme.HERO_TEXT;
+import static com.demcha.examples.flagships.EngineDeckTheme.INK;
+import static com.demcha.examples.flagships.EngineDeckTheme.MUTED;
+import static com.demcha.examples.flagships.EngineDeckTheme.ON_DARK;
+import static com.demcha.examples.flagships.EngineDeckTheme.ON_DARK_MUTED;
+import static com.demcha.examples.flagships.EngineDeckTheme.RULE_DARK;
+import static com.demcha.examples.flagships.EngineDeckTheme.SLATE;
+import static com.demcha.examples.flagships.EngineDeckTheme.SURFACE_LINE;
+import static com.demcha.examples.flagships.EngineDeckTheme.VIOLET;
+import static com.demcha.examples.flagships.EngineDeckTheme.VIOLET_DEEP;
+import static com.demcha.examples.flagships.EngineDeckTheme.VIOLET_LIGHT;
+
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.chart.AxisSpec;
-import com.demcha.compose.document.chart.ChartData;
-import com.demcha.compose.document.chart.ChartSize;
 import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.chart.ChartStyle;
-import com.demcha.compose.document.chart.LegendPosition;
-import com.demcha.compose.document.chart.NumberFormatSpec;
-import com.demcha.compose.document.chart.PointMarker;
-import com.demcha.compose.document.chart.SliceLabelMode;
-import com.demcha.compose.document.chart.ValueLabelMode;
 import com.demcha.compose.document.dsl.ImageBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
@@ -29,14 +41,10 @@ import com.demcha.compose.document.output.DocumentHeaderFooterZone;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
-import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -44,7 +52,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -95,35 +102,6 @@ public final class EngineDeckExample {
 
     private static final String VERSION = "1.8.0";
     private static final String CODENAME = "illustrative";
-
-    // ── Violet brand identity (from logo.svg) ──────────────────────────────
-    private static final DocumentColor HERO_BG = DocumentColor.rgb(18, 18, 33);
-    private static final DocumentColor VIOLET = DocumentColor.rgb(124, 92, 252);
-    private static final DocumentColor VIOLET_DEEP = DocumentColor.rgb(97, 40, 217);
-    private static final DocumentColor VIOLET_LIGHT = DocumentColor.rgb(167, 139, 250);
-
-    // ── Neutrals ───────────────────────────────────────────────────────────
-    private static final DocumentColor INK = DocumentColor.rgb(28, 30, 46);
-    private static final DocumentColor MUTED = DocumentColor.rgb(112, 116, 132);
-    private static final DocumentColor BODY = DocumentColor.rgb(64, 68, 84);
-    private static final DocumentColor SURFACE = DocumentColor.rgb(247, 248, 252);
-    private static final DocumentColor SURFACE_LINE = DocumentColor.rgb(226, 229, 239);
-    private static final DocumentColor HERO_TEXT = DocumentColor.rgb(208, 211, 226);
-
-    // ── Banner (page 1) ──────────────────────────────────────────────────────
-    private static final DocumentColor CODE_BG = DocumentColor.rgb(12, 12, 22);
-    private static final DocumentColor CARD_DARK = DocumentColor.rgb(36, 35, 60);
-    private static final DocumentColor RULE_DARK = DocumentColor.rgb(58, 56, 92);
-    private static final DocumentColor GREEN = DocumentColor.rgb(46, 196, 138);
-    private static final DocumentColor CODE_TXT = DocumentColor.rgb(178, 182, 202);
-    private static final DocumentColor CODE_STR = DocumentColor.rgb(120, 204, 170);
-    private static final DocumentColor CODE_FN = DocumentColor.rgb(150, 190, 255);
-    private static final DocumentColor ON_DARK = DocumentColor.rgb(230, 232, 242);
-    private static final DocumentColor ON_DARK_MUTED = DocumentColor.rgb(152, 156, 178);
-
-    // ── Comparison series ────────────────────────────────────────────────────
-    private static final DocumentColor SLATE = DocumentColor.rgb(118, 126, 148);
-    private static final DocumentColor AMBER = DocumentColor.rgb(224, 158, 72);
 
     private EngineDeckExample() {
     }
@@ -229,15 +207,15 @@ public final class EngineDeckExample {
                                     .textStyle(body())
                                     .lineSpacing(1.45)
                                     .margin(DocumentInsets.bottom(2))))
-                    .addTable(t -> benchTable(bench, t))
+                    .addTable(t -> EngineDeckCharts.benchTable(bench, t))
                     .addRow("CmpCharts", row -> {
                         row.spacing(16).evenWeights();
                         row.addSection("TimeCard", s -> chartCard(s,
                                 "Render time at 1000 rows — ms (lower is faster)",
-                                timeChart(bench), groupedStyle()));
+                                EngineDeckCharts.timeChart(bench), EngineDeckCharts.groupedStyle()));
                         row.addSection("MemCard", s -> chartCard(s,
                                 "Peak heap at 1000 rows — MB (lower is lighter)",
-                                memoryChart(bench), groupedStyle()));
+                                EngineDeckCharts.memoryChart(bench), EngineDeckCharts.groupedStyle()));
                     })
                     .addParagraph(p -> p
                             .text("Measured " + bench.timestamp() + " · " + bench.warmup() + " warmup / "
@@ -264,17 +242,20 @@ public final class EngineDeckExample {
                     .addRow("ScaleTop", row -> {
                         row.spacing(16).evenWeights();
                         row.addSection("ScaleLine", s -> chartCard(s,
-                                "Render time vs. report size — ms", scalingLineChart(bench), lineStyle()));
+                                "Render time vs. report size — ms",
+                                EngineDeckCharts.scalingLineChart(bench), EngineDeckCharts.lineStyle()));
                         row.addSection("MemArea", s -> chartCard(s,
-                                "Peak heap vs. report size — MB", memoryAreaChart(bench), areaStyle()));
+                                "Peak heap vs. report size — MB",
+                                EngineDeckCharts.memoryAreaChart(bench), EngineDeckCharts.areaStyle()));
                     })
                     .addRow("ScaleBottom", row -> {
                         row.spacing(16).evenWeights();
                         row.addSection("ShareDonut", s -> chartCard(s,
-                                "Memory at 1000 rows — share of total", memoryShareDonut(bench), donutStyle()));
+                                "Memory at 1000 rows — share of total",
+                                EngineDeckCharts.memoryShareDonut(bench), EngineDeckCharts.donutStyle()));
                         row.addSection("ThroughCard", s -> chartCard(s,
                                 "Throughput at 1000 rows — docs/sec (higher is better)",
-                                throughputChart(bench), groupedStyle()));
+                                EngineDeckCharts.throughputChart(bench), EngineDeckCharts.groupedStyle()));
                     })
                     .build();
     }
@@ -605,191 +586,6 @@ public final class EngineDeckExample {
                 .spacing(8)
                 .addParagraph(p -> p.text(title).textStyle(h3()).margin(DocumentInsets.zero()))
                 .chart(spec, style);
-    }
-
-    // The benchmark data and the deck's structured content live in the data
-    // layer (EngineDeckData); the methods below only turn that data into the
-    // table and charts.
-
-    // ── Page 3 — measured comparison ──────────────────────────────────────────
-
-    private static void benchTable(EngineDeckData.BenchRun b, com.demcha.compose.document.dsl.TableBuilder table) {
-        table.name("BenchTable")
-                .columns(
-                        DocumentTableColumn.fixed(120),
-                        DocumentTableColumn.auto(),
-                        DocumentTableColumn.auto(),
-                        DocumentTableColumn.auto())
-                .defaultCellStyle(DocumentTableStyle.builder()
-                        .padding(DocumentInsets.symmetric(7, 10))
-                        .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA).size(9).color(INK).build())
-                        .stroke(DocumentStroke.of(SURFACE_LINE, 0.5))
-                        .build())
-                .headerStyle(DocumentTableStyle.builder()
-                        .padding(DocumentInsets.symmetric(8, 10))
-                        .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(9).color(DocumentColor.WHITE).build())
-                        .fillColor(VIOLET_DEEP)
-                        .stroke(DocumentStroke.of(VIOLET_DEEP, 0.5))
-                        .build())
-                .headerRow("Report size", "GraphCompose", "iText 9", "JasperReports")
-                .zebra(DocumentColor.WHITE, SURFACE)
-                .row("1 page · 3 lines",
-                        cell(b, "GraphCompose Canonical"), cell(b, "iText 9"), cell(b, "JasperReports"));
-        for (int size : EngineDeckData.SIZES) {
-            table.row(size + " rows",
-                    cell(b, "GraphCompose (" + size + " rows)"),
-                    cell(b, "iText 9 (" + size + " rows)"),
-                    cell(b, "JasperReports (" + size + " rows)"));
-        }
-    }
-
-    private static String cell(EngineDeckData.BenchRun b, String label) {
-        return String.format(Locale.ROOT, "%.1f ms · %.1f MB", b.timeMs(label), b.heapMb(label));
-    }
-
-    /** Three coloured bars (one per library) at the 1000-row scenario. */
-    private static ChartSpec timeChart(EngineDeckData.BenchRun b) {
-        return ChartSpec.bar()
-                .data(ChartData.builder()
-                        .categories("1000-row report")
-                        .series("GraphCompose", b.timeMs("GraphCompose", 1000))
-                        .series("iText 9", b.timeMs("iText 9", 1000))
-                        .series("JasperReports", b.timeMs("JasperReports", 1000))
-                        .build())
-                .valueAxis(AxisSpec.builder().baselineAtZero(true)
-                        .format(NumberFormatSpec.pattern("#,##0.0").withSuffix(" ms")).build())
-                .legend(LegendPosition.BOTTOM)
-                .valueLabels(ValueLabelMode.OUTSIDE)
-                .size(ChartSize.aspectRatio(16, 8))
-                .build();
-    }
-
-    private static ChartSpec memoryChart(EngineDeckData.BenchRun b) {
-        return ChartSpec.bar()
-                .data(ChartData.builder()
-                        .categories("1000-row report")
-                        .series("GraphCompose", b.heapMb("GraphCompose", 1000))
-                        .series("iText 9", b.heapMb("iText 9", 1000))
-                        .series("JasperReports", b.heapMb("JasperReports", 1000))
-                        .build())
-                .valueAxis(AxisSpec.builder().baselineAtZero(true)
-                        .format(NumberFormatSpec.pattern("#,##0.0").withSuffix(" MB")).build())
-                .legend(LegendPosition.BOTTOM)
-                .valueLabels(ValueLabelMode.OUTSIDE)
-                .size(ChartSize.aspectRatio(16, 8))
-                .build();
-    }
-
-    // ── Page 4 — scaling (real data) ──────────────────────────────────────────
-
-    /** One series per library across the 40 / 200 / 1000-row sweep. */
-    private static ChartData bySize(EngineDeckData.BenchRun b, boolean time) {
-        var d = ChartData.builder().categories("40", "200", "1000");
-        for (String lib : EngineDeckData.LIBS) {
-            double[] v = new double[EngineDeckData.SIZES.length];
-            for (int i = 0; i < EngineDeckData.SIZES.length; i++) {
-                v[i] = time ? b.timeMs(lib, EngineDeckData.SIZES[i]) : b.heapMb(lib, EngineDeckData.SIZES[i]);
-            }
-            d = d.series(lib, v);
-        }
-        return d.build();
-    }
-
-    private static ChartSpec scalingLineChart(EngineDeckData.BenchRun b) {
-        return ChartSpec.line()
-                .data(bySize(b, true))
-                .valueAxis(AxisSpec.builder().baselineAtZero(true)
-                        .format(NumberFormatSpec.pattern("#,##0").withSuffix(" ms")).build())
-                .legend(LegendPosition.BOTTOM)
-                .size(ChartSize.aspectRatio(16, 6.5))
-                .build();
-    }
-
-    private static ChartSpec memoryAreaChart(EngineDeckData.BenchRun b) {
-        return ChartSpec.line()
-                .data(bySize(b, false))
-                .smooth(true)
-                .area(true)
-                .valueAxis(AxisSpec.builder().baselineAtZero(true)
-                        .format(NumberFormatSpec.pattern("#,##0").withSuffix(" MB")).build())
-                .legend(LegendPosition.BOTTOM)
-                .size(ChartSize.aspectRatio(16, 6.5))
-                .build();
-    }
-
-    private static ChartSpec memoryShareDonut(EngineDeckData.BenchRun b) {
-        return ChartSpec.pie()
-                .data(ChartData.builder()
-                        .categories("GraphCompose", "iText 9", "JasperReports")
-                        .series("Heap",
-                                b.heapMb("GraphCompose", 1000),
-                                b.heapMb("iText 9", 1000),
-                                b.heapMb("JasperReports", 1000))
-                        .build())
-                .donutRatio(0.58)
-                .sliceLabels(SliceLabelMode.PERCENT)
-                .centerText("1000 rows")
-                .legend(LegendPosition.BOTTOM)
-                .size(ChartSize.aspectRatio(16, 6.5))
-                .build();
-    }
-
-    private static ChartSpec throughputChart(EngineDeckData.BenchRun b) {
-        return ChartSpec.bar()
-                .data(ChartData.builder()
-                        .categories("docs / sec")
-                        .series("GraphCompose", 1000.0 / b.timeMs("GraphCompose", 1000))
-                        .series("iText 9", 1000.0 / b.timeMs("iText 9", 1000))
-                        .series("JasperReports", 1000.0 / b.timeMs("JasperReports", 1000))
-                        .build())
-                .valueAxis(AxisSpec.builder().baselineAtZero(true)
-                        .format(NumberFormatSpec.pattern("#,##0.0")).build())
-                .legend(LegendPosition.BOTTOM)
-                .valueLabels(ValueLabelMode.OUTSIDE)
-                .size(ChartSize.aspectRatio(16, 6.5))
-                .build();
-    }
-
-    // ── Chart styles (GraphCompose = violet, iText = slate, Jasper = amber) ───
-
-    private static ChartStyle groupedStyle() {
-        return ChartStyle.builder()
-                .seriesPaint(0, DocumentPaint.solid(VIOLET))
-                .seriesPaint(1, DocumentPaint.solid(SLATE))
-                .seriesPaint(2, DocumentPaint.solid(AMBER))
-                .barCornerRadius(DocumentCornerRadius.top(2))
-                .build();
-    }
-
-    private static ChartStyle areaStyle() {
-        return ChartStyle.builder()
-                .seriesPaint(0, DocumentPaint.solid(VIOLET))
-                .seriesPaint(1, DocumentPaint.solid(SLATE))
-                .seriesPaint(2, DocumentPaint.solid(AMBER))
-                .lineWidth(1.6)
-                .build();
-    }
-
-    private static ChartStyle lineStyle() {
-        return ChartStyle.builder()
-                .seriesPaint(0, DocumentPaint.solid(VIOLET))
-                .seriesPaint(1, DocumentPaint.solid(SLATE))
-                .seriesPaint(2, DocumentPaint.solid(AMBER))
-                .lineWidth(2.0)
-                .pointMarker(PointMarker.circle(5.0)
-                        .withStroke(DocumentStroke.of(DocumentColor.WHITE, 1.2)))
-                .build();
-    }
-
-    private static ChartStyle donutStyle() {
-        return ChartStyle.builder()
-                .seriesPaint(0, DocumentPaint.solid(VIOLET))
-                .seriesPaint(1, DocumentPaint.solid(SLATE))
-                .seriesPaint(2, DocumentPaint.solid(AMBER))
-                .sliceGapDegrees(2.0)
-                .build();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

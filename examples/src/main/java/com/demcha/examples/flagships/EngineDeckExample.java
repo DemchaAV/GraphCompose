@@ -125,6 +125,42 @@ public final class EngineDeckExample {
     }
 
     /**
+     * Renders page&nbsp;1's banner as a standalone, full-bleed hero. The dark
+     * violet field is painted as the canonical {@code pageBackground}, so it
+     * fills the whole landscape page — margins and corners included — and the
+     * rasterised image carries no white frame, only the banner itself. This is
+     * the source of the repository README hero
+     * ({@code assets/readme/repository_showcase_render.png}, produced by
+     * {@link com.demcha.examples.support.PdfPageRasterizer}); re-render it after a
+     * version bump — the banner reads {@link #VERSION} / {@link #CODENAME}, so
+     * the hero stays current with one rebuild.
+     *
+     * @return the generated single-page banner PDF path
+     * @throws Exception when rendering or icon IO fails
+     */
+    public static Path generateBanner() throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare("flagships", "engine-banner.pdf");
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4.landscape())
+                .pageBackground(HERO_BG)
+                .margin(16, 16, 16, 16)
+                .create()) {
+            document.metadata(DocumentMetadata.builder()
+                    .title("GraphCompose v" + VERSION + " — " + CODENAME)
+                    .author("GraphCompose")
+                    .subject("GraphCompose banner — the engine's own brand hero")
+                    .producer("GraphCompose (PDFBox 3.0)")
+                    .build());
+            document.pageFlow()
+                    .name("EngineBanner")
+                    .addSection("Banner", EngineDeckExample::banner)
+                    .build();
+            document.buildPdf();
+        }
+        return outputFile;
+    }
+
+    /**
      * Composes the four deck pages onto a session — shared by {@link #generate()}
      * and the layout snapshot test, so the test guards the very layout we ship.
      * Page size and margin live on the session builder (see {@code generate()}).

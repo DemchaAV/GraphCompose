@@ -4,12 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.style.DocumentColor;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -78,6 +83,65 @@ class ParagraphTextStateDedupTest {
                     .describedAs("a style change within a paragraph must re-emit setFont (single-style baseline is 1)")
                     .isGreaterThanOrEqualTo(2);
         }
+    }
+
+    @Test
+    void sameStyleTextAroundAnInlineShapeReEmitsTheFont() throws Exception {
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            // Two same-style text runs with an inline shape between them. The
+            // shape ends the text block and runs its own graphics-state/colour
+            // ops, so the handler must invalidate the tracked font — otherwise
+            // the second run trusts the stale state, skips its Tf, and draws
+            // through whatever the shape left set. Same style, so without the
+            // invalidate the two runs would dedup to a single setFont.
+            session.pageFlow(flow -> flow.addParagraph(p -> p.rich(r -> r
+                    .plain("alpha ")
+                    .diamond(8, DocumentColor.rgb(196, 30, 58))
+                    .plain(" bravo"))));
+            pdf = session.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(operatorCount(document, "Tf"))
+                    .describedAs("the text span after an inline shape must re-emit setFont")
+                    .isEqualTo(2);
+        }
+    }
+
+    @Test
+    void sameStyleTextAroundAnInlineImageReEmitsTheFont() throws Exception {
+        DocumentImageData dot = DocumentImageData.fromBytes(onePixelPng());
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(24, 24, 24, 24)
+                .create()) {
+            // Same guard for the inline-image span: drawImage breaks the text
+            // block, so the text after it must re-emit its setFont.
+            session.pageFlow(flow -> flow.addParagraph(p -> p.rich(r -> r
+                    .plain("alpha ")
+                    .image(dot, 8, 8)
+                    .plain(" bravo"))));
+            pdf = session.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(operatorCount(document, "Tf"))
+                    .describedAs("the text span after an inline image must re-emit setFont")
+                    .isEqualTo(2);
+        }
+    }
+
+    private static byte[] onePixelPng() throws Exception {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, java.awt.Color.WHITE.getRGB());
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     private static int operatorCount(PDDocument document, String operatorName) throws IOException {

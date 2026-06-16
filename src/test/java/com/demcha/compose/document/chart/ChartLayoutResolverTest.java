@@ -234,7 +234,7 @@ class ChartLayoutResolverTest {
     }
 
     @Test
-    void groupedBarsWithNegativeValuesMeasureFromTheNiceFloor() {
+    void groupedBarsEmanateFromZeroAndNegativesHangBelow() {
         ChartData data = ChartData.builder()
                 .categories("A", "B")
                 .series("S", 10.0, -2.0)
@@ -245,17 +245,62 @@ class ChartLayoutResolverTest {
                 bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
 
         // Domain [-2, 10] with the zero baseline rounds to the nice range
-        // [-5, 10]: the axis extends below zero and both bars anchor at the
-        // -5 floor, so the negative bar renders as a short positive-height
-        // column reaching its value level (no crash, no inverted geometry).
+    // [-5, 10]: the axis extends below zero. The positive bar grows up from
+        // the zero line; the negative bar hangs down across it. Both meet
+        // exactly at zero, and their heights are proportional to |value|.
         ChartPrimitive positive = byName(out, "bar_c0_s0");
         ChartPrimitive negative = byName(out, "bar_c1_s0");
-        assertThat(negative.y()).isEqualTo(positive.y());
-        // fractionOf(10) = 1.0 vs fractionOf(-2) = 0.2 over [-5, 10].
+        // Positive bar's bottom == negative bar's top == the zero line.
+        assertThat(positive.y()).isCloseTo(negative.y() + negative.height(), within(1e-9));
+        // The negative bar's body sits below where the positive one starts.
+        assertThat(negative.y()).isLessThan(positive.y());
+        // |−2| / |10| = 0.2.
         assertThat(negative.height()).isCloseTo(positive.height() * 0.2, within(1e-9));
         // The negative bound appears as a tick label.
         assertThat(out.stream().anyMatch(p -> p.node() instanceof ParagraphNode pn
                 && pn.name().startsWith("tick_") && "-5".equals(pn.text()))).isTrue();
+    }
+
+    @Test
+    void horizontalGroupedBarsEmanateFromZeroAndNegativesExtendLeft() {
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 10.0, -2.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).horizontal(true).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        ChartPrimitive positive = byName(out, "bar_c0_s0");
+        ChartPrimitive negative = byName(out, "bar_c1_s0");
+        // Positive bar starts at the zero line and runs right; the negative
+        // bar's right edge reaches the zero line and its body extends left.
+        assertThat(positive.x()).isCloseTo(negative.x() + negative.width(), within(1e-9));
+        assertThat(negative.x()).isLessThan(positive.x());
+        // Widths proportional to |value|: |−2| / |10| = 0.2.
+        assertThat(negative.width()).isCloseTo(positive.width() * 0.2, within(1e-9));
+    }
+
+    @Test
+    void groupedBarsWithAPositiveAxisMinAnchorAtThePlotFloor() {
+        // Zero is off-scale below an explicit positive min, so bars anchor at
+        // the visible floor (the standard "zoomed axis" reading) rather than an
+        // invisible zero line — the deliberate, tested behaviour for a min set.
+        ChartData data = ChartData.builder()
+                .categories("A", "B").series("S", 60.0, 80.0).build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .valueAxis(AxisSpec.builder().min(50.0).build())
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        ChartPrimitive barA = byName(out, "bar_c0_s0");
+        ChartPrimitive barB = byName(out, "bar_c1_s0");
+        // Both bars share the floor baseline; the larger value is taller.
+        assertThat(barA.y()).isEqualTo(barB.y());
+        assertThat(barB.height()).isGreaterThan(barA.height());
     }
 
     @Test

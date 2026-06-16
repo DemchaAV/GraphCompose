@@ -242,6 +242,17 @@ Entries land here as they merge.
   total and ran past the plot top. The stacked floor is now pinned to zero
   (parts summing to a whole), independent of the requested minimum. Grouped
   bars still honour an explicit minimum.
+- **Grouped bars emanate from the zero baseline.** A grouped (non-stacked) bar
+  measured its height from the axis nice-floor, so on an axis that crossed zero
+  a negative value rendered as a short upward column anchored at the floor —
+  visually indistinguishable from a small positive value — and positive bars
+  overshot below zero. Grouped bars now grow from the zero line (positive up,
+  negative hanging below it), matching the standard bar-chart convention and
+  the stacked-bar behaviour. When zero is off-scale — an explicit non-zero
+  `valueAxis().min(...)` or `baselineAtZero(false)` over a range that excludes
+  zero — the baseline clamps to the nearest visible bound, so a deliberately
+  zoomed axis still anchors its bars at the plot floor. Charts with positive
+  data on a zero-based axis are byte-identical.
 - **`ChartStyle.paintForSeries` rejects a negative series index** with a
   value-naming `IllegalArgumentException` instead of leaking a bare
   `IndexOutOfBoundsException` from the palette modulo.
@@ -432,10 +443,13 @@ Entries land here as they merge.
   two spaces per depth, per-depth custom markers survive, lists inside
   sections export, empty lists are a no-op. Pagination: a keep-together
   section taller than a full page still flows instead of relocating. Charts:
-  negative bar values extend the axis below zero and measure from the nice
-  floor, stacked bars skip non-positive segments, a one-point smooth/area
-  line keeps its marker and label, long category labels stay slot-sized,
-  tight-width legends keep every entry, all-negative `NiceScale` ranges.
+  negative grouped bars extend the axis below zero and hang from the zero
+  baseline (positive and negative bars meet at zero, heights proportional to
+  `|value|`), an explicit positive axis minimum anchors grouped bars at the
+  visible floor, stacked bars skip non-positive segments, a one-point
+  smooth/area line keeps its marker and label, long category labels stay
+  slot-sized, tight-width legends keep every entry, all-negative `NiceScale`
+  ranges.
 
 ## v1.7.1 — 2026-06-09
 

@@ -304,6 +304,52 @@ class ChartLayoutResolverTest {
     }
 
     @Test
+    void negativeBarValueLabelsSitOnTheOutsideOfTheBar() {
+        // OUTSIDE labels follow the bar's far end: a positive bar labels above
+        // its top, a negative bar below its bottom — never on the zero side.
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 10.0, -2.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data)
+                .valueLabels(ValueLabelMode.OUTSIDE).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        ChartPrimitive posBar = byName(out, "bar_c0_s0");
+        ChartPrimitive posLabel = byName(out, "value_c0_s0");
+        ChartPrimitive negBar = byName(out, "bar_c1_s0");
+        ChartPrimitive negLabel = byName(out, "value_c1_s0");
+        // Positive label sits above the bar top; negative label below the bottom.
+        assertThat(posLabel.y()).isGreaterThanOrEqualTo(posBar.y() + posBar.height());
+        assertThat(negLabel.y() + negLabel.height()).isLessThanOrEqualTo(negBar.y());
+    }
+
+    @Test
+    void horizontalNegativeBarValueLabelsSitPastTheLeftEnd() {
+        // OUTSIDE labels on horizontal bars: positive past the right end,
+        // negative past the left end (the side away from zero).
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 10.0, -2.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar().data(data).horizontal(true)
+                .valueLabels(ValueLabelMode.OUTSIDE).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        ChartPrimitive posBar = byName(out, "bar_c0_s0");
+        ChartPrimitive posLabel = byName(out, "value_c0_s0");
+        ChartPrimitive negBar = byName(out, "bar_c1_s0");
+        ChartPrimitive negLabel = byName(out, "value_c1_s0");
+        // Positive label past the right end; negative label past the left end.
+        assertThat(posLabel.x()).isGreaterThanOrEqualTo(posBar.x() + posBar.width());
+        assertThat(negLabel.x() + negLabel.width()).isLessThanOrEqualTo(negBar.x());
+    }
+
+    @Test
     void stackedBarsSkipNonPositiveSegments() {
         ChartData data = ChartData.builder().categories("A")
                 .series("Up", 5.0)

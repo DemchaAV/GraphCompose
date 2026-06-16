@@ -269,9 +269,10 @@ public final class EngineDeckExample {
                     .addSection("ScaleBody", s -> s
                             .padding(DocumentInsets.zero())
                             .addParagraph(p -> p
-                                    .text("As the report grows from 40 to 1000 rows, the time lead over iText widens "
-                                            + "and GraphCompose stays markedly lighter on memory than both rivals — "
-                                            + "every series below read from the same benchmark file.")
+                                    .text("As the report grows from 40 to 1000 rows, the time lead over iText widens; "
+                                            + "JasperReports closes to roughly the same render time at 1000 rows, yet "
+                                            + "GraphCompose stays markedly lighter on memory than both rivals throughout — "
+                                            + "every series below reads from the same benchmark file.")
                                     .textStyle(body())
                                     .lineSpacing(1.45)
                                     .margin(DocumentInsets.bottom(2))))

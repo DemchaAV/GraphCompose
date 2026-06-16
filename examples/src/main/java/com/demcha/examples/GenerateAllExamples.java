@@ -22,6 +22,7 @@ import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.themes.CustomBusinessThemeExample;
 import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
+import com.demcha.examples.flagships.EngineDeckExample;
 import com.demcha.examples.flagships.FeatureCatalogExample;
 import com.demcha.examples.flagships.MasterShowcaseExample;
 import com.demcha.examples.flagships.ModuleFirstFileExample;
@@ -167,5 +168,6 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + MasterShowcaseExample.generate());
         System.out.println("Generated: " + FeatureCatalogExample.generate());
         System.out.println("Generated: " + BusinessReportExample.generate());
+        System.out.println("Generated: " + EngineDeckExample.generate());
     }
 }

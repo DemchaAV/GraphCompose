@@ -22,13 +22,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Exhaustiveness guard: every {@link ShapeOutline} permit must render through
- * <em>both</em> outline-consuming surfaces — the shape-container clip path and
- * the inline-shape run — without throwing. Each surface dispatches on the
- * outline kind with an {@code instanceof} chain that ends in an
- * {@code IllegalStateException}; this test reflects over
- * {@code getPermittedSubclasses()} so the next permit added to the sealed type
- * cannot silently miss a render branch (the lesson from the
+ * <em>all three</em> outline-consuming surfaces — the shape-container outline
+ * fill/stroke, the shape-container clip path, and the inline-shape run —
+ * without throwing. Each surface dispatches on the outline kind with an
+ * {@code instanceof} chain that ends in an {@code IllegalStateException}; this
+ * test reflects over {@code getPermittedSubclasses()} so the next permit added
+ * to the sealed type cannot silently miss a render branch (the lesson from the
  * {@code ShapeOutline.Path} clipper, where the inline-shape switch was missed).
+ *
+ * <p>The fill surface is isolated with {@link ClipPolicy#OVERFLOW_VISIBLE}: the
+ * clip test exercises {@code ShapeContainerDefinition}'s fill-geometry chain
+ * transitively (the outline fragment is emitted whether or not the container
+ * clips), but a dedicated fill-only case keeps that branch covered if the clip
+ * surface ever changes.</p>
  */
 class ShapeOutlineRenderCoverageTest {
 
@@ -51,8 +57,33 @@ class ShapeOutlineRenderCoverageTest {
         Set<Class<?>> permits = Set.of(ShapeOutline.class.getPermittedSubclasses());
         Set<Class<?>> covered = REPRESENTATIVES.keySet();
         // If this fails, a new ShapeOutline permit was added — give it a
-        // representative here AND a render branch in BOTH surfaces below.
+        // representative here AND a render branch in all three surfaces below.
         assertThat(covered).containsExactlyInAnyOrderElementsOf(permits);
+    }
+
+    @Test
+    void everyOutlineFillsAContainerWithoutThrowing() throws Exception {
+        // The container's own outline fill/stroke geometry is built by
+        // ShapeContainerDefinition's instanceof chain. OVERFLOW_VISIBLE emits
+        // that fill but no clip, isolating the surface from the clip path.
+        for (ShapeOutline outline : REPRESENTATIVES.values()) {
+            try (DocumentSession session = GraphCompose.document()
+                    .pageSize(200, 160)
+                    .margin(DocumentInsets.of(16))
+                    .create()) {
+                session.add(new ShapeContainerBuilder()
+                        .name("Fill" + outline.getClass().getSimpleName())
+                        .outline(outline)
+                        .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                        .fillColor(DocumentColor.rgb(20, 80, 95))
+                        .center(spacer())
+                        .build());
+                byte[] pdf = session.toPdfBytes();
+                assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII))
+                        .as("fill render of " + outline.getClass().getSimpleName())
+                        .isEqualTo("%PDF-");
+            }
+        }
     }
 
     @Test

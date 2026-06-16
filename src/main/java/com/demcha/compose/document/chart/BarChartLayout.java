@@ -14,6 +14,15 @@ import static com.demcha.compose.document.chart.ChartLayoutSupport.*;
  * Geometry for vertical and horizontal bar charts, grouped or stacked, with
  * per-bar value labels and stacked-total labels.
  *
+ * <p>Grouped bars emanate from the zero baseline — positive values grow away
+ * from zero, negative values hang back across it — matching the standard
+ * bar-chart convention. When zero falls outside the visible range (an explicit
+ * non-zero {@code valueAxis().min(...)} or {@code baselineAtZero(false)} over a
+ * range that does not include zero), the baseline clamps to the nearest visible
+ * bound, so a deliberately zoomed axis still anchors its bars at the plot edge.
+ * Stacked bars always sum upward from a zero floor (see
+ * {@link ChartLayoutSupport#computeFrame}).
+ *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
@@ -100,12 +109,21 @@ final class BarChartLayout {
             } else {
                 double barW = groupW / sCount;
                 double innerBarW = Math.max(0.5, barW * INNER_BAR_RATIO);
+                // Grouped bars emanate from the zero baseline: positive values
+                // grow up, negative values hang down. When zero is off-scale
+                // (an explicit positive min, or baselineAtZero(false) over a
+                // non-zero range), the baseline clamps to the nearest visible
+                // bound, so a zoomed axis still anchors bars at the plot floor.
+                double baseValue = baselineValue(f.scale());
+                double baseY = f.yForValue(baseValue);
                 for (int s = 0; s < sCount; s++) {
                     Double v = data.series().get(s).values().get(c);
                     if (v == null) {
                         continue;
                     }
-                    double h = f.scale().fractionOf(v) * f.plotHeight();
+                    double valueY = f.yForValue(v);
+                    double yBottom = Math.min(baseY, valueY);
+                    double h = Math.abs(valueY - baseY);
                     if (h < MIN_BAR_HEIGHT) {
                         continue;
                     }
@@ -115,12 +133,16 @@ final class BarChartLayout {
                             new ShapeNode("bar_c" + c + "_s" + s, innerBarW, h, null, null,
                                     barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
                                     null, paint),
-                            bx, f.plotBottomY(), innerBarW, h));
+                            bx, yBottom, innerBarW, h));
                     if (bar.valueLabels() == ValueLabelMode.OUTSIDE) {
                         String text = bar.valueAxis().format().format(v);
                         double labelW = Math.max(innerBarW, metrics.width(valueStyle, text) + 2.0);
+                        // Label above a positive bar's top, below a negative bar's bottom.
+                        double labelBottomY = v >= baseValue
+                                ? yBottom + h + labelGap
+                                : yBottom - labelGap - f.valueLineH();
                         emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, null,
-                                bx + innerBarW / 2.0, f.plotBottomY() + h + labelGap,
+                                bx + innerBarW / 2.0, labelBottomY,
                                 labelW, f.valueLineH());
                     }
                 }
@@ -287,12 +309,18 @@ final class BarChartLayout {
             } else {
                 double barH = groupH / sCount;
                 double innerBarH = Math.max(0.5, barH * INNER_BAR_RATIO);
+                // Bars emanate from the zero baseline (clamped to the visible
+                // range): positive values extend right, negative values left.
+                double baseValue = baselineValue(scale);
+                double baseX = plotLeftX + scale.fractionOf(baseValue) * plotW;
                 for (int s = 0; s < sCount; s++) {
                     Double v = data.series().get(s).values().get(c);
                     if (v == null) {
                         continue;
                     }
-                    double w = scale.fractionOf(v) * plotW;
+                    double valueX = plotLeftX + scale.fractionOf(v) * plotW;
+                    double xLeft = Math.min(baseX, valueX);
+                    double w = Math.abs(valueX - baseX);
                     if (w < MIN_BAR_HEIGHT) {
                         continue;
                     }
@@ -302,11 +330,16 @@ final class BarChartLayout {
                             new ShapeNode("bar_c" + c + "_s" + s, w, innerBarH, null, null,
                                     barRadius, null, null, DocumentInsets.zero(), DocumentInsets.zero(),
                                     null, paint),
-                            plotLeftX, barTop - innerBarH, w, innerBarH));
+                            xLeft, barTop - innerBarH, w, innerBarH));
                     if (bar.valueLabels() == ValueLabelMode.OUTSIDE) {
-                        emitEndLabel(out, "value_c" + c + "_s" + s, axis.format().format(v),
-                                valueStyle, null, plotLeftX + w + labelGap,
-                                barTop - innerBarH / 2.0 - valueInk, valueLineH, metrics);
+                        String text = axis.format().format(v);
+                        double labelW = Math.max(8.0, metrics.width(valueStyle, text) + 2.0);
+                        // Past the right end for positive, the left end for negative.
+                        double centerX = v >= baseValue
+                                ? xLeft + w + labelGap + labelW / 2.0
+                                : xLeft - labelGap - labelW / 2.0;
+                        emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, null,
+                                centerX, barTop - innerBarH / 2.0 - valueInk, labelW, valueLineH);
                     }
                 }
             }
@@ -321,6 +354,18 @@ final class BarChartLayout {
         ChartLayoutSupport.emitLegend(out, bar.legend(), reserve, legendEntries, style,
                 width, height, (plotBottomY + plotTopY) / 2.0, metrics);
         return out;
+    }
+
+    /**
+     * The value bars emanate from — zero, clamped into the visible axis range.
+     * With a normal zero-based axis this is exactly zero (bars sit on the
+     * floor); with an explicit non-zero min or {@code baselineAtZero(false)}
+     * that pushes zero off-scale, it clamps to the nearest visible bound so a
+     * zoomed axis anchors its bars at the plot edge instead of an invisible
+     * zero line.
+     */
+    private static double baselineValue(NiceScale scale) {
+        return Math.max(scale.niceMin(), Math.min(0.0, scale.niceMax()));
     }
 
     private static void emitEndLabel(List<ChartPrimitive> out, String name, String text,

@@ -53,6 +53,19 @@ public class ComparativeBenchmark {
     private static final int SWEEP_WARMUP_ITERATIONS = 20;
     private static final int SWEEP_MEASUREMENT_ITERATIONS = 30;
 
+    // Per-library table layout, derived from the widest label any row can print so a
+    // longer label (e.g. a bigger sweep size) can never overflow the column and break
+    // the alignment again — a fixed column width is the failure mode this once had.
+    private static final int LABEL_WIDTH = widestLabelWidth();
+    private static final String TABLE_HEADER_FORMAT = "%-" + LABEL_WIDTH + "s | %14s | %14s%n";
+    private static final String TABLE_ROW_FORMAT = "%-" + LABEL_WIDTH + "s | %14.2f | %14.2f%n";
+    private static final int TABLE_RULE_WIDTH = LABEL_WIDTH + 3 + 14 + 3 + 14;
+
+    // Scaling-summary table: an 8-wide row-count column plus four 16-wide ratio columns.
+    private static final String SUMMARY_HEADER_FORMAT = "%-8s | %16s | %16s | %16s | %16s%n";
+    private static final String SUMMARY_ROW_FORMAT = "%-8d | %16s | %16s | %16s | %16s%n";
+    private static final int SUMMARY_RULE_WIDTH = 8 + 4 * (3 + 16);
+
     private static final String REPORT_PROSE =
             ("GraphCompose lays out structured business documents across many pages "
                     + "while keeping header and footer placement stable. ").repeat(6);
@@ -147,7 +160,7 @@ public class ComparativeBenchmark {
                                 "%.2f".formatted(row.avgTimeMs()),
                                 "%.2f".formatted(row.avgHeapMb())))
                         .toList());
-        System.out.println("-".repeat(60));
+        System.out.println("-".repeat(TABLE_RULE_WIDTH));
         System.out.println("Saved JSON benchmark report to " + jsonPath);
         System.out.println("Saved CSV benchmark report to " + csvPath);
 
@@ -178,8 +191,8 @@ public class ComparativeBenchmark {
     }
 
     private static void printTableHeader() {
-        System.out.printf("%-26s | %14s | %14s%n", "Library", "Avg Time (ms)", "Avg Heap (MB)");
-        System.out.println("-".repeat(60));
+        System.out.printf(TABLE_HEADER_FORMAT, "Library", "Avg Time (ms)", "Avg Heap (MB)");
+        System.out.println("-".repeat(TABLE_RULE_WIDTH));
     }
 
     private static Measured runBenchmark(String name, int iterations, BenchmarkTask task) throws Exception {
@@ -209,7 +222,7 @@ public class ComparativeBenchmark {
         double avgTimeMs = (totalTimeNs / (double) iterations) / 1_000_000.0;
         double avgMemMb = (totalAllocatedBytes / (double) iterations) / (1024.0 * 1024.0);
 
-        System.out.printf("%-26s | %14.2f | %14.2f%n", name, avgTimeMs, avgMemMb);
+        System.out.printf(TABLE_ROW_FORMAT, name, avgTimeMs, avgMemMb);
 
         // Печатаем dummy-переменную, чтобы JIT не вырезал код генерации
         if (dummyAccumulator == 0) System.out.println("Error: No bytes generated");
@@ -474,6 +487,24 @@ public class ComparativeBenchmark {
     }
 
     /**
+     * The widest label printed in the per-library tables, plus one space of padding.
+     * "JasperReports" is the longest library name, so its largest-sweep row is the
+     * widest generated label; the fixed small-invoice labels are checked too in case
+     * the sweep sizes are ever made tiny.
+     */
+    private static int widestLabelWidth() {
+        int maxSize = 0;
+        for (int size : SWEEP_SIZES) {
+            maxSize = Math.max(maxSize, size);
+        }
+        int widest = ("JasperReports (" + maxSize + " rows)").length();
+        for (String fixed : new String[]{"Library", "GraphCompose Canonical"}) {
+            widest = Math.max(widest, fixed.length());
+        }
+        return widest + 1;
+    }
+
+    /**
      * Prints how GraphCompose's time/memory advantage over iText and Jasper changes
      * as the row count grows, so the "does the lead widen with document size?"
      * question is answered by the numbers rather than asserted. A ratio above 1.0
@@ -482,11 +513,11 @@ public class ComparativeBenchmark {
     private static void printScalingSummary(List<ScalingPoint> scaling) {
         System.out.println();
         System.out.println("Scaling summary (GraphCompose advantage; >1.0 = GraphCompose faster / lighter)");
-        System.out.printf("%-8s | %16s | %16s | %16s | %16s%n",
+        System.out.printf(SUMMARY_HEADER_FORMAT,
                 "Rows", "Time vs iText", "Time vs Jasper", "Heap vs iText", "Heap vs Jasper");
-        System.out.println("-".repeat(86));
+        System.out.println("-".repeat(SUMMARY_RULE_WIDTH));
         for (ScalingPoint p : scaling) {
-            System.out.printf("%-8d | %16s | %16s | %16s | %16s%n",
+            System.out.printf(SUMMARY_ROW_FORMAT,
                     p.rows(),
                     ratio(p.iText().timeMs(), p.graphCompose().timeMs()),
                     ratio(p.jasper().timeMs(), p.graphCompose().timeMs()),

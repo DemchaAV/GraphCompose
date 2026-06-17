@@ -10,6 +10,17 @@ Entries land here as they merge.
 
 ### Public API
 
+- **Line-chart interpolation modes** (`@since 1.8.0`). New
+  `LineInterpolation` enum selects how a line series connects its points:
+  `LINEAR` (straight, exact), `SMOOTH` (the existing pretty Catmull-Rom
+  curve, which may overshoot local extremes on sharp swings), and the new
+  `MONOTONE` (Fritsch-Carlson) — a curve that looks just as smooth but is
+  constrained to never overshoot, staying within the value range of the
+  points it spans, for an accurate yet smooth reading of the data. Set it
+  with `ChartSpec.line().interpolation(LineInterpolation.MONOTONE)` — the
+  single, explicit knob for line shape. All three render through the same
+  native PDF curve operators with zero tessellation, so geometry stays
+  deterministic and the hot path is unchanged.
 - **`ChartData.Series` rejects non-finite values.** A `NaN` / ±∞ entry now
   fails at construction — naming the series and the offending index —
   instead of poisoning axis derivation and surfacing as a misleading

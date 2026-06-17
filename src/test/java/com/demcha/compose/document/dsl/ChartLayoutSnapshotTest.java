@@ -69,6 +69,25 @@ class ChartLayoutSnapshotTest {
     }
 
     @Test
+    void monotoneLineMatchesLayoutSnapshot() throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(360, 260)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            ChartSpec spec = ChartSpec.line()
+                    .data(revenue())
+                    .interpolation(com.demcha.compose.document.chart.LineInterpolation.MONOTONE)
+                    .valueAxis(AxisSpec.builder().baselineAtZero(true).build())
+                    .legend(LegendPosition.BOTTOM)
+                    .size(ChartSize.fixedHeight(150))
+                    .build();
+            document.pageFlow().name("ChartMonotoneFixture").chart(spec).build();
+
+            LayoutSnapshotAssertions.assertMatches(document, "charts/line_monotone");
+        }
+    }
+
+    @Test
     void pieChartLowersIntoPolygonFragments() {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(360, 320)

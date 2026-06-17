@@ -256,6 +256,15 @@ Entries land here as they merge.
 - **`ChartStyle.paintForSeries` rejects a negative series index** with a
   value-naming `IllegalArgumentException` instead of leaking a bare
   `IndexOutOfBoundsException` from the palette modulo.
+- **A translucent gradient stop is rejected instead of silently rendering
+  opaque.** Gradients render through PDF axial / radial shadings, which carry
+  no alpha channel, so `PdfShadingSupport` dropped a stop colour's alpha and a
+  translucent stop rendered fully opaque with no diagnostic. `DocumentPaint.Stop`
+  now rejects a colour with alpha below 255 at construction, naming the offending
+  alpha — flatten the transparency into the stop colour, or apply opacity to the
+  whole shape. This matches the SVG reader, which already refuses `stop-opacity`,
+  and reaches the `DocumentPaint.linear(from, to)` sugar too. Opaque gradients are
+  unaffected.
 - **SVG path reader no longer hangs on malformed `d` data.** A `Z`/`z`
   close command (which consumes no operands) followed by a stray
   non-command token — e.g. `"M0 0 Z5"` — made the scanner loop forever,

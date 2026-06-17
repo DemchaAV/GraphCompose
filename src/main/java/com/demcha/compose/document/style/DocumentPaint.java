@@ -223,18 +223,35 @@ public sealed interface DocumentPaint
     /**
      * One gradient colour stop.
      *
+     * <p>The colour must be fully opaque. Gradients render through PDF axial /
+     * radial shadings, which carry no alpha channel, so a translucent stop
+     * would silently render opaque. Rather than render wrong, a stop with
+     * alpha below 255 is rejected at construction — flatten transparency into
+     * the stop colour, or apply opacity to the whole shape instead. This
+     * mirrors the SVG reader, which already refuses {@code stop-opacity}.
+     *
      * @param offset position along the gradient axis in [0,1]
-     * @param color  colour at this offset
+     * @param color  fully-opaque colour at this offset
      */
     record Stop(double offset, DocumentColor color) {
         /**
-         * Validates the offset and colour.
+         * Validates the offset and the opaque-colour requirement.
+         *
+         * @throws IllegalArgumentException if {@code offset} is outside [0,1]
+         *                                  or {@code color} is translucent
          */
         public Stop {
             if (offset < 0 || offset > 1 || Double.isNaN(offset)) {
                 throw new IllegalArgumentException("stop offset must be in [0,1]: " + offset);
             }
             Objects.requireNonNull(color, "color");
+            int alpha = color.color().getAlpha();
+            if (alpha != 255) {
+                throw new IllegalArgumentException(
+                        "gradient stop colour must be opaque (alpha=" + alpha + "); shadings "
+                                + "carry no alpha, so a translucent stop would render opaque — "
+                                + "flatten transparency into the colour or apply opacity to the shape");
+            }
         }
     }
 }

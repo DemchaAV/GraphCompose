@@ -373,6 +373,11 @@ Entries land here as they merge.
   through Graphics2D into an embedded PNG; it now uses `ChartSpec.bar()` with a
   `ChartStyle` palette override (navy/gold) and an explicit 0–100 axis —
   ~90 lines of hand-drawn AWT geometry replaced by a declarative spec.
+- **Chart showcase contrasts SMOOTH vs MONOTONE.** `ChartShowcaseExample`
+  gains a paired before/after on a volatile series — the pretty Catmull-Rom
+  curve overshooting its peaks next to the monotone curve that stays within
+  the data range — and the committed `assets/readme/chart-showcase.png` hero
+  preview now shows that comparison.
 
 ### Internal
 
@@ -470,6 +475,10 @@ Entries land here as they merge.
   smooth/area line keeps its marker and label, long category labels stay
   slot-sized, tight-width legends keep every entry, all-negative `NiceScale`
   ranges.
+- Monotone interpolation pinned in `ChartLayoutResolverTest`: the `MONOTONE`
+  curve's bounding box stays within the `LINEAR` data range (ground truth)
+  while `SMOOTH` overshoots it, plus a one-native-Bézier-run assertion and a
+  `charts/line_monotone` layout snapshot.
 
 ## v1.7.1 — 2026-06-09
 

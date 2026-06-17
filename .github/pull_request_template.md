@@ -1,25 +1,43 @@
-## Summary
+<!--
+Title (the field above) follows Conventional Commits:  type(scope): concrete effect
+  type:  feat | fix | refactor | chore | docs | test
+  scope: api | engine | layout | style | pdf | docx | svg | charts | text | examples | recipes
+  e.g.   fix(api): reject non-finite chart values   ·   feat(charts): native vector chart subsystem
 
-<!-- 1–3 sentences: what changed and why. Reference any related issue. -->
+Write the body in three beats — Why → What → Verification. Prefer descriptive headings when a
+section has a sharper one (e.g. "What moved", "Before → after", "Binary compatibility").
+Delete any heading you have nothing real to put under — never ship an empty placeholder.
+-->
 
-## Type of change
+## Why
 
-- [ ] Bug fix (no public API change)
-- [ ] New feature / public API addition
-- [ ] Documentation only
-- [ ] CI / build / tooling
-- [ ] Refactor (no behavioural change)
+<!-- The problem or motivation: what was broken, missing, or risky, and where it surfaced.
+     Name the root cause. Do NOT restate the title, and do NOT narrate the review/audit that found it. -->
 
-## Checklist
+## What changed
 
-- [ ] **PR targets `develop`** (the integration branch); **not `main`**.
-- [ ] Branch name follows `<type>/<short-description>` (e.g. `feature/canvas-clip`, `fix/table-overflow`, `docs/recipe-themes`); issue-prefixed names like `42/fix/short-description` are also fine.
-- [ ] `./mvnw -B -ntp clean verify` passes locally.
-- [ ] **Java 17 compatible** &mdash; no `List.getFirst()` / `getLast()`, no `Thread.threadId()`, no switch type / deconstruction patterns, no `case null, default ->`. CI matrices Temurin 17 / 21 / 25 and will catch JDK regressions.
-- [ ] **Public API change** (if any): `CHANGELOG.md` entry added under the next `## v<X.Y.Z> — Planned` heading.
-- [ ] **README touched** (if any): `DocumentationCoverageTest.readmeShouldUseCanonicalDslAndAvoidLegacyApis` still passes &mdash; canonical fingerprints (`GraphCompose.document(`, `DocumentSession`, `document.pageFlow(`, `BusinessTheme`) preserved, no legacy tokens (`GraphCompose.pdf(`, `PdfComposer`, `CvTemplateV1`, …).
-- [ ] **Examples touched** (if any): runnable via `./mvnw -f examples/pom.xml exec:java -Dexec.mainClass=…`; if a new example, also added to `GenerateAllExamples` and the gallery row count in `examples/README.md`.
+<!-- Bullets. Name the real class/method. Justify each non-obvious decision inline (the "why behind the how"). -->
+-
 
-## Linked issue
+## Verification
 
-Closes #<issue-number>
+<!-- The proof it works:
+     - command run + result, e.g.  `./mvnw -B -ntp clean verify` → BUILD SUCCESS, <N> tests, 0 failures
+     - the new tests and what each asserts; regenerate renders if the change is visual -->
+
+**Lane:** <!-- canonical | shared-engine | legacy | test --> — <one-line scope note>
+
+Closes #<!-- issue number; delete this line if none -->
+
+---
+
+<details>
+<summary>Pre-merge checklist</summary>
+
+- [ ] Targets **`develop`** (not `main`); branch is `<type>/<short-description>`.
+- [ ] `./mvnw -B -ntp clean verify` passes locally — this is the **Verification** proof above.
+- [ ] **Java 17 compatible** — no `getFirst()`/`getLast()`, `Thread.threadId()`, type/deconstruction `switch`, `case null, default`. (CI runs Temurin 17 / 21 / 25.)
+- [ ] **Public API changed** → `CHANGELOG.md` entry under the next `## v<X.Y.Z> — Planned` heading.
+- [ ] **README / examples touched** → `DocumentationCoverageTest` stays green; a new example is wired into `GenerateAllExamples` + the `examples/README.md` gallery count.
+
+</details>

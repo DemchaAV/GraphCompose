@@ -242,9 +242,29 @@ Entries land here as they merge.
   total and ran past the plot top. The stacked floor is now pinned to zero
   (parts summing to a whole), independent of the requested minimum. Grouped
   bars still honour an explicit minimum.
+- **Grouped bars emanate from the zero baseline.** A grouped (non-stacked) bar
+  measured its height from the axis nice-floor, so on an axis that crossed zero
+  a negative value rendered as a short upward column anchored at the floor —
+  visually indistinguishable from a small positive value — and positive bars
+  overshot below zero. Grouped bars now grow from the zero line (positive up,
+  negative hanging below it), matching the standard bar-chart convention and
+  the stacked-bar behaviour. When zero is off-scale — an explicit non-zero
+  `valueAxis().min(...)` or `baselineAtZero(false)` over a range that excludes
+  zero — the baseline clamps to the nearest visible bound, so a deliberately
+  zoomed axis still anchors its bars at the plot floor. Charts with positive
+  data on a zero-based axis are byte-identical.
 - **`ChartStyle.paintForSeries` rejects a negative series index** with a
   value-naming `IllegalArgumentException` instead of leaking a bare
   `IndexOutOfBoundsException` from the palette modulo.
+- **A translucent gradient stop is rejected instead of silently rendering
+  opaque.** Gradients render through PDF axial / radial shadings, which carry
+  no alpha channel, so `PdfShadingSupport` dropped a stop colour's alpha and a
+  translucent stop rendered fully opaque with no diagnostic. `DocumentPaint.Stop`
+  now rejects a colour with alpha below 255 at construction, naming the offending
+  alpha — flatten the transparency into the stop colour, or apply opacity to the
+  whole shape. This matches the SVG reader, which already refuses `stop-opacity`,
+  and reaches the `DocumentPaint.linear(from, to)` sugar too. Opaque gradients are
+  unaffected.
 - **SVG path reader no longer hangs on malformed `d` data.** A `Z`/`z`
   close command (which consumes no operands) followed by a stray
   non-command token — e.g. `"M0 0 Z5"` — made the scanner loop forever,
@@ -313,6 +333,14 @@ Entries land here as they merge.
   debug-overlay switch, and the document's own chrome — 23 blocks across
   7 pages. Blocks use `keepTogether()`, so a snippet is never orphaned
   from its result.
+- **Landscape capability deck on real benchmark data.** New flagship
+  `EngineDeckExample` renders GraphCompose about itself: a full-page banner
+  (DSL code → engine grid → output backends → real rendered-document
+  thumbnails), an authoring-pipeline page, and two pages that load the
+  repository's comparative benchmark result file and draw the table and charts
+  (GraphCompose vs iText 9 vs JasperReports) straight from it. Content lives in
+  an `EngineDeckData` data layer; an `EngineDeckLayoutSnapshotTest` locks the
+  layout.
 - **Recipe coverage is complete.** Nine new cookbook pages close every gap the
   recipe index tracked: rich text, lists, timelines, barcodes, images,
   PDF chrome (metadata / watermark / running header-footer / protection /
@@ -337,6 +365,55 @@ Entries land here as they merge.
 
 ### Internal
 
+- **Benchmark suite cleanup (not shipped).** Removed three redundant
+  benchmark mains: `FullCvBenchmark` (superseded by the JMH
+  `TemplateCvJmhBenchmark`), `GraphComposeBenchmark` (early-engine relic
+  duplicating `CurrentSpeedBenchmark`'s `engine-simple` scenario), and
+  `ScalabilityBenchmark` (its thread-scaling sweep folded into
+  `CurrentSpeedBenchmark`'s full-profile throughput run, now `1,2,4,8,16`).
+  Dropped the matching `run-benchmarks.ps1` steps and doc entries.
+- **Feature-object benchmarks for the v1.8 vector surface (not shipped).**
+  The suite previously exercised only text/table primitives. Added JMH render
+  benches and deterministic probes over the new vector features:
+  `SvgJmhBenchmark` (path parse / whole-file icon read / icon→node) plus a
+  `SvgParseAllocProbe`; `ChartJmhBenchmark` (bar + line + pie render) plus a
+  `ChartAllocProbe` (layout-compile allocation); `VectorRenderOperatorProbe`
+  (the same paths drawn flat vs. gradient vs. translucent, counted as PDF
+  content-stream operators); `IconRampJmhBenchmark` (icon-placement scaling,
+  `@Param` 8/32/128); and `MixedShowcaseJmhBenchmark` (one document combining
+  prose, inline sparklines, bar + pie charts, SVG icons and a gradient path).
+  Shared `SvgBenchmarkFixtures` / `ChartBenchmarkFixtures` hold the inputs so
+  each bench and its probe measure identical data.
+- **Current-speed report carries a stage breakdown and a run summary (not
+  shipped).** `CurrentSpeedBenchmark` persists a per-scenario compose / layout /
+  render split (`stages[]`, median ms) to the JSON and a `stages` CSV, and
+  writes a readable `summary.md`. `BenchmarkDiffTool` consumes `stages[]`,
+  prints a per-stage delta table, and reports the scenarios added/removed
+  between two runs.
+- **Every current-speed scenario is now covered by the smoke perf gate (not
+  shipped).** The `long-token` scenario previously had no SMOKE threshold and
+  silently escaped the gate; it now has one, and `CurrentSpeedScenarioGateTest`
+  fails the build if any scenario lacks a threshold.
+- **Benchmark coverage for the render hot paths (not shipped).** Added an image
+  embed/scale gate (`ImageCacheOperatorProbe` + `ImageBenchmarkFixtures` +
+  `ImageJmhBenchmark`, with `ImageCacheGateTest` pinning `PdfImageCache` reuse), a
+  single-shot cold-start render bench (`ColdStartJmhBenchmark`), a report-scaling
+  sweep in `ComparativeBenchmark` (equivalent content across GraphCompose /
+  iText 9 / JasperReports at 40 / 200 / 1000 table rows — iText upgraded from the
+  EOL 5.5.x to current 9.x — printing a per-size GraphCompose-advantage ratio plus
+  a post-run sample-PDF dump per library/size), a
+  production-scale `LargeTableJmhBenchmark`, an allocation-rate / GC-pressure probe
+  (`AllocationRateProbe`), and an accented-Latin measurement scenario.
+- **Deterministic benchmark gates run on every PR (not shipped).** The benchmarks
+  module's tests never ran in CI; the `perf-smoke` job now runs them, so the
+  image-cache, render-operator (F5 coalescing), vector-paint (flat / gradient /
+  alpha / stroked / dashed operator structure), and scenario-coverage gates fail a
+  PR on a structural regression. A `vector-rich` scenario (charts + SVG icons +
+  gradient) joins the gated current-speed harness; `BenchmarkMedianTool` carries the
+  stage breakdown into its aggregate; and the smoke gate's GC-noisy `peakHeapMb`
+  check is now advisory (fails only on average latency). Chart-layout variants
+  (horizontal / stacked / donut / value-axis-min), a sparkline ramp, and a
+  per-paint-mode vector render bench round out the JMH suite.
 - **Removed the `java.awt.*` / `java.util.*` co-wildcard in four files.**
   `InvoiceTemplateComposer`, `ProposalTemplateComposer`,
   `WeeklyScheduleTemplateComposer`, and the engine `PdfRenderingSystemECS`
@@ -375,10 +452,13 @@ Entries land here as they merge.
   two spaces per depth, per-depth custom markers survive, lists inside
   sections export, empty lists are a no-op. Pagination: a keep-together
   section taller than a full page still flows instead of relocating. Charts:
-  negative bar values extend the axis below zero and measure from the nice
-  floor, stacked bars skip non-positive segments, a one-point smooth/area
-  line keeps its marker and label, long category labels stay slot-sized,
-  tight-width legends keep every entry, all-negative `NiceScale` ranges.
+  negative grouped bars extend the axis below zero and hang from the zero
+  baseline (positive and negative bars meet at zero, heights proportional to
+  `|value|`), an explicit positive axis minimum anchors grouped bars at the
+  visible floor, stacked bars skip non-positive segments, a one-point
+  smooth/area line keeps its marker and label, long category labels stay
+  slot-sized, tight-width legends keep every entry, all-negative `NiceScale`
+  ranges.
 
 ## v1.7.1 — 2026-06-09
 

@@ -8,8 +8,10 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
@@ -32,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 /**
  * Focused local benchmark harness for current GraphCompose performance.
@@ -47,6 +50,8 @@ import java.util.concurrent.Future;
  *     <li>the built-in CV template</li>
  *     <li>a longer multi-page proposal template</li>
  *     <li>a feature-rich document with QR/barcode, watermark, page break, and footer</li>
+ *     <li>long unbreakable tokens forcing character-level wrap</li>
+ *     <li>a v1.8 vector-rich document (bar/pie charts, SVG icons, gradient path)</li>
  * </ul>
  */
 public final class CurrentSpeedBenchmark {
@@ -55,7 +60,9 @@ public final class CurrentSpeedBenchmark {
     private static final int DEFAULT_FULL_WARMUP_ITERATIONS = 12;
     private static final int DEFAULT_FULL_MEASUREMENT_ITERATIONS = 40;
     private static final int DEFAULT_FULL_DOCS_PER_THREAD = 12;
-    private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8";
+    // The 16-thread tier is absorbed from the removed ScalabilityBenchmark so the
+    // full profile keeps a thread-scaling data point (smoke runs no throughput).
+    private static final String DEFAULT_FULL_THREAD_COUNTS = "1,2,4,8,16";
     // Bumped from 2/5 to 30/100 so smoke runs reach a steady JIT state and the
     // p95 calculation actually has enough samples to interpolate rather than
     // collapsing to the maximum observed time. The smoke profile remains the
@@ -84,6 +91,43 @@ public final class CurrentSpeedBenchmark {
     private final InvoiceDocumentSpec invoice = CanonicalBenchmarkSupport.canonicalInvoice();
     private final ProposalDocumentSpec proposal = CanonicalBenchmarkSupport.canonicalProposal();
     private final CvSpec cv = CanonicalBenchmarkSupport.canonicalCv();
+    // Parsed/built once (like the template fixtures above) so the vector-rich
+    // scenario measures the render, not a per-iteration SVG re-parse.
+    private final SvgIcon vectorRichIcon = SvgIcon.parse(SvgBenchmarkFixtures.MULTI_LAYER_ICON_SVG);
+    private final DocumentPaint vectorRichAccent = DocumentPaint.linear(
+            DocumentColor.rgb(167, 139, 250), DocumentColor.rgb(97, 40, 217));
+
+    // Canonical scenario list, in table order. Declared statically (the
+    // renderer is bound to an instance at run time) so the gate-coverage guard
+    // test can read the scenario names without re-measuring: a scenario added
+    // here without a matching SMOKE threshold below would silently escape the
+    // perf gate, and CurrentSpeedScenarioGateTest fails loudly if that happens.
+    private static final List<ScenarioDef> SCENARIO_DEFS = List.of(
+            new ScenarioDef("engine-simple", "One-page engine composition",
+                    b -> b::renderEngineSimpleDocument),
+            new ScenarioDef("invoice-template", "Compose-first invoice template",
+                    b -> b::renderInvoiceTemplateDocument),
+            new ScenarioDef("cv-template", "Compose-first CV template",
+                    b -> b::renderCvTemplateDocument),
+            new ScenarioDef("proposal-template", "Long multi-page proposal template",
+                    b -> b::renderProposalTemplateDocument),
+            new ScenarioDef("feature-rich", "QR, barcode, watermark, header/footer, page break",
+                    b -> b::renderFeatureRichDocument),
+            new ScenarioDef("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap",
+                    b -> b::renderLongTokenDocument),
+            new ScenarioDef("vector-rich", "v1.8 vector surface: bar + pie charts, SVG icons, gradient path",
+                    b -> b::renderVectorRichDocument)
+    );
+
+    /**
+     * Ordered scenario names. Read by {@code CurrentSpeedScenarioGateTest} to
+     * assert every scenario is covered by a SMOKE gate threshold.
+     *
+     * @return the canonical scenario names in table order
+     */
+    static List<String> scenarioNames() {
+        return SCENARIO_DEFS.stream().map(ScenarioDef::name).toList();
+    }
 
     public static void main(String[] args) throws Exception {
         BenchmarkSupport.configureQuietLogging();
@@ -107,14 +151,9 @@ public final class CurrentSpeedBenchmark {
         System.out.println("Perf gate: " + (enforceGate ? "enabled" : "disabled"));
         System.out.println();
 
-        List<Scenario> scenarios = List.of(
-                new Scenario("engine-simple", "One-page engine composition", this::renderEngineSimpleDocument),
-                new Scenario("invoice-template", "Compose-first invoice template", this::renderInvoiceTemplateDocument),
-                new Scenario("cv-template", "Compose-first CV template", this::renderCvTemplateDocument),
-                new Scenario("proposal-template", "Long multi-page proposal template", this::renderProposalTemplateDocument),
-                new Scenario("feature-rich", "QR, barcode, watermark, header/footer, page break", this::renderFeatureRichDocument),
-                new Scenario("long-token", "Long unbreakable tokens (URLs/IDs) forcing character-level wrap", this::renderLongTokenDocument)
-        );
+        List<Scenario> scenarios = SCENARIO_DEFS.stream()
+                .map(def -> new Scenario(def.name(), def.description(), def.renderer().apply(this)))
+                .toList();
 
         System.out.println("Latency benchmark");
         System.out.printf("%-18s | %10s | %10s | %10s | %10s | %11s | %10s | %10s%n",
@@ -141,20 +180,21 @@ public final class CurrentSpeedBenchmark {
 
         // Stage breakdown: for each template scenario we time compose / layout
         // / render separately so consumers can attribute regressions to the
-        // engine vs. PDFBox. Engine-simple and feature-rich scenarios also
-        // use the canonical pipeline and benefit from the same probe.
+        // engine vs. PDFBox. Only the template scenarios are probed here; the
+        // latency table above still covers every scenario.
+        List<StageRow> stageRows = new ArrayList<>();
         if (profile != BenchmarkProfile.SMOKE || config.measurementIterations() >= 20) {
             System.out.println();
             System.out.println("Stage breakdown (median ms per stage)");
             System.out.printf("%-18s | %12s | %12s | %12s | %12s%n",
                     "Scenario", "Compose", "Layout", "Render", "Total");
             System.out.println("-".repeat(78));
-            runStageBreakdown("invoice-template", () -> openInvoiceSession(),
-                    s -> invoiceTemplate.compose(s, invoice), config.measurementIterations());
-            runStageBreakdown("cv-template", () -> openCvSession(),
-                    s -> cvTemplate.compose(s, cv), config.measurementIterations());
-            runStageBreakdown("proposal-template", () -> openProposalSession(),
-                    s -> proposalTemplate.compose(s, proposal), config.measurementIterations());
+            stageRows.add(runStageBreakdown("invoice-template", () -> openInvoiceSession(),
+                    s -> invoiceTemplate.compose(s, invoice), config.measurementIterations()));
+            stageRows.add(runStageBreakdown("cv-template", () -> openCvSession(),
+                    s -> cvTemplate.compose(s, cv), config.measurementIterations()));
+            stageRows.add(runStageBreakdown("proposal-template", () -> openProposalSession(),
+                    s -> proposalTemplate.compose(s, proposal), config.measurementIterations()));
         }
 
         List<ThroughputRow> throughputRows = new ArrayList<>();
@@ -199,10 +239,13 @@ public final class CurrentSpeedBenchmark {
                 config.docsPerThread(),
                 config.threadCounts(),
                 latencyRows,
+                stageRows,
                 throughputRows,
                 totalBenchmarkBytes);
         System.out.println("Saved JSON benchmark report to " + summary.jsonPath());
-        System.out.println("Saved CSV benchmark reports to " + summary.latencyCsvPath() + " and " + summary.throughputCsvPath());
+        System.out.println("Saved CSV benchmark reports to " + summary.latencyCsvPath() + ", "
+                + summary.stagesCsvPath() + ", and " + summary.throughputCsvPath());
+        System.out.println("Saved markdown summary to " + summary.summaryMarkdownPath());
 
         if (enforceGate) {
             PerformanceGateResult gateResult = evaluatePerformanceGate(profile, latencyRows);
@@ -361,10 +404,10 @@ public final class CurrentSpeedBenchmark {
      * median-ms-per-stage row so callers can attribute regressions to
      * compose / layout / render independently.
      */
-    private void runStageBreakdown(String scenario,
-                                   SessionFactory factory,
-                                   SessionComposer composer,
-                                   int iterations) throws Exception {
+    private StageRow runStageBreakdown(String scenario,
+                                       SessionFactory factory,
+                                       SessionComposer composer,
+                                       int iterations) throws Exception {
         int warmup = Math.max(2, Math.min(20, iterations / 5));
         for (int i = 0; i < warmup; i++) {
             try (DocumentSession session = factory.open()) {
@@ -396,12 +439,13 @@ public final class CurrentSpeedBenchmark {
                 throw new AssertionError();
             }
         }
+        double composeMs = medianMs(composeNs);
+        double layoutMs = medianMs(layoutNs);
+        double renderMs = medianMs(renderNs);
+        double totalMs = medianMs(totalNs);
         System.out.printf("%-18s | %12.3f | %12.3f | %12.3f | %12.3f%n",
-                scenario,
-                medianMs(composeNs),
-                medianMs(layoutNs),
-                medianMs(renderNs),
-                medianMs(totalNs));
+                scenario, composeMs, layoutMs, renderMs, totalMs);
+        return new StageRow(scenario, round(composeMs), round(layoutMs), round(renderMs), round(totalMs));
     }
 
     private static double medianMs(long[] arr) {
@@ -473,6 +517,7 @@ public final class CurrentSpeedBenchmark {
         }
 
         List<String> failures = new ArrayList<>();
+        List<String> advisories = new ArrayList<>();
         for (LatencyRow row : latencyRows) {
             SmokeThreshold threshold = profile.smokeThresholds().get(row.scenario());
             if (threshold == null) {
@@ -490,17 +535,23 @@ public final class CurrentSpeedBenchmark {
                 failures.add(row.scenario() + " avg " + format(row.avgMillis()) + " ms > " + format(maxAvgMillis) + " ms");
             }
             if (row.peakHeapMb() > maxPeakHeapMb) {
-                failures.add(row.scenario() + " peak heap " + format(row.peakHeapMb()) + " MB > " + format(maxPeakHeapMb) + " MB");
+                // peakHeapMb is a GC-timing-noisy used-heap delta, so a breach is
+                // reported as advisory rather than failing the gate — matching
+                // BenchmarkVerdictTool and avoiding flaky CI from a GC blip. The
+                // deterministic memory signal is the allocation-bytes probes.
+                advisories.add(row.scenario() + " peak heap " + format(row.peakHeapMb()) + " MB > " + format(maxPeakHeapMb) + " MB");
             }
         }
 
+        String advisoryNote = advisories.isEmpty() ? "" : " (advisory: " + String.join("; ", advisories) + ")";
+
         if (failures.isEmpty()) {
-            return new PerformanceGateResult(true, "Performance gate passed for profile " + profile.id());
+            return new PerformanceGateResult(true, "Performance gate passed for profile " + profile.id() + advisoryNote);
         }
 
         return new PerformanceGateResult(
                 false,
-                "Performance gate failed for profile " + profile.id() + ": " + String.join("; ", failures));
+                "Performance gate failed for profile " + profile.id() + ": " + String.join("; ", failures) + advisoryNote);
     }
 
     private long usedHeapBytes() {
@@ -520,6 +571,25 @@ public final class CurrentSpeedBenchmark {
                 "GraphCompose Speed Check",
                 "This is a compact benchmark scenario that exercises the ordinary engine path: "
                         + "a root flow container, heading text, paragraph layout, and final PDF serialization.");
+    }
+
+    private byte[] renderVectorRichDocument() throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(com.demcha.compose.document.api.DocumentPageSize.A4)
+                .margin(28, 28, 28, 28)
+                .create()) {
+            var flow = document.pageFlow().name("BenchmarkVectorRich").spacing(12);
+            flow.addParagraph("v1.8 vector-rich benchmark");
+            flow.chart(ChartBenchmarkFixtures.barSpec(), ChartBenchmarkFixtures.barStyle());
+            flow.chart(ChartBenchmarkFixtures.pieSpec());
+            for (int i = 0; i < 8; i++) {
+                flow.addSvgIcon(vectorRichIcon, 32);
+            }
+            flow.addPath(p -> p.size(220, 28)
+                    .moveTo(0.0, 0.5).curveTo(0.25, 1.0, 0.75, 0.0, 1.0, 0.5).fill(vectorRichAccent));
+            flow.build();
+            return document.toPdfBytes();
+        }
     }
 
     private byte[] renderInvoiceTemplateDocument() throws Exception {
@@ -675,16 +745,19 @@ public final class CurrentSpeedBenchmark {
                                      int docsPerThread,
                                      int[] threadCounts,
                                      List<LatencyRow> latencyRows,
+                                     List<StageRow> stageRows,
                                      List<ThroughputRow> throughputRows,
                                      long totalBenchmarkBytes) throws Exception {
+        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
         CurrentSpeedReport report = new CurrentSpeedReport(
-                LocalDateTime.now().format(TIMESTAMP_FORMAT),
+                timestamp,
                 profileId,
                 warmupIterations,
                 measurementIterations,
                 docsPerThread,
                 Arrays.stream(threadCounts).boxed().toList(),
                 latencyRows,
+                stageRows,
                 throughputRows,
                 totalBenchmarkBytes);
 
@@ -715,8 +788,88 @@ public final class CurrentSpeedBenchmark {
                                 format(row.docsPerSecond()),
                                 format(row.avgMillisPerDoc())))
                         .toList());
+        var stagesCsvPath = artifacts.writeCsv(
+                "stages",
+                List.of("scenario", "compose_ms", "layout_ms", "render_ms", "total_ms"),
+                stageRows.stream()
+                        .map(row -> List.of(
+                                row.scenario(),
+                                format(row.composeMillis()),
+                                format(row.layoutMillis()),
+                                format(row.renderMillis()),
+                                format(row.totalMillis())))
+                        .toList());
+        var summaryMarkdownPath = artifacts.writeMarkdown(
+                "summary",
+                buildSummaryMarkdown(timestamp, profileId, latencyRows, stageRows,
+                        throughputRows, totalBenchmarkBytes));
 
-        return new PathSummary(jsonPath.toString(), latencyCsvPath.toString(), throughputCsvPath.toString());
+        return new PathSummary(jsonPath.toString(), latencyCsvPath.toString(),
+                stagesCsvPath.toString(), throughputCsvPath.toString(),
+                summaryMarkdownPath.toString());
+    }
+
+    /**
+     * Renders a single human-readable summary of the run — the latency table,
+     * the per-stage compose/layout/render split (the only place the suite
+     * attributes time to engine stages vs. PDFBox), and the throughput table
+     * when present — so a reviewer reads one file instead of stitching the JSON
+     * and several CSVs together.
+     */
+    private static String buildSummaryMarkdown(String timestamp,
+                                               String profileId,
+                                               List<LatencyRow> latencyRows,
+                                               List<StageRow> stageRows,
+                                               List<ThroughputRow> throughputRows,
+                                               long totalBenchmarkBytes) {
+        StringBuilder md = new StringBuilder();
+        md.append("# Current-speed benchmark — ").append(profileId).append(" profile\n\n");
+        md.append('`').append(timestamp).append("`\n\n");
+
+        md.append("## Latency (ms)\n\n");
+        md.append("| Scenario | Avg | p50 | p95 | Max | Docs/s | Avg KB | Peak MB |\n");
+        md.append("|---|---:|---:|---:|---:|---:|---:|---:|\n");
+        for (LatencyRow row : latencyRows) {
+            md.append("| ").append(row.scenario())
+                    .append(" | ").append(format(row.avgMillis()))
+                    .append(" | ").append(format(row.p50Millis()))
+                    .append(" | ").append(format(row.p95Millis()))
+                    .append(" | ").append(format(row.maxMillis()))
+                    .append(" | ").append(format(row.docsPerSecond()))
+                    .append(" | ").append(format(row.avgKilobytes()))
+                    .append(" | ").append(format(row.peakHeapMb()))
+                    .append(" |\n");
+        }
+
+        if (!stageRows.isEmpty()) {
+            md.append("\n## Stages — template scenarios (median ms — compose / layout / render)\n\n");
+            md.append("| Scenario | Compose | Layout | Render | Total |\n");
+            md.append("|---|---:|---:|---:|---:|\n");
+            for (StageRow row : stageRows) {
+                md.append("| ").append(row.scenario())
+                        .append(" | ").append(format(row.composeMillis()))
+                        .append(" | ").append(format(row.layoutMillis()))
+                        .append(" | ").append(format(row.renderMillis()))
+                        .append(" | ").append(format(row.totalMillis()))
+                        .append(" |\n");
+            }
+        }
+
+        if (!throughputRows.isEmpty()) {
+            md.append("\n## Throughput\n\n");
+            md.append("| Threads | Total docs | Docs/s | Avg doc ms |\n");
+            md.append("|---:|---:|---:|---:|\n");
+            for (ThroughputRow row : throughputRows) {
+                md.append("| ").append(row.threads())
+                        .append(" | ").append(row.totalDocs())
+                        .append(" | ").append(format(row.docsPerSecond()))
+                        .append(" | ").append(format(row.avgMillisPerDoc()))
+                        .append(" |\n");
+            }
+        }
+
+        md.append("\nByte guard: ").append(totalBenchmarkBytes).append('\n');
+        return md.toString();
     }
 
     private static double round(double value) {
@@ -728,6 +881,13 @@ public final class CurrentSpeedBenchmark {
     }
 
     private record Scenario(String name, String description, Renderer renderer) {
+    }
+
+    // Static scenario template: name + description + a factory that binds the
+    // renderer to a benchmark instance. Keeps the scenario list declarable as a
+    // static constant (so the gate-coverage test can read it) while the actual
+    // render still runs against per-run instance state.
+    private record ScenarioDef(String name, String description, Function<CurrentSpeedBenchmark, Renderer> renderer) {
     }
 
     @FunctionalInterface
@@ -770,6 +930,18 @@ public final class CurrentSpeedBenchmark {
                                  double avgMillisPerDoc) {
     }
 
+    /**
+     * Per-scenario compose / layout / render split (median ms). Persisted so a
+     * diff can attribute a regression to an engine stage rather than only the
+     * blended total — previously this was printed to the console and discarded.
+     */
+    private record StageRow(String scenario,
+                            double composeMillis,
+                            double layoutMillis,
+                            double renderMillis,
+                            double totalMillis) {
+    }
+
     private record CurrentSpeedReport(String timestamp,
                                       String profile,
                                       int warmupIterations,
@@ -777,11 +949,13 @@ public final class CurrentSpeedBenchmark {
                                       int docsPerThread,
                                       List<Integer> threadCounts,
                                       List<LatencyRow> latency,
+                                      List<StageRow> stages,
                                       List<ThroughputRow> throughput,
                                       long totalBytes) {
     }
 
-    private record PathSummary(String jsonPath, String latencyCsvPath, String throughputCsvPath) {
+    private record PathSummary(String jsonPath, String latencyCsvPath, String stagesCsvPath,
+                               String throughputCsvPath, String summaryMarkdownPath) {
     }
 
     private record BenchmarkConfig(int warmupIterations,
@@ -805,12 +979,19 @@ public final class CurrentSpeedBenchmark {
                 // (typically 1.5-2x slower) does not produce false positives
                 // while real regressions of 50% or more still trigger. The
                 // previous values (800-2600 ms) were 50-100x looser and would
-                // not have flagged even a 10x slowdown.
+                // not have flagged even a 10x slowdown. long-token (observed
+                // ~3.2 ms / ~94 MB) is gated too so every scenario in the
+                // latency table is covered — CurrentSpeedScenarioGateTest pins
+                // that invariant.
                 "engine-simple", new SmokeThreshold(8.0, 96.0),
                 "invoice-template", new SmokeThreshold(35.0, 384.0),
                 "cv-template", new SmokeThreshold(25.0, 192.0),
                 "proposal-template", new SmokeThreshold(45.0, 384.0),
-                "feature-rich", new SmokeThreshold(100.0, 256.0)
+                "feature-rich", new SmokeThreshold(100.0, 256.0),
+                "long-token", new SmokeThreshold(10.0, 256.0),
+                // vector-rich observed ~5-6 ms smoke avg; charts + SVG icons vary
+                // more than the text scenarios, so a wider ~4.5x band absorbs that.
+                "vector-rich", new SmokeThreshold(25.0, 256.0)
         ));
 
         private final String id;

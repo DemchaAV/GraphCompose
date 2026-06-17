@@ -20,11 +20,12 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 /**
- * Single-page cinematic engine showcase used as the
- * {@code assets/readme/repository_showcase_render.png} source. NOT a
- * business document, NOT a CV — a brand promo page that demonstrates
- * the visual register the engine can hit when an author cares about
- * presentation as much as data:
+ * Single-page cinematic engine showcase — a brand promo page that was
+ * the original {@code repository_showcase_render.png} README hero, now
+ * superseded by {@link EngineDeckExample#generateBanner()}. NOT a
+ * business document, NOT a CV — it demonstrates the visual register the
+ * engine can hit when an author cares about presentation as much as
+ * data:
  *
  * <ul>
  *   <li><b>Top navy band</b> — full-width branded marquee (canonical
@@ -47,9 +48,10 @@ import java.util.Objects;
  * filesystem path assumptions.</p>
  *
  * <p>Output:
- * {@code examples/target/generated-pdfs/flagships/engine-showcase.pdf}
- * — page 1 is rasterised by {@link com.demcha.examples.support.PdfPageRasterizer}
- * into {@code assets/readme/repository_showcase_render.png}.</p>
+ * {@code examples/target/generated-pdfs/flagships/engine-showcase.pdf}.
+ * The README hero is now sourced from
+ * {@link EngineDeckExample#generateBanner()} (rasterised by
+ * {@link com.demcha.examples.support.PdfPageRasterizer}).</p>
  *
  * @author Artem Demchyshyn
  * @since 1.6.6

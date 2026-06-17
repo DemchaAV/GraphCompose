@@ -5,8 +5,10 @@ Runs the local GraphCompose benchmark pipeline and stores timestamped logs and r
 
 .DESCRIPTION
 The wrapper performs a staged local run:
-01 build classpath, 02 current-speed, 03 comparative, 04 core engine, 05 full CV, 06 scalability,
-07 stress, optional 08 endurance, then 09/10 diff steps.
+01 build classpath, 02 current-speed, 03 comparative, 07 stress,
+optional 08 endurance, then 09/10 diff and 11 verdict steps. Steps 04-06
+(core-engine, full-cv, scalability) were retired; the surviving steps keep
+their original numeric prefixes, so the numbering jumps from 03 to 07.
 
 Current-speed diffs are profile-aware. The wrapper only compares reports
 from the same current-speed profile (`smoke` or `full`) and skips the
@@ -368,9 +370,6 @@ try {
                 -InputPaths $comparativeRuns | Out-Null
         }
 
-        Invoke-JavaMain -Name "04-core-engine" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeBenchmark"
-        Invoke-JavaMain -Name "05-full-cv" -Classpath $javaClasspath -MainClass "com.demcha.compose.FullCvBenchmark"
-        Invoke-JavaMain -Name "06-scalability" -Classpath $javaClasspath -MainClass "com.demcha.compose.ScalabilityBenchmark"
         Invoke-JavaMain -Name "07-stress" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeStressTest"
 
         if ($IncludeEndurance) {

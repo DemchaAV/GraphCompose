@@ -68,6 +68,27 @@ public final class ChartShowcaseExample {
                 .barCornerRadius(DocumentCornerRadius.top(2))
                 .build();
 
+        // Mixed positive / negative: bars emanate from the zero baseline, so a
+        // loss grows downward across zero instead of reading as a short upward
+        // stub. The axis extends below zero to make room for the negative bars.
+        ChartData netFlow = ChartData.builder()
+                .categories("Q1", "Q2", "Q3", "Q4")
+                .series("Net cash flow", 8.2, -3.5, 5.1, -1.8)
+                .build();
+
+        ChartSpec varianceSpec = ChartSpec.bar()
+                .data(netFlow)
+                .valueAxis(AxisSpec.builder()
+                        .format(NumberFormatSpec.pattern("#,##0.0").withSuffix("k"))
+                        .build())
+                .valueLabels(ValueLabelMode.OUTSIDE)
+                .size(ChartSize.aspectRatio(16, 7))
+                .build();
+
+        ChartStyle varianceStyle = ChartStyle.builder()
+                .seriesPaint(0, DocumentPaint.solid(DocumentColor.rgb(20, 80, 95)))
+                .build();
+
         // Minimal chart: no grid, no axis tick labels, no category labels —
         // only the bars and their value numbers (e.g. 12.4k).
         ChartSpec minimalSpec = ChartSpec.bar()
@@ -179,6 +200,15 @@ public final class ChartShowcaseExample {
                                     .textStyle(THEME.text().h3())
                                     .margin(DocumentInsets.zero()))
                             .chart(barSpec, barStyle))
+                    .addSection("VarianceCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Net cash flow — bars emanate from zero, losses hang below")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(varianceSpec, varianceStyle))
                     .addSection("MinimalCard", section -> section
                             .keepTogether()
                             .softPanel(DocumentColor.WHITE, 8, 16)

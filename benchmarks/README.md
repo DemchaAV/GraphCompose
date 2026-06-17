@@ -23,7 +23,7 @@
 ## When to use the harness
 
 - **Smoke check before a release** — `CurrentSpeedBenchmark -Dgraphcompose.benchmark.profile=smoke`
-  takes ~15 s, exercises the canonical render path through 5 fixture
+  takes ~15 s, exercises the canonical render path through 7 fixture
   scenarios, and prints a single-page latency / throughput table.
   CI runs this on every PR (the `perf-smoke` job); the goal is "did
   this PR make a representative render visibly slower?" — *not* "is
@@ -51,25 +51,54 @@
   layout-pass count) and reason about it; the harness is a sanity
   check after you've already chosen, not a decision tool before.
 - For **comparing GraphCompose to another PDF library** —
-  `ComparativeBenchmark` does render the same fixture through iText /
-  openHTMLToPDF / JasperReports for rough sizing, but the comparison
-  is a manual smoke test: each library has different defaults
-  (compression, font embedding, image resampling) and reading too much
-  into a single number is the wrong call.
+  `ComparativeBenchmark` does render equivalent content through iText /
+  JasperReports for rough sizing (a tiny single-page invoice for fixed
+  overhead, plus a report-scaling sweep — title + prose + an N-row table
+  at N = 40 / 200 / 1000 — that shows how each engine scales and prints a
+  GraphCompose-advantage ratio per size), but the comparison is a manual smoke test:
+  each library has different defaults (compression, font embedding, image
+  resampling) and reading too much into a single number is the wrong call.
+  Note one boundary asymmetry: the JasperReports figure measures fill +
+  PDF export with the design compiled once outside the loop, while the
+  GraphCompose and iText figures include per-iteration document
+  construction — so the Jasper number excludes work the other two pay.
+  `openHTMLtoPDF` is intentionally absent: its current release (1.0.10)
+  targets PDFBox 2.x and fails at runtime against the PDFBox 3.x this
+  project uses (no PDFBox-3-compatible openhtmltopdf release exists yet),
+  so it cannot share GraphCompose's classpath.
+
+## What runs on a PR — and what is on-demand (by design)
+
+The per-PR CI gate is deliberately light and deterministic:
+
+- **`perf-smoke` job** — `CurrentSpeedBenchmark` in the `smoke` profile with
+  absolute latency / heap thresholds (a gross-regression tripwire), plus the
+  module's deterministic gate tests (`mvnw -f benchmarks/pom.xml test`:
+  image-cache reuse, render-operator coalescing, scenario/threshold coverage).
+
+These are intentionally **not** on the per-PR path:
+
+- **The JMH benches** (`*JmhBenchmark`) are full / on-demand only. A forked,
+  warmed JMH run of the whole suite takes minutes; running it per PR is too
+  expensive for the signal. Run them by hand (or on a schedule) before a release
+  and quote those numbers for rigorous claims.
+- **The relative `BenchmarkVerdictTool` gate** (±% vs a committed baseline) runs
+  locally only, and no static `smoke` baseline is committed: absolute timings are
+  machine-specific, so a baseline captured on one machine would false-positive on
+  another. Use a local same-machine A/B (a `-Repeat` median before/after) for
+  relative comparison; the absolute smoke thresholds are the CI safety net.
 
 ## Files in this module
 
 | File | Role |
 |---|---|
 | `CurrentSpeedBenchmark` | Default scenario runner — what CI's `perf-smoke` job exercises. Takes a `-Dgraphcompose.benchmark.profile=smoke\|full\|stress` switch. |
-| `ComparativeBenchmark` | Renders the same fixtures through GraphCompose, iText, openHTMLToPDF, JasperReports. **Rough local comparison only** — see "When not to use" above. |
-| `FullCvBenchmark`, `ScalabilityBenchmark` | Fixture-specific runners for CV and table-heavy scenarios. |
+| `ComparativeBenchmark` | Renders equivalent content through GraphCompose, iText, JasperReports — a small-invoice tier plus a report-scaling sweep (40 / 200 / 1000 rows) with a per-size advantage ratio, and dumps a sample PDF per library/size. **Rough local comparison only** — see "When not to use" above. |
 | `CanonicalBenchmarkSupport`, `BenchmarkSupport` | Shared fixture builders + measurement helpers. |
 | `BenchmarkReportWriter` | Writes JSON / CSV / text reports under `benchmarks/target/benchmarks/`. |
 | `BenchmarkDiffTool` | Compares two JSON reports and prints a delta table. Useful for pre/post comparisons. |
 | `BenchmarkMedianTool` | Median + dispersion across N runs of the same scenario. |
 | `GraphComposeStressTest`, `EnduranceTest` | Long-running stress / endurance harnesses. |
-| `GraphComposeBenchmark` | Legacy entry point preserved for one downstream caller. New work should target `CurrentSpeedBenchmark`. |
 
 ## Running
 
@@ -97,28 +126,46 @@ without reproducing locally.
 ## How to read a report
 
 The JSON shape is intentionally simple — a top-level run record with
-per-scenario sub-records. Each sub-record carries:
+per-scenario sub-records. The latency rows carry these fields (the JSON
+keys are camelCase; the CSV columns are the snake_case equivalents):
 
-- `avgMs`, `p50Ms`, `p95Ms`, `maxMs` — latency distribution across
-  iterations within the run.
-- `docsPerSec` — rough throughput; **not statistically rigorous**,
-  intended only as a relative number against a sibling scenario or a
-  previous run on the same machine.
-- `avgKB` — average output byte size. Stable across runs on the same
-  fixture; useful for catching content corruption (size shifts by
-  > a few hundred bytes are usually a bug, not a benchmark fluctuation).
-- `peakMB` — peak heap as observed by `MemoryMXBean`; coarse, do not
-  use for memory-budget enforcement.
+- `avgMillis`, `p50Millis`, `p95Millis`, `maxMillis` — latency distribution
+  across iterations within the run.
+- `docsPerSecond` — a **derived** figure, `1000 / avgMillis`: the reciprocal of
+  average latency, **not** a measured throughput rate. Real parallel throughput
+  lives in the separate `throughput[]` section (full profile only). Treat it as
+  a relative number against a sibling scenario or a previous run on the same
+  machine, not a publishable rate.
+- `avgKilobytes` — average output byte size. Stable across runs on the same
+  fixture; useful for catching content corruption (size shifts by more than a
+  few hundred bytes are usually a bug, not a benchmark fluctuation).
+- `peakHeapMb` — used-heap **delta** over the post-warmup baseline (closer to
+  per-iteration allocation pressure than to absolute live heap). GC-timing
+  noisy, so **advisory only** — for a deterministic memory signal use the
+  allocation bytes from `MeasurementCountBenchmark` or the alloc probes.
+
+A `stages[]` array carries the per-template-scenario compose / layout / render
+median split (`composeMillis` / `layoutMillis` / `renderMillis` / `totalMillis`),
+present when the run has enough measurement iterations.
 
 ## Strict JMH layer
 
 The Track C JMH layer (forked JVM, warmup + measurement, JIT-stable numbers)
 lives alongside this manual harness. JMH benchmarks are annotated classes under
 `com.demcha.compose.jmh`; the shade plugin builds a self-contained runner jar so
-forked benchmark JVMs inherit the full classpath. Present benchmarks:
-`CanonicalRender` (bare-DSL multi-section render), `TemplateCv` (the
-`ModernProfessional` layered template), and `PaginatedDocument` (a multi-page
-document parameterised by section count).
+forked benchmark JVMs inherit the full classpath. The suite spans steady-state
+render benches (`CanonicalRender`, `TemplateCv`, `Chart`, `ChartVariant`, `Image`,
+`MixedShowcase`), parameterised scaling ramps (`IconRamp`, `LargeTable`,
+`SparklineRamp`, `PaginatedDocument`, `VectorPaint`), the SVG-import micro-benches
+(`Svg`), and a single-shot cold-start bench (`ColdStart`).
+
+Every steady-state JMH bench uses `@Fork(1)` with a 3×2s warmup / 5×2s measurement
+window — a deliberately fast default for on-demand local iteration (a single fork,
+so the reported `Error` column is blank). For a number you intend to quote, pass
+more forks on the CLI (e.g. `-f 5`) for a cross-fork error estimate. The exception
+is `ColdStart`, which is single-shot (`Mode.SingleShotTime`, `@Warmup(0)`,
+`@Fork(10)`) — it deliberately measures the JIT-cold first render across ten fresh
+JVMs.
 
 The measured region differs per benchmark: `TemplateCv` hoists fixture
 construction into `@Setup` and times the render only, while `CanonicalRender` and

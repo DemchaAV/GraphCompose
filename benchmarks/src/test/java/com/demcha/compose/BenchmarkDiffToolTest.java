@@ -94,6 +94,35 @@ class BenchmarkDiffToolTest {
     }
 
     @Test
+    void currentSpeedDiffSurfacesAddedRemovedScenariosAndStageDeltas() throws Exception {
+        System.setProperty("graphcompose.benchmark.root", tempDir.toString());
+        Path baseline = write("baseline.json", currentSpeedWithStages("full",
+                latency("shared", 10.0, 10.0, 100.0, 1.0, 100.0) + ","
+                        + latency("only-in-baseline", 10.0, 10.0, 100.0, 1.0, 100.0),
+                stage("shared", 1.0, 2.0, 4.0, 7.0),
+                throughput("shared", 1, 50.0, 20.0)));
+        Path candidate = write("candidate.json", currentSpeedWithStages("full",
+                latency("shared", 10.0, 10.0, 100.0, 1.0, 100.0) + ","
+                        + latency("only-in-candidate", 5.0, 5.0, 200.0, 0.5, 90.0),
+                stage("shared", 1.0, 2.0, 8.0, 11.0),
+                throughput("shared", 1, 50.0, 20.0)));
+
+        BenchmarkDiffTool.main(new String[]{baseline.toString(), candidate.toString()});
+
+        JsonNode diff = readDiff("current-speed");
+        // Loud set-changes: one-sided scenarios are surfaced, not silently dropped.
+        assertThat(toStrings(diff.path("addedScenarios"))).containsExactly("only-in-candidate");
+        assertThat(toStrings(diff.path("removedScenarios"))).containsExactly("only-in-baseline");
+        // The shared scenario is still the only intersected latency delta row.
+        assertThat(diff.path("latency").size()).isEqualTo(1);
+        // Stage diff: render 4 -> 8 = +100%, compose unchanged.
+        JsonNode stageDiff = diff.path("stages").get(0);
+        assertThat(stageDiff.path("scenario").asText()).isEqualTo("shared");
+        assertThat(stageDiff.path("renderDeltaPct").asDouble()).isCloseTo(100.0, within(EPS));
+        assertThat(stageDiff.path("composeDeltaPct").asDouble()).isCloseTo(0.0, within(EPS));
+    }
+
+    @Test
     void currentSpeedDiffTreatsZeroBaselineAsHundredPercentAndZeroToZeroAsZero() throws Exception {
         System.setProperty("graphcompose.benchmark.root", tempDir.toString());
         // avgMillis 0 -> 5 => +100 ; p95 0 -> 0 => 0 ; docsPerSecond 0 -> 0 => 0
@@ -226,6 +255,38 @@ class BenchmarkDiffToolTest {
                   "peakHeapMb": %s
                 }
                 """.formatted(scenario, scenario, avgMillis, p95Millis, docsPerSecond, avgKilobytes, peakHeapMb);
+    }
+
+    private static String currentSpeedWithStages(String profile, String latencyItems,
+                                                 String stageItems, String throughputItems) {
+        return """
+                {
+                  "timestamp": "2026-04-14 21:00:00",
+                  "profile": "%s",
+                  "latency": [%s],
+                  "stages": [%s],
+                  "throughput": [%s]
+                }
+                """.formatted(profile, latencyItems, stageItems, throughputItems);
+    }
+
+    private static String stage(String scenario, double composeMs, double layoutMs,
+                                double renderMs, double totalMs) {
+        return """
+                {
+                  "scenario": "%s",
+                  "composeMillis": %s,
+                  "layoutMillis": %s,
+                  "renderMillis": %s,
+                  "totalMillis": %s
+                }
+                """.formatted(scenario, composeMs, layoutMs, renderMs, totalMs);
+    }
+
+    private static java.util.List<String> toStrings(JsonNode array) {
+        java.util.List<String> values = new java.util.ArrayList<>();
+        array.forEach(node -> values.add(node.asText()));
+        return values;
     }
 
     private static String throughput(String scenario, int threads, double docsPerSecond, double avgMillisPerDoc) {

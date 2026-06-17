@@ -15,7 +15,7 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run all 55 examples in one shot:
+Then run all 63 examples in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
@@ -32,10 +32,10 @@ Then run all 55 examples in one shot:
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
 
-`GenerateAllExamples` runs **55** example programs — 16 CV + 15
+`GenerateAllExamples` runs **63** example programs — 16 CV + 15
 cover-letter presets plus invoices, proposals, a schedule, the feature
 demos, and the flagships. The showcase site surfaces the full generated
-catalogue (~53 PDFs); a curated 28-PDF subset is committed under
+catalogue (~53 PDFs); a curated 39-PDF subset is committed under
 [`assets/readme/examples/`](../assets/readme/examples/) for the previews
 linked below.
 
@@ -61,6 +61,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Cover Letter](#cover-letter) | One-page `BusinessTheme.modern()` cover letter with section presets | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
 | **Engine Showcase** | Single-page cinematic brand promo — semantic-graph → polished-PDFs visual metaphor with rounded clip frame, magazine headline lockup, KPI cards, capability columns; source of the README hero image | [Source](src/main/java/com/demcha/examples/flagships/EngineShowcase.java) |
+| **Engine Deck** | Multi-page **landscape** capability deck — page 1 is a banner infographic (DSL code → engine → backends → **real rendered-document thumbnails**), then an authoring-pipeline walkthrough, and two pages of **real benchmark data** (GraphCompose vs iText 9 vs JasperReports) loaded from a bundled result file and drawn as tables + native charts; the landscape companion to Engine Showcase | [PDF](../assets/readme/examples/engine-deck.pdf) · [Source](src/main/java/com/demcha/examples/flagships/EngineDeckExample.java) |
 
 ### 🧱 Core DSL
 

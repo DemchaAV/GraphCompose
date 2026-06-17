@@ -308,7 +308,7 @@ public final class FinancialReportExample {
                 .valueAxis(AxisSpec.builder()
                         .baselineAtZero(true)
                         .max(20)
-                        .format(NumberFormatSpec.pattern("#,##0").withSuffix("K"))
+                        .format(NumberFormatSpec.pattern("#,##0").withSuffix("k"))
                         .build())
                 .size(ChartSize.fixedHeight(96))
                 .build();
@@ -367,7 +367,7 @@ public final class FinancialReportExample {
 
     private static void revenueBreakdownCard(SectionBuilder section) {
         ChartData data = ChartData.builder()
-                .categories("Desktops", "Portables", "Accessories", "iPod", "Other")
+                .categories("Desktops", "Portables", "Accessories", "Wearables", "Other")
                 .series("Share", 30, 26, 18, 14, 12)
                 .build();
         ChartSpec spec = ChartSpec.pie()

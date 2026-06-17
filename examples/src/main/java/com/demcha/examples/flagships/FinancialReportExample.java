@@ -99,99 +99,107 @@ public final class FinancialReportExample {
      */
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "financial-report.pdf");
-        DocumentImageData photo = mastheadPhoto();
-
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
                 .pageBackground(PAPER)
                 .margin(18, 28, 14, 28)
                 .create()) {
-
-            PageFlowBuilder flow = document.pageFlow()
-                    .name("FinancialReport")
-                    .spacing(8);
-
-            // ── Masthead: slanted photo + title + subtitle + sparklines ──
-            flow.addRow("Masthead", row -> row
-                    .spacing(16)
-                    .weights(5, 13)
-                    .addSection("Photo", s -> s.add(mastheadPhoto(photo)))
-                    .addSection("Title", s -> s
-                            .spacing(2)
-                            .addParagraph(p -> p
-                                    .text("One Pager Business")
-                                    .textStyle(titleStyle())
-                                    .margin(DocumentInsets.zero()))
-                            .addParagraph(p -> p
-                                    .text("Monthly Financial Report")
-                                    .textStyle(titleStyle())
-                                    .margin(DocumentInsets.zero()))
-                            .addParagraph(p -> p
-                                    .text("This one pager covers the business monthly financial "
-                                          + "report to assess performance — gross, operating, and "
-                                          + "net profit margin, plus cash, OPEX, and forecast detail.")
-                                    .textStyle(subtitleStyle())
-                                    .lineSpacing(1.35)
-                                    .margin(new DocumentInsets(5, 0, 0, 0)))
-                            .addRich(r -> r
-                                    .style("Revenue ", legendStyle())
-                                    .sparkline(46, 9, TEAL, 65, 70, 74, 81, 88)
-                                    .style("    Net margin ", legendStyle())
-                                    .sparklineLine(46, 9, 1.6, ORANGE, 9, 10, 11, 11.5, 12))));
-
-            // ── Centred report-period band with a centred accent rule ──
-            flow.addSection("Period", s -> s
-                    .spacing(4)
-                    .addParagraph(p -> p
-                            .text("Financial Report : May 2023")
-                            .textStyle(periodStyle())
-                            .align(TextAlign.CENTER)
-                            .margin(DocumentInsets.zero()))
-                    .addAligned(HorizontalAlign.CENTER, new ShapeBuilder()
-                            .name("PeriodRule")
-                            .size(120, 2.5)
-                            .fillColor(ORANGE)
-                            .margin(DocumentInsets.zero())
-                            .build()));
-
-            // ── Three profit-margin gauges ──
-            flow.addRow("Gauges", row -> row
-                    .spacing(14)
-                    .evenWeights()
-                    .addSection("Gauge1", s -> gauge(s, 79, "Gross profit"))
-                    .addSection("Gauge2", s -> gauge(s, 30, "Operating profit margin"))
-                    .addSection("Gauge3", s -> gauge(s, 12, "Net profit margin")));
-
-            // ── Cash position ──
-            sectionBand(flow, "Cash position");
-
-            flow.addRow("CashRow1", row -> row
-                    .spacing(14)
-                    .weights(8, 12)
-                    .addSection("CashBalance", FinancialReportExample::cashBalanceCard)
-                    .addSection("CashEnd", FinancialReportExample::cashAtEndCard));
-
-            flow.addRow("CashRow2", row -> row
-                    .spacing(14)
-                    .weights(11, 9)
-                    .addSection("Opex", FinancialReportExample::opexCard)
-                    .addSection("Breakdown", FinancialReportExample::revenueBreakdownCard));
-
-            // ── Forecast Financial Analysis ──
-            sectionBand(flow, "Forecast Financial Analysis");
-
-            flow.addRow("ForecastRow", row -> row
-                    .spacing(14)
-                    .evenWeights()
-                    .addSection("Revenue", FinancialReportExample::forecastRevenueCard)
-                    .addSection("Costs", FinancialReportExample::costBreakdownCard));
-
-            flow.build();
-
+            compose(document);
             document.buildPdf();
         }
-
         return outputFile;
+    }
+
+    /**
+     * Composes the one-pager into {@code document}. Shared by {@link #generate()}
+     * and the layout snapshot test, so both lay out identical geometry — the test
+     * creates its own session with the same page size and margin.
+     *
+     * @param document the open session to compose into
+     * @throws Exception when the masthead photo resource cannot be read
+     */
+    static void compose(DocumentSession document) throws Exception {
+        DocumentImageData photo = loadMastheadPhoto();
+        PageFlowBuilder flow = document.pageFlow()
+                .name("FinancialReport")
+                .spacing(8);
+
+        // ── Masthead: slanted photo + title + subtitle + sparklines ──
+        flow.addRow("Masthead", row -> row
+                .spacing(16)
+                .weights(5, 13)
+                .addSection("Photo", s -> s.add(mastheadPhoto(photo)))
+                .addSection("Title", s -> s
+                        .spacing(2)
+                        .addParagraph(p -> p
+                                .text("One Pager Business")
+                                .textStyle(titleStyle())
+                                .margin(DocumentInsets.zero()))
+                        .addParagraph(p -> p
+                                .text("Monthly Financial Report")
+                                .textStyle(titleStyle())
+                                .margin(DocumentInsets.zero()))
+                        .addParagraph(p -> p
+                                .text("This one pager covers the business monthly financial "
+                                      + "report to assess performance — gross, operating, and "
+                                      + "net profit margin, plus cash, OPEX, and forecast detail.")
+                                .textStyle(subtitleStyle())
+                                .lineSpacing(1.35)
+                                .margin(new DocumentInsets(5, 0, 0, 0)))
+                        .addRich(r -> r
+                                .style("Revenue ", legendStyle())
+                                .sparkline(46, 9, TEAL, 65, 70, 74, 81, 88)
+                                .style("    Net margin ", legendStyle())
+                                .sparklineLine(46, 9, 1.6, ORANGE, 9, 10, 11, 11.5, 12))));
+
+        // ── Centred report-period band with a centred accent rule ──
+        flow.addSection("Period", s -> s
+                .spacing(4)
+                .addParagraph(p -> p
+                        .text("Financial Report : May 2023")
+                        .textStyle(periodStyle())
+                        .align(TextAlign.CENTER)
+                        .margin(DocumentInsets.zero()))
+                .addAligned(HorizontalAlign.CENTER, new ShapeBuilder()
+                        .name("PeriodRule")
+                        .size(120, 2.5)
+                        .fillColor(ORANGE)
+                        .margin(DocumentInsets.zero())
+                        .build()));
+
+        // ── Three profit-margin gauges ──
+        flow.addRow("Gauges", row -> row
+                .spacing(14)
+                .evenWeights()
+                .addSection("Gauge1", s -> gauge(s, 79, "Gross profit"))
+                .addSection("Gauge2", s -> gauge(s, 30, "Operating profit margin"))
+                .addSection("Gauge3", s -> gauge(s, 12, "Net profit margin")));
+
+        // ── Cash position ──
+        sectionBand(flow, "Cash position");
+
+        flow.addRow("CashRow1", row -> row
+                .spacing(14)
+                .weights(8, 12)
+                .addSection("CashBalance", FinancialReportExample::cashBalanceCard)
+                .addSection("CashEnd", FinancialReportExample::cashAtEndCard));
+
+        flow.addRow("CashRow2", row -> row
+                .spacing(14)
+                .weights(11, 9)
+                .addSection("Opex", FinancialReportExample::opexCard)
+                .addSection("Breakdown", FinancialReportExample::revenueBreakdownCard));
+
+        // ── Forecast Financial Analysis ──
+        sectionBand(flow, "Forecast Financial Analysis");
+
+        flow.addRow("ForecastRow", row -> row
+                .spacing(14)
+                .evenWeights()
+                .addSection("Revenue", FinancialReportExample::forecastRevenueCard)
+                .addSection("Costs", FinancialReportExample::costBreakdownCard));
+
+        flow.build();
     }
 
     /**
@@ -557,7 +565,7 @@ public final class FinancialReportExample {
 
     // ─────────────────── Resource ────────────────────────────────────────
 
-    private static DocumentImageData mastheadPhoto() throws Exception {
+    private static DocumentImageData loadMastheadPhoto() throws Exception {
         try (InputStream in = Objects.requireNonNull(
                 FinancialReportExample.class.getResourceAsStream("/engine-hero.jpg"),
                 "engine-hero.jpg missing from examples/src/main/resources/")) {

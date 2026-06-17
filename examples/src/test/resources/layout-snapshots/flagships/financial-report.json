@@ -1,0 +1,1577 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 539.276,
+    "innerHeight" : 809.89,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 28.0,
+      "bottom" : 14.0,
+      "left" : 28.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "FinancialReport[0]",
+    "entityName" : "FinancialReport",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 42.077,
+    "placementX" : 28.0,
+    "placementY" : 42.077,
+    "placementWidth" : 539.276,
+    "placementHeight" : 781.812,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 781.812,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]",
+    "entityName" : "Masthead",
+    "entityKind" : "RowNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 727.89,
+    "placementX" : 28.0,
+    "placementY" : 727.89,
+    "placementWidth" : 539.276,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Photo[0]",
+    "entityName" : "Photo",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 727.89,
+    "placementX" : 28.0,
+    "placementY" : 727.89,
+    "placementWidth" : 140.0,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.0,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Photo[0]/MastheadPhoto[0]",
+    "entityName" : "MastheadPhoto",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Photo[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 727.89,
+    "placementX" : 28.0,
+    "placementY" : 727.89,
+    "placementWidth" : 140.0,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.0,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Photo[0]/MastheadPhoto[0]/ImageNode[0]",
+    "entityName" : null,
+    "entityKind" : "ImageNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Photo[0]/MastheadPhoto[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.0,
+    "computedY" : 727.89,
+    "placementX" : 28.0,
+    "placementY" : 727.89,
+    "placementWidth" : 140.0,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.0,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Title[1]",
+    "entityName" : "Title",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 189.354,
+    "computedY" : 751.85,
+    "placementX" : 189.354,
+    "placementY" : 751.85,
+    "placementWidth" : 345.005,
+    "placementHeight" : 72.04,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 345.005,
+    "contentHeight" : 72.04,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Title[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Title[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 189.354,
+    "computedY" : 806.315,
+    "placementX" : 189.354,
+    "placementY" : 806.315,
+    "placementWidth" : 174.249,
+    "placementHeight" : 17.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 174.249,
+    "contentHeight" : 17.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Title[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Title[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 189.354,
+    "computedY" : 786.74,
+    "placementX" : 189.354,
+    "placementY" : 786.74,
+    "placementWidth" : 210.121,
+    "placementHeight" : 17.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 210.121,
+    "contentHeight" : 17.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Title[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Title[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 189.354,
+    "computedY" : 762.85,
+    "placementX" : 189.354,
+    "placementY" : 762.85,
+    "placementWidth" : 345.005,
+    "placementHeight" : 16.89,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 345.005,
+    "contentHeight" : 16.89,
+    "margin" : {
+      "top" : 5.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Masthead[0]/Title[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Masthead[0]/Title[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 189.354,
+    "computedY" : 751.85,
+    "placementX" : 189.354,
+    "placementY" : 751.85,
+    "placementWidth" : 176.48,
+    "placementHeight" : 9.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 176.48,
+    "contentHeight" : 9.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Period[1]",
+    "entityName" : "Period",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 699.515,
+    "placementX" : 28.0,
+    "placementY" : 699.515,
+    "placementWidth" : 539.276,
+    "placementHeight" : 20.375,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 20.375,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Period[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Period[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 706.015,
+    "placementX" : 28.0,
+    "placementY" : 706.015,
+    "placementWidth" : 539.276,
+    "placementHeight" : 13.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 13.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Period[1]/Align[1]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "FinancialReport[0]/Period[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 699.515,
+    "placementX" : 28.0,
+    "placementY" : 699.515,
+    "placementWidth" : 539.276,
+    "placementHeight" : 2.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 2.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Period[1]/Align[1]/PeriodRule[0]",
+    "entityName" : "PeriodRule",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "FinancialReport[0]/Period[1]/Align[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 237.638,
+    "computedY" : 699.515,
+    "placementX" : 237.638,
+    "placementY" : 699.515,
+    "placementWidth" : 120.0,
+    "placementHeight" : 2.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.0,
+    "contentHeight" : 2.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]",
+    "entityName" : "Gauges",
+    "entityKind" : "RowNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 595.727,
+    "placementX" : 28.0,
+    "placementY" : 595.727,
+    "placementWidth" : 539.276,
+    "placementHeight" : 95.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 95.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge1[0]",
+    "entityName" : "Gauge1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 595.727,
+    "placementX" : 28.0,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 95.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 95.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge1[0]/Chart[0]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge1[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 607.515,
+    "placementX" : 28.0,
+    "placementY" : 607.515,
+    "placementWidth" : 170.425,
+    "placementHeight" : 84.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 84.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge1[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge1[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 595.727,
+    "placementX" : 28.0,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 8.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 8.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge2[1]",
+    "entityName" : "Gauge2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 212.425,
+    "computedY" : 595.727,
+    "placementX" : 212.425,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 95.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 95.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge2[1]/Chart[0]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge2[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 212.425,
+    "computedY" : 607.515,
+    "placementX" : 212.425,
+    "placementY" : 607.515,
+    "placementWidth" : 170.425,
+    "placementHeight" : 84.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 84.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge2[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge2[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 212.425,
+    "computedY" : 595.727,
+    "placementX" : 212.425,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 8.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 8.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge3[2]",
+    "entityName" : "Gauge3",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 396.85,
+    "computedY" : 595.727,
+    "placementX" : 396.85,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 95.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 95.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge3[2]/Chart[0]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge3[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 396.85,
+    "computedY" : 607.515,
+    "placementX" : 396.85,
+    "placementY" : 607.515,
+    "placementWidth" : 170.425,
+    "placementHeight" : 84.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 84.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Gauges[2]/Gauge3[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Gauges[2]/Gauge3[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 396.85,
+    "computedY" : 595.727,
+    "placementX" : 396.85,
+    "placementY" : 595.727,
+    "placementWidth" : 170.425,
+    "placementHeight" : 8.787,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.425,
+    "contentHeight" : 8.787,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Band:Cash position[3]",
+    "entityName" : "Band:Cash position",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 562.165,
+    "placementX" : 28.0,
+    "placementY" : 562.165,
+    "placementWidth" : 539.276,
+    "placementHeight" : 25.563,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 25.563,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.0,
+      "right" : 7.0,
+      "bottom" : 7.0,
+      "left" : 7.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Band:Cash position[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Band:Cash position[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 35.0,
+    "computedY" : 569.165,
+    "placementX" : 35.0,
+    "placementY" : 569.165,
+    "placementWidth" : 525.276,
+    "placementHeight" : 11.563,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 525.276,
+    "contentHeight" : 11.563,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]",
+    "entityName" : "CashRow1",
+    "entityKind" : "RowNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 421.99,
+    "placementX" : 28.0,
+    "placementY" : 421.99,
+    "placementWidth" : 539.276,
+    "placementHeight" : 132.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 132.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]",
+    "entityName" : "CashBalance",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 450.765,
+    "placementX" : 28.0,
+    "placementY" : 450.765,
+    "placementWidth" : 210.11,
+    "placementHeight" : 103.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 210.11,
+    "contentHeight" : 103.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 533.99,
+    "placementX" : 38.0,
+    "placementY" : 533.99,
+    "placementWidth" : 190.11,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 190.11,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 507.115,
+    "placementX" : 38.0,
+    "placementY" : 507.115,
+    "placementWidth" : 77.818,
+    "placementHeight" : 13.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.818,
+    "contentHeight" : 13.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 483.94,
+    "placementX" : 38.0,
+    "placementY" : 483.94,
+    "placementWidth" : 81.312,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 81.312,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashBalance[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 460.765,
+    "placementX" : 38.0,
+    "placementY" : 460.765,
+    "placementWidth" : 90.475,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.475,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashEnd[1]",
+    "entityName" : "CashEnd",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 252.11,
+    "computedY" : 421.99,
+    "placementX" : 252.11,
+    "placementY" : 421.99,
+    "placementWidth" : 315.165,
+    "placementHeight" : 132.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 315.165,
+    "contentHeight" : 132.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashEnd[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashEnd[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 262.11,
+    "computedY" : 533.99,
+    "placementX" : 262.11,
+    "placementY" : 533.99,
+    "placementWidth" : 295.165,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 295.165,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow1[4]/CashEnd[1]/Chart[1]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/CashRow1[4]/CashEnd[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 262.11,
+    "computedY" : 431.99,
+    "placementX" : 262.11,
+    "placementY" : 431.99,
+    "placementWidth" : 295.165,
+    "placementHeight" : 96.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 295.165,
+    "contentHeight" : 96.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]",
+    "entityName" : "CashRow2",
+    "entityKind" : "RowNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 249.815,
+    "placementX" : 28.0,
+    "placementY" : 249.815,
+    "placementWidth" : 539.276,
+    "placementHeight" : 164.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 164.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Opex[0]",
+    "entityName" : "Opex",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 258.785,
+    "placementX" : 28.0,
+    "placementY" : 258.785,
+    "placementWidth" : 288.902,
+    "placementHeight" : 155.205,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 288.902,
+    "contentHeight" : 155.205,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Opex[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]/Opex[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 393.815,
+    "placementX" : 38.0,
+    "placementY" : 393.815,
+    "placementWidth" : 268.902,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 268.902,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Opex[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]/Opex[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 382.785,
+    "placementX" : 38.0,
+    "placementY" : 382.785,
+    "placementWidth" : 70.118,
+    "placementHeight" : 7.03,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 70.118,
+    "contentHeight" : 7.03,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Opex[0]/Chart[2]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]/Opex[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 268.785,
+    "placementX" : 38.0,
+    "placementY" : 268.785,
+    "placementWidth" : 268.902,
+    "placementHeight" : 110.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 268.902,
+    "contentHeight" : 110.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Breakdown[1]",
+    "entityName" : "Breakdown",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 330.902,
+    "computedY" : 249.815,
+    "placementX" : 330.902,
+    "placementY" : 249.815,
+    "placementWidth" : 236.374,
+    "placementHeight" : 164.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.374,
+    "contentHeight" : 164.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Breakdown[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]/Breakdown[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 340.902,
+    "computedY" : 393.815,
+    "placementX" : 340.902,
+    "placementY" : 393.815,
+    "placementWidth" : 216.374,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 216.374,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/CashRow2[5]/Breakdown[1]/Chart[1]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/CashRow2[5]/Breakdown[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 340.902,
+    "computedY" : 259.815,
+    "placementX" : 340.902,
+    "placementY" : 259.815,
+    "placementWidth" : 216.374,
+    "placementHeight" : 130.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 216.374,
+    "contentHeight" : 130.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Band:Forecast Financial Analysis[6]",
+    "entityName" : "Band:Forecast Financial Analysis",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 216.252,
+    "placementX" : 28.0,
+    "placementY" : 216.252,
+    "placementWidth" : 539.276,
+    "placementHeight" : 25.563,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 25.563,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.0,
+      "right" : 7.0,
+      "bottom" : 7.0,
+      "left" : 7.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/Band:Forecast Financial Analysis[6]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/Band:Forecast Financial Analysis[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 35.0,
+    "computedY" : 223.252,
+    "placementX" : 35.0,
+    "placementY" : 223.252,
+    "placementWidth" : 525.276,
+    "placementHeight" : 11.563,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 525.276,
+    "contentHeight" : 11.563,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]",
+    "entityName" : "ForecastRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "FinancialReport[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 42.077,
+    "placementX" : 28.0,
+    "placementY" : 42.077,
+    "placementWidth" : 539.276,
+    "placementHeight" : 166.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 166.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Revenue[0]",
+    "entityName" : "Revenue",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 62.077,
+    "placementX" : 28.0,
+    "placementY" : 62.077,
+    "placementWidth" : 262.638,
+    "placementHeight" : 146.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 262.638,
+    "contentHeight" : 146.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Revenue[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]/Revenue[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 188.077,
+    "placementX" : 38.0,
+    "placementY" : 188.077,
+    "placementWidth" : 242.638,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.638,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Revenue[0]/Chart[1]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]/Revenue[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 38.0,
+    "computedY" : 72.077,
+    "placementX" : 38.0,
+    "placementY" : 72.077,
+    "placementWidth" : 242.638,
+    "placementHeight" : 110.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.638,
+    "contentHeight" : 110.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Costs[1]",
+    "entityName" : "Costs",
+    "entityKind" : "SectionNode",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 304.638,
+    "computedY" : 42.077,
+    "placementX" : 304.638,
+    "placementY" : 42.077,
+    "placementWidth" : 262.638,
+    "placementHeight" : 166.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 262.638,
+    "contentHeight" : 166.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Costs[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]/Costs[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 314.638,
+    "computedY" : 188.077,
+    "placementX" : 314.638,
+    "placementY" : 188.077,
+    "placementWidth" : 242.638,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.638,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "FinancialReport[0]/ForecastRow[7]/Costs[1]/Chart[1]",
+    "entityName" : null,
+    "entityKind" : "Chart",
+    "parentPath" : "FinancialReport[0]/ForecastRow[7]/Costs[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 314.638,
+    "computedY" : 52.077,
+    "placementX" : 314.638,
+    "placementY" : 52.077,
+    "placementWidth" : 242.638,
+    "placementHeight" : 130.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.638,
+    "contentHeight" : 130.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

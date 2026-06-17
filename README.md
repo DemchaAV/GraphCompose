@@ -20,7 +20,8 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v1.7.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.7.1) (byte-identical layout / render / measurement performance — text wrapping, font embedding, glyph probing, table pagination; the legacy ECS engine is deprecated; zero breaking from v1.7.0)
-> &nbsp;·&nbsp; 🟡 **In develop**: v1.7.2 (next bug-fix / housekeeping cycle)
+
+> &nbsp;·&nbsp; 🟡 **In develop**: v1.8.0 &mdash; codenamed **"illustrative"** (native vector charts + inline sparklines, free-form `ShapeOutline.Path` clip, sharper SVG-reader errors; additive, zero breaking from v1.7)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">

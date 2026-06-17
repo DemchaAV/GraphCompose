@@ -10,6 +10,7 @@ import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.LineInterpolation;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.chart.PointMarker;
 import com.demcha.compose.document.chart.SliceLabelMode;
@@ -123,10 +124,30 @@ public final class ChartShowcaseExample {
         // Smooth area: Catmull-Rom curves with a translucent fill to the baseline.
         ChartSpec areaSpec = ChartSpec.line()
                 .data(revenue)
-                .smooth(true)
+                .interpolation(LineInterpolation.SMOOTH)
                 .area(true)
                 .legend(LegendPosition.TOP)
                 .size(ChartSize.aspectRatio(16, 7))
+                .build();
+
+        // Accuracy vs. beauty on the same volatile series. SMOOTH (Catmull-Rom)
+        // is the prettiest curve but bulges past the peaks and troughs it
+        // connects; MONOTONE (Fritsch-Carlson) stays just as smooth yet never
+        // leaves the data's range — the curve never claims a value the data
+        // never had. Markers pin the true data points so the difference shows.
+        ChartData volatileSeries = ChartData.builder()
+                .categories("Jan", "Feb", "Mar", "Apr", "May", "Jun")
+                .series("Price", 20.0, 95.0, 92.0, 18.0, 24.0, 90.0)
+                .build();
+        ChartSpec smoothSwingSpec = ChartSpec.line()
+                .data(volatileSeries)
+                .interpolation(LineInterpolation.SMOOTH)
+                .size(ChartSize.aspectRatio(16, 6))
+                .build();
+        ChartSpec monotoneSwingSpec = ChartSpec.line()
+                .data(volatileSeries)
+                .interpolation(LineInterpolation.MONOTONE)
+                .size(ChartSize.aspectRatio(16, 6))
                 .build();
 
         // Horizontal bars: categories on Y, values on X, legend as a right column.
@@ -236,6 +257,24 @@ public final class ChartShowcaseExample {
                                     .textStyle(THEME.text().h3())
                                     .margin(DocumentInsets.zero()))
                             .chart(areaSpec))
+                    .addSection("SmoothSwingCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Volatile price — SMOOTH curve (pretty, overshoots the peaks)")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(smoothSwingSpec, lineStyle))
+                    .addSection("MonotoneSwingCard", section -> section
+                            .keepTogether()
+                            .softPanel(DocumentColor.WHITE, 8, 16)
+                            .spacing(10)
+                            .addParagraph(p -> p
+                                    .text("Volatile price — MONOTONE curve (smooth, never leaves the data range)")
+                                    .textStyle(THEME.text().h3())
+                                    .margin(DocumentInsets.zero()))
+                            .chart(monotoneSwingSpec, lineStyle))
                     .addSection("HorizontalCard", section -> section
                             .keepTogether()
                             .softPanel(DocumentColor.WHITE, 8, 16)

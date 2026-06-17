@@ -380,7 +380,7 @@ class ChartLayoutResolverTest {
         // smooth + area exercise the interpolation and fill paths with a
         // single sample as well.
         ChartSpec.Line line = ChartSpec.line().data(data)
-                .smooth(true).area(true)
+                .interpolation(LineInterpolation.SMOOTH).area(true)
                 .valueLabels(ValueLabelMode.OUTSIDE).build();
 
         List<ChartPrimitive> out = ChartLayoutResolver.resolve(
@@ -476,7 +476,7 @@ class ChartLayoutResolverTest {
     void smoothLineEmitsOneNativeBezierRun() {
         ChartData data = ChartData.builder().categories("A", "B", "C")
                 .series("S", 1.0, 3.0, 2.0).build();
-        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).interpolation(LineInterpolation.SMOOTH).build();
 
         List<ChartPrimitive> out = ChartLayoutResolver.resolve(
                 line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
@@ -502,7 +502,7 @@ class ChartLayoutResolverTest {
     void smoothAreaClosesTheExactCurveDownToTheBaseline() {
         ChartData data = ChartData.builder().categories("A", "B", "C")
                 .series("S", 1.0, 3.0, 2.0).build();
-        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).area(true).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).interpolation(LineInterpolation.SMOOTH).area(true).build();
 
         List<ChartPrimitive> out = ChartLayoutResolver.resolve(
                 line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
@@ -537,7 +537,7 @@ class ChartLayoutResolverTest {
     void twoPointSmoothRunFallsBackToAStraightSegment() {
         ChartData data = ChartData.builder().categories("A", "B")
                 .series("S", 1.0, 3.0).build();
-        ChartSpec.Line line = ChartSpec.line().data(data).smooth(true).build();
+        ChartSpec.Line line = ChartSpec.line().data(data).interpolation(LineInterpolation.SMOOTH).build();
 
         List<ChartPrimitive> out = ChartLayoutResolver.resolve(
                 line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
@@ -546,6 +546,63 @@ class ChartLayoutResolverTest {
         byName(out, "line_s0_seg0");
         assertThat(out.stream().noneMatch(p -> p.node().name().startsWith("line_s0_curve")))
                 .isTrue();
+    }
+
+    @Test
+    void monotoneLineEmitsOneNativeBezierRun() {
+        ChartData data = ChartData.builder().categories("A", "B", "C")
+                .series("S", 1.0, 3.0, 2.0).build();
+        ChartSpec.Line line = ChartSpec.line().data(data)
+                .interpolation(LineInterpolation.MONOTONE).build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                line, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+
+        // Like SMOOTH, MONOTONE is one native cubic path — no tessellation.
+        assertThat(out.stream().noneMatch(p -> p.node().name().startsWith("line_s0_seg")))
+                .isTrue();
+        com.demcha.compose.document.node.PathNode curve =
+                (com.demcha.compose.document.node.PathNode) byName(out, "line_s0_curve0").node();
+        assertThat(curve.segments()).hasSize(3);
+        assertThat(curve.segments().get(0))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.MoveTo.class);
+        assertThat(curve.segments().get(1))
+                .isInstanceOf(com.demcha.compose.document.style.DocumentPathSegment.CubicTo.class);
+        assertThat(curve.stroke()).isNotNull();
+    }
+
+    @Test
+    void monotoneCurveStaysWithinTheDataRangeWhileSmoothOvershoots() {
+        // A rise into a flat plateau: Catmull-Rom overshoots above the plateau,
+        // the monotone curve must not. y grows up, so "above" = larger y.
+        ChartData data = ChartData.builder().categories("A", "B", "C", "D")
+                .series("S", 10.0, 80.0, 80.0, 10.0).build();
+
+        // Straight segments trace the data vertices exactly — the ground-truth
+        // value range every curve must respect at its data points.
+        List<ChartPrimitive> linear = ChartLayoutResolver.resolve(
+                ChartSpec.line().data(data).interpolation(LineInterpolation.LINEAR).build(),
+                baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS);
+        double dataTop = linear.stream()
+                .filter(p -> p.node().name().startsWith("line_s0_seg"))
+                .mapToDouble(p -> p.y() + p.height()).max().orElseThrow();
+        double dataBottom = linear.stream()
+                .filter(p -> p.node().name().startsWith("line_s0_seg"))
+                .mapToDouble(ChartPrimitive::y).min().orElseThrow();
+
+        ChartPrimitive monotone = byName(ChartLayoutResolver.resolve(
+                ChartSpec.line().data(data).interpolation(LineInterpolation.MONOTONE).build(),
+                baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS), "line_s0_curve0");
+        ChartPrimitive smooth = byName(ChartLayoutResolver.resolve(
+                ChartSpec.line().data(data).interpolation(LineInterpolation.SMOOTH).build(),
+                baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 120.0, METRICS), "line_s0_curve0");
+
+        double eps = 0.5;
+        // Monotone: the whole curve (its bounding box) stays inside the data range.
+        assertThat(monotone.y() + monotone.height()).isLessThanOrEqualTo(dataTop + eps);
+        assertThat(monotone.y()).isGreaterThanOrEqualTo(dataBottom - eps);
+        // Smooth: the pretty curve bulges above the plateau — that is the overshoot.
+        assertThat(smooth.y() + smooth.height()).isGreaterThan(dataTop + eps);
     }
 
     @Test

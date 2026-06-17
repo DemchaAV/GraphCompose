@@ -14,6 +14,7 @@ import com.demcha.compose.document.chart.ChartSize;
 import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.LineInterpolation;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.chart.PointMarker;
 import com.demcha.compose.document.chart.SliceLabelMode;
@@ -145,7 +146,7 @@ final class EngineDeckCharts {
     static ChartSpec memoryAreaChart(EngineDeckData.BenchRun b) {
         return ChartSpec.line()
                 .data(bySize(b, false))
-                .smooth(true)
+                .interpolation(LineInterpolation.SMOOTH)
                 .area(true)
                 .valueAxis(AxisSpec.builder().baselineAtZero(true)
                         .format(NumberFormatSpec.pattern("#,##0").withSuffix(" MB")).build())

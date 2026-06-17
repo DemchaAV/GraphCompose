@@ -9,6 +9,7 @@ import com.demcha.compose.document.chart.ChartSize;
 import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.LineInterpolation;
 import com.demcha.compose.document.chart.PointMarker;
 import com.demcha.compose.document.chart.SliceLabelMode;
 import com.demcha.compose.document.chart.ValueLabelMode;
@@ -213,13 +214,13 @@ public final class FeatureCatalogExample {
 
             feature(flow, "Line chart — smooth, area fill, markers, label halos", """
                     section.chart(ChartSpec.line().data(revenue)
-                            .smooth(true).area(true).valueLabels(ValueLabelMode.OUTSIDE)
+                            .interpolation(LineInterpolation.SMOOTH).area(true).valueLabels(ValueLabelMode.OUTSIDE)
                             .size(ChartSize.fixedHeight(150)).build(),
                         ChartStyle.builder().lineWidth(1.8)
                             .pointMarker(PointMarker.circle(5).withStroke(DocumentStroke.of(WHITE, 1.2)))
                             .build())""",
                     demo -> demo.chart(ChartSpec.line().data(revenue)
-                                    .smooth(true).area(true).valueLabels(ValueLabelMode.OUTSIDE)
+                                    .interpolation(LineInterpolation.SMOOTH).area(true).valueLabels(ValueLabelMode.OUTSIDE)
                                     .size(ChartSize.fixedHeight(150)).build(),
                             ChartStyle.builder().lineWidth(1.8)
                                     .pointMarker(PointMarker.circle(5)

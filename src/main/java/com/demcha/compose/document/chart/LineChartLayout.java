@@ -13,12 +13,14 @@ import static com.demcha.compose.document.chart.ChartLayoutSupport.*;
 /**
  * Geometry for line charts: straight polylines or native cubic-Bézier
  * smoothed curves, optional translucent area fills (curved to match in
- * smooth mode), point markers, and collision-aware value labels.
+ * curved modes), point markers, and collision-aware value labels.
  *
- * <p>Smooth runs compile into a single {@code PathNode} per run whose
- * Catmull-Rom-derived control points are pure arithmetic on the data points
- * — the exact continuous curve the pre-1.8 fixed-step sampler approximated,
- * now rendered with native PDF curve operators and zero tessellation.</p>
+ * <p>Curved runs ({@link LineInterpolation#SMOOTH} or
+ * {@link LineInterpolation#MONOTONE}) compile into a single {@code PathNode}
+ * per run whose control points are pure arithmetic on the data points —
+ * Catmull-Rom for the pretty (possibly overshooting) curve, Fritsch-Carlson
+ * for the monotone curve that never overshoots — rendered with native PDF
+ * curve operators and zero tessellation.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.8.0
@@ -54,16 +56,17 @@ final class LineChartLayout {
         double strokeWidth = style.lineWidth() == null ? DEFAULT_LINE_WIDTH : style.lineWidth();
         double areaOpacity = style.areaOpacity() == null ? DEFAULT_AREA_OPACITY : style.areaOpacity();
 
-        // Per-series contiguous non-null runs of original data points. Smooth
-        // mode compiles each run into native Bézier primitives; markers and
+        // Per-series contiguous non-null runs of original data points. Curved
+        // modes compile each run into native Bézier primitives; markers and
         // labels stay on the original data points either way.
         List<List<List<double[]>>> seriesRuns = new ArrayList<>();
         for (int s = 0; s < data.seriesCount(); s++) {
             seriesRuns.add(sampleSeries(data.series().get(s), f, slotW));
         }
-        boolean smooth = line.smooth();
+        LineInterpolation interpolation = line.interpolation();
+        boolean curved = interpolation != LineInterpolation.LINEAR;
 
-        // Pass 0 — area fills, under every stroke. Smooth runs close the
+        // Pass 0 — area fills, under every stroke. Curved runs close the
         // exact stroke curve down to the baseline so fill and stroke edges
         // coincide.
         if (line.area()) {
@@ -77,8 +80,9 @@ final class LineChartLayout {
                         continue;
                     }
                     String name = "area_s" + s + "_r" + runIndex;
-                    if (smooth && run.size() >= 3) {
-                        emitCurvedArea(out, name, run, f.plotBottomY(), fill);
+                    if (curved && run.size() >= 3) {
+                        emitCurvedArea(out, name, run, curveControls(run, interpolation),
+                                f.plotBottomY(), fill);
                     } else {
                         emitAreaPolygon(out, name, run, f.plotBottomY(), fill);
                     }
@@ -87,7 +91,7 @@ final class LineChartLayout {
             }
         }
 
-        // Pass 1 — series strokes: one native Bézier path per smooth run
+        // Pass 1 — series strokes: one native Bézier path per curved run
         // (three or more points), straight segments otherwise.
         for (int s = 0; s < data.seriesCount(); s++) {
             DocumentColor color = style.paintForSeries(s, theme.palette()).primaryColor();
@@ -95,8 +99,9 @@ final class LineChartLayout {
             int n = 0;
             int runIndex = 0;
             for (List<double[]> run : seriesRuns.get(s)) {
-                if (smooth && run.size() >= 3) {
-                    out.add(bezierRun("line_s" + s + "_curve" + runIndex, run, stroke));
+                if (curved && run.size() >= 3) {
+                    out.add(bezierRun("line_s" + s + "_curve" + runIndex, run,
+                            curveControls(run, interpolation), stroke));
                 } else {
                     for (int i = 1; i < run.size(); i++) {
                         out.add(segment("line_s" + s + "_seg" + n++,
@@ -175,6 +180,19 @@ final class LineChartLayout {
     }
 
     /**
+     * Cubic-Bézier control points for every span of a run, selected by the
+     * interpolation mode. {@link LineInterpolation#SMOOTH} yields the pretty
+     * Catmull-Rom curve (may overshoot); {@link LineInterpolation#MONOTONE}
+     * yields the Fritsch-Carlson curve constrained to the data's range.
+     * {@code LINEAR} never reaches here (handled as straight segments upstream).
+     */
+    private static List<double[][]> curveControls(List<double[]> run, LineInterpolation mode) {
+        return mode == LineInterpolation.MONOTONE
+                ? monotoneControls(run)
+                : catmullRomControls(run);
+    }
+
+    /**
      * Uniform Catmull-Rom control points (tension 0.5, clamped endpoints)
      * for every span of a run: {@code c1 = p1 + (p2 - p0) / 6},
      * {@code c2 = p2 - (p3 - p1) / 6}. Pure arithmetic on the data points —
@@ -196,13 +214,67 @@ final class LineChartLayout {
     }
 
     /**
-     * One stroked native-Bézier {@code PathNode} primitive covering a whole
-     * smooth run. The box is the bounding box of the data points and every
-     * control point, so normalized coordinates stay within the unit box by
-     * construction.
+     * Monotone cubic (Fritsch-Carlson) control points for every span of a run.
+     * The tangent at each point is the average of the adjacent secant slopes,
+     * forced to zero at local extrema and then rescaled by the Fritsch-Carlson
+     * factor so the resulting cubic stays monotone on every span. The curve
+     * therefore never overshoots — each span stays within the value range of
+     * its two endpoints and preserves the data's rises and falls — unlike the
+     * Catmull-Rom curve. Returns one {@code [c1, c2]} pair per span.
      */
-    private static ChartPrimitive bezierRun(String name, List<double[]> run, DocumentStroke stroke) {
-        List<double[][]> controls = catmullRomControls(run);
+    private static List<double[][]> monotoneControls(List<double[]> points) {
+        int n = points.size();
+        double[] secant = new double[n - 1];
+        for (int i = 0; i < n - 1; i++) {
+            double dx = points.get(i + 1)[0] - points.get(i)[0];
+            secant[i] = dx == 0.0 ? 0.0 : (points.get(i + 1)[1] - points.get(i)[1]) / dx;
+        }
+        double[] tangent = new double[n];
+        tangent[0] = secant[0];
+        tangent[n - 1] = secant[n - 2];
+        for (int i = 1; i < n - 1; i++) {
+            // Opposite-signed (or zero) neighbouring slopes mark a local
+            // extremum; a flat tangent there is what prevents the overshoot.
+            tangent[i] = secant[i - 1] * secant[i] <= 0.0
+                    ? 0.0 : (secant[i - 1] + secant[i]) / 2.0;
+        }
+        // Fritsch-Carlson: clamp each tangent pair into the circle of radius 3
+        // that guarantees a monotone span (alpha^2 + beta^2 <= 9).
+        for (int i = 0; i < n - 1; i++) {
+            if (secant[i] == 0.0) {
+                tangent[i] = 0.0;
+                tangent[i + 1] = 0.0;
+                continue;
+            }
+            double alpha = tangent[i] / secant[i];
+            double beta = tangent[i + 1] / secant[i];
+            double s = alpha * alpha + beta * beta;
+            if (s > 9.0) {
+                double tau = 3.0 / Math.sqrt(s);
+                tangent[i] = tau * alpha * secant[i];
+                tangent[i + 1] = tau * beta * secant[i];
+            }
+        }
+        List<double[][]> controls = new ArrayList<>(n - 1);
+        for (int i = 0; i < n - 1; i++) {
+            double[] p1 = points.get(i);
+            double[] p2 = points.get(i + 1);
+            double third = (p2[0] - p1[0]) / 3.0;
+            double[] c1 = {p1[0] + third, p1[1] + tangent[i] * third};
+            double[] c2 = {p2[0] - third, p2[1] - tangent[i + 1] * third};
+            controls.add(new double[][]{c1, c2});
+        }
+        return controls;
+    }
+
+    /**
+     * One stroked native-Bézier {@code PathNode} primitive covering a whole
+     * curved run, from precomputed control points. The box is the bounding box
+     * of the data points and every control point, so normalized coordinates
+     * stay within the unit box by construction.
+     */
+    private static ChartPrimitive bezierRun(String name, List<double[]> run,
+                                            List<double[][]> controls, DocumentStroke stroke) {
         double minX = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
@@ -241,14 +313,13 @@ final class LineChartLayout {
     }
 
     /**
-     * Curved area fill for a smooth run: the exact stroke curve closed down
-     * to the plot baseline with two straight edges, emitted as one filled
-     * {@code PathNode}.
+     * Curved area fill for a curved run: the exact stroke curve (from the same
+     * precomputed control points) closed down to the plot baseline with two
+     * straight edges, emitted as one filled {@code PathNode}.
      */
     private static void emitCurvedArea(List<ChartPrimitive> out, String name,
-                                       List<double[]> run, double baselineY,
-                                       DocumentColor fill) {
-        List<double[][]> controls = catmullRomControls(run);
+                                       List<double[]> run, List<double[][]> controls,
+                                       double baselineY, DocumentColor fill) {
         double minX = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;
         double minY = baselineY;

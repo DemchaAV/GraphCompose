@@ -250,7 +250,9 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
      * from {@link ChartStyle#pointMarker()} so the geometry is reused).
      *
      * @param data               tabular data
-     * @param smooth             true = curved (Catmull-Rom) segments; false = straight
+     * @param interpolation      how points are connected: {@link LineInterpolation#LINEAR}
+     *                           straight, {@link LineInterpolation#SMOOTH} pretty curve,
+     *                           {@link LineInterpolation#MONOTONE} smooth without overshoot
      * @param area               fill the region between each series and the axis baseline
      *                           (translucent series colour; see {@code ChartStyle.areaOpacity})
      * @param valueAxis          numeric-axis configuration
@@ -261,7 +263,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
      */
     record Line(
             ChartData data,
-            boolean smooth,
+            LineInterpolation interpolation,
             boolean area,
             AxisSpec valueAxis,
             LegendPosition legend,
@@ -274,6 +276,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
          */
         public Line {
             Objects.requireNonNull(data, "data");
+            interpolation = interpolation == null ? LineInterpolation.LINEAR : interpolation;
             valueAxis = valueAxis == null ? AxisSpec.defaults() : valueAxis;
             legend = legend == null ? LegendPosition.NONE : legend;
             valueLabels = valueLabels == null ? ValueLabelMode.NONE : valueLabels;
@@ -281,19 +284,19 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
         }
 
         /**
-         * Backward-compatible constructor without the area and category-label
-         * toggles (no area fill; category labels shown).
+         * Convenience constructor without the area and category-label toggles
+         * (no area fill; category labels shown).
          *
-         * @param data        tabular data
-         * @param smooth      curved segments
-         * @param valueAxis   numeric-axis configuration
-         * @param legend      legend placement
-         * @param valueLabels per-point value label mode
-         * @param size        sizing policy
+         * @param data          tabular data
+         * @param interpolation point-connection mode
+         * @param valueAxis     numeric-axis configuration
+         * @param legend        legend placement
+         * @param valueLabels   per-point value label mode
+         * @param size          sizing policy
          */
-        public Line(ChartData data, boolean smooth, AxisSpec valueAxis, LegendPosition legend,
-                    ValueLabelMode valueLabels, ChartSize size) {
-            this(data, smooth, false, valueAxis, legend, valueLabels, size, true);
+        public Line(ChartData data, LineInterpolation interpolation, AxisSpec valueAxis,
+                    LegendPosition legend, ValueLabelMode valueLabels, ChartSize size) {
+            this(data, interpolation, false, valueAxis, legend, valueLabels, size, true);
         }
 
         @Override
@@ -306,7 +309,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
          */
         public static final class Builder {
             private ChartData data;
-            private boolean smooth = false;
+            private LineInterpolation interpolation = LineInterpolation.LINEAR;
             private boolean area = false;
             private AxisSpec valueAxis = AxisSpec.defaults();
             private LegendPosition legend = LegendPosition.NONE;
@@ -326,16 +329,14 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
             }
 
             /**
-             * Sets smoothing. Curves are Catmull-Rom splines subdivided at a
-             * fixed step, so geometry stays deterministic. Like any
-             * interpolating spline, a curve may slightly overshoot local
-             * extremes between data points on sharp value swings.
+             * Sets how the line connects its points; see
+             * {@link LineInterpolation} for the beauty-vs-accuracy trade-offs.
              *
-             * @param v true for curved segments
+             * @param mode point-connection mode
              * @return this builder
              */
-            public Builder smooth(boolean v) {
-                this.smooth = v;
+            public Builder interpolation(LineInterpolation mode) {
+                this.interpolation = mode;
                 return this;
             }
 
@@ -412,7 +413,7 @@ public sealed interface ChartSpec permits ChartSpec.Bar, ChartSpec.Line, ChartSp
              * @return line spec
              */
             public Line build() {
-                return new Line(data, smooth, area, valueAxis, legend, valueLabels, size,
+                return new Line(data, interpolation, area, valueAxis, legend, valueLabels, size,
                         showCategoryLabels);
             }
         }

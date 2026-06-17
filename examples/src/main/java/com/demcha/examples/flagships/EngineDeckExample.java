@@ -141,9 +141,14 @@ public final class EngineDeckExample {
     public static Path generateBanner() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "engine-banner.pdf");
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(DocumentPageSize.A4.landscape())
+                // The banner content is a top-anchored stack; the default
+                // A4-landscape page left a thick dead dark border around it.
+                // Crop the page to wrap the content tightly — width fits the
+                // 749pt rules plus a thin frame, height wraps the logo→chips
+                // stack — so the rasterised hero is all signal, no padding.
+                .pageSize(801, 525)
                 .pageBackground(HERO_BG)
-                .margin(16, 16, 16, 16)
+                .margin(8, 8, 8, 8)
                 .create()) {
             document.metadata(DocumentMetadata.builder()
                     .title("GraphCompose v" + VERSION + " — " + CODENAME)
@@ -306,7 +311,7 @@ public final class EngineDeckExample {
     // ─────────────────────────────────────────────────────────────────────────
 
     private static void banner(SectionBuilder s) {
-        s.softPanel(HERO_BG, 12, 30)
+        s.softPanel(HERO_BG, 12, 18)
                 .spacing(16)
                 // Logo + version badge on one line; tagline below.
                 .add(brandLine())

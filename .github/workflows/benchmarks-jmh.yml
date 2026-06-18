@@ -41,6 +41,9 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install graph-compose-fonts (the benchmarks render with the bundled families)
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
       - name: Install root artifact (graph-compose + test-jar)
         run: ./mvnw -B -ntp -DskipTests install -pl .
 

@@ -44,6 +44,18 @@
             <version>${graphcompose.version}</version>
         </dependency>
 
+        <!--
+            Bundled Google fonts split out of the engine jar in v1.8.0. The
+            engine no longer ships them, so the examples (which render CVs and
+            showcases in those families) declare the companion artifact
+            explicitly at its own independent version.
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-fonts</artifactId>
+            <version>${graphcompose.fonts.version}</version>
+        </dependency>
+
         <!-- DOCX export (WordExportExample): poi-ooxml is optional in the
              GraphCompose POM, so consumers add it explicitly.
              Keep in lockstep with the root pom's poi.version. -->

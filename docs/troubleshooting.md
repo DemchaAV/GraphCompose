@@ -73,8 +73,8 @@ More: [examples/README](../examples/README.md).
 
 **Build fails copying fonts — `The cloud file provider is not running`.**
 The checkout lives in a cloud-synced folder (OneDrive / Dropbox / iCloud)
-and the font resources under `src/main/resources/fonts/` are dehydrated
-placeholders. Make sure the sync client is running and the files are
+and the font resources under `fonts/src/main/resources/fonts/` (the
+`graph-compose-fonts` module, since v1.8.0) are dehydrated placeholders. Make sure the sync client is running and the files are
 downloaded locally ("Always keep on this device"), or move the checkout
 outside the synced folder.
 

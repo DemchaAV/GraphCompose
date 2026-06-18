@@ -38,6 +38,10 @@
   <img src="./assets/readme/repository_showcase_render.png" alt="GraphCompose render preview" width="780"/>
 </p>
 
+<p align="center">
+  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-banner.pdf"><b>view the source PDF</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"><code>EngineDeckExample</code></a>. The engine renders its own marketing.</sub>
+</p>
+
 ## Why GraphCompose
 
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.

@@ -58,6 +58,30 @@ class VersionConsistencyGuardTest {
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("benchmarks/pom.xml")))
                 .describedAs("benchmarks must inherit the root version (%s)", root)
                 .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("bundle/pom.xml")))
+                .describedAs("bundle (graph-compose-bundle) tracks the engine line and must equal the root version (%s)", root)
+                .isEqualTo(root);
+
+        // NOTE: fonts/pom.xml (graph-compose-fonts) is intentionally NOT checked
+        // here. It carries an independent version line (it ships on its own
+        // fonts-v* tag and is bumped only when the font set changes), so it must
+        // be free to diverge from the engine version.
+    }
+
+    @Test
+    void bundledFontsVersionAgreesAcrossModules() throws Exception {
+        // graph-compose-fonts carries an independent version line. The engine
+        // does NOT depend on the fonts artifact (its tests read the fonts from
+        // the sibling module's source), so the ${graphcompose.fonts.version}
+        // property that pins the artifact lives only in the modules that consume
+        // it: the aggregator (inherited by examples + benchmarks) and the bundle.
+        // This guards the PR-7.1 drift class: those must always agree, even
+        // though they differ from the engine version line.
+        String aggregator = fontsVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"));
+
+        assertThat(fontsVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml")))
+                .describedAs("bundle graphcompose.fonts.version must match the aggregator's (%s)", aggregator)
+                .isEqualTo(aggregator);
     }
 
     @Test
@@ -200,6 +224,15 @@ class VersionConsistencyGuardTest {
 
     private static boolean declaresOwnVersion(Path pom) throws Exception {
         return directChild(parse(pom).getDocumentElement(), "version") != null;
+    }
+
+    private static String fontsVersionProperty(Path pom) throws IOException {
+        Matcher matcher = Pattern.compile("<graphcompose\\.fonts\\.version>([^<]+)</graphcompose\\.fonts\\.version>")
+                .matcher(Files.readString(pom));
+        assertThat(matcher.find())
+                .describedAs("expected a <graphcompose.fonts.version> property in %s", pom)
+                .isTrue();
+        return matcher.group(1).trim();
     }
 
     private static String effectiveVersion(Path pom) throws Exception {

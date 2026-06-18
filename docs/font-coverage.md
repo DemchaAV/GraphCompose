@@ -57,9 +57,16 @@ for the full set (`dot`, `arrow`, `chevron`, `diamond`, `star`, `checkmark`,
 
 ### 2. Use a font that covers the range
 
-`FontName.JETBRAINS_MONO` is bundled for monospaced code and data. For broader
-Unicode coverage, register a custom font family that includes the glyphs you
-need and select it through `DocumentTextStyle.fontName(...)`.
+The curated Google families — `FontName.JETBRAINS_MONO` for monospaced code and
+data, plus the serif / sans / Thai families with broader Unicode coverage — ship
+in the separate `io.github.demchaav:graph-compose-fonts` artifact since v1.8.0.
+Add it (or the `graph-compose-bundle` aggregate) to use them; without it on the
+classpath the engine renders with the standard-14 fonts only, and asking for a
+bundled family fails fast with a message naming the dependency. See the
+[v1.8.0 fonts migration note](migration/v1.8.0-fonts.md).
+
+For glyphs no bundled family covers, register a custom font family that includes
+them and select it through `DocumentTextStyle.fontName(...)`.
 
 ### 3. Stay inside WinAnsi
 

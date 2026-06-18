@@ -63,6 +63,25 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 dependencies { implementation("io.github.demchaav:graph-compose:1.7.1") }
 ```
 
+> **Bundled fonts (from v1.8.0).** The curated Google fonts no longer ship
+> inside the engine jar &mdash; they live in an independently-versioned
+> companion artifact so an engine upgrade never re-downloads ~18&nbsp;MB of
+> fonts. Pure-text and standard-14 documents need nothing extra; to use the
+> bundled families, add:
+>
+> ```xml
+> <dependency>
+>     <groupId>io.github.demchaav</groupId>
+>     <artifactId>graph-compose-fonts</artifactId>
+>     <version>1.0.0</version>
+> </dependency>
+> ```
+>
+> Prefer a single "batteries-included" coordinate? Depend on
+> `io.github.demchaav:graph-compose-bundle` (same version as `graph-compose`
+> above) to pull the engine + fonts together. Full details and upgrade steps:
+> the [v1.8.0 fonts migration note](./docs/migration/v1.8.0-fonts.md).
+
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
 > (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
 > [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)

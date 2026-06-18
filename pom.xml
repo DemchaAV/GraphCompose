@@ -67,6 +67,7 @@
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
@@ -216,6 +217,16 @@
         </dependency>
 
         <!-- Test dependencies -->
+        <!--
+            The bundled Google fonts (graph-compose-fonts) are NOT a dependency
+            of the engine — not even at test scope. The engine's visual /
+            snapshot suite renders with them, but they are placed on the TEST
+            classpath directly from the sibling module's source via the
+            <testResources> entry in <build> below. This keeps the engine fully
+            decoupled from the fonts ARTIFACT (no Maven coordinate to resolve, so
+            an engine-only build never needs the fonts jar published or installed
+            first), while still exercising the real font binaries.
+        -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -282,6 +293,26 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <!-- Default test resources. -->
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <!--
+                Bundled Google fonts live in the sibling graph-compose-fonts
+                module since v1.8.0. The engine's visual / snapshot suite renders
+                with them, so put that module's resources on the TEST classpath
+                directly from source. This decouples the engine build from the
+                fonts ARTIFACT (no Maven dependency to resolve, so no CI/local
+                bootstrap is needed) while still exercising the real binaries.
+                Test-only: it never reaches the main jar (built from
+                src/main/resources) and is excluded from the tests-jar below.
+            -->
+            <testResource>
+                <directory>${project.basedir}/fonts/src/main/resources</directory>
+            </testResource>
+        </testResources>
+
         <!--
             Pin the default-lifecycle plugins (clean / install / site /
             resources / deploy) so requirePluginVersions in the enforcer
@@ -397,21 +428,37 @@
             </plugin>
 
             <!--
-                Publish a tests-classifier jar so the sibling `benchmarks/`
+                Build a tests-classifier jar so the sibling `benchmarks/`
                 module can reuse the test-only fixtures (com.demcha.mock.*,
                 etc.) without duplicating them. The artifact is
                 graph-compose-${version}-tests.jar in the local repository
-                after `mvn install`.
+                after `mvn install`. It is a LOCAL build aid only: the
+                `release` profile disables this execution (phase=none) so the
+                tests jar is never attached and therefore never deployed to
+                Maven Central. See the release profile below.
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>${maven.jar.plugin.version}</version>
                 <executions>
                     <execution>
+                        <id>attach-test-jar</id>
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
+                        <configuration>
+                            <!--
+                                The bundled fonts are on the test classpath via
+                                <testResources> for the engine's own suite; keep
+                                them OUT of the tests-jar. The benchmarks module
+                                (the only consumer of this jar) gets fonts from
+                                the graph-compose-fonts artifact instead.
+                            -->
+                            <excludes>
+                                <exclude>fonts/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -448,6 +495,28 @@
             <id>release</id>
             <build>
                 <plugins>
+                    <!--
+                        Keep the tests-classifier jar OUT of the published
+                        artifact set. The default build attaches a
+                        graph-compose-${version}-tests.jar (for the local
+                        benchmarks module); on a release `deploy` that jar
+                        would otherwise be uploaded to Maven Central, where it
+                        is pure dead weight (test classes + heavy golden
+                        snapshot / visual-baseline resources). Re-declaring the
+                        same execution id bound to phase=none unbinds it, so
+                        the release build never produces or attaches it.
+                    -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven.jar.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-test-jar</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>

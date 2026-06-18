@@ -325,9 +325,27 @@ public final class FontFamilyDefinition {
             String normalizedPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
             InputStream inputStream = FontFamilyDefinition.class.getResourceAsStream(normalizedPath);
             if (inputStream == null) {
-                throw new IllegalArgumentException("Classpath font resource not found: " + normalizedPath);
+                throw new IllegalArgumentException(missingResourceMessage(normalizedPath));
             }
             return inputStream;
+        }
+
+        /**
+         * Builds the not-found message. For a bundled Google-font resource the
+         * likely cause is that the separately-versioned font artifact is not on
+         * the classpath (the fonts moved out of the core jar in v1.8.0), so the
+         * message points at the fix instead of a bare path.
+         */
+        private static String missingResourceMessage(String normalizedPath) {
+            if (normalizedPath.startsWith("/fonts/google/")) {
+                return "Bundled font resource not found: " + normalizedPath
+                        + ". The bundled Google fonts ship in a separate artifact since v1.8.0 — "
+                        + "add the dependency io.github.demchaav:graph-compose-fonts (or the "
+                        + "io.github.demchaav:graph-compose-bundle aggregate) to your build to use "
+                        + "them, or register your own font with FontFamilyDefinition. "
+                        + "See https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v1.8.0-fonts.md";
+            }
+            return "Classpath font resource not found: " + normalizedPath;
         }
 
         @Override

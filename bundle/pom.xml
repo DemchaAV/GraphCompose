@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        "Batteries-included" convenience aggregate. Depending on this single
+        artifact pulls the lean engine plus the bundled Google fonts at a
+        compatible, pinned pair of versions — the one-line install for newcomers
+        who want the pre-split behaviour back. Power users instead depend on
+        graph-compose directly and pick their own graph-compose-fonts version.
+
+        Versioning: this module tracks the ENGINE line (its version == the engine
+        version, bumped in lockstep), and pins a specific graph-compose-fonts
+        version. It is standalone (no Maven parent) and pom-packaged, so Maven
+        Central needs no sources/javadoc jars for it.
+    -->
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-bundle</artifactId>
+    <!--
+        Tracks the engine line. Currently 1.7.1 to match the engine version in
+        the repo; the release-cut `versions:set` bumps engine + bundle to the
+        release version in lockstep, while graph-compose-fonts stays on its own
+        line. The graph-compose dependency below uses ${project.version}, so it
+        follows automatically.
+    -->
+    <version>1.7.1</version>
+    <packaging>pom</packaging>
+
+    <name>GraphCompose Bundle</name>
+    <description>Batteries-included aggregate: the GraphCompose engine plus the bundled Google fonts at compatible versions.</description>
+    <url>https://github.com/DemchaAV/GraphCompose</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>DemchaAV</id>
+            <name>Artem Demchyshyn</name>
+            <email>demchishynartem@gmail.com</email>
+            <url>https://github.com/DemchaAV</url>
+            <roles>
+                <role>Lead Developer</role>
+                <role>Architect</role>
+            </roles>
+            <timezone>UTC 0</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/DemchaAV/GraphCompose.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/DemchaAV/GraphCompose.git</developerConnection>
+        <url>https://github.com/DemchaAV/GraphCompose/tree/main</url>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Pinned bundled-fonts version this bundle ships with. -->
+        <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
+
+        <gpg.skip>true</gpg.skip>
+    </properties>
+
+    <dependencies>
+        <!-- The engine, at this bundle's (== engine) version. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- The bundled fonts, at the pinned independent fonts version. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-fonts</artifactId>
+            <version>${graphcompose.fonts.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!--
+            Maven Central release. A pom-packaged artifact needs no
+            sources/javadoc jars; it only requires a signed .pom uploaded via
+            central-publishing. Activated with `-P release`; the publish workflow
+            flips -Dgpg.skip=false on the engine `v*` tag (the bundle ships
+            together with the engine it pins).
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${gpg.skip}</skip>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

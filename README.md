@@ -19,7 +19,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"** (native vector charts — bar / line / pie + inline sparklines, monotone / smooth line interpolation, free-form `ShapeOutline.Path` clip, SVG path / icon import with native gradients, and a leaner publication — the bundled Google fonts split into the separate `graph-compose-fonts` artifact. Engine APIs stay source- & binary-compatible with v1.7; one consumption change — add `graph-compose-fonts` or `graph-compose-bundle` to keep the bundled fonts, see the [migration note](./docs/migration/v1.8.0-fonts.md).)
+> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"**: native vector charts, SVG &amp; gradient graphics, free-form clipping, and a leaner engine artifact. &mdash; **[What's new in v1.8 &darr;](#whats-new-in-v18)**
 
 > &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -46,10 +46,27 @@
 
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.
 - **Deterministic by design.** Two-pass layout. Snapshots are stable across machines, so layout regressions are catchable in tests before any byte ships.
-- **Cinematic-by-default.** `BusinessTheme` + soft panels + accent strips + transforms + advanced tables are first-class primitives, not workarounds.
+- **Cinematic by default.** `BusinessTheme`, soft panels, accent strips, transforms, native vector charts, and gradients are first-class primitives, not workarounds.
 - **PDFBox isolated, DOCX optional.** Single backend interface. Apache POI&ndash;backed DOCX export is available for compatible semantic content &mdash; see [support matrix](#output-support) for limitations.
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
+
+## What's new in v1.8
+
+The **"illustrative"** release &mdash; the engine gains a vector-graphics dimension.
+
+<p align="center">
+  <img src="./assets/readme/chart-showcase.png" alt="GraphCompose native vector charts" width="720"/>
+</p>
+
+- **Native vector charts** &mdash; bar / line / pie, inline sparklines, and `MONOTONE` / `SMOOTH` line interpolation, drawn as native PDF Béziers (no rasterization): `section.chart(ChartSpec.line()&hellip;, style)`.
+- **SVG path &amp; icon import** &mdash; `SvgIcon.parse(svg)` turns SVG into native vector geometry; recolour per use and place with `addSvgIcon(icon, width, align)`.
+- **Gradients &amp; free-form clipping** &mdash; linear / radial `DocumentPaint` fills and arbitrary `ShapeOutline.Path` clip regions.
+- **Block-level alignment** &mdash; `addAligned(HorizontalAlign.CENTER, node)` centres or right-aligns any fixed node without a wrapper container.
+- **`keepTogether()` pagination** &mdash; keep a section from splitting across a page break.
+- **Leaner publication** &mdash; the bundled Google fonts moved to the independently-versioned `graph-compose-fonts` artifact, so the engine jar dropped from ~20&nbsp;MB to ~2&nbsp;MB. Pure-text / standard-14 documents need nothing extra; add `graph-compose-fonts` (or `graph-compose-bundle`) to keep the bundled families &mdash; see the [migration note](./docs/migration/v1.8.0-fonts.md).
+
+Core document APIs stay source- and binary-compatible with v1.7 (`ConfigLoader` is the one removal). Full notes in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Installation
 
@@ -162,7 +179,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 |---|---|---|---|---|
 | **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
 | **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
-| **iText 7** | Low-level page primitives + high-level helpers | Manual + helpers | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
+| **iText 7** | Object/layout API + low-level canvas | Automatic layout with direct-positioning options | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
 | **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
 | **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
 
@@ -181,47 +198,38 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 
 > **Choosing a template surface** &mdash; layered (`cv.v2`), classic (`cv.presets`), or the built-in `*TemplateV2` family? See **[Which template system should I use?](./docs/templates/which-template-system.md)** for the status matrix, decision tree, and `classic → layered` migration map.
 
-## What's in v1.6 &mdash; "expressive"
+## v1.8 primitives in 30 lines
 
-- **Layered templates** &mdash; 16 CV and 15 paired cover-letter presets on the layered `cv.v2` / `coverletter.v2` architecture (data → theme → components → widgets → presets), one-liner `create()` factories over a typed `CvDocument` / `CoverLetterDocument`. Inline markdown, multi-column layouts. The going-forward standard for new template families. See [`docs/templates/v2-layered/README.md`](./docs/templates/v2-layered/README.md). (The earlier `BusinessTheme`-based preset surface is now deprecated.)
-- **Composed primitives** &mdash; `ListBuilder.addItem(label, Consumer)` (nested lists), `DocumentTableCell.node(...)` (any node inside a cell), `CanvasLayerNode` (pixel-precise free-canvas placement).
-- **Architecture hardening** &mdash; `@Internal` API stability marker, public `PdfFragmentRenderHandler` SPI, `DocumentRenderingException` on the convenience render path, documented thread-safety contract.
+Three snippets from the new vector surfaces. Full runnable versions live in the [examples gallery](./examples/README.md).
 
-Full notes in [`CHANGELOG.md`](./CHANGELOG.md). Upgrade guide: [`docs/roadmaps/migration-v1-5-to-v1-6.md`](./docs/roadmaps/migration-v1-5-to-v1-6.md).
-
-## v1.6 primitives in 30 lines
-
-Three snippets, one per new primitive. Full runnable versions live in the [examples gallery](./examples/README.md).
-
-**Nested list** &mdash; builder-callback child scopes with a per-depth marker cascade.
+**Native chart** &mdash; categories + series in, native vector bars out (no rasterization).
 
 ```java
-document.pageFlow().addList(list -> list
-    .addItem("Backend platform", row -> row
-        .addItem("Java 21, Spring Boot, PostgreSQL")
-        .addItem("REST APIs and event-driven services"))
-    .addItem("Document generation", row -> row
-        .addItem("PDF rendering pipeline")
-        .addItem("Layout snapshot tests")));
+ChartData revenue = ChartData.builder()
+    .categories("Q1", "Q2", "Q3", "Q4")
+    .series("2024", 12.4, 15.1, 9.8, 14.2)
+    .series("2025", 14.0, 18.2, 11.3, 16.9)
+    .build();
+section.chart(ChartSpec.bar().data(revenue)
+    .legend(LegendPosition.BOTTOM)
+    .size(ChartSize.aspectRatio(16, 7))
+    .build());
 ```
 
-**Composed table cell** &mdash; any composable node inside a cell, two-pass row measurement.
+**Overshoot-free line** &mdash; a smooth curve constrained to never overshoot the data range.
 
 ```java
-DocumentTableCell richSummary = DocumentTableCell.node(
-        new ParagraphNode("Summary",
-                "**Q3 results** were *strong* — revenue grew 18% YoY.",
-                bodyStyle, TextAlign.LEFT, 1.0,
-                DocumentInsets.zero(), DocumentInsets.zero()));
+section.chart(ChartSpec.line().data(series)
+    .interpolation(LineInterpolation.MONOTONE)
+    .build());
 ```
 
-**Canvas layer** &mdash; pixel-precise `(x, y)` placement inside a fixed bounding box.
+**SVG import + alignment** &mdash; parse SVG to native geometry, seat any fixed node across the width.
 
 ```java
-document.pageFlow().addCanvas(523, 360, canvas -> canvas
-        .clipPolicy(ClipPolicy.CLIP_BOUNDS)
-        .position(headline, 0, 60)
-        .position(rule(503, 1.4, accent), 10, 32));
+SvgIcon globe = SvgIcon.parse(svgMarkup);
+flow.addSvgIcon(globe, 48, HorizontalAlign.CENTER);
+flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
 ```
 
 ## Architecture

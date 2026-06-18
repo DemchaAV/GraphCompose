@@ -19,7 +19,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"**: native vector charts, SVG &amp; gradient graphics, free-form clipping, and a leaner engine artifact. &mdash; **[What's new in v1.8 &darr;](#whats-new-in-v18)**
+> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"**: native vector charts, SVG &amp; gradient graphics, free-form clipping, and a leaner engine artifact. **[What's new in v1.8 &darr;](#whats-new-in-v18)**
 
 > &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.

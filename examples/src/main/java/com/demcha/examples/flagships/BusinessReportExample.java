@@ -8,11 +8,7 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.ClipPolicy;
-import com.demcha.compose.document.style.DocumentColor;
-import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.style.DocumentStroke;
-import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.theme.BusinessTheme;
@@ -152,9 +148,9 @@ public final class BusinessReportExample {
                                             .name("HeroFrame")
                                             .roundedRect(210, 110, 12)
                                             .fillColor(NAVY_DARK)
-                                            .stroke(DocumentStroke.of(GOLD, 0.6))
+                                            .stroke(DocumentStroke.of(GOLD, 1.5))
                                             .clipPolicy(ClipPolicy.CLIP_PATH)
-                                            .center(buildHeroScene(204, 104)))))
+                                            .center(buildHeroScene(212, 112)))))
 
                     // Three KPI cards
                     .addRow("KpiRow", row -> row
@@ -175,7 +171,7 @@ public final class BusinessReportExample {
                             .spacing(18)
                             .weights(8, 12)
                             .addSection("Highlights", section -> section
-                                    .softPanel(DocumentColor.WHITE, 10, 16)
+                                    .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 16)
                                     .stroke(DocumentStroke.of(CARD_RING, 0.5))
                                     .accentLeft(NAVY, 3)
                                     .spacing(8)
@@ -199,7 +195,7 @@ public final class BusinessReportExample {
                                             .lineSpacing(1.45)
                                             .margin(DocumentInsets.zero())))
                             .addSection("Chart", section -> section
-                                    .softPanel(DocumentColor.WHITE, 10, 14)
+                                    .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 14)
                                     .stroke(DocumentStroke.of(CARD_RING, 0.5))
                                     .accentLeft(GOLD, 3)
                                     .spacing(6)
@@ -225,7 +221,7 @@ public final class BusinessReportExample {
                     // accent strip so the table reads as a distinct
                     // dashboard card rather than a bare grid.
                     .addSection("MetricsCard", card -> card
-                            .softPanel(DocumentColor.WHITE, 10, 12)
+                            .softPanel(DocumentColor.WHITE, DocumentCornerRadius.bottom(10), 12)
                             .stroke(DocumentStroke.of(CARD_RING, 0.5))
                             .accentTop(GOLD, 1.5)
                             .spacing(4)
@@ -305,7 +301,7 @@ public final class BusinessReportExample {
         // RowBuilder, so we keep the layout column-only inside the
         // outer KpiRow row.
         section
-                .softPanel(DocumentColor.WHITE, 8, 14)
+                .softPanel(DocumentColor.WHITE, DocumentCornerRadius.bottom(8), 14)
                 .stroke(DocumentStroke.of(CARD_RING, 0.6))
                 .accentTop(GOLD, 1.5)
                 .spacing(2)

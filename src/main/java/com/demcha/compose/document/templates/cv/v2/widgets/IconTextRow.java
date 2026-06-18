@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.widgets;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
@@ -88,6 +89,51 @@ public final class IconTextRow {
                     .rich(rich -> {
                         if (glyph != null && glyphColor != null) {
                             rich.shape(glyph.outline(iconSize), glyphColor, null,
+                                    InlineImageAlignment.CENTER, 0.0, link);
+                        }
+                        if (link != null) {
+                            rich.link(GAP + label, link);
+                        } else {
+                            rich.style(GAP + label, style);
+                        }
+                    });
+        });
+    }
+
+    /**
+     * Renders an icon + text row from a pre-decoded raster glyph.
+     *
+     * <p>Public API retained for callers that supply their own raster
+     * {@link DocumentImageData} icon. The bundled CV presets use the
+     * recolorable {@link SvgGlyph} overload above; prefer it for new code.</p>
+     *
+     * @param host     host section the row paragraph is appended to
+     * @param icon     glyph image payload (already decoded / cached by the
+     *                 caller); when {@code null} the row renders text only
+     * @param iconSize icon edge length in points (width == height)
+     * @param text     label text rendered after the icon
+     * @param style    text style for the label
+     * @param link     optional link wrapping the whole row (icon + label);
+     *                 {@code null} renders a non-clickable row
+     * @param margin   paragraph margin (vertical rhythm between rows)
+     */
+    public static void render(SectionBuilder host, DocumentImageData icon,
+                              double iconSize, String text,
+                              DocumentTextStyle style, DocumentLinkOptions link,
+                              DocumentInsets margin) {
+        Objects.requireNonNull(host, "host");
+        Objects.requireNonNull(style, "style");
+        String label = text == null ? "" : text;
+        DocumentInsets rowMargin = margin == null ? DocumentInsets.zero() : margin;
+
+        host.addParagraph(paragraph -> {
+            paragraph.textStyle(style)
+                    .align(TextAlign.LEFT)
+                    .link(link)
+                    .margin(rowMargin)
+                    .rich(rich -> {
+                        if (icon != null) {
+                            rich.image(icon, iconSize, iconSize,
                                     InlineImageAlignment.CENTER, 0.0, link);
                         }
                         if (link != null) {

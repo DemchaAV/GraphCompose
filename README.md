@@ -19,7 +19,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"** (native vector charts — bar / line / pie + inline sparklines, monotone / smooth line interpolation, free-form `ShapeOutline.Path` clip, SVG path / icon import with native gradients; additive, zero breaking from v1.7)
+> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"** (native vector charts — bar / line / pie + inline sparklines, monotone / smooth line interpolation, free-form `ShapeOutline.Path` clip, SVG path / icon import with native gradients, and a leaner publication — the bundled Google fonts split into the separate `graph-compose-fonts` artifact. Engine APIs stay source- & binary-compatible with v1.7; one consumption change — add `graph-compose-fonts` or `graph-compose-bundle` to keep the bundled fonts, see the [migration note](./docs/migration/v1.8.0-fonts.md).)
 
 > &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.

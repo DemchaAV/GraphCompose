@@ -237,6 +237,32 @@ Entries land here as they merge.
   node-label settings survive the toggle, `debug(none())` reliably disables
   everything — and disabled debug output stays byte-identical.
 
+### Build & distribution
+
+- **Bundled Google fonts moved to a separate, independently-versioned
+  artifact** (`io.github.demchaav:graph-compose-fonts`). **Breaking for
+  consumers who use the bundled families.** The ~18 MB of curated Google fonts
+  no longer ship inside the `graph-compose` jar, so an engine upgrade never
+  re-downloads them and the engine artifact drops from ~40 MB to a few MB. The
+  public `FontName` constants and the `DefaultFonts` catalog are unchanged
+  (source- and binary-compatible), and the classpath layout `fonts/google/...`
+  is preserved byte-for-byte. To keep the bundled fonts, add
+  `io.github.demchaav:graph-compose-fonts` (its own version line, starting at
+  `1.0.0`) to your build, or depend on the new "batteries-included"
+  `io.github.demchaav:graph-compose-bundle` (engine + fonts at compatible
+  versions). With neither on the classpath, standard-14 documents render
+  unchanged and requesting a bundled family fails fast with a message that
+  names the missing dependency. See
+  [docs/migration/v1.8.0-fonts.md](docs/migration/v1.8.0-fonts.md).
+- **Leaner Maven Central publication.** The release build no longer attaches or
+  uploads the `-tests` classifier jar (it stays a local-only build aid for the
+  benchmarks module), and with the fonts gone the `-sources.jar` no longer
+  carries font binaries either. The published artifact set is now just the
+  engine bytecode plus the small template assets.
+- **`graph-compose-fonts` releases on its own `fonts-v*` tag** via a dedicated
+  publish workflow, so the font set ships only when it actually changes,
+  independent of the engine's `v*` release cadence.
+
 ### Bug fixes
 
 - **A stray non-drawing element no longer breaks a whole SVG icon.** A

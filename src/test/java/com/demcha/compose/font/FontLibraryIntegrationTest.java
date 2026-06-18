@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FontLibraryIntegrationTest {
 
@@ -36,7 +37,10 @@ class FontLibraryIntegrationTest {
     @Test
     void shouldRegisterCustomFontFamilyFromFilePaths() throws Exception {
         FontName customFamily = FontName.of("Brand Sans");
-        Path fontsRoot = Path.of("src", "main", "resources", "fonts", "google", "lato");
+        // The bundled fonts moved to the graph-compose-fonts module in v1.8.0.
+        // This test exercises file-based registration, so it reads the real TTFs
+        // from that module's resources (engine test cwd is the repo root).
+        Path fontsRoot = Path.of("fonts", "src", "main", "resources", "fonts", "google", "lato");
 
         try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .registerFontFamily(
@@ -61,5 +65,33 @@ class FontLibraryIntegrationTest {
             assertThat(fonts.getFont(customFamily, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(customFamily, WordFont.class)).isPresent();
         }
+    }
+
+    @Test
+    void shouldMaterializeStandard14FontsWithoutBundledFontsArtifact() {
+        // The standard-14 families embed nothing and need no PDF document and no
+        // graph-compose-fonts jar — this is the baseline an engine-only consumer
+        // (no bundled fonts on the classpath) still gets.
+        FontLibrary standard = DefaultFonts.standardLibrary();
+
+        assertThat(standard.getFont(FontName.HELVETICA, PdfFont.class)).isPresent();
+        assertThat(standard.getFont(FontName.TIMES_ROMAN, PdfFont.class)).isPresent();
+        assertThat(standard.getFont(FontName.COURIER, PdfFont.class)).isPresent();
+    }
+
+    @Test
+    void shouldGiveActionableErrorWhenBundledFontResourceMissing() {
+        // Simulates the bundled fonts being absent (graph-compose-fonts not on
+        // the classpath): a fonts/google/... resource that cannot be found must
+        // point the caller at the companion artifact, not just print a raw path.
+        FontFamilyDefinition missing = FontFamilyDefinition
+                .classpath(FontName.of("Missing Family"), "fonts/google/__missing__/Missing-Regular.ttf")
+                .build();
+        FontFamilyDefinition.FontBinarySource regular = missing.fontSourceSet().orElseThrow().regular();
+
+        assertThatThrownBy(regular::openStream)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("graph-compose-fonts")
+                .hasMessageContaining("fonts/google/__missing__/Missing-Regular.ttf");
     }
 }

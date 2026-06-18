@@ -79,6 +79,14 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Install graph-compose-fonts into the local repo
+        # The engine's visual / snapshot suite renders with the bundled
+        # Google fonts, which now live in the separately-versioned
+        # graph-compose-fonts artifact (engine depends on it at test
+        # scope). Build + install it locally so the verify step below can
+        # resolve it even before it (or this engine version) is on Central.
+        run: ./mvnw -B -ntp -f fonts/pom.xml clean install
+
       - name: Verify (full canonical suite green at tagged commit)
         # Re-verify the tagged commit before publishing — defence in
         # depth against a tag pushed from a broken branch by mistake.
@@ -86,12 +94,26 @@ jobs:
         # but failing here surfaces a clearer error.
         run: ./mvnw -B -ntp clean verify -pl .
 
-      - name: Publish to Maven Central
+      - name: Publish engine to Maven Central
         # Activates the release profile (sources + javadoc + gpg sign +
         # central-publishing) and flips gpg.skip=false. The deploy
         # phase invokes central-publishing-maven-plugin's upload goal
         # which blocks until Sonatype's validator confirms validation.
+        # The release profile also disables the tests-jar execution, so
+        # only the main + sources + javadoc + pom artefacts are uploaded.
         run: ./mvnw -B -ntp -P release -DskipTests -Dgpg.skip=false deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+      - name: Publish bundle to Maven Central
+        # The graph-compose-bundle convenience aggregate pins this engine
+        # version + a compatible graph-compose-fonts version. It tracks the
+        # engine line, so it ships on the same v* tag. pom-packaged → only a
+        # signed .pom is uploaded; engine + fonts resolve from the local repo
+        # (installed by the engine deploy above and the fonts step earlier).
+        run: ./mvnw -B -ntp -f bundle/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

@@ -62,11 +62,26 @@
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.10</byteBuddy.version>
 
+        <!--
+            Bundled Google fonts moved to the independently-versioned
+            io.github.demchaav:graph-compose-fonts artifact in v1.8.0 so an
+            engine upgrade never re-ships ~18 MB of fonts. The engine depends
+            on it at TEST scope only (the visual / snapshot suite renders with
+            the bundled families); it never propagates to consumers, who add
+            graph-compose-fonts (or graph-compose-bundle) themselves. Its
+            version is an independent line — do NOT fold it into the engine
+            lockstep `versions:set`. Keep in lockstep with the same property in
+            aggregator/pom.xml and bundle/pom.xml (no shared parent to
+            single-source it; VersionConsistencyGuardTest enforces agreement).
+        -->
+        <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+
         <!-- Build plugins -->
         <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
@@ -216,6 +231,20 @@
         </dependency>
 
         <!-- Test dependencies -->
+        <!--
+            The bundled Google font binaries (graph-compose-fonts) are no
+            longer part of the main artifact. The engine's visual / snapshot
+            suite still renders with them, so they are pulled at test scope.
+            Test scope is deliberate: it keeps fonts off the consumer-facing
+            classpath, so upgrading the engine never drags fonts along.
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-fonts</artifactId>
+            <version>${graphcompose.fonts.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -397,18 +426,22 @@
             </plugin>
 
             <!--
-                Publish a tests-classifier jar so the sibling `benchmarks/`
+                Build a tests-classifier jar so the sibling `benchmarks/`
                 module can reuse the test-only fixtures (com.demcha.mock.*,
                 etc.) without duplicating them. The artifact is
                 graph-compose-${version}-tests.jar in the local repository
-                after `mvn install`.
+                after `mvn install`. It is a LOCAL build aid only: the
+                `release` profile disables this execution (phase=none) so the
+                tests jar is never attached and therefore never deployed to
+                Maven Central. See the release profile below.
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>${maven.jar.plugin.version}</version>
                 <executions>
                     <execution>
+                        <id>attach-test-jar</id>
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
@@ -448,6 +481,28 @@
             <id>release</id>
             <build>
                 <plugins>
+                    <!--
+                        Keep the tests-classifier jar OUT of the published
+                        artifact set. The default build attaches a
+                        graph-compose-${version}-tests.jar (for the local
+                        benchmarks module); on a release `deploy` that jar
+                        would otherwise be uploaded to Maven Central, where it
+                        is pure dead weight (test classes + heavy golden
+                        snapshot / visual-baseline resources). Re-declaring the
+                        same execution id bound to phase=none unbinds it, so
+                        the release build never produces or attaches it.
+                    -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven.jar.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-test-jar</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>

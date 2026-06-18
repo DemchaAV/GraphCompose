@@ -423,14 +423,24 @@ try {
     Note ("tag {0}: available OK" -f $tag)
 
     Step 1 "Bump versions to $Version (poms + README install snippets)"
-    # All four version sites must move together or VersionConsistencyGuardTest
-    # fails the verify gate below: the standalone library pom.xml (the published
-    # JitPack artifact), the reactor aggregator, and the examples/benchmarks
-    # children whose inherited <parent> version tracks the aggregator.
+    # All ENGINE-LINE version sites must move together or
+    # VersionConsistencyGuardTest fails the verify gate below: the standalone
+    # library pom.xml (the published artifact), the reactor aggregator, the
+    # examples/benchmarks children whose inherited <parent> version tracks the
+    # aggregator, and the standalone bundle aggregate (graph-compose-bundle).
+    # NOTE: graph-compose-fonts is deliberately absent — it carries an
+    # INDEPENDENT version line (currently 1.0.0) and ships on its own fonts-v*
+    # tag, so an engine release must never rewrite it. Its first <version> is
+    # 1.0.0, not the engine version, so even a stray reactor bump would skip it.
     Update-PomVersion (Join-Path $repoRoot 'pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
+    # Bundle tracks the engine line: its project <version> bumps here; its
+    # graph-compose dep is ${project.version} (follows automatically) and its
+    # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
+    # the bump regex does not touch the $-prefixed property reference).
+    Update-PomVersion (Join-Path $repoRoot 'bundle/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
     Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
     # The Next.js site/ and the docs->site/public mirror were retired when the static

@@ -46,7 +46,7 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 
 The script's Step 1–4 mutates these. The agent only confirms the *current state is one the script can transition from*:
 
-- [ ] The version lives in four sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, and the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graph-compose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal). All four read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all four (plus the README) together. Bumping by hand outside the script — or `mvn versions:set` on a single pom — is what previously left benchmarks on the prior release; if you must bump outside the script, use `mvn -f aggregator/pom.xml versions:set -DnewVersion=<X>`.
+- [ ] The engine version lives in **five** sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graph-compose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal), and the standalone `bundle/pom.xml` (`graph-compose-bundle`, whose `graph-compose` dep is `${project.version}`). All five read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all five (plus the README) together. Note `mvn -f aggregator/pom.xml versions:set` only rewrites the aggregator + its inheriting children — it does **not** touch the standalone `pom.xml` or `bundle/pom.xml`, so prefer the script. **`fonts/pom.xml` (`graph-compose-fonts`) is intentionally NOT in this set** — it carries an independent version line (see §2.D) and must be free to diverge from the engine.
 - [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `web/examples.json`.
 
 ### E. Tag must not exist
@@ -60,11 +60,11 @@ The script's Step 1–4 mutates these. The agent only confirms the *current stat
 Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 
 1. **Pre-flight** — re-checks all of A above (branch, clean tree, in-sync, no existing tag).
-2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, **and** the README Maven + Gradle install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5.
+2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, the standalone `bundle/pom.xml` (`graph-compose-bundle`), **and** the README Maven + Gradle install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5. (`fonts/pom.xml` is left alone — it versions independently; see §2.D.)
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
 4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `web/examples.json`.
 5. **`mvnw verify -pl .`** — full sanity build (skip with `-SkipVerify` only if you just ran it).
-6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, `web/examples.json`, `web/index.html`, and `web/showcase/`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
+6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `bundle/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, `web/examples.json`, `web/index.html`, and `web/showcase/`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
 7. **Annotated tag** `v<X.Y.Z>` (`git tag -a -m "Release v<X.Y.Z>"`).
 8. **Push** `develop` and the tag to `origin` (skip with `-SkipPush`).
 
@@ -99,6 +99,36 @@ Run within 1 hour of the tag push. Independent steps can run in parallel.
 10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
 The release is **done** only when steps 1–7 are all green; step 9 adds Maven Central availability once the D-track of v1.6.6 has shipped.
+
+### 2.D The fonts artifact and the bundle (since v1.8.0)
+
+The bundled Google fonts ship as a **separate, independently-versioned**
+artifact, `io.github.demchaav:graph-compose-fonts` (under `fonts/`), and there
+is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
+`bundle/`).
+
+- **The bundle tracks the engine line.** `cut-release.ps1` Step 1 bumps
+  `bundle/pom.xml` in lockstep with the engine (its `<version>` and, via
+  `${project.version}`, its `graph-compose` dependency). `VersionConsistencyGuardTest`
+  enforces `bundle == engine`. The engine `v<target>` tag's
+  [`publish.yml`](../../.github/workflows/publish.yml) deploys the engine **and**
+  the bundle. Nothing extra to do for the bundle at release time.
+- **The fonts artifact is NOT bumped by the engine release.** It carries its own
+  version line (started at `1.0.0`) and is bumped **only when the font set
+  changes**. `cut-release.ps1` deliberately does not touch `fonts/pom.xml`, and
+  the version guard deliberately does not require it to equal the engine version.
+- **Cutting a fonts release** (only when fonts change): bump `fonts/pom.xml`
+  `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
+  [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
+  only `graph-compose-fonts` to Central. Then bump
+  `<graphcompose.fonts.version>` in the engine `pom.xml`, `aggregator/pom.xml`,
+  and `bundle/pom.xml` to the new fonts version so the next engine release pins
+  it (the engine→fonts dependency is test-scope; examples/benchmarks/bundle pin
+  it for real).
+- **First-time bootstrap.** The engine verify depends on `graph-compose-fonts`
+  at test scope. `publish.yml` installs it locally first
+  (`./mvnw -f fonts/pom.xml install`); for a local full-reactor build run that
+  once before building the engine standalone (`./mvnw clean verify -pl .`).
 
 ---
 

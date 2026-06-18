@@ -121,14 +121,16 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
   [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
   only `graph-compose-fonts` to Central. Then bump
-  `<graphcompose.fonts.version>` in the engine `pom.xml`, `aggregator/pom.xml`,
-  and `bundle/pom.xml` to the new fonts version so the next engine release pins
-  it (the engine→fonts dependency is test-scope; examples/benchmarks/bundle pin
-  it for real).
-- **First-time bootstrap.** The engine verify depends on `graph-compose-fonts`
-  at test scope. `publish.yml` installs it locally first
-  (`./mvnw -f fonts/pom.xml install`); for a local full-reactor build run that
-  once before building the engine standalone (`./mvnw clean verify -pl .`).
+  `<graphcompose.fonts.version>` in `aggregator/pom.xml` (inherited by
+  examples + benchmarks) and `bundle/pom.xml` to the new fonts version so those
+  consumers pin it. The engine `pom.xml` does **not** carry this property — the
+  engine has no dependency on the fonts artifact (its tests read the fonts from
+  the sibling module's source via `<testResources>`).
+- **No fonts bootstrap for the engine.** Because the engine does not depend on
+  the fonts artifact, `./mvnw clean verify -pl .` builds standalone without the
+  fonts jar being published or installed. Only the consumer modules (examples,
+  benchmarks) need `graph-compose-fonts` in the local repo — their CI jobs run
+  `./mvnw -f fonts/pom.xml install` before building.
 
 ---
 

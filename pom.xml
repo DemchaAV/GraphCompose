@@ -62,20 +62,6 @@
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.10</byteBuddy.version>
 
-        <!--
-            Bundled Google fonts moved to the independently-versioned
-            io.github.demchaav:graph-compose-fonts artifact in v1.8.0 so an
-            engine upgrade never re-ships ~18 MB of fonts. The engine depends
-            on it at TEST scope only (the visual / snapshot suite renders with
-            the bundled families); it never propagates to consumers, who add
-            graph-compose-fonts (or graph-compose-bundle) themselves. Its
-            version is an independent line — do NOT fold it into the engine
-            lockstep `versions:set`. Keep in lockstep with the same property in
-            aggregator/pom.xml and bundle/pom.xml (no shared parent to
-            single-source it; VersionConsistencyGuardTest enforces agreement).
-        -->
-        <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
-
         <!-- Build plugins -->
         <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
@@ -232,19 +218,15 @@
 
         <!-- Test dependencies -->
         <!--
-            The bundled Google font binaries (graph-compose-fonts) are no
-            longer part of the main artifact. The engine's visual / snapshot
-            suite still renders with them, so they are pulled at test scope.
-            Test scope is deliberate: it keeps fonts off the consumer-facing
-            classpath, so upgrading the engine never drags fonts along.
+            The bundled Google fonts (graph-compose-fonts) are NOT a dependency
+            of the engine — not even at test scope. The engine's visual /
+            snapshot suite renders with them, but they are placed on the TEST
+            classpath directly from the sibling module's source via the
+            <testResources> entry in <build> below. This keeps the engine fully
+            decoupled from the fonts ARTIFACT (no Maven coordinate to resolve, so
+            an engine-only build never needs the fonts jar published or installed
+            first), while still exercising the real font binaries.
         -->
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-fonts</artifactId>
-            <version>${graphcompose.fonts.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -311,6 +293,26 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <!-- Default test resources. -->
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <!--
+                Bundled Google fonts live in the sibling graph-compose-fonts
+                module since v1.8.0. The engine's visual / snapshot suite renders
+                with them, so put that module's resources on the TEST classpath
+                directly from source. This decouples the engine build from the
+                fonts ARTIFACT (no Maven dependency to resolve, so no CI/local
+                bootstrap is needed) while still exercising the real binaries.
+                Test-only: it never reaches the main jar (built from
+                src/main/resources) and is excluded from the tests-jar below.
+            -->
+            <testResource>
+                <directory>${project.basedir}/fonts/src/main/resources</directory>
+            </testResource>
+        </testResources>
+
         <!--
             Pin the default-lifecycle plugins (clean / install / site /
             resources / deploy) so requirePluginVersions in the enforcer
@@ -445,6 +447,18 @@
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
+                        <configuration>
+                            <!--
+                                The bundled fonts are on the test classpath via
+                                <testResources> for the engine's own suite; keep
+                                them OUT of the tests-jar. The benchmarks module
+                                (the only consumer of this jar) gets fonts from
+                                the graph-compose-fonts artifact instead.
+                            -->
+                            <excludes>
+                                <exclude>fonts/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

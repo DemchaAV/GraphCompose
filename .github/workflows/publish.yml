@@ -79,14 +79,6 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Install graph-compose-fonts into the local repo
-        # The engine's visual / snapshot suite renders with the bundled
-        # Google fonts, which now live in the separately-versioned
-        # graph-compose-fonts artifact (engine depends on it at test
-        # scope). Build + install it locally so the verify step below can
-        # resolve it even before it (or this engine version) is on Central.
-        run: ./mvnw -B -ntp -f fonts/pom.xml clean install
-
       - name: Verify (full canonical suite green at tagged commit)
         # Re-verify the tagged commit before publishing — defence in
         # depth against a tag pushed from a broken branch by mistake.

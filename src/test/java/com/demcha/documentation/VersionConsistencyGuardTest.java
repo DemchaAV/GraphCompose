@@ -70,19 +70,18 @@ class VersionConsistencyGuardTest {
 
     @Test
     void bundledFontsVersionAgreesAcrossModules() throws Exception {
-        // graph-compose-fonts carries an independent version line, but the
-        // ${graphcompose.fonts.version} property that pins it is duplicated in
-        // three poms (engine, aggregator, bundle) because there is no shared
-        // parent to single-source it. This guards the PR-7.1 drift class: the
-        // three must always agree, even though they differ from the engine line.
-        String engine = fontsVersionProperty(PROJECT_ROOT.resolve("pom.xml"));
+        // graph-compose-fonts carries an independent version line. The engine
+        // does NOT depend on the fonts artifact (its tests read the fonts from
+        // the sibling module's source), so the ${graphcompose.fonts.version}
+        // property that pins the artifact lives only in the modules that consume
+        // it: the aggregator (inherited by examples + benchmarks) and the bundle.
+        // This guards the PR-7.1 drift class: those must always agree, even
+        // though they differ from the engine version line.
+        String aggregator = fontsVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"));
 
-        assertThat(fontsVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml")))
-                .describedAs("aggregator graphcompose.fonts.version must match the engine's (%s)", engine)
-                .isEqualTo(engine);
         assertThat(fontsVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml")))
-                .describedAs("bundle graphcompose.fonts.version must match the engine's (%s)", engine)
-                .isEqualTo(engine);
+                .describedAs("bundle graphcompose.fonts.version must match the aggregator's (%s)", aggregator)
+                .isEqualTo(aggregator);
     }
 
     @Test

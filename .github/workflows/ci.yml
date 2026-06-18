@@ -99,6 +99,12 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install graph-compose-fonts (consumed by the examples / benchmarks modules)
+        # The engine itself does not depend on the fonts artifact, but the
+        # examples and benchmarks modules render with the bundled families, so
+        # install graph-compose-fonts into the local repo before building them.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
 
@@ -202,6 +208,12 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install graph-compose-fonts (consumed by the examples / benchmarks modules)
+        # The engine itself does not depend on the fonts artifact, but the
+        # examples and benchmarks modules render with the bundled families, so
+        # install graph-compose-fonts into the local repo before building them.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
 
@@ -263,6 +275,12 @@ jobs:
           restore-keys: |
             benchmark-current-speed-${{ github.ref_name }}-
             benchmark-current-speed-
+
+      - name: Install graph-compose-fonts (consumed by the examples / benchmarks modules)
+        # The engine itself does not depend on the fonts artifact, but the
+        # examples and benchmarks modules render with the bundled families, so
+        # install graph-compose-fonts into the local repo before building them.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
 
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .

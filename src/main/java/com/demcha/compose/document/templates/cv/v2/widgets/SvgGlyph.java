@@ -1,0 +1,140 @@
+package com.demcha.compose.document.templates.cv.v2.widgets;
+
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPathSegment;
+import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.svg.SvgIcon;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * A bundled, recolorable single-colour vector glyph for CV contact / social
+ * rows.
+ *
+ * <h2>What it is</h2>
+ *
+ * <p>CV templates draw small monochrome glyphs (phone / email / location /
+ * LinkedIn …). Since v1.8.0 these ship as classpath SVGs instead of raster
+ * PNGs, which shrinks the published artifact dramatically. The engine renders
+ * the colours baked into an SVG file as-is (there is no render-time tint), so
+ * this helper flattens an icon's <em>filled</em> layers into one
+ * {@link ShapeOutline} silhouette whose colour is then chosen by the caller via
+ * {@code rich.shape(outline, colour)}. That is what lets the same glyph render
+ * in each template's own accent colour without per-template copies.</p>
+ *
+ * <h2>How it works</h2>
+ *
+ * <p>{@link #fromResource(String)} parses the SVG with {@link SvgIcon} (which
+ * normalizes every path into one shared unit frame), concatenates the segments
+ * of the layers that carry a fill, and caches the result. Stroke-only
+ * decorative sub-paths ({@code fill="none"}) are dropped; if an icon has no
+ * filled layer at all its full geometry is used as a fallback so it still
+ * renders. {@link #outline(double)} scales that silhouette to a target width,
+ * preserving the icon's aspect ratio. The outline fills under the non-zero
+ * winding rule, so authored holes (handset cut-outs, letter counters) stay
+ * open.</p>
+ *
+ * <h2>Reuse</h2>
+ *
+ * <p>Lives in {@code cv/v2/widgets} as the shared glyph primitive behind
+ * {@link IconTextRow} and the per-preset contact rows. Reuse it instead of
+ * loading icon bytes by hand.</p>
+ */
+public final class SvgGlyph {
+
+    private static final Map<String, SvgGlyph> CACHE = new ConcurrentHashMap<>();
+
+    private final List<DocumentPathSegment> segments;
+    private final double aspectRatio;
+
+    private SvgGlyph(List<DocumentPathSegment> segments, double aspectRatio) {
+        this.segments = segments;
+        this.aspectRatio = aspectRatio;
+    }
+
+    /**
+     * Loads and caches the flattened glyph for a classpath SVG resource.
+     *
+     * @param resourcePath absolute classpath path, e.g.
+     *                     {@code "/templates/cv/timeline-minimal/icons/email.svg"}
+     * @return the cached, recolorable glyph
+     * @throws IllegalStateException if the resource is missing
+     * @throws UncheckedIOException  if the resource cannot be read
+     */
+    public static SvgGlyph fromResource(String resourcePath) {
+        return CACHE.computeIfAbsent(resourcePath, SvgGlyph::load);
+    }
+
+    private static SvgGlyph load(String resourcePath) {
+        try (InputStream input = SvgGlyph.class.getResourceAsStream(resourcePath)) {
+            if (input == null) {
+                throw new IllegalStateException("Missing CV glyph resource: " + resourcePath);
+            }
+            SvgIcon icon = SvgIcon.parse(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+            List<DocumentPathSegment> filled = new ArrayList<>();
+            for (SvgIcon.Layer layer : icon.layers()) {
+                if (isInkFill(layer.fill()) || layer.fillPaint() != null) {
+                    filled.addAll(layer.geometry().segments());
+                }
+            }
+            if (filled.isEmpty()) {
+                // Stroke-only / unfilled icon: keep every path so the glyph
+                // still renders as a filled silhouette rather than vanishing.
+                for (SvgIcon.Layer layer : icon.layers()) {
+                    filled.addAll(layer.geometry().segments());
+                }
+            }
+            if (filled.isEmpty()) {
+                throw new IllegalStateException("CV glyph has no drawable geometry: " + resourcePath);
+            }
+            return new SvgGlyph(List.copyOf(filled), icon.aspectRatio());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read CV glyph: " + resourcePath, e);
+        }
+    }
+
+    /**
+     * Reports whether a fill is "ink" (part of the glyph) rather than a
+     * near-white background. Many svgrepo icons wrap the figure in a full-box
+     * {@code <rect fill="white"/>} backing plate; when every layer is recolored
+     * to one ink colour, that white paper would flood the whole box and swallow
+     * the figure (it reads as an inverted, solid tile). Treating near-white
+     * fills as background keeps only the real silhouette.
+     */
+    private static boolean isInkFill(DocumentColor fill) {
+        if (fill == null) {
+            return false;
+        }
+        java.awt.Color awt = fill.color();
+        return awt.getRed() < 245 || awt.getGreen() < 245 || awt.getBlue() < 245;
+    }
+
+    /**
+     * Returns the glyph as a path outline at {@code width} points; the height
+     * follows the icon's aspect ratio. Fill it with any colour via
+     * {@code rich.shape(glyph.outline(w), colour)}.
+     *
+     * @param width target width in points; must be positive
+     * @return a path {@link ShapeOutline} of this glyph
+     */
+    public ShapeOutline outline(double width) {
+        double height = width / aspectRatio;
+        return ShapeOutline.path(width, height, segments);
+    }
+
+    /**
+     * Returns the glyph's width-to-height ratio for proportional sizing.
+     *
+     * @return aspect ratio (width / height)
+     */
+    public double aspectRatio() {
+        return aspectRatio;
+    }
+}

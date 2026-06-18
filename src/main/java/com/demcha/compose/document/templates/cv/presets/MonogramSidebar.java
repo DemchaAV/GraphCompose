@@ -6,7 +6,6 @@ import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineRun;
@@ -21,6 +20,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 import com.demcha.compose.document.templates.blocks.Block;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
@@ -35,15 +35,10 @@ import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Templates v2 "Monogram Sidebar" CV preset.
@@ -81,6 +76,8 @@ public final class MonogramSidebar {
     private static final DocumentColor MAIN_RULE = DocumentColor.rgb(72, 79, 84);
     private static final DocumentColor ACCENT = DocumentColor.rgb(158, 146, 104);
     private static final DocumentColor MONOGRAM_RING = DocumentColor.rgb(54, 62, 74);
+    /** Contact glyph fill — the muted gold accent, readable on the pale sidebar. */
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(158, 146, 104);
 
     private static final FontName HEADLINE_FONT = FontName.CRIMSON_TEXT;
     private static final FontName MONOGRAM_FONT = FontName.PT_SERIF;
@@ -91,7 +88,6 @@ public final class MonogramSidebar {
     private static final double CONTACT_ICON_SIZE = 18;
 
     private static final String CONTACT_ICON_ROOT = "/templates/cv/monogram-sidebar/icons/";
-    private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
 
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
     private static final List<String> SKILL_KEYS = List.of("skills", "technical skills", "expertise");
@@ -258,10 +254,10 @@ public final class MonogramSidebar {
                             .textStyle(textStyle)
                             .align(TextAlign.CENTER)
                             .margin(DocumentInsets.top(4))
-                            .rich(rich -> rich.image(
-                                    contactIcon(contact.iconFile()),
-                                    CONTACT_ICON_SIZE,
-                                    CONTACT_ICON_SIZE,
+                            .rich(rich -> rich.shape(
+                                    glyph(contact.iconFile()).outline(CONTACT_ICON_SIZE),
+                                    ICON_COLOR,
+                                    null,
                                     InlineImageAlignment.CENTER,
                                     0.0,
                                     contact.linkOptions())));
@@ -660,13 +656,13 @@ public final class MonogramSidebar {
             return List.of();
         }
         List<ContactLine> lines = new ArrayList<>();
-        addContactLine(lines, "phone.png", safe(header.phone()), null);
+        addContactLine(lines, "phone.svg", safe(header.phone()), null);
         String email = safe(header.email());
         if (!email.isBlank()) {
-            addContactLine(lines, "email.png", email,
+            addContactLine(lines, "email.svg", email,
                     new DocumentLinkOptions("mailto:" + email));
         }
-        addContactLine(lines, "location.png", safe(header.address()), null);
+        addContactLine(lines, "location.svg", safe(header.address()), null);
         for (CvHeader.Link link : header.links()) {
             String label = safe(link.label());
             if (label.isBlank()) {
@@ -691,29 +687,14 @@ public final class MonogramSidebar {
     private static String pickIconFile(String label) {
         String n = normalize(label);
         if (n.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
-        if (n.contains("linkedin")) {
-            return "linkedin.png";
-        }
-        return "linkedin.png";
+        // LinkedIn and any other link → the LinkedIn glyph (V1 fallback).
+        return "linkedin.svg";
     }
 
-    private static DocumentImageData contactIcon(String iconFile) {
-        return DocumentImageData.fromBytes(
-                CONTACT_ICON_CACHE.computeIfAbsent(CONTACT_ICON_ROOT + iconFile,
-                        MonogramSidebar::readIconBytes));
-    }
-
-    private static byte[] readIconBytes(String resourcePath) {
-        try (InputStream input = MonogramSidebar.class.getResourceAsStream(resourcePath)) {
-            if (input == null) {
-                throw new IllegalStateException("Missing monogram sidebar icon: " + resourcePath);
-            }
-            return input.readAllBytes();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read monogram sidebar icon: " + resourcePath, e);
-        }
+    private static SvgGlyph glyph(String iconFile) {
+        return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
     }
 
     private static String stripBasicMarkdown(String value) {

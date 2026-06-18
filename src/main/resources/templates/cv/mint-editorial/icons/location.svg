@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000">
+  <!-- Filled map pin. Teardrop drawn clockwise; the centre circle is wound
+       counter-clockwise so it knocks out as a hole under the non-zero fill
+       rule the renderer uses. -->
+  <path d="M12 2 C16 2 19 5 19 9 C19 13 14 18 12 21.5 C10 18 5 13 5 9 C5 5 8 2 12 2 Z M12 6.8 A2.2 2.2 0 0 0 12 11.2 A2.2 2.2 0 0 0 12 6.8 Z"/>
+</svg>

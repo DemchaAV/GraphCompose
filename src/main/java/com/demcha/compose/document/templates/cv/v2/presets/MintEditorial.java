@@ -5,7 +5,6 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -25,10 +24,13 @@ import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.IconTextRow;
 import com.demcha.compose.document.templates.cv.v2.widgets.SkillBar;
 import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.svg.SvgIcon;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -172,17 +174,17 @@ public final class MintEditorial {
     /**
      * Inline contact / social icon edge length (points).
      */
-    private static final double CONTACT_ICON_SIZE = 9.0;
+    private static final double CONTACT_ICON_SIZE = 11.0;
 
     /**
      * Social icon edge length (points) — the filled badges read larger.
      */
-    private static final double SOCIAL_ICON_SIZE = 12.0;
+    private static final double SOCIAL_ICON_SIZE = 14.0;
 
     /**
      * Expertise badge edge length (points).
      */
-    private static final double BADGE_SIZE = 36.0;
+    private static final double BADGE_SIZE = 72.0;
 
     // Banded-masthead canvas geometry. These values reproduce the DEFAULT
     // (bandless) masthead flow positions exactly — name baseline, tagline
@@ -222,7 +224,20 @@ public final class MintEditorial {
     static final double MASTHEAD_RULE_Y = 123.76;
 
     private static final String ICON_ROOT = "/templates/cv/mint-editorial/icons/";
-    private static final Map<String, byte[]> ICON_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * Contact / social glyph fill — a deep teal-ink that reads clearly on the
+     * white editorial page and harmonises with the mint accent. Recolours the
+     * shared {@link SvgGlyph} silhouettes via {@code rich.shape(...)}.
+     */
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(47, 122, 106);
+
+    /**
+     * Cached SVG source for the expertise badge — parsed once into an
+     * {@link SvgIcon} so the multi-stroke badge keeps its authored look.
+     */
+    private static final String BADGE_SVG = ICON_ROOT + "expertise-badge.svg";
+    private static final Map<String, SvgIcon> SVG_CACHE = new ConcurrentHashMap<>();
 
     private static final List<String> INTERESTS_KEYS =
             List.of("interests", "interest");
@@ -661,19 +676,22 @@ public final class MintEditorial {
                 DocumentTextStyle style = contactStyle();
                 String phone = identity.contact().phone();
                 if (!phone.isBlank()) {
-                    IconTextRow.render(block, icon("phone.png"), CONTACT_ICON_SIZE,
-                            phone, style, null, DocumentInsets.bottom(13));
+                    IconTextRow.render(block, glyph("phone.svg"), ICON_COLOR,
+                            CONTACT_ICON_SIZE, phone, style, null,
+                            DocumentInsets.bottom(13));
                 }
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
-                    IconTextRow.render(block, icon("email.png"), CONTACT_ICON_SIZE,
-                            email, style, new DocumentLinkOptions("mailto:" + email),
+                    IconTextRow.render(block, glyph("email.svg"), ICON_COLOR,
+                            CONTACT_ICON_SIZE, email, style,
+                            new DocumentLinkOptions("mailto:" + email),
                             DocumentInsets.bottom(13));
                 }
                 String address = identity.contact().address();
                 if (!address.isBlank()) {
-                    IconTextRow.render(block, icon("location.png"), CONTACT_ICON_SIZE,
-                            address, style, null, DocumentInsets.bottom(13));
+                    IconTextRow.render(block, glyph("location.svg"), ICON_COLOR,
+                            CONTACT_ICON_SIZE, address, style, null,
+                            DocumentInsets.bottom(13));
                 }
                 for (CvLink link : identity.links()) {
                     if (link.label().isBlank()) {
@@ -682,9 +700,9 @@ public final class MintEditorial {
                     DocumentLinkOptions options = link.url().isBlank()
                             ? null
                             : new DocumentLinkOptions(link.url().trim());
-                    IconTextRow.render(block, icon(contactIconFile(link.label())),
-                            CONTACT_ICON_SIZE, link.label(), style, options,
-                            DocumentInsets.bottom(13));
+                    IconTextRow.render(block, glyph(contactIconFile(link.label())),
+                            ICON_COLOR, CONTACT_ICON_SIZE, link.label(), style,
+                            options, DocumentInsets.bottom(13));
                 }
             });
         }
@@ -759,11 +777,15 @@ public final class MintEditorial {
             section.addSection("CvV2MintEditorialExpertise", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
                 addBlockHeading(block, "Expertise");
-                block.addImage(image -> image
+                // Badge is a stroked multi-path SVG (a checkmark in a ring),
+                // so it renders through SvgIcon.node — preserving its authored
+                // stroke — rather than being flattened to a recoloured glyph.
+                // Wrapped in a layer stack only to carry the 18pt bottom margin
+                // (addSvgIcon has no margin overload).
+                block.addLayerStack(badge -> badge
                         .name("CvV2MintEditorialExpertiseBadge")
-                        .source(icon("expertise-badge.png"))
-                        .size(BADGE_SIZE, BADGE_SIZE)
-                        .margin(DocumentInsets.bottom(18)));
+                        .margin(DocumentInsets.bottom(18))
+                        .layer(badgeIcon().node(BADGE_SIZE)));
                 for (String category : categories.stream().limit(EXPERTISE_LIMIT).toList()) {
                     addLabel(block, category);
                 }
@@ -810,9 +832,9 @@ public final class MintEditorial {
                     DocumentLinkOptions options = link.url().isBlank()
                             ? null
                             : new DocumentLinkOptions(link.url().trim());
-                    IconTextRow.render(block, icon(socialIconFile(link.label())),
-                            SOCIAL_ICON_SIZE, link.label(), style, options,
-                            DocumentInsets.bottom(11));
+                    IconTextRow.render(block, glyph(socialIconFile(link.label())),
+                            ICON_COLOR, SOCIAL_ICON_SIZE, link.label(), style,
+                            options, DocumentInsets.bottom(11));
                 }
             });
         }
@@ -1158,12 +1180,6 @@ public final class MintEditorial {
                     .fillColor(DocumentColor.WHITE)
                     .build();
         }
-
-        private DocumentImageData icon(String fileName) {
-            return DocumentImageData.fromBytes(
-                    ICON_CACHE.computeIfAbsent(ICON_ROOT + fileName,
-                            MintEditorial::readIconBytes));
-        }
     }
 
     // -- Static helpers ----------------------------------------------------
@@ -1250,19 +1266,19 @@ public final class MintEditorial {
     private static String contactIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("linkedin")) {
-            return "linkedin.png";
+            return "linkedin.svg";
         }
         if (normalized.contains("twitter")) {
-            return "twitter.png";
+            return "twitter.svg";
         }
         if (normalized.contains("facebook")) {
-            return "facebook.png";
+            return "facebook.svg";
         }
         if (normalized.contains("pinterest")) {
-            return "pinterest.png";
+            return "pinterest.svg";
         }
         // GitHub, portfolio, personal site, etc. → the globe glyph.
-        return "website.png";
+        return "website.svg";
     }
 
     /**
@@ -1271,29 +1287,44 @@ public final class MintEditorial {
     private static String socialIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("twitter")) {
-            return "twitter.png";
+            return "twitter.svg";
         }
         if (normalized.contains("facebook")) {
-            return "facebook.png";
+            return "facebook.svg";
         }
         if (normalized.contains("pinterest")) {
-            return "pinterest.png";
+            return "pinterest.svg";
         }
         if (normalized.contains("linkedin")) {
-            return "linkedin.png";
+            return "linkedin.svg";
         }
         // GitHub, portfolio, personal site, etc. → the globe glyph.
-        return "website.png";
+        return "website.svg";
     }
 
-    private static byte[] readIconBytes(String resourcePath) {
+    /**
+     * Loads (and caches) a recolorable contact / social glyph by file name.
+     */
+    private static SvgGlyph glyph(String fileName) {
+        return SvgGlyph.fromResource(ICON_ROOT + fileName);
+    }
+
+    /**
+     * Loads (and caches) the expertise badge as a stroked {@link SvgIcon}.
+     */
+    private static SvgIcon badgeIcon() {
+        return SVG_CACHE.computeIfAbsent(BADGE_SVG, MintEditorial::readSvgIcon);
+    }
+
+    private static SvgIcon readSvgIcon(String resourcePath) {
         try (InputStream input = MintEditorial.class
                 .getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException(
                         "Missing mint editorial icon: " + resourcePath);
             }
-            return input.readAllBytes();
+            return SvgIcon.parse(
+                    new String(input.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(
                     "Failed to read mint editorial icon: " + resourcePath, e);

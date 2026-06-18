@@ -3,7 +3,6 @@ package com.demcha.compose.document.templates.cv.v2.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
@@ -11,6 +10,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
@@ -18,10 +18,12 @@ import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -71,6 +73,13 @@ public final class SidebarPortrait {
      */
     private static final DocumentColor DEFAULT_ACCENT =
             DocumentColor.rgb(106, 106, 106);
+
+    /**
+     * Contact glyph fill — a dark slate that reads clearly on the pale-beige
+     * portrait sidebar fill. Recolours the shared {@link SvgGlyph} silhouettes
+     * via {@code rich.shape(...)}.
+     */
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(58, 58, 58);
 
     /**
      * Inner content width of the sidebar column. Derived from the V1
@@ -133,8 +142,8 @@ public final class SidebarPortrait {
             "/templates/cv/sidebar-portrait/";
     private static final String CONTACT_ICON_ROOT =
             TEMPLATE_ASSET_ROOT + "icons/";
-    private static final String PORTRAIT_FILE = "portrait.png";
-    private static final Map<String, byte[]> ASSET_CACHE =
+    private static final String PORTRAIT_FILE = "portrait.svg";
+    private static final Map<String, SvgIcon> PORTRAIT_CACHE =
             new ConcurrentHashMap<>();
 
     private static final List<String> EDUCATION_KEYS =
@@ -405,11 +414,16 @@ public final class SidebarPortrait {
         private void addPhotoBlock(SectionBuilder section) {
             double sideInset = Math.max(0.0,
                     (SIDEBAR_INNER_WIDTH - PHOTO_DIAMETER) / 2.0);
-            section.addImage(image -> image
+            // Default avatar is the bundled portrait.svg, whose outermost
+            // layer is a full-frame filled circle, so the illustration is
+            // already round at PHOTO_DIAMETER — no extra circular clip is
+            // needed. Wrapped in a layer stack so the photo keeps its
+            // centred side insets + 17pt bottom margin (addSvgIcon has no
+            // margin overload). A user-supplied override is a follow-up.
+            section.addLayerStack(photo -> photo
                     .name("CvV2SidebarPortraitPhoto")
-                    .source(portraitImage())
-                    .size(PHOTO_DIAMETER, PHOTO_DIAMETER)
-                    .margin(new DocumentInsets(0, sideInset, 17, sideInset)));
+                    .margin(new DocumentInsets(0, sideInset, 17, sideInset))
+                    .layer(portraitIcon().node(PHOTO_DIAMETER)));
         }
 
         /**
@@ -439,8 +453,8 @@ public final class SidebarPortrait {
                         .link(item.linkOptions())
                         .rich(rich -> {
                             if (item.iconFile() != null) {
-                                rich.image(contactIcon(item.iconFile()),
-                                        10.0, 10.0,
+                                rich.shape(glyph(item.iconFile()).outline(10.0),
+                                        ICON_COLOR, null,
                                         InlineImageAlignment.CENTER,
                                         0.0, item.linkOptions());
                                 rich.style("  ", textStyle);
@@ -874,13 +888,13 @@ public final class SidebarPortrait {
             return List.of();
         }
         List<ContactItem> items = new ArrayList<>();
-        addContactItem(items, "phone.png", identity.contact().phone(), null);
+        addContactItem(items, "phone.svg", identity.contact().phone(), null);
         String email = identity.contact().email();
         if (!email.isBlank()) {
-            addContactItem(items, "email.png", email,
+            addContactItem(items, "email.svg", email,
                     new DocumentLinkOptions("mailto:" + email));
         }
-        addContactItem(items, "location.png", identity.contact().address(),
+        addContactItem(items, "location.svg", identity.contact().address(),
                 null);
         for (CvLink link : identity.links()) {
             String label = link.label();
@@ -906,41 +920,37 @@ public final class SidebarPortrait {
 
     private static String pickIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
-        if (normalized.contains("linkedin")) {
-            return "linkedin.png";
-        }
         if (normalized.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
         if (normalized.contains("dribbble")) {
-            return "dribbble.png";
+            return "dribbble.svg";
         }
         if (normalized.contains("google")) {
-            return "google.png";
+            return "google.svg";
         }
-        return "linkedin.png";
+        // LinkedIn and any other link → the LinkedIn glyph (V1 fallback).
+        return "linkedin.svg";
     }
 
-    private static DocumentImageData contactIcon(String iconFile) {
-        return DocumentImageData.fromBytes(
-                ASSET_CACHE.computeIfAbsent(CONTACT_ICON_ROOT + iconFile,
-                        SidebarPortrait::readAssetBytes));
+    private static SvgGlyph glyph(String iconFile) {
+        return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
     }
 
-    private static DocumentImageData portraitImage() {
-        return DocumentImageData.fromBytes(
-                ASSET_CACHE.computeIfAbsent(TEMPLATE_ASSET_ROOT + PORTRAIT_FILE,
-                        SidebarPortrait::readAssetBytes));
+    private static SvgIcon portraitIcon() {
+        return PORTRAIT_CACHE.computeIfAbsent(TEMPLATE_ASSET_ROOT + PORTRAIT_FILE,
+                SidebarPortrait::readSvgIcon);
     }
 
-    private static byte[] readAssetBytes(String resourcePath) {
+    private static SvgIcon readSvgIcon(String resourcePath) {
         try (InputStream input = SidebarPortrait.class
                 .getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException(
                         "Missing sidebar portrait asset: " + resourcePath);
             }
-            return input.readAllBytes();
+            return SvgIcon.parse(
+                    new String(input.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(
                     "Failed to read sidebar portrait asset: " + resourcePath,

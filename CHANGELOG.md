@@ -5,8 +5,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v1.8.0 — 2026-06-18
 
-Open cycle — the chart subsystem and the keep-together pagination control.
-Entries land here as they merge.
+Codenamed **"illustrative"**. Native vector charts (bar / line / pie, inline
+sparklines, monotone & smooth interpolation), SVG path & icon import with native
+gradients, free-form `ShapeOutline.Path` clipping, the `keepTogether()`
+pagination control, and a leaner publication — the bundled Google fonts split
+into the independently-versioned `graph-compose-fonts` artifact. Core document
+APIs stay source- and binary-compatible with v1.7; the two consumption changes
+are the fonts split and the removal of `ConfigLoader` (both detailed below).
 
 ### Public API
 

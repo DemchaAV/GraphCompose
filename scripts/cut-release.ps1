@@ -495,12 +495,13 @@ try {
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java web/examples.json web/index.html web/showcase" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml bundle/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java web/examples.json web/index.html web/showcase" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
         git add `
             pom.xml `
             aggregator/pom.xml `
+            bundle/pom.xml `
             examples/pom.xml `
             benchmarks/pom.xml `
             README.md `

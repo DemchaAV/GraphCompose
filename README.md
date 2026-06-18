@@ -39,7 +39,7 @@
 </p>
 
 <p align="center">
-  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck.pdf"><b>view the full capability deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"><code>EngineDeckExample</code></a>: live charts and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
+  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck.pdf"><b>view the full capability deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"><code>EngineDeckExample</code></a>: native vector charts and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
 </p>
 
 ## Why GraphCompose

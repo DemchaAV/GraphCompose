@@ -4,7 +4,6 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.LineBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
@@ -14,6 +13,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 import com.demcha.compose.document.templates.blocks.Block;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
@@ -27,15 +27,10 @@ import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Templates v2 "Timeline Minimal" CV preset.
@@ -70,6 +65,8 @@ public final class TimelineMinimal {
     private static final DocumentColor SOFT = DocumentColor.rgb(122, 122, 122);
     private static final DocumentColor RULE = DocumentColor.rgb(195, 195, 195);
     private static final DocumentColor DOT = DocumentColor.rgb(170, 170, 170);
+    /** Contact glyph fill — dark slate, readable on the white page. */
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(58, 58, 58);
 
     private static final double TIMELINE_DOT = 7.0;
     private static final double TIMELINE_LINE_BOX = 1.0;
@@ -78,7 +75,6 @@ public final class TimelineMinimal {
     private static final double CONTACT_ICON_SIZE = 10.5;
     private static final double CONTACT_ICON_BASELINE_OFFSET = -1.35;
     private static final String CONTACT_ICON_ROOT = "/templates/cv/timeline-minimal/icons/";
-    private static final Map<String, byte[]> CONTACT_ICON_CACHE = new ConcurrentHashMap<>();
 
     private TimelineMinimal() {
         // utility class — not instantiable
@@ -206,10 +202,10 @@ public final class TimelineMinimal {
                             rich.style(line.text(), textStyle);
                             rich.plain("  ");
                             if (line.iconFile() != null) {
-                                rich.image(
-                                        contactIcon(line.iconFile()),
-                                        CONTACT_ICON_SIZE,
-                                        CONTACT_ICON_SIZE,
+                                rich.shape(
+                                        glyph(line.iconFile()).outline(CONTACT_ICON_SIZE),
+                                        ICON_COLOR,
+                                        null,
                                         InlineImageAlignment.CENTER,
                                         CONTACT_ICON_BASELINE_OFFSET,
                                         line.linkOptions());
@@ -225,13 +221,13 @@ public final class TimelineMinimal {
                 return List.of();
             }
             List<ContactLine> lines = new ArrayList<>();
-            addContactLine(lines, "LOC", "location.png",
+            addContactLine(lines, "LOC", "location.svg",
                     safe(header.address()), null);
-            addContactLine(lines, "TEL", "phone.png",
+            addContactLine(lines, "TEL", "phone.svg",
                     safe(header.phone()), null);
             String email = safe(header.email());
             if (!email.isBlank()) {
-                addContactLine(lines, "@", "email.png", email,
+                addContactLine(lines, "@", "email.svg", email,
                         new DocumentLinkOptions("mailto:" + email));
             }
             for (CvHeader.Link link : header.links()) {
@@ -258,9 +254,8 @@ public final class TimelineMinimal {
             }
         }
 
-        private DocumentImageData contactIcon(String iconFile) {
-            return DocumentImageData.fromBytes(
-                    CONTACT_ICON_CACHE.computeIfAbsent(iconFile, TimelineMinimal::readIconBytes));
+        private SvgGlyph glyph(String iconFile) {
+            return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
         }
 
         private void addSidebarModule(SectionBuilder sidebar, String title,
@@ -360,31 +355,19 @@ public final class TimelineMinimal {
 
     // -- helpers ---------------------------------------------------------
 
-    private static byte[] readIconBytes(String iconFile) {
-        try (InputStream input = TimelineMinimal.class.getResourceAsStream(
-                CONTACT_ICON_ROOT + iconFile)) {
-            if (input == null) {
-                throw new IllegalStateException("Missing timeline minimal contact icon: " + iconFile);
-            }
-            return input.readAllBytes();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read timeline minimal contact icon: " + iconFile, e);
-        }
-    }
-
     private static String pickIconFile(String label) {
         String n = normalize(label);
         if (n.contains("linkedin")) {
-            return "linkedin.png";
+            return "linkedin.svg";
         }
         if (n.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
         if (n.contains("dribbble")) {
-            return "dribbble.png";
+            return "dribbble.svg";
         }
         if (n.contains("google")) {
-            return "google.png";
+            return "google.svg";
         }
         return null;
     }

@@ -2,7 +2,6 @@ package com.demcha.compose.document.templates.cv.v2.widgets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -93,14 +92,15 @@ class WidgetSmokeTest {
     @Test
     void iconTextRow_renders_with_and_without_link() throws Exception {
         CvTheme theme = CvTheme.mintEditorial();
-        DocumentImageData icon = DocumentImageData.fromBytes(readMintIcon("phone.png"));
+        SvgGlyph icon = SvgGlyph.fromResource("/templates/cv/mint-editorial/icons/phone.svg");
+        DocumentColor iconColor = DocumentColor.rgb(47, 122, 106);
         // Linked row (whole row clickable) and plain row.
-        renderWithSection(section -> IconTextRow.render(section, icon, 9.0,
+        renderWithSection(section -> IconTextRow.render(section, icon, iconColor, 9.0,
                 "hello@example.com", theme.bodyStyle(),
                 new com.demcha.compose.document.node.DocumentLinkOptions(
                         "mailto:hello@example.com"),
                 DocumentInsets.bottom(12)));
-        renderWithSection(section -> IconTextRow.render(section, icon, 9.0,
+        renderWithSection(section -> IconTextRow.render(section, icon, iconColor, 9.0,
                 "London, UK", theme.bodyStyle(), null, DocumentInsets.bottom(12)));
     }
 
@@ -211,14 +211,6 @@ class WidgetSmokeTest {
             action.run(flow);
             flow.build();
             assertThat(session.roots()).isNotEmpty();
-        }
-    }
-
-    private static byte[] readMintIcon(String fileName) throws Exception {
-        try (var input = WidgetSmokeTest.class.getResourceAsStream(
-                "/templates/cv/mint-editorial/icons/" + fileName)) {
-            assertThat(input).as("mint editorial icon %s", fileName).isNotNull();
-            return input.readAllBytes();
         }
     }
 

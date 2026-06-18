@@ -3,7 +3,6 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineRun;
@@ -13,7 +12,9 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 import com.demcha.compose.document.templates.blocks.Block;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;
@@ -31,6 +32,7 @@ import com.demcha.compose.font.FontName;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -75,6 +77,8 @@ public final class SidebarPortrait {
     private static final DocumentColor SIDEBAR_SOFT = SOFT;
     private static final DocumentColor ACCENT = DocumentColor.rgb(106, 106, 106);
     private static final DocumentColor RULE = DocumentColor.rgb(178, 178, 178);
+    /** Contact glyph fill — dark slate, readable on the pale-beige sidebar. */
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(58, 58, 58);
 
     private static final FontName DISPLAY_FONT = FontName.CRIMSON_TEXT;
     private static final FontName BODY_FONT = FontName.LATO;
@@ -91,9 +95,9 @@ public final class SidebarPortrait {
 
     private static final String TEMPLATE_ASSET_ROOT = "/templates/cv/sidebar-portrait/";
     private static final String CONTACT_ICON_ROOT = TEMPLATE_ASSET_ROOT + "icons/";
-    private static final String PORTRAIT_FILE = "portrait.png";
+    private static final String PORTRAIT_FILE = "portrait.svg";
 
-    private static final Map<String, byte[]> ASSET_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, SvgIcon> PORTRAIT_CACHE = new ConcurrentHashMap<>();
 
     private static final List<String> EDUCATION_KEYS = List.of("education", "certifications");
     private static final List<String> SKILL_KEYS = List.of("skills", "technical skills");
@@ -208,11 +212,15 @@ public final class SidebarPortrait {
 
         private void addPhotoBlock(SectionBuilder section) {
             double sideInset = Math.max(0.0, (SIDEBAR_INNER_WIDTH - PHOTO_DIAMETER) / 2.0);
-            section.addImage(image -> image
+            // Default avatar is the bundled portrait.svg, whose outermost
+            // layer is a full-frame filled circle, so it is already round at
+            // PHOTO_DIAMETER. Wrapped in a layer stack to keep the centred
+            // side insets + 17pt bottom margin (addSvgIcon has no margin
+            // overload). A user-supplied override is a follow-up.
+            section.addLayerStack(photo -> photo
                     .name("SidebarPortraitPhoto")
-                    .source(portraitImage())
-                    .size(PHOTO_DIAMETER, PHOTO_DIAMETER)
-                    .margin(new DocumentInsets(0, sideInset, 17, sideInset)));
+                    .margin(new DocumentInsets(0, sideInset, 17, sideInset))
+                    .layer(portraitIcon().node(PHOTO_DIAMETER)));
         }
 
         private void addContactBlock(SectionBuilder section, CvHeader header) {
@@ -231,7 +239,8 @@ public final class SidebarPortrait {
                         .link(contact.linkOptions())
                         .rich(rich -> {
                             if (contact.iconFile() != null) {
-                                rich.image(contactIcon(contact.iconFile()), 10.0, 10.0,
+                                rich.shape(glyph(contact.iconFile()).outline(10.0),
+                                        ICON_COLOR, null,
                                         InlineImageAlignment.CENTER, 0.0, contact.linkOptions());
                                 rich.style("  ", textStyle);
                             }
@@ -689,13 +698,13 @@ public final class SidebarPortrait {
             return List.of();
         }
         List<ContactLine> lines = new ArrayList<>();
-        addContactLine(lines, "phone.png", safe(header.phone()), null);
+        addContactLine(lines, "phone.svg", safe(header.phone()), null);
         String email = safe(header.email());
         if (!email.isBlank()) {
-            addContactLine(lines, "email.png", email,
+            addContactLine(lines, "email.svg", email,
                     new DocumentLinkOptions("mailto:" + email));
         }
-        addContactLine(lines, "location.png", safe(header.address()), null);
+        addContactLine(lines, "location.svg", safe(header.address()), null);
         for (CvHeader.Link link : header.links()) {
             String label = safe(link.label());
             if (label.isBlank()) {
@@ -719,39 +728,34 @@ public final class SidebarPortrait {
 
     private static String pickIconFile(String label) {
         String n = normalize(label);
-        if (n.contains("linkedin")) {
-            return "linkedin.png";
-        }
         if (n.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
         if (n.contains("dribbble")) {
-            return "dribbble.png";
+            return "dribbble.svg";
         }
         if (n.contains("google")) {
-            return "google.png";
+            return "google.svg";
         }
-        return "linkedin.png";
+        // LinkedIn and any other link → the LinkedIn glyph (V1 fallback).
+        return "linkedin.svg";
     }
 
-    private static DocumentImageData contactIcon(String iconFile) {
-        return DocumentImageData.fromBytes(
-                ASSET_CACHE.computeIfAbsent(CONTACT_ICON_ROOT + iconFile,
-                        SidebarPortrait::readAssetBytes));
+    private static SvgGlyph glyph(String iconFile) {
+        return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
     }
 
-    private static DocumentImageData portraitImage() {
-        return DocumentImageData.fromBytes(
-                ASSET_CACHE.computeIfAbsent(TEMPLATE_ASSET_ROOT + PORTRAIT_FILE,
-                        SidebarPortrait::readAssetBytes));
+    private static SvgIcon portraitIcon() {
+        return PORTRAIT_CACHE.computeIfAbsent(TEMPLATE_ASSET_ROOT + PORTRAIT_FILE,
+                SidebarPortrait::readSvgIcon);
     }
 
-    private static byte[] readAssetBytes(String resourcePath) {
+    private static SvgIcon readSvgIcon(String resourcePath) {
         try (InputStream input = SidebarPortrait.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException("Missing sidebar portrait asset: " + resourcePath);
             }
-            return input.readAllBytes();
+            return SvgIcon.parse(new String(input.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read sidebar portrait asset: " + resourcePath, e);
         }

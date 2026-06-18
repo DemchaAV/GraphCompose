@@ -407,6 +407,19 @@ Entries land here as they merge.
 
 ### Internal
 
+- **CV / cover-letter template icons moved from PNG to recolorable SVG.**
+  The bundled contact / social glyphs (phone, email, location, website,
+  LinkedIn, GitHub, …) and the sidebar-portrait avatar now ship as SVG
+  instead of raster PNG. A new internal `SvgGlyph` helper flattens an icon's
+  filled layers into one outline that the presets fill with each template's
+  own accent colour via `rich.shape(...)` — so one bundled glyph recolours
+  per template with no per-template copies, and the icons stay crisp at any
+  zoom. The sidebar-portrait avatar is a swappable SVG placeholder. This
+  shrinks the bundled `templates/cv` assets from ~717 KB to ~133 KB (the
+  431 KB `portrait.png` alone becomes a ~4 KB SVG), trimming the published
+  jar. No public API change; the CV / cover-letter presets render the same
+  layout (visual baselines refreshed for the new glyphs; the sidebar-portrait
+  layout snapshot updated for the vector avatar).
 - **Benchmark suite cleanup (not shipped).** Removed three redundant
   benchmark mains: `FullCvBenchmark` (superseded by the JMH
   `TemplateCvJmhBenchmark`), `GraphComposeBenchmark` (early-engine relic

@@ -3,10 +3,10 @@ package com.demcha.compose.document.templates.coverletter.v2.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -19,19 +19,16 @@ import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * v2 cover-letter pair for the {@code TimelineMinimal} CV preset.
  *
  * <p>Reproduces the CV's masthead: a left spaced-caps Barlow-Condensed
  * name + UPPERCASE role line, balanced by a right-aligned contact stack
- * where each line ends with its PNG glyph icon (LinkedIn / GitHub /
+ * where each line ends with its recolorable SVG glyph icon (LinkedIn / GitHub /
  * location / phone / email), all under a thin full-width rule — the same
  * header as
  * {@link com.demcha.compose.document.templates.cv.v2.presets.TimelineMinimal}.
@@ -72,8 +69,7 @@ public final class TimelineMinimalLetter {
     private static final double CONTACT_ICON_BASELINE_OFFSET = -1.35;
     private static final String CONTACT_ICON_ROOT =
             "/templates/cv/timeline-minimal/icons/";
-    private static final Map<String, byte[]> CONTACT_ICON_CACHE =
-            new ConcurrentHashMap<>();
+    private static final DocumentColor ICON_COLOR = DocumentColor.rgb(58, 58, 58);
 
     private TimelineMinimalLetter() {
     }
@@ -170,9 +166,8 @@ public final class TimelineMinimalLetter {
                                 rich.style(item.text(), textStyle);
                                 rich.plain("  ");
                                 if (item.iconFile() != null) {
-                                    rich.image(contactIcon(item.iconFile()),
-                                            CONTACT_ICON_SIZE,
-                                            CONTACT_ICON_SIZE,
+                                    rich.shape(glyph(item.iconFile()).outline(CONTACT_ICON_SIZE),
+                                            ICON_COLOR, null,
                                             InlineImageAlignment.CENTER,
                                             CONTACT_ICON_BASELINE_OFFSET,
                                             item.linkOptions());
@@ -188,13 +183,13 @@ public final class TimelineMinimalLetter {
                     return List.of();
                 }
                 List<ContactItem> items = new ArrayList<>();
-                addContactItem(items, "LOC", "location.png",
+                addContactItem(items, "LOC", "location.svg",
                         identity.contact().address(), null);
-                addContactItem(items, "TEL", "phone.png",
+                addContactItem(items, "TEL", "phone.svg",
                         identity.contact().phone(), null);
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
-                    addContactItem(items, "@", "email.png", email,
+                    addContactItem(items, "@", "email.svg", email,
                             new DocumentLinkOptions("mailto:" + email));
                 }
                 for (CvLink link : identity.links()) {
@@ -210,10 +205,8 @@ public final class TimelineMinimalLetter {
                 return List.copyOf(items);
             }
 
-            private DocumentImageData contactIcon(String iconFile) {
-                return DocumentImageData.fromBytes(
-                        CONTACT_ICON_CACHE.computeIfAbsent(iconFile,
-                                TimelineMinimalLetter::readIconBytes));
+            private SvgGlyph glyph(String iconFile) {
+                return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
             }
 
             private DocumentTextStyle nameStyle() {
@@ -250,16 +243,16 @@ public final class TimelineMinimalLetter {
     private static String pickIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("linkedin")) {
-            return "linkedin.png";
+            return "linkedin.svg";
         }
         if (normalized.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
         if (normalized.contains("dribbble")) {
-            return "dribbble.png";
+            return "dribbble.svg";
         }
         if (normalized.contains("google")) {
-            return "google.png";
+            return "google.svg";
         }
         return null;
     }
@@ -273,20 +266,6 @@ public final class TimelineMinimalLetter {
             return "GH";
         }
         return "@";
-    }
-
-    private static byte[] readIconBytes(String iconFile) {
-        try (InputStream input = TimelineMinimalLetter.class.getResourceAsStream(
-                CONTACT_ICON_ROOT + iconFile)) {
-            if (input == null) {
-                throw new IllegalStateException(
-                        "Missing timeline minimal contact icon: " + iconFile);
-            }
-            return input.readAllBytes();
-        } catch (IOException e) {
-            throw new UncheckedIOException(
-                    "Failed to read timeline minimal contact icon: " + iconFile, e);
-        }
     }
 
     private record ContactItem(String fallbackIcon, String iconFile,

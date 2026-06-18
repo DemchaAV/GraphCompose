@@ -6,20 +6,16 @@ import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 import com.demcha.compose.font.FontName;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * v2 port of the legacy "Monogram Sidebar" CV preset.
@@ -65,6 +61,15 @@ public final class MonogramSidebar {
             DocumentColor.rgb(158, 146, 104);
 
     /**
+     * Contact glyph fill — the muted gold accent, which reads clearly on the
+     * pale teal-grey sidebar fill and ties the centred icon stack to the
+     * subtitle / date accent. Recolours the shared {@link SvgGlyph}
+     * silhouettes via {@code rich.shape(...)}.
+     */
+    private static final DocumentColor ICON_COLOR =
+            DocumentColor.rgb(158, 146, 104);
+
+    /**
      * V1 default dark monogram ring + initials colour.
      */
     private static final DocumentColor DEFAULT_MONOGRAM_RING =
@@ -100,8 +105,6 @@ public final class MonogramSidebar {
 
     private static final String CONTACT_ICON_ROOT =
             "/templates/cv/monogram-sidebar/icons/";
-    private static final Map<String, byte[]> CONTACT_ICON_CACHE =
-            new ConcurrentHashMap<>();
 
     private static final List<String> EDUCATION_KEYS =
             List.of("education", "certifications");
@@ -443,10 +446,10 @@ public final class MonogramSidebar {
                             .textStyle(textStyle)
                             .align(TextAlign.CENTER)
                             .margin(DocumentInsets.top(4))
-                            .rich(rich -> rich.image(
-                                    contactIcon(item.iconFile()),
-                                    CONTACT_ICON_SIZE,
-                                    CONTACT_ICON_SIZE,
+                            .rich(rich -> rich.shape(
+                                    glyph(item.iconFile()).outline(CONTACT_ICON_SIZE),
+                                    ICON_COLOR,
+                                    null,
                                     InlineImageAlignment.CENTER,
                                     0.0,
                                     item.linkOptions())));
@@ -837,13 +840,13 @@ public final class MonogramSidebar {
             return List.of();
         }
         List<ContactItem> items = new ArrayList<>();
-        addContactItem(items, "phone.png", identity.contact().phone(), null);
+        addContactItem(items, "phone.svg", identity.contact().phone(), null);
         String email = identity.contact().email();
         if (!email.isBlank()) {
-            addContactItem(items, "email.png", email,
+            addContactItem(items, "email.svg", email,
                     new DocumentLinkOptions("mailto:" + email));
         }
-        addContactItem(items, "location.png", identity.contact().address(),
+        addContactItem(items, "location.svg", identity.contact().address(),
                 null);
         for (CvLink link : identity.links()) {
             String label = link.label();
@@ -870,32 +873,14 @@ public final class MonogramSidebar {
     private static String pickIconFile(String label) {
         String normalized = SectionLookup.normalize(label);
         if (normalized.contains("github")) {
-            return "github.png";
+            return "github.svg";
         }
-        if (normalized.contains("linkedin")) {
-            return "linkedin.png";
-        }
-        return "linkedin.png";
+        // LinkedIn and any other link → the LinkedIn glyph (V1 fallback).
+        return "linkedin.svg";
     }
 
-    private static DocumentImageData contactIcon(String iconFile) {
-        return DocumentImageData.fromBytes(
-                CONTACT_ICON_CACHE.computeIfAbsent(CONTACT_ICON_ROOT + iconFile,
-                        MonogramSidebar::readIconBytes));
-    }
-
-    private static byte[] readIconBytes(String resourcePath) {
-        try (InputStream input = MonogramSidebar.class
-                .getResourceAsStream(resourcePath)) {
-            if (input == null) {
-                throw new IllegalStateException(
-                        "Missing monogram sidebar icon: " + resourcePath);
-            }
-            return input.readAllBytes();
-        } catch (IOException e) {
-            throw new UncheckedIOException(
-                    "Failed to read monogram sidebar icon: " + resourcePath, e);
-        }
+    private static SvgGlyph glyph(String iconFile) {
+        return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
     }
 
     private static List<String> skillTokens(SkillsSection skills) {

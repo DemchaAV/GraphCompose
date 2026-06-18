@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.8.0 — Planned
+## v1.8.0 — 2026-06-18
 
 Open cycle — the chart subsystem and the keep-together pagination control.
 Entries land here as they merge.

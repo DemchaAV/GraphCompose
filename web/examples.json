@@ -432,12 +432,30 @@
           "label": "Shapes & Containers",
           "examples": [
             {
+              "id": "photo-clip",
+              "title": "Photo Clip (silhouette)",
+              "description": "A raster photo clipped to a free-form silhouette — circle, SVG heart, star — via ShapeContainer.path(...) + ClipPolicy.CLIP_PATH; the image COVER-fills each box so the native-curve outline crops it crisply at any zoom.",
+              "tags": ["shapes", "shapes", "clip", "v1.8"],
+              "pdf": "showcase/pdf/features/shapes/photo-clip.pdf",
+              "screenshot": "showcase/screenshots/features/shapes/photo-clip.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java"
+            },
+            {
               "id": "shape-container",
               "title": "Shape-as-Container",
               "description": "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.",
               "tags": ["shapes", "shapes", "clip"],
               "pdf": "showcase/pdf/features/shapes/shape-container.pdf",
               "screenshot": "showcase/screenshots/features/shapes/shape-container.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
+            },
+            {
+              "id": "vector-path",
+              "title": "Vector Paths (Bézier)",
+              "description": "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.",
+              "tags": ["shapes", "shapes", "bezier", "v1.8"],
+              "pdf": "showcase/pdf/features/shapes/vector-path.pdf",
+              "screenshot": "showcase/screenshots/features/shapes/vector-path.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
             }
           ]
@@ -564,6 +582,81 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
             }
           ]
+        },
+        {
+          "id": "charts",
+          "label": "Charts",
+          "examples": [
+            {
+              "id": "chart-showcase",
+              "title": "Chart Showcase",
+              "description": "Generated showcase for features / charts.",
+              "tags": ["features", "charts"],
+              "pdf": "showcase/pdf/features/charts/chart-showcase.pdf",
+              "screenshot": "showcase/screenshots/features/charts/chart-showcase.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            }
+          ]
+        },
+        {
+          "id": "debug",
+          "label": "Debug & Diagnostics",
+          "examples": [
+            {
+              "id": "debug-overlay",
+              "title": "Debug Overlay",
+              "description": "DocumentDebugOptions — guide lines plus semantic node-path labels on the rendered sheet; trace any misplaced block back to the builder call that authored it.",
+              "tags": ["debug", "debug", "labels", "v1.8"],
+              "pdf": "showcase/pdf/features/debug/debug-overlay.pdf",
+              "screenshot": "showcase/screenshots/features/debug/debug-overlay.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/debug/Debug Overlay"
+            }
+          ]
+        },
+        {
+          "id": "docx",
+          "label": "Docx",
+          "examples": [
+            {
+              "id": "word-export-companion",
+              "title": "Word Export (DOCX)",
+              "description": "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts fall back to their data table.",
+              "tags": ["docx", "docx", "word", "export"],
+              "pdf": "showcase/pdf/features/docx/word-export-companion.pdf",
+              "screenshot": "showcase/screenshots/features/docx/word-export-companion.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java"
+            }
+          ]
+        },
+        {
+          "id": "layout",
+          "label": "Layout & Alignment",
+          "examples": [
+            {
+              "id": "block-align",
+              "title": "Block Alignment",
+              "description": "addAligned(align, node) / addSvgIcon(icon, w, align) — seat any fixed-size node left / centre / right across the content width.",
+              "tags": ["layout", "layout", "align", "v1.8"],
+              "pdf": "showcase/pdf/features/layout/block-align.pdf",
+              "screenshot": "showcase/screenshots/features/layout/block-align.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/Block Align"
+            }
+          ]
+        },
+        {
+          "id": "svg",
+          "label": "SVG Import",
+          "examples": [
+            {
+              "id": "svg-icon-gallery",
+              "title": "SVG Icon Gallery",
+              "description": "34 real-world multicolour svgrepo icons through SvgIcon.parse — native vector layers, the whole set 156 KB of sources.",
+              "tags": ["svg", "svg", "icons", "v1.8"],
+              "pdf": "showcase/pdf/features/svg/svg-icon-gallery.pdf",
+              "screenshot": "showcase/screenshots/features/svg/svg-icon-gallery.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/svg/Svg Icon Gallery"
+            }
+          ]
         }
       ]
     },
@@ -583,6 +676,33 @@
               "pdf": "showcase/pdf/flagships/default/business-report.pdf",
               "screenshot": "showcase/screenshots/flagships/default/business-report.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
+            },
+            {
+              "id": "engine-deck",
+              "title": "Engine Deck",
+              "description": "Generated showcase for flagships / default.",
+              "tags": ["flagships", "default"],
+              "pdf": "showcase/pdf/flagships/default/engine-deck.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/engine-deck.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "feature-catalog",
+              "title": "Feature Catalog",
+              "description": "Generated showcase for flagships / default.",
+              "tags": ["flagships", "default"],
+              "pdf": "showcase/pdf/flagships/default/feature-catalog.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/feature-catalog.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "financial-report",
+              "title": "Financial Report",
+              "description": "Generated showcase for flagships / default.",
+              "tags": ["flagships", "default"],
+              "pdf": "showcase/pdf/flagships/default/financial-report.pdf",
+              "screenshot": "showcase/screenshots/flagships/default/financial-report.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "master-showcase",

@@ -55,12 +55,12 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.7.1</version>
+    <version>1.8.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.7.1") }
+dependencies { implementation("io.github.demchaav:graph-compose:1.8.0") }
 ```
 
 > **Bundled fonts (from v1.8.0).** The curated Google fonts no longer ship

@@ -32,6 +32,13 @@
                          you've just run verify yourself and don't
                          want to wait another minute.
 
+      -SkipShowcase    — skip the showcase steps (GH_BASE flip +
+                         ShowcaseSync regen) and leave the showcase
+                         out of the release commit. Use for a pure
+                         code release where no example render changed,
+                         so you don't need fresh generated PDFs. The
+                         version bump still updates web/index.html.
+
 .EXAMPLE
     pwsh ./scripts/cut-release.ps1 -Version 1.6.0
     # full release of v1.6.0
@@ -71,6 +78,9 @@ param(
 
     [Parameter(ParameterSetName='Release')]
     [switch]$SkipVerify,
+
+    [Parameter(ParameterSetName='Release')]
+    [switch]$SkipShowcase,
 
     [Parameter(Mandatory=$true, ParameterSetName='PostRelease')]
     [switch]$PostReleaseOnly
@@ -467,11 +477,15 @@ try {
         }
     }
 
-    Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
-    Update-ShowcaseGhBase $tag | Out-Null
+    if (-not $SkipShowcase) {
+        Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
+        Update-ShowcaseGhBase $tag | Out-Null
 
-    Step 4 "Regenerate web/examples.json with $tag links"
-    Run-ShowcaseSync
+        Step 4 "Regenerate web/examples.json with $tag links"
+        Run-ShowcaseSync
+    } else {
+        Step 3 "Skipped showcase GH_BASE flip + regen (-SkipShowcase)"
+    }
 
     if (-not $SkipVerify) {
         Step 5 "Run mvnw verify (sanity check)"
@@ -494,22 +508,29 @@ try {
 
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
+    # Version/doc files always ship; the showcase files only when it was regenerated.
+    $commitFiles = @(
+        'pom.xml',
+        'aggregator/pom.xml',
+        'bundle/pom.xml',
+        'examples/pom.xml',
+        'benchmarks/pom.xml',
+        'README.md',
+        'CHANGELOG.md',
+        'web/index.html'
+    )
+    if (-not $SkipShowcase) {
+        $commitFiles += @(
+            'examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java',
+            'web/examples.json',
+            'web/showcase'
+        )
+    }
     if ($DryRun) {
-        Write-Host "    [DRY RUN] git add pom.xml aggregator/pom.xml bundle/pom.xml examples/pom.xml benchmarks/pom.xml README.md CHANGELOG.md examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java web/examples.json web/index.html web/showcase" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] git add $($commitFiles -join ' ')" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] git commit -m `"$commitMsg`"" -ForegroundColor Yellow
     } else {
-        git add `
-            pom.xml `
-            aggregator/pom.xml `
-            bundle/pom.xml `
-            examples/pom.xml `
-            benchmarks/pom.xml `
-            README.md `
-            CHANGELOG.md `
-            examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java `
-            web/examples.json `
-            web/index.html `
-            web/showcase
+        git add @commitFiles
         git commit -m $commitMsg
         Note "commit: $commitMsg"
     }

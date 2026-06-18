@@ -9,13 +9,20 @@ name: Deploy web showcase to GitHub Pages
 # REQUIRES: repository Settings → Pages → Source = "GitHub Actions"
 # (one-time switch from "Deploy from a branch"). Until that switch is made,
 # this workflow builds the artifact but Pages keeps serving the old source.
+#
+# Triggers: every push to `main` AND every `v*` release tag. The tag trigger
+# is the reliable one for releases — the v1.8.0 release fast-forwarded `main`
+# with 67 changed `web/` files yet the old `paths: web/**` filter silently
+# skipped the deploy, so the live site kept serving the previous release. We
+# dropped the paths filter rather than depend on it: `main` is only pushed at
+# releases / hotfixes, so deploying unconditionally is cheap and correct, and
+# the `v*` tag is a second guaranteed trigger. `concurrency` de-dupes the two
+# triggers a release fires.
 
 on:
   push:
     branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/deploy-web.yml"
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:

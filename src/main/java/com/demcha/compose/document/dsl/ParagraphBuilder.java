@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -327,6 +328,52 @@ public final class ParagraphBuilder {
     }
 
     /**
+     * Adds an inline image run that jumps to a named {@code anchor(...)} elsewhere
+     * in the document, with default {@link InlineImageAlignment#CENTER} alignment
+     * and zero offset.
+     *
+     * @param imageData image payload
+     * @param width     target width in points
+     * @param height    target height in points
+     * @param anchor    target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData, double width, double height, String anchor) {
+        return inlineImageLinkTo(imageData, width, height, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Adds a fully-specified inline image run that jumps to a named
+     * {@code anchor(...)} elsewhere in the document.
+     *
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData,
+                                              double width,
+                                              double height,
+                                              InlineImageAlignment alignment,
+                                              double baselineOffset,
+                                              String anchor) {
+        this.inlineRuns.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
+        this.text = "";
+        return this;
+    }
+
+    /**
      * Adds an inline filled circle ("dot") measured on the same baseline as the
      * surrounding text — the building block for skill rating dots, custom
      * bullets and status indicators that should not depend on font glyph
@@ -485,6 +532,50 @@ public final class ParagraphBuilder {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline filled shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill    fill color
+     * @param anchor  target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder shapeLinkTo(ShapeOutline outline, DocumentColor fill, String anchor) {
+        return shapeLinkTo(outline, fill, null, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Adds a fully-specified inline shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document. At least one of {@code fill} or {@code stroke}
+     * must be present.
+     *
+     * @param outline        figure geometry; supplies the run's size
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder shapeLinkTo(ShapeOutline outline,
+                                        DocumentColor fill,
+                                        DocumentStroke stroke,
+                                        InlineImageAlignment alignment,
+                                        double baselineOffset,
+                                        String anchor) {
+        this.inlineRuns.add(new InlineShapeRun(
+                List.of(new ShapeLayer(outline, fill, stroke)),
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
         this.text = "";
         return this;
     }

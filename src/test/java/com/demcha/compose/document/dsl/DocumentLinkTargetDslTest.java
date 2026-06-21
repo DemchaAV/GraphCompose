@@ -79,6 +79,15 @@ class DocumentLinkTargetDslTest {
     }
 
     @Test
+    void paragraphBuilderInlineShapeLinkToProducesInternalGraphicLink() {
+        ParagraphNode node = new ParagraphBuilder()
+                .shapeLinkTo(ShapeOutline.circle(6), DocumentColor.of(Color.RED), "scale")
+                .build();
+        InlineShapeRun run = (InlineShapeRun) node.inlineRuns().get(0);
+        assertThat(((InternalLinkTarget) run.linkTarget()).anchor()).isEqualTo("scale");
+    }
+
+    @Test
     void internalLinkTargetRejectsBlankAnchor() {
         assertThatThrownBy(() -> new InternalLinkTarget("   "))
                 .isInstanceOf(IllegalArgumentException.class)

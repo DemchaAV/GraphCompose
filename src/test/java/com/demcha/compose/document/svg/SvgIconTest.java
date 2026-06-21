@@ -453,6 +453,23 @@ class SvgIconTest {
     }
 
     @Test
+    void singleStopTranslucentGradientOverlayIsDropped() {
+        // A one-stop translucent gradient is a flat alpha fill — still an overlay
+        // we cannot composite, so it is dropped too (not only two-stop fades).
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <radialGradient id="g">
+                    <stop offset="0" style="stop-color:#000000;stop-opacity:0.2"/>
+                  </radialGradient>
+                  <path d="M0 0 H10 V10 Z" fill="#00ff00"/>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(0, 255, 0));
+    }
+
+    @Test
     void multiColourTranslucentGradientStillRenders() {
         // A real colour transition (red→blue) is structural even with a
         // translucent stop; it must keep rendering as a gradient (e.g. the sky in

@@ -169,9 +169,11 @@ final class SvgGradients {
                 stops = stopElements(target);
             }
         }
-        if (stops.size() < 2) {
+        if (stops.isEmpty()) {
             return false;
         }
+        // A single translucent stop is a flat alpha fill — still an overlay we
+        // cannot composite, so it is caught here too (not only two-stop fades).
         Integer rgb = null;
         boolean translucent = false;
         for (Element stop : stops) {

@@ -151,8 +151,11 @@ final class SvgIconReader {
             paint = stylize(element, inherited, gradients);
             matrix = compose(transform, element.getAttribute("transform"));
             // A clip-path on this element (or group) clips it and its descendants
-            // to the referenced shape; the innermost clip wins. Resolved in icon
-            // space with the same matrix/box as the geometry it bounds.
+            // to the referenced shape, resolved in icon space with the same
+            // matrix/box as the geometry it bounds. Nested clips are not
+            // intersected — the innermost wins; this is exact for the Noto set
+            // (no glyph nests a different clip inside another) and any residual
+            // overflow is still bounded by the inline viewBox clip at render.
             SvgPath ownClip = resolveClip(element, matrix, box, ids);
             if (ownClip != null) {
                 activeClip = ownClip;

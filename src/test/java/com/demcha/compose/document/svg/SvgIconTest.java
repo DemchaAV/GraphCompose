@@ -380,17 +380,37 @@ class SvgIconTest {
                   <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
                 </linearGradient>""")))
                 .hasMessageContaining("spreadMethod");
-        assertThatThrownBy(() -> SvgIcon.parse(defs.formatted("""
+    }
+
+    @Test
+    void translucentAndFocalGradientsDegradeInsteadOfFailing() {
+        String defs = """
+                <svg viewBox="0 0 10 10">
+                  <defs>%s</defs>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """;
+
+        // A gradient with any translucent stop has no opaque-PDF-shading analogue,
+        // so it degrades to a flat fill (its first stop) rather than failing — this
+        // is what lets real-world art (Noto emoji) import.
+        SvgIcon translucent = SvgIcon.parse(defs.formatted("""
                 <linearGradient id="g">
-                  <stop offset="0" stop-color="#000" stop-opacity="0.5"/>
-                  <stop offset="1" stop-color="#fff"/>
-                </linearGradient>""")))
-                .hasMessageContaining("stop-opacity");
-        assertThatThrownBy(() -> SvgIcon.parse(defs.formatted("""
+                  <stop offset="0" stop-color="#000000" stop-opacity="0.5"/>
+                  <stop offset="1" stop-color="#ffffff"/>
+                </linearGradient>"""));
+        SvgIcon.Layer flat = translucent.layers().get(0);
+        assertThat(flat.fillPaint()).isInstanceOf(DocumentPaint.Solid.class);
+        assertThat(((DocumentPaint.Solid) flat.fillPaint()).color().color())
+                .isEqualTo(new java.awt.Color(0, 0, 0));
+
+        // A focal radial (fx/fy) approximates as a plain radial about the centre.
+        SvgIcon focal = SvgIcon.parse(defs.formatted("""
                 <radialGradient id="g" fx="0.2" fy="0.2">
                   <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
-                </radialGradient>""")))
-                .hasMessageContaining("focal");
+                </radialGradient>"""));
+        assertThat(focal.layers().get(0).fillPaint())
+                .isInstanceOf(DocumentPaint.RadialCircle.class);
     }
 
     @Test

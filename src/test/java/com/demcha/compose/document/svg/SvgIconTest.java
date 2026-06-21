@@ -413,17 +413,37 @@ class SvgIconTest {
     }
 
     @Test
-    void clipPathIsIgnoredSoContentStillImports() {
-        // clip-path has no representation in the flat layer model; rather than fail
-        // the icon, the clip is ignored and the content renders unclipped — most
-        // real-world art (incl. the bulk of Noto emoji that use it) reads fine.
+    void clipPathIsResolvedOntoTheLayer() {
+        // The Illustrator <use>+clipPath idiom: the clipPath references a <defs>
+        // shape via <use>; the clipped layer must carry that shape as its clip so
+        // the backend confines the paint to it (Noto hands clip detail to the
+        // silhouette).
         SvgIcon icon = SvgIcon.parse("""
                 <svg viewBox="0 0 10 10">
-                  <defs><clipPath id="c"><rect x="0" y="0" width="5" height="10"/></clipPath></defs>
+                  <defs>
+                    <path id="s" d="M0 0 H5 V10 H0 Z"/>
+                    <clipPath id="c"><use xlink:href="#s"/></clipPath>
+                  </defs>
                   <g clip-path="url(#c)"><path d="M0 0 H10 V10 Z" fill="#000"/></g>
                 </svg>
                 """);
         assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).clip()).isNotNull();
+        assertThat(icon.layers().get(0).clip().hasDrawingSegment()).isTrue();
+    }
+
+    @Test
+    void displayNoneSubtreeIsSkipped() {
+        // Illustrator exports guide/template layers as display:none groups; their
+        // registration hatching must not paint.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <g style="display:none;"><path d="M0 0 H10 V10 Z" fill="#ff0000"/></g>
+                  <path d="M2 2 H8 V8 Z" fill="#00ff00"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(0, 255, 0));
     }
 
     @Test

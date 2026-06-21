@@ -2,12 +2,14 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
@@ -1669,15 +1671,16 @@ public final class TextFlowSupport {
         }
 
         private static InlineSvgToken of(InlineSvgRun run) {
-            // Reuse the icon's own scaling: node(width) lowers each SVG layer to
-            // a PathNode whose stroke/dash are scaled to points and whose
-            // geometry stays normalized to the unit box.
-            LayerStackNode scaled = run.icon().node(run.width());
-            List<ResolvedSvgLayer> resolved = new ArrayList<>(scaled.layers().size());
-            for (LayerStackNode.Layer layer : scaled.layers()) {
-                if (layer.node() instanceof PathNode path) {
-                    resolved.add(toResolvedSvgLayer(path));
-                }
+            // Lower each SVG layer to an engine-ready span. Geometry (and the clip
+            // region) stay normalized to the unit box and scale at render; the
+            // stroke width and dash lengths are in SVG user units, so scale them to
+            // points here (scale = target width / source frame width) — the same
+            // arithmetic SvgIcon.node(double) does, but carrying the clip through.
+            SvgIcon icon = run.icon();
+            double scale = run.width() / icon.sourceWidth();
+            List<ResolvedSvgLayer> resolved = new ArrayList<>(icon.layers().size());
+            for (SvgIcon.Layer layer : icon.layers()) {
+                resolved.add(toResolvedSvgLayer(layer, scale));
             }
             return new InlineSvgToken(
                     List.copyOf(resolved),
@@ -1689,39 +1692,49 @@ public final class TextFlowSupport {
         }
 
         /**
-         * Lowers a scaled SVG {@link PathNode} to an engine-ready
-         * {@link ResolvedSvgLayer}. Mirrors the paint normalization in
-         * {@code PathDefinition}: solid paints collapse to flat colours so the
-         * inline render path matches the block path; only true gradients travel
-         * as {@link DocumentPaint}.
+         * Lowers an {@link SvgIcon.Layer} to an engine-ready {@link ResolvedSvgLayer}.
+         * Mirrors the paint normalization in {@code PathDefinition} (solid paints
+         * collapse to flat colours; only true gradients travel as
+         * {@link DocumentPaint}), scales the stroke/dash to points by {@code scale},
+         * and carries the optional clip region.
          */
-        private static ResolvedSvgLayer toResolvedSvgLayer(PathNode node) {
+        private static ResolvedSvgLayer toResolvedSvgLayer(SvgIcon.Layer layer, double scale) {
             Color fill;
             DocumentPaint fillGradient = null;
-            if (node.fillPaint() instanceof DocumentPaint.Solid solid) {
+            if (layer.fillPaint() instanceof DocumentPaint.Solid solid) {
                 fill = solid.color().color();
-            } else if (node.fillPaint() != null) {
-                fillGradient = node.fillPaint();
+            } else if (layer.fillPaint() != null) {
+                fillGradient = layer.fillPaint();
                 fill = null;
             } else {
-                fill = node.fillColor() == null ? null : node.fillColor().color();
+                fill = layer.fill() == null ? null : layer.fill().color();
             }
-            DocumentStroke stroke = node.stroke();
+            DocumentStroke stroke = layer.stroke() == null ? null
+                    : DocumentStroke.of(layer.stroke().color(), layer.stroke().width() * scale);
             DocumentPaint strokeGradient = null;
-            if (node.strokePaint() instanceof DocumentPaint.Solid solid) {
+            if (layer.strokePaint() instanceof DocumentPaint.Solid solid && stroke != null) {
                 stroke = DocumentStroke.of(solid.color(), stroke.width());
-            } else if (node.strokePaint() != null) {
-                strokeGradient = node.strokePaint();
+            } else if (layer.strokePaint() != null && !(layer.strokePaint() instanceof DocumentPaint.Solid)) {
+                strokeGradient = layer.strokePaint();
+            }
+            DocumentDashPattern dash = null;
+            if (!layer.dashArray().isEmpty()) {
+                double[] scaled = new double[layer.dashArray().size()];
+                for (int i = 0; i < scaled.length; i++) {
+                    scaled[i] = layer.dashArray().get(i) * scale;
+                }
+                dash = DocumentDashPattern.of(scaled);
             }
             return new ResolvedSvgLayer(
-                    node.segments(),
+                    layer.geometry().segments(),
                     fill,
                     fillGradient,
                     toStroke(stroke),
                     strokeGradient,
-                    node.dashPattern(),
-                    node.lineCap(),
-                    node.lineJoin());
+                    dash,
+                    layer.lineCap(),
+                    layer.lineJoin(),
+                    layer.clip() == null ? null : layer.clip().segments());
         }
     }
 }

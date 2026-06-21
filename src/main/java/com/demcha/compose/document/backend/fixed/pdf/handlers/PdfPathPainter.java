@@ -52,6 +52,8 @@ final class PdfPathPainter {
      * @param dashPattern stroke dash pattern; {@link DocumentDashPattern#NONE} is solid
      * @param lineCap     stroke end-cap style
      * @param lineJoin    stroke corner style
+     * @param clip        optional clip region (normalized to the same box); the
+     *                    paint is confined to it. {@code null} means no clipping.
      * @throws IOException if the content stream rejects an operator
      */
     static void paintPath(PDPageContentStream stream,
@@ -68,11 +70,44 @@ final class PdfPathPainter {
                           DocumentPaint strokePaint,
                           DocumentDashPattern dashPattern,
                           DocumentLineCap lineCap,
-                          DocumentLineJoin lineJoin) throws IOException {
+                          DocumentLineJoin lineJoin,
+                          List<DocumentPathSegment> clip) throws IOException {
         if (width <= 0 || height <= 0) {
             return;
         }
+        if (clip == null || clip.isEmpty()) {
+            fillStrokePath(stream, environment, pageIndex, x, y, width, height, segments,
+                    fillColor, fillPaint, stroke, strokePaint, dashPattern, lineCap, lineJoin);
+            return;
+        }
+        // Confine the paint to the clip region (e.g. a Noto emoji clips its
+        // shadow/detail layers to the icon silhouette).
+        stream.saveGraphicsState();
+        try {
+            PdfShapeGeometry.addPathSegments(stream, x, y, width, height, clip);
+            stream.clip();
+            fillStrokePath(stream, environment, pageIndex, x, y, width, height, segments,
+                    fillColor, fillPaint, stroke, strokePaint, dashPattern, lineCap, lineJoin);
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
 
+    private static void fillStrokePath(PDPageContentStream stream,
+                                       PdfRenderEnvironment environment,
+                                       int pageIndex,
+                                       float x,
+                                       float y,
+                                       float width,
+                                       float height,
+                                       List<DocumentPathSegment> segments,
+                                       Color fillColor,
+                                       DocumentPaint fillPaint,
+                                       Stroke stroke,
+                                       DocumentPaint strokePaint,
+                                       DocumentDashPattern dashPattern,
+                                       DocumentLineCap lineCap,
+                                       DocumentLineJoin lineJoin) throws IOException {
         if (fillPaint == null && strokePaint == null) {
             PdfShapeGeometry.fillAndStrokePath(stream, fillColor, stroke,
                     dashPattern, lineCap, lineJoin,

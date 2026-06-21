@@ -205,7 +205,7 @@ public final class PdfParagraphFragmentRenderHandler
                     (float) cursorX, (float) bottom, (float) width, (float) height,
                     layer.segments(), layer.fillColor(), layer.fillPaint(),
                     layer.stroke(), layer.strokePaint(),
-                    layer.dashPattern(), layer.lineCap(), layer.lineJoin());
+                    layer.dashPattern(), layer.lineCap(), layer.lineJoin(), layer.clip());
         }
     }
 

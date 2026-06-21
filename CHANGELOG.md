@@ -71,11 +71,16 @@ PDF `GoTo` actions. External links are unchanged.
   radial about the centre, instead of failing the whole icon. This lets
   real-world artwork import (keeps gradient scenes like `:framed_picture:` /
   `:city_sunrise:` looking like scenes rather than flat blobs); fully-opaque
-  gradients are unchanged, byte for byte. SVG `clip-path` (the Illustrator
-  `<use>` + `clipPath` idiom) is unsupported: the clip is ignored and the content
-  renders unclipped. Most artwork that uses it reads fine (the bulk of Noto's
-  clip-path glyphs — hands, faces, plants — render correctly); a handful where
-  the clip is structural (e.g. `:leg:`, `:foot:`) overflow and render imperfectly.
+  gradients are unchanged, byte for byte.
+- **SVG `clip-path` and `display:none` support** (`@since 1.9.0`). A
+  `clip-path:url(#id)` (including the Adobe-Illustrator `<use>` + `clipPath`
+  idiom, where the clipPath references a `<defs>` shape) is resolved to a clip
+  region on each affected `SvgIcon.Layer` and honoured by the inline renderer, so
+  glyphs that clip detail to a silhouette — hand gestures, body parts, the
+  probing cane — render correctly instead of overflowing into halos. Hidden
+  subtrees (`display:none`, e.g. an Illustrator guide layer of registration
+  hatching) are skipped. Together these take the Noto Emoji set to essentially
+  the whole bundled set rendering cleanly.
 
 ### Documentation
 

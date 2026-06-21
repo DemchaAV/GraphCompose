@@ -206,6 +206,9 @@ public final class SvgIcon {
      * @param lineCap     stroke end-cap style; never {@code null} (BUTT default)
      * @param lineJoin    stroke corner style; never {@code null} (MITER default)
      * @param dashArray   stroke dash lengths in user units; empty for solid
+     * @param clip        optional clip region (normalized to the same icon frame
+     *                    as {@code geometry}); the layer paints only inside it.
+     *                    {@code null} means no clipping. ({@code @since 1.9.0})
      * @since 1.8.0
      */
     public record Layer(SvgPath geometry,
@@ -215,7 +218,8 @@ public final class SvgIcon {
                         DocumentPaint strokePaint,
                         DocumentLineCap lineCap,
                         DocumentLineJoin lineJoin,
-                        List<Double> dashArray) {
+                        List<Double> dashArray,
+                        SvgPath clip) {
         /**
          * Validates the geometry reference and normalizes style defaults.
          */
@@ -227,6 +231,24 @@ public final class SvgIcon {
         }
 
         /**
+         * Compatibility constructor without a clip region.
+         *
+         * @param geometry    normalized path geometry
+         * @param fill        fill colour, or {@code null}
+         * @param fillPaint   gradient fill, or {@code null}
+         * @param stroke      outline stroke, or {@code null}
+         * @param strokePaint gradient stroke paint, or {@code null}
+         * @param lineCap     stroke end-cap style
+         * @param lineJoin    stroke corner style
+         * @param dashArray   stroke dash lengths in user units
+         */
+        public Layer(SvgPath geometry, DocumentColor fill, DocumentPaint fillPaint,
+                     DocumentStroke stroke, DocumentPaint strokePaint,
+                     DocumentLineCap lineCap, DocumentLineJoin lineJoin, List<Double> dashArray) {
+            this(geometry, fill, fillPaint, stroke, strokePaint, lineCap, lineJoin, dashArray, null);
+        }
+
+        /**
          * Compatibility constructor for flat-colour layers.
          *
          * @param geometry normalized path geometry
@@ -234,7 +256,7 @@ public final class SvgIcon {
          * @param stroke   outline stroke, or {@code null}
          */
         public Layer(SvgPath geometry, DocumentColor fill, DocumentStroke stroke) {
-            this(geometry, fill, null, stroke, null, null, null, null);
+            this(geometry, fill, null, stroke, null, null, null, null, null);
         }
 
         /**
@@ -248,7 +270,7 @@ public final class SvgIcon {
          */
         public Layer(SvgPath geometry, DocumentColor fill, DocumentPaint fillPaint,
                      DocumentStroke stroke, DocumentPaint strokePaint) {
-            this(geometry, fill, fillPaint, stroke, strokePaint, null, null, null);
+            this(geometry, fill, fillPaint, stroke, strokePaint, null, null, null, null);
         }
     }
 }

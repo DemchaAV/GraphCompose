@@ -30,6 +30,8 @@ import java.util.Objects;
  * @param dashPattern stroke dash pattern; {@link DocumentDashPattern#NONE} is solid
  * @param lineCap     stroke end-cap style; {@code BUTT} is the PDF default
  * @param lineJoin    stroke corner style; {@code MITER} is the PDF default
+ * @param clip        optional clip region (normalized to the same box); the layer
+ *                    paints only inside it. {@code null} means no clipping.
  * @author Artem Demchyshyn
  * @since 1.9.0
  */
@@ -41,15 +43,17 @@ public record ResolvedSvgLayer(
         DocumentPaint strokePaint,
         DocumentDashPattern dashPattern,
         DocumentLineCap lineCap,
-        DocumentLineJoin lineJoin
+        DocumentLineJoin lineJoin,
+        List<DocumentPathSegment> clip
 ) {
     /**
-     * Copies the segment list defensively and normalizes dash and stroke style
+     * Copies the segment lists defensively and normalizes dash and stroke style
      * defaults.
      */
     public ResolvedSvgLayer {
         Objects.requireNonNull(segments, "segments");
         segments = List.copyOf(segments);
+        clip = clip == null ? null : List.copyOf(clip);
         dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
         lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
         lineJoin = lineJoin == null ? DocumentLineJoin.MITER : lineJoin;

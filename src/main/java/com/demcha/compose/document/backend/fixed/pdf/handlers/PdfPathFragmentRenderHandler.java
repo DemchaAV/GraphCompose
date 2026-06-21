@@ -47,6 +47,6 @@ public final class PdfPathFragmentRenderHandler
                 (float) fragment.width(), (float) fragment.height(),
                 payload.segments(), payload.fillColor(), payload.fillPaint(),
                 payload.stroke(), payload.strokePaint(),
-                payload.dashPattern(), payload.lineCap(), payload.lineJoin());
+                payload.dashPattern(), payload.lineCap(), payload.lineJoin(), null);
     }
 }

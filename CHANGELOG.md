@@ -93,6 +93,10 @@ PDF `GoTo` actions. External links are unchanged.
   `examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java`
   — a `Shortcode | SVG (vector) | PNG (raster)` comparison table, drawing each
   starter glyph down both inline paths (`RichText.svgIcon` vs `RichText.image`).
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java`
+  — a paginated catalogue of the entire bundled emoji set (every indexed glyph,
+  drawn inline).
 
 ### Tests
 

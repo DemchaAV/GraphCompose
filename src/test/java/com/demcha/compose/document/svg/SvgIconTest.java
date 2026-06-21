@@ -413,6 +413,21 @@ class SvgIconTest {
     }
 
     @Test
+    void clipPathIsRejectedSoCallersCanFallBack() {
+        // clip-path has no representation in the flat layer model; rendering the
+        // clipped content unclipped paints garbage, so the icon is rejected loudly
+        // (emoji callers then fall back to text rather than render broken).
+        assertThatThrownBy(() -> SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <defs><clipPath id="c"><rect x="0" y="0" width="5" height="10"/></clipPath></defs>
+                  <g clip-path="url(#c)"><path d="M0 0 H10 V10 Z" fill="#000"/></g>
+                </svg>
+                """))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("clip-path");
+    }
+
+    @Test
     void malformedGradientNumberSaysWhatExpectedANumber() {
         // A non-numeric gradient coordinate must read in the reader's house
         // style (named + reason) instead of leaking a bare JDK parse message.

@@ -69,10 +69,13 @@ PDF `GoTo` actions. External links are unchanged.
   (which has no opaque-PDF-shading analogue) is ignored — the gradient renders
   with opaque stops — and a focal radial (`fx` / `fy`) approximates as a plain
   radial about the centre, instead of failing the whole icon. This lets
-  real-world artwork import (it takes the Noto Emoji set from ~80% to ~99.9% of
-  glyphs rendering, and keeps gradient scenes like `:framed_picture:` /
+  real-world artwork import (keeps gradient scenes like `:framed_picture:` /
   `:city_sunrise:` looking like scenes rather than flat blobs); fully-opaque
-  gradients are unchanged, byte for byte.
+  gradients are unchanged, byte for byte. SVG `clip-path` (the Illustrator
+  `<use>` + `clipPath` idiom) is still unsupported and is now rejected loudly
+  rather than painting unclipped overflow — so the ~12% of Noto glyphs that use
+  it (e.g. `:leg:`, `:superhero:`) fall back to text instead of rendering broken,
+  and the rest (~1.1k shortcodes) render cleanly.
 
 ### Documentation
 

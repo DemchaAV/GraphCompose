@@ -3,6 +3,8 @@ package com.demcha.compose.document.layout;
 import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -15,6 +17,7 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -565,6 +568,8 @@ public final class TextFlowSupport {
                     width += imageRun.width();
                 } else if (run instanceof InlineShapeRun shapeRun) {
                     width += shapeRun.width();
+                } else if (run instanceof InlineSvgRun svgRun) {
+                    width += svgRun.width();
                 }
             }
             return width <= innerWidth;
@@ -1248,6 +1253,8 @@ public final class TextFlowSupport {
                 currentLine.add(InlineImageToken.of(imageRun));
             } else if (run instanceof InlineShapeRun shapeRun) {
                 currentLine.add(InlineShapeToken.of(shapeRun));
+            } else if (run instanceof InlineSvgRun svgRun) {
+                currentLine.add(InlineSvgToken.of(svgRun));
             }
         }
 
@@ -1295,6 +1302,10 @@ public final class TextFlowSupport {
                 if (shapeToken.height() > maxInlineGraphicHeight) {
                     maxInlineGraphicHeight = shapeToken.height();
                 }
+            } else if (token instanceof InlineSvgToken svgToken) {
+                if (svgToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = svgToken.height();
+                }
             }
         }
         double resolvedLineHeight = Math.max(dominantTextLineHeight, maxInlineGraphicHeight);
@@ -1330,6 +1341,15 @@ public final class TextFlowSupport {
                         shapeToken.baselineOffset(),
                         shapeToken.linkTarget()));
                 width += shapeToken.width();
+            } else if (token instanceof InlineSvgToken svgToken) {
+                spans.add(new ParagraphSvgSpan(
+                        svgToken.layers(),
+                        svgToken.width(),
+                        svgToken.height(),
+                        svgToken.alignment(),
+                        svgToken.baselineOffset(),
+                        svgToken.linkTarget()));
+                width += svgToken.width();
             }
         }
 
@@ -1539,7 +1559,8 @@ public final class TextFlowSupport {
     // Inline tokens + indent spec
     // ------------------------------------------------------------------
 
-    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
+    private sealed interface InlineLayoutToken
+            permits InlineTextToken, InlineImageToken, InlineShapeToken, InlineSvgToken {
         double width();
     }
 
@@ -1632,6 +1653,75 @@ public final class TextFlowSupport {
                     run.alignment(),
                     run.baselineOffset(),
                     run.linkTarget());
+        }
+    }
+
+    private record InlineSvgToken(
+            List<ResolvedSvgLayer> layers,
+            double width,
+            double height,
+            InlineImageAlignment alignment,
+            double baselineOffset,
+            DocumentLinkTarget linkTarget
+    ) implements InlineLayoutToken {
+        private InlineSvgToken {
+            alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
+        }
+
+        private static InlineSvgToken of(InlineSvgRun run) {
+            // Reuse the icon's own scaling: node(width) lowers each SVG layer to
+            // a PathNode whose stroke/dash are scaled to points and whose
+            // geometry stays normalized to the unit box.
+            LayerStackNode scaled = run.icon().node(run.width());
+            List<ResolvedSvgLayer> resolved = new ArrayList<>(scaled.layers().size());
+            for (LayerStackNode.Layer layer : scaled.layers()) {
+                if (layer.node() instanceof PathNode path) {
+                    resolved.add(toResolvedSvgLayer(path));
+                }
+            }
+            return new InlineSvgToken(
+                    List.copyOf(resolved),
+                    run.width(),
+                    run.height(),
+                    run.alignment(),
+                    run.baselineOffset(),
+                    run.linkTarget());
+        }
+
+        /**
+         * Lowers a scaled SVG {@link PathNode} to an engine-ready
+         * {@link ResolvedSvgLayer}. Mirrors the paint normalization in
+         * {@code PathDefinition}: solid paints collapse to flat colours so the
+         * inline render path matches the block path; only true gradients travel
+         * as {@link DocumentPaint}.
+         */
+        private static ResolvedSvgLayer toResolvedSvgLayer(PathNode node) {
+            Color fill;
+            DocumentPaint fillGradient = null;
+            if (node.fillPaint() instanceof DocumentPaint.Solid solid) {
+                fill = solid.color().color();
+            } else if (node.fillPaint() != null) {
+                fillGradient = node.fillPaint();
+                fill = null;
+            } else {
+                fill = node.fillColor() == null ? null : node.fillColor().color();
+            }
+            DocumentStroke stroke = node.stroke();
+            DocumentPaint strokeGradient = null;
+            if (node.strokePaint() instanceof DocumentPaint.Solid solid) {
+                stroke = DocumentStroke.of(solid.color(), stroke.width());
+            } else if (node.strokePaint() != null) {
+                strokeGradient = node.strokePaint();
+            }
+            return new ResolvedSvgLayer(
+                    node.segments(),
+                    fill,
+                    fillGradient,
+                    toStroke(stroke),
+                    strokeGradient,
+                    node.dashPattern(),
+                    node.lineCap(),
+                    node.lineJoin());
         }
     }
 }

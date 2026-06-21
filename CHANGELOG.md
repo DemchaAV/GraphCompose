@@ -38,12 +38,27 @@ PDF `GoTo` actions. External links are unchanged.
   records (`InlineTextRun` / `InlineImageRun` / `InlineShapeRun`) is now
   `linkTarget()`; the former `linkOptions()` remains as a deprecated bridge that
   returns the external options (or `null` for an internal link).
+- **Inline SVG-icon runs** (`@since 1.9.0`). A parsed `SvgIcon` can now sit on
+  the text baseline inside a paragraph via `RichText.svgIcon(icon, size)` and
+  `ParagraphBuilder.svgIcon(icon, size)` (with `alignment` / `baselineOffset` /
+  link overloads, plus a clickable form). `size` is the glyph's height in points;
+  the width follows the icon's aspect ratio. The icon is drawn as crisp vector
+  layers carrying their own colours — gradients included — so it renders
+  independently of the active font's glyph coverage. This is the engine path for
+  vector colour emoji (e.g. a Twemoji SVG dropped inline) and small vector marks.
+  A new sealed `InlineRun` variant (`InlineSvgRun`) joins text / image / shape;
+  the inline render reuses the existing SVG paint pipeline (shared with the block
+  path fragment), so flat-colour output stays byte-identical.
 
 ### Documentation
 
 - New runnable example
   `examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java`
   — a clickable table of contents plus a bidirectional footnote.
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java`
+  — multi-colour vector glyphs (gold star, green check badge, violet gradient
+  orb, info / warning marks) flowing inline with text, at several sizes.
 
 ### Tests
 
@@ -53,6 +68,11 @@ PDF `GoTo` actions. External links are unchanged.
   emits an annotation per line fragment; external links still emit `URI`; a
   section anchor and a shape internal link are both navigable; a duplicate anchor
   keeps the last registration; plus a visual artifact write.
+- `InlineSvgRunTest` (run validation: null icon, non-finite / non-positive
+  dimensions, alignment default, external-link wrapping) and `InlineSvgRenderTest`
+  (PDFBox end-to-end: text preserved with no glyph substitution, the icon's fill
+  colour and an inline gradient both rasterize onto the page, a linked icon emits
+  a clickable annotation, and `svgIcon` sizes by aspect ratio).
 
 ## v1.8.0 — 2026-06-18
 

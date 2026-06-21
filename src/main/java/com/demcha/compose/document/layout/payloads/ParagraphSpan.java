@@ -4,10 +4,11 @@ import com.demcha.compose.document.node.DocumentLinkTarget;
 
 /**
  * One measured span inside a paragraph line. Sealed because the wrapping
- * algorithm can produce text, image or shape spans for the same line — all
- * contribute to wrapping width and per-line height.
+ * algorithm can produce text, image, shape or SVG-icon spans for the same
+ * line — all contribute to wrapping width and per-line height.
  */
-public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageSpan, ParagraphShapeSpan {
+public sealed interface ParagraphSpan
+        permits ParagraphTextSpan, ParagraphImageSpan, ParagraphShapeSpan, ParagraphSvgSpan {
     /**
      * Measured width of this span.
      *

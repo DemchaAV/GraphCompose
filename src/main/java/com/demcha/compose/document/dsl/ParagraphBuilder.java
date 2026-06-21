@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.ExternalLinkTarget;
 import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineShapeRun;
+import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineRun;
@@ -22,6 +23,7 @@ import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.svg.SvgIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -529,6 +531,68 @@ public final class ParagraphBuilder {
                 outline,
                 fill,
                 stroke,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline SVG-icon run sized to {@code size} points tall, with
+     * default {@link InlineImageAlignment#CENTER} alignment and zero offset.
+     *
+     * <p>The icon is drawn as crisp vector layers on the text baseline, carrying
+     * its own colours — so it renders independently of the active font's glyph
+     * coverage. This is the inline path for vector colour emoji (e.g. Twemoji
+     * SVG) and small vector marks. The icon keeps its aspect ratio: the width is
+     * {@code size * icon.aspectRatio()}.</p>
+     *
+     * @param icon parsed vector icon; must not be {@code null}
+     * @param size target height in points (the icon's vertical extent on the line)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon, double size) {
+        return svgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline SVG-icon run with explicit vertical alignment.
+     *
+     * @param icon      parsed vector icon; must not be {@code null}
+     * @param size      target height in points
+     * @param alignment vertical alignment relative to the surrounding text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
+        return svgIcon(icon, size, alignment, 0.0, null);
+    }
+
+    /**
+     * Adds a fully-specified, optionally clickable inline SVG-icon run, measured
+     * on the surrounding text baseline. The figure is drawn from vector geometry,
+     * so it never depends on font glyph coverage.
+     *
+     * @param icon           parsed vector icon; must not be {@code null}
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional inline link metadata
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon,
+                                    double size,
+                                    InlineImageAlignment alignment,
+                                    double baselineOffset,
+                                    DocumentLinkOptions linkOptions) {
+        Objects.requireNonNull(icon, "icon");
+        this.inlineRuns.add(new InlineSvgRun(
+                icon,
+                size * icon.aspectRatio(),
+                size,
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));

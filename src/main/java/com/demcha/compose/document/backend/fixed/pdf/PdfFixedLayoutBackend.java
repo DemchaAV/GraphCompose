@@ -127,6 +127,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             alignment = shapeSpan.alignment();
             graphicHeight = shapeSpan.height();
             baselineOffset = shapeSpan.baselineOffset();
+        } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphSvgSpan svgSpan) {
+            alignment = svgSpan.alignment();
+            graphicHeight = svgSpan.height();
+            baselineOffset = svgSpan.baselineOffset();
         } else {
             // Text spans cover the full line box.
             return new PdfLinkAnnotationWriter.PlacedPdfRect(

@@ -3,6 +3,7 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.*;
+import com.demcha.compose.document.svg.SvgIcon;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -373,6 +374,66 @@ public final class RichText {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 new InternalLinkTarget(anchor)));
+        return this;
+    }
+
+    /**
+     * Appends an inline SVG-icon run sized to {@code size} points tall, with
+     * default {@link InlineImageAlignment#CENTER} alignment and zero offset.
+     *
+     * <p>The icon is drawn as crisp vector layers on the text baseline, carrying
+     * its own colours — so it renders independently of the active font's glyph
+     * coverage. This is the inline path for vector colour emoji (e.g. Twemoji
+     * SVG) and small vector marks. The icon keeps its aspect ratio: the width is
+     * {@code size * icon.aspectRatio()}.</p>
+     *
+     * @param icon parsed vector icon; must not be {@code null}
+     * @param size target height in points (the icon's vertical extent on the line)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon, double size) {
+        return svgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Appends an inline SVG-icon run with explicit vertical alignment.
+     *
+     * @param icon      parsed vector icon; must not be {@code null}
+     * @param size      target height in points
+     * @param alignment vertical alignment relative to the surrounding text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
+        return svgIcon(icon, size, alignment, 0.0, null);
+    }
+
+    /**
+     * Appends a fully-specified, optionally clickable inline SVG-icon run; the
+     * link annotation covers the icon rectangle on supporting backends.
+     *
+     * @param icon           parsed vector icon; must not be {@code null}
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to the surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional link metadata
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon,
+                            double size,
+                            InlineImageAlignment alignment,
+                            double baselineOffset,
+                            DocumentLinkOptions linkOptions) {
+        Objects.requireNonNull(icon, "icon");
+        runs.add(new InlineSvgRun(
+                icon,
+                size * icon.aspectRatio(),
+                size,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
         return this;
     }
 

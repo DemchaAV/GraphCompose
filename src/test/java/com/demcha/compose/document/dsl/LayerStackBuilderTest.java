@@ -3,7 +3,10 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.SpacerNode;
@@ -422,6 +425,51 @@ class LayerStackBuilderTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void clipToBoundsEmitsBalancedClipMarkersAroundLayers() {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 320)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            LayerStackNode clipped = new LayerStackBuilder()
+                    .name("Clipped")
+                    .layer(new SpacerNode("Inner", 80.0, 50.0,
+                            DocumentInsets.zero(), DocumentInsets.zero()))
+                    .clipToBounds()
+                    .build();
+
+            assertThat(clipped.clipToBounds()).isTrue();
+            session.add(clipped);
+
+            List<PlacedFragment> fragments = session.layoutGraph().fragments();
+            assertThat(fragments)
+                    .filteredOn(f -> f.payload() instanceof ShapeClipBeginPayload)
+                    .as("clipToBounds() opens exactly one bounds clip")
+                    .hasSize(1);
+            assertThat(fragments)
+                    .filteredOn(f -> f.payload() instanceof ShapeClipEndPayload)
+                    .as("clipToBounds() closes exactly one bounds clip")
+                    .hasSize(1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void defaultStackDoesNotClipAndExplicitFalseStaysOff() {
+        SpacerNode inner = new SpacerNode("Inner", 40.0, 30.0,
+                DocumentInsets.zero(), DocumentInsets.zero());
+
+        // Default: no clip, byte-identical to pre-1.9 stacks.
+        assertThat(new LayerStackBuilder().name("Default").layer(inner).build().clipToBounds())
+                .isFalse();
+        // Explicit false is a no-op opt-out.
+        assertThat(new LayerStackBuilder().name("Off").layer(inner).clipToBounds(false).build()
+                .clipToBounds())
+                .isFalse();
     }
 
     private static PlacedNode nodeWithSemanticName(LayoutGraph graph, String name) {

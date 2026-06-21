@@ -101,7 +101,9 @@ PDF `GoTo` actions. External links are unchanged.
   the icon box: `LayerStackNode` gains an opt-in `clipToBounds` (`@since 1.9.0`,
   default off so existing stacks stay byte-identical) and `SvgIcon.node(...)`
   sets it. It reuses the `ShapeContainer` clip pipeline — one paired
-  begin/end marker per icon — so it matches the inline fix above.
+  begin/end marker per icon — so it matches the inline fix above. The same
+  flag is exposed to the DSL as `LayerStackBuilder.clipToBounds()` — the
+  `overflow: hidden` of a stacking box for any layer stack.
 
 ### Documentation
 

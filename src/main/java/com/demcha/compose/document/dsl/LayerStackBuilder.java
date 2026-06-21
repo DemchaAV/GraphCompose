@@ -26,6 +26,7 @@ public final class LayerStackBuilder {
     private String name = "";
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private boolean clipToBounds = false;
 
     /**
      * Creates a layer stack builder.
@@ -266,11 +267,36 @@ public final class LayerStackBuilder {
     }
 
     /**
+     * Clips the layers to the stack box — the {@code overflow: hidden} of a
+     * stacking box. Anything a layer paints outside the box (after padding) is
+     * cut away. Off by default, so layers may overflow.
+     *
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LayerStackBuilder clipToBounds() {
+        return clipToBounds(true);
+    }
+
+    /**
+     * Sets whether the layers are clipped to the stack box.
+     *
+     * @param clip {@code true} to clip layers to the box, {@code false} to let
+     *             them overflow (the default)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LayerStackBuilder clipToBounds(boolean clip) {
+        this.clipToBounds = clip;
+        return this;
+    }
+
+    /**
      * Builds the layer stack node.
      *
      * @return immutable layer stack node
      */
     public LayerStackNode build() {
-        return new LayerStackNode(name, List.copyOf(layers), padding, margin);
+        return new LayerStackNode(name, List.copyOf(layers), padding, margin, clipToBounds);
     }
 }

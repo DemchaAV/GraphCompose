@@ -7,10 +7,13 @@ import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +28,15 @@ import java.util.Map;
  * <p><b>Thread-safety:</b> mutable and confined to one render pass.</p>
  */
 public final class PdfRenderEnvironment {
+    private static final Logger LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
+
     private final PDDocument document;
     private final FontLibrary fonts;
     private final PdfRenderSession session;
     private final Map<String, PDImageXObject> imageCache = new HashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
+    private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
+    private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
 
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session) {
         this.document = document;
@@ -98,6 +105,68 @@ public final class PdfRenderEnvironment {
         return List.copyOf(bookmarkRecords);
     }
 
+    /**
+     * Records the resolved page and top-left of a named anchor declared by an
+     * {@code AnchorMarkerPayload} fragment. A duplicate name keeps the last
+     * registration (and logs a warning), matching the documented contract.
+     *
+     * @param fragment placed anchor marker fragment
+     * @param anchor   non-blank anchor name
+     */
+    public void registerAnchor(PlacedFragment fragment, String anchor) {
+        if (anchor == null || anchor.isBlank()) {
+            return;
+        }
+        AnchorDestination destination = new AnchorDestination(
+                fragment.pageIndex(),
+                fragment.x(),
+                fragment.y() + fragment.height());
+        AnchorDestination previous = anchorDestinations.put(anchor, destination);
+        if (previous != null) {
+            LOG.warn("render.pdf.anchor.duplicate name={} — last registration wins", anchor);
+        }
+    }
+
+    /**
+     * Defers an internal (anchor-targeting) link for resolution in the post-pass,
+     * once every anchor's position is known (supports forward references).
+     *
+     * @param pageIndex source page index where the clickable rectangle lives
+     * @param rectangle clickable rectangle on the source page
+     * @param anchor    target anchor name
+     */
+    void deferInternalLink(int pageIndex, PdfLinkAnnotationWriter.PlacedPdfRect rectangle, String anchor) {
+        deferredInternalLinks.add(new DeferredInternalLink(pageIndex, rectangle, anchor));
+    }
+
+    Map<String, AnchorDestination> anchorDestinations() {
+        return Map.copyOf(anchorDestinations);
+    }
+
+    List<DeferredInternalLink> deferredInternalLinks() {
+        return List.copyOf(deferredInternalLinks);
+    }
+
     record BookmarkRecord(String title, int level, int pageIndex, double y) {
+    }
+
+    /**
+     * Resolved page and top-left of a named anchor destination.
+     *
+     * @param pageIndex zero-based page index the anchor resolved to
+     * @param left      left edge in PDF user space
+     * @param top       top edge in PDF user space
+     */
+    record AnchorDestination(int pageIndex, double left, double top) {
+    }
+
+    /**
+     * A clickable internal-link rectangle awaiting anchor resolution.
+     *
+     * @param pageIndex source page index
+     * @param rectangle clickable rectangle on the source page
+     * @param anchor    target anchor name
+     */
+    record DeferredInternalLink(int pageIndex, PdfLinkAnnotationWriter.PlacedPdfRect rectangle, String anchor) {
     }
 }

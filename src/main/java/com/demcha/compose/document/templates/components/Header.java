@@ -205,7 +205,7 @@ public final class Header {
                 continue;
             }
             if (separatorPending) {
-                runs.add(new InlineTextRun(" | ", null, null));
+                runs.add(new InlineTextRun(" | "));
             }
             DocumentLinkOptions linkOptions = link.url() == null || link.url().isBlank()
                     ? null

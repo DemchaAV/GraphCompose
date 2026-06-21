@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N extends DocumentNode> {
     private final List<DocumentNode> children = new ArrayList<>();
     private String name = "";
+    private String anchor;
     private double spacing = 0.0;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -51,6 +52,23 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T name(String name) {
         this.name = name == null ? "" : name;
+        return self();
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this flow's top-left.
+     *
+     * <p>Internal links created with {@code RichText.linkTo(text, anchor)} or a
+     * {@code linkTo(anchor)} target jump here. Anchor names must be unique per
+     * document; a duplicate keeps the last registration. A blank name clears the
+     * anchor.</p>
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return self();
     }
 
@@ -1027,6 +1045,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected String name() {
         return name;
+    }
+
+    protected String anchor() {
+        return anchor;
     }
 
     protected List<DocumentNode> children() {

@@ -333,7 +333,7 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
         }
         moduleChildren.addAll(children());
         return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(),
-                stroke(), cornerRadius(), borders(), keepTogether);
+                stroke(), cornerRadius(), borders(), keepTogether, anchor());
     }
 
     /**

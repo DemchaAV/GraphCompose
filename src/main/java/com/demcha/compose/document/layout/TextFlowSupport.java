@@ -2,10 +2,14 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
@@ -15,6 +19,7 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -128,18 +133,22 @@ public final class TextFlowSupport {
                 layout.lineGap(),
                 layout.baselineOffset(),
                 layout.visualLines(),
-                node.linkOptions(),
+                node.linkTarget(),
                 layout.emitBookmark() ? node.bookmarkOptions() : null,
                 node.verticalAlign());
 
-        return List.of(new LayoutFragment(
+        LayoutFragment paragraph = new LayoutFragment(
                 placement.path(),
                 0,
                 0.0,
                 0.0,
                 placement.width(),
                 placement.height(),
-                payload));
+                payload);
+        return NodeDefinitionSupport.withAnchorMarker(
+                List.of(paragraph),
+                layout.emitAnchor() ? node.anchor() : null,
+                placement);
     }
 
     /**
@@ -477,6 +486,7 @@ public final class TextFlowSupport {
                 source.lineGap(),
                 maxLineWidth,
                 totalHeight,
+                false,
                 false);
         return new PreparedListItemLayout(String.join("\n", logicalLines), layout);
     }
@@ -560,6 +570,8 @@ public final class TextFlowSupport {
                     width += imageRun.width();
                 } else if (run instanceof InlineShapeRun shapeRun) {
                     width += shapeRun.width();
+                } else if (run instanceof InlineSvgRun svgRun) {
+                    width += svgRun.width();
                 }
             }
             return width <= innerWidth;
@@ -642,7 +654,8 @@ public final class TextFlowSupport {
                 gap,
                 maxLineWidth,
                 totalHeight,
-                node.bookmarkOptions() != null);
+                node.bookmarkOptions() != null,
+                node.anchor() != null);
     }
 
     private static ParagraphLine emptyParagraphLine(TextMeasurementSystem.LineMetrics metrics) {
@@ -687,7 +700,7 @@ public final class TextFlowSupport {
                 source.lineSpacing(),
                 "",
                 DocumentTextIndent.NONE,
-                source.linkOptions(),
+                source.linkTarget(),
                 keepTopInsets && layout.emitBookmark() ? source.bookmarkOptions() : null,
                 new DocumentInsets(
                         keepTopInsets ? source.padding().top() : 0.0,
@@ -700,7 +713,8 @@ public final class TextFlowSupport {
                         keepBottomInsets ? source.margin().bottom() : 0.0,
                         source.margin().left()),
                 null,
-                source.verticalAlign());
+                source.verticalAlign(),
+                keepTopInsets ? source.anchor() : null);
 
         PreparedParagraphLayout fragmentLayout = new PreparedParagraphLayout(
                 List.copyOf(sliceLogicalLines),
@@ -711,7 +725,8 @@ public final class TextFlowSupport {
                 layout.lineGap(),
                 maxLineWidth,
                 totalHeight,
-                keepTopInsets && layout.emitBookmark());
+                keepTopInsets && layout.emitBookmark(),
+                keepTopInsets && layout.emitAnchor());
 
         MeasureResult measure = new MeasureResult(
                 maxLineWidth + fragmentNode.padding().horizontal(),
@@ -953,7 +968,7 @@ public final class TextFlowSupport {
                     InlineTextToken chunkToken = InlineTextToken.of(
                             chunk,
                             textToken.textStyle(),
-                            textToken.linkOptions(),
+                            textToken.linkTarget(),
                             measurement);
                     currentLine.add(chunkToken);
                     currentWidth += chunkToken.width();
@@ -1233,13 +1248,15 @@ public final class TextFlowSupport {
                         continue;
                     }
                     for (String token : tokenize(parts[partIndex])) {
-                        currentLine.add(InlineTextToken.of(token, style, textRun.linkOptions(), measurement));
+                        currentLine.add(InlineTextToken.of(token, style, textRun.linkTarget(), measurement));
                     }
                 }
             } else if (run instanceof InlineImageRun imageRun) {
                 currentLine.add(InlineImageToken.of(imageRun));
             } else if (run instanceof InlineShapeRun shapeRun) {
                 currentLine.add(InlineShapeToken.of(shapeRun));
+            } else if (run instanceof InlineSvgRun svgRun) {
+                currentLine.add(InlineSvgToken.of(svgRun));
             }
         }
 
@@ -1287,6 +1304,10 @@ public final class TextFlowSupport {
                 if (shapeToken.height() > maxInlineGraphicHeight) {
                     maxInlineGraphicHeight = shapeToken.height();
                 }
+            } else if (token instanceof InlineSvgToken svgToken) {
+                if (svgToken.height() > maxInlineGraphicHeight) {
+                    maxInlineGraphicHeight = svgToken.height();
+                }
             }
         }
         double resolvedLineHeight = Math.max(dominantTextLineHeight, maxInlineGraphicHeight);
@@ -1301,7 +1322,7 @@ public final class TextFlowSupport {
                         textToken.textStyle(),
                         textToken.width(),
                         measurement.lineMetrics(textToken.textStyle()).lineHeight(),
-                        textToken.linkOptions()));
+                        textToken.linkTarget()));
                 text.append(textToken.text());
                 width += textToken.width();
             } else if (token instanceof InlineImageToken imageToken) {
@@ -1311,7 +1332,7 @@ public final class TextFlowSupport {
                         imageToken.height(),
                         imageToken.alignment(),
                         imageToken.baselineOffset(),
-                        imageToken.linkOptions()));
+                        imageToken.linkTarget()));
                 width += imageToken.width();
             } else if (token instanceof InlineShapeToken shapeToken) {
                 spans.add(new ParagraphShapeSpan(
@@ -1320,8 +1341,17 @@ public final class TextFlowSupport {
                         shapeToken.height(),
                         shapeToken.alignment(),
                         shapeToken.baselineOffset(),
-                        shapeToken.linkOptions()));
+                        shapeToken.linkTarget()));
                 width += shapeToken.width();
+            } else if (token instanceof InlineSvgToken svgToken) {
+                spans.add(new ParagraphSvgSpan(
+                        svgToken.layers(),
+                        svgToken.width(),
+                        svgToken.height(),
+                        svgToken.alignment(),
+                        svgToken.baselineOffset(),
+                        svgToken.linkTarget()));
+                width += svgToken.width();
             }
         }
 
@@ -1378,7 +1408,7 @@ public final class TextFlowSupport {
             if (trimmed.equals(textToken.text())) {
                 return textToken;
             }
-            return InlineTextToken.of(trimmed, textToken.textStyle(), textToken.linkOptions(), measurement);
+            return InlineTextToken.of(trimmed, textToken.textStyle(), textToken.linkTarget(), measurement);
         }
         return textToken;
     }
@@ -1531,7 +1561,8 @@ public final class TextFlowSupport {
     // Inline tokens + indent spec
     // ------------------------------------------------------------------
 
-    private sealed interface InlineLayoutToken permits InlineTextToken, InlineImageToken, InlineShapeToken {
+    private sealed interface InlineLayoutToken
+            permits InlineTextToken, InlineImageToken, InlineShapeToken, InlineSvgToken {
         double width();
     }
 
@@ -1554,7 +1585,7 @@ public final class TextFlowSupport {
     private record InlineTextToken(
             String text,
             TextStyle textStyle,
-            DocumentLinkOptions linkOptions,
+            DocumentLinkTarget linkTarget,
             double width
     ) implements InlineLayoutToken {
         private InlineTextToken {
@@ -1564,12 +1595,12 @@ public final class TextFlowSupport {
 
         private static InlineTextToken of(String text,
                                           TextStyle style,
-                                          DocumentLinkOptions linkOptions,
+                                          DocumentLinkTarget linkTarget,
                                           TextMeasurementSystem measurement) {
             String safeText = text == null ? "" : text;
             TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
             double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
-            return new InlineTextToken(safeText, safeStyle, linkOptions, width);
+            return new InlineTextToken(safeText, safeStyle, linkTarget, width);
         }
     }
 
@@ -1579,7 +1610,7 @@ public final class TextFlowSupport {
             double height,
             InlineImageAlignment alignment,
             double baselineOffset,
-            DocumentLinkOptions linkOptions
+            DocumentLinkTarget linkTarget
     ) implements InlineLayoutToken {
         private InlineImageToken {
             Objects.requireNonNull(imageData, "imageData");
@@ -1593,7 +1624,7 @@ public final class TextFlowSupport {
                     run.height(),
                     run.alignment(),
                     run.baselineOffset(),
-                    run.linkOptions());
+                    run.linkTarget());
         }
     }
 
@@ -1603,7 +1634,7 @@ public final class TextFlowSupport {
             double height,
             InlineImageAlignment alignment,
             double baselineOffset,
-            DocumentLinkOptions linkOptions
+            DocumentLinkTarget linkTarget
     ) implements InlineLayoutToken {
         private InlineShapeToken {
             alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
@@ -1623,7 +1654,87 @@ public final class TextFlowSupport {
                     run.height(),
                     run.alignment(),
                     run.baselineOffset(),
-                    run.linkOptions());
+                    run.linkTarget());
+        }
+    }
+
+    private record InlineSvgToken(
+            List<ResolvedSvgLayer> layers,
+            double width,
+            double height,
+            InlineImageAlignment alignment,
+            double baselineOffset,
+            DocumentLinkTarget linkTarget
+    ) implements InlineLayoutToken {
+        private InlineSvgToken {
+            alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
+        }
+
+        private static InlineSvgToken of(InlineSvgRun run) {
+            // Lower each SVG layer to an engine-ready span. Geometry (and the clip
+            // region) stay normalized to the unit box and scale at render; the
+            // stroke width and dash lengths are in SVG user units, so scale them to
+            // points here (scale = target width / source frame width) — the same
+            // arithmetic SvgIcon.node(double) does, but carrying the clip through.
+            SvgIcon icon = run.icon();
+            double scale = run.width() / icon.sourceWidth();
+            List<ResolvedSvgLayer> resolved = new ArrayList<>(icon.layers().size());
+            for (SvgIcon.Layer layer : icon.layers()) {
+                resolved.add(toResolvedSvgLayer(layer, scale));
+            }
+            return new InlineSvgToken(
+                    List.copyOf(resolved),
+                    run.width(),
+                    run.height(),
+                    run.alignment(),
+                    run.baselineOffset(),
+                    run.linkTarget());
+        }
+
+        /**
+         * Lowers an {@link SvgIcon.Layer} to an engine-ready {@link ResolvedSvgLayer}.
+         * Mirrors the paint normalization in {@code PathDefinition} (solid paints
+         * collapse to flat colours; only true gradients travel as
+         * {@link DocumentPaint}), scales the stroke/dash to points by {@code scale},
+         * and carries the optional clip region.
+         */
+        private static ResolvedSvgLayer toResolvedSvgLayer(SvgIcon.Layer layer, double scale) {
+            Color fill;
+            DocumentPaint fillGradient = null;
+            if (layer.fillPaint() instanceof DocumentPaint.Solid solid) {
+                fill = solid.color().color();
+            } else if (layer.fillPaint() != null) {
+                fillGradient = layer.fillPaint();
+                fill = null;
+            } else {
+                fill = layer.fill() == null ? null : layer.fill().color();
+            }
+            DocumentStroke stroke = layer.stroke() == null ? null
+                    : DocumentStroke.of(layer.stroke().color(), layer.stroke().width() * scale);
+            DocumentPaint strokeGradient = null;
+            if (layer.strokePaint() instanceof DocumentPaint.Solid solid && stroke != null) {
+                stroke = DocumentStroke.of(solid.color(), stroke.width());
+            } else if (layer.strokePaint() != null && !(layer.strokePaint() instanceof DocumentPaint.Solid)) {
+                strokeGradient = layer.strokePaint();
+            }
+            DocumentDashPattern dash = null;
+            if (!layer.dashArray().isEmpty()) {
+                double[] scaled = new double[layer.dashArray().size()];
+                for (int i = 0; i < scaled.length; i++) {
+                    scaled[i] = layer.dashArray().get(i) * scale;
+                }
+                dash = DocumentDashPattern.of(scaled);
+            }
+            return new ResolvedSvgLayer(
+                    layer.geometry().segments(),
+                    fill,
+                    fillGradient,
+                    toStroke(stroke),
+                    strokeGradient,
+                    dash,
+                    layer.lineCap(),
+                    layer.lineJoin(),
+                    layer.clip() == null ? null : layer.clip().segments());
         }
     }
 }

@@ -22,7 +22,8 @@ public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
     private int quietZoneMargin = 0;
     private double width;
     private double height;
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -217,13 +218,50 @@ public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
     }
 
     /**
-     * Attaches link metadata to the barcode.
+     * Attaches external link metadata to the barcode.
      *
      * @param linkOptions link metadata
      * @return this builder
      */
     public BarcodeBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches a link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public BarcodeBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Makes this element an internal link to a named {@code anchor(...)} elsewhere
+     * in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public BarcodeBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this element's top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public BarcodeBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -288,7 +326,7 @@ public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
                 .background(background)
                 .quietZoneMargin(quietZoneMargin)
                 .build();
-        return new BarcodeNode(name, options, width, height, linkOptions, bookmarkOptions, padding, margin, transform);
+        return new BarcodeNode(name, options, width, height, linkTarget, bookmarkOptions, padding, margin, transform, anchor);
     }
 }
 

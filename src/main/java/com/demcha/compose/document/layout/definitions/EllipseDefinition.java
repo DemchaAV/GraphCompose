@@ -59,8 +59,11 @@ public final class EllipseDefinition implements NodeDefinition<EllipseNode> {
                 new EllipseFragmentPayload(
                         node.fillColor() == null ? null : node.fillColor().color(),
                         toStroke(node.stroke()),
-                        node.linkOptions(),
+                        node.linkTarget(),
                         node.bookmarkOptions()));
-        return wrapAtomicWithTransform(leaf, placement, node.transform());
+        return withAnchorMarker(
+                wrapAtomicWithTransform(leaf, placement, node.transform()),
+                node.anchor(),
+                placement);
     }
 }

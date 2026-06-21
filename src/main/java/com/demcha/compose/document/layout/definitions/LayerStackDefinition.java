@@ -2,12 +2,17 @@ package com.demcha.compose.document.layout.definitions;
 
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.LayerStackNode;
+import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.ShapeOutline;
 
 import java.util.List;
 
+import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.measureStack;
 import static com.demcha.compose.document.layout.NodeDefinitionSupport.toPadding;
 
@@ -64,6 +69,67 @@ public final class LayerStackDefinition implements NodeDefinition<LayerStackNode
     public List<LayoutFragment> emitFragments(PreparedNode<LayerStackNode> prepared,
                                               FragmentContext ctx,
                                               FragmentPlacement placement) {
-        return List.of();
+        if (!emitsBoundsClip(prepared)) {
+            return List.of();
+        }
+        LayerStackNode node = prepared.node();
+        double width = prepared.measureResult().width() - node.padding().horizontal();
+        double height = prepared.measureResult().height() - node.padding().vertical();
+        // Open a bounds clip before the layers (the "before the body" half of
+        // the paired marker; the matching restore is emitted in
+        // emitOverlayFragments after the layers). This reuses the
+        // ShapeContainer clip pipeline so the block icon honours SVG viewBox
+        // semantics — off-canvas layer geometry is cut to the box, the
+        // block-path mirror of the inline glyph-box clip in
+        // PdfParagraphFragmentRenderHandler.
+        return List.of(new LayoutFragment(
+                placement.path(),
+                0,
+                node.padding().left(),
+                node.padding().bottom(),
+                width,
+                height,
+                new ShapeClipBeginPayload(
+                        new ShapeOutline.Rectangle(width, height),
+                        ClipPolicy.CLIP_BOUNDS,
+                        placement.path())));
+    }
+
+    @Override
+    public List<LayoutFragment> emitOverlayFragments(PreparedNode<LayerStackNode> prepared,
+                                                     FragmentContext ctx,
+                                                     FragmentPlacement placement) {
+        if (!emitsBoundsClip(prepared)) {
+            return List.of();
+        }
+        // Close the bounds clip after the layers — restores the graphics
+        // state saved by the begin marker on the same page (the stack is
+        // atomic, so begin and end never straddle a page break). Gated by the
+        // same condition as the begin so the save/restore pair always balances.
+        return List.of(new LayoutFragment(
+                placement.path(),
+                0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                new ShapeClipEndPayload(placement.path())));
+    }
+
+    /**
+     * Whether this stack emits a viewBox bounds-clip around its layers. True
+     * only for an opted-in stack ({@code clipToBounds}) whose content box is
+     * non-degenerate — the single source of truth shared by the begin marker
+     * ({@link #emitFragments}) and the end marker ({@link #emitOverlayFragments})
+     * so the graphics-state save/restore pair can never go unbalanced.
+     */
+    private static boolean emitsBoundsClip(PreparedNode<LayerStackNode> prepared) {
+        LayerStackNode node = prepared.node();
+        if (!node.clipToBounds()) {
+            return false;
+        }
+        double width = prepared.measureResult().width() - node.padding().horizontal();
+        double height = prepared.measureResult().height() - node.padding().vertical();
+        return width > EPS && height > EPS;
     }
 }

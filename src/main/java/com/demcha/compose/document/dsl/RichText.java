@@ -1,8 +1,10 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.emoji.EmojiLibrary;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.*;
+import com.demcha.compose.document.svg.SvgIcon;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -213,6 +215,34 @@ public final class RichText {
     }
 
     /**
+     * Appends an internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the same document, using the default link style.
+     *
+     * @param text   visible link text
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText linkTo(String text, String anchor) {
+        return linkTo(text, null, anchor);
+    }
+
+    /**
+     * Appends a styled internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the same document.
+     *
+     * @param text   visible link text
+     * @param style  explicit style for this run, or {@code null} for the link default
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText linkTo(String text, DocumentTextStyle style, String anchor) {
+        runs.add(new InlineTextRun(text == null ? "" : text, style, new InternalLinkTarget(anchor)));
+        return this;
+    }
+
+    /**
      * Appends a fully-customized run with both an explicit style and link
      * metadata.
      *
@@ -301,6 +331,154 @@ public final class RichText {
                 baselineOffset,
                 linkOptions));
         return this;
+    }
+
+    /**
+     * Appends an inline image run that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param imageData image payload
+     * @param width     target width in points
+     * @param height    target height in points
+     * @param anchor    target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText imageLinkTo(DocumentImageData imageData, double width, double height, String anchor) {
+        return imageLinkTo(imageData, width, height, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Appends a fully-specified inline image run that jumps to a named
+     * {@code anchor(...)} elsewhere in the document.
+     *
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText imageLinkTo(DocumentImageData imageData,
+                                double width,
+                                double height,
+                                InlineImageAlignment alignment,
+                                double baselineOffset,
+                                String anchor) {
+        runs.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
+        return this;
+    }
+
+    /**
+     * Appends an inline SVG-icon run sized to {@code size} points tall, with
+     * default {@link InlineImageAlignment#CENTER} alignment and zero offset.
+     *
+     * <p>The icon is drawn as crisp vector layers on the text baseline, carrying
+     * its own colours — so it renders independently of the active font's glyph
+     * coverage. This is the inline path for vector colour emoji (e.g. Twemoji
+     * SVG) and small vector marks. The icon keeps its aspect ratio: the width is
+     * {@code size * icon.aspectRatio()}.</p>
+     *
+     * @param icon parsed vector icon; must not be {@code null}
+     * @param size target height in points (the icon's vertical extent on the line)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon, double size) {
+        return svgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Appends an inline SVG-icon run with explicit vertical alignment.
+     *
+     * @param icon      parsed vector icon; must not be {@code null}
+     * @param size      target height in points
+     * @param alignment vertical alignment relative to the surrounding text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
+        return svgIcon(icon, size, alignment, 0.0, null);
+    }
+
+    /**
+     * Appends a fully-specified, optionally clickable inline SVG-icon run; the
+     * link annotation covers the icon rectangle on supporting backends.
+     *
+     * @param icon           parsed vector icon; must not be {@code null}
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to the surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional link metadata
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText svgIcon(SvgIcon icon,
+                            double size,
+                            InlineImageAlignment alignment,
+                            double baselineOffset,
+                            DocumentLinkOptions linkOptions) {
+        Objects.requireNonNull(icon, "icon");
+        runs.add(new InlineSvgRun(
+                icon,
+                size * icon.aspectRatio(),
+                size,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
+        return this;
+    }
+
+    /**
+     * Appends a colour emoji resolved from its GitHub-style shortcode (e.g.
+     * {@code ":star:"}) as an inline vector glyph sized to {@code size} points
+     * tall, with default {@link InlineImageAlignment#CENTER} alignment.
+     *
+     * <p>Resolution is lenient: when the shortcode is unknown, or no emoji set is
+     * on the classpath (the {@code graph-compose-emoji} artifact), the literal
+     * shortcode is appended as plain text — the way GitHub renders an
+     * unrecognised {@code :code:}. Resolution uses {@link EmojiLibrary#getDefault()}.</p>
+     *
+     * @param shortcode emoji shortcode, with or without surrounding colons
+     * @param size      target height in points
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText emoji(String shortcode, double size) {
+        return emoji(shortcode, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Appends a colour emoji (see {@link #emoji(String, double)}) with explicit
+     * vertical alignment, baseline offset and optional link metadata.
+     *
+     * @param shortcode      emoji shortcode, with or without surrounding colons
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to the surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional link metadata (ignored on the text fallback)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText emoji(String shortcode,
+                          double size,
+                          InlineImageAlignment alignment,
+                          double baselineOffset,
+                          DocumentLinkOptions linkOptions) {
+        SvgIcon icon = EmojiLibrary.getDefault().find(shortcode).orElse(null);
+        if (icon != null) {
+            return svgIcon(icon, size, alignment, baselineOffset, linkOptions);
+        }
+        return plain(shortcode);
     }
 
     /**
@@ -460,6 +638,49 @@ public final class RichText {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        return this;
+    }
+
+    /**
+     * Appends an inline filled shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill    fill color
+     * @param anchor  target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText shapeLinkTo(ShapeOutline outline, DocumentColor fill, String anchor) {
+        return shapeLinkTo(outline, fill, null, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Appends a fully-specified inline shape that jumps to a named
+     * {@code anchor(...)} elsewhere in the document. At least one of {@code fill}
+     * or {@code stroke} must be present.
+     *
+     * @param outline        figure geometry; supplies the run's size
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText shapeLinkTo(ShapeOutline outline,
+                                DocumentColor fill,
+                                DocumentStroke stroke,
+                                InlineImageAlignment alignment,
+                                double baselineOffset,
+                                String anchor) {
+        runs.add(new InlineShapeRun(
+                List.of(new ShapeLayer(outline, fill, stroke)),
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
         return this;
     }
 

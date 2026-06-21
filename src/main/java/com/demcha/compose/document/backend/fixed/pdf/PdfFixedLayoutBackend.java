@@ -8,6 +8,9 @@ import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.*;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -17,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.*;
@@ -102,7 +106,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfShapeClipBeginRenderHandler(),
                 new PdfShapeClipEndRenderHandler(),
                 new PdfTransformBeginRenderHandler(),
-                new PdfTransformEndRenderHandler());
+                new PdfTransformEndRenderHandler(),
+                new PdfAnchorMarkerRenderHandler());
     }
 
     private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(ParagraphSpan span,
@@ -122,6 +127,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             alignment = shapeSpan.alignment();
             graphicHeight = shapeSpan.height();
             baselineOffset = shapeSpan.baselineOffset();
+        } else if (span instanceof com.demcha.compose.document.layout.payloads.ParagraphSvgSpan svgSpan) {
+            alignment = svgSpan.alignment();
+            graphicHeight = svgSpan.height();
+            baselineOffset = svgSpan.baselineOffset();
         } else {
             // Text spans cover the full line box.
             return new PdfLinkAnnotationWriter.PlacedPdfRect(
@@ -301,6 +310,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                     PdfNodeLabelRenderer.drawAll(ownerBounds, environment, debug.labelText());
                 }
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
+                // Pass B of internal-link resolution: every anchor is now placed,
+                // so deferred go-to links (incl. forward references) can resolve.
+                PdfInternalLinkWriter.apply(
+                        document,
+                        environment.anchorDestinations(),
+                        environment.deferredInternalLinks());
             }
 
             PdfDocumentPostProcessor.apply(
@@ -380,11 +395,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             // rects tight to the rendered text (alignment-aware). Other
             // semantic payloads (shapes, table rows) still use the full
             // fragment rect as their clickable area.
-            if (semanticPayload.linkOptions() != null && !(payload instanceof ParagraphFragmentPayload)) {
-                PdfLinkAnnotationWriter.addUriLink(
-                        environment.document().getPage(fragment.pageIndex()),
+            if (semanticPayload.linkTarget() != null && !(payload instanceof ParagraphFragmentPayload)) {
+                emitLinkTarget(
+                        environment,
+                        fragment.pageIndex(),
                         new PdfLinkAnnotationWriter.PlacedPdfRect(fragment.x(), fragment.y(), fragment.width(), fragment.height()),
-                        semanticPayload.linkOptions());
+                        semanticPayload.linkTarget());
             }
             if (semanticPayload.bookmarkOptions() != null) {
                 environment.registerBookmark(fragment, semanticPayload.bookmarkOptions());
@@ -395,10 +411,29 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
     }
 
+    /**
+     * Emits a link target on the resolved rectangle: external URIs are written
+     * inline as {@code URI} annotations, while internal anchor links are
+     * deferred for go-to resolution once every anchor is placed.
+     */
+    private void emitLinkTarget(PdfRenderEnvironment environment,
+                                int pageIndex,
+                                PdfLinkAnnotationWriter.PlacedPdfRect rectangle,
+                                DocumentLinkTarget target) throws IOException {
+        if (target instanceof ExternalLinkTarget external) {
+            PdfLinkAnnotationWriter.addUriLink(
+                    environment.document().getPage(pageIndex),
+                    rectangle,
+                    external.options());
+        } else if (target instanceof InternalLinkTarget internal) {
+            environment.deferInternalLink(pageIndex, rectangle, internal.anchor());
+        }
+    }
+
     private void addParagraphLinks(PlacedFragment fragment,
                                    ParagraphFragmentPayload payload,
                                    PdfRenderEnvironment environment) throws Exception {
-        var paragraphLink = payload.linkOptions();
+        var paragraphLink = payload.linkTarget();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
         double contentTop = fragment.y() + fragment.height() - payload.padding().top();
@@ -420,8 +455,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             // (LinkedIn / GitHub icon paragraphs) hijacked each other's
             // clicks.
             if (paragraphLink != null && line.width() > 0.0) {
-                PdfLinkAnnotationWriter.addUriLink(
-                        environment.document().getPage(fragment.pageIndex()),
+                emitLinkTarget(
+                        environment,
+                        fragment.pageIndex(),
                         new PdfLinkAnnotationWriter.PlacedPdfRect(
                                 lineX,
                                 lineTop - resolvedLineHeight,
@@ -432,7 +468,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
             double spanX = lineX;
             for (ParagraphSpan span : line.spans()) {
-                if (span.linkOptions() != null && span.width() > 0.0) {
+                if (span.linkTarget() != null && span.width() > 0.0) {
                     PdfLinkAnnotationWriter.PlacedPdfRect rect = spanLinkRectangle(
                             span,
                             spanX,
@@ -440,10 +476,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                             resolvedLineHeight,
                             line.textAscent(),
                             line.baselineOffsetFromBottom());
-                    PdfLinkAnnotationWriter.addUriLink(
-                            environment.document().getPage(fragment.pageIndex()),
-                            rect,
-                            span.linkOptions());
+                    emitLinkTarget(environment, fragment.pageIndex(), rect, span.linkTarget());
                 }
                 spanX += span.width();
             }

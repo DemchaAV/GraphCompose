@@ -3,6 +3,157 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.9.0 — unreleased
+
+In-document navigation. Rendered PDFs can now declare named **anchors** and
+**internal links** that jump to them — clickable tables of contents,
+`[text](#heading)`-style links, and bidirectional footnotes — emitted as native
+PDF `GoTo` actions. External links are unchanged.
+
+### Public API
+
+- **In-PDF navigation: anchors + internal links** (`@since 1.9.0`). Every flow
+  and leaf builder gains `anchor(String)`, declaring a named destination at the
+  element's top-left — `section.anchor("intro")`, `paragraph.anchor("fn-1")`, and
+  the same on image / shape / ellipse / line / barcode / table builders. A link
+  targets an anchor instead of a URI via `RichText.linkTo(text, anchor)` /
+  `linkTo(text, style, anchor)`, `ParagraphBuilder.inlineLinkTo(text, anchor)` /
+  `linkTo(anchor)`, and `linkTo(anchor)` on the leaf builders. Inline graphics
+  inside a paragraph jump to anchors too via `RichText.imageLinkTo(...)` /
+  `shapeLinkTo(...)` (and the matching `ParagraphBuilder.inlineImageLinkTo(...)` /
+  `shapeLinkTo(...)`). Anchor resolution
+  is deferred to the end of the render pass, so a link may target an anchor that
+  appears later in the document (a forward reference). An unknown anchor renders
+  as ordinary styled text (no annotation) and logs a warning; a link whose text
+  wraps produces one annotation per line fragment; a duplicate anchor name keeps
+  the last registration. Backends without in-document navigation (DOCX) render an
+  internal link as plain text.
+- **Unified `DocumentLinkTarget`** (`@since 1.9.0`). A new sealed
+  `DocumentLinkTarget` — `ExternalLinkTarget` (wrapping `DocumentLinkOptions`)
+  and `InternalLinkTarget` (an anchor name) — is now the link type carried
+  through semantic nodes and resolved layout fragments. `DocumentLinkOptions` is
+  unchanged and still accepted by every existing `link(DocumentLinkOptions)` and
+  inline-link DSL method (wrapped into an `ExternalLinkTarget` automatically), so
+  authoring code is source-compatible. The link accessor on the inline-run
+  records (`InlineTextRun` / `InlineImageRun` / `InlineShapeRun`) is now
+  `linkTarget()`; the former `linkOptions()` remains as a deprecated bridge that
+  returns the external options (or `null` for an internal link).
+- **Inline SVG-icon runs** (`@since 1.9.0`). A parsed `SvgIcon` can now sit on
+  the text baseline inside a paragraph via `RichText.svgIcon(icon, size)` and
+  `ParagraphBuilder.svgIcon(icon, size)` (with `alignment` / `baselineOffset` /
+  link overloads, plus a clickable form). `size` is the glyph's height in points;
+  the width follows the icon's aspect ratio. The icon is drawn as crisp vector
+  layers carrying their own colours — gradients included — so it renders
+  independently of the active font's glyph coverage. This is the engine path for
+  vector colour emoji (e.g. a Twemoji SVG dropped inline) and small vector marks.
+  A new sealed `InlineRun` variant (`InlineSvgRun`) joins text / image / shape;
+  the inline render reuses the existing SVG paint pipeline (shared with the block
+  path fragment), so flat-colour output stays byte-identical.
+- **Colour emoji by shortcode** (`@since 1.9.0`). `RichText.emoji(":star:", size)`
+  and `ParagraphBuilder.emoji(...)` resolve a GitHub-style shortcode to an inline
+  vector colour glyph. Resolution is lenient — an unknown shortcode (or no emoji
+  set on the classpath) is rendered as the literal text, the way GitHub treats an
+  unrecognised `:code:`. The resolver is the new `EmojiLibrary`
+  (`com.demcha.compose.document.emoji`): data-driven from the classpath layout
+  `emoji/emoji-index.properties` (`shortcode=codepoint`) + `emoji/svg/<codepoint>.svg`,
+  with `find(...)` (lenient `Optional`), `require(...)` (strict), `isAvailable()`
+  and per-codepoint caching (a glyph using an SVG feature the parser rejects is
+  treated as unresolved, so it falls back to text rather than failing the render).
+  The glyphs ship in a new, independently-versioned **`graph-compose-emoji`**
+  companion module (mirroring the `graph-compose-fonts` split): the engine carries
+  no emoji art and has no Maven dependency on it. The module bundles the full
+  **Noto Emoji** SVG set (~3.7k glyphs, SIL OFL 1.1) with a GitHub-style shortcode
+  index (~1.6k shortcodes) generated from the gemoji database; both are rebuilt by
+  `emoji/tools/build-emoji-set.py`.
+- **SVG gradient import is now best-effort** (`@since 1.9.0`). `stop-opacity`
+  (which has no opaque-PDF-shading analogue) is ignored — the gradient renders
+  with opaque stops — and a focal radial (`fx` / `fy`) approximates as a plain
+  radial about the centre, instead of failing the whole icon. This lets
+  real-world artwork import (keeps gradient scenes like `:framed_picture:` /
+  `:city_sunrise:` looking like scenes rather than flat blobs); fully-opaque
+  gradients are unchanged, byte for byte.
+- **SVG `clip-path` and `display:none` support** (`@since 1.9.0`). A
+  `clip-path:url(#id)` (including the Adobe-Illustrator `<use>` + `clipPath`
+  idiom, where the clipPath references a `<defs>` shape) is resolved to a clip
+  region on each affected `SvgIcon.Layer` and honoured by the inline renderer, so
+  glyphs that clip detail to a silhouette — hand gestures, body parts, the
+  probing cane — render correctly instead of overflowing into halos. Hidden
+  subtrees (`display:none`, e.g. an Illustrator guide layer of registration
+  hatching) are skipped. Together these take the Noto Emoji set to essentially
+  the whole bundled set rendering cleanly.
+- **Same-colour translucent gradients are dropped, not painted opaque.** A
+  gradient whose stops are all the same RGB with at least one translucent stop
+  carries no colour — it is a pure alpha overlay (a soft shadow or edge
+  highlight, e.g. the hair-edge darkening on the vampire glyphs). With no
+  shading-alpha in the backend, painting it opaque covered the art beneath (the
+  vampire's face rendered as a solid hair blob); such layers are now dropped.
+  Multi-colour gradients (real scenes — `:framed_picture:`, `:sunrise:`,
+  `:city_sunset:`) are structural and keep rendering as gradients.
+- **Inline SVG icons are clipped to their viewBox.** Real-world icon art
+  (notably Noto's working files) parks geometry outside the viewBox — a browser
+  clips it to the viewBox, but the inline renderer was painting it, so an icon
+  could smear copies of itself across adjacent glyphs (`:package:` rendered as
+  several duplicated boxes overlapping its neighbours). The inline SVG render now
+  clips each icon to its glyph box, matching SVG `viewBox` semantics.
+- **Block SVG icons are clipped to their viewBox too.** The same off-canvas art
+  bled past the box on the block path (`addSvgIcon(icon, w)` / `SvgIcon.node(w)`),
+  which had no viewBox clip. A block icon's layer stack now clips its layers to
+  the icon box: `LayerStackNode` gains an opt-in `clipToBounds` (`@since 1.9.0`,
+  default off so existing stacks stay byte-identical) and `SvgIcon.node(...)`
+  sets it. It reuses the `ShapeContainer` clip pipeline — one paired
+  begin/end marker per icon — so it matches the inline fix above. The same
+  flag is exposed to the DSL as `LayerStackBuilder.clipToBounds()` — the
+  `overflow: hidden` of a stacking box for any layer stack.
+
+### Documentation
+
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java`
+  — a clickable table of contents plus a bidirectional footnote.
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java`
+  — multi-colour vector glyphs (gold star, green check badge, violet gradient
+  orb, info / warning marks) flowing inline with text, at several sizes.
+- New `graph-compose-emoji` module bundling the Noto Emoji SVG set (OFL 1.1) with
+  `emoji/OFL.txt`, `emoji/NOTICE.md` and the `emoji/tools/build-emoji-set.py`
+  generator that rebuilds the glyphs + shortcode index from noto-emoji + gemoji.
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java`
+  — `:shortcode:` colour emoji flowing inline with text, the starter-set legend,
+  the unknown-shortcode text fallback, and several glyph sizes.
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/EmojiSvgVsPngExample.java`
+  — a `Shortcode | SVG (vector) | PNG (raster)` comparison table, drawing each
+  starter glyph down both inline paths (`RichText.svgIcon` vs `RichText.image`).
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/EmojiGalleryExample.java`
+  — a paginated catalogue of the entire bundled emoji set (every indexed glyph,
+  drawn inline).
+
+### Tests
+
+- `InternalLinkAnchorTest` (PDFBox assertions): forward and backward references
+  resolve to `GoTo`; an unknown anchor produces no annotation and no crash; the
+  destination points at the correct page across a page break; a wrapped link
+  emits an annotation per line fragment; external links still emit `URI`; a
+  section anchor and a shape internal link are both navigable; a duplicate anchor
+  keeps the last registration; plus a visual artifact write.
+- `InlineSvgRunTest` (run validation: null icon, non-finite / non-positive
+  dimensions, alignment default, external-link wrapping) and `InlineSvgRenderTest`
+  (PDFBox end-to-end: text preserved with no glyph substitution, the icon's fill
+  colour and an inline gradient both rasterize onto the page, a linked icon emits
+  a clickable annotation, and `svgIcon` sizes by aspect ratio). `InlineSvgRenderTest`
+  also rasterizes off-canvas geometry to prove the inline glyph-box clip, and the
+  new `BlockSvgRenderTest` does the same for the block path — off-canvas art does
+  not bleed, in-box art still paints, the layer stack emits a balanced
+  `CLIP_BOUNDS` begin/end pair, and a plain (non-icon) stack emits none.
+- `EmojiLibraryTest` (resolves shortcodes case-insensitively with/without colons,
+  unknown → empty, `require` throws, an absent set reports unavailable and names
+  the `graph-compose-emoji` artifact) and `EmojiRenderTest` (a known shortcode
+  rasterizes a colour glyph, a gradient emoji paints its shading, an unknown
+  shortcode falls back to literal text, and `RichText.emoji` yields an
+  `InlineSvgRun` or a text run accordingly).
+
 ## v1.8.0 — 2026-06-18
 
 Codenamed **"illustrative"**. Native vector charts (bar / line / pie, inline

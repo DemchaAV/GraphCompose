@@ -172,6 +172,54 @@ public final class PdfParagraphFragmentRenderHandler
         }
     }
 
+    /**
+     * Draws an inline SVG-icon span: each resolved vector layer is painted on
+     * the baseline-seated box through the shared {@link PdfPathPainter}, so the
+     * inline glyph matches the block path fragment for fragment (flat colours,
+     * gradients, dashes alike).
+     */
+    private static void renderSvg(PDPageContentStream stream,
+                                  ParagraphSvgSpan span,
+                                  PdfRenderEnvironment environment,
+                                  int pageIndex,
+                                  double cursorX,
+                                  double baselineY,
+                                  double textAscent,
+                                  double baselineOffsetFromBottom,
+                                  double lineHeight) throws IOException {
+        double width = span.width();
+        double height = span.height();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        double bottom = resolveInlineGraphicBottom(
+                height,
+                span.alignment(),
+                span.baselineOffset(),
+                baselineY,
+                textAscent,
+                baselineOffsetFromBottom,
+                lineHeight);
+        // Clip to the glyph box (the SVG viewBox). Real-world icon art — notably
+        // Noto's working files — parks off-canvas geometry outside the viewBox
+        // (a browser clips it away); without this it would bleed into adjacent
+        // glyphs, e.g. :package: smearing duplicate boxes across its neighbours.
+        stream.saveGraphicsState();
+        try {
+            stream.addRect((float) cursorX, (float) bottom, (float) width, (float) height);
+            stream.clip();
+            for (ResolvedSvgLayer layer : span.layers()) {
+                PdfPathPainter.paintPath(stream, environment, pageIndex,
+                        (float) cursorX, (float) bottom, (float) width, (float) height,
+                        layer.segments(), layer.fillColor(), layer.fillPaint(),
+                        layer.stroke(), layer.strokePaint(),
+                        layer.dashPattern(), layer.lineCap(), layer.lineJoin(), layer.clip());
+            }
+        } finally {
+            stream.restoreGraphicsState();
+        }
+    }
+
     @Override
     public Class<ParagraphFragmentPayload> payloadType() {
         return ParagraphFragmentPayload.class;
@@ -209,7 +257,7 @@ public final class PdfParagraphFragmentRenderHandler
                     case LEFT -> innerX;
                 };
 
-                renderLine(stream, fonts, line, lineX, baselineY, environment, textState);
+                renderLine(stream, fonts, line, lineX, baselineY, environment, textState, fragment.pageIndex());
 
                 cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
             }
@@ -224,7 +272,8 @@ public final class PdfParagraphFragmentRenderHandler
                             double lineX,
                             double baselineY,
                             PdfRenderEnvironment environment,
-                            TextRenderState textState) throws IOException {
+                            TextRenderState textState,
+                            int pageIndex) throws IOException {
         List<ParagraphSpan> spans = line.spans();
         if (spans.isEmpty()) {
             return;
@@ -289,6 +338,15 @@ public final class PdfParagraphFragmentRenderHandler
                             line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
                     textState.invalidate();
                     cursorX += shapeSpan.width();
+                } else if (span instanceof ParagraphSvgSpan svgSpan) {
+                    if (inTextBlock) {
+                        stream.endText();
+                        inTextBlock = false;
+                    }
+                    renderSvg(stream, svgSpan, environment, pageIndex, cursorX, baselineY,
+                            line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
+                    textState.invalidate();
+                    cursorX += svgSpan.width();
                 }
             }
         } finally {

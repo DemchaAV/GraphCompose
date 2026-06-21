@@ -75,10 +75,13 @@ public final class ShapeDefinition implements NodeDefinition<ShapeNode> {
                         fill,
                         toStroke(node.stroke()),
                         node.cornerRadius(),
-                        node.linkOptions(),
+                        node.linkTarget(),
                         node.bookmarkOptions(),
                         null,
                         gradient));
-        return wrapAtomicWithTransform(leaf, placement, node.transform());
+        return withAnchorMarker(
+                wrapAtomicWithTransform(leaf, placement, node.transform()),
+                node.anchor(),
+                placement);
     }
 }

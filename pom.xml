@@ -311,6 +311,17 @@
             <testResource>
                 <directory>${project.basedir}/fonts/src/main/resources</directory>
             </testResource>
+            <!--
+                Colour-emoji glyphs live in the sibling graph-compose-emoji module
+                (same arrangement as fonts above). EmojiLibrary resolves them from
+                the classpath, so the resolver suite reads that module's resources
+                directly from source — decoupling the engine build from the emoji
+                ARTIFACT (no Maven dependency to resolve). Test-only: never reaches
+                the main jar and is excluded from the tests-jar below.
+            -->
+            <testResource>
+                <directory>${project.basedir}/emoji/src/main/resources</directory>
+            </testResource>
         </testResources>
 
         <!--
@@ -453,10 +464,12 @@
                                 <testResources> for the engine's own suite; keep
                                 them OUT of the tests-jar. The benchmarks module
                                 (the only consumer of this jar) gets fonts from
-                                the graph-compose-fonts artifact instead.
+                                the graph-compose-fonts artifact instead. The emoji
+                                glyphs follow the same rule.
                             -->
                             <excludes>
                                 <exclude>fonts/**</exclude>
+                                <exclude>emoji/**</exclude>
                             </excludes>
                         </configuration>
                     </execution>

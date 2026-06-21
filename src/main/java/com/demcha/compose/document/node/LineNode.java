@@ -16,7 +16,7 @@ import com.demcha.compose.document.style.DocumentTransform;
  * @param endX            line end x offset inside the box
  * @param endY            line end y offset inside the box
  * @param stroke          line stroke descriptor
- * @param linkOptions     optional node-level link metadata
+ * @param linkTarget      optional node-level link target (external URI or internal anchor)
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding         inner padding
  * @param margin          outer margin
@@ -24,6 +24,8 @@ import com.demcha.compose.document.style.DocumentTransform;
  *                        {@link DocumentTransform#NONE}.
  * @param dashPattern     dash pattern for the stroke; defaults to
  *                        {@link DocumentDashPattern#NONE} (solid)
+ * @param anchor          optional in-document navigation anchor name at the line box's
+ *                        top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record LineNode(
@@ -35,12 +37,13 @@ public record LineNode(
         double endX,
         double endY,
         DocumentStroke stroke,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
         DocumentTransform transform,
-        DocumentDashPattern dashPattern
+        DocumentDashPattern dashPattern,
+        String anchor
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit line geometry.
@@ -51,12 +54,51 @@ public record LineNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         transform = transform == null ? DocumentTransform.NONE : transform;
         dashPattern = dashPattern == null ? DocumentDashPattern.NONE : dashPattern;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         requireNonNegativeFinite(width, "width");
         requireNonNegativeFinite(height, "height");
         requireFinite(startX, "startX");
         requireFinite(startY, "startY");
         requireFinite(endX, "endX");
         requireFinite(endY, "endY");
+    }
+
+    /**
+     * Backwards-compatible canonical constructor taking external
+     * {@link DocumentLinkOptions} (wrapped) and no navigation anchor.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved line box width
+     * @param height          resolved line box height
+     * @param startX          line start x offset inside the box
+     * @param startY          line start y offset inside the box
+     * @param endX            line end x offset inside the box
+     * @param endY            line end y offset inside the box
+     * @param stroke          line stroke descriptor
+     * @param linkOptions     optional external link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
+     * @param dashPattern     dash pattern for the stroke
+     */
+    public LineNode(String name,
+                    double width,
+                    double height,
+                    double startX,
+                    double startY,
+                    double endX,
+                    double endY,
+                    DocumentStroke stroke,
+                    DocumentLinkOptions linkOptions,
+                    DocumentBookmarkOptions bookmarkOptions,
+                    DocumentInsets padding,
+                    DocumentInsets margin,
+                    DocumentTransform transform,
+                    DocumentDashPattern dashPattern) {
+        this(name, width, height, startX, startY, endX, endY, stroke,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions),
+                bookmarkOptions, padding, margin, transform, dashPattern, null);
     }
 
     /**
@@ -135,5 +177,17 @@ public record LineNode(
         if (Double.isNaN(value) || Double.isInfinite(value)) {
             throw new IllegalArgumentException(name + " must be finite: " + value);
         }
+    }
+
+    /**
+     * Returns the external link options, or {@code null} when the node has no
+     * link or targets an internal anchor.
+     *
+     * @return external link metadata, or {@code null}
+     * @deprecated use {@link #linkTarget()}; this bridge only exposes external links
+     */
+    @Deprecated(since = "1.9.0")
+    public DocumentLinkOptions linkOptions() {
+        return linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
     }
 }

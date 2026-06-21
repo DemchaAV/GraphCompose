@@ -75,6 +75,11 @@ annotation on supporting backends; `with(text, style, linkOptions)`
 combines an explicit style with link metadata. On `ParagraphBuilder`,
 `inlineLink(text, options)` is the equivalent low-level call.
 
+For in-document navigation, `linkTo(text, anchor)` points at a named
+`anchor(...)` elsewhere in the document instead of a URL, and inline images
+and shapes can link to an anchor too (`imageLinkTo` / `shapeLinkTo`). See
+[in-pdf-navigation.md](in-pdf-navigation.md).
+
 ## Inline images
 
 ```java

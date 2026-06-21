@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentLineJoin;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * @param stroke          optional stroke
  * @param strokePaint     optional gradient stroke paint; the stroke still
  *                        supplies the width
- * @param linkOptions     optional fragment-level link metadata
+ * @param linkTarget     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  * @param dashPattern     dash pattern for the stroke;
  *                        {@link DocumentDashPattern#NONE} is solid
@@ -44,7 +44,7 @@ public record PathFragmentPayload(
         DocumentPaint fillPaint,
         Stroke stroke,
         DocumentPaint strokePaint,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentDashPattern dashPattern,
         DocumentLineCap lineCap,

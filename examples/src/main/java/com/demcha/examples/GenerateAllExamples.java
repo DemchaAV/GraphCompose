@@ -16,7 +16,13 @@ import com.demcha.examples.features.streaming.HttpStreamingExample;
 import com.demcha.examples.features.svg.SvgIconGalleryExample;
 import com.demcha.examples.features.tables.ComposedTableCellExample;
 import com.demcha.examples.features.tables.TableAdvancedExample;
+import com.demcha.examples.features.text.EmojiGalleryExample;
+import com.demcha.examples.features.text.EmojiShortcodeExample;
+import com.demcha.examples.features.text.EmojiSvgVsPngExample;
+import com.demcha.examples.features.text.EmojiClipPathReportExample;
 import com.demcha.examples.features.text.InlineShapesExample;
+import com.demcha.examples.features.text.InlineSvgIconExample;
+import com.demcha.examples.features.navigation.InPdfNavigationExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.themes.CustomBusinessThemeExample;
@@ -143,8 +149,14 @@ public final class GenerateAllExamples {
 
         // Text + sections
         System.out.println("Generated: " + InlineShapesExample.generate());
+        System.out.println("Generated: " + InlineSvgIconExample.generate());
+        System.out.println("Generated: " + EmojiShortcodeExample.generate());
+        System.out.println("Generated: " + EmojiSvgVsPngExample.generate());
+        System.out.println("Generated: " + EmojiGalleryExample.generate());
+        System.out.println("Generated: " + EmojiClipPathReportExample.generate());
         System.out.println("Generated: " + RichTextShowcaseExample.generate());
         System.out.println("Generated: " + SectionPresetsExample.generate());
+        System.out.println("Generated: " + InPdfNavigationExample.generate());
 
         // Theming + chrome
         System.out.println("Generated: " + CustomBusinessThemeExample.generate());

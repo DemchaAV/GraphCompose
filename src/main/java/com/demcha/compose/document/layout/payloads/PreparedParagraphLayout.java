@@ -19,7 +19,10 @@ import java.util.List;
  * @param lineGap        extra spacing between wrapped lines
  * @param maxLineWidth   widest measured line width
  * @param totalHeight    cumulative paragraph height
- * @param emitBookmark   whether the paragraph should emit a bookmark
+ * @param emitBookmark   whether this (head) fragment should emit the node bookmark
+ * @param emitAnchor     whether this (head) fragment should emit the node anchor
+ *                       marker; tracked separately from {@code emitBookmark} so a
+ *                       paragraph may be anchored without also being bookmarked
  */
 public record PreparedParagraphLayout(
         List<String> logicalLines,
@@ -30,6 +33,7 @@ public record PreparedParagraphLayout(
         double lineGap,
         double maxLineWidth,
         double totalHeight,
-        boolean emitBookmark
+        boolean emitBookmark,
+        boolean emitAnchor
 ) implements PreparedNodeLayout {
 }

@@ -25,6 +25,7 @@ authoring API; public application code should not import
 | [Barcodes](recipes/barcodes.md) | QR / Code 128 / EAN / UPC and friends, tinting, quiet zone |
 | [Images](recipes/images.md) | Sources, sizing precedence, fit modes, images in rows and cards |
 | [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer placeholders, protection, links, bookmarks |
+| [In-PDF navigation](recipes/in-pdf-navigation.md) | Anchors + internal `linkTo` links: clickable contents, heading jumps, bidirectional footnotes, inline-graphic links |
 | [Translucency](recipes/translucency.md) | `DocumentColor.rgba` / `withOpacity`, alpha coverage, layered tints |
 | [DOCX export](recipes/docx-export.md) | Semantic export, node mapping, fallbacks and skipped kinds |
 | [Snapshot testing](recipes/snapshot-testing.md) | Layout-snapshot regression testing in consumer projects |

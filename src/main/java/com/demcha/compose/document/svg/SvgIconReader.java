@@ -54,13 +54,14 @@ final class SvgIconReader {
         }
         double[] box = viewBox(root);
         Map<String, Element> gradients = SvgGradients.collect(root);
+        Map<String, Element> ids = collectIds(root);
 
         List<SvgIcon.Layer> layers = new ArrayList<>();
         SkipTally skipped = new SkipTally();
         walk(root, identity(),
                 new Paint(new PaintValue(DocumentColor.rgb(0, 0, 0), null), PaintValue.NONE, 1.0,
                         DocumentLineCap.BUTT, DocumentLineJoin.MITER, List.of()),
-                box, gradients, skipped, layers);
+                null, box, gradients, ids, skipped, layers);
         if (layers.isEmpty()) {
             throw new IllegalArgumentException(
                     "SVG document contains no drawable geometry" + skipped.reason());
@@ -129,19 +130,36 @@ final class SvgIconReader {
     // Tree walk
     // ------------------------------------------------------------------
 
-    private static void walk(Element element, double[] transform, Paint inherited,
-                             double[] box, Map<String, Element> gradients,
+    private static void walk(Element element, double[] transform, Paint inherited, SvgPath clip,
+                             double[] box, Map<String, Element> gradients, Map<String, Element> ids,
                              SkipTally skipped, List<SvgIcon.Layer> out) {
         String name = localName(element);
+        // Hidden subtrees (display:none) carry no visible ink — e.g. an Illustrator
+        // guide/template layer of registration hatching. Skip the element and its
+        // descendants wholesale.
+        if (isDisplayNone(element)) {
+            return;
+        }
         // Process THIS element's own geometry with element context, so any
         // unsupported colour / transform / gradient / unit names the offending
         // element. Recursion stays outside the try — a child's error is already
         // contextualized by its own walk, so it never double-wraps.
         Paint paint;
         double[] matrix;
+        SvgPath activeClip = clip;
         try {
             paint = stylize(element, inherited, gradients);
             matrix = compose(transform, element.getAttribute("transform"));
+            // A clip-path on this element (or group) clips it and its descendants
+            // to the referenced shape, resolved in icon space with the same
+            // matrix/box as the geometry it bounds. Nested clips are not
+            // intersected — the innermost wins; this is exact for the Noto set
+            // (no glyph nests a different clip inside another) and any residual
+            // overflow is still bounded by the inline viewBox clip at render.
+            SvgPath ownClip = resolveClip(element, matrix, box, ids);
+            if (ownClip != null) {
+                activeClip = ownClip;
+            }
             String d = switch (name) {
                 case "path" -> element.getAttribute("d");
                 case "rect" -> SvgShapeLowering.rect(num(element, "x"), num(element, "y"),
@@ -159,7 +177,7 @@ final class SvgIconReader {
             };
 
             if (d != null && !d.isBlank()) {
-                emitLayer(element, d, paint, matrix, box, gradients, out);
+                emitLayer(element, d, paint, matrix, activeClip, box, gradients, out);
             } else if (DROPS_CONTENT.contains(name)) {
                 // A shape kind we deliberately don't render — count it so the icon
                 // surfaces one warning per kind instead of silently losing pixels.
@@ -177,7 +195,7 @@ final class SvgIconReader {
             for (int i = 0; i < children.getLength(); i++) {
                 Node child = children.item(i);
                 if (child instanceof Element childElement) {
-                    walk(childElement, matrix, paint, box, gradients, skipped, out);
+                    walk(childElement, matrix, paint, activeClip, box, gradients, ids, skipped, out);
                 }
             }
         }
@@ -185,7 +203,7 @@ final class SvgIconReader {
 
     /** Builds and appends the layer for a drawable element (curve geometry + paint). */
     private static void emitLayer(Element element, String d, Paint paint,
-                                  double[] matrix, double[] box, Map<String, Element> gradients,
+                                  double[] matrix, SvgPath clip, double[] box, Map<String, Element> gradients,
                                   List<SvgIcon.Layer> out) {
         boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
         if (!paint.fill().visible() && !strokeVisible) {
@@ -207,6 +225,14 @@ final class SvgIconReader {
         DocumentColor fillColor = paint.fill().color();
         DocumentPaint fillPaint = null;
         if (paint.fill().gradient() != null) {
+            if (!strokeVisible && SvgGradients.isAlphaOnlyOverlay(paint.fill().gradient(), gradients)) {
+                // A same-colour translucent gradient is a pure alpha overlay (a
+                // soft shadow or edge highlight, e.g. the hair-edge darkening on
+                // the vampire glyphs). With no shading-alpha in the backend,
+                // painting it opaque would cover the art beneath it — drop the
+                // layer rather than blot out a face.
+                return;
+            }
             fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients, matrix, box, geometry);
             fillColor = fillPaint.primaryColor();
         }
@@ -221,7 +247,110 @@ final class SvgIconReader {
             }
         }
         out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint,
-                paint.lineCap(), paint.lineJoin(), paint.dashArray()));
+                paint.lineCap(), paint.lineJoin(), paint.dashArray(),
+                clip != null && clip.hasDrawingSegment() ? clip : null));
+    }
+
+    // ------------------------------------------------------------------
+    // Clipping (clip-path → a single clip shape in icon space)
+    // ------------------------------------------------------------------
+
+    /**
+     * Resolves an element's {@code clip-path:url(#id)} to a clip shape in the
+     * icon's normalized space, or {@code null} when there is none or it cannot be
+     * resolved. Handles the Adobe-Illustrator idiom where the clipPath wraps a
+     * {@code <use href="#shape">} pointing at a {@code <defs>} path.
+     */
+    private static SvgPath resolveClip(Element element, double[] matrix, double[] box,
+                                       Map<String, Element> ids) {
+        String value = attrOrStyle(element, "clip-path");
+        if (value == null || value.isBlank() || value.trim().equals("none")
+            || !value.trim().startsWith("url(")) {
+            return null;
+        }
+        try {
+            String id = SvgGradients.urlId(value.trim());
+            Element clipPath = id == null ? null : ids.get(id);
+            if (clipPath == null) {
+                return null;
+            }
+            String d = clipShapeData(clipPath, ids);
+            if (d == null || d.isBlank()) {
+                return null;
+            }
+            return SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
+        } catch (RuntimeException e) {
+            // A clip we cannot model is better dropped (paint unclipped) than fatal.
+            return null;
+        }
+    }
+
+    /** Path data of a clipPath's first usable child (direct shape, or a <use href="#shape">). */
+    private static String clipShapeData(Element clipPath, Map<String, Element> ids) {
+        NodeList children = clipPath.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (!(children.item(i) instanceof Element child)) {
+                continue;
+            }
+            if ("use".equals(localName(child))) {
+                String href = child.getAttribute("xlink:href");
+                if (href.isEmpty()) {
+                    href = child.getAttribute("href");
+                }
+                if (href.startsWith("#")) {
+                    Element target = ids.get(href.substring(1));
+                    String d = target == null ? null : shapeData(target);
+                    if (d != null && !d.isBlank()) {
+                        return d;
+                    }
+                }
+            } else {
+                String d = shapeData(child);
+                if (d != null && !d.isBlank()) {
+                    return d;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Lowers a shape element to path data (the clip-path subset of the walk switch). */
+    private static String shapeData(Element element) {
+        return switch (localName(element)) {
+            case "path" -> element.getAttribute("d");
+            case "rect" -> SvgShapeLowering.rect(num(element, "x"), num(element, "y"),
+                    num(element, "width"), num(element, "height"), num(element, "rx"), num(element, "ry"));
+            case "circle" -> SvgShapeLowering.ellipse(num(element, "cx"), num(element, "cy"),
+                    num(element, "r"), num(element, "r"));
+            case "ellipse" -> SvgShapeLowering.ellipse(num(element, "cx"), num(element, "cy"),
+                    num(element, "rx"), num(element, "ry"));
+            case "polygon" -> SvgShapeLowering.points(element.getAttribute("points"), true);
+            default -> null;
+        };
+    }
+
+    private static boolean isDisplayNone(Element element) {
+        String display = attrOrStyle(element, "display");
+        return display != null && display.trim().equalsIgnoreCase("none");
+    }
+
+    private static Map<String, Element> collectIds(Element root) {
+        Map<String, Element> ids = new java.util.HashMap<>();
+        collectIds(root, ids);
+        return ids;
+    }
+
+    private static void collectIds(Element element, Map<String, Element> ids) {
+        String id = element.getAttribute("id");
+        if (!id.isEmpty()) {
+            ids.putIfAbsent(id, element);
+        }
+        NodeList children = element.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i) instanceof Element child) {
+                collectIds(child, ids);
+            }
+        }
     }
 
     /**

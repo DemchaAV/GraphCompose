@@ -21,7 +21,7 @@ import java.util.Objects;
  * @param baselineOffset extra vertical offset in points applied after
  *                       {@code alignment} resolution; positive values move
  *                       the image up
- * @param linkOptions    optional per-run link metadata
+ * @param linkTarget     optional per-run link target (external URI or internal anchor)
  * @author Artem Demchyshyn
  */
 public record InlineImageRun(
@@ -30,7 +30,7 @@ public record InlineImageRun(
         double height,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkOptions linkOptions
+        DocumentLinkTarget linkTarget
 ) implements InlineRun {
     /**
      * Validates dimensions and normalizes alignment defaults.
@@ -58,7 +58,7 @@ public record InlineImageRun(
      * @param height    target height in points
      */
     public InlineImageRun(DocumentImageData imageData, double width, double height) {
-        this(imageData, width, height, InlineImageAlignment.CENTER, 0.0, null);
+        this(imageData, width, height, InlineImageAlignment.CENTER, 0.0, (DocumentLinkTarget) null);
     }
 
     /**
@@ -74,6 +74,39 @@ public record InlineImageRun(
                           double width,
                           double height,
                           InlineImageAlignment alignment) {
-        this(imageData, width, height, alignment, 0.0, null);
+        this(imageData, width, height, alignment, 0.0, (DocumentLinkTarget) null);
+    }
+
+    /**
+     * Creates an inline image run with external link metadata.
+     *
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    external link metadata, wrapped into an
+     *                       {@link ExternalLinkTarget}
+     */
+    public InlineImageRun(DocumentImageData imageData,
+                          double width,
+                          double height,
+                          InlineImageAlignment alignment,
+                          double baselineOffset,
+                          DocumentLinkOptions linkOptions) {
+        this(imageData, width, height, alignment, baselineOffset,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions));
+    }
+
+    /**
+     * Returns the external link options of this run, or {@code null} when the run
+     * has no link or targets an internal anchor.
+     *
+     * @return external link metadata, or {@code null}
+     * @deprecated use {@link #linkTarget()}; this bridge only exposes external links
+     */
+    @Deprecated(since = "1.9.0")
+    public DocumentLinkOptions linkOptions() {
+        return linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
     }
 }

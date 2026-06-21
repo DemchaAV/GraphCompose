@@ -112,10 +112,8 @@ final class SvgGradients {
             return new DocumentPaint.LinearAxis(stops, n0[0], n0[1], n1[0], n1[1]);
         }
 
-        if (!gradient.getAttribute("fx").isEmpty() || !gradient.getAttribute("fy").isEmpty()) {
-            throw new IllegalArgumentException(
-                    "focal radial gradients (fx/fy) have no PDF analogue and are not supported");
-        }
+        // Focal radial gradients (fx/fy) have no PDF analogue; approximate them
+        // as a plain radial about the centre rather than failing the icon.
         double[] centre = point(gradient, "cx", "cy", 0.5, 0.5, userSpace, box);
         double r = length(gradient, "r", 0.5, userSpace, box);
         centre = apply(gt, centre);
@@ -150,6 +148,66 @@ final class SvgGradients {
         return stops;
     }
 
+    /**
+     * Detects a gradient that carries no colour information: every stop is the
+     * same RGB and at least one stop is translucent. Such a gradient is a pure
+     * alpha overlay (a soft shadow or an edge highlight); with no shading-alpha
+     * in the backend, painting it opaque would cover the art beneath it, so the
+     * caller drops the layer instead. A multi-colour gradient (a real scene) or a
+     * fully-opaque monochrome gradient (effectively a flat fill) returns
+     * {@code false} and renders as before.
+     *
+     * @param gradient the gradient element
+     * @param all      every gradient by id (for the one-level href stop hop)
+     * @return {@code true} if the gradient is a same-colour translucent overlay
+     */
+    static boolean isAlphaOnlyOverlay(Element gradient, Map<String, Element> all) {
+        List<Element> stops = stopElements(gradient);
+        if (stops.isEmpty()) {
+            Element target = href(gradient, all);
+            if (target != null) {
+                stops = stopElements(target);
+            }
+        }
+        if (stops.isEmpty()) {
+            return false;
+        }
+        // A single translucent stop is a flat alpha fill — still an overlay we
+        // cannot composite, so it is caught here too (not only two-stop fades).
+        Integer rgb = null;
+        boolean translucent = false;
+        for (Element stop : stops) {
+            String colorValue = attrOrStyle(stop, "stop-color");
+            DocumentColor color = colorValue == null
+                    ? DocumentColor.rgb(0, 0, 0)
+                    : SvgIconReader.color(colorValue, DocumentColor.rgb(0, 0, 0));
+            if (color == null) {
+                return false;
+            }
+            int current = color.color().getRGB() & 0xFFFFFF;
+            if (rgb == null) {
+                rgb = current;
+            } else if (rgb != current) {
+                return false;
+            }
+            if (fraction(attrOrStyle(stop, "stop-opacity"), 1.0) < 1.0) {
+                translucent = true;
+            }
+        }
+        return translucent;
+    }
+
+    private static List<Element> stopElements(Element gradient) {
+        List<Element> stops = new ArrayList<>();
+        NodeList children = gradient.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i) instanceof Element stop && "stop".equals(localName(stop))) {
+                stops.add(stop);
+            }
+        }
+        return stops;
+    }
+
     private static List<DocumentPaint.Stop> readOwnStops(Element gradient) {
         List<DocumentPaint.Stop> stops = new ArrayList<>();
         NodeList children = gradient.getChildNodes();
@@ -163,11 +221,8 @@ final class SvgGradients {
             // SVG clamps offsets into [0,1] and forces them non-decreasing.
             offset = Math.max(previous, Math.min(1.0, Math.max(0.0, offset)));
             previous = offset;
-            String opacity = attrOrStyle(stop, "stop-opacity");
-            if (opacity != null && fraction(opacity, 1.0) < 1.0) {
-                throw new IllegalArgumentException(
-                        "gradient stop-opacity is not supported — flatten transparency before import");
-            }
+            // stop-opacity has no opaque-PDF-shading analogue; it is ignored and
+            // the stop is treated as opaque (best-effort import of real-world art).
             String colorValue = attrOrStyle(stop, "stop-color");
             DocumentColor color = colorValue == null
                     ? DocumentColor.rgb(0, 0, 0)

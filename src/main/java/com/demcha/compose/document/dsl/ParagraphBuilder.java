@@ -1,11 +1,17 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.emoji.EmojiLibrary;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineShapeRun;
+import com.demcha.compose.document.node.InlineSvgRun;
 import com.demcha.compose.document.node.InlineImageRun;
+import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
@@ -18,6 +24,7 @@ import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.document.svg.SvgIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +44,8 @@ public final class ParagraphBuilder {
     private double lineSpacing = 0.0;
     private String bulletOffset = "";
     private DocumentTextIndent indentStrategy = DocumentTextIndent.NONE;
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -152,13 +160,51 @@ public final class ParagraphBuilder {
     }
 
     /**
-     * Attaches paragraph-level link metadata.
+     * Attaches paragraph-level external link metadata.
      *
      * @param linkOptions link metadata
      * @return this builder
      */
     public ParagraphBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches a paragraph-level link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Attaches a paragraph-level internal link to a named {@code anchor(...)}
+     * elsewhere in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this paragraph's
+     * top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -192,6 +238,21 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineLink(String text, DocumentLinkOptions linkOptions) {
         return inlineText(text, (DocumentTextStyle) null, linkOptions);
+    }
+
+    /**
+     * Adds an inline internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the document.
+     *
+     * @param text   visible link text
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineLinkTo(String text, String anchor) {
+        this.inlineRuns.add(new InlineTextRun(text, null, new InternalLinkTarget(anchor)));
+        this.text = "";
+        return this;
     }
 
     /**
@@ -265,6 +326,52 @@ public final class ParagraphBuilder {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline image run that jumps to a named {@code anchor(...)} elsewhere
+     * in the document, with default {@link InlineImageAlignment#CENTER} alignment
+     * and zero offset.
+     *
+     * @param imageData image payload
+     * @param width     target width in points
+     * @param height    target height in points
+     * @param anchor    target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData, double width, double height, String anchor) {
+        return inlineImageLinkTo(imageData, width, height, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Adds a fully-specified inline image run that jumps to a named
+     * {@code anchor(...)} elsewhere in the document.
+     *
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData,
+                                              double width,
+                                              double height,
+                                              InlineImageAlignment alignment,
+                                              double baselineOffset,
+                                              String anchor) {
+        this.inlineRuns.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
         this.text = "";
         return this;
     }
@@ -428,6 +535,155 @@ public final class ParagraphBuilder {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline SVG-icon run sized to {@code size} points tall, with
+     * default {@link InlineImageAlignment#CENTER} alignment and zero offset.
+     *
+     * <p>The icon is drawn as crisp vector layers on the text baseline, carrying
+     * its own colours — so it renders independently of the active font's glyph
+     * coverage. This is the inline path for vector colour emoji (e.g. Twemoji
+     * SVG) and small vector marks. The icon keeps its aspect ratio: the width is
+     * {@code size * icon.aspectRatio()}.</p>
+     *
+     * @param icon parsed vector icon; must not be {@code null}
+     * @param size target height in points (the icon's vertical extent on the line)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon, double size) {
+        return svgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds an inline SVG-icon run with explicit vertical alignment.
+     *
+     * @param icon      parsed vector icon; must not be {@code null}
+     * @param size      target height in points
+     * @param alignment vertical alignment relative to the surrounding text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
+        return svgIcon(icon, size, alignment, 0.0, null);
+    }
+
+    /**
+     * Adds a fully-specified, optionally clickable inline SVG-icon run, measured
+     * on the surrounding text baseline. The figure is drawn from vector geometry,
+     * so it never depends on font glyph coverage.
+     *
+     * @param icon           parsed vector icon; must not be {@code null}
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional inline link metadata
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder svgIcon(SvgIcon icon,
+                                    double size,
+                                    InlineImageAlignment alignment,
+                                    double baselineOffset,
+                                    DocumentLinkOptions linkOptions) {
+        Objects.requireNonNull(icon, "icon");
+        this.inlineRuns.add(new InlineSvgRun(
+                icon,
+                size * icon.aspectRatio(),
+                size,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds a colour emoji resolved from its GitHub-style shortcode (e.g.
+     * {@code ":star:"}) as an inline vector glyph sized to {@code size} points
+     * tall, with default {@link InlineImageAlignment#CENTER} alignment.
+     *
+     * <p>Resolution is lenient: when the shortcode is unknown, or no emoji set is
+     * on the classpath (the {@code graph-compose-emoji} artifact), the literal
+     * shortcode is added as inline text — the way GitHub renders an unrecognised
+     * {@code :code:}. Resolution uses {@link EmojiLibrary#getDefault()}.</p>
+     *
+     * @param shortcode emoji shortcode, with or without surrounding colons
+     * @param size      target height in points
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder emoji(String shortcode, double size) {
+        return emoji(shortcode, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds a colour emoji (see {@link #emoji(String, double)}) with explicit
+     * vertical alignment, baseline offset and optional link metadata.
+     *
+     * @param shortcode      emoji shortcode, with or without surrounding colons
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to the surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional link metadata (ignored on the text fallback)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder emoji(String shortcode,
+                                  double size,
+                                  InlineImageAlignment alignment,
+                                  double baselineOffset,
+                                  DocumentLinkOptions linkOptions) {
+        SvgIcon icon = EmojiLibrary.getDefault().find(shortcode).orElse(null);
+        if (icon != null) {
+            return svgIcon(icon, size, alignment, baselineOffset, linkOptions);
+        }
+        return inlineText(shortcode);
+    }
+
+    /**
+     * Adds an inline filled shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill    fill color
+     * @param anchor  target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder shapeLinkTo(ShapeOutline outline, DocumentColor fill, String anchor) {
+        return shapeLinkTo(outline, fill, null, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Adds a fully-specified inline shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document. At least one of {@code fill} or {@code stroke}
+     * must be present.
+     *
+     * @param outline        figure geometry; supplies the run's size
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder shapeLinkTo(ShapeOutline outline,
+                                        DocumentColor fill,
+                                        DocumentStroke stroke,
+                                        InlineImageAlignment alignment,
+                                        double baselineOffset,
+                                        String anchor) {
+        this.inlineRuns.add(new InlineShapeRun(
+                List.of(new ShapeLayer(outline, fill, stroke)),
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
         this.text = "";
         return this;
     }
@@ -689,12 +945,13 @@ public final class ParagraphBuilder {
                 lineSpacing,
                 bulletOffset,
                 indentStrategy,
-                linkOptions,
+                linkTarget,
                 bookmarkOptions,
                 padding,
                 margin,
                 autoSize,
-                verticalAlign);
+                verticalAlign,
+                anchor);
     }
 }
 

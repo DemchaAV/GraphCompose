@@ -380,17 +380,125 @@ class SvgIconTest {
                   <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
                 </linearGradient>""")))
                 .hasMessageContaining("spreadMethod");
-        assertThatThrownBy(() -> SvgIcon.parse(defs.formatted("""
+    }
+
+    @Test
+    void translucentAndFocalGradientsDegradeInsteadOfFailing() {
+        String defs = """
+                <svg viewBox="0 0 10 10">
+                  <defs>%s</defs>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """;
+
+        // stop-opacity has no opaque-PDF-shading analogue, so it is ignored and the
+        // gradient renders with opaque stops rather than failing — this is what lets
+        // real-world art (Noto emoji) import (scenes keep their gradient, not a flat
+        // blob).
+        SvgIcon translucent = SvgIcon.parse(defs.formatted("""
                 <linearGradient id="g">
-                  <stop offset="0" stop-color="#000" stop-opacity="0.5"/>
-                  <stop offset="1" stop-color="#fff"/>
-                </linearGradient>""")))
-                .hasMessageContaining("stop-opacity");
-        assertThatThrownBy(() -> SvgIcon.parse(defs.formatted("""
+                  <stop offset="0" stop-color="#000000" stop-opacity="0.5"/>
+                  <stop offset="1" stop-color="#ffffff"/>
+                </linearGradient>"""));
+        assertThat(translucent.layers().get(0).fillPaint())
+                .isInstanceOf(DocumentPaint.LinearAxis.class);
+
+        // A focal radial (fx/fy) approximates as a plain radial about the centre.
+        SvgIcon focal = SvgIcon.parse(defs.formatted("""
                 <radialGradient id="g" fx="0.2" fy="0.2">
                   <stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/>
-                </radialGradient>""")))
-                .hasMessageContaining("focal");
+                </radialGradient>"""));
+        assertThat(focal.layers().get(0).fillPaint())
+                .isInstanceOf(DocumentPaint.RadialCircle.class);
+    }
+
+    @Test
+    void clipPathIsResolvedOntoTheLayer() {
+        // The Illustrator <use>+clipPath idiom: the clipPath references a <defs>
+        // shape via <use>; the clipped layer must carry that shape as its clip so
+        // the backend confines the paint to it (Noto hands clip detail to the
+        // silhouette).
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <defs>
+                    <path id="s" d="M0 0 H5 V10 H0 Z"/>
+                    <clipPath id="c"><use xlink:href="#s"/></clipPath>
+                  </defs>
+                  <g clip-path="url(#c)"><path d="M0 0 H10 V10 Z" fill="#000"/></g>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).clip()).isNotNull();
+        assertThat(icon.layers().get(0).clip().hasDrawingSegment()).isTrue();
+    }
+
+    @Test
+    void monochromeTranslucentGradientOverlayIsDropped() {
+        // A same-colour fade (here #6D4C41 from opacity 0 to 1) carries no colour
+        // — it is a pure alpha overlay (an edge shadow). With no shading-alpha in
+        // the backend, painting it opaque would blot out the art beneath, so the
+        // layer is dropped and the base colour survives.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <radialGradient id="g">
+                    <stop offset="0" style="stop-color:#6D4C41;stop-opacity:0"/>
+                    <stop offset="1" style="stop-color:#6D4C41"/>
+                  </radialGradient>
+                  <path d="M0 0 H10 V10 Z" fill="#00ff00"/>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(0, 255, 0));
+    }
+
+    @Test
+    void singleStopTranslucentGradientOverlayIsDropped() {
+        // A one-stop translucent gradient is a flat alpha fill — still an overlay
+        // we cannot composite, so it is dropped too (not only two-stop fades).
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <radialGradient id="g">
+                    <stop offset="0" style="stop-color:#000000;stop-opacity:0.2"/>
+                  </radialGradient>
+                  <path d="M0 0 H10 V10 Z" fill="#00ff00"/>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(0, 255, 0));
+    }
+
+    @Test
+    void multiColourTranslucentGradientStillRenders() {
+        // A real colour transition (red→blue) is structural even with a
+        // translucent stop; it must keep rendering as a gradient (e.g. the sky in
+        // :framed_picture: / :sunrise:).
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <linearGradient id="g">
+                    <stop offset="0" style="stop-color:#ff0000;stop-opacity:0.5"/>
+                    <stop offset="1" style="stop-color:#0000ff"/>
+                  </linearGradient>
+                  <path d="M0 0 H10 V10 Z" fill="url(#g)"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fillPaint()).isNotNull();
+    }
+
+    @Test
+    void displayNoneSubtreeIsSkipped() {
+        // Illustrator exports guide/template layers as display:none groups; their
+        // registration hatching must not paint.
+        SvgIcon icon = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <g style="display:none;"><path d="M0 0 H10 V10 Z" fill="#ff0000"/></g>
+                  <path d="M2 2 H8 V8 Z" fill="#00ff00"/>
+                </svg>
+                """);
+        assertThat(icon.layers()).hasSize(1);
+        assertThat(icon.layers().get(0).fill().color()).isEqualTo(new java.awt.Color(0, 255, 0));
     }
 
     @Test

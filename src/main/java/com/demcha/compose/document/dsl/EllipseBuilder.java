@@ -2,6 +2,9 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -22,7 +25,8 @@ public final class EllipseBuilder implements Transformable<EllipseBuilder> {
     private double height;
     private DocumentColor fillColor;
     private DocumentStroke stroke;
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -132,7 +136,44 @@ public final class EllipseBuilder implements Transformable<EllipseBuilder> {
      * @return this builder
      */
     public EllipseBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches an ellipse-level link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public EllipseBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Makes the ellipse an internal link to a named {@code anchor(...)} elsewhere
+     * in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public EllipseBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this ellipse's top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public EllipseBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -190,6 +231,6 @@ public final class EllipseBuilder implements Transformable<EllipseBuilder> {
      * @return ellipse node
      */
     public EllipseNode build() {
-        return new EllipseNode(name, width, height, fillColor, stroke, linkOptions, bookmarkOptions, padding, margin, transform);
+        return new EllipseNode(name, width, height, fillColor, stroke, linkTarget, bookmarkOptions, padding, margin, transform, anchor);
     }
 }

@@ -23,6 +23,7 @@ API, with copy-pasteable snippets verified against the current release.
 | [barcodes.md](barcodes.md) | QR / Code 128 / Code 39 / EAN / UPC / PDF417 / DataMatrix, tinting, quiet zone, card centring |
 | [images.md](images.md) | Sources (bytes/path), sizing precedence, STRETCH/CONTAIN/COVER fit modes, images in rows and cards |
 | [pdf-chrome.md](pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |
+| [in-pdf-navigation.md](in-pdf-navigation.md) | Named `anchor(...)` destinations + internal `linkTo(...)` links: clickable tables of contents, `#heading`-style jumps, bidirectional footnotes, inline-graphic links — native PDF GoTo actions |
 | [translucency.md](translucency.md) | `DocumentColor.rgba` / `withOpacity`: which primitives honour alpha, byte-identity for opaque colours, layered tints |
 | [docx-export.md](docx-export.md) | Semantic DOCX export: 1:1 node mapping, chart/shape-container fallbacks, skipped kinds |
 | [snapshot-testing.md](snapshot-testing.md) | Layout-snapshot regression testing in consumer projects, baseline update flow |

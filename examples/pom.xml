@@ -56,6 +56,17 @@
             <version>${graphcompose.fonts.version}</version>
         </dependency>
 
+        <!--
+            Colour-emoji glyphs for EmojiShortcodeExample. The engine resolves
+            emoji from the classpath, so the examples declare the companion
+            artifact explicitly at its own independent version (like fonts).
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-emoji</artifactId>
+            <version>${graphcompose.emoji.version}</version>
+        </dependency>
+
         <!-- DOCX export (WordExportExample): poi-ooxml is optional in the
              GraphCompose POM, so consumers add it explicitly.
              Keep in lockstep with the root pom's poi.version. -->

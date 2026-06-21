@@ -75,6 +75,10 @@ PDF `GoTo` actions. External links are unchanged.
 - New `graph-compose-emoji` module with `emoji/NOTICE.md` documenting the bundled
   original starter set and the mechanical drop-in for the full jdecked/twemoji
   set (CC-BY 4.0).
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java`
+  — `:shortcode:` colour emoji flowing inline with text, the starter-set legend,
+  the unknown-shortcode text fallback, and several glyph sizes.
 
 ### Tests
 

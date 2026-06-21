@@ -16,6 +16,7 @@ import com.demcha.examples.features.streaming.HttpStreamingExample;
 import com.demcha.examples.features.svg.SvgIconGalleryExample;
 import com.demcha.examples.features.tables.ComposedTableCellExample;
 import com.demcha.examples.features.tables.TableAdvancedExample;
+import com.demcha.examples.features.text.EmojiShortcodeExample;
 import com.demcha.examples.features.text.InlineShapesExample;
 import com.demcha.examples.features.text.InlineSvgIconExample;
 import com.demcha.examples.features.navigation.InPdfNavigationExample;
@@ -146,6 +147,7 @@ public final class GenerateAllExamples {
         // Text + sections
         System.out.println("Generated: " + InlineShapesExample.generate());
         System.out.println("Generated: " + InlineSvgIconExample.generate());
+        System.out.println("Generated: " + EmojiShortcodeExample.generate());
         System.out.println("Generated: " + RichTextShowcaseExample.generate());
         System.out.println("Generated: " + SectionPresetsExample.generate());
         System.out.println("Generated: " + InPdfNavigationExample.generate());

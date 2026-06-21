@@ -81,6 +81,14 @@ PDF `GoTo` actions. External links are unchanged.
   subtrees (`display:none`, e.g. an Illustrator guide layer of registration
   hatching) are skipped. Together these take the Noto Emoji set to essentially
   the whole bundled set rendering cleanly.
+- **Same-colour translucent gradients are dropped, not painted opaque.** A
+  gradient whose stops are all the same RGB with at least one translucent stop
+  carries no colour — it is a pure alpha overlay (a soft shadow or edge
+  highlight, e.g. the hair-edge darkening on the vampire glyphs). With no
+  shading-alpha in the backend, painting it opaque covered the art beneath (the
+  vampire's face rendered as a solid hair blob); such layers are now dropped.
+  Multi-colour gradients (real scenes — `:framed_picture:`, `:sunrise:`,
+  `:city_sunset:`) are structural and keep rendering as gradients.
 
 ### Documentation
 

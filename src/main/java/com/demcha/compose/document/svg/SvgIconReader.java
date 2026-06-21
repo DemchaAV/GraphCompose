@@ -222,6 +222,14 @@ final class SvgIconReader {
         DocumentColor fillColor = paint.fill().color();
         DocumentPaint fillPaint = null;
         if (paint.fill().gradient() != null) {
+            if (!strokeVisible && SvgGradients.isAlphaOnlyOverlay(paint.fill().gradient(), gradients)) {
+                // A same-colour translucent gradient is a pure alpha overlay (a
+                // soft shadow or edge highlight, e.g. the hair-edge darkening on
+                // the vampire glyphs). With no shading-alpha in the backend,
+                // painting it opaque would cover the art beneath it — drop the
+                // layer rather than blot out a face.
+                return;
+            }
             fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients, matrix, box, geometry);
             fillColor = fillPaint.primaryColor();
         }

@@ -105,6 +105,12 @@ jobs:
         # install graph-compose-fonts into the local repo before building them.
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
 
+      - name: Install graph-compose-emoji (consumed by the examples module)
+        # The emoji example renders colour emoji from the bundled Noto SVG set;
+        # like graph-compose-fonts it is a standalone artifact not on Maven
+        # Central, so install it into the local repo before building examples.
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
+
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
 

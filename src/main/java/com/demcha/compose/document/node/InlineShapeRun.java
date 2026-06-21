@@ -33,7 +33,7 @@ import java.util.Objects;
  * @param baselineOffset extra vertical offset in points applied after
  *                       {@code alignment} resolution; positive values move the
  *                       figure up
- * @param linkOptions    optional per-run link metadata
+ * @param linkTarget     optional per-run link target (external URI or internal anchor)
  * @author Artem Demchyshyn
  * @since 1.7.0
  */
@@ -41,7 +41,7 @@ public record InlineShapeRun(
         List<ShapeLayer> layers,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkOptions linkOptions
+        DocumentLinkTarget linkTarget
 ) implements InlineRun {
     /**
      * Copies the layer stack defensively, requires at least one layer, and
@@ -57,6 +57,35 @@ public record InlineShapeRun(
             throw new IllegalArgumentException("inline shape baselineOffset must be finite: " + baselineOffset);
         }
         alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
+    }
+
+    /**
+     * Convenience constructor taking external link options, wrapped into an
+     * {@link ExternalLinkTarget}.
+     *
+     * @param layers         one or more paint layers
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional external link metadata
+     */
+    public InlineShapeRun(List<ShapeLayer> layers,
+                          InlineImageAlignment alignment,
+                          double baselineOffset,
+                          DocumentLinkOptions linkOptions) {
+        this(layers, alignment, baselineOffset,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions));
+    }
+
+    /**
+     * Returns the external link options of this run, or {@code null} when the run
+     * has no link or targets an internal anchor.
+     *
+     * @return external link metadata, or {@code null}
+     * @deprecated use {@link #linkTarget()}; this bridge only exposes external links
+     */
+    @Deprecated(since = "1.9.0")
+    public DocumentLinkOptions linkOptions() {
+        return linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
     }
 
     /**
@@ -188,6 +217,6 @@ public record InlineShapeRun(
             Objects.requireNonNull(mark, "mark");
             layers.add(new ShapeLayer(mark, checkColor));
         }
-        return new InlineShapeRun(layers, InlineImageAlignment.CENTER, 0.0, null);
+        return new InlineShapeRun(layers, InlineImageAlignment.CENTER, 0.0, (DocumentLinkTarget) null);
     }
 }

@@ -13,12 +13,14 @@ import com.demcha.compose.document.style.DocumentTransform;
  * @param height          resolved ellipse height
  * @param fillColor       optional fill color
  * @param stroke          optional stroke descriptor
- * @param linkOptions     optional node-level link metadata
+ * @param linkTarget      optional node-level link target (external URI or internal anchor)
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding         inner padding
  * @param margin          outer margin
  * @param transform       render-time affine transform; defaults to
  *                        {@link DocumentTransform#NONE}.
+ * @param anchor          optional in-document navigation anchor name at the ellipse's
+ *                        top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record EllipseNode(
@@ -27,11 +29,12 @@ public record EllipseNode(
         double height,
         DocumentColor fillColor,
         DocumentStroke stroke,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
-        DocumentTransform transform
+        DocumentTransform transform,
+        String anchor
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit ellipse dimensions.
@@ -41,12 +44,43 @@ public record EllipseNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         transform = transform == null ? DocumentTransform.NONE : transform;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (width <= 0 || Double.isNaN(width) || Double.isInfinite(width)) {
             throw new IllegalArgumentException("width must be finite and positive: " + width);
         }
         if (height <= 0 || Double.isNaN(height) || Double.isInfinite(height)) {
             throw new IllegalArgumentException("height must be finite and positive: " + height);
         }
+    }
+
+    /**
+     * Backwards-compatible canonical constructor taking external
+     * {@link DocumentLinkOptions} (wrapped) and no navigation anchor.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved ellipse width
+     * @param height          resolved ellipse height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param linkOptions     optional external link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
+     */
+    public EllipseNode(String name,
+                       double width,
+                       double height,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentLinkOptions linkOptions,
+                       DocumentBookmarkOptions bookmarkOptions,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentTransform transform) {
+        this(name, width, height, fillColor, stroke,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions),
+                bookmarkOptions, padding, margin, transform, null);
     }
 
     /**

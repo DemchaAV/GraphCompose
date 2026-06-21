@@ -13,7 +13,7 @@ import java.awt.*;
  * @param fillColor       optional fill color
  * @param stroke          optional stroke descriptor
  * @param cornerRadius    optional render-only corner radius
- * @param linkOptions     optional node-level link metadata
+ * @param linkTarget      optional node-level link target (external URI or internal anchor)
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding         inner padding
  * @param margin          outer margin
@@ -26,6 +26,8 @@ import java.awt.*;
  *                        {@code fillColor}. Gradients render as native shadings in
  *                        the PDF backend; backends without shading support fall
  *                        back to {@link DocumentPaint#primaryColor()}.
+ * @param anchor          optional in-document navigation anchor name at the shape's
+ *                        top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record ShapeNode(
@@ -35,13 +37,49 @@ public record ShapeNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
         DocumentTransform transform,
-        DocumentPaint fillPaint
+        DocumentPaint fillPaint,
+        String anchor
 ) implements DocumentNode {
+    /**
+     * Backwards-compatible canonical constructor taking external
+     * {@link DocumentLinkOptions} (wrapped) with a paint fill and no navigation
+     * anchor.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved shape width
+     * @param height          resolved shape height
+     * @param fillColor       optional fill color
+     * @param stroke          optional stroke descriptor
+     * @param cornerRadius    optional render-only corner radius
+     * @param linkOptions     optional external link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
+     * @param fillPaint       optional paint fill
+     */
+    public ShapeNode(String name,
+                     double width,
+                     double height,
+                     DocumentColor fillColor,
+                     DocumentStroke stroke,
+                     DocumentCornerRadius cornerRadius,
+                     DocumentLinkOptions linkOptions,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin,
+                     DocumentTransform transform,
+                     DocumentPaint fillPaint) {
+        this(name, width, height, fillColor, stroke, cornerRadius,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions),
+                bookmarkOptions, padding, margin, transform, fillPaint, null);
+    }
+
     /**
      * Backwards-compatible canonical constructor without a paint fill.
      *
@@ -81,6 +119,7 @@ public record ShapeNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         transform = transform == null ? DocumentTransform.NONE : transform;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (width <= 0 || Double.isNaN(width) || Double.isInfinite(width)) {
             throw new IllegalArgumentException("width must be finite and positive: " + width);
         }

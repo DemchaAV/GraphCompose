@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout.payloads;
 
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 
 /**
  * One measured span inside a paragraph line. Sealed because the wrapping
@@ -16,11 +16,11 @@ public sealed interface ParagraphSpan permits ParagraphTextSpan, ParagraphImageS
     double width();
 
     /**
-     * Link metadata anchored to this span, if any.
+     * Link target anchored to this span, if any.
      *
-     * @return optional link metadata anchored to this span
+     * @return optional link target anchored to this span
      */
-    DocumentLinkOptions linkOptions();
+    DocumentLinkTarget linkTarget();
 
     /**
      * Height this span contributes to its line.

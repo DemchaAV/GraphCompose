@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout.payloads;
 
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 
 /**
@@ -10,14 +10,14 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
  * @param textStyle   resolved text style
  * @param width       measured span width
  * @param height      font line height contribution
- * @param linkOptions optional link metadata for the span
+ * @param linkTarget optional link metadata for the span
  */
 public record ParagraphTextSpan(
         String text,
         TextStyle textStyle,
         double width,
         double height,
-        DocumentLinkOptions linkOptions
+        DocumentLinkTarget linkTarget
 ) implements ParagraphSpan {
     /**
      * Creates a normalized measured paragraph text span.

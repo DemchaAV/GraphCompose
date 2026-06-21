@@ -3,6 +3,9 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineImageRun;
@@ -37,7 +40,8 @@ public final class ParagraphBuilder {
     private double lineSpacing = 0.0;
     private String bulletOffset = "";
     private DocumentTextIndent indentStrategy = DocumentTextIndent.NONE;
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -152,13 +156,51 @@ public final class ParagraphBuilder {
     }
 
     /**
-     * Attaches paragraph-level link metadata.
+     * Attaches paragraph-level external link metadata.
      *
      * @param linkOptions link metadata
      * @return this builder
      */
     public ParagraphBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches a paragraph-level link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Attaches a paragraph-level internal link to a named {@code anchor(...)}
+     * elsewhere in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this paragraph's
+     * top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -192,6 +234,21 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineLink(String text, DocumentLinkOptions linkOptions) {
         return inlineText(text, (DocumentTextStyle) null, linkOptions);
+    }
+
+    /**
+     * Adds an inline internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the document.
+     *
+     * @param text   visible link text
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineLinkTo(String text, String anchor) {
+        this.inlineRuns.add(new InlineTextRun(text, null, new InternalLinkTarget(anchor)));
+        this.text = "";
+        return this;
     }
 
     /**
@@ -689,12 +746,13 @@ public final class ParagraphBuilder {
                 lineSpacing,
                 bulletOffset,
                 indentStrategy,
-                linkOptions,
+                linkTarget,
                 bookmarkOptions,
                 padding,
                 margin,
                 autoSize,
-                verticalAlign);
+                verticalAlign,
+                anchor);
     }
 }
 

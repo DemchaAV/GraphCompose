@@ -20,7 +20,7 @@ import java.util.Objects;
  * @param rowStyles              row-specific style overrides
  * @param columnStyles           column-specific style overrides
  * @param width                  optional explicit table width
- * @param linkOptions            optional node-level link metadata
+ * @param linkTarget             optional node-level link target (external URI or internal anchor)
  * @param bookmarkOptions        optional node-level bookmark metadata
  * @param padding                outer table padding
  * @param margin                 outer table margin
@@ -28,6 +28,8 @@ import java.util.Objects;
  *                               top of every continuation page when the
  *                               table is split across pages; {@code 0}
  *                               disables the feature
+ * @param anchor                 optional in-document navigation anchor name at the
+ *                               table's top-left, or {@code null} for none
  */
 public record TableNode(
         String name,
@@ -37,11 +39,12 @@ public record TableNode(
         Map<Integer, DocumentTableStyle> rowStyles,
         Map<Integer, DocumentTableStyle> columnStyles,
         Double width,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
-        int repeatedHeaderRowCount
+        int repeatedHeaderRowCount,
+        String anchor
 ) implements DocumentNode {
     /**
      * Backward-compatible constructor that keeps the original advanced V2
@@ -124,6 +127,40 @@ public record TableNode(
     }
 
     /**
+     * Backward-compatible canonical constructor taking external
+     * {@link DocumentLinkOptions} (wrapped) and no navigation anchor.
+     *
+     * @param name                   table node name
+     * @param columns                negotiated table columns
+     * @param rows                   table rows in source order
+     * @param defaultCellStyle       default cell style applied to every cell
+     * @param rowStyles              row-specific style overrides
+     * @param columnStyles           column-specific style overrides
+     * @param width                  optional explicit table width
+     * @param linkOptions            optional external link metadata
+     * @param bookmarkOptions        optional node-level bookmark metadata
+     * @param padding                outer table padding
+     * @param margin                 outer table margin
+     * @param repeatedHeaderRowCount repeated header row count
+     */
+    public TableNode(String name,
+                     List<DocumentTableColumn> columns,
+                     List<List<DocumentTableCell>> rows,
+                     DocumentTableStyle defaultCellStyle,
+                     Map<Integer, DocumentTableStyle> rowStyles,
+                     Map<Integer, DocumentTableStyle> columnStyles,
+                     Double width,
+                     DocumentLinkOptions linkOptions,
+                     DocumentBookmarkOptions bookmarkOptions,
+                     DocumentInsets padding,
+                     DocumentInsets margin,
+                     int repeatedHeaderRowCount) {
+        this(name, columns, rows, defaultCellStyle, rowStyles, columnStyles, width,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions),
+                bookmarkOptions, padding, margin, repeatedHeaderRowCount, null);
+    }
+
+    /**
      * Normalizes table rows, styles, spacing, and validates explicit width
      * and repeated-header row count.
      */
@@ -138,6 +175,7 @@ public record TableNode(
         columnStyles = normalizeStyleMap(columnStyles, "column");
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (width != null && (width <= 0 || Double.isNaN(width) || Double.isInfinite(width))) {
             throw new IllegalArgumentException("width must be finite and positive when set: " + width);
         }

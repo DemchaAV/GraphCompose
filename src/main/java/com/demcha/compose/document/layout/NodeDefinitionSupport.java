@@ -107,6 +107,48 @@ public final class NodeDefinitionSupport {
     }
 
     /**
+     * Builds a non-visual anchor marker fragment spanning the node's resolved
+     * top-left box, declaring {@code anchor} as an in-document navigation
+     * destination. The marker draws nothing; the PDF backend records its
+     * resolved page and position so internal links can resolve to it.
+     *
+     * @param anchor    non-blank anchor name
+     * @param placement resolved fragment placement
+     * @return one anchor marker fragment
+     */
+    public static LayoutFragment anchorMarkerFragment(String anchor, FragmentPlacement placement) {
+        return new LayoutFragment(
+                placement.path(),
+                0,
+                0.0,
+                0.0,
+                placement.width(),
+                placement.height(),
+                new AnchorMarkerPayload(anchor));
+    }
+
+    /**
+     * Appends an {@link AnchorMarkerPayload} fragment to {@code base} when
+     * {@code anchor} is non-null, otherwise returns {@code base} unchanged.
+     *
+     * @param base      already-emitted fragments
+     * @param anchor    optional anchor name; {@code null} skips the marker
+     * @param placement resolved fragment placement
+     * @return {@code base}, optionally with an anchor marker appended
+     */
+    public static List<LayoutFragment> withAnchorMarker(List<LayoutFragment> base,
+                                                        String anchor,
+                                                        FragmentPlacement placement) {
+        if (anchor == null) {
+            return base;
+        }
+        List<LayoutFragment> out = new ArrayList<>(base.size() + 1);
+        out.addAll(base);
+        out.add(anchorMarkerFragment(anchor, placement));
+        return List.copyOf(out);
+    }
+
+    /**
      * Emits an optional background/border decoration fragment.
      *
      * @param fillColor    optional fill color
@@ -389,6 +431,7 @@ public final class NodeDefinitionSupport {
                 new TableLayoutSupport.PreparedTableLayout(
                         layout,
                         node.bookmarkOptions() != null,
+                        node.anchor() != null,
                         resolved.preparedContents()));
     }
 
@@ -474,7 +517,7 @@ public final class NodeDefinitionSupport {
                     new TableRowFragmentPayload(
                             layout.rows().get(rowIndex),
                             rowIndex == 0,
-                            node.linkOptions(),
+                            node.linkTarget(),
                             rowIndex == 0 && preparedLayout.emitBookmark()
                                     ? node.bookmarkOptions()
                                     : null)));
@@ -501,6 +544,9 @@ public final class NodeDefinitionSupport {
             rowTopOffset += rowHeight;
         }
 
+        if (preparedLayout.emitAnchor() && node.anchor() != null) {
+            fragments.add(anchorMarkerFragment(node.anchor(), placement));
+        }
         return List.copyOf(fragments);
     }
 

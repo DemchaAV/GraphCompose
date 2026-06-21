@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout.payloads;
 
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.engine.components.content.ImageData;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
  * @param height         target height in points
  * @param alignment      vertical alignment relative to the surrounding text
  * @param baselineOffset extra vertical offset in points; positive moves up
- * @param linkOptions    optional link metadata
+ * @param linkTarget    optional link metadata
  */
 public record ParagraphImageSpan(
         ImageData imageData,
@@ -22,7 +22,7 @@ public record ParagraphImageSpan(
         double height,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkOptions linkOptions
+        DocumentLinkTarget linkTarget
 ) implements ParagraphSpan {
     /**
      * Validates and normalizes inline image span fields.

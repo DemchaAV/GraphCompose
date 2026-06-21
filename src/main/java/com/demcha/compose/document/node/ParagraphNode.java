@@ -20,13 +20,15 @@ import java.util.Objects;
  * @param lineSpacing     extra space between wrapped lines
  * @param bulletOffset    first-line prefix used by list-style paragraph paths
  * @param indentStrategy  hanging/first-line indent strategy
- * @param linkOptions     optional node-level link metadata
+ * @param linkTarget      optional node-level link target (external URI or internal anchor)
  * @param bookmarkOptions optional node-level bookmark metadata
  * @param padding         inner padding
  * @param margin          outer margin
  * @param autoSize        optional automatic font down-scaling policy
  * @param verticalAlign   vertical seating of the text within its line box
  *                        ({@link TextVerticalAlign#DEFAULT} keeps baseline seating)
+ * @param anchor          optional in-document navigation anchor name declared at the
+ *                        paragraph's top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -38,12 +40,13 @@ public record ParagraphNode(
         double lineSpacing,
         String bulletOffset,
         DocumentTextIndent indentStrategy,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentInsets padding,
         DocumentInsets margin,
         DocumentTextAutoSize autoSize,
-        TextVerticalAlign verticalAlign
+        TextVerticalAlign verticalAlign,
+        String anchor
 ) implements DocumentNode {
     /**
      * Normalizes optional text, inline runs, style, alignment, spacing, and
@@ -69,9 +72,49 @@ public record ParagraphNode(
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         verticalAlign = verticalAlign == null ? TextVerticalAlign.DEFAULT : verticalAlign;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }
+    }
+
+    /**
+     * Backwards-compatible 14-arg constructor taking external
+     * {@link DocumentLinkOptions} (wrapped into an {@link ExternalLinkTarget})
+     * and no navigation anchor.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param text            paragraph text when inline runs are not supplied
+     * @param inlineRuns      optional inline runs in source order
+     * @param textStyle       base paragraph text style
+     * @param align           horizontal text alignment
+     * @param lineSpacing     extra space between wrapped lines
+     * @param bulletOffset    first-line prefix used by list-style paragraph paths
+     * @param indentStrategy  hanging/first-line indent strategy
+     * @param linkOptions     optional external link metadata
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param autoSize        optional automatic font down-scaling policy
+     * @param verticalAlign   vertical seating of the text within its line box
+     */
+    public ParagraphNode(String name,
+                         String text,
+                         List<InlineRun> inlineRuns,
+                         DocumentTextStyle textStyle,
+                         TextAlign align,
+                         double lineSpacing,
+                         String bulletOffset,
+                         DocumentTextIndent indentStrategy,
+                         DocumentLinkOptions linkOptions,
+                         DocumentBookmarkOptions bookmarkOptions,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentTextAutoSize autoSize,
+                         TextVerticalAlign verticalAlign) {
+        this(name, text, inlineRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
+                linkOptions == null ? null : new ExternalLinkTarget(linkOptions),
+                bookmarkOptions, padding, margin, autoSize, verticalAlign, null);
     }
 
     /**

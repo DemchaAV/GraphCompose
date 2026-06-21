@@ -315,7 +315,7 @@ final class TableLayoutSupport {
                 source.rowStyles(),
                 source.columnStyles(),
                 layout.finalWidth(),
-                source.linkOptions(),
+                source.linkTarget(),
                 keepTopInsets ? source.bookmarkOptions() : null,
                 new DocumentInsets(
                         keepTopInsets ? source.padding().top() : 0.0,
@@ -330,7 +330,8 @@ final class TableLayoutSupport {
                 // Continuation slices retain the same repeat-header
                 // contract — the prepended header rows live at indices
                 // [0, repeatedHeaderRowCount) of fragmentSourceRows.
-                source.repeatedHeaderRowCount());
+                source.repeatedHeaderRowCount(),
+                keepTopInsets ? source.anchor() : null);
 
         ResolvedTableLayout fragmentLayout = new ResolvedTableLayout(
                 layout.columnWidths(),
@@ -346,7 +347,7 @@ final class TableLayoutSupport {
         Map<CellKey, PreparedNode<?>> sliceContents = sliceComposedCellContents(
                 preparedContents, fromInclusive, toExclusive, prependHeaderRowCount);
         return PreparedNode.leaf(fragmentNode, measure,
-                new PreparedTableLayout(fragmentLayout, keepTopInsets, sliceContents));
+                new PreparedTableLayout(fragmentLayout, keepTopInsets, keepTopInsets, sliceContents));
     }
 
     /**
@@ -791,19 +792,11 @@ final class TableLayoutSupport {
     record PreparedTableLayout(
             ResolvedTableLayout resolvedLayout,
             boolean emitBookmark,
+            boolean emitAnchor,
             Map<CellKey, PreparedNode<?>> preparedContents
     ) implements PreparedNodeLayout {
         PreparedTableLayout {
             preparedContents = preparedContents == null ? Map.of() : Map.copyOf(preparedContents);
-        }
-
-        /**
-         * Back-compat 2-arg constructor for callers that don't carry
-         * composed cell content. Defaults {@code preparedContents} to
-         * an empty map.
-         */
-        PreparedTableLayout(ResolvedTableLayout resolvedLayout, boolean emitBookmark) {
-            this(resolvedLayout, emitBookmark, Map.of());
         }
     }
 

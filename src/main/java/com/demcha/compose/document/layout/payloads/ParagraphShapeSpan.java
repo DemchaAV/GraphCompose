@@ -1,6 +1,6 @@
 package com.demcha.compose.document.layout.payloads;
 
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  * @param height         bounding height in points
  * @param alignment      vertical alignment relative to the surrounding text
  * @param baselineOffset extra vertical offset in points; positive moves up
- * @param linkOptions    optional link metadata
+ * @param linkTarget    optional link metadata
  */
 public record ParagraphShapeSpan(
         List<ResolvedShapeLayer> layers,
@@ -24,7 +24,7 @@ public record ParagraphShapeSpan(
         double height,
         InlineImageAlignment alignment,
         double baselineOffset,
-        DocumentLinkOptions linkOptions
+        DocumentLinkTarget linkTarget
 ) implements ParagraphSpan {
     /**
      * Copies the layer stack defensively and normalizes alignment defaults.

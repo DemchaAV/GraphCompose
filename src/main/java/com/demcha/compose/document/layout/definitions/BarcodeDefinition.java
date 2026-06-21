@@ -58,8 +58,11 @@ public final class BarcodeDefinition implements NodeDefinition<BarcodeNode> {
                 height,
                 new BarcodeFragmentPayload(
                         toBarcodeData(node.barcodeOptions()),
-                        node.linkOptions(),
+                        node.linkTarget(),
                         node.bookmarkOptions()));
-        return wrapAtomicWithTransform(leaf, placement, node.transform());
+        return withAnchorMarker(
+                wrapAtomicWithTransform(leaf, placement, node.transform()),
+                node.anchor(),
+                placement);
     }
 }

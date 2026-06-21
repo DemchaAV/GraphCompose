@@ -50,11 +50,15 @@ public final class SectionDefinition implements NodeDefinition<SectionNode> {
                                               FragmentContext ctx,
                                               FragmentPlacement placement) {
         SectionNode node = prepared.node();
-        return emitDecorationFragment(
+        List<LayoutFragment> decoration = emitDecorationFragment(
                 node.fillColor() == null ? null : node.fillColor().color(),
                 toStroke(node.stroke()),
                 node.cornerRadius(),
                 toSideBorders(node.borders()),
+                placement);
+        return withAnchorMarker(
+                decoration,
+                placement.pageIndex() == placement.startPage() ? node.anchor() : null,
                 placement);
     }
 }

@@ -2,6 +2,9 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.style.*;
 
@@ -20,7 +23,8 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     private Double endX;
     private Double endY;
     private DocumentStroke stroke = DocumentStroke.of(DocumentColor.BLACK, 1.0);
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -239,13 +243,50 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     }
 
     /**
-     * Attaches line-level link metadata.
+     * Attaches line-level external link metadata.
      *
      * @param linkOptions link metadata
      * @return this builder
      */
     public LineBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches a link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LineBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Makes this element an internal link to a named {@code anchor(...)} elsewhere
+     * in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LineBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this element's top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LineBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -316,12 +357,13 @@ public final class LineBuilder implements Transformable<LineBuilder> {
                 resolvedEndX,
                 resolvedEndY,
                 stroke,
-                linkOptions,
+                linkTarget,
                 bookmarkOptions,
                 padding,
                 margin,
                 transform,
-                dashPattern);
+                dashPattern,
+                anchor);
     }
 
     private boolean isHorizontalLine() {

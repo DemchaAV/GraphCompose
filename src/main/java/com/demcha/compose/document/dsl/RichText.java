@@ -213,6 +213,34 @@ public final class RichText {
     }
 
     /**
+     * Appends an internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the same document, using the default link style.
+     *
+     * @param text   visible link text
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText linkTo(String text, String anchor) {
+        return linkTo(text, null, anchor);
+    }
+
+    /**
+     * Appends a styled internal-link run that jumps to a named {@code anchor(...)}
+     * elsewhere in the same document.
+     *
+     * @param text   visible link text
+     * @param style  explicit style for this run, or {@code null} for the link default
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText linkTo(String text, DocumentTextStyle style, String anchor) {
+        runs.add(new InlineTextRun(text == null ? "" : text, style, new InternalLinkTarget(anchor)));
+        return this;
+    }
+
+    /**
      * Appends a fully-customized run with both an explicit style and link
      * metadata.
      *

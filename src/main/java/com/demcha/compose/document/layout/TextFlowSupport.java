@@ -128,18 +128,22 @@ public final class TextFlowSupport {
                 layout.lineGap(),
                 layout.baselineOffset(),
                 layout.visualLines(),
-                node.linkOptions(),
+                node.linkTarget(),
                 layout.emitBookmark() ? node.bookmarkOptions() : null,
                 node.verticalAlign());
 
-        return List.of(new LayoutFragment(
+        LayoutFragment paragraph = new LayoutFragment(
                 placement.path(),
                 0,
                 0.0,
                 0.0,
                 placement.width(),
                 placement.height(),
-                payload));
+                payload);
+        return NodeDefinitionSupport.withAnchorMarker(
+                List.of(paragraph),
+                layout.emitAnchor() ? node.anchor() : null,
+                placement);
     }
 
     /**
@@ -477,6 +481,7 @@ public final class TextFlowSupport {
                 source.lineGap(),
                 maxLineWidth,
                 totalHeight,
+                false,
                 false);
         return new PreparedListItemLayout(String.join("\n", logicalLines), layout);
     }
@@ -642,7 +647,8 @@ public final class TextFlowSupport {
                 gap,
                 maxLineWidth,
                 totalHeight,
-                node.bookmarkOptions() != null);
+                node.bookmarkOptions() != null,
+                node.anchor() != null);
     }
 
     private static ParagraphLine emptyParagraphLine(TextMeasurementSystem.LineMetrics metrics) {
@@ -687,7 +693,7 @@ public final class TextFlowSupport {
                 source.lineSpacing(),
                 "",
                 DocumentTextIndent.NONE,
-                source.linkOptions(),
+                source.linkTarget(),
                 keepTopInsets && layout.emitBookmark() ? source.bookmarkOptions() : null,
                 new DocumentInsets(
                         keepTopInsets ? source.padding().top() : 0.0,
@@ -700,7 +706,8 @@ public final class TextFlowSupport {
                         keepBottomInsets ? source.margin().bottom() : 0.0,
                         source.margin().left()),
                 null,
-                source.verticalAlign());
+                source.verticalAlign(),
+                keepTopInsets ? source.anchor() : null);
 
         PreparedParagraphLayout fragmentLayout = new PreparedParagraphLayout(
                 List.copyOf(sliceLogicalLines),
@@ -711,7 +718,8 @@ public final class TextFlowSupport {
                 layout.lineGap(),
                 maxLineWidth,
                 totalHeight,
-                keepTopInsets && layout.emitBookmark());
+                keepTopInsets && layout.emitBookmark(),
+                keepTopInsets && layout.emitAnchor());
 
         MeasureResult measure = new MeasureResult(
                 maxLineWidth + fragmentNode.padding().horizontal(),
@@ -953,7 +961,7 @@ public final class TextFlowSupport {
                     InlineTextToken chunkToken = InlineTextToken.of(
                             chunk,
                             textToken.textStyle(),
-                            textToken.linkOptions(),
+                            textToken.linkTarget(),
                             measurement);
                     currentLine.add(chunkToken);
                     currentWidth += chunkToken.width();
@@ -1233,7 +1241,7 @@ public final class TextFlowSupport {
                         continue;
                     }
                     for (String token : tokenize(parts[partIndex])) {
-                        currentLine.add(InlineTextToken.of(token, style, textRun.linkOptions(), measurement));
+                        currentLine.add(InlineTextToken.of(token, style, textRun.linkTarget(), measurement));
                     }
                 }
             } else if (run instanceof InlineImageRun imageRun) {
@@ -1301,7 +1309,7 @@ public final class TextFlowSupport {
                         textToken.textStyle(),
                         textToken.width(),
                         measurement.lineMetrics(textToken.textStyle()).lineHeight(),
-                        textToken.linkOptions()));
+                        textToken.linkTarget()));
                 text.append(textToken.text());
                 width += textToken.width();
             } else if (token instanceof InlineImageToken imageToken) {
@@ -1311,7 +1319,7 @@ public final class TextFlowSupport {
                         imageToken.height(),
                         imageToken.alignment(),
                         imageToken.baselineOffset(),
-                        imageToken.linkOptions()));
+                        imageToken.linkTarget()));
                 width += imageToken.width();
             } else if (token instanceof InlineShapeToken shapeToken) {
                 spans.add(new ParagraphShapeSpan(
@@ -1320,7 +1328,7 @@ public final class TextFlowSupport {
                         shapeToken.height(),
                         shapeToken.alignment(),
                         shapeToken.baselineOffset(),
-                        shapeToken.linkOptions()));
+                        shapeToken.linkTarget()));
                 width += shapeToken.width();
             }
         }
@@ -1378,7 +1386,7 @@ public final class TextFlowSupport {
             if (trimmed.equals(textToken.text())) {
                 return textToken;
             }
-            return InlineTextToken.of(trimmed, textToken.textStyle(), textToken.linkOptions(), measurement);
+            return InlineTextToken.of(trimmed, textToken.textStyle(), textToken.linkTarget(), measurement);
         }
         return textToken;
     }
@@ -1554,7 +1562,7 @@ public final class TextFlowSupport {
     private record InlineTextToken(
             String text,
             TextStyle textStyle,
-            DocumentLinkOptions linkOptions,
+            DocumentLinkTarget linkTarget,
             double width
     ) implements InlineLayoutToken {
         private InlineTextToken {
@@ -1564,12 +1572,12 @@ public final class TextFlowSupport {
 
         private static InlineTextToken of(String text,
                                           TextStyle style,
-                                          DocumentLinkOptions linkOptions,
+                                          DocumentLinkTarget linkTarget,
                                           TextMeasurementSystem measurement) {
             String safeText = text == null ? "" : text;
             TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
             double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
-            return new InlineTextToken(safeText, safeStyle, linkOptions, width);
+            return new InlineTextToken(safeText, safeStyle, linkTarget, width);
         }
     }
 
@@ -1579,7 +1587,7 @@ public final class TextFlowSupport {
             double height,
             InlineImageAlignment alignment,
             double baselineOffset,
-            DocumentLinkOptions linkOptions
+            DocumentLinkTarget linkTarget
     ) implements InlineLayoutToken {
         private InlineImageToken {
             Objects.requireNonNull(imageData, "imageData");
@@ -1593,7 +1601,7 @@ public final class TextFlowSupport {
                     run.height(),
                     run.alignment(),
                     run.baselineOffset(),
-                    run.linkOptions());
+                    run.linkTarget());
         }
     }
 
@@ -1603,7 +1611,7 @@ public final class TextFlowSupport {
             double height,
             InlineImageAlignment alignment,
             double baselineOffset,
-            DocumentLinkOptions linkOptions
+            DocumentLinkTarget linkTarget
     ) implements InlineLayoutToken {
         private InlineShapeToken {
             alignment = alignment == null ? InlineImageAlignment.CENTER : alignment;
@@ -1623,7 +1631,7 @@ public final class TextFlowSupport {
                     run.height(),
                     run.alignment(),
                     run.baselineOffset(),
-                    run.linkOptions());
+                    run.linkTarget());
         }
     }
 }

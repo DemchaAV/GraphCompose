@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 
 /**
  * Marker interface for fragment payloads that carry canonical PDF link or
@@ -14,7 +14,7 @@ public interface PdfSemanticFragmentPayload {
      *
      * @return fragment-level link options, or {@code null}
      */
-    DocumentLinkOptions linkOptions();
+    DocumentLinkTarget linkTarget();
 
     /**
      * Returns bookmark metadata for the resolved fragment, or {@code null}

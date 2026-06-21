@@ -23,7 +23,7 @@ public final class PageFlowBuilder extends AbstractFlowBuilder<PageFlowBuilder, 
 
     @Override
     protected ContainerNode buildNode() {
-        return new ContainerNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius(), borders());
+        return new ContainerNode(name(), children(), spacing(), padding(), margin(), fillColor(), stroke(), cornerRadius(), borders(), anchor());
     }
 
     /**

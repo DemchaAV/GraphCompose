@@ -2,7 +2,7 @@ package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.engine.components.content.ImageData;
 
 /**
@@ -10,13 +10,13 @@ import com.demcha.compose.engine.components.content.ImageData;
  *
  * @param imageData       image source data
  * @param fitMode         image fit policy used inside the resolved fragment
- * @param linkOptions     optional fragment-level link metadata
+ * @param linkTarget     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  */
 public record ImageFragmentPayload(
         ImageData imageData,
         DocumentImageFitMode fitMode,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions
 ) implements PdfSemanticFragmentPayload {
     /**

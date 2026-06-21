@@ -17,6 +17,8 @@ import java.util.Objects;
  * @param stroke       optional uniform border stroke
  * @param cornerRadius optional render-only corner radius
  * @param borders      optional per-side border strokes overriding the uniform stroke
+ * @param anchor       optional in-document navigation anchor name; renders a named
+ *                     destination at the container's top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record ContainerNode(
@@ -28,7 +30,8 @@ public record ContainerNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
-        DocumentBorders borders
+        DocumentBorders borders,
+        String anchor
 ) implements DocumentNode {
     /**
      * Creates a normalized vertical flow container.
@@ -41,9 +44,36 @@ public record ContainerNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         borders = borders == null ? DocumentBorders.NONE : borders;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the navigation anchor (defaults to
+     * no anchor).
+     *
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param spacing      vertical spacing between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side border strokes overriding the uniform stroke
+     */
+    public ContainerNode(String name,
+                         List<DocumentNode> children,
+                         double spacing,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentColor fillColor,
+                         DocumentStroke stroke,
+                         DocumentCornerRadius cornerRadius,
+                         DocumentBorders borders) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, null);
     }
 
     /**

@@ -51,7 +51,7 @@ public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, Se
     @Override
     protected SectionNode buildNode() {
         return new SectionNode(name(), children(), spacing(), padding(), margin(), fillColor(),
-                stroke(), cornerRadius(), borders(), keepTogether);
+                stroke(), cornerRadius(), borders(), keepTogether, anchor());
     }
 
     /**

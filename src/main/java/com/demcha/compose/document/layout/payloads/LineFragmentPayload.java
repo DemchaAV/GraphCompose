@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
@@ -13,7 +13,7 @@ import com.demcha.compose.engine.components.content.shape.Stroke;
  * @param startY          line start y offset inside the fragment
  * @param endX            line end x offset inside the fragment
  * @param endY            line end y offset inside the fragment
- * @param linkOptions     optional fragment-level link metadata
+ * @param linkTarget     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  * @param dashPattern     dash pattern for the stroke; {@link DocumentDashPattern#NONE} is solid
  */
@@ -23,7 +23,7 @@ public record LineFragmentPayload(
         double startY,
         double endX,
         double endY,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions,
         DocumentDashPattern dashPattern
 ) implements PdfSemanticFragmentPayload {
@@ -43,7 +43,7 @@ public record LineFragmentPayload(
      * @param startY          line start y offset inside the fragment
      * @param endX            line end x offset inside the fragment
      * @param endY            line end y offset inside the fragment
-     * @param linkOptions     optional fragment-level link metadata
+     * @param linkTarget     optional fragment-level link metadata
      * @param bookmarkOptions optional fragment-level bookmark metadata
      */
     public LineFragmentPayload(Stroke stroke,
@@ -51,8 +51,8 @@ public record LineFragmentPayload(
                                double startY,
                                double endX,
                                double endY,
-                               DocumentLinkOptions linkOptions,
+                               DocumentLinkTarget linkTarget,
                                DocumentBookmarkOptions bookmarkOptions) {
-        this(stroke, startX, startY, endX, endY, linkOptions, bookmarkOptions, DocumentDashPattern.NONE);
+        this(stroke, startX, startY, endX, endY, linkTarget, bookmarkOptions, DocumentDashPattern.NONE);
     }
 }

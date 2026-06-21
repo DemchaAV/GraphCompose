@@ -20,6 +20,8 @@ import java.util.Objects;
  * @param keepTogether when {@code true}, the section relocates whole to the next
  *                     page instead of orphaning its leading children when it does
  *                     not fit in the remaining page space (and fits on a fresh page)
+ * @param anchor       optional in-document navigation anchor name; renders a named
+ *                     destination at the section's top-left, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record SectionNode(
@@ -32,7 +34,8 @@ public record SectionNode(
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
         DocumentBorders borders,
-        boolean keepTogether
+        boolean keepTogether,
+        String anchor
 ) implements DocumentNode {
     /**
      * Normalizes optional section fields and validates child spacing.
@@ -45,9 +48,38 @@ public record SectionNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         borders = borders == null ? DocumentBorders.NONE : borders;
+        anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the navigation anchor (defaults to
+     * no anchor).
+     *
+     * @param name         node name
+     * @param children     child nodes
+     * @param spacing      vertical spacing
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side borders
+     * @param keepTogether keep-together relocation flag
+     */
+    public SectionNode(String name,
+                       List<DocumentNode> children,
+                       double spacing,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentCornerRadius cornerRadius,
+                       DocumentBorders borders,
+                       boolean keepTogether) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, keepTogether, null);
     }
 
     /**
@@ -73,7 +105,7 @@ public record SectionNode(
                        DocumentStroke stroke,
                        DocumentCornerRadius cornerRadius,
                        DocumentBorders borders) {
-        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, false);
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, false, null);
     }
 
     /**

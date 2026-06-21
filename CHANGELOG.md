@@ -3,6 +3,54 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v1.9.0 — unreleased
+
+In-document navigation. Rendered PDFs can now declare named **anchors** and
+**internal links** that jump to them — clickable tables of contents,
+`[text](#heading)`-style links, and bidirectional footnotes — emitted as native
+PDF `GoTo` actions. External links are unchanged.
+
+### Public API
+
+- **In-PDF navigation: anchors + internal links** (`@since 1.9.0`). Every flow
+  and leaf builder gains `anchor(String)`, declaring a named destination at the
+  element's top-left — `section.anchor("intro")`, `paragraph.anchor("fn-1")`, and
+  the same on image / shape / ellipse / line / barcode / table builders. A link
+  targets an anchor instead of a URI via `RichText.linkTo(text, anchor)` /
+  `linkTo(text, style, anchor)`, `ParagraphBuilder.inlineLinkTo(text, anchor)` /
+  `linkTo(anchor)`, and `linkTo(anchor)` on the leaf builders. Anchor resolution
+  is deferred to the end of the render pass, so a link may target an anchor that
+  appears later in the document (a forward reference). An unknown anchor renders
+  as ordinary styled text (no annotation) and logs a warning; a link whose text
+  wraps produces one annotation per line fragment; a duplicate anchor name keeps
+  the last registration. Backends without in-document navigation (DOCX) render an
+  internal link as plain text.
+- **Unified `DocumentLinkTarget`** (`@since 1.9.0`). A new sealed
+  `DocumentLinkTarget` — `ExternalLinkTarget` (wrapping `DocumentLinkOptions`)
+  and `InternalLinkTarget` (an anchor name) — is now the link type carried
+  through semantic nodes and resolved layout fragments. `DocumentLinkOptions` is
+  unchanged and still accepted by every existing `link(DocumentLinkOptions)` and
+  inline-link DSL method (wrapped into an `ExternalLinkTarget` automatically), so
+  authoring code is source-compatible. The link accessor on the inline-run
+  records (`InlineTextRun` / `InlineImageRun` / `InlineShapeRun`) is now
+  `linkTarget()`; the former `linkOptions()` remains as a deprecated bridge that
+  returns the external options (or `null` for an internal link).
+
+### Documentation
+
+- New runnable example
+  `examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java`
+  — a clickable table of contents plus a bidirectional footnote.
+
+### Tests
+
+- `InternalLinkAnchorTest` (PDFBox assertions): forward and backward references
+  resolve to `GoTo`; an unknown anchor produces no annotation and no crash; the
+  destination points at the correct page across a page break; a wrapped link
+  emits an annotation per line fragment; external links still emit `URI`; a
+  section anchor and a shape internal link are both navigable; a duplicate anchor
+  keeps the last registration; plus a visual artifact write.
+
 ## v1.8.0 — 2026-06-18
 
 Codenamed **"illustrative"**. Native vector charts (bar / line / pie, inline

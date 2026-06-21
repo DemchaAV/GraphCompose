@@ -1,7 +1,7 @@
 package com.demcha.compose.document.layout.payloads;
 
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 
@@ -17,14 +17,14 @@ import java.util.Objects;
  * @param points          normalized vertex ring (at least three), in draw order
  * @param fillColor       optional fill color
  * @param stroke          optional stroke
- * @param linkOptions     optional fragment-level link metadata
+ * @param linkTarget     optional fragment-level link metadata
  * @param bookmarkOptions optional fragment-level bookmark metadata
  */
 public record PolygonFragmentPayload(
         List<ShapePoint> points,
         Color fillColor,
         Stroke stroke,
-        DocumentLinkOptions linkOptions,
+        DocumentLinkTarget linkTarget,
         DocumentBookmarkOptions bookmarkOptions
 ) implements PdfSemanticFragmentPayload {
     /**

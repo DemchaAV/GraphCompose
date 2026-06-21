@@ -4,6 +4,9 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.DocumentLinkTarget;
+import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTransform;
@@ -24,7 +27,8 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
     private Double height;
     private Double scale;
     private DocumentImageFitMode fitMode = DocumentImageFitMode.STRETCH;
-    private DocumentLinkOptions linkOptions;
+    private DocumentLinkTarget linkTarget;
+    private String anchor;
     private DocumentBookmarkOptions bookmarkOptions;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -166,7 +170,44 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
      * @return this builder
      */
     public ImageBuilder link(DocumentLinkOptions linkOptions) {
-        this.linkOptions = linkOptions;
+        this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
+        return this;
+    }
+
+    /**
+     * Attaches an image-level link target (external URI or internal anchor).
+     *
+     * @param linkTarget link target, or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ImageBuilder linkTarget(DocumentLinkTarget linkTarget) {
+        this.linkTarget = linkTarget;
+        return this;
+    }
+
+    /**
+     * Makes the image an internal link to a named {@code anchor(...)} elsewhere
+     * in the document.
+     *
+     * @param anchor target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ImageBuilder linkTo(String anchor) {
+        this.linkTarget = new InternalLinkTarget(anchor);
+        return this;
+    }
+
+    /**
+     * Declares a named in-document navigation anchor at this image's top-left.
+     *
+     * @param anchor anchor name, or {@code null}/blank to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ImageBuilder anchor(String anchor) {
+        this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
         return this;
     }
 
@@ -231,10 +272,11 @@ public final class ImageBuilder implements Transformable<ImageBuilder> {
                 height,
                 scale,
                 fitMode,
-                linkOptions,
+                linkTarget,
                 bookmarkOptions,
                 padding,
                 margin,
-                transform);
+                transform,
+                anchor);
     }
 }

@@ -202,6 +202,18 @@ public record ShapeNode(
                      DocumentInsets margin) {
         this(name, width, height, fillColor, stroke, cornerRadius, linkOptions, bookmarkOptions, padding, margin, DocumentTransform.NONE);
     }
+
+    /**
+     * Returns the external link options, or {@code null} when the node has no
+     * link or targets an internal anchor.
+     *
+     * @return external link metadata, or {@code null}
+     * @deprecated use {@link #linkTarget()}; this bridge only exposes external links
+     */
+    @Deprecated(since = "1.9.0")
+    public DocumentLinkOptions linkOptions() {
+        return linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
+    }
 }
 
 

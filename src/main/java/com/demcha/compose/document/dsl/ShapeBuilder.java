@@ -25,6 +25,15 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
     protected DocumentStroke stroke;
     protected DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     protected DocumentLinkTarget linkTarget;
+    /**
+     * Retained for binary compatibility and subclass access; {@link #build()}
+     * reads {@link #linkTarget}. Kept in sync as the external link, or
+     * {@code null} when the shape targets an internal anchor.
+     *
+     * @deprecated use {@link #linkTarget} / {@link #linkTarget(DocumentLinkTarget)}
+     */
+    @Deprecated
+    protected DocumentLinkOptions linkOptions;
     protected String anchor;
     protected DocumentBookmarkOptions bookmarkOptions;
     protected DocumentInsets padding = DocumentInsets.zero();
@@ -159,6 +168,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      * @return this builder
      */
     public ShapeBuilder link(DocumentLinkOptions linkOptions) {
+        this.linkOptions = linkOptions;
         this.linkTarget = linkOptions == null ? null : new ExternalLinkTarget(linkOptions);
         return this;
     }
@@ -172,6 +182,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      */
     public ShapeBuilder linkTarget(DocumentLinkTarget linkTarget) {
         this.linkTarget = linkTarget;
+        this.linkOptions = linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
         return this;
     }
 
@@ -185,6 +196,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      */
     public ShapeBuilder linkTo(String anchor) {
         this.linkTarget = new InternalLinkTarget(anchor);
+        this.linkOptions = null;
         return this;
     }
 

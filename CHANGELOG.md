@@ -18,7 +18,9 @@ PDF `GoTo` actions. External links are unchanged.
   the same on image / shape / ellipse / line / barcode / table builders. A link
   targets an anchor instead of a URI via `RichText.linkTo(text, anchor)` /
   `linkTo(text, style, anchor)`, `ParagraphBuilder.inlineLinkTo(text, anchor)` /
-  `linkTo(anchor)`, and `linkTo(anchor)` on the leaf builders. Anchor resolution
+  `linkTo(anchor)`, and `linkTo(anchor)` on the leaf builders. Inline graphics
+  inside a paragraph jump to anchors too via `RichText.imageLinkTo(...)` and
+  `RichText.shapeLinkTo(...)`. Anchor resolution
   is deferred to the end of the render pass, so a link may target an anchor that
   appears later in the document (a forward reference). An unknown anchor renders
   as ordinary styled text (no annotation) and logs a warning; a link whose text

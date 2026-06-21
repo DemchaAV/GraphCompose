@@ -3,11 +3,16 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.ExternalLinkTarget;
+import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.ShapeOutline;
 import org.junit.jupiter.api.Test;
+
+import java.awt.Color;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,6 +67,15 @@ class DocumentLinkTargetDslTest {
         // link(null) stays unambiguous against link(DocumentLinkOptions) — no link set.
         ParagraphNode cleared = new ParagraphBuilder().text("t").link((DocumentLinkOptions) null).build();
         assertThat(cleared.linkTarget()).isNull();
+    }
+
+    @Test
+    void richTextShapeLinkToProducesInternalGraphicLink() {
+        InlineShapeRun run = (InlineShapeRun) RichText.text("rate ")
+                .shapeLinkTo(ShapeOutline.circle(6), DocumentColor.of(Color.RED), "scale")
+                .runs().get(1);
+        assertThat(run.linkTarget()).isInstanceOf(InternalLinkTarget.class);
+        assertThat(((InternalLinkTarget) run.linkTarget()).anchor()).isEqualTo("scale");
     }
 
     @Test

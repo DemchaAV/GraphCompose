@@ -3,8 +3,10 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.RichText;
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.testing.VisualTestOutputs;
 import org.apache.pdfbox.Loader;
@@ -17,7 +19,10 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPa
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -182,6 +187,32 @@ class InternalLinkAnchorTest {
     }
 
     @Test
+    void inlineShapeInternalLinkIsNavigable() throws Exception {
+        byte[] pdf = render(session -> session.dsl().pageFlow().name("Flow")
+                .addRich(RichText.text("rate ")
+                        .shapeLinkTo(ShapeOutline.circle(7), DocumentColor.of(Color.RED), "scale"))
+                .addParagraph(p -> p.text("Scale").anchor("scale"))
+                .build());
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(goToLinks(document, 0)).hasSize(1);
+        }
+    }
+
+    @Test
+    void inlineImageInternalLinkIsNavigable() throws Exception {
+        DocumentImageData image = DocumentImageData.fromBytes(onePixelPng());
+        byte[] pdf = render(session -> session.dsl().pageFlow().name("Flow")
+                .addRich(RichText.text("see ").imageLinkTo(image, 8, 8, "fig"))
+                .addParagraph(p -> p.text("Figure").anchor("fig"))
+                .build());
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(goToLinks(document, 0)).hasSize(1);
+        }
+    }
+
+    @Test
     void tableAnchorIsNavigable() throws Exception {
         byte[] pdf = render(session -> session.dsl().pageFlow().name("Flow")
                 .addRich(RichText.text("Go to ").linkTo("table", "tbl"))
@@ -261,6 +292,14 @@ class InternalLinkAnchorTest {
         Files.write(output, pdf);
         assertThat(Files.size(output)).isPositive();
         assertThat(new String(pdf, 0, 8, java.nio.charset.StandardCharsets.US_ASCII)).startsWith("%PDF-");
+    }
+
+    private static byte[] onePixelPng() throws IOException {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, Color.WHITE.getRGB());
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     @FunctionalInterface

@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -89,7 +90,10 @@ public final class InPdfNavigationExample {
                                     .textStyle(body()))
                             .addRich(RichText.text("Jump back to the ")
                                     .linkTo("contents", LINK_STYLE, "overview")
-                                    .plain(".")))
+                                    .plain("."))
+                            .addRich(RichText.text("Inline graphics navigate too — ")
+                                    .shapeLinkTo(ShapeOutline.circle(7), LINK, "notes")
+                                    .plain(" click the dot to jump to the notes.")))
 
                     .addSection("Notes", section -> section
                             .anchor("notes")

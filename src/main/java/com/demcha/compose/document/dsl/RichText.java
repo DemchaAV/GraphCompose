@@ -332,6 +332,51 @@ public final class RichText {
     }
 
     /**
+     * Appends an inline image run that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param imageData image payload
+     * @param width     target width in points
+     * @param height    target height in points
+     * @param anchor    target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText imageLinkTo(DocumentImageData imageData, double width, double height, String anchor) {
+        return imageLinkTo(imageData, width, height, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Appends a fully-specified inline image run that jumps to a named
+     * {@code anchor(...)} elsewhere in the document.
+     *
+     * @param imageData      image payload
+     * @param width          target width in points
+     * @param height         target height in points
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText imageLinkTo(DocumentImageData imageData,
+                                double width,
+                                double height,
+                                InlineImageAlignment alignment,
+                                double baselineOffset,
+                                String anchor) {
+        runs.add(new InlineImageRun(
+                imageData,
+                width,
+                height,
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
+        return this;
+    }
+
+    /**
      * Appends an inline filled circle ("dot") run — the building block for
      * skill rating dots, custom bullets and inline status indicators that
      * should not depend on font glyph coverage.
@@ -488,6 +533,49 @@ public final class RichText {
                 alignment == null ? InlineImageAlignment.CENTER : alignment,
                 baselineOffset,
                 linkOptions));
+        return this;
+    }
+
+    /**
+     * Appends an inline filled shape that jumps to a named {@code anchor(...)}
+     * elsewhere in the document, with default {@link InlineImageAlignment#CENTER}
+     * alignment and zero offset.
+     *
+     * @param outline figure geometry; supplies the run's size
+     * @param fill    fill color
+     * @param anchor  target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText shapeLinkTo(ShapeOutline outline, DocumentColor fill, String anchor) {
+        return shapeLinkTo(outline, fill, null, InlineImageAlignment.CENTER, 0.0, anchor);
+    }
+
+    /**
+     * Appends a fully-specified inline shape that jumps to a named
+     * {@code anchor(...)} elsewhere in the document. At least one of {@code fill}
+     * or {@code stroke} must be present.
+     *
+     * @param outline        figure geometry; supplies the run's size
+     * @param fill           optional fill color
+     * @param stroke         optional outline stroke
+     * @param alignment      vertical alignment relative to surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param anchor         target anchor name
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText shapeLinkTo(ShapeOutline outline,
+                                DocumentColor fill,
+                                DocumentStroke stroke,
+                                InlineImageAlignment alignment,
+                                double baselineOffset,
+                                String anchor) {
+        runs.add(new InlineShapeRun(
+                List.of(new ShapeLayer(outline, fill, stroke)),
+                alignment == null ? InlineImageAlignment.CENTER : alignment,
+                baselineOffset,
+                new InternalLinkTarget(anchor)));
         return this;
     }
 

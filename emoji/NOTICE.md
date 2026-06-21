@@ -2,33 +2,43 @@
 
 ## What ships here
 
-A small **original starter set** of colour-emoji SVG glyphs, authored for
-GraphCompose and licensed under the project's **MIT** license (same as this
-module's metadata). The set is intentionally minimal — enough to exercise the
-inline colour-emoji pipeline end to end. Glyphs live under
-`src/main/resources/emoji/svg/<codepoint>.svg`, indexed by
-`src/main/resources/emoji/emoji-index.properties` (`shortcode=codepoint`).
+The colour-emoji glyphs under `src/main/resources/emoji/svg/<codepoint>.svg` are
+the **[Noto Emoji](https://github.com/googlefonts/noto-emoji)** SVG set
+(© Google), licensed under the **SIL Open Font License 1.1** — see
+[`OFL.txt`](OFL.txt). They are vector SVG (not the CBDT colour *font*, which
+PDFBox renders blank), so the engine draws them as crisp inline vectors.
+
+The shortcode index `src/main/resources/emoji/emoji-index.properties`
+(`shortcode=codepoint`) maps GitHub-style shortcodes to glyphs, generated from
+the **[github/gemoji](https://github.com/github/gemoji)** database (MIT).
 
 The engine resolves these via `com.demcha.compose.document.emoji.EmojiLibrary`
-and `RichText.emoji(":star:", size)` — no engine change is needed to add more.
+and `RichText.emoji(":rocket:", size)` — it carries no emoji art and has no
+Maven dependency on this module.
 
-## Shipping the full Twemoji set (drop-in, optional)
+## Regenerating the set
 
-To ship real, comprehensive colour emoji, use the maintained
-[**jdecked/twemoji**](https://github.com/jdecked/twemoji) SVG set
-(**CC-BY 4.0**):
+`emoji/tools/build-emoji-set.py` rebuilds `svg/` + `emoji-index.properties` from
+fresh sources — re-run it to track a newer Noto Emoji / gemoji, no engine change:
 
-1. Copy `assets/svg/*.svg` into `src/main/resources/emoji/svg/`
-   (filenames are already lowercase hex codepoints, e.g. `1f680.svg`).
-2. Extend `src/main/resources/emoji/emoji-index.properties` with the
-   `shortcode=codepoint` pairs you want resolvable (the GitHub/gemoji shortcode
-   list is the usual source).
-3. Add the required **CC-BY 4.0 attribution** to this NOTICE (Twemoji is
-   © Twitter, Inc. and other contributors) — attribution is mandatory.
+```bash
+# 1) noto-emoji SVGs (sparse, shallow)
+git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/googlefonts/noto-emoji.git target/noto-emoji
+(cd target/noto-emoji && git sparse-checkout set svg)
 
-No code changes are required: `EmojiLibrary` is fully data-driven from the
-classpath layout above.
+# 2) gemoji shortcode database
+curl -fsSL https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json \
+    -o target/gemoji.json
 
-> The Google **Noto Color Emoji** font (`NotoColorEmoji-Regular.ttf`) is **not**
-> usable here — PDFBox renders its CBDT colour tables blank. This module ships
-> **vector SVG** glyphs precisely to avoid that limitation.
+# 3) generate the module resources
+python emoji/tools/build-emoji-set.py \
+    --noto target/noto-emoji/svg --gemoji target/gemoji.json \
+    --out emoji/src/main/resources/emoji
+```
+
+The tool copies each `noto svg/emoji_u<cps>.svg` to `emoji/svg/<cps>.svg`
+(`_`→`-`), and maps each gemoji alias to its codepoint (dropping the `FE0F`
+variation selector, which Noto omits from filenames). Glyphs a real-world SVG
+feature the engine's parser cannot handle are skipped at render time and fall
+back to the literal shortcode text.

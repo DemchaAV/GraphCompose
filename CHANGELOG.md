@@ -57,11 +57,21 @@ PDF `GoTo` actions. External links are unchanged.
   (`com.demcha.compose.document.emoji`): data-driven from the classpath layout
   `emoji/emoji-index.properties` (`shortcode=codepoint`) + `emoji/svg/<codepoint>.svg`,
   with `find(...)` (lenient `Optional`), `require(...)` (strict), `isAvailable()`
-  and per-codepoint caching. The glyphs ship in a new, independently-versioned
-  **`graph-compose-emoji`** companion module (mirroring the `graph-compose-fonts`
-  split): the engine carries no emoji art and has no Maven dependency on it. The
-  module bundles a small original starter set; the full jdecked/twemoji set
-  (CC-BY 4.0) is a documented drop-in needing no engine change.
+  and per-codepoint caching (a glyph using an SVG feature the parser rejects is
+  treated as unresolved, so it falls back to text rather than failing the render).
+  The glyphs ship in a new, independently-versioned **`graph-compose-emoji`**
+  companion module (mirroring the `graph-compose-fonts` split): the engine carries
+  no emoji art and has no Maven dependency on it. The module bundles the full
+  **Noto Emoji** SVG set (~3.7k glyphs, SIL OFL 1.1) with a GitHub-style shortcode
+  index (~1.6k shortcodes) generated from the gemoji database; both are rebuilt by
+  `emoji/tools/build-emoji-set.py`.
+- **SVG gradient import is now best-effort** (`@since 1.9.0`). A
+  `<linearGradient>` / `<radialGradient>` with a translucent stop
+  (`stop-opacity < 1`) degrades to a flat fill (its first stop), and a focal
+  radial (`fx` / `fy`) approximates as a plain radial about the centre — instead
+  of failing the whole icon. This lets real-world artwork import (it is what
+  takes the Noto Emoji set from ~80% to ~99.9% of glyphs rendering); fully-opaque
+  gradients are unchanged, byte for byte.
 
 ### Documentation
 
@@ -72,9 +82,9 @@ PDF `GoTo` actions. External links are unchanged.
   `examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java`
   — multi-colour vector glyphs (gold star, green check badge, violet gradient
   orb, info / warning marks) flowing inline with text, at several sizes.
-- New `graph-compose-emoji` module with `emoji/NOTICE.md` documenting the bundled
-  original starter set and the mechanical drop-in for the full jdecked/twemoji
-  set (CC-BY 4.0).
+- New `graph-compose-emoji` module bundling the Noto Emoji SVG set (OFL 1.1) with
+  `emoji/OFL.txt`, `emoji/NOTICE.md` and the `emoji/tools/build-emoji-set.py`
+  generator that rebuilds the glyphs + shortcode index from noto-emoji + gemoji.
 - New runnable example
   `examples/src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java`
   — `:shortcode:` colour emoji flowing inline with text, the starter-set legend,

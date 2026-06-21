@@ -1,6 +1,8 @@
 package com.demcha.compose.document.emoji;
 
 import com.demcha.compose.document.svg.SvgIcon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.9.0
  */
 public final class EmojiLibrary {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EmojiLibrary.class);
 
     private static final String INDEX_RESOURCE = "emoji/emoji-index.properties";
     private static final String SVG_PREFIX = "emoji/svg/";
@@ -108,24 +112,44 @@ public final class EmojiLibrary {
      *                                  artifact when no emoji set is present
      */
     public SvgIcon require(String shortcode) {
-        return find(shortcode).orElseThrow(() -> new IllegalArgumentException(
-                isAvailable()
-                        ? "Unknown emoji shortcode \"" + shortcode + "\" (not in emoji-index.properties)"
-                        : "No emoji set on the classpath: add the graph-compose-emoji artifact "
-                          + "(or equivalent emoji/ resources) to resolve \"" + shortcode + "\""));
+        Optional<SvgIcon> icon = find(shortcode);
+        if (icon.isPresent()) {
+            return icon.get();
+        }
+        String name = normalize(shortcode);
+        String message;
+        if (!isAvailable()) {
+            message = "No emoji set on the classpath: add the graph-compose-emoji artifact "
+                      + "(or equivalent emoji/ resources) to resolve \"" + shortcode + "\"";
+        } else if (name != null && index().containsKey(name)) {
+            message = "Emoji \"" + shortcode + "\" is indexed but its glyph could not be rendered";
+        } else {
+            message = "Unknown emoji shortcode \"" + shortcode + "\" (not in emoji-index.properties)";
+        }
+        throw new IllegalArgumentException(message);
     }
 
     private SvgIcon iconForCodepoint(String codepoint) {
         // computeIfAbsent records nothing when the mapping function returns null,
-        // so a missing glyph stays unresolved (and is retried) without NPE.
+        // so a missing or unparseable glyph stays unresolved (and is retried)
+        // without NPE — callers then fall back to literal text.
         return iconCache.computeIfAbsent(codepoint, cp -> {
+            String xml;
             try (InputStream in = loader.getResourceAsStream(SVG_PREFIX + cp + SVG_SUFFIX)) {
                 if (in == null) {
                     return null;
                 }
-                return SvgIcon.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+                xml = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to read emoji glyph for codepoint " + cp, e);
+            }
+            try {
+                return SvgIcon.parse(xml);
+            } catch (RuntimeException e) {
+                // A real-world glyph may use an SVG feature the parser rejects;
+                // treat it as unresolved rather than failing the whole render.
+                LOG.debug("emoji glyph {} could not be parsed: {}", cp, e.toString());
+                return null;
             }
         });
     }

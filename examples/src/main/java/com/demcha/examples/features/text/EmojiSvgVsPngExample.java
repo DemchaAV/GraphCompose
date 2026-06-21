@@ -41,14 +41,14 @@ import java.util.List;
 public final class EmojiSvgVsPngExample {
 
     private static final String[][] EMOJI = {
-            {"star", ":star:"},
+            {"rocket", ":rocket:"},
+            {"heart", ":heart:"},
+            {"smile", ":smile:"},
+            {"fire", ":fire:"},
+            {"tada", ":tada:"},
+            {"+1", ":+1:"},
+            {"bulb", ":bulb:"},
             {"white_check_mark", ":white_check_mark:"},
-            {"warning", ":warning:"},
-            {"information_source", ":information_source:"},
-            {"red_circle", ":red_circle:"},
-            {"large_blue_circle", ":large_blue_circle:"},
-            {"green_circle", ":green_circle:"},
-            {"purple_circle", ":purple_circle:"},
     };
 
     private static final DocumentColor INK = DocumentColor.rgb(34, 38, 50);

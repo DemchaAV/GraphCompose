@@ -57,26 +57,30 @@ public final class EmojiShortcodeExample {
                                     .margin(DocumentInsets.zero()))
                             .addRich(rich -> rich
                                     .plain("Write ")
-                                    .accent(":star:", BRAND)
+                                    .accent(":rocket:", BRAND)
                                     .plain(", get ")
-                                    .emoji(":star:", 11)
+                                    .emoji(":rocket:", 11)
                                     .plain(" — an inline vector glyph on the baseline. Ship it ")
                                     .emoji(":white_check_mark:", 11).plain(" ")
-                                    .emoji(":purple_circle:", 11)))
+                                    .emoji(":tada:", 11)))
                     .addSection("Status", section -> labelledRow(section,
                             "emoji(\":code:\", size) — a coloured glyph between words",
                             rich -> rich
                                     .emoji(":white_check_mark:", 10).plain(" Deploy succeeded     ")
                                     .emoji(":warning:", 10).plain(" Disk almost full     ")
                                     .emoji(":information_source:", 10).plain(" 3 updates available")))
-                    .addSection("Legend", section -> labelledRow(section,
-                            "the bundled starter set",
+                    .addSection("Reactions", section -> labelledRow(section,
+                            "the full GitHub shortcode set resolves",
                             rich -> rich
-                                    .emoji(":star:", 10).plain(" :star:    ")
-                                    .emoji(":red_circle:", 10).plain(" :red_circle:    ")
-                                    .emoji(":large_blue_circle:", 10).plain(" :large_blue_circle:    ")
-                                    .emoji(":green_circle:", 10).plain(" :green_circle:    ")
-                                    .emoji(":purple_circle:", 10).plain(" :purple_circle:")))
+                                    .emoji(":+1:", 11).plain("  ")
+                                    .emoji(":heart:", 11).plain("  ")
+                                    .emoji(":fire:", 11).plain("  ")
+                                    .emoji(":100:", 11).plain("  ")
+                                    .emoji(":smile:", 11).plain("  ")
+                                    .emoji(":eyes:", 11).plain("  ")
+                                    .emoji(":sparkles:", 11).plain("  ")
+                                    .emoji(":bug:", 11).plain("  ")
+                                    .emoji(":bulb:", 11)))
                     .addSection("Fallback", section -> section
                             .softPanel(PANEL, 6, 12)
                             .spacing(5)
@@ -85,11 +89,10 @@ public final class EmojiShortcodeExample {
                                     .textStyle(caption())
                                     .margin(DocumentInsets.zero()))
                             .addRich(rich -> rich
-                                    .plain("Known ").emoji(":star:", 10)
-                                    .plain("   ·   unknown ").emoji(":rocket:", 10)
-                                    .plain("  ")
-                                    .emoji(":does_not_exist:", 10)
-                                    .plain("  (not in the starter set — shown as text)")))
+                                    .plain("Known ").emoji(":tada:", 10)
+                                    .plain("   ·   unknown ").emoji(":does_not_exist:", 10)
+                                    .plain(" ").emoji(":not_a_real_code:", 10)
+                                    .plain("  (rendered as text)")))
                     .addSection("Sizing", section -> section
                             .softPanel(PANEL, 6, 12)
                             .spacing(5)
@@ -99,10 +102,10 @@ public final class EmojiShortcodeExample {
                                     .margin(DocumentInsets.zero()))
                             .addRich(rich -> rich
                                     .plain("Scales with the text  ")
-                                    .emoji(":purple_circle:", 8).plain("  ")
-                                    .emoji(":purple_circle:", 12).plain("  ")
-                                    .emoji(":purple_circle:", 16).plain("  ")
-                                    .emoji(":purple_circle:", 22)))
+                                    .emoji(":rocket:", 8).plain("  ")
+                                    .emoji(":rocket:", 12).plain("  ")
+                                    .emoji(":rocket:", 16).plain("  ")
+                                    .emoji(":rocket:", 22)))
                     .addSection("Footer", section -> section
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))

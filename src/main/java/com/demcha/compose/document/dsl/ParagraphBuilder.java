@@ -1,5 +1,6 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.emoji.EmojiLibrary;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
@@ -598,6 +599,49 @@ public final class ParagraphBuilder {
                 linkOptions));
         this.text = "";
         return this;
+    }
+
+    /**
+     * Adds a colour emoji resolved from its GitHub-style shortcode (e.g.
+     * {@code ":star:"}) as an inline vector glyph sized to {@code size} points
+     * tall, with default {@link InlineImageAlignment#CENTER} alignment.
+     *
+     * <p>Resolution is lenient: when the shortcode is unknown, or no emoji set is
+     * on the classpath (the {@code graph-compose-emoji} artifact), the literal
+     * shortcode is added as inline text — the way GitHub renders an unrecognised
+     * {@code :code:}. Resolution uses {@link EmojiLibrary#getDefault()}.</p>
+     *
+     * @param shortcode emoji shortcode, with or without surrounding colons
+     * @param size      target height in points
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder emoji(String shortcode, double size) {
+        return emoji(shortcode, size, InlineImageAlignment.CENTER, 0.0, null);
+    }
+
+    /**
+     * Adds a colour emoji (see {@link #emoji(String, double)}) with explicit
+     * vertical alignment, baseline offset and optional link metadata.
+     *
+     * @param shortcode      emoji shortcode, with or without surrounding colons
+     * @param size           target height in points
+     * @param alignment      vertical alignment relative to the surrounding text
+     * @param baselineOffset extra vertical shift in points; positive moves up
+     * @param linkOptions    optional link metadata (ignored on the text fallback)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder emoji(String shortcode,
+                                  double size,
+                                  InlineImageAlignment alignment,
+                                  double baselineOffset,
+                                  DocumentLinkOptions linkOptions) {
+        SvgIcon icon = EmojiLibrary.getDefault().find(shortcode).orElse(null);
+        if (icon != null) {
+            return svgIcon(icon, size, alignment, baselineOffset, linkOptions);
+        }
+        return inlineText(shortcode);
     }
 
     /**

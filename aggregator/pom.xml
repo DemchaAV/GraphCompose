@@ -53,6 +53,7 @@
     <modules>
         <module>..</module>
         <module>../fonts</module>
+        <module>../emoji</module>
         <module>../bundle</module>
         <module>../examples</module>
         <module>../benchmarks</module>

@@ -49,6 +49,19 @@ PDF `GoTo` actions. External links are unchanged.
   A new sealed `InlineRun` variant (`InlineSvgRun`) joins text / image / shape;
   the inline render reuses the existing SVG paint pipeline (shared with the block
   path fragment), so flat-colour output stays byte-identical.
+- **Colour emoji by shortcode** (`@since 1.9.0`). `RichText.emoji(":star:", size)`
+  and `ParagraphBuilder.emoji(...)` resolve a GitHub-style shortcode to an inline
+  vector colour glyph. Resolution is lenient — an unknown shortcode (or no emoji
+  set on the classpath) is rendered as the literal text, the way GitHub treats an
+  unrecognised `:code:`. The resolver is the new `EmojiLibrary`
+  (`com.demcha.compose.document.emoji`): data-driven from the classpath layout
+  `emoji/emoji-index.properties` (`shortcode=codepoint`) + `emoji/svg/<codepoint>.svg`,
+  with `find(...)` (lenient `Optional`), `require(...)` (strict), `isAvailable()`
+  and per-codepoint caching. The glyphs ship in a new, independently-versioned
+  **`graph-compose-emoji`** companion module (mirroring the `graph-compose-fonts`
+  split): the engine carries no emoji art and has no Maven dependency on it. The
+  module bundles a small original starter set; the full jdecked/twemoji set
+  (CC-BY 4.0) is a documented drop-in needing no engine change.
 
 ### Documentation
 
@@ -59,6 +72,9 @@ PDF `GoTo` actions. External links are unchanged.
   `examples/src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java`
   — multi-colour vector glyphs (gold star, green check badge, violet gradient
   orb, info / warning marks) flowing inline with text, at several sizes.
+- New `graph-compose-emoji` module with `emoji/NOTICE.md` documenting the bundled
+  original starter set and the mechanical drop-in for the full jdecked/twemoji
+  set (CC-BY 4.0).
 
 ### Tests
 
@@ -73,6 +89,12 @@ PDF `GoTo` actions. External links are unchanged.
   (PDFBox end-to-end: text preserved with no glyph substitution, the icon's fill
   colour and an inline gradient both rasterize onto the page, a linked icon emits
   a clickable annotation, and `svgIcon` sizes by aspect ratio).
+- `EmojiLibraryTest` (resolves shortcodes case-insensitively with/without colons,
+  unknown → empty, `require` throws, an absent set reports unavailable and names
+  the `graph-compose-emoji` artifact) and `EmojiRenderTest` (a known shortcode
+  rasterizes a colour glyph, a gradient emoji paints its shading, an unknown
+  shortcode falls back to literal text, and `RichText.emoji` yields an
+  `InlineSvgRun` or a text run accordingly).
 
 ## v1.8.0 — 2026-06-18
 

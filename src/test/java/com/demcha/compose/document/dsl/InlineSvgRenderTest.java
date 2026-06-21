@@ -96,6 +96,26 @@ class InlineSvgRenderTest {
     }
 
     @Test
+    void offCanvasSvgGeometryIsClippedToTheViewBox() throws Exception {
+        // A crimson square drawn entirely OUTSIDE the 10×10 viewBox (x 30..40 →
+        // normalized x 3..4). SVG viewBox semantics clip it away; without the
+        // glyph-box clip it would bleed several glyph-widths to the right and
+        // smear onto neighbouring content (the :package: duplicate-box bug, where
+        // Noto's working file parks off-canvas copies outside the viewBox).
+        SvgIcon offCanvas = SvgIcon.parse("""
+                <svg viewBox="0 0 10 10">
+                  <path d="M30 0 H40 V10 H30 Z" fill="rgb(196, 30, 58)"/>
+                </svg>
+                """);
+        try (PDDocument document = Loader.loadPDF(renderIconRow(offCanvas))) {
+            BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
+            assertThat(containsColorNear(image, 196, 30, 58, 45))
+                    .as("off-canvas SVG geometry must be clipped to the viewBox, not bleed onto the page")
+                    .isFalse();
+        }
+    }
+
+    @Test
     void linkedInlineSvgEmitsClickableAnnotationSizedToTheIconBox() throws Exception {
         double iconSize = 6.0;
         byte[] pdf;

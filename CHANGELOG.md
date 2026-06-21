@@ -89,6 +89,12 @@ PDF `GoTo` actions. External links are unchanged.
   vampire's face rendered as a solid hair blob); such layers are now dropped.
   Multi-colour gradients (real scenes — `:framed_picture:`, `:sunrise:`,
   `:city_sunset:`) are structural and keep rendering as gradients.
+- **Inline SVG icons are clipped to their viewBox.** Real-world icon art
+  (notably Noto's working files) parks geometry outside the viewBox — a browser
+  clips it to the viewBox, but the inline renderer was painting it, so an icon
+  could smear copies of itself across adjacent glyphs (`:package:` rendered as
+  several duplicated boxes overlapping its neighbours). The inline SVG render now
+  clips each icon to its glyph box, matching SVG `viewBox` semantics.
 
 ### Documentation
 

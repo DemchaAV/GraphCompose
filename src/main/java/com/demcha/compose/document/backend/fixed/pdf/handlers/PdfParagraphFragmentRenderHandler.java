@@ -200,12 +200,23 @@ public final class PdfParagraphFragmentRenderHandler
                 textAscent,
                 baselineOffsetFromBottom,
                 lineHeight);
-        for (ResolvedSvgLayer layer : span.layers()) {
-            PdfPathPainter.paintPath(stream, environment, pageIndex,
-                    (float) cursorX, (float) bottom, (float) width, (float) height,
-                    layer.segments(), layer.fillColor(), layer.fillPaint(),
-                    layer.stroke(), layer.strokePaint(),
-                    layer.dashPattern(), layer.lineCap(), layer.lineJoin(), layer.clip());
+        // Clip to the glyph box (the SVG viewBox). Real-world icon art — notably
+        // Noto's working files — parks off-canvas geometry outside the viewBox
+        // (a browser clips it away); without this it would bleed into adjacent
+        // glyphs, e.g. :package: smearing duplicate boxes across its neighbours.
+        stream.saveGraphicsState();
+        try {
+            stream.addRect((float) cursorX, (float) bottom, (float) width, (float) height);
+            stream.clip();
+            for (ResolvedSvgLayer layer : span.layers()) {
+                PdfPathPainter.paintPath(stream, environment, pageIndex,
+                        (float) cursorX, (float) bottom, (float) width, (float) height,
+                        layer.segments(), layer.fillColor(), layer.fillPaint(),
+                        layer.stroke(), layer.strokePaint(),
+                        layer.dashPattern(), layer.lineCap(), layer.lineJoin(), layer.clip());
+            }
+        } finally {
+            stream.restoreGraphicsState();
         }
     }
 

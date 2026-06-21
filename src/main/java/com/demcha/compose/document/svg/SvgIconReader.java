@@ -133,15 +133,6 @@ final class SvgIconReader {
                              double[] box, Map<String, Element> gradients,
                              SkipTally skipped, List<SvgIcon.Layer> out) {
         String name = localName(element);
-        // Clipping (clip-path, the Adobe-Illustrator <use>+clipPath idiom) has no
-        // representation in the flat layer model yet. Honour it or fail loudly —
-        // rendering the clipped content unclipped paints overflow/garbage, so the
-        // whole icon is rejected instead (callers fall back to text).
-        String clip = attrOrStyle(element, "clip-path");
-        if (clip != null && !clip.isBlank() && !clip.trim().equals("none")) {
-            throw new IllegalArgumentException(
-                    "clip-path is not supported in " + describe(element));
-        }
         // Process THIS element's own geometry with element context, so any
         // unsupported colour / transform / gradient / unit names the offending
         // element. Recursion stays outside the try — a child's error is already

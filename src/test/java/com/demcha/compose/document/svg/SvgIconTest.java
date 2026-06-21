@@ -413,18 +413,17 @@ class SvgIconTest {
     }
 
     @Test
-    void clipPathIsRejectedSoCallersCanFallBack() {
-        // clip-path has no representation in the flat layer model; rendering the
-        // clipped content unclipped paints garbage, so the icon is rejected loudly
-        // (emoji callers then fall back to text rather than render broken).
-        assertThatThrownBy(() -> SvgIcon.parse("""
+    void clipPathIsIgnoredSoContentStillImports() {
+        // clip-path has no representation in the flat layer model; rather than fail
+        // the icon, the clip is ignored and the content renders unclipped — most
+        // real-world art (incl. the bulk of Noto emoji that use it) reads fine.
+        SvgIcon icon = SvgIcon.parse("""
                 <svg viewBox="0 0 10 10">
                   <defs><clipPath id="c"><rect x="0" y="0" width="5" height="10"/></clipPath></defs>
                   <g clip-path="url(#c)"><path d="M0 0 H10 V10 Z" fill="#000"/></g>
                 </svg>
-                """))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("clip-path");
+                """);
+        assertThat(icon.layers()).hasSize(1);
     }
 
     @Test

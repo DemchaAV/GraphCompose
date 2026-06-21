@@ -72,10 +72,10 @@ PDF `GoTo` actions. External links are unchanged.
   real-world artwork import (keeps gradient scenes like `:framed_picture:` /
   `:city_sunrise:` looking like scenes rather than flat blobs); fully-opaque
   gradients are unchanged, byte for byte. SVG `clip-path` (the Illustrator
-  `<use>` + `clipPath` idiom) is still unsupported and is now rejected loudly
-  rather than painting unclipped overflow — so the ~12% of Noto glyphs that use
-  it (e.g. `:leg:`, `:superhero:`) fall back to text instead of rendering broken,
-  and the rest (~1.1k shortcodes) render cleanly.
+  `<use>` + `clipPath` idiom) is unsupported: the clip is ignored and the content
+  renders unclipped. Most artwork that uses it reads fine (the bulk of Noto's
+  clip-path glyphs — hands, faces, plants — render correctly); a handful where
+  the clip is structural (e.g. `:leg:`, `:foot:`) overflow and render imperfectly.
 
 ### Documentation
 

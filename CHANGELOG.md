@@ -95,6 +95,13 @@ PDF `GoTo` actions. External links are unchanged.
   could smear copies of itself across adjacent glyphs (`:package:` rendered as
   several duplicated boxes overlapping its neighbours). The inline SVG render now
   clips each icon to its glyph box, matching SVG `viewBox` semantics.
+- **Block SVG icons are clipped to their viewBox too.** The same off-canvas art
+  bled past the box on the block path (`addSvgIcon(icon, w)` / `SvgIcon.node(w)`),
+  which had no viewBox clip. A block icon's layer stack now clips its layers to
+  the icon box: `LayerStackNode` gains an opt-in `clipToBounds` (`@since 1.9.0`,
+  default off so existing stacks stay byte-identical) and `SvgIcon.node(...)`
+  sets it. It reuses the `ShapeContainer` clip pipeline — one paired
+  begin/end marker per icon — so it matches the inline fix above.
 
 ### Documentation
 
@@ -133,7 +140,11 @@ PDF `GoTo` actions. External links are unchanged.
   dimensions, alignment default, external-link wrapping) and `InlineSvgRenderTest`
   (PDFBox end-to-end: text preserved with no glyph substitution, the icon's fill
   colour and an inline gradient both rasterize onto the page, a linked icon emits
-  a clickable annotation, and `svgIcon` sizes by aspect ratio).
+  a clickable annotation, and `svgIcon` sizes by aspect ratio). `InlineSvgRenderTest`
+  also rasterizes off-canvas geometry to prove the inline glyph-box clip, and the
+  new `BlockSvgRenderTest` does the same for the block path — off-canvas art does
+  not bleed, in-box art still paints, the layer stack emits a balanced
+  `CLIP_BOUNDS` begin/end pair, and a plain (non-icon) stack emits none.
 - `EmojiLibraryTest` (resolves shortcodes case-insensitively with/without colons,
   unknown → empty, `require` throws, an absent set reports unavailable and names
   the `graph-compose-emoji` artifact) and `EmojiRenderTest` (a known shortcode

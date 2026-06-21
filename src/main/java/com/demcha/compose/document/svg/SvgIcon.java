@@ -146,6 +146,11 @@ public final class SvgIcon {
      * {@code ShapeContainer} / {@code LayerStack} nine-point grids — the
      * node-form sibling of the {@code addSvgIcon(icon, width)} flow sugar.
      *
+     * <p>The stack clips its layers to the icon box ({@code clipToBounds}),
+     * the way a browser clips an SVG to its {@code viewBox}: art that an
+     * exporter parks outside the viewBox (Noto's working files keep
+     * off-canvas copies) is cut away instead of bleeding past the box.</p>
+     *
      * @param width target width in points; must be positive
      * @return layer stack rendering this icon at {@code width} points
      * @throws IllegalArgumentException if {@code width} is not positive
@@ -187,7 +192,7 @@ public final class SvgIcon {
                     layer.lineCap(),
                     layer.lineJoin())));
         }
-        return new LayerStackNode("SvgIcon", stack, null, null);
+        return new LayerStackNode("SvgIcon", stack, null, null, true);
     }
 
     /**

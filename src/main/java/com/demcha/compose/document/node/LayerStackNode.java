@@ -17,17 +17,28 @@ import java.util.Objects;
  * <p>Pagination is atomic: the entire stack moves to the next page when its
  * measured height does not fit on the current page.</p>
  *
- * @param name    node name used in snapshots and layout graph paths
- * @param layers  child layers in back-to-front order
- * @param padding inner padding applied around all layers
- * @param margin  outer margin around the stack
+ * <p>When {@code clipToBounds} is set, the layers are clipped to the stack's
+ * own box (the {@code overflow: hidden} of a stacking box) — anything a layer
+ * paints outside the box is cut away. {@code SvgIcon.node(...)} uses this so a
+ * block-rendered icon honours SVG {@code viewBox} semantics: real-world icon
+ * art that parks geometry off-canvas (Noto's working files) cannot bleed past
+ * the icon box, mirroring the inline glyph-box clip.</p>
+ *
+ * @param name         node name used in snapshots and layout graph paths
+ * @param layers       child layers in back-to-front order
+ * @param padding      inner padding applied around all layers
+ * @param margin       outer margin around the stack
+ * @param clipToBounds clip the layers to the stack box; {@code false} lets
+ *                     layers overflow (the default, byte-identical to pre-1.9
+ *                     stacks). ({@code @since 1.9.0})
  * @author Artem Demchyshyn
  */
 public record LayerStackNode(
         String name,
         List<Layer> layers,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        boolean clipToBounds
 ) implements DocumentNode {
 
     /**
@@ -46,6 +57,19 @@ public record LayerStackNode(
         layers = List.copyOf(normalized);
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
+    }
+
+    /**
+     * Back-compat constructor for a non-clipping stack (the historical
+     * four-arg shape). Equivalent to {@code clipToBounds = false}.
+     *
+     * @param name    node name used in snapshots and layout graph paths
+     * @param layers  child layers in back-to-front order
+     * @param padding inner padding applied around all layers
+     * @param margin  outer margin around the stack
+     */
+    public LayerStackNode(String name, List<Layer> layers, DocumentInsets padding, DocumentInsets margin) {
+        this(name, layers, padding, margin, false);
     }
 
     @Override

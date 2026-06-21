@@ -391,18 +391,17 @@ class SvgIconTest {
                 </svg>
                 """;
 
-        // A gradient with any translucent stop has no opaque-PDF-shading analogue,
-        // so it degrades to a flat fill (its first stop) rather than failing — this
-        // is what lets real-world art (Noto emoji) import.
+        // stop-opacity has no opaque-PDF-shading analogue, so it is ignored and the
+        // gradient renders with opaque stops rather than failing — this is what lets
+        // real-world art (Noto emoji) import (scenes keep their gradient, not a flat
+        // blob).
         SvgIcon translucent = SvgIcon.parse(defs.formatted("""
                 <linearGradient id="g">
                   <stop offset="0" stop-color="#000000" stop-opacity="0.5"/>
                   <stop offset="1" stop-color="#ffffff"/>
                 </linearGradient>"""));
-        SvgIcon.Layer flat = translucent.layers().get(0);
-        assertThat(flat.fillPaint()).isInstanceOf(DocumentPaint.Solid.class);
-        assertThat(((DocumentPaint.Solid) flat.fillPaint()).color().color())
-                .isEqualTo(new java.awt.Color(0, 0, 0));
+        assertThat(translucent.layers().get(0).fillPaint())
+                .isInstanceOf(DocumentPaint.LinearAxis.class);
 
         // A focal radial (fx/fy) approximates as a plain radial about the centre.
         SvgIcon focal = SvgIcon.parse(defs.formatted("""

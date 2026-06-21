@@ -65,12 +65,13 @@ PDF `GoTo` actions. External links are unchanged.
   **Noto Emoji** SVG set (~3.7k glyphs, SIL OFL 1.1) with a GitHub-style shortcode
   index (~1.6k shortcodes) generated from the gemoji database; both are rebuilt by
   `emoji/tools/build-emoji-set.py`.
-- **SVG gradient import is now best-effort** (`@since 1.9.0`). A
-  `<linearGradient>` / `<radialGradient>` with a translucent stop
-  (`stop-opacity < 1`) degrades to a flat fill (its first stop), and a focal
-  radial (`fx` / `fy`) approximates as a plain radial about the centre — instead
-  of failing the whole icon. This lets real-world artwork import (it is what
-  takes the Noto Emoji set from ~80% to ~99.9% of glyphs rendering); fully-opaque
+- **SVG gradient import is now best-effort** (`@since 1.9.0`). `stop-opacity`
+  (which has no opaque-PDF-shading analogue) is ignored — the gradient renders
+  with opaque stops — and a focal radial (`fx` / `fy`) approximates as a plain
+  radial about the centre, instead of failing the whole icon. This lets
+  real-world artwork import (it takes the Noto Emoji set from ~80% to ~99.9% of
+  glyphs rendering, and keeps gradient scenes like `:framed_picture:` /
+  `:city_sunrise:` looking like scenes rather than flat blobs); fully-opaque
   gradients are unchanged, byte for byte.
 
 ### Documentation

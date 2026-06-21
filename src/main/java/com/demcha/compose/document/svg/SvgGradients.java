@@ -94,13 +94,6 @@ final class SvgGradients {
                     "unsupported spreadMethod '" + spread + "' — only pad maps to PDF shadings");
         }
         List<DocumentPaint.Stop> stops = stops(gradient, all);
-        if (hasTranslucentStop(gradient, all)) {
-            // Real-world art (e.g. Noto emoji) uses partly-transparent gradient
-            // stops for soft highlights and shadows. The PDF shadings emitted here
-            // are opaque, so degrade such a gradient to a flat fill (its first
-            // stop) rather than failing the whole icon.
-            return DocumentPaint.solid(stops.get(0).color());
-        }
         boolean userSpace = "userSpaceOnUse".equals(gradient.getAttribute("gradientUnits").trim());
         double[] gt = SvgIconReader.compose(SvgIconReader.identity(),
                 gradient.getAttribute("gradientTransform"));
@@ -133,32 +126,6 @@ final class SvgGradients {
     // ------------------------------------------------------------------
     // Stops
     // ------------------------------------------------------------------
-
-    /**
-     * True if the gradient (or its one href hop) declares any stop with
-     * {@code stop-opacity < 1}; such gradients degrade to a flat fill because the
-     * PDF shadings emitted here are opaque.
-     */
-    private static boolean hasTranslucentStop(Element gradient, Map<String, Element> all) {
-        if (ownStopsTranslucent(gradient)) {
-            return true;
-        }
-        Element target = href(gradient, all);
-        return target != null && ownStopsTranslucent(target);
-    }
-
-    private static boolean ownStopsTranslucent(Element gradient) {
-        NodeList children = gradient.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i) instanceof Element stop && "stop".equals(localName(stop))) {
-                String opacity = attrOrStyle(stop, "stop-opacity");
-                if (opacity != null && fraction(opacity, 1.0) < 1.0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     private static List<DocumentPaint.Stop> stops(Element gradient, Map<String, Element> all) {
         List<DocumentPaint.Stop> stops = readOwnStops(gradient);
@@ -194,9 +161,8 @@ final class SvgGradients {
             // SVG clamps offsets into [0,1] and forces them non-decreasing.
             offset = Math.max(previous, Math.min(1.0, Math.max(0.0, offset)));
             previous = offset;
-            // stop-opacity is handled one level up — a gradient with any
-            // translucent stop degrades to a flat fill — so the stop colour is
-            // read as opaque here.
+            // stop-opacity has no opaque-PDF-shading analogue; it is ignored and
+            // the stop is treated as opaque (best-effort import of real-world art).
             String colorValue = attrOrStyle(stop, "stop-color");
             DocumentColor color = colorValue == null
                     ? DocumentColor.rgb(0, 0, 0)

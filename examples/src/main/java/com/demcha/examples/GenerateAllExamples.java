@@ -22,6 +22,7 @@ import com.demcha.examples.features.text.EmojiSvgVsPngExample;
 import com.demcha.examples.features.text.EmojiClipPathReportExample;
 import com.demcha.examples.features.text.InlineShapesExample;
 import com.demcha.examples.features.text.InlineSvgIconExample;
+import com.demcha.examples.features.text.InlineHighlightExample;
 import com.demcha.examples.features.navigation.InPdfNavigationExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
@@ -150,6 +151,7 @@ public final class GenerateAllExamples {
         // Text + sections
         System.out.println("Generated: " + InlineShapesExample.generate());
         System.out.println("Generated: " + InlineSvgIconExample.generate());
+        System.out.println("Generated: " + InlineHighlightExample.generate());
         System.out.println("Generated: " + EmojiShortcodeExample.generate());
         System.out.println("Generated: " + EmojiSvgVsPngExample.generate());
         System.out.println("Generated: " + EmojiGalleryExample.generate());

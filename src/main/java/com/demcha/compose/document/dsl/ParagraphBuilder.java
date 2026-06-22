@@ -10,6 +10,7 @@ import com.demcha.compose.document.node.InternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineShapeRun;
 import com.demcha.compose.document.node.InlineSvgRun;
+import com.demcha.compose.document.node.InlineHighlightRun;
 import com.demcha.compose.document.node.InlineImageRun;
 import com.demcha.compose.document.node.ShapeLayer;
 import com.demcha.compose.document.node.InlineRun;
@@ -19,6 +20,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -267,6 +269,96 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineText(String text, DocumentTextStyle textStyle, DocumentLinkOptions linkOptions) {
         this.inlineRuns.add(new InlineTextRun(text, textStyle, linkOptions));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline run drawn on a rounded background "chip" — styled text on a
+     * padded fill, on the text baseline (e.g. a GitHub-style inline {@code code}
+     * span). The chip wraps with the line; its background is a PDF decoration
+     * (text-only backends keep the text and drop the fill).
+     *
+     * @param text         visible text
+     * @param textStyle    glyph style; falls back to the paragraph style when {@code null}
+     * @param background   chip fill colour; must not be {@code null}
+     * @param cornerRadius corner radius in points, clamped to half the chip height
+     * @param padding      inset between the glyphs and the chip edges
+     * @return this builder
+     * @throws IllegalArgumentException if {@code cornerRadius} is negative or non-finite
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineHighlight(String text, DocumentTextStyle textStyle,
+                                            DocumentColor background, double cornerRadius, DocumentInsets padding) {
+        return inlineHighlight(text, textStyle, background, cornerRadius, padding, null);
+    }
+
+    /**
+     * Adds a clickable highlight chip: as {@link #inlineHighlight(String,
+     * DocumentTextStyle, DocumentColor, double, DocumentInsets)}, but the whole
+     * chip becomes an external link.
+     *
+     * @param text         visible text
+     * @param textStyle    glyph style; falls back to the paragraph style when {@code null}
+     * @param background   chip fill colour; must not be {@code null}
+     * @param cornerRadius corner radius in points, clamped to half the chip height
+     * @param padding      inset between the glyphs and the chip edges
+     * @param link         external link metadata, or {@code null} for no link
+     * @return this builder
+     * @throws IllegalArgumentException if {@code cornerRadius} is negative or non-finite
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineHighlight(String text, DocumentTextStyle textStyle, DocumentColor background,
+                                            double cornerRadius, DocumentInsets padding, DocumentLinkOptions link) {
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
+                new InlineBackground(background, cornerRadius, padding), link));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline code chip with engine defaults — a monospace font, a muted
+     * code ink and a light rounded background.
+     *
+     * @param text the code text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineCode(String text) {
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, CodeChip.STYLE, CodeChip.BACKGROUND));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds an inline code chip with an explicit glyph style (e.g. to match the
+     * paragraph size), keeping the default chip fill and padding.
+     *
+     * @param text      the code text
+     * @param textStyle the glyph style (typically a monospace font)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineCode(String text, DocumentTextStyle textStyle) {
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, textStyle, CodeChip.BACKGROUND));
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds a coloured chip: {@code text} in {@code fg} on a {@code bg} fill, with
+     * the default code radius and padding.
+     *
+     * @param text the text
+     * @param fg   the text colour
+     * @param bg   the chip fill colour; must not be {@code null}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg) {
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text,
+                DocumentTextStyle.builder().color(fg).build(),
+                new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));
         this.text = "";
         return this;
     }

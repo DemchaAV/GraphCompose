@@ -193,6 +193,93 @@ public final class RichText {
     }
 
     /**
+     * Appends an inline run drawn on a rounded background "chip" — styled text on
+     * a padded fill, on the text baseline (e.g. a GitHub-style inline {@code code}
+     * span or a status badge). The chip wraps with the line; its background is a
+     * PDF decoration (text-only backends keep the text and drop the fill).
+     *
+     * @param text         visible text
+     * @param textStyle    glyph style; falls back to the paragraph style when {@code null}
+     * @param background   chip fill colour; must not be {@code null}
+     * @param cornerRadius corner radius in points, clamped to half the chip height
+     * @param padding      inset between the glyphs and the chip edges
+     * @return this builder
+     * @throws IllegalArgumentException if {@code cornerRadius} is negative or non-finite
+     * @since 1.9.0
+     */
+    public RichText highlight(String text, DocumentTextStyle textStyle,
+                              DocumentColor background, double cornerRadius, DocumentInsets padding) {
+        return highlight(text, textStyle, background, cornerRadius, padding, null);
+    }
+
+    /**
+     * Appends a clickable highlight chip: as {@link #highlight(String,
+     * DocumentTextStyle, DocumentColor, double, DocumentInsets)}, but the whole
+     * chip (glyphs and padding) becomes an external link.
+     *
+     * @param text         visible text
+     * @param textStyle    glyph style; falls back to the paragraph style when {@code null}
+     * @param background   chip fill colour; must not be {@code null}
+     * @param cornerRadius corner radius in points, clamped to half the chip height
+     * @param padding      inset between the glyphs and the chip edges
+     * @param link         external link metadata, or {@code null} for no link
+     * @return this builder
+     * @throws IllegalArgumentException if {@code cornerRadius} is negative or non-finite
+     * @since 1.9.0
+     */
+    public RichText highlight(String text, DocumentTextStyle textStyle, DocumentColor background,
+                              double cornerRadius, DocumentInsets padding, DocumentLinkOptions link) {
+        runs.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
+                new InlineBackground(background, cornerRadius, padding), link));
+        return this;
+    }
+
+    /**
+     * Appends an inline code chip with engine defaults — a monospace font, a
+     * muted code ink and a light rounded background (e.g.
+     * {@code code("io.github.demchaav")}).
+     *
+     * @param text the code text
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText code(String text) {
+        runs.add(new InlineHighlightRun(text == null ? "" : text, CodeChip.STYLE, CodeChip.BACKGROUND));
+        return this;
+    }
+
+    /**
+     * Appends an inline code chip with an explicit glyph style (e.g. to match the
+     * paragraph size), keeping the default chip fill and padding.
+     *
+     * @param text      the code text
+     * @param textStyle the glyph style (typically a monospace font)
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText code(String text, DocumentTextStyle textStyle) {
+        runs.add(new InlineHighlightRun(text == null ? "" : text, textStyle, CodeChip.BACKGROUND));
+        return this;
+    }
+
+    /**
+     * Appends a coloured chip: {@code text} in {@code fg} on a {@code bg} fill,
+     * with the default code radius and padding.
+     *
+     * @param text the text
+     * @param fg   the text colour
+     * @param bg   the chip fill colour; must not be {@code null}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RichText chip(String text, DocumentColor fg, DocumentColor bg) {
+        runs.add(new InlineHighlightRun(text == null ? "" : text,
+                DocumentTextStyle.builder().color(fg).build(),
+                new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));
+        return this;
+    }
+
+    /**
      * Appends a clickable link run with default link styling.
      *
      * @param text    visible link text

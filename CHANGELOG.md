@@ -49,6 +49,18 @@ PDF `GoTo` actions. External links are unchanged.
   A new sealed `InlineRun` variant (`InlineSvgRun`) joins text / image / shape;
   the inline render reuses the existing SVG paint pipeline (shared with the block
   path fragment), so flat-colour output stays byte-identical.
+- **Inline highlight chips** (`@since 1.9.0`). An inline run can now sit on a
+  rounded, padded background fill — the GitHub inline `code` look and inline
+  status badges. `RichText.highlight(text, style, bg, radius, padding)` is the
+  primitive; `code(text)` ships engine defaults (a monospace font, a muted ink
+  and a light chip) and `chip(text, fg, bg)` colours a badge — with the matching
+  `ParagraphBuilder.inlineHighlight` / `inlineCode` / `inlineChip`. A `highlight`
+  overload takes `DocumentLinkOptions`, so a chip can also be a link. The fill is
+  a new `InlineBackground(fill, cornerRadius, padding)` carried by a new sealed
+  `InlineRun` variant, `InlineHighlightRun`; horizontal padding widens the run's
+  advance, vertical padding overflows the line box without changing line metrics.
+  Text-only backends (DOCX) keep the text and drop the fill. (A follow-up adds
+  multi-word coalescing and wrapping the chip across line breaks.)
 - **Colour emoji by shortcode** (`@since 1.9.0`). `RichText.emoji(":star:", size)`
   and `ParagraphBuilder.inlineEmoji(...)` resolve a GitHub-style shortcode to an inline
   vector colour glyph. Resolution is lenient — an unknown shortcode (or no emoji

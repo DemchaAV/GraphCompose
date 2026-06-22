@@ -554,8 +554,8 @@ public final class ParagraphBuilder {
      * @return this builder
      * @since 1.9.0
      */
-    public ParagraphBuilder svgIcon(SvgIcon icon, double size) {
-        return svgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
+    public ParagraphBuilder inlineSvgIcon(SvgIcon icon, double size) {
+        return inlineSvgIcon(icon, size, InlineImageAlignment.CENTER, 0.0, null);
     }
 
     /**
@@ -567,8 +567,8 @@ public final class ParagraphBuilder {
      * @return this builder
      * @since 1.9.0
      */
-    public ParagraphBuilder svgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
-        return svgIcon(icon, size, alignment, 0.0, null);
+    public ParagraphBuilder inlineSvgIcon(SvgIcon icon, double size, InlineImageAlignment alignment) {
+        return inlineSvgIcon(icon, size, alignment, 0.0, null);
     }
 
     /**
@@ -584,7 +584,7 @@ public final class ParagraphBuilder {
      * @return this builder
      * @since 1.9.0
      */
-    public ParagraphBuilder svgIcon(SvgIcon icon,
+    public ParagraphBuilder inlineSvgIcon(SvgIcon icon,
                                     double size,
                                     InlineImageAlignment alignment,
                                     double baselineOffset,
@@ -616,12 +616,12 @@ public final class ParagraphBuilder {
      * @return this builder
      * @since 1.9.0
      */
-    public ParagraphBuilder emoji(String shortcode, double size) {
-        return emoji(shortcode, size, InlineImageAlignment.CENTER, 0.0, null);
+    public ParagraphBuilder inlineEmoji(String shortcode, double size) {
+        return inlineEmoji(shortcode, size, InlineImageAlignment.CENTER, 0.0, null);
     }
 
     /**
-     * Adds a colour emoji (see {@link #emoji(String, double)}) with explicit
+     * Adds a colour emoji (see {@link #inlineEmoji(String, double)}) with explicit
      * vertical alignment, baseline offset and optional link metadata.
      *
      * @param shortcode      emoji shortcode, with or without surrounding colons
@@ -632,14 +632,14 @@ public final class ParagraphBuilder {
      * @return this builder
      * @since 1.9.0
      */
-    public ParagraphBuilder emoji(String shortcode,
+    public ParagraphBuilder inlineEmoji(String shortcode,
                                   double size,
                                   InlineImageAlignment alignment,
                                   double baselineOffset,
                                   DocumentLinkOptions linkOptions) {
         SvgIcon icon = EmojiLibrary.getDefault().find(shortcode).orElse(null);
         if (icon != null) {
-            return svgIcon(icon, size, alignment, baselineOffset, linkOptions);
+            return inlineSvgIcon(icon, size, alignment, baselineOffset, linkOptions);
         }
         return inlineText(shortcode);
     }

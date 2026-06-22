@@ -149,7 +149,7 @@ public final class EmojiSvgVsPngExample {
         byte[] glyphPdf;
         try (DocumentSession g = GraphCompose.document().pageSize(box, box).margin(0, 0, 0, 0).create()) {
             g.dsl().pageFlow().name("g")
-                    .addParagraph(p -> p.svgIcon(icon, box).margin(DocumentInsets.zero()))
+                    .addParagraph(p -> p.inlineSvgIcon(icon, box).margin(DocumentInsets.zero()))
                     .build();
             glyphPdf = g.toPdfBytes();
         }

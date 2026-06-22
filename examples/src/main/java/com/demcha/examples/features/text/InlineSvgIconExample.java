@@ -20,7 +20,7 @@ import java.util.function.Consumer;
  * Runnable showcase for inline SVG-icon runs ({@code @since 1.9.0}).
  *
  * <p>Parsed {@link SvgIcon}s are placed on the text baseline with
- * {@code RichText.svgIcon(icon, size)} / {@code ParagraphBuilder.svgIcon(...)},
+ * {@code RichText.svgIcon(icon, size)} / {@code ParagraphBuilder.inlineSvgIcon(...)},
  * so multi-colour vector glyphs flow inside a line of text — crisp at any zoom,
  * carrying their own colours, with no dependence on the active font's glyph
  * coverage. This is the engine path for vector colour emoji: a {@code :rocket:}

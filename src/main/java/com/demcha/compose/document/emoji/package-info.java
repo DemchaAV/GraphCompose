@@ -4,7 +4,7 @@
  * <p>The entry point is {@link com.demcha.compose.document.emoji.EmojiLibrary},
  * which maps GitHub-style shortcodes (e.g. {@code ":star:"}) to parsed
  * {@link com.demcha.compose.document.svg.SvgIcon} glyphs and backs the
- * {@code RichText.emoji(...)} / {@code ParagraphBuilder.emoji(...)} DSL. It is
+ * {@code RichText.emoji(...)} / {@code ParagraphBuilder.inlineEmoji(...)} DSL. It is
  * data-driven from the classpath layout {@code emoji/emoji-index.properties}
  * + {@code emoji/svg/<codepoint>.svg} shipped by the independently-versioned
  * {@code graph-compose-emoji} companion artifact; the engine carries no emoji

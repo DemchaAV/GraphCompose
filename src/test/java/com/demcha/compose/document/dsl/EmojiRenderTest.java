@@ -24,7 +24,7 @@ class EmojiRenderTest {
 
     @Test
     void knownShortcodeRendersAsInlineColourGlyph() throws Exception {
-        byte[] pdf = render(p -> p.inlineText("Done ").emoji(":white_check_mark:", 14));
+        byte[] pdf = render(p -> p.inlineText("Done ").inlineEmoji(":white_check_mark:", 14));
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertThat(new PDFTextStripper().getText(document)).contains("Done").doesNotContain("?");
             BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
@@ -39,7 +39,7 @@ class EmojiRenderTest {
 
     @Test
     void secondColourEmojiAlsoResolvesAndPaints() throws Exception {
-        byte[] pdf = render(p -> p.inlineText("Launch ").emoji(":rocket:", 14));
+        byte[] pdf = render(p -> p.inlineText("Launch ").inlineEmoji(":rocket:", 14));
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertThat(new PDFTextStripper().getText(document)).contains("Launch").doesNotContain(":rocket:");
             BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
@@ -51,7 +51,7 @@ class EmojiRenderTest {
 
     @Test
     void unknownShortcodeFallsBackToLiteralText() throws Exception {
-        byte[] pdf = render(p -> p.inlineText("Ping ").emoji(":not_a_real_emoji:", 14));
+        byte[] pdf = render(p -> p.inlineText("Ping ").inlineEmoji(":not_a_real_emoji:", 14));
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertThat(new PDFTextStripper().getText(document)).contains(":not_a_real_emoji:");
         }

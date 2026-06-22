@@ -310,6 +310,7 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineHighlight(String text, DocumentTextStyle textStyle, DocumentColor background,
                                             double cornerRadius, DocumentInsets padding, DocumentLinkOptions link) {
+        Objects.requireNonNull(background, "background");
         this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
                 new InlineBackground(background, cornerRadius, padding), link));
         this.text = "";
@@ -356,6 +357,7 @@ public final class ParagraphBuilder {
      * @since 1.9.0
      */
     public ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg) {
+        Objects.requireNonNull(bg, "bg");
         this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text,
                 DocumentTextStyle.builder().color(fg).build(),
                 new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));

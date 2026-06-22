@@ -229,6 +229,7 @@ public final class RichText {
      */
     public RichText highlight(String text, DocumentTextStyle textStyle, DocumentColor background,
                               double cornerRadius, DocumentInsets padding, DocumentLinkOptions link) {
+        Objects.requireNonNull(background, "background");
         runs.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
                 new InlineBackground(background, cornerRadius, padding), link));
         return this;
@@ -273,6 +274,7 @@ public final class RichText {
      * @since 1.9.0
      */
     public RichText chip(String text, DocumentColor fg, DocumentColor bg) {
+        Objects.requireNonNull(bg, "bg");
         runs.add(new InlineHighlightRun(text == null ? "" : text,
                 DocumentTextStyle.builder().color(fg).build(),
                 new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));

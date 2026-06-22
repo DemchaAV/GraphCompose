@@ -302,7 +302,10 @@ public record ParagraphNode(
             if (run instanceof InlineTextRun textRun) {
                 textRuns.add(textRun);
             } else if (run instanceof InlineHighlightRun highlight) {
-                textRuns.add(new InlineTextRun(highlight.text(), highlight.textStyle(), highlight.linkTarget()));
+                // Collapse newlines to spaces to match how the PDF tokenizer
+                // lowers a chip (it stays one line), so both text surfaces agree.
+                String chipText = highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+                textRuns.add(new InlineTextRun(chipText, highlight.textStyle(), highlight.linkTarget()));
             }
         }
         return List.copyOf(textRuns);

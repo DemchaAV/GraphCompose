@@ -122,8 +122,8 @@ public final class PdfParagraphFragmentRenderHandler
     /**
      * Draws a highlight "chip": a rounded fill behind the span's glyphs, then the
      * glyphs in their own text block offset right by the chip's left padding. The
-     * fill band is the text cap/descent band expanded by vertical padding, so the
-     * chip overflows the line box like a browser highlight without enlarging it.
+     * fill band is the line's text box expanded by vertical padding, so the chip
+     * overflows the line box like a browser highlight without enlarging it.
      */
     private static void renderChip(PDPageContentStream stream,
                                    FontLibrary fonts,
@@ -132,6 +132,11 @@ public final class PdfParagraphFragmentRenderHandler
                                    double baselineY,
                                    ParagraphLine line,
                                    TextRenderState textState) throws IOException {
+        PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
+        String text = font.sanitizeForRender(span.textStyle(), span.text());
+        if (text.isEmpty()) {
+            return;                                             // nothing to paint — no glyph-less fill
+        }
         InlineBackground background = span.background();
         DocumentInsets pad = background.padding();
         float chipWidth = (float) span.width();                 // glyphs + left + right padding
@@ -143,11 +148,6 @@ public final class PdfParagraphFragmentRenderHandler
             PdfShapeGeometry.fillAndStrokePath(stream, fill, null, s ->
                     PdfShapeFragmentRenderHandler.drawRoundedRectangle(
                             s, (float) cursorX, chipBottom, chipWidth, chipHeight, radius, radius, radius, radius));
-        }
-        PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        String text = font.sanitizeForRender(span.textStyle(), span.text());
-        if (text.isEmpty()) {
-            return;
         }
         stream.beginText();
         stream.newLineAtOffset((float) (cursorX + pad.left()), (float) baselineY);

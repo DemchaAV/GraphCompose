@@ -1408,6 +1408,7 @@ public final class TextFlowSupport {
                 continue;
             }
             if (candidate instanceof InlineTextToken textToken
+                && textToken.highlightGroup() == null
                 && (textToken.text() == null || textToken.text().isBlank())) {
                 end--;
                 continue;
@@ -1425,6 +1426,13 @@ public final class TextFlowSupport {
         }
         if (!(token instanceof InlineTextToken textToken)) {
             return token;
+        }
+        if (textToken.highlightGroup() != null) {
+            // A chip is one atomic token carrying its own background/padding;
+            // never strip its leading whitespace or rebuild it via the plain
+            // factory (that would silently drop the fill — see the sibling guard
+            // in wrapInlineParagraph's long-token branch).
+            return textToken;
         }
         if (!inlineLineHasVisibleContent(currentLine)) {
             String trimmed = textToken.text() == null ? "" : textToken.text().stripLeading();
@@ -1445,6 +1453,11 @@ public final class TextFlowSupport {
                 continue;
             }
             if (token instanceof InlineTextToken textToken) {
+                if (textToken.highlightGroup() != null) {
+                    // A chip is visible content (it carries a fill) even when its
+                    // text is blank — e.g. a colour-swatch badge.
+                    return true;
+                }
                 if (textToken.text() != null && !textToken.text().isBlank()) {
                     return true;
                 }

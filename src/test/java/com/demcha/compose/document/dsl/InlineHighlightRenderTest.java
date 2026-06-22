@@ -99,6 +99,71 @@ class InlineHighlightRenderTest {
         }
     }
 
+    @Test
+    void chipFirstOnLineWithLeadingSpaceKeepsItsBackground() throws Exception {
+        // Regression: a leading-space chip as the FIRST run on a line must not be
+        // rebuilt by the whitespace trimmer (which would null its background and
+        // render it as plain text). The `chip(" Paid ", ...)` badge idiom hits this.
+        List<ParagraphTextSpan> spans = textSpans(p -> p.inlineChip(" Paid ", DocumentColor.rgb(22, 101, 52), FILL));
+        ParagraphTextSpan chip = spans.stream().filter(s -> s.background() != null).findFirst()
+                .orElseThrow(() -> new AssertionError("leading-space chip lost its background: " + spans));
+        assertThat(chip.text()).contains("Paid");
+        byte[] pdf = render(p -> p.inlineChip(" Paid ", DocumentColor.rgb(22, 101, 52), FILL));
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
+            assertThat(containsColorNear(image, 255, 235, 59, 40))
+                    .as("a first-on-line leading-space chip must still paint its fill")
+                    .isTrue();
+        }
+    }
+
+    @Test
+    void chipMidLineKeepsTheTextOnBothSides() throws Exception {
+        // Text before AND after the chip: the chip's isolated text-block / cursorX
+        // advance must let the trailing plain span resume correctly.
+        byte[] pdf = render(p -> p.inlineText("a ").inlineHighlight("CHIP", MONO, FILL, 3.0, PAD).inlineText(" b"));
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ").trim();
+            assertThat(text).isEqualTo("a CHIP b");
+            BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
+            assertThat(containsColorNear(image, 255, 235, 59, 40)).isTrue();
+        }
+    }
+
+    @Test
+    void multiWordChipStaysOneSpanAndCollapsesNewlines() throws Exception {
+        // PR-1 invariant: a chip is one atomic token — a multi-word chip is a
+        // single span (not split per word), and an embedded newline collapses to
+        // a space (unlike a plain text run, which would split into lines).
+        List<ParagraphTextSpan> badge = textSpans(p -> p.inlineChip(" On hold ", DocumentColor.rgb(146, 64, 14), FILL));
+        assertThat(badge.stream().filter(s -> s.background() != null).count())
+                .as("a multi-word chip is one span, not split per word")
+                .isEqualTo(1);
+        assertThat(badge.stream().filter(s -> s.background() != null).findFirst().orElseThrow().text())
+                .contains("On hold");
+
+        List<ParagraphTextSpan> code = textSpans(p -> p.inlineCode("a\nb"));
+        assertThat(code.stream().filter(s -> s.background() != null).findFirst().orElseThrow().text())
+                .isEqualTo("a b")
+                .doesNotContain("\n");
+    }
+
+    @Test
+    void overWideAtomicChipRendersWithoutThrowing() throws Exception {
+        // A chip wider than the column is emitted on its own line (PR-1 atomic);
+        // it must still render the text on one page without throwing.
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document().pageSize(90, 140).margin(10, 10, 10, 10).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineCode("io.github.demchaav.a.very.long.package.name")).build();
+            pdf = session.toPdfBytes();
+        }
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertThat(document.getNumberOfPages()).isEqualTo(1);
+            assertThat(new PDFTextStripper().getText(document)).doesNotContain("?");
+        }
+    }
+
     private static byte[] render(Consumer<ParagraphBuilder> body) throws Exception {
         try (DocumentSession session = GraphCompose.document().pageSize(320, 140).margin(16, 16, 16, 16).create()) {
             session.dsl().pageFlow().name("Flow").addParagraph(body::accept).build();

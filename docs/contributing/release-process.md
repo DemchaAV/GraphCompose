@@ -132,6 +132,32 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   benchmarks) need `graph-compose-fonts` in the local repo — their CI jobs run
   `./mvnw -f fonts/pom.xml install` before building.
 
+### 2.E The emoji artifact (since v1.9.0)
+
+The colour-emoji glyphs ship as a **separate, independently-versioned**
+artifact, `io.github.demchaav:graph-compose-emoji` (under `emoji/`), mirroring
+the fonts arrangement above — with one difference: the **bundle does NOT
+include emoji** (it stays opt-in), so a fonts-style consumer re-pin is not
+needed.
+
+- **NOT bumped by the engine release.** It carries its own version line
+  (started at `1.0.0`) and is bumped **only when the glyph set or shortcode
+  index changes**. `cut-release.ps1` does not touch `emoji/pom.xml`, and the
+  version guard does not require it to equal the engine version.
+- **Cutting an emoji release** (only when the set changes): bump
+  `emoji/pom.xml` `<version>`, push an `emoji-vX.Y.Z` tag. That tag triggers
+  [`publish-emoji.yml`](../../.github/workflows/publish-emoji.yml), which deploys
+  only `graph-compose-emoji` to Central. The engine has no dependency on the
+  emoji artifact (its tests read the glyphs from the sibling module's source via
+  `<testResources>`), so nothing else needs re-pinning.
+- **Regenerating the set.** `emoji/tools/build-emoji-set.py` rebuilds
+  `emoji/svg/` + `emoji-index.properties` from fresh Noto Emoji + gemoji sources,
+  copying **only** the glyphs a shortcode resolves (see
+  [`emoji/NOTICE.md`](../../emoji/NOTICE.md)). Bump the version when the
+  regenerated set changes, then cut an `emoji-v*` release.
+- **First publish:** `emoji/pom.xml` is already `1.0.0`; tag `emoji-v1.0.0` (on a
+  commit that includes `publish-emoji.yml`) to ship it.
+
 ---
 
 ## 2.C One-time Maven Central setup (maintainer)

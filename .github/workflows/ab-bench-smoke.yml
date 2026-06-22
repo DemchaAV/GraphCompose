@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Check out repository (full history for the A/B branch switches)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

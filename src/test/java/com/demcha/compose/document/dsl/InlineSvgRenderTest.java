@@ -342,6 +342,42 @@ class InlineSvgRenderTest {
         }
     }
 
+    @Test
+    void linkedInlineSvgOnAWrappedLineKeepsTheAnnotationSizedToTheIcon() throws Exception {
+        // The single-line linked case is covered above; here the linked icon lands
+        // on a wrapped line, exercising spanLinkRectangle's alignment/height
+        // geometry when the icon's line is not the paragraph's first line.
+        double iconSize = 8.0;
+        byte[] pdf;
+        int lineCount;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(168, 200)
+                .margin(14, 14, 14, 14)
+                .create()) {
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph(p -> p
+                            .inlineText("This label is intentionally long so the linked icon wraps onto a later line ")
+                            .inlineSvgIcon(crimsonSquare(), iconSize, InlineImageAlignment.CENTER,
+                                    0.0, new DocumentLinkOptions("https://example.com")))
+                    .build();
+            lineCount = paragraphLines(session.layoutGraph()).size();
+            pdf = session.toPdfBytes();
+        }
+
+        assertThat(lineCount).as("the linked icon sits on a wrapped paragraph").isGreaterThanOrEqualTo(2);
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            PDAnnotationLink link = (PDAnnotationLink) document.getPage(0).getAnnotations().stream()
+                    .filter(PDAnnotationLink.class::isInstance)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("no link annotation for the wrapped inline SVG"));
+            assertThat((double) link.getRectangle().getHeight())
+                    .as("link rect still hugs the icon, not the line box, on a wrapped line")
+                    .isCloseTo(iconSize, within(0.5));
+        }
+    }
+
     private static List<ParagraphLine> paragraphLines(LayoutGraph graph) {
         return graph.fragments().stream()
                 .map(PlacedFragment::payload)

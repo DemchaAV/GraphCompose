@@ -16,9 +16,12 @@ import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -285,7 +288,64 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     }
 
     private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
-        try (PDDocument document = new PDDocument()) {
+        try (PDDocument document = buildDocument(graph, context)) {
+            document.save(output);
+            return document.getNumberOfPages();
+        }
+    }
+
+    /**
+     * Renders the document to one rasterized image per page (or a single page
+     * when {@code pageIndex >= 0}). PDF-specific convenience that rasterizes the
+     * in-memory {@link PDDocument} directly via {@link PDFRenderer}, avoiding the
+     * serialize-to-bytes-then-reparse round-trip of {@link #render} +
+     * {@code Loader.loadPDF}.
+     *
+     * @param graph       resolved layout graph
+     * @param context     fixed-layout render configuration (output stream/file ignored)
+     * @param dpi         target resolution in dots per inch (72 = native)
+     * @param transparent {@code true} for an ARGB image (transparent background), {@code false} for opaque RGB
+     * @param pageIndex   zero-based page to render, or a negative value for all pages
+     * @return one image per rendered page, in page order
+     * @throws Exception                 if PDF creation, rendering, or rasterization fails
+     * @throws IndexOutOfBoundsException if {@code pageIndex} is out of range
+     */
+    public List<BufferedImage> renderToImages(LayoutGraph graph,
+                                              FixedLayoutRenderContext context,
+                                              int dpi,
+                                              boolean transparent,
+                                              int pageIndex) throws Exception {
+        Objects.requireNonNull(graph, "graph");
+        Objects.requireNonNull(context, "context");
+        try (PDDocument document = buildDocument(graph, context)) {
+            PDFRenderer renderer = new PDFRenderer(document);
+            ImageType imageType = transparent ? ImageType.ARGB : ImageType.RGB;
+            int pageCount = document.getNumberOfPages();
+            if (pageIndex >= 0) {
+                if (pageIndex >= pageCount) {
+                    throw new IndexOutOfBoundsException(
+                            "pageIndex " + pageIndex + " is out of bounds for " + pageCount + " page(s)");
+                }
+                return List.of(renderer.renderImageWithDPI(pageIndex, (float) dpi, imageType));
+            }
+            List<BufferedImage> images = new ArrayList<>(pageCount);
+            for (int page = 0; page < pageCount; page++) {
+                images.add(renderer.renderImageWithDPI(page, (float) dpi, imageType));
+            }
+            return images;
+        }
+    }
+
+    /**
+     * Builds the fully-rendered, post-processed {@link PDDocument} (pages drawn,
+     * links and bookmarks resolved, metadata / watermark / protection /
+     * header-footer applied) but does NOT save or close it — the caller owns the
+     * returned open document. On any build failure the document is closed and the
+     * exception rethrown, so the resource never leaks.
+     */
+    private PDDocument buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
+        PDDocument document = new PDDocument();
+        try {
             FontLibrary fonts = PdfFontLibraryFactory.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
 
@@ -326,8 +386,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                     protectionOptions,
                     headerFooterOptions);
 
-            document.save(output);
-            return pages.size();
+            return document;
+        } catch (Exception ex) {
+            document.close();
+            throw ex;
         }
     }
 

@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -124,6 +125,22 @@ public final class DocumentSession implements AutoCloseable {
      * already catch them keep their semantics.
      */
     private static <R> R wrapPdfRendering(String action, PdfRenderingBody<R> body) throws DocumentRenderingException {
+        try {
+            return body.run();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DocumentRenderingException("Failed to " + action + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Image-rendering analogue of {@link #wrapPdfRendering}: rewraps any
+     * underlying checked {@link Exception} as {@link DocumentRenderingException}
+     * while letting {@link RuntimeException}s (e.g. argument/state validation)
+     * propagate unchanged.
+     */
+    private static <R> R wrapImageRendering(String action, ImageRenderingBody<R> body) throws DocumentRenderingException {
         try {
             return body.run();
         } catch (RuntimeException e) {
@@ -858,6 +875,89 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Renders every page of the current document to a raster image at the given
+     * resolution, with an opaque white background.
+     *
+     * <p>Renders the in-memory document directly to images — without the
+     * intermediate PDF byte array of {@link #toPdfBytes()} followed by a
+     * {@code Loader.loadPDF(...)} re-parse — so it avoids that serialize-then-reparse
+     * round-trip. Useful for page previews, thumbnails, and pixel diffing.</p>
+     *
+     * @param dpi target resolution in dots per inch (72 = native page size); must be {@code > 0}
+     * @return one image per page, in page order
+     * @throws IllegalArgumentException   if {@code dpi <= 0}
+     * @throws DocumentRenderingException if rendering fails
+     * @since 1.9.0
+     */
+    public List<BufferedImage> toImages(int dpi) throws DocumentRenderingException {
+        return toImages(dpi, false);
+    }
+
+    /**
+     * Renders every page of the current document to a raster image at the given
+     * resolution. See {@link #toImages(int)} for the no-round-trip rationale.
+     *
+     * @param dpi         target resolution in dots per inch; must be {@code > 0}
+     * @param transparent {@code true} for a transparent (ARGB) background, {@code false} for opaque white (RGB)
+     * @return one image per page, in page order
+     * @throws IllegalArgumentException   if {@code dpi <= 0}
+     * @throws DocumentRenderingException if rendering fails
+     * @since 1.9.0
+     */
+    public List<BufferedImage> toImages(int dpi, boolean transparent) throws DocumentRenderingException {
+        requirePositiveDpi(dpi);
+        return wrapImageRendering("render images at " + dpi + " DPI",
+                () -> renderingFacade.renderImages(dpi, transparent, -1));
+    }
+
+    /**
+     * Renders a single page of the current document to a raster image at the given
+     * resolution, with an opaque white background.
+     *
+     * <p>Each call rebuilds the whole document, so to rasterize several pages prefer
+     * {@link #toImages(int)} — one build, every page.</p>
+     *
+     * @param pageIndex zero-based page index
+     * @param dpi       target resolution in dots per inch; must be {@code > 0}
+     * @return the rendered page image
+     * @throws IllegalArgumentException   if {@code dpi <= 0}
+     * @throws IndexOutOfBoundsException  if {@code pageIndex} is out of range
+     * @throws DocumentRenderingException if rendering fails
+     * @since 1.9.0
+     */
+    public BufferedImage toImage(int pageIndex, int dpi) throws DocumentRenderingException {
+        return toImage(pageIndex, dpi, false);
+    }
+
+    /**
+     * Renders a single page of the current document to a raster image at the given
+     * resolution.
+     *
+     * @param pageIndex   zero-based page index
+     * @param dpi         target resolution in dots per inch; must be {@code > 0}
+     * @param transparent {@code true} for a transparent (ARGB) background, {@code false} for opaque white (RGB)
+     * @return the rendered page image
+     * @throws IllegalArgumentException   if {@code dpi <= 0}
+     * @throws IndexOutOfBoundsException  if {@code pageIndex} is out of range
+     * @throws DocumentRenderingException if rendering fails
+     * @since 1.9.0
+     */
+    public BufferedImage toImage(int pageIndex, int dpi, boolean transparent) throws DocumentRenderingException {
+        requirePositiveDpi(dpi);
+        if (pageIndex < 0) {
+            throw new IndexOutOfBoundsException("pageIndex must be >= 0, got " + pageIndex);
+        }
+        return wrapImageRendering("render page " + pageIndex + " at " + dpi + " DPI",
+                () -> renderingFacade.renderImages(dpi, transparent, pageIndex).get(0));
+    }
+
+    private static void requirePositiveDpi(int dpi) {
+        if (dpi <= 0) {
+            throw new IllegalArgumentException("dpi must be > 0, got " + dpi);
+        }
+    }
+
+    /**
      * Closes measurement resources owned by the session.
      *
      * <p>This method is idempotent: a second call is a no-op. After the session
@@ -914,7 +1014,7 @@ public final class DocumentSession implements AutoCloseable {
     private void ensureRenderable() {
         if (roots.isEmpty()) {
             throw new IllegalStateException(
-                    "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf.");
+                    "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf/toImages/toImage.");
         }
     }
 
@@ -951,6 +1051,11 @@ public final class DocumentSession implements AutoCloseable {
 
     @FunctionalInterface
     private interface PdfRenderingBody<R> {
+        R run() throws Exception;
+    }
+
+    @FunctionalInterface
+    private interface ImageRenderingBody<R> {
         R run() throws Exception;
     }
 

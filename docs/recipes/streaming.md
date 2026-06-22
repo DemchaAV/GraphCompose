@@ -76,6 +76,38 @@ s3.putObject(bucket, key, RequestBody.fromBytes(pdfBytes));
 with an explicit stream — the in-memory path holds the entire PDF
 before returning.
 
+## Page images (previews and thumbnails)
+
+When you need a raster image of the document — a preview, a thumbnail,
+a pixel diff — render straight to `java.awt.image.BufferedImage` with
+`toImages(int dpi)` (one image per page) or `toImage(int pageIndex, int dpi)`
+(a single page). This rasterizes the in-memory document directly, so you
+skip the `toPdfBytes()` → re-parse round-trip you'd otherwise need.
+
+```java
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+
+try (DocumentSession document = GraphCompose.document().create()) {
+    document.pageFlow(page -> page.module("Summary",
+            module -> module.paragraph("Preview me")));
+
+    List<BufferedImage> pages = document.toImages(150); // 150 DPI
+    for (int i = 0; i < pages.size(); i++) {
+        ImageIO.write(pages.get(i), "png", Path.of("page-" + i + ".png").toFile());
+    }
+}
+```
+
+The background is opaque white by default. Pass `transparent = true`
+(`toImages(dpi, true)` / `toImage(pageIndex, dpi, true)`) to get an ARGB
+image with a transparent background instead — useful when compositing a
+single glyph or badge.
+
+The return type is the JDK `BufferedImage`, so this stays free of any
+PDF-renderer types in your call site. (`dpi` must be `> 0`; `pageIndex`
+must be in range.)
+
 ## DOCX semantic export
 
 `DocxSemanticBackend` produces an editable Word document. Apache POI

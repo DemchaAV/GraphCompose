@@ -118,6 +118,16 @@ PDF `GoTo` actions. External links are unchanged.
   begin/end marker per icon — so it matches the inline fix above. The same
   flag is exposed to the DSL as `LayerStackBuilder.clipToBounds()` — the
   `overflow: hidden` of a stacking box for any layer stack.
+- **Render a document straight to images** (`@since 1.9.0`). `DocumentSession`
+  gains `toImages(int dpi)` → `List<BufferedImage>` (one per page) and
+  `toImage(int pageIndex, int dpi)` → `BufferedImage`, plus `transparent`
+  overloads (`toImages(dpi, transparent)` / `toImage(pageIndex, dpi, transparent)`)
+  that return ARGB instead of opaque white. These rasterize the in-memory document
+  directly, skipping the previous `toPdfBytes()` → reparse round-trip needed to get
+  a preview or thumbnail. The return type is the JDK `java.awt.image.BufferedImage`,
+  so the public surface stays renderer-agnostic; the PDFBox `PDFRenderer` call lives
+  in the PDF backend. `PdfVisualRegression` also gains direct `renderPages(session)` /
+  `assertMatchesBaseline(name, session)` overloads on the same path.
 
 ### Documentation
 
@@ -167,6 +177,14 @@ PDF `GoTo` actions. External links are unchanged.
   rasterizes a colour glyph, a gradient emoji paints its shading, an unknown
   shortcode falls back to literal text, and `RichText.emoji` yields an
   `InlineSvgRun` or a text run accordingly).
+- `DocumentSessionImageTest` (direct render-to-image): `toImages(dpi)` returns one
+  image per page sized to the page at that DPI; dimensions scale with DPI; rendered
+  pages contain painted (non-background) pixels; `transparent` yields an ARGB image
+  with a fully-transparent margin while the default is opaque RGB; `toImage(pageIndex,
+  dpi)` returns the requested page and is pixel-identical to the matching `toImages`
+  entry; a post-processed watermark also lands in the raster; the direct render is
+  pixel-identical to the `toPdfBytes()` round-trip (`PdfVisualRegression` / `ImageDiff`,
+  budget 0); and `dpi <= 0`, an out-of-range page, and an empty document are rejected.
 
 ## v1.8.0 — 2026-06-18
 

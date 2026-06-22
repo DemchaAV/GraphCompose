@@ -59,8 +59,10 @@ PDF `GoTo` actions. External links are unchanged.
   a new `InlineBackground(fill, cornerRadius, padding)` carried by a new sealed
   `InlineRun` variant, `InlineHighlightRun`; horizontal padding widens the run's
   advance, vertical padding overflows the line box without changing line metrics.
-  Text-only backends (DOCX) keep the text and drop the fill. (A follow-up adds
-  multi-word coalescing and wrapping the chip across line breaks.)
+  A multi-word chip wraps with the surrounding line, painting one continuous
+  rounded fill per visual-line fragment (its horizontal padding sits on the run's
+  outer edges, so a wrapped fragment is open on the inner break). Text-only
+  backends (DOCX) keep the text and drop the fill.
 - **Colour emoji by shortcode** (`@since 1.9.0`). `RichText.emoji(":star:", size)`
   and `ParagraphBuilder.inlineEmoji(...)` resolve a GitHub-style shortcode to an inline
   vector colour glyph. Resolution is lenient — an unknown shortcode (or no emoji

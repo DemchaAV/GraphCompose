@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentColor;
@@ -161,6 +162,143 @@ class InlineHighlightRenderTest {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertThat(document.getNumberOfPages()).isEqualTo(1);
             assertThat(new PDFTextStripper().getText(document)).doesNotContain("?");
+        }
+    }
+
+    @Test
+    void multiWordChipWrapsToOneCoalescedFillPerLineFragment() throws Exception {
+        // A multi-word chip too wide for the column wraps; each visual line carries
+        // exactly ONE coalesced chip span (one rounded fill per fragment, not per
+        // word), and a continuation fragment opens on its inner edge (no lead pad).
+        List<ParagraphLine> lines;
+        try (DocumentSession session = GraphCompose.document().pageSize(130, 220).margin(12, 12, 12, 12).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineHighlight("alpha beta gamma delta epsilon", MONO, FILL, 3.0, PAD))
+                    .build();
+            lines = paragraphLines(session.layoutGraph());
+        }
+        List<ParagraphLine> chipLines = lines.stream()
+                .filter(l -> l.spans().stream().anyMatch(s -> s instanceof ParagraphTextSpan ts && ts.background() != null))
+                .toList();
+        assertThat(chipLines).as("the multi-word chip wraps to >=2 line fragments").hasSizeGreaterThanOrEqualTo(2);
+        for (ParagraphLine line : chipLines) {
+            long chipSpans = line.spans().stream()
+                    .filter(s -> s instanceof ParagraphTextSpan ts && ts.background() != null).count();
+            assertThat(chipSpans).as("each fragment is one coalesced span, not split per word").isEqualTo(1);
+        }
+        ParagraphTextSpan first = chipSpan(chipLines.get(0));
+        ParagraphTextSpan continuation = chipSpan(chipLines.get(1));
+        assertThat(first.background().padding().left()).as("first fragment keeps the lead pad").isGreaterThan(0.0);
+        assertThat(continuation.background().padding().left())
+                .as("continuation fragment is open on the inner edge (slice)").isEqualTo(0.0);
+    }
+
+    @Test
+    void wrappedChipPaintsAcrossBothFragments() throws Exception {
+        // The same chip on a wide column (one line) vs a narrow one (wrapped): the
+        // wrapped fill spans more vertical extent — proof the fill paints on every
+        // fragment, not just the first. (The fragments' fills overlap vertically via
+        // the vertical padding, like a browser highlight, so they read as one band.)
+        String text = "alpha beta gamma delta epsilon";
+        int single = fillYExtent(renderHighlightAt(420, text), 255, 235, 59, 40);
+        int wrapped = fillYExtent(renderHighlightAt(130, text), 255, 235, 59, 40);
+        assertThat(single).as("the single-line chip paints").isGreaterThan(0);
+        assertThat(wrapped).as("the wrapped chip fill spans an extra line vs the single-line chip")
+                .isGreaterThan(single + 15);
+    }
+
+    private static ParagraphTextSpan chipSpan(ParagraphLine line) {
+        return (ParagraphTextSpan) line.spans().stream()
+                .filter(s -> s instanceof ParagraphTextSpan ts && ts.background() != null)
+                .findFirst().orElseThrow();
+    }
+
+    private static List<ParagraphLine> paragraphLines(LayoutGraph graph) {
+        return graph.fragments().stream()
+                .map(PlacedFragment::payload)
+                .filter(ParagraphFragmentPayload.class::isInstance)
+                .map(ParagraphFragmentPayload.class::cast)
+                .flatMap(payload -> payload.lines().stream())
+                .toList();
+    }
+
+    private static BufferedImage renderHighlightAt(double pageWidth, String text) throws Exception {
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document().pageSize(pageWidth, 220).margin(12, 12, 12, 12).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineHighlight(text, MONO, FILL, 3.0, PAD))
+                    .build();
+            pdf = session.toPdfBytes();
+        }
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            return new PDFRenderer(document).renderImageWithDPI(0, 144);
+        }
+    }
+
+    /** Vertical extent (maxY - minY, px) of pixels matching the colour; 0 if none present. */
+    private static int fillYExtent(BufferedImage image, int r, int g, int b, int tolerance) {
+        int minY = Integer.MAX_VALUE;
+        int maxY = -1;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int rgb = image.getRGB(x, y);
+                if (Math.abs(((rgb >> 16) & 0xFF) - r) <= tolerance
+                        && Math.abs(((rgb >> 8) & 0xFF) - g) <= tolerance
+                        && Math.abs((rgb & 0xFF) - b) <= tolerance) {
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                    break;
+                }
+            }
+        }
+        return maxY < 0 ? 0 : maxY - minY;
+    }
+
+    @Test
+    void wrappedChipMidParagraphKeepsItsFullTextAcrossTheBreak() throws Exception {
+        // A chip with plain text on BOTH sides that wraps: every chip word survives
+        // in order (not dropped or duplicated at the wrap seam), and the surrounding
+        // text is intact on both sides.
+        String chip = "alpha beta gamma delta epsilon";
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document().pageSize(130, 220).margin(12, 12, 12, 12).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineText("Tags: ").inlineHighlight(chip, MONO, FILL, 3.0, PAD).inlineText(" end"))
+                    .build();
+            pdf = session.toPdfBytes();
+        }
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String rendered = new PDFTextStripper().getText(document).replaceAll("\\s+", " ").trim();
+            assertThat(rendered).isEqualTo("Tags: alpha beta gamma delta epsilon end");
+        }
+    }
+
+    @Test
+    void twoAdjacentDifferentChipsStaySeparateSpans() throws Exception {
+        List<ParagraphTextSpan> spans = textSpans(p -> p
+                .inlineChip("A", DocumentColor.rgb(0, 100, 0), DocumentColor.rgb(220, 255, 220))
+                .inlineChip("B", DocumentColor.rgb(100, 0, 0), DocumentColor.rgb(255, 220, 220)));
+        assertThat(spans.stream().filter(s -> s.background() != null).count())
+                .as("two distinct chips do not coalesce into one fill")
+                .isEqualTo(2);
+    }
+
+    @Test
+    void wrappedLinkedChipEmitsAClickableRectPerFragment() throws Exception {
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document().pageSize(130, 220).margin(12, 12, 12, 12).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineHighlight("alpha beta gamma delta epsilon", MONO, FILL, 3.0, PAD,
+                            new DocumentLinkOptions("https://example.com")))
+                    .build();
+            pdf = session.toPdfBytes();
+        }
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            long links = document.getPage(0).getAnnotations().stream()
+                    .filter(PDAnnotationLink.class::isInstance).count();
+            assertThat(links).as("a wrapped linked chip is clickable on each visual line fragment")
+                    .isGreaterThanOrEqualTo(2);
+            assertThat(new PDFTextStripper().getText(document)).contains("alpha").contains("epsilon").doesNotContain("?");
         }
     }
 

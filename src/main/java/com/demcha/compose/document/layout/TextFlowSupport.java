@@ -952,10 +952,10 @@ public final class TextFlowSupport {
 
                 if (!(sanitizedToken instanceof InlineTextToken textToken)
                         || textToken.highlightGroup() != null) {
-                    // Atomic runs that exceed the available width are emitted on
-                    // their own line; further breaking is not possible (image /
-                    // shape / SVG, and — in PR-1 — a highlight chip, which stays
-                    // one token until multi-word coalescing lands).
+                    // Atomic runs that exceed the available width are emitted on their
+                    // own line; further breaking is not possible (image / shape / SVG,
+                    // and a single highlight-chip word — a chip wraps between its words
+                    // but a lone over-wide chip word is not char-split).
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
                     continue;
@@ -1269,16 +1269,27 @@ public final class TextFlowSupport {
                 }
                 TextStyle style = highlight.textStyle() == null
                         ? defaultStyle : toTextStyle(highlight.textStyle());
-                // PR-1: a highlight chip is one atomic token (no word-split / wrap
-                // across lines yet — a follow-up adds multi-word coalescing), so
-                // newlines collapse to spaces and the whole run stays one token.
+                // A chip stays on one logical line (newlines collapse to spaces) but
+                // its text tokenizes into words, all tagged with the same group, so
+                // it wraps with the surrounding line. Horizontal padding sits on the
+                // run's outer edges — lead pad on the first word, trail pad on the
+                // last — and toInlineParagraphLine coalesces the same-group tokens on
+                // each visual line back into one rounded fill.
                 String normalized = BlockText.sanitizeText(
                         highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' '));
                 if (normalized.isEmpty()) {
                     continue;
                 }
-                currentLine.add(InlineTextToken.ofHighlight(
-                        normalized, style, highlight.linkTarget(), highlight.background(), highlight, measurement));
+                List<String> words = tokenize(normalized);
+                DocumentInsets pad = highlight.background().padding();
+                for (int wordIndex = 0; wordIndex < words.size(); wordIndex++) {
+                    currentLine.add(InlineTextToken.ofHighlight(
+                            words.get(wordIndex), style, highlight.linkTarget(),
+                            highlight.background(), highlight,
+                            wordIndex == 0 ? pad.left() : 0.0,
+                            wordIndex == words.size() - 1 ? pad.right() : 0.0,
+                            measurement));
+                }
             }
         }
 
@@ -1337,8 +1348,56 @@ public final class TextFlowSupport {
         List<ParagraphSpan> spans = new ArrayList<>(trimmedTokens.size());
         StringBuilder text = new StringBuilder();
         double width = 0.0;
-        for (InlineLayoutToken token : trimmedTokens) {
-            if (token instanceof InlineTextToken textToken) {
+        int tokenIndex = 0;
+        while (tokenIndex < trimmedTokens.size()) {
+            InlineLayoutToken token = trimmedTokens.get(tokenIndex);
+            if (token instanceof InlineTextToken chipStart && chipStart.highlightGroup() != null) {
+                // Coalesce every consecutive token of the same chip run on this
+                // visual line into ONE span, so a multi-word (or wrapped) chip paints
+                // a single rounded fill per line-fragment. Padding sits on the
+                // fragment's outer edges — the lead pad of the first token consumed
+                // and the trail pad of the last — so a wrapped fragment is open on
+                // the inner break edge.
+                Object group = chipStart.highlightGroup();
+                InlineBackground source = chipStart.background();
+                List<InlineTextToken> parts = new ArrayList<>();
+                while (tokenIndex < trimmedTokens.size()
+                        && trimmedTokens.get(tokenIndex) instanceof InlineTextToken part
+                        && part.highlightGroup() == group) {
+                    parts.add(part);
+                    tokenIndex++;
+                }
+                // Collapse a soft-wrap space: when the run continues onto the next
+                // line the trailing whitespace token carries no trail pad, so drop it
+                // — the fill ends at the last visible glyph and the seam space stays
+                // out of line width. The run's authored trailing space keeps its trail
+                // pad and is preserved.
+                int end = parts.size();
+                while (end > 1 && parts.get(end - 1).text().isBlank() && parts.get(end - 1).trailPad() == 0.0) {
+                    end--;
+                }
+                double leftPad = parts.get(0).leadPad();
+                double trailPad = parts.get(end - 1).trailPad();
+                double glyphs = 0.0;
+                StringBuilder chip = new StringBuilder();
+                for (int partIndex = 0; partIndex < end; partIndex++) {
+                    chip.append(parts.get(partIndex).text());
+                    glyphs += parts.get(partIndex).width();
+                }
+                double spanWidth = leftPad + glyphs + trailPad;
+                DocumentInsets basePad = source.padding();
+                InlineBackground fragment = new InlineBackground(source.fill(), source.cornerRadius(),
+                        new DocumentInsets(basePad.top(), trailPad, basePad.bottom(), leftPad));
+                spans.add(new ParagraphTextSpan(
+                        chip.toString(),
+                        chipStart.textStyle(),
+                        spanWidth,
+                        measurement.lineMetrics(chipStart.textStyle()).lineHeight(),
+                        chipStart.linkTarget(),
+                        fragment));
+                text.append(chip);
+                width += spanWidth;
+            } else if (token instanceof InlineTextToken textToken) {
                 // wrapWidth folds in the chip's horizontal padding (zero for plain
                 // text), so the span width and the line width both account for it.
                 double spanWidth = textToken.wrapWidth();
@@ -1351,6 +1410,7 @@ public final class TextFlowSupport {
                         textToken.background()));
                 text.append(textToken.text());
                 width += spanWidth;
+                tokenIndex++;
             } else if (token instanceof InlineImageToken imageToken) {
                 spans.add(new ParagraphImageSpan(
                         imageToken.imageData(),
@@ -1360,6 +1420,7 @@ public final class TextFlowSupport {
                         imageToken.baselineOffset(),
                         imageToken.linkTarget()));
                 width += imageToken.width();
+                tokenIndex++;
             } else if (token instanceof InlineShapeToken shapeToken) {
                 spans.add(new ParagraphShapeSpan(
                         shapeToken.layers(),
@@ -1369,6 +1430,7 @@ public final class TextFlowSupport {
                         shapeToken.baselineOffset(),
                         shapeToken.linkTarget()));
                 width += shapeToken.width();
+                tokenIndex++;
             } else if (token instanceof InlineSvgToken svgToken) {
                 spans.add(new ParagraphSvgSpan(
                         svgToken.layers(),
@@ -1378,6 +1440,9 @@ public final class TextFlowSupport {
                         svgToken.baselineOffset(),
                         svgToken.linkTarget()));
                 width += svgToken.width();
+                tokenIndex++;
+            } else {
+                tokenIndex++;
             }
         }
 
@@ -1428,10 +1493,10 @@ public final class TextFlowSupport {
             return token;
         }
         if (textToken.highlightGroup() != null) {
-            // A chip is one atomic token carrying its own background/padding;
-            // never strip its leading whitespace or rebuild it via the plain
-            // factory (that would silently drop the fill — see the sibling guard
-            // in wrapInlineParagraph's long-token branch).
+            // A chip token carries the run's background/group/padding; never strip
+            // its leading whitespace or rebuild it via the plain factory (that would
+            // drop the fill). The chip's words reassemble in toInlineParagraphLine,
+            // which collapses the soft-wrap space at a wrap seam.
             return textToken;
         }
         if (!inlineLineHasVisibleContent(currentLine)) {
@@ -1665,13 +1730,14 @@ public final class TextFlowSupport {
                                                    DocumentLinkTarget linkTarget,
                                                    InlineBackground background,
                                                    Object highlightGroup,
+                                                   double leadPad,
+                                                   double trailPad,
                                                    TextMeasurementSystem measurement) {
             String safeText = text == null ? "" : text;
             TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
             double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
-            DocumentInsets pad = background.padding();
             return new InlineTextToken(safeText, safeStyle, linkTarget, width,
-                    background, highlightGroup, pad.left(), pad.right());
+                    background, highlightGroup, leadPad, trailPad);
         }
     }
 

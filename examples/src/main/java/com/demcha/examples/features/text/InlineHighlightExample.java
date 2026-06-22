@@ -91,6 +91,17 @@ public final class InlineHighlightExample {
                                     .plain("   square ")
                                     .highlight("sharp", chipText(), DocumentColor.rgb(255, 228, 230),
                                             0.0, DocumentInsets.symmetric(2, 6))))
+                    .addSection("Wrapping", section -> labelledRow(section,
+                            "a multi-word highlight wraps across lines — one continuous fill per fragment",
+                            rich -> rich
+                                    .plain("Reviewer note: ")
+                                    .highlight("this longer highlighted phrase is intentionally verbose so that it "
+                                                    + "spans more than one visual line, and the engine still paints a "
+                                                    + "continuous rounded chip on each line fragment rather than one "
+                                                    + "box per word",
+                                            chipText(), DocumentColor.rgb(254, 249, 195),
+                                            4.0, DocumentInsets.symmetric(2, 6))
+                                    .plain(" — done.")))
                     .addSection("Footer", section -> section
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))

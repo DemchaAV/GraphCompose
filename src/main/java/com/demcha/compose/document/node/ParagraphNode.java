@@ -61,6 +61,8 @@ public record ParagraphNode(
             for (InlineRun run : inlineRuns) {
                 if (run instanceof InlineTextRun textRun) {
                     concatenated.append(textRun.text());
+                } else if (run instanceof InlineHighlightRun highlight) {
+                    concatenated.append(highlight.text());
                 }
             }
             text = concatenated.toString();
@@ -272,6 +274,9 @@ public record ParagraphNode(
             if (run instanceof InlineTextRun textRun && textRun.text().isEmpty()) {
                 continue;
             }
+            if (run instanceof InlineHighlightRun highlight && highlight.text().isEmpty()) {
+                continue;
+            }
             normalized.add(run);
         }
         return List.copyOf(normalized);
@@ -281,8 +286,10 @@ public record ParagraphNode(
      * Returns inline text runs in source order, filtering out image runs.
      *
      * <p>Provided for callers that only consume textual content (e.g. the
-     * DOCX semantic backend or text-only tests). Image runs are silently
-     * dropped — use {@link #inlineRuns()} to access the full mixed list.</p>
+     * DOCX semantic backend or text-only tests). Image / shape / SVG runs are
+     * silently dropped; a highlight chip degrades to a plain text run (its
+     * background is a PDF-only decoration) so the text survives. Use
+     * {@link #inlineRuns()} to access the full mixed list.</p>
      *
      * @return inline text runs in source order
      */
@@ -294,6 +301,11 @@ public record ParagraphNode(
         for (InlineRun run : inlineRuns) {
             if (run instanceof InlineTextRun textRun) {
                 textRuns.add(textRun);
+            } else if (run instanceof InlineHighlightRun highlight) {
+                // Collapse newlines to spaces to match how the PDF tokenizer
+                // lowers a chip (it stays one line), so both text surfaces agree.
+                String chipText = highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+                textRuns.add(new InlineTextRun(chipText, highlight.textStyle(), highlight.linkTarget()));
             }
         }
         return List.copyOf(textRuns);

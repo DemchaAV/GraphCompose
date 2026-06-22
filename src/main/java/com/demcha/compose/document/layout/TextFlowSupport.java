@@ -5,6 +5,7 @@ import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextAutoSize;
 import com.demcha.compose.document.style.DocumentTextIndent;
@@ -572,6 +573,9 @@ public final class TextFlowSupport {
                     width += shapeRun.width();
                 } else if (run instanceof InlineSvgRun svgRun) {
                     width += svgRun.width();
+                } else if (run instanceof InlineHighlightRun highlight) {
+                    width += measurement.textWidth(engineStyle, highlight.text())
+                            + highlight.background().padding().horizontal();
                 }
             }
             return width <= innerWidth;
@@ -919,7 +923,7 @@ public final class TextFlowSupport {
                     continue;
                 }
 
-                double tokenWidth = sanitizedToken.width();
+                double tokenWidth = sanitizedToken.wrapWidth();
                 if (currentLine.isEmpty() || currentWidth + tokenWidth <= maxWidth + EPS) {
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
@@ -939,17 +943,19 @@ public final class TextFlowSupport {
                 if (sanitizedToken == null) {
                     continue;
                 }
-                tokenWidth = sanitizedToken.width();
+                tokenWidth = sanitizedToken.wrapWidth();
                 if (currentWidth + tokenWidth <= maxWidth + EPS) {
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
                     continue;
                 }
 
-                if (!(sanitizedToken instanceof InlineTextToken textToken)) {
-                    // Atomic image runs that exceed the available width are
-                    // emitted on their own line; further breaking is not
-                    // possible.
+                if (!(sanitizedToken instanceof InlineTextToken textToken)
+                        || textToken.highlightGroup() != null) {
+                    // Atomic runs that exceed the available width are emitted on
+                    // their own line; further breaking is not possible (image /
+                    // shape / SVG, and — in PR-1 — a highlight chip, which stays
+                    // one token until multi-word coalescing lands).
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
                     continue;
@@ -1257,6 +1263,22 @@ public final class TextFlowSupport {
                 currentLine.add(InlineShapeToken.of(shapeRun));
             } else if (run instanceof InlineSvgRun svgRun) {
                 currentLine.add(InlineSvgToken.of(svgRun));
+            } else if (run instanceof InlineHighlightRun highlight) {
+                if (highlight.text().isEmpty()) {
+                    continue;
+                }
+                TextStyle style = highlight.textStyle() == null
+                        ? defaultStyle : toTextStyle(highlight.textStyle());
+                // PR-1: a highlight chip is one atomic token (no word-split / wrap
+                // across lines yet — a follow-up adds multi-word coalescing), so
+                // newlines collapse to spaces and the whole run stays one token.
+                String normalized = BlockText.sanitizeText(
+                        highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' '));
+                if (normalized.isEmpty()) {
+                    continue;
+                }
+                currentLine.add(InlineTextToken.ofHighlight(
+                        normalized, style, highlight.linkTarget(), highlight.background(), highlight, measurement));
             }
         }
 
@@ -1317,14 +1339,18 @@ public final class TextFlowSupport {
         double width = 0.0;
         for (InlineLayoutToken token : trimmedTokens) {
             if (token instanceof InlineTextToken textToken) {
+                // wrapWidth folds in the chip's horizontal padding (zero for plain
+                // text), so the span width and the line width both account for it.
+                double spanWidth = textToken.wrapWidth();
                 spans.add(new ParagraphTextSpan(
                         textToken.text(),
                         textToken.textStyle(),
-                        textToken.width(),
+                        spanWidth,
                         measurement.lineMetrics(textToken.textStyle()).lineHeight(),
-                        textToken.linkTarget()));
+                        textToken.linkTarget(),
+                        textToken.background()));
                 text.append(textToken.text());
-                width += textToken.width();
+                width += spanWidth;
             } else if (token instanceof InlineImageToken imageToken) {
                 spans.add(new ParagraphImageSpan(
                         imageToken.imageData(),
@@ -1368,7 +1394,7 @@ public final class TextFlowSupport {
     private static double inlineLineWidth(List<InlineLayoutToken> tokens) {
         double width = 0.0;
         for (InlineLayoutToken token : tokens) {
-            width += token.width();
+            width += token.wrapWidth();
         }
         return width;
     }
@@ -1382,6 +1408,7 @@ public final class TextFlowSupport {
                 continue;
             }
             if (candidate instanceof InlineTextToken textToken
+                && textToken.highlightGroup() == null
                 && (textToken.text() == null || textToken.text().isBlank())) {
                 end--;
                 continue;
@@ -1399,6 +1426,13 @@ public final class TextFlowSupport {
         }
         if (!(token instanceof InlineTextToken textToken)) {
             return token;
+        }
+        if (textToken.highlightGroup() != null) {
+            // A chip is one atomic token carrying its own background/padding;
+            // never strip its leading whitespace or rebuild it via the plain
+            // factory (that would silently drop the fill — see the sibling guard
+            // in wrapInlineParagraph's long-token branch).
+            return textToken;
         }
         if (!inlineLineHasVisibleContent(currentLine)) {
             String trimmed = textToken.text() == null ? "" : textToken.text().stripLeading();
@@ -1419,6 +1453,11 @@ public final class TextFlowSupport {
                 continue;
             }
             if (token instanceof InlineTextToken textToken) {
+                if (textToken.highlightGroup() != null) {
+                    // A chip is visible content (it carries a fill) even when its
+                    // text is blank — e.g. a colour-swatch badge.
+                    return true;
+                }
                 if (textToken.text() != null && !textToken.text().isBlank()) {
                     return true;
                 }
@@ -1564,6 +1603,15 @@ public final class TextFlowSupport {
     private sealed interface InlineLayoutToken
             permits InlineTextToken, InlineImageToken, InlineShapeToken, InlineSvgToken {
         double width();
+
+        /**
+         * Width used for line-wrap accounting. Equals {@link #width()} except for
+         * a highlight chip token, which reserves its outer horizontal padding here
+         * so wrapping accounts for the chip's full advance.
+         */
+        default double wrapWidth() {
+            return width();
+        }
     }
 
     private record ParagraphIndentSpec(String firstLinePrefix, String continuationPrefix) {
@@ -1586,11 +1634,20 @@ public final class TextFlowSupport {
             String text,
             TextStyle textStyle,
             DocumentLinkTarget linkTarget,
-            double width
+            double width,
+            InlineBackground background,
+            Object highlightGroup,
+            double leadPad,
+            double trailPad
     ) implements InlineLayoutToken {
         private InlineTextToken {
             text = text == null ? "" : text;
             textStyle = textStyle == null ? TextStyle.DEFAULT_STYLE : textStyle;
+        }
+
+        @Override
+        public double wrapWidth() {
+            return width + leadPad + trailPad;
         }
 
         private static InlineTextToken of(String text,
@@ -1600,7 +1657,21 @@ public final class TextFlowSupport {
             String safeText = text == null ? "" : text;
             TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
             double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
-            return new InlineTextToken(safeText, safeStyle, linkTarget, width);
+            return new InlineTextToken(safeText, safeStyle, linkTarget, width, null, null, 0.0, 0.0);
+        }
+
+        private static InlineTextToken ofHighlight(String text,
+                                                   TextStyle style,
+                                                   DocumentLinkTarget linkTarget,
+                                                   InlineBackground background,
+                                                   Object highlightGroup,
+                                                   TextMeasurementSystem measurement) {
+            String safeText = text == null ? "" : text;
+            TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
+            double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
+            DocumentInsets pad = background.padding();
+            return new InlineTextToken(safeText, safeStyle, linkTarget, width,
+                    background, highlightGroup, pad.left(), pad.right());
         }
     }
 

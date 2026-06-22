@@ -7,6 +7,8 @@ import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
@@ -115,6 +117,45 @@ public final class PdfParagraphFragmentRenderHandler
             case TEXT_BOTTOM -> lineBottom;
         };
         return base + baselineOffset;
+    }
+
+    /**
+     * Draws a highlight "chip": a rounded fill behind the span's glyphs, then the
+     * glyphs in their own text block offset right by the chip's left padding. The
+     * fill band is the line's text box expanded by vertical padding, so the chip
+     * overflows the line box like a browser highlight without enlarging it.
+     */
+    private static void renderChip(PDPageContentStream stream,
+                                   FontLibrary fonts,
+                                   ParagraphTextSpan span,
+                                   double cursorX,
+                                   double baselineY,
+                                   ParagraphLine line,
+                                   TextRenderState textState) throws IOException {
+        PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
+        String text = font.sanitizeForRender(span.textStyle(), span.text());
+        if (text.isEmpty()) {
+            return;                                             // nothing to paint — no glyph-less fill
+        }
+        InlineBackground background = span.background();
+        DocumentInsets pad = background.padding();
+        float chipWidth = (float) span.width();                 // glyphs + left + right padding
+        float chipBottom = (float) (baselineY - line.baselineOffsetFromBottom() - pad.bottom());
+        float chipHeight = (float) (line.textLineHeight() + pad.vertical());
+        Color fill = background.fill() == null ? null : background.fill().color();
+        if (fill != null && chipWidth > 0 && chipHeight > 0) {
+            float radius = (float) Math.min(background.cornerRadius(), Math.min(chipWidth, chipHeight) / 2.0f);
+            PdfShapeGeometry.fillAndStrokePath(stream, fill, null, s ->
+                    PdfShapeFragmentRenderHandler.drawRoundedRectangle(
+                            s, (float) cursorX, chipBottom, chipWidth, chipHeight, radius, radius, radius, radius));
+        }
+        stream.beginText();
+        stream.newLineAtOffset((float) (cursorX + pad.left()), (float) baselineY);
+        textState.invalidate();
+        textState.applyFont(stream, font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
+        textState.applyColor(stream, span.textStyle().color());
+        stream.showText(text);
+        stream.endText();
     }
 
     private static void renderShape(PDPageContentStream stream,
@@ -284,6 +325,19 @@ public final class PdfParagraphFragmentRenderHandler
         try {
             for (ParagraphSpan span : spans) {
                 if (span instanceof ParagraphTextSpan textSpan) {
+                    if (textSpan.background() != null) {
+                        // A chip span paints a rounded fill plus its glyphs in an
+                        // isolated text block (offset by the left padding), so it
+                        // closes any open run first and is a fragment boundary.
+                        if (inTextBlock) {
+                            stream.endText();
+                            inTextBlock = false;
+                        }
+                        renderChip(stream, fonts, textSpan, cursorX, baselineY, line, textState);
+                        textState.invalidate();
+                        cursorX += textSpan.width();
+                        continue;
+                    }
                     PdfFont font = fonts.getFont(textSpan.textStyle().fontName(), PdfFont.class).orElseThrow();
                     // Font-aware sanitization keeps width measurement
                     // (PdfFont.getTextWidth) and the bytes emitted here

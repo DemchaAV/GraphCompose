@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 /**
  * Runnable showcase for colour emoji by shortcode ({@code @since 1.9.0}).
  *
- * <p>{@code RichText.emoji(":star:", size)} / {@code ParagraphBuilder.emoji(...)}
+ * <p>{@code RichText.emoji(":star:", size)} / {@code ParagraphBuilder.inlineEmoji(...)}
  * resolve a GitHub-style shortcode to an inline vector colour glyph, drawn on the
  * text baseline — crisp at any zoom, no emoji font needed. Glyphs come from the
  * {@code graph-compose-emoji} companion artifact on the classpath (here, the

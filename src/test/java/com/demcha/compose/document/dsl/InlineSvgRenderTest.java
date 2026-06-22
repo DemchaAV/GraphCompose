@@ -2,6 +2,11 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphLine;
+import com.demcha.compose.document.layout.payloads.ParagraphSvgSpan;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineSvgRun;
@@ -128,7 +133,7 @@ class InlineSvgRenderTest {
                     .name("Flow")
                     .addParagraph(paragraph -> paragraph
                             .inlineText("Home ")
-                            .svgIcon(crimsonSquare(), iconSize, InlineImageAlignment.CENTER,
+                            .inlineSvgIcon(crimsonSquare(), iconSize, InlineImageAlignment.CENTER,
                                     0.0, new DocumentLinkOptions("https://example.com")))
                     .build();
             pdf = session.toPdfBytes();
@@ -192,7 +197,7 @@ class InlineSvgRenderTest {
                     .addParagraph(p -> {
                         p.inlineText("Status complete now");
                         if (withIcon) {
-                            p.svgIcon(wideBar, 10);
+                            p.inlineSvgIcon(wideBar, 10);
                         }
                         p.autoSize(24, 5);
                     })
@@ -241,11 +246,109 @@ class InlineSvgRenderTest {
                     .addParagraph(paragraph -> paragraph
                             .name("IconRow")
                             .inlineText("Ship it ")
-                            .svgIcon(icon, 12)
+                            .inlineSvgIcon(icon, 12)
                             .inlineText(" now"))
                     .build();
             return session.toPdfBytes();
         }
+    }
+
+    @Test
+    void inlineSvgIconWrapsAcrossLinesAndDrivesLineHeight() throws Exception {
+        // A tall (28pt) icon mid-paragraph on a narrow column: the paragraph must
+        // wrap to several lines, the icon's line must carry a ParagraphSvgSpan, and
+        // that line's height must be driven up by the icon (lineHeight > the plain
+        // text-line height) — exercising the wrap + per-line max-graphic-height path
+        // that the single-line tests above never reach.
+        SvgIcon icon = crimsonSquare();
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(170, 240)
+                .margin(14, 14, 14, 14)
+                .create()) {
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph(p -> p
+                            .name("WrappingIconParagraph")
+                            .inlineText("This sentence is intentionally long so that it wraps onto more "
+                                    + "than one line before it reaches the inline ")
+                            .inlineSvgIcon(icon, 28)
+                            .inlineText(" icon and then continues with yet more trailing text"))
+                    .build();
+
+            List<ParagraphLine> lines = paragraphLines(session.layoutGraph());
+            assertThat(lines).as("the paragraph wraps to multiple lines").hasSizeGreaterThanOrEqualTo(2);
+
+            ParagraphLine iconLine = lines.stream()
+                    .filter(line -> line.spans().stream().anyMatch(ParagraphSvgSpan.class::isInstance))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("no wrapped line carries the inline SVG span"));
+            ParagraphSvgSpan span = (ParagraphSvgSpan) iconLine.spans().stream()
+                    .filter(ParagraphSvgSpan.class::isInstance)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(iconLine.lineHeight())
+                    .as("the icon's line grows to fit the icon")
+                    .isGreaterThanOrEqualTo(span.height());
+            assertThat(iconLine.lineHeight())
+                    .as("the tall icon, not the text, drives its line's height")
+                    .isGreaterThan(iconLine.textLineHeight());
+
+            byte[] pdf = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdf)) {
+                BufferedImage image = new PDFRenderer(document).renderImageWithDPI(0, 144);
+                assertThat(containsColorNear(image, 196, 30, 58, 45))
+                        .as("the wrapped inline SVG icon still paints its fill colour")
+                        .isTrue();
+                assertThat(new PDFTextStripper().getText(document)).doesNotContain("?");
+            }
+        }
+    }
+
+    @Test
+    void inlineSvgIconSplitAcrossPagesRendersAndPaints() throws Exception {
+        // The icon sits near the start of a paragraph whose body is long enough to
+        // paginate. The split/continuation flow must keep the icon (it lands on the
+        // head page) rather than drop or duplicate it across the page break.
+        SvgIcon icon = crimsonSquare();
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < 50; i++) {
+            body.append("Filler sentence ").append(i).append(" that pads the paragraph. ");
+        }
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(220, 130)
+                .margin(12, 12, 12, 12)
+                .create()) {
+            session.dsl()
+                    .pageFlow()
+                    .name("Flow")
+                    .addParagraph(p -> p
+                            .inlineText("Status ")
+                            .inlineSvgIcon(icon, 12)
+                            .inlineText(" then a long body that must paginate: " + body))
+                    .build();
+
+            byte[] pdf = session.toPdfBytes();
+            try (PDDocument document = Loader.loadPDF(pdf)) {
+                assertThat(document.getNumberOfPages())
+                        .as("the paragraph splits across a page break")
+                        .isGreaterThanOrEqualTo(2);
+                BufferedImage head = new PDFRenderer(document).renderImageWithDPI(0, 144);
+                assertThat(containsColorNear(head, 196, 30, 58, 45))
+                        .as("the inline SVG icon paints on its (head) page within a paginating paragraph")
+                        .isTrue();
+                assertThat(new PDFTextStripper().getText(document)).doesNotContain("?");
+            }
+        }
+    }
+
+    private static List<ParagraphLine> paragraphLines(LayoutGraph graph) {
+        return graph.fragments().stream()
+                .map(PlacedFragment::payload)
+                .filter(ParagraphFragmentPayload.class::isInstance)
+                .map(ParagraphFragmentPayload.class::cast)
+                .flatMap(payload -> payload.lines().stream())
+                .toList();
     }
 
     private static boolean containsColorNear(BufferedImage image, int r, int g, int b, int tolerance) {

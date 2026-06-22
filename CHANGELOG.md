@@ -40,7 +40,7 @@ PDF `GoTo` actions. External links are unchanged.
   returns the external options (or `null` for an internal link).
 - **Inline SVG-icon runs** (`@since 1.9.0`). A parsed `SvgIcon` can now sit on
   the text baseline inside a paragraph via `RichText.svgIcon(icon, size)` and
-  `ParagraphBuilder.svgIcon(icon, size)` (with `alignment` / `baselineOffset` /
+  `ParagraphBuilder.inlineSvgIcon(icon, size)` (with `alignment` / `baselineOffset` /
   link overloads, plus a clickable form). `size` is the glyph's height in points;
   the width follows the icon's aspect ratio. The icon is drawn as crisp vector
   layers carrying their own colours — gradients included — so it renders
@@ -50,7 +50,7 @@ PDF `GoTo` actions. External links are unchanged.
   the inline render reuses the existing SVG paint pipeline (shared with the block
   path fragment), so flat-colour output stays byte-identical.
 - **Colour emoji by shortcode** (`@since 1.9.0`). `RichText.emoji(":star:", size)`
-  and `ParagraphBuilder.emoji(...)` resolve a GitHub-style shortcode to an inline
+  and `ParagraphBuilder.inlineEmoji(...)` resolve a GitHub-style shortcode to an inline
   vector colour glyph. Resolution is lenient — an unknown shortcode (or no emoji
   set on the classpath) is rendered as the literal text, the way GitHub treats an
   unrecognised `:code:`. The resolver is the new `EmojiLibrary`

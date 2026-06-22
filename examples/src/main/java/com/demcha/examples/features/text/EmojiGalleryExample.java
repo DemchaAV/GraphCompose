@@ -59,7 +59,7 @@ public final class EmojiGalleryExample {
                 List<SvgIcon> chunk = glyphs.subList(start, Math.min(start + PER_PARAGRAPH, glyphs.size()));
                 flow.addParagraph(p -> {
                     for (SvgIcon icon : chunk) {
-                        p.svgIcon(icon, ICON_PT).inlineText("  ");
+                        p.inlineSvgIcon(icon, ICON_PT).inlineText("  ");
                     }
                 });
             }

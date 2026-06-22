@@ -188,9 +188,12 @@ class InlineHighlightRenderTest {
         }
         ParagraphTextSpan first = chipSpan(chipLines.get(0));
         ParagraphTextSpan continuation = chipSpan(chipLines.get(1));
+        ParagraphTextSpan last = chipSpan(chipLines.get(chipLines.size() - 1));
         assertThat(first.background().padding().left()).as("first fragment keeps the lead pad").isGreaterThan(0.0);
         assertThat(continuation.background().padding().left())
                 .as("continuation fragment is open on the inner edge (slice)").isEqualTo(0.0);
+        assertThat(last.background().padding().right()).as("final fragment keeps the trail pad (closed-right)")
+                .isGreaterThan(0.0);
     }
 
     @Test
@@ -252,6 +255,37 @@ class InlineHighlightRenderTest {
             }
         }
         return maxY < 0 ? 0 : maxY - minY;
+    }
+
+    @Test
+    void wrappedChipHasNoSoftWrapSeamSpaceAtAnyWidth() throws Exception {
+        // Across a sweep of column widths (so the break lands at many different
+        // points), no chip fragment may begin or end with a soft-wrap space: a
+        // fragment leads/trails with a space only where it carries the authored
+        // outer pad (leftPad/rightPad > 0). Guards both the leading and trailing
+        // seam-collapse.
+        String text = "alpha beta gamma delta epsilon zeta eta theta";
+        for (int width = 78; width <= 220; width += 6) {
+            int w = width;
+            List<ParagraphLine> lines;
+            try (DocumentSession session = GraphCompose.document().pageSize(w, 300).margin(10, 10, 10, 10).create()) {
+                session.dsl().pageFlow().name("Flow")
+                        .addParagraph(p -> p.inlineHighlight(text, MONO, FILL, 3.0, PAD)).build();
+                lines = paragraphLines(session.layoutGraph());
+            }
+            lines.stream()
+                    .flatMap(l -> l.spans().stream())
+                    .filter(s -> s instanceof ParagraphTextSpan ts && ts.background() != null)
+                    .map(ParagraphTextSpan.class::cast)
+                    .forEach(f -> {
+                        if (f.background().padding().left() == 0.0) {
+                            assertThat(f.text()).as("no leading soft-wrap space at width " + w).doesNotStartWith(" ");
+                        }
+                        if (f.background().padding().right() == 0.0) {
+                            assertThat(f.text()).as("no trailing soft-wrap space at width " + w).doesNotEndWith(" ");
+                        }
+                    });
+        }
     }
 
     @Test

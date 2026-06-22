@@ -1367,20 +1367,26 @@ public final class TextFlowSupport {
                     parts.add(part);
                     tokenIndex++;
                 }
-                // Collapse a soft-wrap space: when the run continues onto the next
-                // line the trailing whitespace token carries no trail pad, so drop it
-                // — the fill ends at the last visible glyph and the seam space stays
-                // out of line width. The run's authored trailing space keeps its trail
-                // pad and is preserved.
+                // Collapse a soft-wrap space at a wrap seam: a continuation fragment
+                // can begin or end with an inter-word space token (which carries no
+                // lead/trail pad). Drop those so the fill hugs the visible glyphs and
+                // the seam space stays out of line width. The run's AUTHORED outer
+                // spaces keep their pad (leadPad/trailPad > 0) and are preserved.
+                // tokenize() coalesces consecutive whitespace, so at most one token is
+                // trimmed per side; the guard keeps at least one token regardless.
+                int start = 0;
                 int end = parts.size();
-                while (end > 1 && parts.get(end - 1).text().isBlank() && parts.get(end - 1).trailPad() == 0.0) {
+                while (end - start > 1 && parts.get(end - 1).text().isBlank() && parts.get(end - 1).trailPad() == 0.0) {
                     end--;
                 }
-                double leftPad = parts.get(0).leadPad();
+                while (end - start > 1 && parts.get(start).text().isBlank() && parts.get(start).leadPad() == 0.0) {
+                    start++;
+                }
+                double leftPad = parts.get(start).leadPad();
                 double trailPad = parts.get(end - 1).trailPad();
                 double glyphs = 0.0;
                 StringBuilder chip = new StringBuilder();
-                for (int partIndex = 0; partIndex < end; partIndex++) {
+                for (int partIndex = start; partIndex < end; partIndex++) {
                     chip.append(parts.get(partIndex).text());
                     glyphs += parts.get(partIndex).width();
                 }

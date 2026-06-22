@@ -3,8 +3,12 @@ package com.demcha.compose.document.emoji;
 import com.demcha.compose.document.svg.SvgIcon;
 import org.junit.jupiter.api.Test;
 
+import org.junit.jupiter.api.io.TempDir;
+
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -68,6 +72,26 @@ class EmojiLibraryTest {
             assertThatThrownBy(() -> absent.require(":star:"))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("graph-compose-emoji");
+        }
+    }
+
+    @Test
+    void indexedGlyphThatCannotBeParsedResolvesEmptyAndRequireExplains(@TempDir Path classpathRoot) throws Exception {
+        // A set whose index points at a glyph the SVG parser rejects (here an svg
+        // with no drawable geometry). find() must stay lenient — empty, so callers
+        // fall back to literal text — and require()'s message must distinguish
+        // "indexed but unrenderable" from "unknown shortcode".
+        Path svgDir = Files.createDirectories(classpathRoot.resolve("emoji/svg"));
+        Files.writeString(classpathRoot.resolve("emoji/emoji-index.properties"), "broken=0bad1\n");
+        Files.writeString(svgDir.resolve("0bad1.svg"), "<svg viewBox='0 0 10 10'/>");
+        try (URLClassLoader loader = new URLClassLoader(new URL[]{classpathRoot.toUri().toURL()}, null)) {
+            EmojiLibrary lib = new EmojiLibrary(loader);
+
+            assertThat(lib.isAvailable()).isTrue();
+            assertThat(lib.find("broken")).isEmpty();
+            assertThatThrownBy(() -> lib.require("broken"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("could not be rendered");
         }
     }
 }

@@ -8,7 +8,7 @@ API, with copy-pasteable snippets verified against the current release.
 | Recipe | Covers |
 |---|---|
 | [charts.md](charts.md) | Native vector bar / line / area / pie-donut charts: data–spec–style layers, axis & grid toggles, point markers, value-label halos, legend placement, translucent area fills |
-| [rich-text.md](rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline shapes and checkboxes |
+| [rich-text.md](rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline SVG icons, emoji shortcodes, inline shapes and checkboxes |
 | [lists.md](lists.md) | `addList`: quick bulleted lists, marker customisation, nested lists with per-depth markers, spacing and styled items |
 | [timelines.md](timelines.md) | `addTimeline`: markers (dot / circle / numbered / square) on a connector rail, geometry and text-style controls, pagination opt-ins |
 | [keep-together.md](keep-together.md) | `keepTogether()` / `keepEntriesTogether()` — blocks that relocate whole instead of orphaning a heading at a page break |

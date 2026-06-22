@@ -19,7 +19,7 @@ authoring API; public application code should not import
 | [Layered page design](recipes/layered-page-design.md) | Choosing between page backgrounds, rows, layer stacks, and canvases |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
-| [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs, inline links/images/shapes, checkboxes |
+| [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs, inline links/images/shapes, SVG icons, emoji shortcodes, checkboxes |
 | [Lists](recipes/lists.md) | `addList`, marker customisation, nested lists with per-depth markers |
 | [Timelines](recipes/timelines.md) | `addTimeline`: markers on a connector rail, geometry and text-style controls |
 | [Barcodes](recipes/barcodes.md) | QR / Code 128 / EAN / UPC and friends, tinting, quiet zone |

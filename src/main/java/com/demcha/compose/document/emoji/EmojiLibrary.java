@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>The engine carries no emoji art and has no Maven dependency on the emoji
  * module — exactly like {@code DefaultFonts} and {@code graph-compose-fonts}.
  * This resolver is fully data-driven: any classpath providing that layout works,
- * so the small bundled starter set can be replaced wholesale by the full
- * jdecked/twemoji set with no code change.</p>
+ * so the bundled Noto Emoji set (SIL OFL 1.1) can be swapped for another emoji
+ * set by changing the classpath alone, with no code change.</p>
  *
  * <p>Resolution is lenient by design — {@link #find(String)} returns an empty
  * {@link Optional} for an unknown shortcode or when no emoji set is on the

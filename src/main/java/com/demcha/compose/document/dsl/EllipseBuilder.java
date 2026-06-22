@@ -158,6 +158,7 @@ public final class EllipseBuilder implements Transformable<EllipseBuilder> {
      *
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public EllipseBuilder linkTo(String anchor) {

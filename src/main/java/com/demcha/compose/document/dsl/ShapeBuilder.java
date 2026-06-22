@@ -192,6 +192,7 @@ public class ShapeBuilder implements Transformable<ShapeBuilder> {
      *
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ShapeBuilder linkTo(String anchor) {

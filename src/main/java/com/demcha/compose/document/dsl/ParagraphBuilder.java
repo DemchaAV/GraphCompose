@@ -188,6 +188,7 @@ public final class ParagraphBuilder {
      *
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder linkTo(String anchor) {
@@ -247,6 +248,7 @@ public final class ParagraphBuilder {
      * @param text   visible link text
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder inlineLinkTo(String text, String anchor) {
@@ -340,6 +342,7 @@ public final class ParagraphBuilder {
      * @param height    target height in points
      * @param anchor    target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData, double width, double height, String anchor) {
@@ -357,6 +360,7 @@ public final class ParagraphBuilder {
      * @param baselineOffset extra vertical shift in points; positive moves up
      * @param anchor         target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder inlineImageLinkTo(DocumentImageData imageData,
@@ -653,6 +657,7 @@ public final class ParagraphBuilder {
      * @param fill    fill color
      * @param anchor  target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder shapeLinkTo(ShapeOutline outline, DocumentColor fill, String anchor) {
@@ -671,6 +676,7 @@ public final class ParagraphBuilder {
      * @param baselineOffset extra vertical shift in points; positive moves up
      * @param anchor         target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public ParagraphBuilder shapeLinkTo(ShapeOutline outline,

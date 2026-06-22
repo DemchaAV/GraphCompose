@@ -271,6 +271,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
      *
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public LineBuilder linkTo(String anchor) {

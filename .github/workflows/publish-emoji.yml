@@ -1,0 +1,67 @@
+name: Publish emoji to Maven Central
+
+# Publishes the graph-compose-emoji companion artifact to Maven Central,
+# independently of the engine. The bundled Noto Emoji glyphs change rarely, so
+# they release on their OWN tag line (emoji-v*) — pushing an engine v* tag
+# never touches them, and re-publishing emoji does not require an engine
+# release. This mirrors publish-fonts.yml but targets emoji/pom.xml.
+#
+# Tagging: emoji-vX.Y.Z (e.g. emoji-v1.0.0). The emoji artifact carries its
+# own independent version (see emoji/pom.xml) — keep it in sync with the tag.
+#
+# Human prerequisites are identical to publish.yml (GPG key + Central token
+# secrets). See docs/contributing/release-process.md for the runbook.
+
+on:
+  push:
+    tags:
+      - 'emoji-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing emoji-v*-prefixed tag to (re-)publish'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-emoji:
+    name: Publish ${{ github.ref_name }} to Maven Central
+    runs-on: ubuntu-latest
+    # Only ship plain semver tags (emoji-vX.Y.Z) to Central; pre-release
+    # suffixes ship nowhere from here.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (!contains(github.ref, '-rc') && !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') && !contains(github.ref, '-snapshot'))
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+
+    steps:
+      - name: Check out repository at tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up Temurin JDK 17 with Central credentials and GPG key
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Publish emoji to Maven Central
+        # Activates the emoji module's release profile (sources + javadoc +
+        # gpg sign + central-publishing) and flips gpg.skip=false. Blocks
+        # until Sonatype's validator confirms validation.
+        run: ./mvnw -B -ntp -f emoji/pom.xml -P release -Dgpg.skip=false deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}

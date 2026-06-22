@@ -246,6 +246,7 @@ public final class BarcodeBuilder implements Transformable<BarcodeBuilder> {
      *
      * @param anchor target anchor name
      * @return this builder
+     * @throws IllegalArgumentException if {@code anchor} is blank
      * @since 1.9.0
      */
     public BarcodeBuilder linkTo(String anchor) {

@@ -98,6 +98,52 @@ relative to the surrounding line (`CENTER` by default); the full
 overload adds a `baselineOffset` and `DocumentLinkOptions` for a
 clickable inline image.
 
+## Inline SVG icons
+
+A parsed `SvgIcon` sits on the text baseline like a word, drawn as crisp
+vector layers that carry their own colours — so it renders independently
+of the active font's glyph coverage. `size` is the glyph height in points;
+the width follows the icon's aspect ratio.
+
+```java
+import com.demcha.compose.document.svg.SvgIcon;
+
+SvgIcon star = SvgIcon.parse(
+        "<svg viewBox='0 0 24 24'>"
+      + "  <path d='M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z' fill='#f5b301'/>"
+      + "</svg>");
+
+section.addRich(rich -> rich
+        .plain("Rated ")
+        .svgIcon(star, 11)
+        .plain(" by reviewers."));
+```
+
+On `ParagraphBuilder` the equivalent call is `inlineSvgIcon(icon, size)`;
+both take `alignment` / `baselineOffset` / link overloads and a clickable
+form via `DocumentLinkOptions`. `SvgIcon.parse(String)` reads inline SVG
+markup; `SvgIcon.read(Path)` loads it from a file.
+
+## Emoji / shortcodes
+
+`emoji(":code:")` resolves a GitHub-style shortcode to an inline colour
+glyph through `EmojiLibrary`. Resolution is lenient: an unknown shortcode —
+or no emoji set on the classpath — falls back to the literal text, the way
+GitHub renders an unrecognised `:code:`.
+
+```java
+section.addRich(rich -> rich
+        .plain("Deploy ")
+        .emoji(":white_check_mark:", 11)
+        .plain(" succeeded ")
+        .emoji(":rocket:", 11));
+```
+
+On `ParagraphBuilder` the call is `inlineEmoji(":code:", size)`. Glyphs ship
+in the optional, independently-versioned `graph-compose-emoji` companion
+artifact (Noto Emoji, SIL OFL 1.1) — add it to the classpath to resolve
+shortcodes; the engine itself carries no emoji art.
+
 ## Inline shapes and checkboxes
 
 Geometric figures drawn from geometry — not font glyphs — so they render

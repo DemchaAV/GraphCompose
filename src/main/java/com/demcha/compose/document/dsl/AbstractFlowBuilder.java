@@ -33,6 +33,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     private DocumentStroke stroke;
     private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     private DocumentBorders borders = DocumentBorders.NONE;
+    private DocumentBleed bleed = DocumentBleed.none();
 
     /**
      * Creates a base flow builder.
@@ -129,6 +130,41 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T margin(float top, float right, float bottom, float left) {
         return margin(new DocumentInsets(top, right, bottom, left));
+    }
+
+    /**
+     * Declares the page edges on which this flow bleeds past the page content
+     * margin to the trimmed physical page edge. The intent-revealing replacement
+     * for the hand-computed negative-margin idiom — the engine resolves the bleed
+     * against the active page margin at layout time.
+     *
+     * <p>Only the flow's background fill/border extends to the edge — its
+     * children stay inside the content margin, so text never runs off the page.
+     * Horizontal bleed widens the flow to the side edges; vertical bleed extends
+     * it toward the top/bottom edge and is meaningful for a flow already seated
+     * against that edge (e.g. a masthead band at the top of the page).</p>
+     *
+     * @param bleed edges to bleed, or {@code null}/{@link DocumentBleed#none()} to clear
+     * @return this builder
+     * @see #bleedToEdge(DocumentEdge...)
+     * @since 1.9.0
+     */
+    public T bleed(DocumentBleed bleed) {
+        this.bleed = bleed == null ? DocumentBleed.none() : bleed;
+        return self();
+    }
+
+    /**
+     * Shorthand for {@link #bleed(DocumentBleed)} with the given edges — e.g.
+     * {@code bleedToEdge(DocumentEdge.LEFT, DocumentEdge.RIGHT)} for a band that
+     * reaches both side edges.
+     *
+     * @param edges edges to bleed; no edges clears the bleed
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T bleedToEdge(DocumentEdge... edges) {
+        return bleed(DocumentBleed.of(edges));
     }
 
     /**
@@ -1081,6 +1117,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected DocumentBorders borders() {
         return borders;
+    }
+
+    protected DocumentBleed bleed() {
+        return bleed;
     }
 }
 

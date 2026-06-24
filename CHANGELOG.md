@@ -12,6 +12,16 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **Content bleed: `DocumentBleed` / `DocumentEdge`** (`@since 1.9.0`). Flow
+  builders gain `bleed(DocumentBleed)` and `bleedToEdge(DocumentEdge...)`, so a
+  section's background fill extends to the trimmed physical page edge on the
+  declared sides — a full-bleed masthead band or an edge-to-edge colour panel —
+  while the section's children stay inside the content margin (text never runs
+  off the page). It is the content-side twin of `PageBackgroundFill` and the
+  intent-revealing replacement for the hand-computed negative-margin idiom,
+  resolved against the active page margin at layout time. Nodes that do not bleed
+  render byte-identically to before.
+
 - **In-PDF navigation: anchors + internal links** (`@since 1.9.0`). Every flow
   and leaf builder gains `anchor(String)`, declaring a named destination at the
   element's top-left — `section.anchor("intro")`, `paragraph.anchor("fn-1")`, and

@@ -1,5 +1,6 @@
 package com.demcha.compose.document.node;
 
+import com.demcha.compose.document.style.DocumentBleed;
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.List;
@@ -69,6 +70,19 @@ public interface DocumentNode {
      */
     default boolean keepTogether() {
         return false;
+    }
+
+    /**
+     * Edges on which this node bleeds past the page content margin to the
+     * trimmed physical page edge. Default {@link DocumentBleed#none()} (normal
+     * in-margin placement), so nodes that do not opt in are placed exactly as
+     * before.
+     *
+     * @return the edges to bleed; never {@code null}
+     * @since 1.9.0
+     */
+    default DocumentBleed bleed() {
+        return DocumentBleed.none();
     }
 }
 

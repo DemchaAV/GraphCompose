@@ -5,6 +5,8 @@ import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PageBreakNode;
+import com.demcha.compose.document.style.DocumentBleed;
+import com.demcha.compose.document.style.DocumentEdge;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import org.slf4j.Logger;
@@ -391,6 +393,33 @@ public final class LayoutCompiler {
         advanceSpace(padding.bottom() + margin.bottom(), state);
         int endPage = state.pageIndex;
         double endPageBottomY = state.pageTop() - state.usedHeight + margin.bottom();
+
+        // Content bleed: the decoration box (fill/border) extends to the trimmed
+        // page edge on the declared edges, while children stay in the content
+        // region (so text never runs off the page). Byte-identical when the node
+        // does not bleed — every value below collapses to the in-margin geometry.
+        DocumentBleed bleed = node.bleed();
+        double decorX = placementX;
+        double decorWidth = naturalMeasure.width();
+        double decorTopY = placementTopY;
+        double decorBottomY = endPageBottomY;
+        if (bleed.any()) {
+            double pageWidth = state.canvas.width();
+            double pageHeight = state.canvas.height();
+            if (bleed.bleeds(DocumentEdge.LEFT)) {
+                decorWidth += decorX;
+                decorX = 0.0;
+            }
+            if (bleed.bleeds(DocumentEdge.RIGHT)) {
+                decorWidth = Math.max(0.0, pageWidth - decorX);
+            }
+            if (bleed.bleeds(DocumentEdge.TOP)) {
+                decorTopY = pageHeight;
+            }
+            if (bleed.bleeds(DocumentEdge.BOTTOM)) {
+                decorBottomY = 0.0;
+            }
+        }
         List<PlacedFragment> decorationFragments = compositeDecorationFragments(
                 prepared,
                 definition,
@@ -398,15 +427,16 @@ public final class LayoutCompiler {
                 parentPath,
                 childIndex,
                 depth,
-                placementX,
-                placementTopY,
-                endPageBottomY,
-                naturalMeasure.width(),
+                decorX,
+                decorTopY,
+                decorBottomY,
+                decorWidth,
                 startPage,
                 endPage,
                 margin,
                 padding,
                 state.canvas,
+                bleed,
                 fragmentContext);
         if (!decorationFragments.isEmpty()) {
             fragments.addAll(decorationInsertIndex, decorationFragments);
@@ -585,6 +615,7 @@ public final class LayoutCompiler {
                 margin,
                 padding,
                 state.canvas,
+                DocumentBleed.none(),
                 fragmentContext);
         if (!decorationFragments.isEmpty()) {
             fragments.addAll(decorationInsertIndex, decorationFragments);
@@ -701,6 +732,7 @@ public final class LayoutCompiler {
                 margin,
                 padding,
                 state.canvas,
+                DocumentBleed.none(),
                 fragmentContext);
         if (!decorationFragments.isEmpty()) {
             fragments.addAll(decorationInsertIndex, decorationFragments);
@@ -1212,6 +1244,7 @@ public final class LayoutCompiler {
                         margin,
                         padding,
                         canvas,
+                        DocumentBleed.none(),
                         fragmentContext);
                 if (!stackDecorations.isEmpty()) {
                     fragments.addAll(decorationInsertIndex, stackDecorations);
@@ -1306,6 +1339,7 @@ public final class LayoutCompiler {
                     margin,
                     padding,
                     canvas,
+                    DocumentBleed.none(),
                     fragmentContext);
             if (!decorationFragments.isEmpty()) {
                 fragments.addAll(decorationInsertIndex, decorationFragments);
@@ -1355,10 +1389,17 @@ public final class LayoutCompiler {
                                                               Margin margin,
                                                               Padding padding,
                                                               LayoutCanvas canvas,
+                                                              DocumentBleed bleed,
                                                               FragmentContext fragmentContext) {
         List<PlacedFragment> placed = new ArrayList<>();
-        double pageTopY = canvas.height() - canvas.margin().top();
-        double pageBottomY = canvas.margin().bottom();
+        // On bled edges the clamp bound is the physical page edge rather than the
+        // content-area edge, so the fill reaches past the top/bottom margin.
+        double pageTopY = bleed.bleeds(DocumentEdge.TOP)
+                ? canvas.height()
+                : canvas.height() - canvas.margin().top();
+        double pageBottomY = bleed.bleeds(DocumentEdge.BOTTOM)
+                ? 0.0
+                : canvas.margin().bottom();
 
         for (int pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
             double segmentTopY = pageIndex == startPage ? startPageTopY : pageTopY;

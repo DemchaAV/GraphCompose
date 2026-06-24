@@ -18,10 +18,6 @@ import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -146,15 +142,13 @@ public final class EmojiSvgVsPngExample {
     /** Renders the glyph alone through the engine, then rasterises that page to PNG bytes. */
     private static byte[] rasterise(SvgIcon icon) throws Exception {
         double box = 24.0;
-        byte[] glyphPdf;
         try (DocumentSession g = GraphCompose.document().pageSize(box, box).margin(0, 0, 0, 0).create()) {
             g.dsl().pageFlow().name("g")
                     .addParagraph(p -> p.inlineSvgIcon(icon, box).margin(DocumentInsets.zero()))
                     .build();
-            glyphPdf = g.toPdfBytes();
-        }
-        try (PDDocument doc = Loader.loadPDF(glyphPdf)) {
-            BufferedImage image = new PDFRenderer(doc).renderImageWithDPI(0, 96f, ImageType.ARGB);
+            // Rasterise the in-memory page directly (transparent ARGB) — no PDF
+            // byte round-trip.
+            BufferedImage image = g.toImage(0, 96, true);
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             ImageIO.write(image, "png", buffer);
             return buffer.toByteArray();

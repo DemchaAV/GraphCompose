@@ -1,5 +1,6 @@
 package com.demcha.compose.testing.visual;
 
+import com.demcha.compose.document.api.DocumentSession;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -145,8 +146,26 @@ public final class PdfVisualRegression {
     public void assertMatchesBaseline(String baselineName, byte[] pdfBytes) throws IOException {
         Objects.requireNonNull(baselineName, "baselineName");
         Objects.requireNonNull(pdfBytes, "pdfBytes");
+        assertMatchesBaseline(baselineName, renderPages(pdfBytes));
+    }
 
-        List<BufferedImage> rendered = renderPages(pdfBytes);
+    /**
+     * Renders {@code session} page by page (directly, without an intermediate PDF
+     * byte array) and compares each page against the stored baseline. Throws an
+     * {@link AssertionError} when any page differs beyond the configured budget.
+     *
+     * @param baselineName baseline base name (no extension, no page suffix)
+     * @param session      the document session to rasterize
+     * @throws IOException when reading or writing baseline files fails
+     * @since 1.9.0
+     */
+    public void assertMatchesBaseline(String baselineName, DocumentSession session) throws IOException {
+        Objects.requireNonNull(baselineName, "baselineName");
+        Objects.requireNonNull(session, "session");
+        assertMatchesBaseline(baselineName, renderPages(session));
+    }
+
+    private void assertMatchesBaseline(String baselineName, List<BufferedImage> rendered) throws IOException {
         Files.createDirectories(baselineRoot);
 
         if (approveMode()) {
@@ -204,6 +223,25 @@ public final class PdfVisualRegression {
             }
             return pages;
         }
+    }
+
+    /**
+     * Renders {@code session} directly into a list of one image per page, without
+     * the serialize-to-bytes-then-reparse round-trip of {@link #renderPages(byte[])}.
+     * The render scale is mapped to the {@link DocumentSession} DPI API as
+     * {@code round(scale * 72)}; for the default scale {@code 1.0} (and any scale
+     * that is a whole multiple of {@code 1/72}) this is pixel-identical to the
+     * byte-based path. For a fractional scale that does not divide evenly the DPI is
+     * rounded, so the two paths may differ by the rounding — keep {@code renderScale}
+     * an integer multiple of {@code 1/72} (e.g. 1.0, 2.0) when comparing the two.
+     *
+     * @param session the document session to rasterize
+     * @return list of page images at the configured render scale
+     * @since 1.9.0
+     */
+    public List<BufferedImage> renderPages(DocumentSession session) {
+        Objects.requireNonNull(session, "session");
+        return session.toImages(Math.round(renderScale * 72f));
     }
 
     private Path baselinePath(String baselineName, int pageIndex) {

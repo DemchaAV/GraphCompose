@@ -13,6 +13,7 @@ import com.demcha.compose.font.FontFamilyDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -170,6 +171,29 @@ final class DocumentRenderingFacade {
                     context.revision(),
                     ex.getClass().getSimpleName(),
                     ex);
+            throw ex;
+        }
+    }
+
+    List<BufferedImage> renderImages(int dpi, boolean transparent, int pageIndex) throws Exception {
+        context.ensureOpen();
+        context.ensureRenderable();
+        long startNanos = System.nanoTime();
+        LIFECYCLE_LOG.debug("document.images.start sessionId={} revision={} roots={} dpi={} transparent={} pageIndex={}",
+                context.sessionId(), context.revision(), context.rootCount(), dpi, transparent, pageIndex);
+        try {
+            List<BufferedImage> images = context.conveniencePdfBackend().renderToImages(
+                    context.layoutGraph(),
+                    new FixedLayoutRenderContext(context.canvas(), context.customFontFamilies(), null, null),
+                    dpi,
+                    transparent,
+                    pageIndex);
+            LIFECYCLE_LOG.debug("document.images.end sessionId={} revision={} pageCount={} durationMs={}",
+                    context.sessionId(), context.revision(), images.size(), elapsedMillis(startNanos));
+            return images;
+        } catch (Exception ex) {
+            LIFECYCLE_LOG.error("document.images.failed sessionId={} revision={} errorType={}",
+                    context.sessionId(), context.revision(), ex.getClass().getSimpleName(), ex);
             throw ex;
         }
     }

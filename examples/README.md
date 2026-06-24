@@ -75,6 +75,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Canvas layer (free placement)](#canvas-layer-v16) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
 | [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
 | [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
+| [Content bleed](#content-bleed) | `band.bleedToEdge(TOP, LEFT, RIGHT)` / `bleed(DocumentBleed.of(...))` — a section's fill reaches the trimmed page edge while its children stay in the content margin | [PDF](../assets/readme/examples/content-bleed.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BleedExample.java) |
 
 ### 📋 Templates recommended
 
@@ -414,6 +415,26 @@ flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
 
 [📄 View PDF](../assets/readme/examples/block-align.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java)
+
+### Content bleed
+
+A section's background fill normally stops at the page content margin.
+`bleed(DocumentBleed)` / `bleedToEdge(DocumentEdge...)` extends the fill to the
+trimmed physical page edge on the declared sides — a full-bleed masthead band or
+an edge-to-edge accent strip — while the section's children stay inside the
+content margin, so a heading never runs off the page. It is the content-side twin
+of `pageBackground(...)` and the intent-revealing replacement for the
+hand-computed negative-margin idiom.
+
+```java
+page.addSection(band -> band
+    .fillColor(ink)
+    .bleedToEdge(DocumentEdge.TOP, DocumentEdge.LEFT, DocumentEdge.RIGHT)
+    .addParagraph("Title"));            // title stays in the safe area
+```
+
+[📄 View PDF](../assets/readme/examples/content-bleed.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/BleedExample.java)
 
 ### Advanced tables
 

@@ -31,6 +31,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     private DocumentTransform transform = DocumentTransform.NONE;
     private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
     private DocumentLineCap lineCap = DocumentLineCap.BUTT;
+    private boolean fillWidth = false;
 
     /**
      * Creates a line builder.
@@ -260,6 +261,26 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     }
 
     /**
+     * Stretches a horizontal line to fill the width available where it is placed,
+     * instead of its fixed {@link #width(double)}. In a row column the line spans
+     * the whole slot; at flow level it spans the content width. This is the flex
+     * line behind a dot leader — pair it with {@code dashed(...)} (and
+     * {@code lineCap(ROUND)} for dots) so the leader runs from one column to the
+     * next without computing the gap width by hand.
+     *
+     * <p>Applies to horizontal lines only (the default geometry); on a vertical
+     * or diagonal line it is a no-op, since stretching the end point would change
+     * the line's slope.</p>
+     *
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LineBuilder fill() {
+        this.fillWidth = true;
+        return this;
+    }
+
+    /**
      * Attaches line-level external link metadata.
      *
      * @param linkOptions link metadata
@@ -382,7 +403,8 @@ public final class LineBuilder implements Transformable<LineBuilder> {
                 transform,
                 dashPattern,
                 anchor,
-                lineCap);
+                lineCap,
+                fillWidth);
     }
 
     private boolean isHorizontalLine() {

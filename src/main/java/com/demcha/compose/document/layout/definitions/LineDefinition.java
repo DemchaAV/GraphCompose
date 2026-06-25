@@ -29,9 +29,23 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
 
     @Override
     public PreparedNode<LineNode> prepare(LineNode node, PrepareContext ctx, BoxConstraints constraints) {
+        // A horizontal fill line claims the width available where it is placed (its
+        // row slot, or the content width) rather than its authored fixed width.
+        double outerWidth = isFill(node)
+                ? constraints.availableWidth()
+                : node.width() + node.padding().horizontal();
         return PreparedNode.leaf(node, new MeasureResult(
-                node.width() + node.padding().horizontal(),
+                outerWidth,
                 node.height() + node.padding().vertical()));
+    }
+
+    /**
+     * Fill applies only to horizontal lines — stretching the end point of a
+     * vertical or diagonal line would silently change its geometry, so fill is a
+     * no-op there.
+     */
+    private static boolean isFill(LineNode node) {
+        return node.fillWidth() && Math.abs(node.startY() - node.endY()) <= EPS;
     }
 
     @Override
@@ -49,6 +63,9 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
         if (width <= EPS && height <= EPS) {
             return List.of();
         }
+        // A fill line is stretched to its resolved box, so it ends at the box's
+        // right content edge instead of the authored endX.
+        double endX = isFill(node) ? width : node.endX();
         LayoutFragment leaf = new LayoutFragment(
                 placement.path(),
                 0,
@@ -60,7 +77,7 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
                         toStroke(node.stroke()),
                         node.startX(),
                         node.startY(),
-                        node.endX(),
+                        endX,
                         node.endY(),
                         node.linkTarget(),
                         node.bookmarkOptions(),

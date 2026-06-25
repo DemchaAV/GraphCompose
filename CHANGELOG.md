@@ -12,6 +12,13 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`LineBuilder.fill()`** (`@since 1.9.0`). A line stretches to the width
+  available where it is placed — its column inside a row, or the content width at
+  flow level — instead of its authored fixed width. Paired with a dotted stroke
+  (`dashed(0.1, 4).lineCap(ROUND)`) it is the flex leader behind a
+  table-of-contents row, drawn without measuring the gap by hand. A non-fill line
+  is unchanged, so existing line output stays byte-identical.
+
 - **Negative-margin handling** (`@since 1.9.0`). A negative **page** margin
   (`DocumentSession.margin(...)` or the builder's `margin(...)`) is now rejected
   with an `IllegalArgumentException` — it would make the content area larger than

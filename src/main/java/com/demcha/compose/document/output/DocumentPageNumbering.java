@@ -11,8 +11,8 @@ import lombok.Getter;
  * number shows on the first page. Attaches to a {@link DocumentHeaderFooter} via
  * {@code builder().numbering(...)}.
  *
- * <p>{@link #getStartAt()} is the value printed on the first counted page;
- * {@link #getCountFrom()} is the physical (1-based) page where counting begins —
+ * <p>{@code startAt} is the value printed on the first counted page;
+ * {@code countFrom} is the physical (1-based) page where counting begins —
  * pages before it are not counted. So {@code startAt=1, countFrom=3} prints the
  * first two pages without numbering and starts the body at {@code 1}. Under an
  * offset, {@code {pages}} expands to the <em>counted</em> total

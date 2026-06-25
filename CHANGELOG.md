@@ -19,7 +19,9 @@ PDF `GoTo` actions. External links are unchanged.
   `startAt` (printed value on the first counted page), `countFrom` (physical page
   where counting begins), `showOnFirstPage`, and a `DocumentPageNumberStyle`
   (`DECIMAL`, `LOWER_ROMAN`, `UPPER_ROMAN`, `LOWER_ALPHA`, `UPPER_ALPHA`) — e.g.
-  lower-roman front matter then arabic body, or no number on a cover page. Under
+  lower-roman or alphabetic numbering, an uncounted cover, or an offset/restarted
+  count (one style per zone; switching style mid-document — roman front matter then
+  arabic body — is a per-section concern). Under
   an offset, `{pages}` expands to the counted total
   (`startAt + (totalPages - countFrom)`), not the physical page count. The default
   (`DocumentPageNumbering.DEFAULT`) is decimal, no offset, shown on every page, so

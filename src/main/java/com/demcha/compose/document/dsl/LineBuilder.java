@@ -30,6 +30,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     private DocumentInsets margin = DocumentInsets.zero();
     private DocumentTransform transform = DocumentTransform.NONE;
     private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
+    private DocumentLineCap lineCap = DocumentLineCap.BUTT;
 
     /**
      * Creates a line builder.
@@ -243,6 +244,22 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     }
 
     /**
+     * Sets the line end-cap style. {@code null} keeps the PDF default
+     * ({@link DocumentLineCap#BUTT}). Pair {@code ROUND} with a short dash to
+     * draw a dotted line — e.g.
+     * {@code dashed(0.1, 4).lineCap(DocumentLineCap.ROUND)} renders round dots
+     * (a zero-length dash is rejected, so use a tiny on-segment).
+     *
+     * @param lineCap cap style, or {@code null} for the default
+     * @return this builder
+     * @since 1.9.0
+     */
+    public LineBuilder lineCap(DocumentLineCap lineCap) {
+        this.lineCap = lineCap == null ? DocumentLineCap.BUTT : lineCap;
+        return this;
+    }
+
+    /**
      * Attaches line-level external link metadata.
      *
      * @param linkOptions link metadata
@@ -364,7 +381,8 @@ public final class LineBuilder implements Transformable<LineBuilder> {
                 margin,
                 transform,
                 dashPattern,
-                anchor);
+                anchor,
+                lineCap);
     }
 
     private boolean isHorizontalLine() {

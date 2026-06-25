@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.options;
 
+import com.demcha.compose.document.output.DocumentPageNumbering;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +43,9 @@ public final class PdfHeaderFooterOptions {
     @Builder.Default
     private final float separatorThickness = 0.5f;
 
+    @Builder.Default
+    private final DocumentPageNumbering numbering = DocumentPageNumbering.DEFAULT;
+
     private PdfHeaderFooterOptions() {
         this.zone = PdfHeaderFooterZone.HEADER;
         this.height = 30f;
@@ -53,6 +57,7 @@ public final class PdfHeaderFooterOptions {
         this.showSeparator = false;
         this.separatorColor = new Color(200, 200, 200);
         this.separatorThickness = 0.5f;
+        this.numbering = DocumentPageNumbering.DEFAULT;
     }
 
     /**

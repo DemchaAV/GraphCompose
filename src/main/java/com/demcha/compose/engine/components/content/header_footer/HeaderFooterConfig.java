@@ -63,8 +63,62 @@ public final class HeaderFooterConfig implements Component {
     @Builder.Default
     private final float separatorThickness = 0.5f;
 
+    /** Printed value on the first counted page. */
+    @Builder.Default
+    private final int numberStartAt = 1;
+
+    /** Physical 1-based page where counting begins; earlier pages are uncounted. */
+    @Builder.Default
+    private final int numberCountFrom = 1;
+
+    /** Whether the number is shown on the first physical page. */
+    @Builder.Default
+    private final boolean numberShowOnFirstPage = true;
+
+    /** Numeral style for the rendered page number. */
+    @Builder.Default
+    private final PageNumberStyle numberStyle = PageNumberStyle.DECIMAL;
+
     /**
-     * Resolves placeholder tokens in the given text for a specific page.
+     * Resolves placeholder tokens in the given text for a specific page, honouring
+     * this zone's page-numbering offset/restart/style. {@code {page}} and
+     * {@code {pages}} use the counted value ({@code startAt + (physicalPage -
+     * countFrom)}); {@code {pages}} reports the counted total, not the physical
+     * page count. With the default numbering this yields exactly the same output
+     * as the static {@link #resolvePlaceholders(String, int, int)}.
+     *
+     * @param text         raw text with placeholders
+     * @param physicalPage 1-based physical page number
+     * @param totalPages   total number of physical pages
+     * @return resolved text
+     */
+    public String resolveTokens(String text, int physicalPage, int totalPages) {
+        if (text == null || text.isEmpty()) return text;
+        int counted = numberStartAt + (physicalPage - numberCountFrom);
+        int countedTotal = numberStartAt + (totalPages - numberCountFrom);
+        return text
+                .replace("{page}", numberStyle.format(counted))
+                .replace("{pages}", numberStyle.format(countedTotal))
+                .replace("{date}", java.time.LocalDate.now().toString());
+    }
+
+    /**
+     * Whether this zone's number should be rendered on the given physical page —
+     * false before {@code countFrom}, and false on page 1 when
+     * {@code showOnFirstPage} is off.
+     *
+     * @param physicalPage 1-based physical page number
+     * @return {@code true} if the zone renders on this page
+     */
+    public boolean appliesTo(int physicalPage) {
+        return physicalPage >= numberCountFrom && (numberShowOnFirstPage || physicalPage != 1);
+    }
+
+    /**
+     * Resolves placeholder tokens with decimal, no-offset numbering. Retained for
+     * binary compatibility (public since v1.7.0); production rendering uses the
+     * numbering-aware instance method {@link #resolveTokens(String, int, int)},
+     * which reproduces this output for the default numbering.
      *
      * @param text          raw text with placeholders
      * @param currentPage   1-based page number

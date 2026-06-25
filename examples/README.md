@@ -98,6 +98,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
+| [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
@@ -640,6 +641,28 @@ GraphCompose.document(outputFile)
 
 [📄 View PDF](../assets/readme/examples/pdf-chrome.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java)
+
+### Page numbering
+
+`DocumentHeaderFooter.builder().numbering(...)` controls how the `{page}` /
+`{pages}` footer tokens count: an offset (`startAt`), a restart point
+(`countFrom`), a style (`DECIMAL` / `LOWER_ROMAN` / `UPPER_ROMAN` / `LOWER_ALPHA`
+/ `UPPER_ALPHA`), and whether the number shows on the first page
+(`showOnFirstPage`). Under an offset, `{pages}` reports the counted total, not the
+physical page count. Here a cover is left uncounted and the body is lower-roman.
+
+```java
+session.chrome().footer(DocumentHeaderFooter.builder()
+    .centerText("{page} / {pages}")
+    .numbering(DocumentPageNumbering.builder()
+        .style(DocumentPageNumberStyle.LOWER_ROMAN)
+        .countFrom(2)            // physical page 1 (the cover) is uncounted
+        .build())
+    .build());
+```
+
+[📄 View PDF](../assets/readme/examples/page-numbering.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java)
 
 ---
 

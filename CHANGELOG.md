@@ -12,6 +12,21 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`DocumentPageNumbering` / `DocumentPageNumberStyle`** (`@since 1.9.0`). Header
+  and footer `{page}` / `{pages}` tokens can now offset, restart, restyle, and
+  suppress-on-first-page numbering per zone via
+  `DocumentHeaderFooter.builder().numbering(...)`. `DocumentPageNumbering` carries
+  `startAt` (printed value on the first counted page), `countFrom` (physical page
+  where counting begins), `showOnFirstPage`, and a `DocumentPageNumberStyle`
+  (`DECIMAL`, `LOWER_ROMAN`, `UPPER_ROMAN`, `LOWER_ALPHA`, `UPPER_ALPHA`) — e.g.
+  lower-roman or alphabetic numbering, an uncounted cover, or an offset/restarted
+  count (one style per zone; switching style mid-document — roman front matter then
+  arabic body — is a per-section concern). Under
+  an offset, `{pages}` expands to the counted total
+  (`startAt + (totalPages - countFrom)`), not the physical page count. The default
+  (`DocumentPageNumbering.DEFAULT`) is decimal, no offset, shown on every page, so
+  existing header/footer output is byte-identical.
+
 - **`LineBuilder.lineCap(DocumentLineCap)`** (`@since 1.9.0`). Lines gain the
   round / square end-caps `PathBuilder` already exposed. Pairing `ROUND` with a
   short dash draws a dotted line — `line.dashed(0.1, 4).lineCap(DocumentLineCap.ROUND)`

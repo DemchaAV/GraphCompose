@@ -106,6 +106,7 @@ public final class PdfOutputOptionsTranslator {
                 .showSeparator(entry.isShowSeparator())
                 .separatorColor(entry.getSeparatorColor() == null ? null : entry.getSeparatorColor().color())
                 .separatorThickness(entry.getSeparatorThickness())
+                .numbering(entry.getNumbering())
                 .build();
     }
 

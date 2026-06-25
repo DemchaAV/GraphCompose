@@ -93,6 +93,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
 | [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` + `SvgPath.parse(...)` — design shapes and imported SVG icons as native curves; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
 | [Line caps & dotted lines](#line-caps--dotted-lines) | `line.lineCap(ROUND)` — round / square caps for plain lines; `dashed(0.1, 4).lineCap(ROUND)` draws a dotted leader | [PDF](../assets/readme/examples/line-cap.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/LineCapExample.java) |
+| [Fill lines & dot leaders](#fill-lines--dot-leaders) | `line().fill()` — a line stretches to its row column or the content width; pair with `dashed(...).lineCap(ROUND)` for a dot leader drawn without measuring the gap | [PDF](../assets/readme/examples/line-fill.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/LineFillExample.java) |
 | [SVG icon gallery](#svg-icon-gallery) | 34 real-world multicolour svgrepo icons via `SvgIcon.parse` — up to 19 layers each, the whole set 156 KB of sources | [PDF](../assets/readme/examples/svg-icon-gallery.pdf) · [Source](src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
@@ -403,6 +404,23 @@ flow.addLine(l -> l.horizontal(w).stroke(stroke)
 
 [📄 View PDF](../assets/readme/examples/line-cap.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/shapes/LineCapExample.java)
+
+### Fill lines & dot leaders
+
+`LineBuilder.fill()` stretches a line to the width available where it is placed —
+the content width at flow level, or its column inside a row — instead of an
+authored fixed width. Paired with a dotted stroke it is the flex leader behind a
+table-of-contents row, drawn without measuring the gap by hand. A non-fill line
+keeps its fixed width, so existing line output stays byte-identical.
+
+```java
+flow.addRow(r -> r.weights(5, 1)
+    .addLine(l -> l.fill().stroke(s).dashed(0.1, 4).lineCap(DocumentLineCap.ROUND))  // leader fills its column
+    .addParagraph("p. 12"));
+```
+
+[📄 View PDF](../assets/readme/examples/line-fill.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/shapes/LineFillExample.java)
 
 ### SVG icon gallery
 

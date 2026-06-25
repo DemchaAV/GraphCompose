@@ -12,6 +12,15 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`DocumentSession.pageIndex()` + `PageIndex` / `PageReference`** (`@since 1.9.0`).
+  Resolves every declared `anchor(...)` to its final page in a single,
+  backend-neutral pass over the laid-out document — `pageNumberOf("intro")` for a
+  "see page N" cross-reference, `forAnchor(...)` for the full `PageReference`.
+  Computed from the resolved layout graph (not from rendered PDF bytes) and cached
+  per layout revision alongside `layoutSnapshot()`. The read-side foundation for
+  clickable tables of contents and cross-references. A duplicate anchor resolves to
+  its last registration — the same destination a `linkTo(anchor)` jumps to.
+
 - **`DocumentPageNumbering` / `DocumentPageNumberStyle`** (`@since 1.9.0`). Header
   and footer `{page}` / `{pages}` tokens can now offset, restart, restyle, and
   suppress-on-first-page numbering per zone via

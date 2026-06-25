@@ -27,6 +27,7 @@ import com.demcha.examples.features.text.InlineShapesExample;
 import com.demcha.examples.features.text.InlineSvgIconExample;
 import com.demcha.examples.features.text.InlineHighlightExample;
 import com.demcha.examples.features.navigation.InPdfNavigationExample;
+import com.demcha.examples.features.navigation.PageReferenceExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.themes.CustomBusinessThemeExample;
@@ -164,6 +165,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + RichTextShowcaseExample.generate());
         System.out.println("Generated: " + SectionPresetsExample.generate());
         System.out.println("Generated: " + InPdfNavigationExample.generate());
+        System.out.println("Generated: " + PageReferenceExample.generate());
 
         // Theming + chrome
         System.out.println("Generated: " + CustomBusinessThemeExample.generate());

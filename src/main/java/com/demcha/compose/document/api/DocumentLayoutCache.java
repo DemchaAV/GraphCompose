@@ -2,6 +2,7 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.PageIndex;
 
 import java.util.function.Supplier;
 
@@ -27,6 +28,8 @@ final class DocumentLayoutCache {
     private long cachedLayoutRevision = -1;
     private LayoutSnapshot cachedSnapshot;
     private long cachedSnapshotRevision = -1;
+    private PageIndex cachedPageIndex;
+    private long cachedPageIndexRevision = -1;
 
     DocumentLayoutCache() {
     }
@@ -47,6 +50,7 @@ final class DocumentLayoutCache {
         revision++;
         cachedLayout = null;
         cachedSnapshot = null;
+        cachedPageIndex = null;
     }
 
     /**
@@ -99,5 +103,30 @@ final class DocumentLayoutCache {
         cachedSnapshot = compute.get();
         cachedSnapshotRevision = revision;
         return cachedSnapshot;
+    }
+
+    /**
+     * Indicates whether the page-index cache still matches the current revision.
+     *
+     * @return {@code true} when the cached page index is still valid
+     */
+    boolean isPageIndexCached() {
+        return cachedPageIndex != null && cachedPageIndexRevision == revision;
+    }
+
+    /**
+     * Returns the cached page index or computes a fresh one through the supplied
+     * function and stores it for the current revision.
+     *
+     * @param compute lazy compute path used on cache miss
+     * @return cached or freshly computed page index
+     */
+    PageIndex pageIndex(Supplier<PageIndex> compute) {
+        if (isPageIndexCached()) {
+            return cachedPageIndex;
+        }
+        cachedPageIndex = compute.get();
+        cachedPageIndexRevision = revision;
+        return cachedPageIndex;
     }
 }

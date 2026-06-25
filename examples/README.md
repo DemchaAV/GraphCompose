@@ -99,6 +99,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
+| [Page references](#page-references) | `DocumentSession.pageIndex()` — resolve an `anchor(...)` to its page for a two-pass "see page N" cross-reference | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
@@ -663,6 +664,23 @@ session.chrome().footer(DocumentHeaderFooter.builder()
 
 [📄 View PDF](../assets/readme/examples/page-numbering.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java)
+
+### Page references
+
+`DocumentSession.pageIndex()` resolves every declared `anchor(...)` to its final
+page, so a document can print a real "see page N" cross-reference. It is a
+two-pass workflow — a throwaway first pass lays the document out and reads the
+anchor's page; the second renders the same document with the resolved number.
+Computed from the layout graph (not from rendered bytes), so it is backend-neutral
+and consistent with where a `linkTo(anchor)` jumps.
+
+```java
+int page = probe.pageIndex().pageNumberOf("appendix").orElse(0);
+// ... render again, printing "see page " + page
+```
+
+[📄 View PDF](../assets/readme/examples/page-reference.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java)
 
 ---
 

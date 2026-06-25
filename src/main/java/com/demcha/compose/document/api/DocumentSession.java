@@ -10,6 +10,7 @@ import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOption
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
+import com.demcha.compose.document.debug.snapshot.PageIndexExtractor;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.exceptions.DocumentRenderingException;
@@ -18,6 +19,7 @@ import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.output.*;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.PageIndex;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.font.FontFamilyDefinition;
@@ -759,6 +761,36 @@ public final class DocumentSession implements AutoCloseable {
         LIFECYCLE_LOG.debug("document.layoutSnapshot.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         LayoutSnapshot computed = layoutCache.snapshot(() -> LayoutGraphSnapshotExtractor.extract(layoutGraph()));
         LIFECYCLE_LOG.debug("document.layoutSnapshot.end sessionId={} revision={} roots={} pages={} durationMs={}", sessionId, revision, roots.size(), computed.totalPages(), elapsedMillis(startNanos));
+        return computed;
+    }
+
+    /**
+     * Resolves every declared {@code anchor(...)} to its final page in a single,
+     * backend-neutral pass over the laid-out document — the foundation for
+     * cross-references ("see page N") and clickable tables of contents.
+     *
+     * <p>Computed from the resolved layout graph (not from rendered output) and
+     * cached per layout revision alongside {@link #layoutSnapshot()}. A duplicate
+     * anchor resolves to its last registration, matching where a
+     * {@code linkTo(anchor)} jumps.</p>
+     *
+     * @return the resolved anchor-to-page index
+     * @throws IllegalStateException if this session has already been closed
+     * @since 1.9.0
+     */
+    public PageIndex pageIndex() {
+        ensureOpen();
+        long revision = layoutCache.revision();
+        if (layoutCache.isPageIndexCached()) {
+            PageIndex cached = layoutCache.pageIndex(() -> {
+                throw new IllegalStateException("PageIndex cache miss after isPageIndexCached() returned true.");
+            });
+            LIFECYCLE_LOG.debug("document.pageIndex.cache.hit sessionId={} revision={} roots={}", sessionId, revision, roots.size());
+            return cached;
+        }
+        long startNanos = System.nanoTime();
+        PageIndex computed = layoutCache.pageIndex(() -> PageIndexExtractor.from(layoutGraph()));
+        LIFECYCLE_LOG.debug("document.pageIndex.end sessionId={} revision={} roots={} anchors={} durationMs={}", sessionId, revision, roots.size(), computed.all().size(), elapsedMillis(startNanos));
         return computed;
     }
 

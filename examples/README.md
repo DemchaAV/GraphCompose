@@ -102,6 +102,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
+| [Table of contents](#table-of-contents) | `addTableOfContents(toc -> toc.entry(label, anchor))` — a native clickable TOC with dot leaders and auto-resolved page numbers | [PDF](../assets/readme/examples/table-of-contents.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/TocExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
@@ -721,6 +722,25 @@ flow.addRow(r -> r.columns(auto(), weight(1), auto())
 
 [📄 View PDF](../assets/readme/examples/page-reference.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java)
+
+### Table of contents
+
+`addTableOfContents(...)` builds a native, clickable table of contents from the
+page-reference primitive: each `entry(label, anchor)` becomes a row whose label
+links to the chapter, a dotted (or dashed) leader fills the gap, and the page
+number is resolved automatically from the laid-out document — no manual two-pass.
+The rows are added to the flow, so a long contents paginates naturally.
+
+```java
+flow.addTableOfContents(toc -> toc.title("Contents")
+    .leader(DocumentLeader.DOTS)
+    .entry("Introduction", "intro")
+    .entry("Appendix", "appendix"));
+// ... chapters declared with .anchor("intro"), .anchor("appendix"), ...
+```
+
+[📄 View PDF](../assets/readme/examples/table-of-contents.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/navigation/TocExample.java)
 
 ---
 

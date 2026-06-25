@@ -29,9 +29,9 @@ import java.util.stream.Stream;
  * <p>Each preset renders a fixed canonical {@link CvSpec} on full A4
  * with the preset's {@code RECOMMENDED_MARGIN}, the resulting PDF is
  * rasterized via PDFBox, and the per-pixel diff against a checked-in
- * baseline PNG is asserted to stay within the budget specified in
- * {@code docs/private/templates-restructure-plan.md} sec 6.2 (2500
- * mismatched pixels at per-channel tolerance 8). Re-run with
+ * baseline PNG is asserted to stay within the {@code PIXEL_DIFF_BUDGET}
+ * mismatched-pixel budget at {@code PER_PIXEL_TOLERANCE} per-channel
+ * colour tolerance. Re-run with
  * {@code -Dgraphcompose.visual.approve=true} to refresh the baselines
  * after a deliberate visual change.</p>
  *

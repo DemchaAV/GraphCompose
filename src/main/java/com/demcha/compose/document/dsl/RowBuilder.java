@@ -57,6 +57,10 @@ public final class RowBuilder {
                || child instanceof EllipseNode
                || child instanceof SpacerNode
                || child instanceof BarcodeNode
+               // PageReferenceNode is an atomic one-line text leaf (the page
+               // number of an anchor), so it slots into a row like a paragraph —
+               // it is the number column of a table-of-contents row.
+               || child instanceof PageReferenceNode
                || child instanceof SectionNode
                || child instanceof ContainerNode
                // ShapeContainerNode is the same shape of thing as
@@ -357,6 +361,34 @@ public final class RowBuilder {
      */
     public RowBuilder addLine(Consumer<LineBuilder> spec) {
         return add(BuilderSupport.configure(new LineBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a page reference that prints the page number of a named
+     * {@code anchor(...)} — the number column of a table-of-contents row, or the
+     * page in a "see page N" line. Resolved automatically from the laid-out
+     * document.
+     *
+     * @param anchor    the anchor whose page number is printed
+     * @param textStyle text style for the number
+     * @param align     horizontal alignment within the column
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder addPageReference(String anchor, DocumentTextStyle textStyle, TextAlign align) {
+        return add(new PageReferenceNode(anchor, textStyle, align));
+    }
+
+    /**
+     * Adds a page reference with the default text style, left-aligned (see
+     * {@link #addPageReference(String, DocumentTextStyle, TextAlign)}).
+     *
+     * @param anchor the anchor whose page number is printed
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder addPageReference(String anchor) {
+        return add(new PageReferenceNode(anchor, DocumentTextStyle.DEFAULT, TextAlign.LEFT));
     }
 
     /**

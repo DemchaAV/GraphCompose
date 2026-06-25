@@ -5,6 +5,7 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.font.FontLibrary;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  * Shared fragment emission context passed to node definitions.
@@ -67,6 +68,18 @@ public interface FragmentContext {
             FragmentPlacement placement) {
         throw new UnsupportedOperationException(
                 "FragmentContext implementation does not support child fragment emission");
+    }
+
+    /**
+     * Resolves the 1-based page number a named {@code anchor(...)} lands on, when
+     * the pass has page numbers available (the second pass of a page-reference /
+     * table-of-contents resolve). Empty on the first pass and for unknown anchors.
+     *
+     * @param anchor anchor name to resolve
+     * @return the 1-based page number, or empty when unresolved
+     */
+    default OptionalInt resolvedPage(String anchor) {
+        return OptionalInt.empty();
     }
 }
 

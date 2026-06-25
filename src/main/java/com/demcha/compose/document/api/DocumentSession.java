@@ -17,6 +17,7 @@ import com.demcha.compose.document.exceptions.DocumentRenderingException;
 import com.demcha.compose.document.layout.*;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.output.*;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.snapshot.PageIndex;
@@ -32,7 +33,9 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -62,6 +65,13 @@ import java.util.function.Consumer;
  */
 public final class DocumentSession implements AutoCloseable {
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
+
+    /**
+     * Cap on page-reference recompiles after the first resolve. A table of
+     * contents converges in one recompile; the cap bounds a pathological document
+     * whose numbers keep shifting pages, falling back to the last layout.
+     */
+    private static final int MAX_PAGE_REFERENCE_PASSES = 5;
 
     private final String sessionId = Integer.toHexString(System.identityHashCode(this));
     private final Path defaultOutputFile;
@@ -754,14 +764,64 @@ public final class DocumentSession implements AutoCloseable {
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.layout.start sessionId={} revision={} roots={}", sessionId, revision, roots.size());
         try {
-            DocumentLayoutPassContext context = new DocumentLayoutPassContext(registry, canvas, measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown);
-            LayoutGraph computed = layoutCache.layout(() -> DocumentPageBackgrounds.apply(compiler.compile(documentGraph(), context, context), pageBackgrounds));
+            LayoutGraph computed = layoutCache.layout(this::computeLayout);
             LIFECYCLE_LOG.debug("document.layout.end sessionId={} revision={} roots={} pages={} nodes={} fragments={} durationMs={}", sessionId, revision, roots.size(), computed.totalPages(), computed.nodes().size(), computed.fragments().size(), elapsedMillis(startNanos));
             return computed;
         } catch (RuntimeException ex) {
             LIFECYCLE_LOG.warn("document.layout.failed sessionId={} revision={} roots={} errorType={}", sessionId, revision, roots.size(), ex.getClass().getSimpleName());
             throw ex;
         }
+    }
+
+    /**
+     * Compiles the semantic graph for one layout revision. A document that
+     * contains a {@link PageReferenceNode} is compiled in two passes — the first
+     * resolves every anchor's page, the next renders the references with the
+     * resolved numbers — then re-resolved to a fixed point: if rendering the
+     * numbers shifted any anchor's page (a reference whose own width re-wrapped a
+     * neighbour and pushed content across a boundary), it recompiles with the new
+     * numbers until the pages stop moving, capped at {@link #MAX_PAGE_REFERENCE_PASSES}
+     * recompiles. All passes run inside the cache compute, so the result is cached
+     * once per revision. Documents without a page reference compile once and are
+     * byte-identical to before.
+     */
+    private LayoutGraph computeLayout() {
+        LayoutGraph graph = compilePass(Map.of());
+        if (!containsPageReference(roots)) {
+            return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
+        }
+        Map<String, Integer> resolved = resolvedPageNumbers(graph);
+        for (int pass = 0; pass < MAX_PAGE_REFERENCE_PASSES; pass++) {
+            graph = compilePass(resolved);
+            Map<String, Integer> rendered = resolvedPageNumbers(graph);
+            if (rendered.equals(resolved)) {
+                return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
+            }
+            resolved = rendered;
+        }
+        LIFECYCLE_LOG.debug("document.layout.pageReference.unconverged sessionId={} passes={}", sessionId, MAX_PAGE_REFERENCE_PASSES);
+        return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
+    }
+
+    private LayoutGraph compilePass(Map<String, Integer> resolvedPages) {
+        DocumentLayoutPassContext context = new DocumentLayoutPassContext(registry, canvas,
+                measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown, resolvedPages);
+        return compiler.compile(documentGraph(), context, context);
+    }
+
+    private static boolean containsPageReference(List<DocumentNode> nodes) {
+        for (DocumentNode node : nodes) {
+            if (node instanceof PageReferenceNode || containsPageReference(node.children())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, Integer> resolvedPageNumbers(LayoutGraph graph) {
+        Map<String, Integer> pages = new HashMap<>();
+        PageIndexExtractor.from(graph).all().forEach((anchor, reference) -> pages.put(anchor, reference.pageNumber()));
+        return pages;
     }
 
     /**

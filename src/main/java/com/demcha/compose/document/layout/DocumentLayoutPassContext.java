@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 
 /**
  * Internal context for one canonical document layout pass.
@@ -25,10 +26,12 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
     private final FontLibrary fontLibrary;
     private final TextMeasurementSystem textMeasurementSystem;
     private final boolean markdown;
+    private final Map<String, Integer> resolvedPages;
     private final Map<PreparedNodeCacheKey, PreparedNode<?>> preparedNodes = new HashMap<>();
 
     /**
-     * Creates a layout-pass context.
+     * Creates a layout-pass context with no resolved page numbers — the first
+     * pass, where page-reference nodes render their placeholder.
      *
      * @param registry              semantic node registry used for preparation
      * @param canvas                active layout canvas
@@ -41,11 +44,38 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
                                      FontLibrary fontLibrary,
                                      TextMeasurementSystem textMeasurementSystem,
                                      boolean markdown) {
+        this(registry, canvas, fontLibrary, textMeasurementSystem, markdown, Map.of());
+    }
+
+    /**
+     * Creates a layout-pass context carrying resolved anchor page numbers — the
+     * second pass of a page-reference / table-of-contents resolve.
+     *
+     * @param registry              semantic node registry used for preparation
+     * @param canvas                active layout canvas
+     * @param fontLibrary           document font library
+     * @param textMeasurementSystem text measurement service for this pass
+     * @param markdown              whether paragraph markdown parsing is enabled
+     * @param resolvedPages         anchor name to 1-based page number
+     */
+    public DocumentLayoutPassContext(NodeRegistry registry,
+                                     LayoutCanvas canvas,
+                                     FontLibrary fontLibrary,
+                                     TextMeasurementSystem textMeasurementSystem,
+                                     boolean markdown,
+                                     Map<String, Integer> resolvedPages) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.canvas = Objects.requireNonNull(canvas, "canvas");
         this.fontLibrary = Objects.requireNonNull(fontLibrary, "fontLibrary");
         this.textMeasurementSystem = Objects.requireNonNull(textMeasurementSystem, "textMeasurementSystem");
         this.markdown = markdown;
+        this.resolvedPages = resolvedPages == null ? Map.of() : Map.copyOf(resolvedPages);
+    }
+
+    @Override
+    public OptionalInt resolvedPage(String anchor) {
+        Integer page = anchor == null ? null : resolvedPages.get(anchor);
+        return page == null ? OptionalInt.empty() : OptionalInt.of(page);
     }
 
     @Override

@@ -1129,6 +1129,11 @@ class DocumentSessionTest {
         }
 
         @Override
+        public java.util.OptionalInt resolvedPage(String anchor) {
+            return java.util.OptionalInt.empty();
+        }
+
+        @Override
         public void close() throws Exception {
             measurementDocument.close();
         }

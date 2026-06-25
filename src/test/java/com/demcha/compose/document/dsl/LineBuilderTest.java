@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.style.DocumentDashPattern;
+import com.demcha.compose.document.style.DocumentLineCap;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,5 +46,27 @@ class LineBuilderTest {
     @Test
     void dashedRejectsInvalidPattern() {
         assertThatIllegalArgumentException().isThrownBy(() -> new LineBuilder().dashed(0));
+    }
+
+    @Test
+    void lineCapDefaultsToButt() {
+        LineNode node = new LineBuilder().horizontal(120).build();
+        assertThat(node.lineCap()).isEqualTo(DocumentLineCap.BUTT);
+    }
+
+    @Test
+    void lineCapCarriesIntoNode() {
+        LineNode node = new LineBuilder().horizontal(120).lineCap(DocumentLineCap.ROUND).build();
+        assertThat(node.lineCap()).isEqualTo(DocumentLineCap.ROUND);
+    }
+
+    @Test
+    void lineCapNullRestoresButt() {
+        LineNode node = new LineBuilder()
+                .horizontal(120)
+                .lineCap(DocumentLineCap.ROUND)
+                .lineCap(null)
+                .build();
+        assertThat(node.lineCap()).isEqualTo(DocumentLineCap.BUTT);
     }
 }

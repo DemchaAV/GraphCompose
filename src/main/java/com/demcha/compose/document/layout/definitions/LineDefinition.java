@@ -64,7 +64,8 @@ public final class LineDefinition implements NodeDefinition<LineNode> {
                         node.endY(),
                         node.linkTarget(),
                         node.bookmarkOptions(),
-                        node.dashPattern()));
+                        node.dashPattern(),
+                        node.lineCap()));
         return withAnchorMarker(
                 wrapAtomicWithTransform(leaf, placement, node.transform()),
                 node.anchor(),

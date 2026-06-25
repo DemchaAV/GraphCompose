@@ -12,6 +12,13 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`LineBuilder.lineCap(DocumentLineCap)`** (`@since 1.9.0`). Lines gain the
+  round / square end-caps `PathBuilder` already exposed. Pairing `ROUND` with a
+  short dash draws a dotted line — `line.dashed(0.1, 4).lineCap(DocumentLineCap.ROUND)`
+  renders round dots (the standard table-of-contents leader / separator style).
+  The `BUTT` default emits no cap operator, so existing line output is
+  byte-identical.
+
 - **Content bleed: `DocumentBleed` / `DocumentEdge`** (`@since 1.9.0`). Flow
   builders gain `bleed(DocumentBleed)` and `bleedToEdge(DocumentEdge...)`, so a
   section's background fill extends to the trimmed physical page edge on the

@@ -45,6 +45,7 @@ public final class PdfLineFragmentRenderHandler
             stream.setStrokingColor(stroke.strokeColor().color());
             stream.setLineWidth((float) stroke.width());
             PdfShapeGeometry.applyDashPattern(stream, payload.dashPattern());
+            PdfShapeGeometry.applyStrokeStyle(stream, payload.lineCap(), null);
             stream.moveTo((float) (fragment.x() + payload.startX()), (float) (fragment.y() + payload.startY()));
             stream.lineTo((float) (fragment.x() + payload.endX()), (float) (fragment.y() + payload.endY()));
             stream.stroke();

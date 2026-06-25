@@ -92,6 +92,7 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [Shape containers](#shape-containers) | Circles, ellipses, rounded cards with `ClipPolicy.CLIP_PATH` | [PDF](../assets/readme/examples/shape-container.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java) |
 | [Vector paths (Bézier)](#vector-paths-bézier) | `addPath(...)` + `SvgPath.parse(...)` — design shapes and imported SVG icons as native curves; zero tessellation | [PDF](../assets/readme/examples/vector-path.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java) |
+| [Line caps & dotted lines](#line-caps--dotted-lines) | `line.lineCap(ROUND)` — round / square caps for plain lines; `dashed(0.1, 4).lineCap(ROUND)` draws a dotted leader | [PDF](../assets/readme/examples/line-cap.pdf) · [Source](src/main/java/com/demcha/examples/features/shapes/LineCapExample.java) |
 | [SVG icon gallery](#svg-icon-gallery) | 34 real-world multicolour svgrepo icons via `SvgIcon.parse` — up to 19 layers each, the whole set 156 KB of sources | [PDF](../assets/readme/examples/svg-icon-gallery.pdf) · [Source](src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java) |
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
@@ -384,6 +385,22 @@ flow.addPath(path -> path
 
 [📄 View PDF](../assets/readme/examples/vector-path.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java)
+
+### Line caps & dotted lines
+
+`LineBuilder.lineCap(DocumentLineCap)` brings the round / square end-caps
+`PathBuilder` already had to plain lines. The headline use is a dotted line: a
+`ROUND` cap on a near-zero dash draws round dots — the classic table-of-contents
+leader / separator. The `BUTT` default emits no cap operator, so existing line
+output stays byte-identical.
+
+```java
+flow.addLine(l -> l.horizontal(w).stroke(stroke)
+    .dashed(0.1, 4).lineCap(DocumentLineCap.ROUND));   // round dots
+```
+
+[📄 View PDF](../assets/readme/examples/line-cap.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/shapes/LineCapExample.java)
 
 ### SVG icon gallery
 

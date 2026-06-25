@@ -133,7 +133,7 @@ class InlineHighlightRenderTest {
 
     @Test
     void multiWordChipStaysOneSpanAndCollapsesNewlines() throws Exception {
-        // PR-1 invariant: a chip is one atomic token — a multi-word chip is a
+        // Invariant: a chip is one atomic token — a multi-word chip is a
         // single span (not split per word), and an embedded newline collapses to
         // a space (unlike a plain text run, which would split into lines).
         List<ParagraphTextSpan> badge = textSpans(p -> p.inlineChip(" On hold ", DocumentColor.rgb(146, 64, 14), FILL));
@@ -151,7 +151,7 @@ class InlineHighlightRenderTest {
 
     @Test
     void overWideAtomicChipRendersWithoutThrowing() throws Exception {
-        // A chip wider than the column is emitted on its own line (PR-1 atomic);
+        // A chip wider than the column is emitted on its own line (atomic);
         // it must still render the text on one page without throwing.
         byte[] pdf;
         try (DocumentSession session = GraphCompose.document().pageSize(90, 140).margin(10, 10, 10, 10).create()) {

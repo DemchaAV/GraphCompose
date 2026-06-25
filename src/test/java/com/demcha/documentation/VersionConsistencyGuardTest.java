@@ -75,7 +75,7 @@ class VersionConsistencyGuardTest {
         // the sibling module's source), so the ${graphcompose.fonts.version}
         // property that pins the artifact lives only in the modules that consume
         // it: the aggregator (inherited by examples + benchmarks) and the bundle.
-        // This guards the PR-7.1 drift class: those must always agree, even
+        // This guards the version-literal drift class: those must always agree, even
         // though they differ from the engine version line.
         String aggregator = fontsVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"));
 

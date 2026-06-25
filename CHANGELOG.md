@@ -12,6 +12,15 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **Negative-margin handling** (`@since 1.9.0`). A negative **page** margin
+  (`DocumentSession.margin(...)` or the builder's `margin(...)`) is now rejected
+  with an `IllegalArgumentException` — it would make the content area larger than
+  the sheet, silently overflowing it; use a node's `bleed(...)` to reach the page
+  edge instead. Separately, a negative **node** bottom margin now pulls the
+  following content up — symmetric with a negative top margin, which was already
+  honoured (the vertical flow previously dropped it). Existing documents are
+  unaffected, since neither shape was usable before.
+
 - **`DocumentSession.pageIndex()` + `PageIndex` / `PageReference`** (`@since 1.9.0`).
   Resolves every declared `anchor(...)` to its final page in a single,
   backend-neutral pass over the laid-out document — `pageNumberOf("intro")` for a

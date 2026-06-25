@@ -100,7 +100,7 @@ public final class DocumentSession implements AutoCloseable {
                            boolean guideLines) {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.margin = margin == null ? DocumentInsets.zero() : margin;
+        this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         this.markdown = markdown;
         this.debug = DocumentDebugOptions.none().withGuides(guideLines);
@@ -297,14 +297,36 @@ public final class DocumentSession implements AutoCloseable {
      *
      * @param margin new canvas margin, or {@code null} to reset to zero
      * @return this session
-     * @throws IllegalStateException if this session has already been closed
+     * @throws IllegalStateException    if this session has already been closed
+     * @throws IllegalArgumentException if any margin component is negative — a
+     *                                  negative page margin overflows the sheet;
+     *                                  use a node's {@code bleed(...)} instead
      */
     public DocumentSession margin(DocumentInsets margin) {
         ensureOpen();
-        this.margin = margin == null ? DocumentInsets.zero() : margin;
+        this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
         this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
         invalidate();
         return this;
+    }
+
+    /**
+     * Rejects a negative page margin. Unlike a node margin (where a negative
+     * value is a valid overlap / inset trick), a negative page margin makes the
+     * content area larger than the page, so content silently overflows the sheet.
+     * To draw content past the page edge, use a node's {@code bleed(...)} instead.
+     *
+     * @param margin the requested page margin
+     * @return {@code margin} when every component is non-negative
+     * @throws IllegalArgumentException if any component is negative
+     */
+    private static DocumentInsets requireNonNegativePageMargin(DocumentInsets margin) {
+        if (margin.top() < 0 || margin.right() < 0 || margin.bottom() < 0 || margin.left() < 0) {
+            throw new IllegalArgumentException(
+                    "page margin must be non-negative: " + margin
+                    + " — use a node's bleed(...) to extend content past the page edge");
+        }
+        return margin;
     }
 
     /**

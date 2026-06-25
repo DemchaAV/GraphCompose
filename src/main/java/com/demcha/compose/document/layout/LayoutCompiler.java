@@ -390,7 +390,7 @@ public final class LayoutCompiler {
             }
         }
 
-        advanceSpace(padding.bottom() + margin.bottom(), state);
+        closeBottomSpace(padding.bottom() + margin.bottom(), state);
         int endPage = state.pageIndex;
         double endPageBottomY = state.pageTop() - state.usedHeight + margin.bottom();
 
@@ -1525,6 +1525,25 @@ public final class LayoutCompiler {
         }
         state.touchPage();
         state.usedHeight = Math.min(state.canvas.innerHeight(), state.usedHeight + amount);
+    }
+
+    /**
+     * Closes out a composite's bottom edge. A positive bottom inset advances the
+     * flow as usual; a NEGATIVE one (a negative bottom margin) pulls the following
+     * sibling up — symmetric with a negative top margin, which already offsets via
+     * {@code placementTopY}. The plain {@link #advanceSpace} drops a non-positive
+     * amount, so the closing edge needs this dedicated path. The top-of-node
+     * reservation deliberately stays on {@link #advanceSpace} so a negative top
+     * margin keeps its existing flow behaviour; only the closing edge gains the
+     * pull-up. The cursor never drops below the page top.
+     */
+    private void closeBottomSpace(double amount, CompilerState state) {
+        if (amount >= EPS) {
+            advanceSpace(amount, state);
+        } else if (amount <= -EPS) {
+            state.touchPage();
+            state.usedHeight = Math.max(0.0, state.usedHeight + amount);
+        }
     }
 
     private String pathFor(DocumentNode node, String parentPath, int childIndex) {

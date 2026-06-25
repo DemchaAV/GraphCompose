@@ -12,6 +12,15 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`RowBuilder.columns(...)` + `DocumentRowColumn`** (`@since 1.9.0`). Size each row
+  column explicitly: `DocumentRowColumn.fixed(pt)`, `auto()` (intrinsic content
+  width), or `weight(w)` (a share of the space left after the fixed and intrinsic
+  columns). Mix them freely — `columns(auto(), weight(1), auto())` with a
+  `line().fill()` in the middle is a dot-leader table-of-contents row, with the
+  label and page number sized to their content. `weights(...)` stays as sugar for
+  the even / weighted split (and a weight-only column list resolves identically),
+  so existing rows are byte-identical.
+
 - **`LineBuilder.fill()`** (`@since 1.9.0`). A line stretches to the width
   available where it is placed — its column inside a row, or the content width at
   flow level — instead of its authored fixed width. Paired with a dotted stroke

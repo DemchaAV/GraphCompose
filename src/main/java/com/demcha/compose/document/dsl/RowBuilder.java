@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 public final class RowBuilder {
     private final List<DocumentNode> children = new ArrayList<>();
     private final List<Double> weights = new ArrayList<>();
+    private final List<DocumentRowColumn> columns = new ArrayList<>();
     private String name = "";
     private boolean weightsDirty;
     private double gap;
@@ -186,6 +187,7 @@ public final class RowBuilder {
      */
     public RowBuilder weights(double... weights) {
         this.weights.clear();
+        this.columns.clear();
         if (weights != null) {
             for (double w : weights) {
                 this.weights.add(w);
@@ -202,7 +204,36 @@ public final class RowBuilder {
      */
     public RowBuilder evenWeights() {
         this.weights.clear();
+        this.columns.clear();
         this.weightsDirty = true;
+        return this;
+    }
+
+    /**
+     * Sizes each column explicitly: a fixed point width, an automatic
+     * (content-sized) width via {@link DocumentRowColumn#auto()}, or a weight that
+     * shares the leftover space. Mix them freely — a dot-leader row is
+     * {@code columns(auto(), weight(1), auto())} with a {@code line().fill()} in
+     * the middle. The count must match the children at {@link #build()}.
+     *
+     * <p>Fixed and auto columns are left-packed: add a {@code weight(...)} column
+     * to absorb the remainder, otherwise trailing space is left empty. Mutually
+     * exclusive with {@link #weights(double...)}; calling one clears the other. A
+     * weight-only column list resolves identically to {@code weights(...)}.</p>
+     *
+     * @param columns one width spec per row child
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder columns(DocumentRowColumn... columns) {
+        this.columns.clear();
+        this.weights.clear();
+        this.weightsDirty = false;
+        if (columns != null) {
+            for (DocumentRowColumn column : columns) {
+                this.columns.add(column);
+            }
+        }
         return this;
     }
 
@@ -409,7 +440,8 @@ public final class RowBuilder {
                 fillColor,
                 stroke,
                 cornerRadius,
-                borders);
+                borders,
+                List.copyOf(columns));
     }
 
     private void validate() {
@@ -417,6 +449,11 @@ public final class RowBuilder {
             throw new IllegalStateException("RowBuilder weights size " + weights.size()
                                             + " does not match children size " + children.size()
                                             + ". Pass " + children.size() + " weights or call evenWeights().");
+        }
+        if (!columns.isEmpty() && columns.size() != children.size()) {
+            throw new IllegalStateException("RowBuilder columns size " + columns.size()
+                                            + " does not match children size " + children.size()
+                                            + ". Pass " + children.size() + " columns.");
         }
     }
 }

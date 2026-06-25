@@ -76,6 +76,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
 | [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
 | [Content bleed](#content-bleed) | `band.bleedToEdge(TOP, LEFT, RIGHT)` / `bleed(DocumentBleed.of(...))` — a section's fill reaches the trimmed page edge while its children stay in the content margin | [PDF](../assets/readme/examples/content-bleed.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BleedExample.java) |
+| [Row columns & TOC](#row-columns--toc) | `row.columns(auto(), weight(1), auto())` — size columns by content / fixed points / weight; with `line().fill()` it builds a dot-leader table of contents | [PDF](../assets/readme/examples/row-columns.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java) |
 
 ### 📋 Templates recommended
 
@@ -472,6 +473,24 @@ page.addSection(band -> band
 
 [📄 View PDF](../assets/readme/examples/content-bleed.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/layout/BleedExample.java)
+
+### Row columns & TOC
+
+`RowBuilder.columns(...)` sizes each column as fixed points, intrinsic content
+width (`auto()`), or a `weight()` share of the remainder — `weights(...)` stays
+as sugar for the even / weighted split. Combined with `line().fill()` it builds a
+table-of-contents row without measuring the gap: the label and page number size
+to their content while the dotted leader fills between them.
+
+```java
+flow.addRow(r -> r.columns(auto(), weight(1), auto())
+    .addParagraph(label)
+    .addLine(l -> l.fill().dashed(0.1, 4).lineCap(DocumentLineCap.ROUND))  // leader fills the gap
+    .addParagraph(pageNumber));
+```
+
+[📄 View PDF](../assets/readme/examples/row-columns.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java)
 
 ### Advanced tables
 

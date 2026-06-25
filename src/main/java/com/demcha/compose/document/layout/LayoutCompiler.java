@@ -5,8 +5,10 @@ import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PageBreakNode;
+import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.style.DocumentBleed;
 import com.demcha.compose.document.style.DocumentEdge;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import org.slf4j.Logger;
@@ -506,8 +508,16 @@ public final class LayoutCompiler {
         double rowInnerY = placementTopY - padding.top();
 
         if (!children.isEmpty()) {
-            double[] slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
-                    layoutSpec.spacing(), childRegionWidth);
+            List<DocumentRowColumn> columns = node instanceof RowNode row ? row.columns() : List.of();
+            double[] slotWidths;
+            if (!columns.isEmpty()) {
+                double available = RowSlots.rowAvailableWidth(childRegionWidth, layoutSpec.spacing(), children.size());
+                double[] intrinsic = RowSlots.intrinsicColumnWidths(children, columns, available, prepareContext);
+                slotWidths = RowSlots.distributeColumns(columns, intrinsic, layoutSpec.spacing(), childRegionWidth, semanticName);
+            } else {
+                slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
+                        layoutSpec.spacing(), childRegionWidth);
+            }
             double cursorX = placementX + padding.left();
 
             for (int index = 0; index < children.size(); index++) {

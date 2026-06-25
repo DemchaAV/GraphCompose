@@ -4,6 +4,8 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.font.FontLibrary;
 
+import java.util.OptionalInt;
+
 /**
  * Shared prepare context passed to node definitions.
  */
@@ -46,6 +48,19 @@ public interface PrepareContext {
      */
     default boolean markdownEnabled() {
         return false;
+    }
+
+    /**
+     * Resolves the 1-based page number a named {@code anchor(...)} lands on, when
+     * the pass has page numbers available (the second pass of a page-reference /
+     * table-of-contents resolve). Empty on the first pass and for unknown anchors,
+     * so a page-reference node renders a placeholder until it is resolved.
+     *
+     * @param anchor anchor name to resolve
+     * @return the 1-based page number, or empty when unresolved
+     */
+    default OptionalInt resolvedPage(String anchor) {
+        return OptionalInt.empty();
     }
 }
 

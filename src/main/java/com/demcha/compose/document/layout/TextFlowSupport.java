@@ -57,6 +57,20 @@ public final class TextFlowSupport {
     }
 
     /**
+     * Measures the glyph width of a single text string in a document text style —
+     * the content width, not a full-block paragraph width. Used by leaves that
+     * size themselves to a short string (e.g. a page-reference number).
+     *
+     * @param style       document text style
+     * @param text        text to measure
+     * @param measurement text measurement service
+     * @return the measured glyph width in points
+     */
+    public static double measureTextWidth(DocumentTextStyle style, String text, TextMeasurementSystem measurement) {
+        return measurement.textWidth(toTextStyle(style), text);
+    }
+
+    /**
      * Measures a paragraph node and wraps it into a prepared leaf carrying its
      * visual line layout.
      *

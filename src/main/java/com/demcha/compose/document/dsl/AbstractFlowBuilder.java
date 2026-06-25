@@ -7,6 +7,8 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.PageReferenceNode;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 
 import java.awt.*;
@@ -956,6 +958,33 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T addSection(String name, Consumer<SectionBuilder> spec) {
         return add(BuilderSupport.configure(new SectionBuilder().name(name), spec).build());
+    }
+
+    /**
+     * Adds a page reference that prints the page number a named {@code anchor(...)}
+     * lands on — the "see page N" cross-reference. The number is resolved from the
+     * laid-out document automatically (a second layout pass), so no manual
+     * probe-then-render is needed. Uses the default text style, left-aligned.
+     *
+     * @param anchor the anchor whose page number is printed
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T addPageReference(String anchor) {
+        return add(new PageReferenceNode(anchor, DocumentTextStyle.DEFAULT, TextAlign.LEFT));
+    }
+
+    /**
+     * Adds a styled page reference (see {@link #addPageReference(String)}).
+     *
+     * @param anchor    the anchor whose page number is printed
+     * @param textStyle text style for the number
+     * @param align     horizontal alignment within the node box
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T addPageReference(String anchor, DocumentTextStyle textStyle, TextAlign align) {
+        return add(new PageReferenceNode(anchor, textStyle, align));
     }
 
     /**

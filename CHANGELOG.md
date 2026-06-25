@@ -12,6 +12,17 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`addPageReference(anchor)` + `PageReferenceNode`** (`@since 1.9.0`). Prints the
+  page a declared `anchor(...)` lands on — a native "see page N" cross-reference —
+  in a single authoring pass. A document that contains a page reference is laid
+  out twice: the first pass resolves every anchor's page, the second renders the
+  references with the resolved numbers; the reference reserves only its content
+  width in both passes, so its own footprint does not shift the pages it reports.
+  Available on flows (`addPageReference(anchor)`) and inside rows (the number
+  column of a table-of-contents row). Documents without a page reference are
+  unaffected (single pass, byte-identical). `pageIndex()` remains for programmatic
+  access.
+
 - **`RowBuilder.columns(...)` + `DocumentRowColumn`** (`@since 1.9.0`). Size each row
   column explicitly: `DocumentRowColumn.fixed(pt)`, `auto()` (intrinsic content
   width), or `weight(w)` (a share of the space left after the fixed and intrinsic

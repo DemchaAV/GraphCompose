@@ -1199,6 +1199,24 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Captures this session as one section of a {@link MultiSectionDocument}: its
+     * resolved layout graph, page geometry, custom fonts, and chrome (header /
+     * footer / watermark / metadata). Package-private — used only by
+     * {@link MultiSectionDocument} to concatenate sessions into one PDF.
+     *
+     * @return a render unit for this section
+     */
+    com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend.Section toSectionRenderUnit() {
+        ensureOpen();
+        ensureRenderable();
+        return new com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend.Section(
+                layoutGraph(),
+                canvas,
+                List.copyOf(customFontFamilies),
+                chromeOptions.toConveniencePdfBackend(debug));
+    }
+
+    /**
      * Inner adapter exposing session-private state to {@link DocumentRenderingFacade}
      * without making the corresponding session methods public.
      */

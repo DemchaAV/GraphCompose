@@ -41,9 +41,28 @@ public final class PdfWatermarkRenderer {
      * @throws IOException if writing to the content stream fails
      */
     public static void apply(PDDocument doc, WatermarkConfig config) throws IOException {
+        if (doc == null) return;
+        apply(doc, config, 0, doc.getNumberOfPages());
+    }
+
+    /**
+     * Applies the given watermark configuration to one contiguous window of
+     * pages. This is the multi-section entry point: each section's watermark is
+     * confined to that section's pages, which can have a different page size from
+     * the rest of the combined document.
+     *
+     * @param doc              the target PDF document
+     * @param config           the watermark configuration
+     * @param basePageOffset   zero-based index of the window's first page
+     * @param sectionPageCount number of pages in the window
+     * @throws IOException if writing to the content stream fails
+     */
+    public static void apply(PDDocument doc, WatermarkConfig config, int basePageOffset, int sectionPageCount)
+            throws IOException {
         if (config == null) return;
 
-        for (int i = 0; i < doc.getNumberOfPages(); i++) {
+        for (int local = 0; local < sectionPageCount; local++) {
+            int i = basePageOffset + local;
             PDPage page = doc.getPage(i);
             PDRectangle mediaBox = page.getMediaBox();
 

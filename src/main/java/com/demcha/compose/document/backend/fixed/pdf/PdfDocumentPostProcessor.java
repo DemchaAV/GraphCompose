@@ -64,29 +64,93 @@ public final class PdfDocumentPostProcessor {
         }
 
         if (metadataOptions != null) {
-            PDDocumentInformation info = document.getDocumentInformation();
-            if (metadataOptions.getTitle() != null) {
-                info.setTitle(metadataOptions.getTitle());
-            }
-            if (metadataOptions.getAuthor() != null) {
-                info.setAuthor(metadataOptions.getAuthor());
-            }
-            if (metadataOptions.getSubject() != null) {
-                info.setSubject(metadataOptions.getSubject());
-            }
-            if (metadataOptions.getKeywords() != null) {
-                info.setKeywords(metadataOptions.getKeywords());
-            }
-            if (metadataOptions.getCreator() != null) {
-                info.setCreator(metadataOptions.getCreator());
-            }
-            if (metadataOptions.getProducer() != null) {
-                info.setProducer(metadataOptions.getProducer());
-            }
+            applyMetadata(document, metadataOptions);
         }
 
         if (protectionOptions != null) {
             applyProtection(document, protectionOptions);
+        }
+    }
+
+    /**
+     * Applies the per-section visible chrome — watermark and repeating
+     * header/footer — to one contiguous window of pages in a combined
+     * multi-section document, numbering each section from its own first page.
+     *
+     * <p>Metadata and protection are document-global in PDF and are NOT applied
+     * here; see {@link #applyDocumentMetadataAndProtection}.</p>
+     *
+     * @param document            target combined PDFBox document
+     * @param canvas              section layout canvas used to derive content margins
+     * @param watermarkOptions    section watermark options, or {@code null}
+     * @param headerFooterOptions section repeating header/footer options
+     * @param basePageOffset      zero-based index of the section's first page
+     * @param sectionPageCount    number of pages in the section
+     * @throws IOException if PDFBox post-processing fails
+     */
+    public static void applySectionChrome(PDDocument document,
+                                          LayoutCanvas canvas,
+                                          PdfWatermarkOptions watermarkOptions,
+                                          Collection<PdfHeaderFooterOptions> headerFooterOptions,
+                                          int basePageOffset,
+                                          int sectionPageCount) throws IOException {
+        if (watermarkOptions != null) {
+            PdfWatermarkRenderer.apply(
+                    document, PdfOptionsAdapter.toEngine(watermarkOptions), basePageOffset, sectionPageCount);
+        }
+
+        if (headerFooterOptions != null && !headerFooterOptions.isEmpty()) {
+            Margin canvasMargin = canvas.margin();
+            float marginLeft = canvasMargin != null ? (float) canvasMargin.left() : 24f;
+            float marginRight = canvasMargin != null ? (float) canvasMargin.right() : 24f;
+            List<com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig> configs =
+                    headerFooterOptions.stream()
+                            .map(PdfOptionsAdapter::toEngine)
+                            .toList();
+            PdfHeaderFooterRenderer.apply(document, configs, marginLeft, marginRight, basePageOffset, sectionPageCount);
+        }
+    }
+
+    /**
+     * Applies document-global metadata and protection to a combined document.
+     * Unlike watermark and header/footer, these cannot be scoped per section, so
+     * a multi-section document applies them once.
+     *
+     * @param document          target PDFBox document
+     * @param metadataOptions   metadata options, or {@code null}
+     * @param protectionOptions protection options, or {@code null}
+     * @throws IOException if PDFBox post-processing fails
+     */
+    public static void applyDocumentMetadataAndProtection(PDDocument document,
+                                                          PdfMetadataOptions metadataOptions,
+                                                          PdfProtectionOptions protectionOptions) throws IOException {
+        if (metadataOptions != null) {
+            applyMetadata(document, metadataOptions);
+        }
+        if (protectionOptions != null) {
+            applyProtection(document, protectionOptions);
+        }
+    }
+
+    private static void applyMetadata(PDDocument document, PdfMetadataOptions metadataOptions) {
+        PDDocumentInformation info = document.getDocumentInformation();
+        if (metadataOptions.getTitle() != null) {
+            info.setTitle(metadataOptions.getTitle());
+        }
+        if (metadataOptions.getAuthor() != null) {
+            info.setAuthor(metadataOptions.getAuthor());
+        }
+        if (metadataOptions.getSubject() != null) {
+            info.setSubject(metadataOptions.getSubject());
+        }
+        if (metadataOptions.getKeywords() != null) {
+            info.setKeywords(metadataOptions.getKeywords());
+        }
+        if (metadataOptions.getCreator() != null) {
+            info.setCreator(metadataOptions.getCreator());
+        }
+        if (metadataOptions.getProducer() != null) {
+            info.setProducer(metadataOptions.getProducer());
         }
     }
 

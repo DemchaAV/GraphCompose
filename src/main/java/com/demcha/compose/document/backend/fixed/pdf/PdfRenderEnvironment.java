@@ -33,15 +33,36 @@ public final class PdfRenderEnvironment {
     private final PDDocument document;
     private final FontLibrary fonts;
     private final PdfRenderSession session;
+    private final int pageIndexOffset;
     private final Map<String, PDImageXObject> imageCache = new HashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
 
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session) {
+        this(document, fonts, session, 0);
+    }
+
+    /**
+     * Creates an environment whose recorded anchors, links, and bookmarks are
+     * stamped with a page index shifted by {@code pageIndexOffset}.
+     *
+     * <p>Drawing stays local: {@link #pageSurface(int)} indexes the section's own
+     * page list (offset {@code 0}). Only the destinations that resolve against the
+     * combined document — anchors, deferred links, and bookmarks — are rebased by
+     * the offset, so a section appended at page {@code N} navigates correctly. A
+     * single-section render uses offset {@code 0} and is unaffected.</p>
+     *
+     * @param document        live combined document
+     * @param fonts           shared font library
+     * @param session         page-scoped drawing surface for this section
+     * @param pageIndexOffset number of pages already placed before this section
+     */
+    PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session, int pageIndexOffset) {
         this.document = document;
         this.fonts = fonts;
         this.session = session;
+        this.pageIndexOffset = pageIndexOffset;
     }
 
     /**
@@ -74,6 +95,19 @@ public final class PdfRenderEnvironment {
     }
 
     /**
+     * Resolves a section-local page index to the physical page in the combined
+     * document, applying the section's page-index offset. Used by link
+     * annotations, which attach to the document page rather than the section's
+     * drawing surface.
+     *
+     * @param localPageIndex zero-based page index within the current section
+     * @return the physical page in the combined document
+     */
+    public org.apache.pdfbox.pdmodel.PDPage documentPage(int localPageIndex) {
+        return document.getPage(localPageIndex + pageIndexOffset);
+    }
+
+    /**
      * Resolves an image XObject through the render-pass image cache.
      *
      * @param imageData semantic image payload
@@ -97,7 +131,7 @@ public final class PdfRenderEnvironment {
         bookmarkRecords.add(new BookmarkRecord(
                 bookmarkOptions.title(),
                 bookmarkOptions.level(),
-                fragment.pageIndex(),
+                fragment.pageIndex() + pageIndexOffset,
                 fragment.y() + fragment.height()));
     }
 
@@ -118,7 +152,7 @@ public final class PdfRenderEnvironment {
             return;
         }
         AnchorDestination destination = new AnchorDestination(
-                fragment.pageIndex(),
+                fragment.pageIndex() + pageIndexOffset,
                 fragment.x(),
                 fragment.y() + fragment.height());
         AnchorDestination previous = anchorDestinations.put(anchor, destination);
@@ -136,7 +170,7 @@ public final class PdfRenderEnvironment {
      * @param anchor    target anchor name
      */
     void deferInternalLink(int pageIndex, PdfLinkAnnotationWriter.PlacedPdfRect rectangle, String anchor) {
-        deferredInternalLinks.add(new DeferredInternalLink(pageIndex, rectangle, anchor));
+        deferredInternalLinks.add(new DeferredInternalLink(pageIndex + pageIndexOffset, rectangle, anchor));
     }
 
     Map<String, AnchorDestination> anchorDestinations() {

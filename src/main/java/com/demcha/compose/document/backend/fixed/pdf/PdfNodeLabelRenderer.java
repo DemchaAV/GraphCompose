@@ -70,7 +70,10 @@ final class PdfNodeLabelRenderer {
         PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         for (Map.Entry<Integer, TreeMap<String, PdfGuideLinesRenderer.Bounds>> page : byPage.entrySet()) {
             int pageIndex = page.getKey();
-            PDRectangle mediaBox = environment.document().getPage(pageIndex).getMediaBox();
+            // Resolve the section-local index to the physical combined-document page
+            // so the MediaBox matches the page the label draws on (identity for a
+            // single section; offset for a later section in a multi-section document).
+            PDRectangle mediaBox = environment.documentPage(pageIndex).getMediaBox();
             PDPageContentStream stream = environment.pageSurface(pageIndex);
             for (Map.Entry<String, PdfGuideLinesRenderer.Bounds> label : page.getValue().entrySet()) {
                 draw(stream, font, mediaBox, label.getKey(), label.getValue(), labelText);

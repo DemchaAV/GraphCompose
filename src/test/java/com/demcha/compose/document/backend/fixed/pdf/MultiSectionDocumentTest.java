@@ -3,11 +3,17 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.MultiSectionDocument;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
+import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentPageNumbering;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentPaint;
+import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
@@ -54,7 +60,7 @@ class MultiSectionDocumentTest {
                 .pageSize(240, 360)
                 .margin(DocumentInsets.of(24))
                 .create();
-        body.footer(PdfHeaderFooterOptions.builder().centerText("Page {page} of {pages}").build());
+        body.footer(DocumentHeaderFooter.builder().centerText("Page {page} of {pages}").build());
         body.pageFlow(page -> {
             page.addSection(s -> s.anchor("intro").addParagraph("Introduction"));
             page.addPageBreak(b -> b.name("body-break"));
@@ -202,5 +208,134 @@ class MultiSectionDocumentTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> GraphCompose.documents().create())
                 .withMessageContaining("at least one section");
+    }
+
+    @Test
+    void gradientStrokeInALaterSectionRegistersOnItsOwnPage() throws Exception {
+        Path out = tempDir.resolve("gradient-section.pdf");
+        DocumentColor a = DocumentColor.rgb(167, 139, 250);
+        DocumentColor b = DocumentColor.rgb(97, 40, 217);
+        DocumentPaint axis = new DocumentPaint.LinearAxis(
+                List.of(new DocumentPaint.Stop(0.0, a), new DocumentPaint.Stop(1.0, b)), 0.0, 0.0, 1.0, 1.0);
+
+        DocumentSession cover = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+
+        DocumentSession body = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        body.pageFlow().name("Flow").addPath(p -> p.size(120, 60)
+                .moveTo(0, 0.5).curveTo(0.25, 1, 0.75, 0, 1, 0.5)
+                .stroke(DocumentStroke.of(a, 3))
+                .strokePaint(axis)).build();
+
+        try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
+            doc.buildPdf();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(out.toFile())) {
+            // The gradient stroke is on the BODY (section 2, page index 1). Its shading
+            // pattern must register on the body's own page resources, not the cover's.
+            assertThat(patternCount(pdf, 1)).isEqualTo(1);
+            assertThat(patternCount(pdf, 0)).isZero();
+        }
+    }
+
+    @Test
+    void internalLinkSourceInALaterSectionLandsOnItsGlobalPage() throws Exception {
+        Path out = tempDir.resolve("backward-link.pdf");
+        DocumentSession cover = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        cover.pageFlow(page -> page.addSection(s -> s.anchor("home").addParagraph("Home")));
+
+        DocumentSession middle = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        middle.pageFlow(page -> page.addParagraph("Middle"));
+
+        DocumentSession last = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        last.pageFlow(page -> page.addParagraph(p -> p.text("Back to home").linkTo("home")));
+
+        try (MultiSectionDocument doc = GraphCompose.documents(out)
+                .section(cover).section(middle).section(last).create()) {
+            doc.buildPdf();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(out.toFile())) {
+            assertThat(pdf.getNumberOfPages()).isEqualTo(3);
+            // The link SOURCE is on the third section (global page 2, cumulative offset 2);
+            // its annotation must land on page 2 and target the cover (page 0).
+            assertThat(goToTargetPages(pdf, 2)).contains(0);
+            assertThat(goToTargetPages(pdf, 0)).isEmpty();
+        }
+    }
+
+    @Test
+    void footerCanSkipASectionsOwnFirstPage() throws Exception {
+        Path out = tempDir.resolve("skip-first.pdf");
+        DocumentSession cover = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+
+        DocumentSession body = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        body.footer(DocumentHeaderFooter.builder()
+                .centerText("Folio {page}")
+                .numbering(DocumentPageNumbering.builder().showOnFirstPage(false).build())
+                .build());
+        body.pageFlow(page -> {
+            page.addParagraph("Body one");
+            page.addPageBreak(b -> b.name("body-break"));
+            page.addParagraph("Body two");
+        });
+
+        try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
+            doc.buildPdf();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(out.toFile())) {
+            // Body's own first page (document page 2) suppresses the footer; its
+            // second page (document page 3) shows "Folio 2" — the section-local window.
+            assertThat(pageText(pdf, 2)).doesNotContain("Folio");
+            assertThat(pageText(pdf, 3)).contains("Folio 2");
+        }
+    }
+
+    @Test
+    void metadataIsTakenFromTheFirstSectionThatDeclaresIt() throws Exception {
+        Path out = tempDir.resolve("metadata.pdf");
+        DocumentSession cover = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        cover.metadata(DocumentMetadata.builder().title("Cover wins").build());
+        cover.pageFlow(page -> page.addParagraph("Cover"));
+
+        DocumentSession body = GraphCompose.document().pageSize(300, 400).margin(DocumentInsets.of(24)).create();
+        body.metadata(DocumentMetadata.builder().title("Body loses").build());
+        body.pageFlow(page -> page.addParagraph("Body"));
+
+        try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
+            doc.buildPdf();
+        }
+
+        try (PDDocument pdf = Loader.loadPDF(out.toFile())) {
+            assertThat(pdf.getDocumentInformation().getTitle()).isEqualTo("Cover wins");
+        }
+    }
+
+    @Test
+    void closeIsIdempotentThenRejectsFurtherRendering() {
+        MultiSectionDocument doc = GraphCompose.documents().section(cover()).section(body()).create();
+        doc.close();
+        doc.close(); // idempotent — no throw on the second call
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(doc::toPdfBytes);
+    }
+
+    @Test
+    void buildPdfWithoutADefaultOutputFileThrows() {
+        try (MultiSectionDocument doc = GraphCompose.documents().section(cover()).section(body()).create()) {
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(doc::buildPdf)
+                    .withMessageContaining("default output file");
+        }
+    }
+
+    private static int patternCount(PDDocument doc, int zeroBasedPage) throws IOException {
+        int count = 0;
+        for (COSName ignored : doc.getPage(zeroBasedPage).getResources().getPatternNames()) {
+            count++;
+        }
+        return count;
     }
 }

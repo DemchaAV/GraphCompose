@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.*;
@@ -421,6 +422,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * @throws Exception if PDF creation, rendering, or saving fails
      * @since 1.9.0
      */
+    @Beta
     public byte[] renderSections(List<Section> sections) throws Exception {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             writeSections(sections, output);
@@ -437,6 +439,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * @throws Exception if PDF creation, rendering, or saving fails
      * @since 1.9.0
      */
+    @Beta
     public void writeSections(List<Section> sections, OutputStream output) throws Exception {
         Objects.requireNonNull(output, "output");
         try (PDDocument document = buildSectionsDocument(sections)) {
@@ -535,6 +538,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * @param chrome      the section's configured backend
      * @since 1.9.0
      */
+    @Beta
     public record Section(LayoutGraph graph,
                           LayoutCanvas canvas,
                           List<FontFamilyDefinition> customFonts,

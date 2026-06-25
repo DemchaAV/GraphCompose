@@ -755,7 +755,7 @@ portrait, page-numbered body in a single document.
 ```java
 DocumentSession cover = GraphCompose.document().pageSize(440, 300).margin(DocumentInsets.of(0)).create();
 DocumentSession body  = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(40)).create();
-body.footer(PdfHeaderFooterOptions.builder().centerText("{page} / {pages}").build());
+body.footer(DocumentHeaderFooter.builder().centerText("{page} / {pages}").build());
 
 try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
     doc.buildPdf();   // cover keeps its geometry; body is numbered 1..N from its own first page

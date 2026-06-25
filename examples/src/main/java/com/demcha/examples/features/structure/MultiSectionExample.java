@@ -3,7 +3,7 @@ package com.demcha.examples.features.structure;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.MultiSectionDocument;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -21,7 +21,7 @@ import java.nio.file.Path;
  * <pre>{@code
  * DocumentSession cover = GraphCompose.document().pageSize(440, 300).margin(of(0)).create();
  * DocumentSession body  = GraphCompose.document().pageSize(300, 440).margin(of(40)).create();
- * body.footer(PdfHeaderFooterOptions.builder().centerText("{page}").build());
+ * body.footer(DocumentHeaderFooter.builder().centerText("{page}").build());
  *
  * try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
  *     doc.buildPdf();
@@ -77,7 +77,7 @@ public final class MultiSectionExample {
                 .pageSize(300, 440)
                 .margin(DocumentInsets.of(40))
                 .create();
-        body.footer(PdfHeaderFooterOptions.builder().centerText("{page} / {pages}").build());
+        body.footer(DocumentHeaderFooter.builder().centerText("{page} / {pages}").build());
         body.pageFlow(page -> {
             for (int i = 0; i < CHAPTERS.length; i++) {
                 String[] chapter = CHAPTERS[i];

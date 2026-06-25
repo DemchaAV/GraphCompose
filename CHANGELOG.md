@@ -12,6 +12,14 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`addTableOfContents(...)` + `TocBuilder` / `DocumentLeader`** (`@since 1.9.0`).
+  A native, clickable table of contents: each `entry(label, anchor)` becomes a row
+  whose label links to the chapter (`linkTo`), a dotted or dashed leader fills the
+  gap, and the page number is resolved automatically from the laid-out document —
+  no manual two-pass. Built entirely from the existing primitives (auto/weight
+  columns, `line().fill()`, `addPageReference`) and added to the flow, so a long
+  contents paginates across pages.
+
 - **`addPageReference(anchor)` + `PageReferenceNode`** (`@since 1.9.0`). Prints the
   page a declared `anchor(...)` lands on — a native "see page N" cross-reference —
   in a single authoring pass. A document that contains a page reference is laid

@@ -961,6 +961,26 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a native table of contents: an optional title and one clickable,
+     * page-numbered row per {@code entry(label, anchor)}. Each row links its label
+     * to the anchor, fills the gap with a leader, and prints the anchor's page —
+     * resolved automatically from the laid-out document, no manual two-pass. The
+     * rows are added to this flow, so a long table of contents paginates naturally.
+     *
+     * @param spec table-of-contents builder callback
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T addTableOfContents(Consumer<TocBuilder> spec) {
+        TocBuilder toc = new TocBuilder();
+        Objects.requireNonNull(spec, "spec").accept(toc);
+        for (DocumentNode node : toc.buildEntries()) {
+            add(node);
+        }
+        return self();
+    }
+
+    /**
      * Adds a page reference that prints the page number a named {@code anchor(...)}
      * lands on — the "see page N" cross-reference. The number is resolved from the
      * laid-out document automatically (a second layout pass), so no manual

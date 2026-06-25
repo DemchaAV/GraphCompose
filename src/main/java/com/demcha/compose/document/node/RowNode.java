@@ -29,6 +29,9 @@ import java.util.Objects;
  * @param stroke       optional border stroke
  * @param cornerRadius optional render-only corner radius
  * @param borders      optional per-side border strokes overriding the uniform stroke
+ * @param columns      optional per-child column widths (fixed / intrinsic / weight);
+ *                     length must match children, or be empty. Mutually exclusive
+ *                     with {@code weights}.
  * @author Artem Demchyshyn
  */
 public record RowNode(
@@ -41,7 +44,8 @@ public record RowNode(
         DocumentColor fillColor,
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
-        DocumentBorders borders
+        DocumentBorders borders,
+        List<DocumentRowColumn> columns
 ) implements DocumentNode {
     /**
      * Creates a normalized horizontal row container.
@@ -60,6 +64,21 @@ public record RowNode(
                 throw new IllegalArgumentException("RowNode weights must be positive finite numbers, got: " + weights);
             }
         }
+        columns = columns == null ? List.of() : List.copyOf(columns);
+        if (!columns.isEmpty()) {
+            if (columns.size() != children.size()) {
+                throw new IllegalArgumentException("RowNode columns size " + columns.size()
+                                                   + " does not match children size " + children.size());
+            }
+            for (DocumentRowColumn column : columns) {
+                if (column == null) {
+                    throw new IllegalArgumentException("RowNode columns must not contain null.");
+                }
+            }
+            if (!weights.isEmpty()) {
+                throw new IllegalArgumentException("RowNode cannot set both weights and columns; use one.");
+            }
+        }
         padding = padding == null ? DocumentInsets.zero() : padding;
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
@@ -67,6 +86,34 @@ public record RowNode(
         if (gap < 0 || Double.isNaN(gap) || Double.isInfinite(gap)) {
             throw new IllegalArgumentException("gap must be finite and non-negative: " + gap);
         }
+    }
+
+    /**
+     * Backwards-compatible constructor without per-child columns — defaults to an
+     * empty column list (weights / even split).
+     *
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param weights      optional per-child weights (length must match children, or be empty)
+     * @param gap          horizontal gap between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side border strokes
+     */
+    public RowNode(String name,
+                   List<DocumentNode> children,
+                   List<Double> weights,
+                   double gap,
+                   DocumentInsets padding,
+                   DocumentInsets margin,
+                   DocumentColor fillColor,
+                   DocumentStroke stroke,
+                   DocumentCornerRadius cornerRadius,
+                   DocumentBorders borders) {
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, List.of());
     }
 
     /**
@@ -91,6 +138,6 @@ public record RowNode(
                    DocumentColor fillColor,
                    DocumentStroke stroke,
                    DocumentCornerRadius cornerRadius) {
-        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE);
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE, List.of());
     }
 }

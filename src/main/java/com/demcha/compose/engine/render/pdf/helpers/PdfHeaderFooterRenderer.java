@@ -56,6 +56,9 @@ public final class PdfHeaderFooterRenderer {
                     doc, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
 
                 for (HeaderFooterConfig config : configs) {
+                    if (!config.appliesTo(i + 1)) {
+                        continue;
+                    }
                     renderZone(cs, config, mediaBox, i + 1, totalPages, marginLeft, marginRight);
                 }
             }
@@ -90,7 +93,7 @@ public final class PdfHeaderFooterRenderer {
         // unsupported code points become '?' instead of crashing the
         // whole document render.
         String leftText = GlyphFallbackLogger.sanitize(font,
-                HeaderFooterConfig.resolvePlaceholders(config.getLeftText(), currentPage, totalPages));
+                config.resolveTokens(config.getLeftText(), currentPage, totalPages));
         if (!leftText.isEmpty()) {
             cs.beginText();
             cs.setFont(font, fontSize);
@@ -100,7 +103,7 @@ public final class PdfHeaderFooterRenderer {
         }
 
         String centerText = GlyphFallbackLogger.sanitize(font,
-                HeaderFooterConfig.resolvePlaceholders(config.getCenterText(), currentPage, totalPages));
+                config.resolveTokens(config.getCenterText(), currentPage, totalPages));
         if (!centerText.isEmpty()) {
             float textWidth = font.getStringWidth(centerText) / 1000f * fontSize;
             float centerX = marginLeft + (usableWidth - textWidth) / 2f;
@@ -112,7 +115,7 @@ public final class PdfHeaderFooterRenderer {
         }
 
         String rightText = GlyphFallbackLogger.sanitize(font,
-                HeaderFooterConfig.resolvePlaceholders(config.getRightText(), currentPage, totalPages));
+                config.resolveTokens(config.getRightText(), currentPage, totalPages));
         if (!rightText.isEmpty()) {
             float textWidth = font.getStringWidth(rightText) / 1000f * fontSize;
             float rightX = pageWidth - marginRight - textWidth;

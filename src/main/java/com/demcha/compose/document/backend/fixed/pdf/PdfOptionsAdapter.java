@@ -3,10 +3,13 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.node.DocumentBarcodeOptions;
 import com.demcha.compose.document.node.DocumentBarcodeType;
+import com.demcha.compose.document.output.DocumentPageNumberStyle;
+import com.demcha.compose.document.output.DocumentPageNumbering;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeType;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone;
+import com.demcha.compose.engine.components.content.header_footer.PageNumberStyle;
 import com.demcha.compose.engine.components.content.metadata.DocumentMetadata;
 import com.demcha.compose.engine.components.content.protection.PdfProtectionConfig;
 import com.demcha.compose.engine.components.content.watermark.WatermarkConfig;
@@ -74,6 +77,9 @@ final class PdfOptionsAdapter {
         if (options == null) {
             return null;
         }
+        DocumentPageNumbering numbering = options.getNumbering() == null
+                ? DocumentPageNumbering.DEFAULT
+                : options.getNumbering();
         return HeaderFooterConfig.builder()
                 .zone(map(options.getZone()))
                 .height(options.getHeight())
@@ -85,6 +91,10 @@ final class PdfOptionsAdapter {
                 .showSeparator(options.isShowSeparator())
                 .separatorColor(options.getSeparatorColor())
                 .separatorThickness(options.getSeparatorThickness())
+                .numberStartAt(numbering.getStartAt())
+                .numberCountFrom(numbering.getCountFrom())
+                .numberShowOnFirstPage(numbering.isShowOnFirstPage())
+                .numberStyle(map(numbering.getStyle()))
                 .build();
     }
 
@@ -120,6 +130,19 @@ final class PdfOptionsAdapter {
 
     private static HeaderFooterZone map(PdfHeaderFooterZone zone) {
         return zone == PdfHeaderFooterZone.FOOTER ? HeaderFooterZone.FOOTER : HeaderFooterZone.HEADER;
+    }
+
+    private static PageNumberStyle map(DocumentPageNumberStyle style) {
+        if (style == null) {
+            return PageNumberStyle.DECIMAL;
+        }
+        return switch (style) {
+            case DECIMAL -> PageNumberStyle.DECIMAL;
+            case LOWER_ROMAN -> PageNumberStyle.LOWER_ROMAN;
+            case UPPER_ROMAN -> PageNumberStyle.UPPER_ROMAN;
+            case LOWER_ALPHA -> PageNumberStyle.LOWER_ALPHA;
+            case UPPER_ALPHA -> PageNumberStyle.UPPER_ALPHA;
+        };
     }
 
     private static BarcodeType map(DocumentBarcodeType type) {

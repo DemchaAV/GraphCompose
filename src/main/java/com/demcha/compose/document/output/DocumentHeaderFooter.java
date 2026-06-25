@@ -44,6 +44,9 @@ public final class DocumentHeaderFooter {
     @Builder.Default
     private final float separatorThickness = 0.5f;
 
+    @Builder.Default
+    private final DocumentPageNumbering numbering = DocumentPageNumbering.DEFAULT;
+
     private DocumentHeaderFooter() {
         this.zone = DocumentHeaderFooterZone.HEADER;
         this.height = 30f;
@@ -55,6 +58,7 @@ public final class DocumentHeaderFooter {
         this.showSeparator = false;
         this.separatorColor = DocumentColor.LIGHT_GRAY;
         this.separatorThickness = 0.5f;
+        this.numbering = DocumentPageNumbering.DEFAULT;
     }
 
     /**

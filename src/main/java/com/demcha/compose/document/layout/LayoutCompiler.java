@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.RowNode;
+import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentBleed;
 import com.demcha.compose.document.style.DocumentEdge;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -518,6 +519,9 @@ public final class LayoutCompiler {
                 slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
                         layoutSpec.spacing(), childRegionWidth);
             }
+            RowVerticalAlign verticalAlign = node instanceof RowNode rowNode
+                    ? rowNode.verticalAlign() : RowVerticalAlign.TOP;
+            double bandContentHeight = naturalMeasure.height() - padding.vertical();
             double cursorX = placementX + padding.left();
 
             for (int index = 0; index < children.size(); index++) {
@@ -539,6 +543,14 @@ public final class LayoutCompiler {
                                                     + "Reduce the child height, shorten its content, or increase the row height.");
                 }
 
+                // Cross-axis seating within the row band. TOP yields offset 0.0,
+                // so the band-top expression below is byte-identical to the
+                // pre-verticalAlign placement; only CENTER/BOTTOM shift the child.
+                double verticalOffset = verticalAlign == RowVerticalAlign.TOP
+                        ? 0.0
+                        : (bandContentHeight - childMargin.vertical() - childMeasure.height())
+                          * (verticalAlign == RowVerticalAlign.CENTER ? 0.5 : 1.0);
+
                 if (childPrepared.isComposite()) {
                     PlacementContext slotCtx = new FixedSlotPlacementContext(
                             state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
@@ -551,7 +563,7 @@ public final class LayoutCompiler {
                             index,
                             depth + 1,
                             cursorX,
-                            rowInnerY,
+                            rowInnerY - verticalOffset,
                             slotWidth,
                             FixedSlotKind.ROW_SLOT,
                             slotCtx);
@@ -561,7 +573,7 @@ public final class LayoutCompiler {
 
                 String childPath = pathFor(child, path, index);
                 String childSemanticName = semanticName(child);
-                double childTopY = rowInnerY - childMargin.top();
+                double childTopY = rowInnerY - childMargin.top() - verticalOffset;
                 double childPlacementY = childTopY - childMeasure.height();
                 Padding childPadding = toPadding(child.padding());
 

@@ -42,6 +42,7 @@ public final class RowBuilder {
     private DocumentStroke stroke;
     private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     private DocumentBorders borders = DocumentBorders.NONE;
+    private RowVerticalAlign verticalAlign = RowVerticalAlign.TOP;
 
     /**
      * Creates a row builder.
@@ -176,6 +177,21 @@ public final class RowBuilder {
      */
     public RowBuilder borders(DocumentBorders borders) {
         this.borders = borders == null ? DocumentBorders.NONE : borders;
+        return this;
+    }
+
+    /**
+     * Sets the cross-axis (vertical) placement of the row's children within the
+     * row band, whose height is that of the tallest child. Shorter children align
+     * to the top, middle, or bottom without manual coordinates.
+     *
+     * @param verticalAlign cross-axis alignment; {@code null} resets to
+     *                      {@link RowVerticalAlign#TOP}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder verticalAlign(RowVerticalAlign verticalAlign) {
+        this.verticalAlign = verticalAlign == null ? RowVerticalAlign.TOP : verticalAlign;
         return this;
     }
 
@@ -473,7 +489,8 @@ public final class RowBuilder {
                 stroke,
                 cornerRadius,
                 borders,
-                List.copyOf(columns));
+                List.copyOf(columns),
+                verticalAlign);
     }
 
     private void validate() {

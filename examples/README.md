@@ -77,6 +77,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
 | [Content bleed](#content-bleed) | `band.bleedToEdge(TOP, LEFT, RIGHT)` / `bleed(DocumentBleed.of(...))` — a section's fill reaches the trimmed page edge while its children stay in the content margin | [PDF](../assets/readme/examples/content-bleed.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BleedExample.java) |
 | [Row columns & TOC](#row-columns--toc) | `row.columns(auto(), weight(1), auto())` — size columns by content / fixed points / weight; with `line().fill()` it builds a dot-leader table of contents | [PDF](../assets/readme/examples/row-columns.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java) |
+| [Row vertical align](#row-vertical-align) | `row.verticalAlign(TOP / CENTER / BOTTOM)` — seat a row's children on the cross axis within the band set by the tallest child | [PDF](../assets/readme/examples/row-vertical-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java) |
 
 ### 📋 Templates recommended
 
@@ -493,6 +494,23 @@ flow.addRow(r -> r.columns(auto(), weight(1), auto())
 
 [📄 View PDF](../assets/readme/examples/row-columns.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java)
+
+### Row vertical align
+
+`RowBuilder.verticalAlign(...)` seats a row's children on the cross axis within
+the row band, whose height is that of the tallest child. A short label beside a
+large price moves from the top to the middle to the bottom of the band as the
+alignment changes — the `align-items` analogue for a horizontal row, no manual
+coordinates. `TOP` is the default, so existing rows are unchanged.
+
+```java
+flow.addRow(r -> r.verticalAlign(RowVerticalAlign.BOTTOM)
+    .addParagraph(bigPrice)      // tallest child sets the band height
+    .addParagraph(smallLabel));  // seated on the band bottom
+```
+
+[📄 View PDF](../assets/readme/examples/row-vertical-align.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java)
 
 ### Advanced tables
 

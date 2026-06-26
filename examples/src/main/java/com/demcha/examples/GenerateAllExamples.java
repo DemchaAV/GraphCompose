@@ -45,6 +45,7 @@ import com.demcha.examples.flagships.BusinessReportExample;
 import com.demcha.examples.flagships.EngineDeckExample;
 import com.demcha.examples.flagships.FeatureCatalogExample;
 import com.demcha.examples.flagships.FinancialReportExample;
+import com.demcha.examples.features.title.BookTemplateExample;
 import com.demcha.examples.flagships.MasterShowcaseExample;
 import com.demcha.examples.flagships.ModuleFirstFileExample;
 import com.demcha.examples.templates.coverletter.v2.CvBlueBannerLetterV2Example;
@@ -211,5 +212,6 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BusinessReportExample.generate());
         System.out.println("Generated: " + EngineDeckExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
+        System.out.println("Generated: " + BookTemplateExample.generate());
     }
 }

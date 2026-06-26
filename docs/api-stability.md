@@ -151,8 +151,32 @@ prose so the reader knows not to look for one.
 
 ### Currently slated for removal in 2.0
 
-See [`docs/templates/which-template-system.md` § 4](templates/which-template-system.md#4-deprecation-inventory--1x--20)
-for the full deprecation inventory.
+Two inventories track what is deferred to the next major:
+
+- **Template surfaces and pre-rebuild aliases** —
+  [`docs/templates/which-template-system.md` § 4](templates/which-template-system.md#4-deprecation-inventory--1x--20).
+- **Every other public-API rework, simplification, or deprecation** — the ledger below.
+
+#### 2.0 breaking-changes ledger
+
+A row lands here during senior review (the `graphcompose-senior-review` skill,
+Lane 1.5 "accept a compromise" step) whenever a **Stable** public API ships in a shape
+we already intend to change but can't break in 1.x.
+
+The cheaper path is to ship a new or unsure shape `@Beta` (Experimental) instead — then
+there is *no debt and no row*, because an Experimental API may change in any minor
+release (§ 1). A row exists only for compromises that had to land in the **Stable**
+tier, which can change only in a major release. A `// TODO(v2)` code comment is **not**
+a record — it rots and nothing tracks it; the record is a row here, plus an ADR
+`## Consequences` note when the compromise reflects a real design decision.
+
+When the 2.0 cycle opens, a `planned` row's API is marked
+`@Deprecated(forRemoval = true, since = "1.x.0")` per the format above, the deprecation
+window starts, and its `Status` flips to `deprecated 1.x`.
+
+| Element | Tier now | Status | Why the 1.x shape is a compromise | 2.0 action | ADR | Issue |
+|---|---|---|---|---|---|---|
+| _none yet_ | | | | | | |
 
 ---
 

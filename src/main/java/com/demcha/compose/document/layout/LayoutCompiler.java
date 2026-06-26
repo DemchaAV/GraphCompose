@@ -546,6 +546,9 @@ public final class LayoutCompiler {
                 // Cross-axis seating within the row band. TOP yields offset 0.0,
                 // so the band-top expression below is byte-identical to the
                 // pre-verticalAlign placement; only CENTER/BOTTOM shift the child.
+                // The slack is never negative: the measure phase sets the band to
+                // the tallest child's margin-box, so bandContentHeight >=
+                // childMargin.vertical() + childMeasure.height() for every child.
                 double verticalOffset = verticalAlign == RowVerticalAlign.TOP
                         ? 0.0
                         : (bandContentHeight - childMargin.vertical() - childMeasure.height())

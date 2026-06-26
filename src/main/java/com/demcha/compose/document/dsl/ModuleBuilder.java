@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.dsl.internal.SemanticNameNormalizer;
 import com.demcha.compose.document.node.*;
+import com.demcha.compose.document.style.DocumentBleed;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
@@ -332,8 +333,10 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
                     .build());
         }
         moduleChildren.addAll(children());
+        // A module does not bleed (matching its long-standing behaviour) — thread
+        // only the bookmark, leaving bleed at none().
         return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(),
-                stroke(), cornerRadius(), borders(), keepTogether, anchor(), bleed(), bookmarkOptions());
+                stroke(), cornerRadius(), borders(), keepTogether, anchor(), DocumentBleed.none(), bookmarkOptions());
     }
 
     /**

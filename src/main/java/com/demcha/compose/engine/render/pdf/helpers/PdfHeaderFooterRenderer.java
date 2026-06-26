@@ -44,22 +44,50 @@ public final class PdfHeaderFooterRenderer {
                              List<HeaderFooterConfig> configs,
                              float marginLeft,
                              float marginRight) throws IOException {
+        if (doc == null) return;
+        apply(doc, configs, marginLeft, marginRight, 0, doc.getNumberOfPages());
+    }
+
+    /**
+     * Applies the given header/footer configurations to one contiguous window of
+     * pages, numbering them relative to that window.
+     *
+     * <p>This is the multi-section entry point: each section of a combined
+     * document gets its own header/footer with section-local {@code {page}} /
+     * {@code {pages}} tokens. {@code currentPage} runs {@code 1..sectionPageCount}
+     * within the window (so {@link HeaderFooterConfig#appliesTo} and the page
+     * counter restart per section) and {@code totalPages} is the section's own
+     * page count rather than the whole document's.</p>
+     *
+     * @param doc             the target PDF document
+     * @param configs         list of header/footer configurations
+     * @param marginLeft      left margin of the section canvas
+     * @param marginRight     right margin of the section canvas
+     * @param basePageOffset  zero-based index of the window's first physical page
+     * @param sectionPageCount number of pages in the window
+     * @throws IOException if writing to the content stream fails
+     */
+    public static void apply(PDDocument doc,
+                             List<HeaderFooterConfig> configs,
+                             float marginLeft,
+                             float marginRight,
+                             int basePageOffset,
+                             int sectionPageCount) throws IOException {
         if (configs == null || configs.isEmpty()) return;
 
-        int totalPages = doc.getNumberOfPages();
-
-        for (int i = 0; i < totalPages; i++) {
-            PDPage page = doc.getPage(i);
+        for (int local = 0; local < sectionPageCount; local++) {
+            int physical = basePageOffset + local;
+            PDPage page = doc.getPage(physical);
             PDRectangle mediaBox = page.getMediaBox();
 
             try (PDPageContentStream cs = new PDPageContentStream(
                     doc, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
 
                 for (HeaderFooterConfig config : configs) {
-                    if (!config.appliesTo(i + 1)) {
+                    if (!config.appliesTo(local + 1)) {
                         continue;
                     }
-                    renderZone(cs, config, mediaBox, i + 1, totalPages, marginLeft, marginRight);
+                    renderZone(cs, config, mediaBox, local + 1, sectionPageCount, marginLeft, marginRight);
                 }
             }
         }

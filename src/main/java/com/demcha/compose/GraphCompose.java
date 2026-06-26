@@ -6,6 +6,8 @@ import com.demcha.compose.font.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.api.MultiSectionDocument;
+import com.demcha.compose.document.api.MultiSectionDocumentBuilder;
 import com.demcha.compose.document.output.DocumentDebugOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 
@@ -90,6 +92,31 @@ public final class GraphCompose {
      */
     public static DocumentBuilder document(Path outputFile) {
         return new DocumentBuilder(outputFile);
+    }
+
+    /**
+     * Starts a multi-section document: several independently authored
+     * {@link DocumentSession} sections — each with its own page size, margins,
+     * fonts, and page numbering — concatenated into one PDF with cross-section
+     * anchors, links, and bookmark outline.
+     *
+     * @return builder for assembling a multi-section document
+     * @since 1.9.0
+     */
+    public static MultiSectionDocumentBuilder documents() {
+        return new MultiSectionDocumentBuilder(null);
+    }
+
+    /**
+     * Starts a multi-section document with a default output target used by
+     * {@link MultiSectionDocument#buildPdf()}.
+     *
+     * @param outputFile default PDF output path for {@link MultiSectionDocument#buildPdf()}
+     * @return builder for assembling a multi-section document
+     * @since 1.9.0
+     */
+    public static MultiSectionDocumentBuilder documents(Path outputFile) {
+        return new MultiSectionDocumentBuilder(outputFile);
     }
 
     /**

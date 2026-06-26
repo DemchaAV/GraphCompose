@@ -1,12 +1,16 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.*;
 import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
+import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontName;
 import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.ExternalLinkTarget;
@@ -351,24 +355,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
-                Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = debug.enabled()
-                        ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
-                        : Map.of();
-                PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(TableRowFragmentPayload.class);
-                for (int index = 0; index < graph.fragments().size(); index++) {
-                    PlacedFragment fragment = graph.fragments().get(index);
-                    if (fragment.payload() instanceof TableRowFragmentPayload
-                        && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
-                        index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, ownerBounds);
-                        continue;
-                    }
-                    renderFragment(fragment, environment, ownerBounds);
-                }
-                // Node labels paint as one post-pass so badges always land on
-                // top of the content they annotate, in deterministic order.
-                if (debug.showNodeLabels()) {
-                    PdfNodeLabelRenderer.drawAll(ownerBounds, environment, debug.labelText());
-                }
+                renderGraph(graph, environment);
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
                 // Pass B of internal-link resolution: every anchor is now placed,
                 // so deferred go-to links (incl. forward references) can resolve.
@@ -390,6 +377,177 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         } catch (Exception ex) {
             document.close();
             throw ex;
+        }
+    }
+
+    /**
+     * Paints every fragment of one graph onto the current render environment's
+     * pages, in fragment order, grouping table rows so fills land beneath
+     * borders and text. Shared by the single-section and multi-section paths.
+     */
+    private void renderGraph(LayoutGraph graph, PdfRenderEnvironment environment) throws Exception {
+        Map<String, Map<Integer, PdfGuideLinesRenderer.Bounds>> ownerBounds = debug.enabled()
+                ? PdfGuideLinesRenderer.computeOwnerBounds(graph.fragments())
+                : Map.of();
+        PdfFragmentRenderHandler<?> tableRowHandler = handlers.get(TableRowFragmentPayload.class);
+        for (int index = 0; index < graph.fragments().size(); index++) {
+            PlacedFragment fragment = graph.fragments().get(index);
+            if (fragment.payload() instanceof TableRowFragmentPayload
+                && tableRowHandler instanceof PdfTableRowFragmentRenderHandler tableHandler) {
+                index = renderTableRowGroup(graph.fragments(), index, tableHandler, environment, ownerBounds);
+                continue;
+            }
+            renderFragment(fragment, environment, ownerBounds);
+        }
+        // Node labels paint as one post-pass so badges always land on
+        // top of the content they annotate, in deterministic order.
+        if (debug.showNodeLabels()) {
+            PdfNodeLabelRenderer.drawAll(ownerBounds, environment, debug.labelText());
+        }
+    }
+
+    /**
+     * Concatenates several {@link Section sections} into one PDF and returns its
+     * bytes. Each section keeps its own page geometry, fonts, and chrome
+     * (watermark, header/footer); anchors, links, and bookmarks resolve across
+     * section boundaries against the combined document.
+     *
+     * <p>This is the low-level assembly seam;
+     * {@link com.demcha.compose.document.api.MultiSectionDocument} (via
+     * {@link com.demcha.compose.GraphCompose#documents()}) is the public entry
+     * point that builds the {@link Section}s for you.</p>
+     *
+     * @param sections ordered, non-empty list of sections
+     * @return rendered combined-document bytes
+     * @throws Exception if PDF creation, rendering, or saving fails
+     * @since 1.9.0
+     */
+    @Beta
+    public byte[] renderSections(List<Section> sections) throws Exception {
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            writeSections(sections, output);
+            return output.toByteArray();
+        }
+    }
+
+    /**
+     * Concatenates several {@link Section sections} into one PDF written to the
+     * caller-owned stream (never closed by the backend).
+     *
+     * @param sections ordered, non-empty list of sections
+     * @param output   caller-owned output stream
+     * @throws Exception if PDF creation, rendering, or saving fails
+     * @since 1.9.0
+     */
+    @Beta
+    public void writeSections(List<Section> sections, OutputStream output) throws Exception {
+        Objects.requireNonNull(output, "output");
+        try (PDDocument document = buildSectionsDocument(sections)) {
+            document.save(output);
+        }
+    }
+
+    private PDDocument buildSectionsDocument(List<Section> sections) throws Exception {
+        Objects.requireNonNull(sections, "sections");
+        if (sections.isEmpty()) {
+            throw new IllegalArgumentException("A multi-section document needs at least one section.");
+        }
+        PDDocument document = new PDDocument();
+        try {
+            FontLibrary fonts = PdfFontLibraryFactory.library(document, unionCustomFonts(sections));
+            Map<String, PdfRenderEnvironment.AnchorDestination> anchors = new LinkedHashMap<>();
+            List<PdfRenderEnvironment.DeferredInternalLink> links = new ArrayList<>();
+            List<PdfRenderEnvironment.BookmarkRecord> bookmarks = new ArrayList<>();
+            int pageOffset = 0;
+            for (Section section : sections) {
+                LayoutGraph graph = section.graph();
+                List<PDPage> pages = createPages(document, graph);
+                try (PdfRenderSession renderSession = new PdfRenderSession(document, pages)) {
+                    // Each section renders with its OWN backend's handlers/debug, but
+                    // records navigation against the combined document via the page offset.
+                    PdfRenderEnvironment environment =
+                            new PdfRenderEnvironment(document, fonts, renderSession, pageOffset);
+                    section.chrome().renderGraph(graph, environment);
+                    bookmarks.addAll(environment.bookmarkRecords());
+                    links.addAll(environment.deferredInternalLinks());
+                    environment.anchorDestinations().forEach((name, destination) -> {
+                        if (anchors.put(name, destination) != null) {
+                            RENDER_LOG.warn(
+                                    "render.pdf.multisection.anchor.duplicate name={} — last section wins", name);
+                        }
+                    });
+                }
+                PdfFixedLayoutBackend chrome = section.chrome();
+                PdfDocumentPostProcessor.applySectionChrome(
+                        document,
+                        section.canvas(),
+                        chrome.watermarkOptions,
+                        chrome.headerFooterOptions,
+                        pageOffset,
+                        pages.size());
+                pageOffset += pages.size();
+            }
+            // Every anchor is now placed, so cross-section go-to links and the
+            // combined outline resolve in a single pass over the merged maps.
+            PdfBookmarkOutlineWriter.apply(document, List.copyOf(bookmarks));
+            PdfInternalLinkWriter.apply(document, Map.copyOf(anchors), List.copyOf(links));
+            applyDocumentMetadataAndProtection(document, sections);
+            return document;
+        } catch (Exception ex) {
+            document.close();
+            throw ex;
+        }
+    }
+
+    private static void applyDocumentMetadataAndProtection(PDDocument document, List<Section> sections)
+            throws IOException {
+        // Metadata and protection are document-global in PDF; the first section
+        // that declares each wins for the combined document.
+        PdfMetadataOptions metadata = null;
+        PdfProtectionOptions protection = null;
+        for (Section section : sections) {
+            if (metadata == null) {
+                metadata = section.chrome().metadataOptions;
+            }
+            if (protection == null) {
+                protection = section.chrome().protectionOptions;
+            }
+        }
+        PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(document, metadata, protection);
+    }
+
+    private static List<FontFamilyDefinition> unionCustomFonts(List<Section> sections) {
+        Map<FontName, FontFamilyDefinition> byName = new LinkedHashMap<>();
+        for (Section section : sections) {
+            for (FontFamilyDefinition family : section.customFonts()) {
+                byName.putIfAbsent(family.name(), family);
+            }
+        }
+        return List.copyOf(byName.values());
+    }
+
+    /**
+     * One section of a multi-section document: a fully laid-out graph plus the
+     * geometry, fonts, and chrome of the {@link com.demcha.compose.document.api.DocumentSession}
+     * that produced it. The {@code chrome} backend carries that section's
+     * watermark, header/footer, metadata, and protection options.
+     *
+     * @param graph       the section's resolved layout graph
+     * @param canvas      the section's page canvas (size + margins)
+     * @param customFonts the section's custom font families
+     * @param chrome      the section's configured backend
+     * @since 1.9.0
+     */
+    @Beta
+    public record Section(LayoutGraph graph,
+                          LayoutCanvas canvas,
+                          List<FontFamilyDefinition> customFonts,
+                          PdfFixedLayoutBackend chrome) {
+        public Section {
+            Objects.requireNonNull(graph, "graph");
+            Objects.requireNonNull(canvas, "canvas");
+            Objects.requireNonNull(chrome, "chrome");
+            customFonts = customFonts == null ? List.of() : List.copyOf(customFonts);
         }
     }
 
@@ -484,7 +642,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                 DocumentLinkTarget target) throws IOException {
         if (target instanceof ExternalLinkTarget external) {
             PdfLinkAnnotationWriter.addUriLink(
-                    environment.document().getPage(pageIndex),
+                    environment.documentPage(pageIndex),
                     rectangle,
                     external.options());
         } else if (target instanceof InternalLinkTarget internal) {

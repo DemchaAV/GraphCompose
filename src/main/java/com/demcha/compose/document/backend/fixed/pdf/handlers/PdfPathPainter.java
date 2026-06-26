@@ -137,7 +137,11 @@ final class PdfPathPainter {
 
             boolean hasStrokeWidth = stroke != null && stroke.width() > 0;
             if (strokePaint != null && hasStrokeWidth) {
-                PDResources resources = environment.document().getPage(pageIndex).getResources();
+                // The shading pattern must register on the SAME physical page the
+                // stroke draws on. In a multi-section document that page is offset
+                // from the section-local pageIndex, so resolve it through the
+                // environment's page-offset mapping (identity for a single section).
+                PDResources resources = environment.documentPage(pageIndex).getResources();
                 stream.setStrokingColor(PdfShadingSupport.strokePattern(
                         strokePaint, resources, x, y, width, height));
                 stream.setLineWidth((float) stroke.width());

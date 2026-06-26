@@ -12,6 +12,17 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`GraphCompose.documents()` + `MultiSectionDocumentBuilder` / `MultiSectionDocument`**
+  (`@since 1.9.0`). Concatenates several independently authored `DocumentSession`
+  sections — each with its own page size, margins, fonts, and footer numbering —
+  into one PDF inside the engine, with no external PDF merge. Anchors, internal
+  links, and the bookmark outline resolve across section boundaries against the
+  combined document, and each section is numbered from its own first page, so a
+  full-bleed cover of one page size can precede a margined, page-numbered body of
+  another. Document-level metadata and protection are taken from the first section
+  that declares them. Single-section output is unchanged. `MultiSectionDocument`
+  is `AutoCloseable` and owns its sections.
+
 - **`addTableOfContents(...)` + `TocBuilder` / `DocumentLeader`** (`@since 1.9.0`).
   A native, clickable table of contents: each `entry(label, anchor)` becomes a row
   whose label links to the chapter (`linkTo`), a dotted or dashed leader fills the

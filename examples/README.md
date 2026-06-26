@@ -103,6 +103,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
 | [Table of contents](#table-of-contents) | `addTableOfContents(toc -> toc.entry(label, anchor))` — a native clickable TOC with dot leaders and auto-resolved page numbers | [PDF](../assets/readme/examples/table-of-contents.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/TocExample.java) |
+| [Multi-section documents](#multi-section-documents) | `GraphCompose.documents()` — concatenate sections with different page sizes / margins / numbering into one PDF, with cross-section links and outline | [PDF](../assets/readme/examples/multi-section-document.pdf) · [Source](src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
@@ -741,6 +742,28 @@ flow.addTableOfContents(toc -> toc.title("Contents")
 
 [📄 View PDF](../assets/readme/examples/table-of-contents.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/navigation/TocExample.java)
+
+### Multi-section documents
+
+`GraphCompose.documents()` concatenates several independently authored sections —
+each a full `DocumentSession` with its own page size, margins, fonts, and footer
+numbering — into one PDF **inside the engine** (no external merge). Anchors, links,
+and the bookmark outline resolve across section boundaries, and each section is
+numbered from its own first page, so a full-bleed landscape cover can precede a
+portrait, page-numbered body in a single document.
+
+```java
+DocumentSession cover = GraphCompose.document().pageSize(440, 300).margin(DocumentInsets.of(0)).create();
+DocumentSession body  = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(40)).create();
+body.footer(DocumentHeaderFooter.builder().centerText("{page} / {pages}").build());
+
+try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
+    doc.buildPdf();   // cover keeps its geometry; body is numbered 1..N from its own first page
+}
+```
+
+[📄 View PDF](../assets/readme/examples/multi-section-document.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java)
 
 ---
 

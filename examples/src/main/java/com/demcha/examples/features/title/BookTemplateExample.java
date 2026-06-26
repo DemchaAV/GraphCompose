@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Book template — a full-bleed cover, a clickable table of contents with dotted
  * leaders, then chapters, all in <b>one</b> {@code DocumentSession}. The reader
- * opens with the bookmark panel showing Cover / Contents / every chapter.
+ * opens with the bookmark panel showing the cover and every chapter.
  *
  * <p>This is the flagship that the v1.9 book primitives were built for. Each part
  * uses the API that replaced a former workaround:</p>

@@ -128,6 +128,20 @@ class RowFlexTest {
     }
 
     @Test
+    void arrangementGapAppliesAcrossACompositeChild() {
+        // The middle child is a section (a composite column), so its cursor advance
+        // goes through the composite branch — confirm the SPACE_BETWEEN extra gap is
+        // applied there too, pushing the last child flush right.
+        try (DocumentSession session = row(r -> r.gap(0).arrangement(RowArrangement.SPACE_BETWEEN)
+                .addSpacer(s -> s.name("a").size(20, 10))
+                .addSection(sec -> sec.name("box").addSpacer(s -> s.size(20, 10)))
+                .addSpacer(s -> s.name("c").size(20, 10)))) {
+            assertThat(leftOf(session, "a")).isCloseTo(20.0, within(0.5));
+            assertThat(rightOf(session, "c")).isCloseTo(220.0, within(0.5));
+        }
+    }
+
+    @Test
     void growRejectsNonFiniteFactors() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new SpacerBuilder().grow(Double.NaN).build())

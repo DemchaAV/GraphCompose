@@ -227,7 +227,8 @@ public final class RowBuilder {
      * Adds a flex spacer with the given grow factor. Multiple flex spacers share
      * the leftover width in proportion to their grow factors.
      *
-     * @param grow grow factor; must be finite and {@code > 0}
+     * @param grow grow factor; must be finite and {@code >= 0} ({@code 0} is a
+     *             rigid, zero-width spacer)
      * @return this builder
      * @since 1.9.0
      */

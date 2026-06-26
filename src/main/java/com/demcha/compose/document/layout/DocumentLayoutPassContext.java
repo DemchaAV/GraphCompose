@@ -27,6 +27,8 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
     private final TextMeasurementSystem textMeasurementSystem;
     private final boolean markdown;
     private final Map<String, Integer> resolvedPages;
+    private final PageGeometry pageGeometry;
+    private final Map<String, Integer> nodeStartPages;
     private final Map<PreparedNodeCacheKey, PreparedNode<?>> preparedNodes = new HashMap<>();
 
     /**
@@ -64,18 +66,57 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
                                      TextMeasurementSystem textMeasurementSystem,
                                      boolean markdown,
                                      Map<String, Integer> resolvedPages) {
+        this(registry, canvas, fontLibrary, textMeasurementSystem, markdown, resolvedPages, null, Map.of());
+    }
+
+    /**
+     * Creates a layout-pass context carrying per-page margin geometry and the
+     * previous pass's top-level block page assignments — the per-page-margin fixed
+     * point. A document with no per-page margins passes {@code null} geometry and an
+     * empty assignment map and is laid out exactly as before.
+     *
+     * @param registry              semantic node registry used for preparation
+     * @param canvas                active layout canvas (the document-wide fallback)
+     * @param fontLibrary           document font library
+     * @param textMeasurementSystem text measurement service for this pass
+     * @param markdown              whether paragraph markdown parsing is enabled
+     * @param resolvedPages         anchor name to 1-based page number
+     * @param pageGeometry          per-page geometry resolver, or {@code null}
+     * @param nodeStartPages        node path to its 0-based start page
+     */
+    public DocumentLayoutPassContext(NodeRegistry registry,
+                                     LayoutCanvas canvas,
+                                     FontLibrary fontLibrary,
+                                     TextMeasurementSystem textMeasurementSystem,
+                                     boolean markdown,
+                                     Map<String, Integer> resolvedPages,
+                                     PageGeometry pageGeometry,
+                                     Map<String, Integer> nodeStartPages) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.canvas = Objects.requireNonNull(canvas, "canvas");
         this.fontLibrary = Objects.requireNonNull(fontLibrary, "fontLibrary");
         this.textMeasurementSystem = Objects.requireNonNull(textMeasurementSystem, "textMeasurementSystem");
         this.markdown = markdown;
         this.resolvedPages = resolvedPages == null ? Map.of() : Map.copyOf(resolvedPages);
+        this.pageGeometry = pageGeometry;
+        this.nodeStartPages = nodeStartPages == null ? Map.of() : Map.copyOf(nodeStartPages);
     }
 
     @Override
     public OptionalInt resolvedPage(String anchor) {
         Integer page = anchor == null ? null : resolvedPages.get(anchor);
         return page == null ? OptionalInt.empty() : OptionalInt.of(page);
+    }
+
+    @Override
+    public PageGeometry pageGeometry() {
+        return pageGeometry;
+    }
+
+    @Override
+    public int assignedStartPage(String path, int fallback) {
+        Integer assigned = path == null ? null : nodeStartPages.get(path);
+        return assigned == null ? fallback : assigned;
     }
 
     @Override

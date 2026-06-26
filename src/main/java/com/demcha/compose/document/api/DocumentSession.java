@@ -88,6 +88,7 @@ public final class DocumentSession implements AutoCloseable {
     private boolean markdown;
     private DocumentDebugOptions debug = DocumentDebugOptions.none();
     private List<PageBackgroundFill> pageBackgrounds = List.of();
+    private List<PageMarginRule> pageMargins = List.of();
     private PdfMeasurementResources measurementResources;
     private boolean closed;
 
@@ -452,6 +453,35 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Overrides the page margin for ranges of pages, replacing the document-wide
+     * {@link #margin(DocumentInsets)} on the pages each rule covers. Use this for a
+     * document whose pages are not all the same shape — a full-bleed cover with
+     * {@link DocumentInsets#zero()} insets followed by book margins on the body, a
+     * wide title page, and so on.
+     *
+     * <p>Each {@link PageMarginRule} addresses pages by 1-based number; rules apply
+     * in list order and the last rule covering a page wins. Pass {@code null} or an
+     * empty list to clear (the default — every page uses the document-wide margin).</p>
+     *
+     * <p>Because content is measured before it is paginated, each top-level block is
+     * laid out at the content width of the page it begins on. A margin that changes
+     * the content width therefore takes effect where content breaks onto a covered
+     * page — the model is different margins for different page ranges, not a margin
+     * that changes mid-block. To extend a single node past the page edge instead,
+     * use {@code bleed(...)} (see {@link com.demcha.compose.document.style.DocumentBleed}).</p>
+     *
+     * @param rules ordered list of per-page margin overrides, or {@code null}/empty to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     */
+    public DocumentSession pageMargins(List<PageMarginRule> rules) {
+        ensureOpen();
+        this.pageMargins = rules == null ? List.of() : List.copyOf(rules);
+        invalidate();
+        return this;
+    }
+
+    /**
      * Returns a fluent facade for chrome configuration (metadata,
      * watermark, protection, header, footer). The facade is a thin
      * grouping of the canonical chrome methods on this session — both
@@ -802,27 +832,65 @@ public final class DocumentSession implements AutoCloseable {
      * byte-identical to before.
      */
     private LayoutGraph computeLayout() {
-        LayoutGraph graph = compilePass(Map.of());
-        if (!containsPageReference(roots)) {
+        PageGeometry geometry = buildPageGeometry();
+        boolean hasMargins = geometry != null;
+        boolean hasPageReference = containsPageReference(roots);
+
+        LayoutGraph graph = compilePass(Map.of(), geometry, Map.of());
+        if (!hasMargins && !hasPageReference) {
             return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
         }
-        Map<String, Integer> resolved = resolvedPageNumbers(graph);
+        // Two coupled fixed points share one loop: page references resolve their
+        // numbers, and per-page margins resolve which page each top-level block
+        // begins on (its content width). A pass feeds back both; the layout is
+        // settled once neither changes. Capped so a document that never converges
+        // still returns its last (best) layout.
+        Map<String, Integer> resolved = hasPageReference ? resolvedPageNumbers(graph) : Map.of();
+        Map<String, Integer> startPages = hasMargins ? nodeStartPages(graph) : Map.of();
         for (int pass = 0; pass < MAX_PAGE_REFERENCE_PASSES; pass++) {
-            graph = compilePass(resolved);
-            Map<String, Integer> rendered = resolvedPageNumbers(graph);
-            if (rendered.equals(resolved)) {
+            graph = compilePass(resolved, geometry, startPages);
+            Map<String, Integer> renderedPages = hasPageReference ? resolvedPageNumbers(graph) : Map.of();
+            Map<String, Integer> renderedStarts = hasMargins ? nodeStartPages(graph) : Map.of();
+            if (renderedPages.equals(resolved) && renderedStarts.equals(startPages)) {
                 return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
             }
-            resolved = rendered;
+            resolved = renderedPages;
+            startPages = renderedStarts;
         }
-        LIFECYCLE_LOG.debug("document.layout.pageReference.unconverged sessionId={} passes={}", sessionId, MAX_PAGE_REFERENCE_PASSES);
+        LIFECYCLE_LOG.debug("document.layout.unconverged sessionId={} passes={}", sessionId, MAX_PAGE_REFERENCE_PASSES);
         return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
     }
 
-    private LayoutGraph compilePass(Map<String, Integer> resolvedPages) {
+    private LayoutGraph compilePass(Map<String, Integer> resolvedPages,
+                                    PageGeometry geometry,
+                                    Map<String, Integer> nodeStartPages) {
         DocumentLayoutPassContext context = new DocumentLayoutPassContext(registry, canvas,
-                measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown, resolvedPages);
+                measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown,
+                resolvedPages, geometry, nodeStartPages);
         return compiler.compile(documentGraph(), context, context);
+    }
+
+    private PageGeometry buildPageGeometry() {
+        if (pageMargins.isEmpty()) {
+            return null;
+        }
+        List<PageMarginOverride> overrides = new ArrayList<>(pageMargins.size());
+        for (PageMarginRule rule : pageMargins) {
+            int fromIndex = rule.fromPage() - 1;
+            int toIndexExclusive = rule.toPageExclusive() == Integer.MAX_VALUE
+                    ? Integer.MAX_VALUE
+                    : rule.toPageExclusive() - 1;
+            overrides.add(new PageMarginOverride(fromIndex, toIndexExclusive, toEngineMargin(rule.insets())));
+        }
+        return PageGeometry.of(canvas, overrides);
+    }
+
+    private static Map<String, Integer> nodeStartPages(LayoutGraph graph) {
+        Map<String, Integer> starts = new HashMap<>();
+        for (PlacedNode node : graph.nodes()) {
+            starts.put(node.path(), node.startPage());
+        }
+        return starts;
     }
 
     private static boolean containsPageReference(List<DocumentNode> nodes) {

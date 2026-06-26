@@ -76,6 +76,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
 | [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
 | [Content bleed](#content-bleed) | `band.bleedToEdge(TOP, LEFT, RIGHT)` / `bleed(DocumentBleed.of(...))` — a section's fill reaches the trimmed page edge while its children stay in the content margin | [PDF](../assets/readme/examples/content-bleed.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BleedExample.java) |
+| [Per-page margin](#per-page-margin) | `pageMargins(List.of(PageMarginRule.page(1, zero()), PageMarginRule.from(2, …)))` — a full-bleed cover and a book-margin body in one document | [PDF](../assets/readme/examples/per-page-margin.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java) |
 | [Row columns & TOC](#row-columns--toc) | `row.columns(auto(), weight(1), auto())` — size columns by content / fixed points / weight; with `line().fill()` it builds a dot-leader table of contents | [PDF](../assets/readme/examples/row-columns.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java) |
 | [Row vertical align](#row-vertical-align) | `row.verticalAlign(TOP / CENTER / BOTTOM)` — seat a row's children on the cross axis within the band set by the tallest child | [PDF](../assets/readme/examples/row-vertical-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java) |
 | [Row flex & arrangement](#row-flex--arrangement) | `row.pushRight()` / `flexSpacer()` springs + `arrangement(SPACE_BETWEEN / CENTER / …)` — push children apart or justify leftover width | [PDF](../assets/readme/examples/row-flex.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowFlexExample.java) |
@@ -479,6 +480,23 @@ page.addSection(band -> band
 
 [📄 View PDF](../assets/readme/examples/content-bleed.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/layout/BleedExample.java)
+
+### Per-page margin
+
+`pageMargins(List.of(...))` overrides the page margin for ranges of pages, so a
+single document can mix a full-bleed cover with a book-margin body. Each rule
+addresses pages by 1-based number; the content is laid out at the width of the page
+it begins on. Page 1 below uses a zero margin (the band spans the sheet); pages 2+
+use wide book margins (the body sits in a narrow column).
+
+```java
+document.pageMargins(List.of(
+    PageMarginRule.page(1, DocumentInsets.zero()),                // full-bleed cover
+    PageMarginRule.from(2, DocumentInsets.symmetric(36, 86))));   // book body
+```
+
+[📄 View PDF](../assets/readme/examples/per-page-margin.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java)
 
 ### Row columns & TOC
 

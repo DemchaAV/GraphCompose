@@ -103,6 +103,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
+| [Viewer preferences](#viewer-preferences) | `chrome().viewerPreferences(...)` — open with the bookmark panel (`USE_OUTLINES`), set page layout, or show the doc title in the window | [PDF](../assets/readme/examples/viewer-preferences.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
 | [Table of contents](#table-of-contents) | `addTableOfContents(toc -> toc.entry(label, anchor))` — a native clickable TOC with dot leaders and auto-resolved page numbers | [PDF](../assets/readme/examples/table-of-contents.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/TocExample.java) |
 | [Container bookmarks](#container-bookmarks) | `section.bookmark(new DocumentBookmarkOptions(title))` — make a section / container a PDF outline (bookmark-panel) target | [PDF](../assets/readme/examples/container-bookmark.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java) |
@@ -741,6 +742,24 @@ session.chrome().footer(DocumentHeaderFooter.builder()
 
 [📄 View PDF](../assets/readme/examples/page-numbering.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java)
+
+### Viewer preferences
+
+`chrome().viewerPreferences(...)` controls how a reader presents the document when
+it opens — the page mode (`USE_OUTLINES` opens the bookmark panel, pairing with
+`bookmark(...)` on sections), the page layout (e.g. two-column), and window-chrome
+flags (`displayDocTitle`, `hideToolbar`, `fitWindow`, …). Written to the PDF
+catalog; readers honour the subset they support. PDF-only — other backends ignore it.
+
+```java
+document.chrome().viewerPreferences(DocumentViewerPreferences.builder()
+    .pageMode(DocumentPageMode.USE_OUTLINES)  // open with the bookmark panel
+    .displayDocTitle(true)
+    .build());
+```
+
+[📄 View PDF](../assets/readme/examples/viewer-preferences.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java)
 
 ### Page references
 

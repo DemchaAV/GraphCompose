@@ -12,6 +12,15 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`chrome().viewerPreferences(...)` + `DocumentViewerPreferences` /
+  `DocumentPageMode` / `DocumentPageLayout`** (`@since 1.9.0`). Controls how a PDF
+  reader presents the document on open — the page mode (`USE_OUTLINES` opens the
+  bookmark panel, pairing with `bookmark(...)`), the page layout (single / one-column
+  / two-column / two-page), and the window flags (`displayDocTitle`, `hideToolbar`,
+  `hideMenubar`, `fitWindow`, `centerWindow`). Written to the PDF document catalog;
+  `DocumentViewerPreferences.openOutline()` is a one-line preset. PDF-only — other
+  backends ignore it. A document that sets none is unchanged.
+
 - **Container `bookmark(...)`** (`@since 1.9.0`). `bookmark(DocumentBookmarkOptions)`
   on any container flow builder (`Section` / `Container` / page flow) — previously
   only the seven leaf builders carried a bookmark — adds a PDF outline entry pointing

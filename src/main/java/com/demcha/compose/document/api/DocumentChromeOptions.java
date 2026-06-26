@@ -36,12 +36,17 @@ final class DocumentChromeOptions {
     private DocumentMetadata metadata;
     private DocumentWatermark watermark;
     private DocumentProtection protection;
+    private DocumentViewerPreferences viewerPreferences;
 
     DocumentChromeOptions() {
     }
 
     void setMetadata(DocumentMetadata metadata) {
         this.metadata = metadata;
+    }
+
+    void setViewerPreferences(DocumentViewerPreferences viewerPreferences) {
+        this.viewerPreferences = viewerPreferences;
     }
 
     void setWatermark(DocumentWatermark watermark) {
@@ -76,6 +81,7 @@ final class DocumentChromeOptions {
         return metadata == null
                && watermark == null
                && protection == null
+               && viewerPreferences == null
                && headersAndFooters.isEmpty();
     }
 
@@ -89,7 +95,8 @@ final class DocumentChromeOptions {
         if (isEmpty()) {
             return DocumentOutputOptions.EMPTY;
         }
-        return new DocumentOutputOptions(metadata, watermark, protection, List.copyOf(headersAndFooters));
+        return new DocumentOutputOptions(metadata, watermark, protection, viewerPreferences,
+                List.copyOf(headersAndFooters));
     }
 
     /**
@@ -110,7 +117,8 @@ final class DocumentChromeOptions {
                 .debug(debug)
                 .metadata(PdfOutputOptionsTranslator.toPdf(metadata))
                 .watermark(PdfOutputOptionsTranslator.toPdf(watermark))
-                .protect(PdfOutputOptionsTranslator.toPdf(protection));
+                .protect(PdfOutputOptionsTranslator.toPdf(protection))
+                .viewerPreferences(PdfOutputOptionsTranslator.toPdf(viewerPreferences));
         for (DocumentHeaderFooter entry : headersAndFooters) {
             PdfHeaderFooterOptions translated = PdfOutputOptionsTranslator.toPdf(entry);
             if (entry.getZone() == DocumentHeaderFooterZone.FOOTER) {

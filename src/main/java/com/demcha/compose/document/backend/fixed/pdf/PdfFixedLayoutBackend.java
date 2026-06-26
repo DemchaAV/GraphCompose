@@ -114,7 +114,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                 new PdfShapeClipEndRenderHandler(),
                 new PdfTransformBeginRenderHandler(),
                 new PdfTransformEndRenderHandler(),
-                new PdfAnchorMarkerRenderHandler());
+                new PdfAnchorMarkerRenderHandler(),
+                new PdfBookmarkMarkerRenderHandler());
     }
 
     private static PdfLinkAnnotationWriter.PlacedPdfRect spanLinkRectangle(ParagraphSpan span,

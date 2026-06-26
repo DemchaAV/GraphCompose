@@ -149,6 +149,47 @@ public final class NodeDefinitionSupport {
     }
 
     /**
+     * Builds a non-visual {@link BookmarkMarkerPayload} fragment at the placement's
+     * top-left, declaring a PDF outline entry for a container.
+     *
+     * @param bookmark  the outline entry
+     * @param placement resolved fragment placement
+     * @return one bookmark marker fragment
+     */
+    public static LayoutFragment bookmarkMarkerFragment(DocumentBookmarkOptions bookmark,
+                                                        FragmentPlacement placement) {
+        return new LayoutFragment(
+                placement.path(),
+                0,
+                0.0,
+                0.0,
+                placement.width(),
+                placement.height(),
+                new BookmarkMarkerPayload(bookmark));
+    }
+
+    /**
+     * Appends a {@link BookmarkMarkerPayload} fragment to {@code base} when
+     * {@code bookmark} is non-null, otherwise returns {@code base} unchanged.
+     *
+     * @param base      already-emitted fragments
+     * @param bookmark  optional outline entry; {@code null} skips the marker
+     * @param placement resolved fragment placement
+     * @return {@code base}, optionally with a bookmark marker appended
+     */
+    public static List<LayoutFragment> withBookmarkMarker(List<LayoutFragment> base,
+                                                          DocumentBookmarkOptions bookmark,
+                                                          FragmentPlacement placement) {
+        if (bookmark == null) {
+            return base;
+        }
+        List<LayoutFragment> out = new ArrayList<>(base.size() + 1);
+        out.addAll(base);
+        out.add(bookmarkMarkerFragment(bookmark, placement));
+        return List.copyOf(out);
+    }
+
+    /**
      * Emits an optional background/border decoration fragment.
      *
      * @param fillColor    optional fill color

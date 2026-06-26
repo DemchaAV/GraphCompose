@@ -24,6 +24,8 @@ import java.util.Objects;
  *                     destination at the section's top-left, or {@code null} for none
  * @param bleed        edges on which the section bleeds to the trimmed page edge,
  *                     or {@link DocumentBleed#none()} for normal in-margin placement
+ * @param bookmarkOptions optional PDF outline entry placed at the section's top on
+ *                        its start page, or {@code null} for none
  * @author Artem Demchyshyn
  */
 public record SectionNode(
@@ -38,7 +40,8 @@ public record SectionNode(
         DocumentBorders borders,
         boolean keepTogether,
         String anchor,
-        DocumentBleed bleed
+        DocumentBleed bleed,
+        DocumentBookmarkOptions bookmarkOptions
 ) implements DocumentNode {
     /**
      * Normalizes optional section fields and validates child spacing.
@@ -56,6 +59,38 @@ public record SectionNode(
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without a bookmark (defaults to none).
+     *
+     * @param name         node name
+     * @param children     child nodes
+     * @param spacing      vertical spacing
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional uniform border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side borders
+     * @param keepTogether keep-together relocation flag
+     * @param anchor       optional navigation anchor name
+     * @param bleed        optional bleed declaration
+     */
+    public SectionNode(String name,
+                       List<DocumentNode> children,
+                       double spacing,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentCornerRadius cornerRadius,
+                       DocumentBorders borders,
+                       boolean keepTogether,
+                       String anchor,
+                       DocumentBleed bleed) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, keepTogether,
+                anchor, bleed, null);
     }
 
     /**
@@ -86,7 +121,7 @@ public record SectionNode(
                        boolean keepTogether,
                        String anchor) {
         this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, keepTogether,
-                anchor, DocumentBleed.none());
+                anchor, DocumentBleed.none(), null);
     }
 
     /**

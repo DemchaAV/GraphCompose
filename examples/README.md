@@ -105,6 +105,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
 | [Table of contents](#table-of-contents) | `addTableOfContents(toc -> toc.entry(label, anchor))` — a native clickable TOC with dot leaders and auto-resolved page numbers | [PDF](../assets/readme/examples/table-of-contents.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/TocExample.java) |
+| [Container bookmarks](#container-bookmarks) | `section.bookmark(new DocumentBookmarkOptions(title))` — make a section / container a PDF outline (bookmark-panel) target | [PDF](../assets/readme/examples/container-bookmark.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java) |
 | [Multi-section documents](#multi-section-documents) | `GraphCompose.documents()` — concatenate sections with different page sizes / margins / numbering into one PDF, with cross-section links and outline | [PDF](../assets/readme/examples/multi-section-document.pdf) · [Source](src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java) |
 | [HTTP streaming](#http-streaming) | `writePdf(OutputStream)` for Servlet / S3 / GCS — caller's stream is not closed | [PDF](../assets/readme/examples/invoice-http-stream.pdf) · [Source](src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java) |
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
@@ -779,6 +780,22 @@ flow.addTableOfContents(toc -> toc.title("Contents")
 
 [📄 View PDF](../assets/readme/examples/table-of-contents.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/navigation/TocExample.java)
+
+### Container bookmarks
+
+`bookmark(...)` on a section or container flow adds a PDF **outline** entry — the
+reader's bookmark panel — pointing at that container's start page, making a
+structured document navigable. It works on any container, even an unstyled one
+(no fill or border), and is independent of the page content.
+
+```java
+flow.addSection(s -> s.bookmark(new DocumentBookmarkOptions("2. Methodology"))
+    .addParagraph(heading)
+    .addParagraph(body));
+```
+
+[📄 View PDF](../assets/readme/examples/container-bookmark.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java)
 
 ### Multi-section documents
 

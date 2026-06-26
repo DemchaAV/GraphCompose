@@ -5,6 +5,7 @@ import com.demcha.compose.document.chart.ChartStyle;
 import com.demcha.compose.document.dsl.internal.BuilderSupport;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.ChartNode;
+import com.demcha.compose.document.node.DocumentBookmarkOptions;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageReferenceNode;
@@ -28,6 +29,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     private final List<DocumentNode> children = new ArrayList<>();
     private String name = "";
     private String anchor;
+    private DocumentBookmarkOptions bookmarkOptions;
     private double spacing = 0.0;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
@@ -72,6 +74,21 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T anchor(String anchor) {
         this.anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
+        return self();
+    }
+
+    /**
+     * Adds a PDF outline (bookmark) entry pointing at this container's top on its
+     * start page, making a section or container a navigable outline target (a
+     * {@code chrome().viewerPreferences(...)} page mode of {@code USE_OUTLINES}
+     * opens the bookmark panel automatically).
+     *
+     * @param bookmarkOptions outline entry (title, level), or {@code null} to clear
+     * @return this builder
+     * @since 1.9.0
+     */
+    public T bookmark(DocumentBookmarkOptions bookmarkOptions) {
+        this.bookmarkOptions = bookmarkOptions;
         return self();
     }
 
@@ -1134,6 +1151,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected String anchor() {
         return anchor;
+    }
+
+    protected DocumentBookmarkOptions bookmarkOptions() {
+        return bookmarkOptions;
     }
 
     protected List<DocumentNode> children() {

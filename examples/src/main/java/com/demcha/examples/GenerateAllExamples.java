@@ -32,6 +32,7 @@ import com.demcha.examples.features.text.InlineSvgIconExample;
 import com.demcha.examples.features.text.InlineHighlightExample;
 import com.demcha.examples.features.navigation.InPdfNavigationExample;
 import com.demcha.examples.features.navigation.PageReferenceExample;
+import com.demcha.examples.features.navigation.ContainerBookmarkExample;
 import com.demcha.examples.features.navigation.TocExample;
 import com.demcha.examples.features.structure.MultiSectionExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
@@ -177,6 +178,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + InPdfNavigationExample.generate());
         System.out.println("Generated: " + PageReferenceExample.generate());
         System.out.println("Generated: " + TocExample.generate());
+        System.out.println("Generated: " + ContainerBookmarkExample.generate());
         System.out.println("Generated: " + MultiSectionExample.generate());
 
         // Theming + chrome

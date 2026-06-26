@@ -56,9 +56,10 @@ public final class SectionDefinition implements NodeDefinition<SectionNode> {
                 node.cornerRadius(),
                 toSideBorders(node.borders()),
                 placement);
-        return withAnchorMarker(
-                decoration,
-                placement.pageIndex() == placement.startPage() ? node.anchor() : null,
+        boolean onStartPage = placement.pageIndex() == placement.startPage();
+        return withBookmarkMarker(
+                withAnchorMarker(decoration, onStartPage ? node.anchor() : null, placement),
+                onStartPage ? node.bookmarkOptions() : null,
                 placement);
     }
 }

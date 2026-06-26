@@ -117,6 +117,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Financial report one-pager | Single-page monthly financial dashboard — three margin gauges, cash & stacked-OPEX charts, a revenue donut, and forecast bars; all v1.8 native vector charts plus inline sparklines and a path-clipped photo masthead | [PDF](../assets/readme/examples/financial-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FinancialReportExample.java) |
 | [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end | [PDF](../assets/readme/examples/master-showcase.pdf) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
 | Feature catalog | Browsable reference PDF: every shipped capability as a block — outline-clickable heading, the exact API call, the rendered result right under it | [PDF](../assets/readme/examples/feature-catalog.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java) |
+| Book template | A full novel front: full-bleed wave cover, a clickable dotted-leader table of contents with live page numbers, and chapters — the v1.9 book primitives (`pageMargins`, `addTableOfContents`, `DocumentPageNumbering`, container `bookmark`, `viewerPreferences`) in **one session**, no external PDF merge | [PDF](../assets/readme/examples/book-template.pdf) · [Source](src/main/java/com/demcha/examples/features/title/BookTemplateExample.java) |
 
 ### 🗄️ Legacy
 

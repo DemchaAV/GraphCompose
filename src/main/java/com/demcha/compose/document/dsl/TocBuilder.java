@@ -4,6 +4,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentLeader;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -158,8 +159,13 @@ public final class TocBuilder {
         if (leader == DocumentLeader.NONE) {
             row.addSpacer(s -> s.width(1).height(1));
         } else {
+            // Bottom-aligning a thin line drops it to the descender line; lift it by
+            // about the font's descent so the leader sits on the text baseline, level
+            // with the label and the page number.
+            double baselineLift = entryStyle.size() * 0.2;
             row.addLine(line -> {
-                line.fill().stroke(DocumentStroke.of(leaderColor, 1.0));
+                line.fill().stroke(DocumentStroke.of(leaderColor, 1.0))
+                        .margin(DocumentInsets.bottom(baselineLift));
                 if (leader == DocumentLeader.DOTS) {
                     line.dashed(0.1, 4).lineCap(DocumentLineCap.ROUND);
                 } else {

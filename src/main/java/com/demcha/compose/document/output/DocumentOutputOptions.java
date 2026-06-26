@@ -15,6 +15,7 @@ import java.util.Objects;
  * @param metadata          document information (title, author, ...)
  * @param watermark         optional document-wide watermark
  * @param protection        optional access protection
+ * @param viewerPreferences optional PDF viewer preferences (page mode / layout / window flags)
  * @param headersAndFooters repeating header/footer entries
  * @author Artem Demchyshyn
  */
@@ -22,12 +23,13 @@ public record DocumentOutputOptions(
         DocumentMetadata metadata,
         DocumentWatermark watermark,
         DocumentProtection protection,
+        DocumentViewerPreferences viewerPreferences,
         List<DocumentHeaderFooter> headersAndFooters
 ) {
     /**
      * All-empty defaults.
      */
-    public static final DocumentOutputOptions EMPTY = new DocumentOutputOptions(null, null, null, List.of());
+    public static final DocumentOutputOptions EMPTY = new DocumentOutputOptions(null, null, null, null, List.of());
 
     /**
      * Normalizes the headers-and-footers collection to an immutable snapshot.
@@ -40,11 +42,27 @@ public record DocumentOutputOptions(
     }
 
     /**
+     * Backwards-compatible constructor without viewer preferences (defaults to none).
+     *
+     * @param metadata          document information
+     * @param watermark         optional document-wide watermark
+     * @param protection        optional access protection
+     * @param headersAndFooters repeating header/footer entries
+     */
+    public DocumentOutputOptions(DocumentMetadata metadata,
+                                 DocumentWatermark watermark,
+                                 DocumentProtection protection,
+                                 List<DocumentHeaderFooter> headersAndFooters) {
+        this(metadata, watermark, protection, null, headersAndFooters);
+    }
+
+    /**
      * Returns {@code true} when at least one option is configured.
      *
      * @return {@code true} for non-empty option bundles
      */
     public boolean hasAny() {
-        return metadata != null || watermark != null || protection != null || !headersAndFooters.isEmpty();
+        return metadata != null || watermark != null || protection != null
+               || viewerPreferences != null || !headersAndFooters.isEmpty();
     }
 }

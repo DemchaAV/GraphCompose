@@ -3,6 +3,7 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentProtection;
+import com.demcha.compose.document.output.DocumentViewerPreferences;
 import com.demcha.compose.document.output.DocumentWatermark;
 
 import java.util.Objects;
@@ -64,6 +65,22 @@ public final class SessionChromeApi {
     public SessionChromeApi metadata(DocumentMetadata metadata) {
         ensureOpen();
         chromeOptions.setMetadata(metadata);
+        return this;
+    }
+
+    /**
+     * Sets the PDF viewer preferences — how a reader presents the document when it
+     * opens (page mode, page layout, window flags). PDF-only; other backends
+     * ignore it.
+     *
+     * @param viewerPreferences viewer preferences, or {@code null} to clear
+     * @return this facade for chaining
+     * @throws IllegalStateException if the owning session has already been closed
+     * @since 1.9.0
+     */
+    public SessionChromeApi viewerPreferences(DocumentViewerPreferences viewerPreferences) {
+        ensureOpen();
+        chromeOptions.setViewerPreferences(viewerPreferences);
         return this;
     }
 

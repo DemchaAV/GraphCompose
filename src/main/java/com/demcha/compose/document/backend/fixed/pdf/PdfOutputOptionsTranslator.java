@@ -39,6 +39,27 @@ public final class PdfOutputOptionsTranslator {
     }
 
     /**
+     * Translates canonical viewer preferences into the PDF backend value.
+     *
+     * @param viewerPreferences canonical viewer preferences, may be {@code null}
+     * @return PDF viewer-preference options or {@code null} when input is {@code null}
+     */
+    public static PdfViewerPreferencesOptions toPdf(DocumentViewerPreferences viewerPreferences) {
+        if (viewerPreferences == null) {
+            return null;
+        }
+        return PdfViewerPreferencesOptions.builder()
+                .pageMode(viewerPreferences.getPageMode())
+                .pageLayout(viewerPreferences.getPageLayout())
+                .displayDocTitle(viewerPreferences.getDisplayDocTitle())
+                .hideToolbar(viewerPreferences.getHideToolbar())
+                .hideMenubar(viewerPreferences.getHideMenubar())
+                .fitWindow(viewerPreferences.getFitWindow())
+                .centerWindow(viewerPreferences.getCenterWindow())
+                .build();
+    }
+
+    /**
      * Translates a canonical watermark into the PDF backend value.
      *
      * @param watermark canonical watermark, may be {@code null}

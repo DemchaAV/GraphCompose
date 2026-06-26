@@ -56,17 +56,18 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     private final PdfMetadataOptions metadataOptions;
     private final PdfWatermarkOptions watermarkOptions;
     private final PdfProtectionOptions protectionOptions;
+    private final PdfViewerPreferencesOptions viewerPreferencesOptions;
     private final List<PdfHeaderFooterOptions> headerFooterOptions;
 
     /**
      * Creates a backend with the built-in paragraph, shape, image, and table handlers.
      */
     public PdfFixedLayoutBackend() {
-        this(defaultHandlers(), DocumentDebugOptions.none(), null, null, null, List.of());
+        this(defaultHandlers(), DocumentDebugOptions.none(), null, null, null, null, List.of());
     }
 
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {
-        this(handlers, DocumentDebugOptions.none(), null, null, null, List.of());
+        this(handlers, DocumentDebugOptions.none(), null, null, null, null, List.of());
     }
 
     private PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers,
@@ -74,6 +75,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                                   PdfMetadataOptions metadataOptions,
                                   PdfWatermarkOptions watermarkOptions,
                                   PdfProtectionOptions protectionOptions,
+                                  PdfViewerPreferencesOptions viewerPreferencesOptions,
                                   Collection<PdfHeaderFooterOptions> headerFooterOptions) {
         Map<Class<?>, PdfFragmentRenderHandler<?>> registry = new LinkedHashMap<>();
         for (PdfFragmentRenderHandler<?> handler : handlers) {
@@ -87,6 +89,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         this.metadataOptions = metadataOptions;
         this.watermarkOptions = watermarkOptions;
         this.protectionOptions = protectionOptions;
+        this.viewerPreferencesOptions = viewerPreferencesOptions;
         this.headerFooterOptions = List.copyOf(headerFooterOptions);
     }
 
@@ -373,6 +376,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                     watermarkOptions,
                     protectionOptions,
                     headerFooterOptions);
+            PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferencesOptions);
 
             return document;
         } catch (Exception ex) {
@@ -502,10 +506,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
 
     private static void applyDocumentMetadataAndProtection(PDDocument document, List<Section> sections)
             throws IOException {
-        // Metadata and protection are document-global in PDF; the first section
-        // that declares each wins for the combined document.
+        // Metadata, protection, and viewer preferences are document-global in PDF;
+        // the first section that declares each wins for the combined document.
         PdfMetadataOptions metadata = null;
         PdfProtectionOptions protection = null;
+        PdfViewerPreferencesOptions viewerPreferences = null;
         for (Section section : sections) {
             if (metadata == null) {
                 metadata = section.chrome().metadataOptions;
@@ -513,8 +518,12 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             if (protection == null) {
                 protection = section.chrome().protectionOptions;
             }
+            if (viewerPreferences == null) {
+                viewerPreferences = section.chrome().viewerPreferencesOptions;
+            }
         }
         PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(document, metadata, protection);
+        PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferences);
     }
 
     private static List<FontFamilyDefinition> unionCustomFonts(List<Section> sections) {
@@ -745,6 +754,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         private PdfMetadataOptions metadataOptions;
         private PdfWatermarkOptions watermarkOptions;
         private PdfProtectionOptions protectionOptions;
+        private PdfViewerPreferencesOptions viewerPreferencesOptions;
 
         private Builder() {
         }
@@ -811,6 +821,17 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
          */
         public Builder debug(DocumentDebugOptions options) {
             this.debug = options == null ? DocumentDebugOptions.none() : options;
+            return this;
+        }
+
+        /**
+         * Configures PDF viewer preferences (page mode / layout / window flags).
+         *
+         * @param options viewer-preference options, or {@code null} to clear
+         * @return this builder
+         */
+        public Builder viewerPreferences(PdfViewerPreferencesOptions options) {
+            this.viewerPreferencesOptions = options;
             return this;
         }
 
@@ -889,6 +910,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                     metadataOptions,
                     watermarkOptions,
                     protectionOptions,
+                    viewerPreferencesOptions,
                     headerFooterOptions);
         }
     }

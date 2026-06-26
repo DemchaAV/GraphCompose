@@ -3,16 +3,24 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfViewerPreferencesOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.style.DocumentPageLayout;
+import com.demcha.compose.document.style.DocumentPageMode;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer;
 import com.demcha.compose.engine.render.pdf.helpers.PdfWatermarkRenderer;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.pdmodel.PageLayout;
+import org.apache.pdfbox.pdmodel.PageMode;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import org.apache.pdfbox.pdmodel.interactive.viewerpreferences.PDViewerPreferences;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -130,6 +138,78 @@ public final class PdfDocumentPostProcessor {
         if (protectionOptions != null) {
             applyProtection(document, protectionOptions);
         }
+    }
+
+    /**
+     * Writes document-global viewer preferences to the PDF catalog: page mode,
+     * page layout, and the window-chrome flags. Each unset field leaves the
+     * reader's default in place. A no-op when {@code options} is {@code null}.
+     *
+     * @param document target PDFBox document
+     * @param options  viewer-preference options, or {@code null}
+     * @since 1.9.0
+     */
+    public static void applyViewerPreferences(PDDocument document, PdfViewerPreferencesOptions options) {
+        if (options == null) {
+            return;
+        }
+        PDDocumentCatalog catalog = document.getDocumentCatalog();
+        if (options.getPageMode() != null) {
+            catalog.setPageMode(toPageMode(options.getPageMode()));
+        }
+        if (options.getPageLayout() != null) {
+            catalog.setPageLayout(toPageLayout(options.getPageLayout()));
+        }
+
+        PDViewerPreferences prefs = catalog.getViewerPreferences();
+        if (prefs == null) {
+            prefs = new PDViewerPreferences(new COSDictionary());
+        }
+        boolean anyFlag = false;
+        if (options.getDisplayDocTitle() != null) {
+            prefs.setDisplayDocTitle(options.getDisplayDocTitle());
+            anyFlag = true;
+        }
+        if (options.getHideToolbar() != null) {
+            prefs.setHideToolbar(options.getHideToolbar());
+            anyFlag = true;
+        }
+        if (options.getHideMenubar() != null) {
+            prefs.setHideMenubar(options.getHideMenubar());
+            anyFlag = true;
+        }
+        if (options.getFitWindow() != null) {
+            prefs.setFitWindow(options.getFitWindow());
+            anyFlag = true;
+        }
+        if (options.getCenterWindow() != null) {
+            prefs.setCenterWindow(options.getCenterWindow());
+            anyFlag = true;
+        }
+        if (anyFlag) {
+            catalog.setViewerPreferences(prefs);
+        }
+    }
+
+    private static PageMode toPageMode(DocumentPageMode mode) {
+        return switch (mode) {
+            case USE_NONE -> PageMode.USE_NONE;
+            case USE_OUTLINES -> PageMode.USE_OUTLINES;
+            case USE_THUMBNAILS -> PageMode.USE_THUMBS;
+            case FULL_SCREEN -> PageMode.FULL_SCREEN;
+            case USE_ATTACHMENTS -> PageMode.USE_ATTACHMENTS;
+        };
+    }
+
+    private static PageLayout toPageLayout(DocumentPageLayout layout) {
+        return switch (layout) {
+            case SINGLE_PAGE -> PageLayout.SINGLE_PAGE;
+            case ONE_COLUMN -> PageLayout.ONE_COLUMN;
+            case TWO_COLUMN_LEFT -> PageLayout.TWO_COLUMN_LEFT;
+            case TWO_COLUMN_RIGHT -> PageLayout.TWO_COLUMN_RIGHT;
+            case TWO_PAGE_LEFT -> PageLayout.TWO_PAGE_LEFT;
+            case TWO_PAGE_RIGHT -> PageLayout.TWO_PAGE_RIGHT;
+        };
     }
 
     private static void applyMetadata(PDDocument document, PdfMetadataOptions metadataOptions) {

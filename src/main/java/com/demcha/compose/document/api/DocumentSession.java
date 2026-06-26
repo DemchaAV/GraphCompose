@@ -493,6 +493,22 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Sets the PDF viewer preferences — how a reader presents the document when it
+     * opens (page mode, page layout, window flags). PDF-only; other backends
+     * ignore it.
+     *
+     * @param viewerPreferences viewer preferences, or {@code null} to clear
+     * @return this session
+     * @throws IllegalStateException if this session has already been closed
+     * @since 1.9.0
+     */
+    public DocumentSession viewerPreferences(DocumentViewerPreferences viewerPreferences) {
+        ensureOpen();
+        chromeOptions.setViewerPreferences(viewerPreferences);
+        return this;
+    }
+
+    /**
      * @param options legacy PDF metadata options, or {@code null} to clear
      * @return this session
      * @deprecated since 1.6.0, removal in v2.0; prefer the canonical

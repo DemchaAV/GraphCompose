@@ -62,6 +62,31 @@ public interface PrepareContext {
     default OptionalInt resolvedPage(String anchor) {
         return OptionalInt.empty();
     }
+
+    /**
+     * Per-page geometry resolver for documents with per-page margin overrides, or
+     * {@code null} when the document uses a single document-wide margin (the common
+     * case, laid out exactly as before).
+     *
+     * @return the page-geometry resolver, or {@code null}
+     */
+    default PageGeometry pageGeometry() {
+        return null;
+    }
+
+    /**
+     * The page a node begins on, carried over from the previous layout pass so this
+     * pass can measure the node at that page's content width (the per-page-margin
+     * fixed point). Returns {@code fallback} on the first pass and for documents
+     * without per-page margins.
+     *
+     * @param path     stable semantic path of the node
+     * @param fallback value to use when no assignment is carried over
+     * @return the 0-based start page assigned in the previous pass, or {@code fallback}
+     */
+    default int assignedStartPage(String path, int fallback) {
+        return fallback;
+    }
 }
 
 

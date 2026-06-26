@@ -9,6 +9,7 @@ import com.demcha.examples.features.chrome.PageNumberingExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
 import com.demcha.examples.features.chrome.ViewerPreferencesExample;
 import com.demcha.examples.features.layout.BleedExample;
+import com.demcha.examples.features.layout.PerPageMarginExample;
 import com.demcha.examples.features.layout.RowColumnsExample;
 import com.demcha.examples.features.layout.RowFlexExample;
 import com.demcha.examples.features.layout.RowVerticalAlignExample;
@@ -160,6 +161,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + SvgIconGalleryExample.generate());
         System.out.println("Generated: " + BlockAlignExample.generate());
         System.out.println("Generated: " + BleedExample.generate());
+        System.out.println("Generated: " + PerPageMarginExample.generate());
         System.out.println("Generated: " + RowColumnsExample.generate());
         System.out.println("Generated: " + RowVerticalAlignExample.generate());
         System.out.println("Generated: " + RowFlexExample.generate());

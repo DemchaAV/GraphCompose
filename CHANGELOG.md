@@ -12,6 +12,14 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`DocumentSession.pageMargins(List<PageMarginRule>)`** (`@since 1.9.0`). Overrides
+  the page margin for ranges of pages, so one document can mix a full-bleed cover
+  (`PageMarginRule.page(1, DocumentInsets.zero())`) with book margins on the body
+  (`PageMarginRule.from(2, …)`) — both horizontally and vertically. Pages are 1-based;
+  rules apply in list order, last-covering-rule wins. Each top-level block is laid out
+  at the content width of the page it begins on. A document that sets no rules is laid
+  out exactly as before.
+
 - **`chrome().viewerPreferences(...)` + `DocumentViewerPreferences` /
   `DocumentPageMode` / `DocumentPageLayout`** (`@since 1.9.0`). Controls how a PDF
   reader presents the document on open — the page mode (`USE_OUTLINES` opens the

@@ -28,6 +28,7 @@ import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.BoxConstraints;
 import com.demcha.compose.document.layout.BuiltInNodeDefinitions;
 import com.demcha.compose.document.layout.FragmentContext;
+import com.demcha.compose.document.layout.PageGeometry;
 import com.demcha.compose.document.layout.FragmentPlacement;
 import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutFragment;
@@ -1121,6 +1122,11 @@ class DocumentSessionTest {
         @Override
         public LayoutCanvas canvas() {
             return canvas;
+        }
+
+        @Override
+        public PageGeometry pageGeometry() {
+            return null;
         }
 
         @Override

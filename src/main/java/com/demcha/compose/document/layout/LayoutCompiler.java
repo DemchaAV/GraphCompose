@@ -178,19 +178,31 @@ public final class LayoutCompiler {
         LayoutCanvas canvas = prepareContext.canvas();
         LAYOUT_LOG.debug("layout.compile.start roots={} canvas={}x{}", graph.roots().size(), Math.round(canvas.width()), Math.round(canvas.height()));
         PAGINATION_LOG.debug("pagination.compile.start roots={} innerHeight={}", graph.roots().size(), Math.round(canvas.innerHeight()));
-        CompilerState state = new CompilerState(canvas);
+        CompilerState state = new CompilerState(canvas, prepareContext.pageGeometry());
         List<PlacedNode> nodes = new ArrayList<>();
         List<PlacedFragment> fragments = new ArrayList<>();
 
         for (int index = 0; index < graph.roots().size(); index++) {
             DocumentNode root = graph.roots().get(index);
+            // Each top-level block is measured at the content width of the page it
+            // begins on. The start page is carried over from the previous layout
+            // pass (the per-page-margin fixed point); on the first pass it falls back
+            // to the page the previous block ended on. With no per-page margins the
+            // path lookup is skipped and the width is the single canvas width, so the
+            // layout — and the work done — is byte-identical.
+            int startPage = state.pageIndex;
+            if (state.hasPageGeometry()) {
+                startPage = prepareContext.assignedStartPage(pathFor(root, null, index), state.pageIndex);
+            }
+            double regionWidth = state.innerWidthForPage(startPage);
+            double regionX = state.marginLeftForPage(startPage);
             compileNode(
-                    prepareForRegionWidth(prepareContext, root, canvas.innerWidth()),
+                    prepareForRegionWidth(prepareContext, root, regionWidth),
                     null,
                     index,
                     1,
-                    canvas.margin().left(),
-                    canvas.innerWidth(),
+                    regionX,
+                    regionWidth,
                     state,
                     prepareContext,
                     fragmentContext,
@@ -353,7 +365,7 @@ public final class LayoutCompiler {
         // existing layouts are unchanged.
         double outerHeight = naturalMeasure.height() + margin.vertical();
         boolean keepWhole = node.keepTogether()
-                            && outerHeight <= state.canvas.innerHeight() + CAPACITY_TOLERANCE;
+                            && outerHeight <= state.activeInnerHeight() + CAPACITY_TOLERANCE;
         double startReservation = margin.top() + padding.top();
         if (keepWhole && outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
@@ -374,16 +386,31 @@ public final class LayoutCompiler {
         List<DocumentNode> children = definition.children(node);
         double childRegionX = placementX + padding.left();
         double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+        // At the root level the page margin defines the document's content column, so
+        // each direct child is measured at the content width of the page it begins on
+        // (carried over from the previous pass via the fixed point). Nested composites
+        // keep their parent-allocated geometry. With no per-page margins both branches
+        // resolve to the same width, so the layout is byte-identical.
+        boolean pageColumn = depth == 1 && state.hasPageGeometry();
 
         for (int index = 0; index < children.size(); index++) {
             DocumentNode child = children.get(index);
+            double thisChildRegionX = childRegionX;
+            double thisChildRegionWidth = childRegionWidth;
+            if (pageColumn) {
+                int childStartPage = prepareContext.assignedStartPage(
+                        pathFor(child, path, index), state.pageIndex);
+                double pageRegionWidth = state.innerWidthForPage(childStartPage);
+                thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
+                thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
+            }
             compileNode(
-                    prepareForRegionWidth(prepareContext, child, childRegionWidth),
+                    prepareForRegionWidth(prepareContext, child, thisChildRegionWidth),
                     path,
                     index,
                     depth + 1,
-                    childRegionX,
-                    childRegionWidth,
+                    thisChildRegionX,
+                    thisChildRegionWidth,
                     state,
                     prepareContext,
                     fragmentContext,
@@ -488,7 +515,7 @@ public final class LayoutCompiler {
                                       MeasureResult naturalMeasure) {
         DocumentNode node = prepared.node();
         double rowOuterHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.canvas.innerHeight();
+        double fullPageHeight = state.activeInnerHeight();
         if (rowOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, rowOuterHeight, fullPageHeight);
         }
@@ -712,7 +739,7 @@ public final class LayoutCompiler {
                                      MeasureResult naturalMeasure) {
         DocumentNode node = prepared.node();
         double stackOuterHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.canvas.innerHeight();
+        double fullPageHeight = state.activeInnerHeight();
         if (stackOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, stackOuterHeight, fullPageHeight);
         }
@@ -853,7 +880,7 @@ public final class LayoutCompiler {
         Padding padding = toPadding(node.padding());
         MeasureResult naturalMeasure = prepared.measureResult();
         double outerHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.canvas.innerHeight();
+        double fullPageHeight = state.activeInnerHeight();
 
         if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw atomicTooLarge(path, outerHeight, fullPageHeight);
@@ -1034,7 +1061,7 @@ public final class LayoutCompiler {
             Padding currentPadding = toPadding(currentNode.padding());
             MeasureResult pieceMeasure = current.measureResult();
             double pieceOuterHeight = pieceMeasure.height() + currentMargin.vertical();
-            double fullPageOuterHeight = state.canvas.innerHeight();
+            double fullPageOuterHeight = state.activeInnerHeight();
 
             if (pieceOuterHeight <= state.remainingHeight() + EPS) {
                 state.touchPage();
@@ -1440,16 +1467,20 @@ public final class LayoutCompiler {
                                                               DocumentBleed bleed,
                                                               FragmentContext fragmentContext) {
         List<PlacedFragment> placed = new ArrayList<>();
-        // On bled edges the clamp bound is the physical page edge rather than the
-        // content-area edge, so the fill reaches past the top/bottom margin.
-        double pageTopY = bleed.bleeds(DocumentEdge.TOP)
-                ? canvas.height()
-                : canvas.height() - canvas.margin().top();
-        double pageBottomY = bleed.bleeds(DocumentEdge.BOTTOM)
-                ? 0.0
-                : canvas.margin().bottom();
-
+        // The intermediate-page band edges follow each page's own margin, so a fill
+        // spanning a per-page-margin boundary clamps to the right content area on
+        // every page. With no per-page margins every page resolves to the canvas
+        // margin and the bounds are identical for all pages, as before.
+        PageGeometry geometry = fragmentContext.pageGeometry();
         for (int pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
+            // On bled edges the clamp bound is the physical page edge rather than the
+            // content-area edge, so the fill reaches past the top/bottom margin.
+            double pageTopY = bleed.bleeds(DocumentEdge.TOP)
+                    ? canvas.height()
+                    : canvas.height() - pageMarginTop(canvas, geometry, pageIndex);
+            double pageBottomY = bleed.bleeds(DocumentEdge.BOTTOM)
+                    ? 0.0
+                    : pageMarginBottom(canvas, geometry, pageIndex);
             double segmentTopY = pageIndex == startPage ? startPageTopY : pageTopY;
             double segmentBottomY = pageIndex == endPage ? endPageBottomY : pageBottomY;
             segmentTopY = Math.min(segmentTopY, pageTopY);
@@ -1479,6 +1510,14 @@ public final class LayoutCompiler {
         return placed;
     }
 
+    private static double pageMarginTop(LayoutCanvas canvas, PageGeometry geometry, int pageIndex) {
+        return geometry == null ? canvas.margin().top() : geometry.marginForPage(pageIndex).top();
+    }
+
+    private static double pageMarginBottom(LayoutCanvas canvas, PageGeometry geometry, int pageIndex) {
+        return geometry == null ? canvas.margin().bottom() : geometry.marginForPage(pageIndex).bottom();
+    }
+
     private List<PlacedFragment> compositeOverlayFragments(PreparedNode<DocumentNode> prepared,
                                                            NodeDefinition<DocumentNode> definition,
                                                            String path,
@@ -1496,10 +1535,10 @@ public final class LayoutCompiler {
                                                            LayoutCanvas canvas,
                                                            FragmentContext fragmentContext) {
         List<PlacedFragment> placed = new ArrayList<>();
-        double pageTopY = canvas.height() - canvas.margin().top();
-        double pageBottomY = canvas.margin().bottom();
-
+        PageGeometry geometry = fragmentContext.pageGeometry();
         for (int pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
+            double pageTopY = canvas.height() - pageMarginTop(canvas, geometry, pageIndex);
+            double pageBottomY = pageMarginBottom(canvas, geometry, pageIndex);
             double segmentTopY = pageIndex == startPage ? startPageTopY : pageTopY;
             double segmentBottomY = pageIndex == endPage ? endPageBottomY : pageBottomY;
             segmentTopY = Math.min(segmentTopY, pageTopY);
@@ -1572,7 +1611,7 @@ public final class LayoutCompiler {
             state.newPage();
         }
         state.touchPage();
-        state.usedHeight = Math.min(state.canvas.innerHeight(), state.usedHeight + amount);
+        state.usedHeight = Math.min(state.activeInnerHeight(), state.usedHeight + amount);
     }
 
     /**

@@ -176,7 +176,7 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 
 | Element | Tier now | Status | Why the 1.x shape is a compromise | 2.0 action | ADR | Issue |
 |---|---|---|---|---|---|---|
-| _none yet_ | | | | | | |
+| `DocumentSession.pageMargins(List<PageMarginRule>)` / `PageMarginRule` | Stable | planned | Per-page margins resolve a block's content width by the page it *begins* on (the engine measures each block once, before pagination). A margin that changes the content width therefore does not re-wrap a block mid-flow across a page boundary. | Revisit a page-aware per-line/per-fragment width model so a block can re-wrap when it crosses a margin boundary, if demand warrants. | — | — |
 
 ---
 

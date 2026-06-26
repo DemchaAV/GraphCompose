@@ -81,6 +81,18 @@ public interface FragmentContext {
     default OptionalInt resolvedPage(String anchor) {
         return OptionalInt.empty();
     }
+
+    /**
+     * Per-page geometry resolver for documents with per-page margin overrides, or
+     * {@code null} when the document uses a single document-wide margin — in which
+     * case fragment placement uses {@link #canvas()} for every page, exactly as
+     * before.
+     *
+     * @return the page-geometry resolver, or {@code null}
+     */
+    default PageGeometry pageGeometry() {
+        return null;
+    }
 }
 
 

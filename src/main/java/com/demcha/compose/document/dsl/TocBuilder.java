@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentLeader;
@@ -147,8 +148,11 @@ public final class TocBuilder {
     }
 
     private DocumentNode buildEntryRow(Entry entry) {
+        // Bottom-align so the leader sits on the entries' baseline rather than
+        // riding along the top of the line.
         RowBuilder row = new RowBuilder()
                 .gap(6)
+                .verticalAlign(RowVerticalAlign.BOTTOM)
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto());
         row.addParagraph(p -> p.text(entry.label()).textStyle(entryStyle).linkTo(entry.anchor()));
         if (leader == DocumentLeader.NONE) {

@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentLeader;
@@ -28,6 +29,22 @@ class TocBuilderTest {
         DocumentNode entryRow = nodes.get(nodes.size() - 1);   // no title set -> the entry row is last
         assertThat(entryRow).isInstanceOf(RowNode.class);
         assertThat(((RowNode) entryRow).verticalAlign()).isEqualTo(RowVerticalAlign.BOTTOM);
+    }
+
+    @Test
+    void theLeaderIsLiftedOntoTheBaselineNotLeftOnTheDescender() {
+        // Bottom-alignment alone leaves the leader on the descender line — the user-visible
+        // fix is the upward lift, so pin that the leader carries a positive bottom margin.
+        List<DocumentNode> nodes = new TocBuilder()
+                .leader(DocumentLeader.DOTS)
+                .entry("Introduction", "intro")
+                .buildEntries();
+
+        LineNode leader = (LineNode) ((RowNode) nodes.get(nodes.size() - 1)).children().stream()
+                .filter(LineNode.class::isInstance)
+                .findFirst()
+                .orElseThrow();
+        assertThat(leader.margin().bottom()).isGreaterThan(0.0);
     }
 
     @Test

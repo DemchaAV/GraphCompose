@@ -31,6 +31,13 @@ public final class TocBuilder {
 
     private static final DocumentColor DEFAULT_LEADER_COLOR = DocumentColor.rgb(150, 150, 150);
 
+    // A bottom-aligned thin line lands on the descender line; lifting it by roughly the
+    // font's descent seats it on the text baseline. The exact descent is a font metric
+    // not reachable from the DSL layer, so this is a deliberate approximation tuned for
+    // typical text faces. It assumes the entry and page-number styles share a size — the
+    // common case; if they differ they sit on different baselines regardless.
+    private static final double LEADER_BASELINE_LIFT_RATIO = 0.2;
+
     private String title = "";
     private DocumentTextStyle titleStyle = DocumentTextStyle.DEFAULT.withSize(16);
     private DocumentTextStyle entryStyle = DocumentTextStyle.DEFAULT;
@@ -159,10 +166,8 @@ public final class TocBuilder {
         if (leader == DocumentLeader.NONE) {
             row.addSpacer(s -> s.width(1).height(1));
         } else {
-            // Bottom-aligning a thin line drops it to the descender line; lift it by
-            // about the font's descent so the leader sits on the text baseline, level
-            // with the label and the page number.
-            double baselineLift = entryStyle.size() * 0.2;
+            // Lift the leader off the descender line onto the baseline (see the ratio above).
+            double baselineLift = entryStyle.size() * LEADER_BASELINE_LIFT_RATIO;
             row.addLine(line -> {
                 line.fill().stroke(DocumentStroke.of(leaderColor, 1.0))
                         .margin(DocumentInsets.bottom(baselineLift));

@@ -50,11 +50,16 @@ public record PageMarginRule(int fromPage, int toPageExclusive, DocumentInsets i
             throw new IllegalArgumentException(
                     "toPageExclusive (" + toPageExclusive + ") must be greater than fromPage (" + fromPage + ")");
         }
-        if (insets.top() < 0 || insets.right() < 0 || insets.bottom() < 0 || insets.left() < 0) {
+        if (!isNonNegativeFinite(insets.top()) || !isNonNegativeFinite(insets.right())
+                || !isNonNegativeFinite(insets.bottom()) || !isNonNegativeFinite(insets.left())) {
             throw new IllegalArgumentException(
-                    "page margin must be non-negative; use bleed() to extend a node past the page edge "
-                    + "(see DocumentBleed). Insets were " + insets);
+                    "page margin must be a finite, non-negative value; use bleed() to extend a node past "
+                    + "the page edge (see DocumentBleed). Insets were " + insets);
         }
+    }
+
+    private static boolean isNonNegativeFinite(double value) {
+        return Double.isFinite(value) && value >= 0.0;
     }
 
     /**
@@ -65,6 +70,9 @@ public record PageMarginRule(int fromPage, int toPageExclusive, DocumentInsets i
      * @return a rule covering exactly {@code page}
      */
     public static PageMarginRule page(int page, DocumentInsets insets) {
+        if (page == Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("page must be < Integer.MAX_VALUE; use from(...) for an open-ended range");
+        }
         return new PageMarginRule(page, page + 1, insets);
     }
 
@@ -79,6 +87,9 @@ public record PageMarginRule(int fromPage, int toPageExclusive, DocumentInsets i
     public static PageMarginRule range(int fromPage, int toPage, DocumentInsets insets) {
         if (toPage < fromPage) {
             throw new IllegalArgumentException("toPage (" + toPage + ") must be >= fromPage (" + fromPage + ")");
+        }
+        if (toPage == Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("toPage must be < Integer.MAX_VALUE; use from(...) for an open-ended range");
         }
         return new PageMarginRule(fromPage, toPage + 1, insets);
     }

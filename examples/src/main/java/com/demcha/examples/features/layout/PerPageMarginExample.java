@@ -22,7 +22,7 @@ import java.util.List;
  * <pre>{@code
  * document.pageMargins(List.of(
  *     PageMarginRule.page(1, DocumentInsets.zero()),                 // full-bleed cover
- *     PageMarginRule.from(2, DocumentInsets.symmetric(40, 86))));    // book body
+ *     PageMarginRule.from(2, DocumentInsets.symmetric(36, 86))));    // book body
  * }</pre>
  *
  * @author Artem Demchyshyn

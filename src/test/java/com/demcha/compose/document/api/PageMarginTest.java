@@ -7,7 +7,9 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalInt;
 
@@ -22,6 +24,9 @@ import static org.assertj.core.api.Assertions.within;
  * origin (top margin) are checked directly.
  */
 class PageMarginTest {
+
+    @TempDir
+    Path tempDir;
 
     private static PlacedNode node(LayoutGraph graph, String semanticName) {
         return graph.nodes().stream()
@@ -188,7 +193,7 @@ class PageMarginTest {
     }
 
     @Test
-    void ruleRejectsInvalidRangeAndNegativeInsets() {
+    void ruleRejectsInvalidRangeAndNonFiniteOrNegativeInsets() {
         assertThatThrownBy(() -> new PageMarginRule(0, 2, DocumentInsets.of(10)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("fromPage");
@@ -198,5 +203,110 @@ class PageMarginTest {
         assertThatThrownBy(() -> PageMarginRule.page(1, new DocumentInsets(-1, 0, 0, 0)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("bleed");
+        // NaN / Infinity must be rejected at the public type, not slip through to the engine.
+        assertThatThrownBy(() -> PageMarginRule.page(1, new DocumentInsets(Double.NaN, 0, 0, 0)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("finite");
+        assertThatThrownBy(() -> PageMarginRule.page(1, new DocumentInsets(0, Double.POSITIVE_INFINITY, 0, 0)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("finite");
+        // The +1 factories must not overflow Integer.MAX_VALUE into a confusing message.
+        assertThatThrownBy(() -> PageMarginRule.page(Integer.MAX_VALUE, DocumentInsets.of(10)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("from(");
+        assertThatThrownBy(() -> PageMarginRule.range(1, Integer.MAX_VALUE, DocumentInsets.of(10)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("from(");
+    }
+
+    @Test
+    void nullRulesClearLikeAnEmptyList() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 300)
+                .margin(DocumentInsets.of(28))
+                .create()) {
+            session.pageMargins(List.of(PageMarginRule.page(1, DocumentInsets.of(8))));
+            session.pageMargins(null); // clears back to the document-wide margin
+            session.pageFlow().addParagraph(p -> p.name("only").text("Only")).build();
+
+            assertThat(node(session.layoutGraph(), "only").placementX()).isCloseTo(28.0, within(0.5));
+        }
+    }
+
+    @Test
+    void aMiddleOnlyRuleLeavesNeighbourPagesAtTheBaseMargin() throws Exception {
+        // A rule for page 2 only: page 1 and page 3 keep the base margin, page 2 is overridden.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 160)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageMargins(List.of(PageMarginRule.page(2, DocumentInsets.symmetric(20, 80))));
+            session.pageFlow()
+                    .addParagraph(p -> p.name("p1").text("Page one"))
+                    .addPageBreak(b -> { })
+                    .addParagraph(p -> p.name("p2").text("Page two"))
+                    .addPageBreak(b -> { })
+                    .addParagraph(p -> p.name("p3").text("Page three"))
+                    .build();
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(node(graph, "p1").placementX()).isCloseTo(20.0, within(0.5));  // base
+            assertThat(node(graph, "p2").placementX()).isCloseTo(80.0, within(0.5));  // override
+            assertThat(node(graph, "p3").placementX()).isCloseTo(20.0, within(0.5));  // base again
+        }
+    }
+
+    @Test
+    void everyTopLevelBlockIsPlacedConsistentlyWithItsStartPage() throws Exception {
+        // The coupled fixed point must converge to a consistent assignment: every block's
+        // placement X must match the left margin of the page it actually lands on (no block
+        // measured for one page but placed against another's geometry).
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 150)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageMargins(List.of(
+                    PageMarginRule.page(1, DocumentInsets.symmetric(20, 12)),
+                    PageMarginRule.from(2, DocumentInsets.symmetric(20, 64))));
+            var flow = session.pageFlow();
+            for (int i = 0; i < 30; i++) {
+                final int n = i;
+                flow.addParagraph(p -> p.name("b" + n).text("Block " + n + " sitting near a boundary"));
+            }
+            flow.build();
+
+            LayoutGraph graph = session.layoutGraph();
+            assertThat(graph.totalPages()).isGreaterThan(1);
+            for (PlacedNode block : graph.nodes()) {
+                if (block.parentPath() != null && block.semanticName() != null
+                        && block.semanticName().startsWith("b")) {
+                    double expectedLeft = block.startPage() == 0 ? 12.0 : 64.0;
+                    assertThat(block.placementX())
+                            .as("block %s on page %d", block.semanticName(), block.startPage())
+                            .isCloseTo(expectedLeft, within(0.5));
+                }
+            }
+        }
+    }
+
+    @Test
+    void eachMultiSectionSectionResolvesItsOwnSectionLocalPageMargins() throws Exception {
+        DocumentSession cover = GraphCompose.document().pageSize(240, 200).margin(DocumentInsets.of(20)).create();
+        cover.pageMargins(List.of(PageMarginRule.page(1, DocumentInsets.of(12))));
+        cover.pageFlow().addParagraph(p -> p.name("cover").text("Cover")).build();
+        assertThat(node(cover.layoutGraph(), "cover").placementX()).isCloseTo(12.0, within(0.5));
+
+        DocumentSession body = GraphCompose.document().pageSize(240, 200).margin(DocumentInsets.of(20)).create();
+        // Section-local page 1 → its own rule, independent of the cover section.
+        body.pageMargins(List.of(PageMarginRule.page(1, DocumentInsets.of(72))));
+        body.pageFlow().addParagraph(p -> p.name("body").text("Body")).build();
+        assertThat(node(body.layoutGraph(), "body").placementX()).isCloseTo(72.0, within(0.5));
+
+        Path out = tempDir.resolve("multi-margins.pdf");
+        try (MultiSectionDocument doc = GraphCompose.documents(out).section(cover).section(body).create()) {
+            doc.buildPdf();
+            assertThat(doc.sectionSnapshots()).hasSize(2);
+        }
+        assertThat(out).exists();
     }
 }

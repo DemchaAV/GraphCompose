@@ -464,11 +464,13 @@ public final class DocumentSession implements AutoCloseable {
      * empty list to clear (the default — every page uses the document-wide margin).</p>
      *
      * <p>Because content is measured before it is paginated, each top-level block is
-     * laid out at the content width of the page it begins on. A margin that changes
-     * the content width therefore takes effect where content breaks onto a covered
-     * page — the model is different margins for different page ranges, not a margin
-     * that changes mid-block. To extend a single node past the page edge instead,
-     * use {@code bleed(...)} (see {@link com.demcha.compose.document.style.DocumentBleed}).</p>
+     * laid out at the content width <em>and</em> against the vertical space of the page
+     * it begins on. A margin that changes the content width or the usable height
+     * therefore takes effect where content breaks onto a covered page — the model is
+     * different margins for different page ranges, not a margin that changes mid-block,
+     * and a keep-together block's fit is judged against its starting page's height. To
+     * extend a single node past the page edge instead, use {@code bleed(...)} (see
+     * {@link com.demcha.compose.document.style.DocumentBleed}).</p>
      *
      * @param rules ordered list of per-page margin overrides, or {@code null}/empty to clear
      * @return this session

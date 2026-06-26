@@ -48,7 +48,7 @@ public final class DocumentViewerPreferences {
 
     /**
      * Preset that opens the reader with the bookmark (outline) panel visible —
-     * pairs with {@code bookmark(...)} on sections.
+     * pairs with {@code bookmark(...)} on sections and containers.
      *
      * @return viewer preferences with {@link DocumentPageMode#USE_OUTLINES}
      */

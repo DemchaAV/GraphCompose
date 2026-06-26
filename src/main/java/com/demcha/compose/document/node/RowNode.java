@@ -32,6 +32,8 @@ import java.util.Objects;
  * @param columns      optional per-child column widths (fixed / intrinsic / weight);
  *                     length must match children, or be empty. Mutually exclusive
  *                     with {@code weights}.
+ * @param verticalAlign cross-axis placement of children within the row band
+ *                      (defaults to {@link RowVerticalAlign#TOP})
  * @author Artem Demchyshyn
  */
 public record RowNode(
@@ -45,7 +47,8 @@ public record RowNode(
         DocumentStroke stroke,
         DocumentCornerRadius cornerRadius,
         DocumentBorders borders,
-        List<DocumentRowColumn> columns
+        List<DocumentRowColumn> columns,
+        RowVerticalAlign verticalAlign
 ) implements DocumentNode {
     /**
      * Creates a normalized horizontal row container.
@@ -83,9 +86,41 @@ public record RowNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         borders = borders == null ? DocumentBorders.NONE : borders;
+        verticalAlign = verticalAlign == null ? RowVerticalAlign.TOP : verticalAlign;
         if (gap < 0 || Double.isNaN(gap) || Double.isInfinite(gap)) {
             throw new IllegalArgumentException("gap must be finite and non-negative: " + gap);
         }
+    }
+
+    /**
+     * Backwards-compatible constructor without a cross-axis vertical alignment —
+     * defaults to {@link RowVerticalAlign#TOP}.
+     *
+     * @param name         node name used in snapshots and layout graph paths
+     * @param children     child semantic nodes in source order
+     * @param weights      optional per-child weights (length must match children, or be empty)
+     * @param gap          horizontal gap between children
+     * @param padding      inner padding
+     * @param margin       outer margin
+     * @param fillColor    optional background fill
+     * @param stroke       optional border stroke
+     * @param cornerRadius optional render-only corner radius
+     * @param borders      optional per-side border strokes
+     * @param columns      optional per-child column widths
+     */
+    public RowNode(String name,
+                   List<DocumentNode> children,
+                   List<Double> weights,
+                   double gap,
+                   DocumentInsets padding,
+                   DocumentInsets margin,
+                   DocumentColor fillColor,
+                   DocumentStroke stroke,
+                   DocumentCornerRadius cornerRadius,
+                   DocumentBorders borders,
+                   List<DocumentRowColumn> columns) {
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, columns,
+                RowVerticalAlign.TOP);
     }
 
     /**
@@ -113,7 +148,8 @@ public record RowNode(
                    DocumentStroke stroke,
                    DocumentCornerRadius cornerRadius,
                    DocumentBorders borders) {
-        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, List.of());
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, List.of(),
+                RowVerticalAlign.TOP);
     }
 
     /**
@@ -138,6 +174,7 @@ public record RowNode(
                    DocumentColor fillColor,
                    DocumentStroke stroke,
                    DocumentCornerRadius cornerRadius) {
-        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE, List.of());
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE,
+                List.of(), RowVerticalAlign.TOP);
     }
 }

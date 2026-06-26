@@ -12,6 +12,13 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`RowBuilder.verticalAlign(...)` + `RowVerticalAlign`** (`@since 1.9.0`). Seats a
+  row's children on the cross axis within the row band, whose height is that of the
+  tallest child: `TOP` (the default), `CENTER`, or `BOTTOM` — the `align-items`
+  analogue for a horizontal row, without manual coordinates. The measure phase is
+  unchanged and `TOP` rows render byte-for-byte as before, so existing documents are
+  unaffected.
+
 - **`GraphCompose.documents()` + `MultiSectionDocumentBuilder` / `MultiSectionDocument`**
   (`@since 1.9.0`). Concatenates several independently authored `DocumentSession`
   sections — each with its own page size, margins, fonts, and footer numbering —

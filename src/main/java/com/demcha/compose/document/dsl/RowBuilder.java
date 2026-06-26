@@ -43,6 +43,7 @@ public final class RowBuilder {
     private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     private DocumentBorders borders = DocumentBorders.NONE;
     private RowVerticalAlign verticalAlign = RowVerticalAlign.TOP;
+    private RowArrangement arrangement = RowArrangement.START;
 
     /**
      * Creates a row builder.
@@ -193,6 +194,57 @@ public final class RowBuilder {
     public RowBuilder verticalAlign(RowVerticalAlign verticalAlign) {
         this.verticalAlign = verticalAlign == null ? RowVerticalAlign.TOP : verticalAlign;
         return this;
+    }
+
+    /**
+     * Sets the main-axis distribution of the row's leftover width when its
+     * children do not fill it — the {@code justify-content} analogue. Only takes
+     * effect when the children are content-sized (no weights / columns / grow
+     * spacer absorbs the slack).
+     *
+     * @param arrangement main-axis arrangement; {@code null} resets to
+     *                    {@link RowArrangement#START}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder arrangement(RowArrangement arrangement) {
+        this.arrangement = arrangement == null ? RowArrangement.START : arrangement;
+        return this;
+    }
+
+    /**
+     * Adds a flex spacer — an invisible spring with {@code grow == 1} that absorbs
+     * the row's leftover width, pushing the children before and after it apart.
+     *
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder flexSpacer() {
+        return flexSpacer(1.0);
+    }
+
+    /**
+     * Adds a flex spacer with the given grow factor. Multiple flex spacers share
+     * the leftover width in proportion to their grow factors.
+     *
+     * @param grow grow factor; must be finite and {@code > 0}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder flexSpacer(double grow) {
+        return add(new SpacerBuilder().grow(grow).build());
+    }
+
+    /**
+     * Inserts a {@link #flexSpacer()} at the current position. With one spacer this
+     * pushes the children added after it to the right edge; with several it splits
+     * the leftover width between them.
+     *
+     * @return this builder
+     * @since 1.9.0
+     */
+    public RowBuilder pushRight() {
+        return flexSpacer();
     }
 
     /**
@@ -490,7 +542,8 @@ public final class RowBuilder {
                 cornerRadius,
                 borders,
                 List.copyOf(columns),
-                verticalAlign);
+                verticalAlign,
+                arrangement);
     }
 
     private void validate() {

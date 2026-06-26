@@ -12,6 +12,15 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **`RowBuilder.flexSpacer()` / `pushRight()` / `arrangement(...)` + `RowArrangement`
+  + `SpacerBuilder.grow(...)`** (`@since 1.9.0`). Main-axis (`justify-content`) layout
+  for a row. A `flexSpacer()` (or `pushRight()`) is an invisible spring that absorbs
+  the row's leftover width — a title stays left while a badge sits flush right; a
+  spacer's `grow(...)` factor sets its share. `arrangement(START / CENTER / END /
+  SPACE_BETWEEN / SPACE_AROUND / SPACE_EVENLY)` justifies content-sized children
+  instead. Flex is mutually exclusive with `weights` / `columns`. The default
+  (`START`, no grow) is byte-for-byte unchanged, so existing rows are unaffected.
+
 - **`RowBuilder.verticalAlign(...)` + `RowVerticalAlign`** (`@since 1.9.0`). Seats a
   row's children on the cross axis within the row band, whose height is that of the
   tallest child: `TOP` (the default), `CENTER`, or `BOTTOM` — the `align-items`

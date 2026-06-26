@@ -346,7 +346,9 @@ public final class NodeDefinitionSupport {
         double totalGap = n > 1 ? gap * (n - 1) : 0.0;
         double slotsTotal = Math.max(0.0, availableWidth - totalGap);
         double[] slotWidths = new double[n];
-        if (!node.columns().isEmpty()) {
+        if (RowSlots.hasFlexLayout(node)) {
+            slotWidths = RowSlots.distributeFlex(node.children(), gap, availableWidth, ctx);
+        } else if (!node.columns().isEmpty()) {
             double[] intrinsic = RowSlots.intrinsicColumnWidths(node.children(), node.columns(), slotsTotal, ctx);
             slotWidths = RowSlots.distributeColumns(node.columns(), intrinsic, gap, availableWidth, node.name());
         } else if (node.weights().isEmpty()) {

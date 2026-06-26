@@ -34,6 +34,10 @@ import java.util.Objects;
  *                     with {@code weights}.
  * @param verticalAlign cross-axis placement of children within the row band
  *                      (defaults to {@link RowVerticalAlign#TOP})
+ * @param arrangement  main-axis distribution of the row's leftover width
+ *                     (defaults to {@link RowArrangement#START}); mutually
+ *                     exclusive with {@code weights} / {@code columns} and with a
+ *                     grow spacer
  * @author Artem Demchyshyn
  */
 public record RowNode(
@@ -48,7 +52,8 @@ public record RowNode(
         DocumentCornerRadius cornerRadius,
         DocumentBorders borders,
         List<DocumentRowColumn> columns,
-        RowVerticalAlign verticalAlign
+        RowVerticalAlign verticalAlign,
+        RowArrangement arrangement
 ) implements DocumentNode {
     /**
      * Creates a normalized horizontal row container.
@@ -87,9 +92,55 @@ public record RowNode(
         cornerRadius = cornerRadius == null ? DocumentCornerRadius.ZERO : cornerRadius;
         borders = borders == null ? DocumentBorders.NONE : borders;
         verticalAlign = verticalAlign == null ? RowVerticalAlign.TOP : verticalAlign;
+        arrangement = arrangement == null ? RowArrangement.START : arrangement;
+        boolean hasGrowChild = false;
+        for (DocumentNode child : children) {
+            if (child instanceof SpacerNode spacer && spacer.grow() > 0.0) {
+                hasGrowChild = true;
+                break;
+            }
+        }
+        if ((hasGrowChild || arrangement != RowArrangement.START)
+            && (!weights.isEmpty() || !columns.isEmpty())) {
+            throw new IllegalArgumentException("RowNode cannot combine flex (a grow spacer or a non-START "
+                                               + "arrangement) with weights or columns; use one distribution strategy.");
+        }
         if (gap < 0 || Double.isNaN(gap) || Double.isInfinite(gap)) {
             throw new IllegalArgumentException("gap must be finite and non-negative: " + gap);
         }
+    }
+
+    /**
+     * Backwards-compatible constructor without a main-axis arrangement — defaults
+     * to {@link RowArrangement#START}.
+     *
+     * @param name          node name used in snapshots and layout graph paths
+     * @param children      child semantic nodes in source order
+     * @param weights       optional per-child weights (length must match children, or be empty)
+     * @param gap           horizontal gap between children
+     * @param padding       inner padding
+     * @param margin        outer margin
+     * @param fillColor     optional background fill
+     * @param stroke        optional border stroke
+     * @param cornerRadius  optional render-only corner radius
+     * @param borders       optional per-side border strokes
+     * @param columns       optional per-child column widths
+     * @param verticalAlign cross-axis placement of children within the row band
+     */
+    public RowNode(String name,
+                   List<DocumentNode> children,
+                   List<Double> weights,
+                   double gap,
+                   DocumentInsets padding,
+                   DocumentInsets margin,
+                   DocumentColor fillColor,
+                   DocumentStroke stroke,
+                   DocumentCornerRadius cornerRadius,
+                   DocumentBorders borders,
+                   List<DocumentRowColumn> columns,
+                   RowVerticalAlign verticalAlign) {
+        this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, columns,
+                verticalAlign, RowArrangement.START);
     }
 
     /**
@@ -120,7 +171,7 @@ public record RowNode(
                    DocumentBorders borders,
                    List<DocumentRowColumn> columns) {
         this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, columns,
-                RowVerticalAlign.TOP);
+                RowVerticalAlign.TOP, RowArrangement.START);
     }
 
     /**
@@ -149,7 +200,7 @@ public record RowNode(
                    DocumentCornerRadius cornerRadius,
                    DocumentBorders borders) {
         this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, borders, List.of(),
-                RowVerticalAlign.TOP);
+                RowVerticalAlign.TOP, RowArrangement.START);
     }
 
     /**
@@ -175,6 +226,6 @@ public record RowNode(
                    DocumentStroke stroke,
                    DocumentCornerRadius cornerRadius) {
         this(name, children, weights, gap, padding, margin, fillColor, stroke, cornerRadius, DocumentBorders.NONE,
-                List.of(), RowVerticalAlign.TOP);
+                List.of(), RowVerticalAlign.TOP, RowArrangement.START);
     }
 }

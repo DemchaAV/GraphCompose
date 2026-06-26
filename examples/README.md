@@ -78,6 +78,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Content bleed](#content-bleed) | `band.bleedToEdge(TOP, LEFT, RIGHT)` / `bleed(DocumentBleed.of(...))` — a section's fill reaches the trimmed page edge while its children stay in the content margin | [PDF](../assets/readme/examples/content-bleed.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BleedExample.java) |
 | [Row columns & TOC](#row-columns--toc) | `row.columns(auto(), weight(1), auto())` — size columns by content / fixed points / weight; with `line().fill()` it builds a dot-leader table of contents | [PDF](../assets/readme/examples/row-columns.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java) |
 | [Row vertical align](#row-vertical-align) | `row.verticalAlign(TOP / CENTER / BOTTOM)` — seat a row's children on the cross axis within the band set by the tallest child | [PDF](../assets/readme/examples/row-vertical-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java) |
+| [Row flex & arrangement](#row-flex--arrangement) | `row.pushRight()` / `flexSpacer()` springs + `arrangement(SPACE_BETWEEN / CENTER / …)` — push children apart or justify leftover width | [PDF](../assets/readme/examples/row-flex.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/RowFlexExample.java) |
 
 ### 📋 Templates recommended
 
@@ -511,6 +512,24 @@ flow.addRow(r -> r.verticalAlign(RowVerticalAlign.BOTTOM)
 
 [📄 View PDF](../assets/readme/examples/row-vertical-align.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java)
+
+### Row flex & arrangement
+
+`RowBuilder.pushRight()` / `flexSpacer()` add an invisible spring that absorbs the
+row's leftover width — a header title stays left while a status badge sits flush
+right. `arrangement(...)` instead justifies content-sized children across the row
+(`SPACE_BETWEEN`, `CENTER`, `END`, `SPACE_AROUND`, `SPACE_EVENLY`) — the
+`justify-content` analogue, no manual coordinates. `START` is the default, so
+existing rows are unchanged.
+
+```java
+flow.addRow(r -> r.addParagraph(title).pushRight().addParagraph(status)); // title left, status right
+flow.addRow(r -> r.arrangement(RowArrangement.SPACE_BETWEEN)
+    .addParagraph(a).addParagraph(b).addParagraph(c));                    // spread edge-to-edge
+```
+
+[📄 View PDF](../assets/readme/examples/row-flex.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/layout/RowFlexExample.java)
 
 ### Advanced tables
 

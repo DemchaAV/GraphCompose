@@ -15,6 +15,7 @@ public final class SpacerBuilder {
     private double height;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private double grow;
 
     /**
      * Creates a spacer builder.
@@ -69,6 +70,20 @@ public final class SpacerBuilder {
     }
 
     /**
+     * Sets the flex grow factor. Inside a row, a spacer with {@code grow > 0}
+     * becomes a spring that absorbs a share of the row's leftover width
+     * proportional to its grow factor; {@code 0} (the default) is rigid.
+     *
+     * @param grow grow factor; must be finite and {@code >= 0}
+     * @return this builder
+     * @since 1.9.0
+     */
+    public SpacerBuilder grow(double grow) {
+        this.grow = grow;
+        return this;
+    }
+
+    /**
      * Sets spacer padding.
      *
      * @param padding padding in points
@@ -96,6 +111,6 @@ public final class SpacerBuilder {
      * @return spacer node
      */
     public SpacerNode build() {
-        return new SpacerNode(name, width, height, padding, margin);
+        return new SpacerNode(name, width, height, padding, margin, grow);
     }
 }

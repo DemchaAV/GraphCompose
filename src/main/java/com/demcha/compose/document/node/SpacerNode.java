@@ -10,6 +10,9 @@ import com.demcha.compose.document.style.DocumentInsets;
  * @param height  spacer height contribution
  * @param padding inner padding
  * @param margin  outer margin
+ * @param grow    flex grow factor inside a row: {@code 0} (the default) is a rigid
+ *                spacer; {@code > 0} makes it a spring that absorbs a share of the
+ *                row's leftover width proportional to its grow factor
  * @author Artem Demchyshyn
  */
 public record SpacerNode(
@@ -17,7 +20,8 @@ public record SpacerNode(
         double width,
         double height,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        double grow
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates spacer dimensions.
@@ -32,5 +36,21 @@ public record SpacerNode(
         if (height < 0 || Double.isNaN(height) || Double.isInfinite(height)) {
             throw new IllegalArgumentException("height must be finite and non-negative: " + height);
         }
+        if (grow < 0 || Double.isNaN(grow) || Double.isInfinite(grow)) {
+            throw new IllegalArgumentException("grow must be finite and non-negative: " + grow);
+        }
+    }
+
+    /**
+     * Backwards-compatible constructor for a rigid spacer ({@code grow == 0}).
+     *
+     * @param name    node name used in snapshots and layout graph paths
+     * @param width   spacer width contribution
+     * @param height  spacer height contribution
+     * @param padding inner padding
+     * @param margin  outer margin
+     */
+    public SpacerNode(String name, double width, double height, DocumentInsets padding, DocumentInsets margin) {
+        this(name, width, height, padding, margin, 0.0);
     }
 }

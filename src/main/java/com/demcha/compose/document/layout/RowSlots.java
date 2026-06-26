@@ -1,6 +1,9 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.RowArrangement;
+import com.demcha.compose.document.node.RowNode;
+import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.style.DocumentRowColumn;
 
 import java.util.List;
@@ -140,5 +143,122 @@ final class RowSlots {
                     + childCount + "). Pass exactly " + childCount
                     + " weight(s) or leave weights empty for an even split.");
         }
+    }
+
+    /**
+     * Whether a row uses the flex distribution path — a grow spacer absorbs the
+     * leftover width, or a non-{@link RowArrangement#START START} arrangement
+     * justifies it. Only this returning {@code true} routes a row through
+     * {@link #distributeFlex}; every other row keeps the unchanged
+     * columns / weights / even split.
+     *
+     * @param node the node being distributed
+     * @return {@code true} when flex distribution applies
+     */
+    static boolean hasFlexLayout(DocumentNode node) {
+        if (!(node instanceof RowNode row)) {
+            return false;
+        }
+        if (row.arrangement() != RowArrangement.START) {
+            return true;
+        }
+        return hasGrowChild(row.children());
+    }
+
+    private static boolean hasGrowChild(List<DocumentNode> children) {
+        for (DocumentNode child : children) {
+            if (child instanceof SpacerNode spacer && spacer.grow() > 0.0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static double growOf(DocumentNode child) {
+        return child instanceof SpacerNode spacer ? spacer.grow() : 0.0;
+    }
+
+    /**
+     * Distributes the row width for the flex path: every non-grow child takes its
+     * intrinsic (natural content) width, and the leftover is shared across the
+     * grow children in proportion to their grow factors. With no grow child the
+     * children keep their intrinsic widths and the leftover is handed to
+     * {@link #flexJustify} for main-axis arrangement. Called identically by the
+     * compile and measure phases so the slot widths match.
+     *
+     * @param children   the row's children
+     * @param gap        gap between children
+     * @param innerWidth the row's content width
+     * @param ctx        the prepare context (for intrinsic widths)
+     * @return resolved slot width per child
+     */
+    static double[] distributeFlex(List<DocumentNode> children,
+                                   double gap,
+                                   double innerWidth,
+                                   PrepareContext ctx) {
+        int n = children.size();
+        double available = rowAvailableWidth(innerWidth, gap, n);
+        double[] slots = new double[n];
+        double totalGrow = 0.0;
+        double used = 0.0;
+        for (int i = 0; i < n; i++) {
+            DocumentNode child = children.get(i);
+            double grow = growOf(child);
+            if (grow > 0.0) {
+                totalGrow += grow;
+            } else {
+                double childInner = Math.max(0.0, available - child.margin().horizontal());
+                double natural = ctx.prepare(child, BoxConstraints.natural(childInner)).measureResult().width();
+                slots[i] = natural + child.margin().horizontal();
+                used += slots[i];
+            }
+        }
+        double remaining = Math.max(0.0, available - used);
+        if (totalGrow > 0.0) {
+            for (int i = 0; i < n; i++) {
+                double grow = growOf(children.get(i));
+                if (grow > 0.0) {
+                    slots[i] = remaining * (grow / totalGrow);
+                }
+            }
+        }
+        return slots;
+    }
+
+    /**
+     * Resolves a non-START {@link RowArrangement} into a leading offset and an
+     * extra inter-child gap that justify {@code leftover} width across {@code n}
+     * content-sized children. The compile phase applies these to the cursor; the
+     * measure phase does not need them (they shift x only, not height).
+     *
+     * @param arrangement the row arrangement (must not be START)
+     * @param leftover    the unused width to distribute
+     * @param n           number of children
+     * @return {@code {leading, extraGap}} — leading offset before the first child,
+     *         and extra gap inserted between adjacent children
+     */
+    static double[] flexJustify(RowArrangement arrangement, double leftover, int n) {
+        double leading = 0.0;
+        double extraGap = 0.0;
+        switch (arrangement) {
+            case START -> {
+            }
+            case CENTER -> leading = leftover / 2.0;
+            case END -> leading = leftover;
+            case SPACE_BETWEEN -> {
+                if (n > 1) {
+                    extraGap = leftover / (n - 1);
+                }
+            }
+            case SPACE_AROUND -> {
+                extraGap = n > 0 ? leftover / n : 0.0;
+                leading = extraGap / 2.0;
+            }
+            case SPACE_EVENLY -> {
+                leading = leftover / (n + 1);
+                extraGap = leading;
+            }
+        }
+        return new double[]{leading, extraGap};
     }
 }

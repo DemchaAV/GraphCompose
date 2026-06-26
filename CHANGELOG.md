@@ -12,6 +12,13 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Public API
 
+- **Container `bookmark(...)`** (`@since 1.9.0`). `bookmark(DocumentBookmarkOptions)`
+  on any container flow builder (`Section` / `Container` / page flow) — previously
+  only the seven leaf builders carried a bookmark — adds a PDF outline entry pointing
+  at that container's start page, making a structured document navigable through the
+  reader's bookmark panel. Emitted via its own non-visual marker fragment, so it works
+  even on an unstyled container, and a container without a bookmark is unaffected.
+
 - **`RowBuilder.flexSpacer()` / `pushRight()` / `arrangement(...)` + `RowArrangement`
   + `SpacerBuilder.grow(...)`** (`@since 1.9.0`). Main-axis (`justify-content`) layout
   for a row. A `flexSpacer()` (or `pushRight()`) is an invisible spring that absorbs

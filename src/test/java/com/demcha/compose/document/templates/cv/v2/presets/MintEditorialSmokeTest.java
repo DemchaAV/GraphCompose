@@ -14,7 +14,7 @@ import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.style.DocumentColor;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +61,7 @@ class MintEditorialSmokeTest {
                 .pageSize(DocumentPageSize.A4)
                 .margin(48, 48, 48, 48)
                 .create()) {
-            MintEditorial.create(CvTheme.mintEditorial())
+            MintEditorial.create(BrandTheme.mintEditorial())
                     .compose(session, fullDocument());
             assertThat(session.roots()).isNotEmpty();
         }

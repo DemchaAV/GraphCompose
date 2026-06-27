@@ -11,7 +11,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
@@ -74,7 +74,7 @@ public final class ClassicSerif {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.classicSerif());
+        return create(BrandTheme.classicSerif());
     }
 
     /**
@@ -83,12 +83,12 @@ public final class ClassicSerif {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

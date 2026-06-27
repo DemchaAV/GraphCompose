@@ -7,7 +7,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
@@ -27,9 +27,9 @@ import java.util.Objects;
  * <ol>
  *   <li>Define its identity ({@link #ID}, {@link #DISPLAY_NAME},
  *       {@link #RECOMMENDED_MARGIN}).</li>
- *   <li>Pick a default theme — {@link CvTheme#boxedClassic()} — that
+ *   <li>Pick a default theme — {@link BrandTheme#boxedClassic()} — that
  *       callers can override via the
- *       {@link #create(CvTheme)} overload.</li>
+ *       {@link #create(BrandTheme)} overload.</li>
  *   <li>Walk {@link CvDocument#sections()} top-to-bottom, emitting a
  *       banner + body pair per section. All actual drawing is
  *       delegated to {@code cv/v2/components}.</li>
@@ -66,7 +66,7 @@ public final class BoxedSections {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
     /**
@@ -78,12 +78,12 @@ public final class BoxedSections {
      * @return ready-to-use template
      * @throws NullPointerException if {@code theme} is null
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

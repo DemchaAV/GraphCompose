@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,7 +134,7 @@ public final class EngineeringResume {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.engineeringResume());
+        return create(BrandTheme.engineeringResume());
     }
 
     /**
@@ -143,12 +143,12 @@ public final class EngineeringResume {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

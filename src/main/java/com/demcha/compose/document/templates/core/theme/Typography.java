@@ -1,11 +1,11 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import com.demcha.compose.font.FontName;
 
 import java.util.Objects;
 
 /**
- * Font + size scale tokens for a {@link CvTheme}.
+ * Font + size scale tokens for a {@link BrandTheme}.
  *
  * <p>Each field names <strong>what</strong> renders at that size, not
  * an abstract "small / medium / large" — that way the call site
@@ -28,7 +28,7 @@ import java.util.Objects;
  * @param bodyLineSpacing   line-spacing multiplier for body
  *                          paragraphs (typically 1.4)
  */
-public record CvTypography(
+public record Typography(
         FontName headlineFont,
         FontName bodyFont,
         double sizeHeadline,
@@ -43,7 +43,7 @@ public record CvTypography(
     /**
      * Validates that the font tokens are not null.
      */
-    public CvTypography {
+    public Typography {
         Objects.requireNonNull(headlineFont, "headlineFont");
         Objects.requireNonNull(bodyFont, "bodyFont");
     }
@@ -52,10 +52,10 @@ public record CvTypography(
      * The classic PT-Serif scale used by the original Boxed Sections
      * preset.
      *
-     * @return a {@code CvTypography} scale for the classic preset
+     * @return a {@code Typography} scale for the classic preset
      */
-    public static CvTypography classic() {
-        return new CvTypography(
+    public static Typography classic() {
+        return new Typography(
                 FontName.PT_SERIF, FontName.PT_SERIF,
                 21.5,    // headline
                 8.5,     // contact
@@ -71,10 +71,10 @@ public record CvTypography(
      * Helvetica scale for the Modern Professional preset — larger
      * display name, larger section titles, comfortable body size.
      *
-     * @return a {@code CvTypography} scale for the Modern Professional preset
+     * @return a {@code Typography} scale for the Modern Professional preset
      */
-    public static CvTypography modernProfessional() {
-        return new CvTypography(
+    public static Typography modernProfessional() {
+        return new Typography(
                 FontName.HELVETICA_BOLD, FontName.HELVETICA,
                 28.0,    // headline (display name)
                 9.0,     // contact
@@ -97,10 +97,10 @@ public record CvTypography(
      * variant — small bold spaced-caps title in the soft palette
      * tone.</p>
      *
-     * @return a {@code CvTypography} scale for the Centered Headline preset
+     * @return a {@code Typography} scale for the Centered Headline preset
      */
-    public static CvTypography centeredHeadline() {
-        return new CvTypography(
+    public static Typography centeredHeadline() {
+        return new Typography(
                 FontName.POPPINS, FontName.LATO,
                 24.0,    // headline (spaced-caps name)
                 8.3,     // contact
@@ -118,10 +118,10 @@ public record CvTypography(
      * Preset-local body variants still override this when the visual
      * needs a distinct summary size.
      *
-     * @return a {@code CvTypography} scale for the Classic Serif preset
+     * @return a {@code Typography} scale for the Classic Serif preset
      */
-    public static CvTypography classicSerif() {
-        return new CvTypography(
+    public static Typography classicSerif() {
+        return new Typography(
                 FontName.PT_SERIF, FontName.PT_SERIF,
                 27.0,    // headline
                 8.7,     // contact
@@ -138,10 +138,10 @@ public record CvTypography(
      * preset. Compact sizes keep the two-column rail/body layout
      * single-page friendly while preserving the crisp editorial feel.
      *
-     * @return a {@code CvTypography} scale for the Nordic Clean preset
+     * @return a {@code Typography} scale for the Nordic Clean preset
      */
-    public static CvTypography nordicClean() {
-        return new CvTypography(
+    public static Typography nordicClean() {
+        return new Typography(
                 FontName.BARLOW, FontName.LATO,
                 27.0,    // headline
                 7.4,     // contact stack
@@ -158,10 +158,10 @@ public record CvTypography(
      * preset. The section-title slot also uses the mono headline font
      * so tick labels keep the terminal/card visual signature.
      *
-     * @return a {@code CvTypography} scale for the Compact Mono preset
+     * @return a {@code Typography} scale for the Compact Mono preset
      */
-    public static CvTypography compactMono() {
-        return new CvTypography(
+    public static Typography compactMono() {
+        return new Typography(
                 FontName.IBM_PLEX_MONO, FontName.LATO,
                 23.5,    // headline
                 8.3,     // contact
@@ -177,10 +177,10 @@ public record CvTypography(
      * Compact PT-Serif headline + Lato body scale used by the Blue
      * Banner preset.
      *
-     * @return a {@code CvTypography} scale for the Blue Banner preset
+     * @return a {@code Typography} scale for the Blue Banner preset
      */
-    public static CvTypography blueBanner() {
-        return new CvTypography(
+    public static Typography blueBanner() {
+        return new Typography(
                 FontName.PT_SERIF, FontName.LATO,
                 20.0,    // headline
                 7.5,     // contact
@@ -195,10 +195,10 @@ public record CvTypography(
     /**
      * Compact Helvetica scale for the Editorial Blue preset.
      *
-     * @return a {@code CvTypography} scale for the Editorial Blue preset
+     * @return a {@code Typography} scale for the Editorial Blue preset
      */
-    public static CvTypography editorialBlue() {
-        return new CvTypography(
+    public static Typography editorialBlue() {
+        return new Typography(
                 FontName.HELVETICA_BOLD, FontName.HELVETICA,
                 22.0,    // headline
                 9.0,     // contact
@@ -217,10 +217,10 @@ public record CvTypography(
      * The sample data is information-dense, so the body sizes are
      * compact and the line spacing trends to 1.35 for readability.
      *
-     * @return a {@code CvTypography} scale for the Sidebar Portrait preset
+     * @return a {@code Typography} scale for the Sidebar Portrait preset
      */
-    public static CvTypography sidebarPortrait() {
-        return new CvTypography(
+    public static Typography sidebarPortrait() {
+        return new Typography(
                 FontName.CRIMSON_TEXT, FontName.LATO,
                 28.0,    // headline (hero name)
                 8.3,     // contact (sidebar contact stack)
@@ -240,10 +240,10 @@ public record CvTypography(
      * The PT-Serif monogram font is preset-local because no other v2
      * preset uses it for a circle-ring badge.
      *
-     * @return a {@code CvTypography} scale for the Monogram Sidebar preset
+     * @return a {@code Typography} scale for the Monogram Sidebar preset
      */
-    public static CvTypography monogramSidebar() {
-        return new CvTypography(
+    public static Typography monogramSidebar() {
+        return new Typography(
                 FontName.CRIMSON_TEXT, FontName.LATO,
                 30.0,    // headline (spaced-caps name lines)
                 7.4,     // contact (sidebar contact stack)
@@ -261,10 +261,10 @@ public record CvTypography(
      * 7.8pt main section headings, 7.25pt body, and a 1.08 line
      * spacing tuned for dense engineering-resume cards.
      *
-     * @return a {@code CvTypography} scale for the Engineering Resume preset
+     * @return a {@code Typography} scale for the Engineering Resume preset
      */
-    public static CvTypography engineeringResume() {
-        return new CvTypography(
+    public static Typography engineeringResume() {
+        return new Typography(
                 FontName.BARLOW, FontName.LATO,
                 24.5,    // headline (UPPERCASE name in navy header)
                 7.2,     // contact (right-aligned navy header stack)
@@ -283,10 +283,10 @@ public record CvTypography(
      * titles, 7.5-7.9pt body. Compact sizes squeeze the 3-column
      * sidebar / axis / main layout onto one page.
      *
-     * @return a {@code CvTypography} scale for the Timeline Minimal preset
+     * @return a {@code Typography} scale for the Timeline Minimal preset
      */
-    public static CvTypography timelineMinimal() {
-        return new CvTypography(
+    public static Typography timelineMinimal() {
+        return new Typography(
                 FontName.BARLOW_CONDENSED, FontName.LATO,
                 28.0,    // headline (spaced uppercase masthead)
                 7.8,     // contact (right-aligned contact stack)
@@ -305,10 +305,10 @@ public record CvTypography(
      * slot for the teal module headings, and a 9.4pt body with 1.2
      * line spacing tuned for the dense card layout.
      *
-     * @return a {@code CvTypography} scale for the Panel preset
+     * @return a {@code Typography} scale for the Panel preset
      */
-    public static CvTypography panel() {
-        return new CvTypography(
+    public static Typography panel() {
+        return new Typography(
                 FontName.POPPINS, FontName.LATO,
                 22.0,    // headline (centered uppercase name)
                 8.9,     // contact (V1 META_SIZE = body - 0.5)
@@ -327,10 +327,10 @@ public record CvTypography(
      * and a 9.5pt body with 1.25 line-spacing tuned for an executive
      * single-column resume density.
      *
-     * @return a {@code CvTypography} scale for the Executive preset
+     * @return a {@code Typography} scale for the Executive preset
      */
-    public static CvTypography executive() {
-        return new CvTypography(
+    public static Typography executive() {
+        return new Typography(
                 FontName.POPPINS, FontName.LATO,
                 24.0,    // headline (uppercase masthead)
                 9.1,     // contact meta (V1 META_SIZE = body - 0.4)
@@ -348,10 +348,10 @@ public record CvTypography(
      * heading, and compact 7.4-8pt metadata/body tuned for the dense
      * two-column editorial layout.
      *
-     * @return a {@code CvTypography} scale for the Mint Editorial preset
+     * @return a {@code Typography} scale for the Mint Editorial preset
      */
-    public static CvTypography mintEditorial() {
-        return new CvTypography(
+    public static Typography mintEditorial() {
+        return new Typography(
                 FontName.POPPINS, FontName.POPPINS,
                 26.0,    // headline (spaced-caps centered name)
                 7.4,     // contact (icon line text)

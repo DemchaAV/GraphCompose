@@ -55,7 +55,7 @@ public record Typography(
 
     /**
      * Returns the default Helvetica-based typography matching the historical
-     * {@code CvTheme.defaultTheme()} sizing.
+     * {@code BrandTheme.defaultTheme()} sizing.
      *
      * @return Helvetica typography preset
      */

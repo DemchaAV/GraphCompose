@@ -16,7 +16,7 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.font.FontName;
 
@@ -31,7 +31,7 @@ import java.util.Objects;
  * bronze-underlined link row, and a thin full-width muted rule — then a
  * single-column letter body (greeting, paragraphs, closing) via the
  * shared {@link LetterBody}. Both documents read all colour, font, and
- * spacing from {@link CvTheme#executive()}, so a writer's CV and cover
+ * spacing from {@link BrandTheme#executive()}, so a writer's CV and cover
  * letter ship as one matched set.</p>
  *
  * <p>The masthead block is preset-local inline DSL mirroring the CV's,
@@ -84,7 +84,7 @@ public final class ExecutiveLetter {
      * @return a {@code DocumentTemplate} for the "Executive Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.executive());
+        return create(BrandTheme.executive());
     }
 
     /**
@@ -94,12 +94,12 @@ public final class ExecutiveLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Executive Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

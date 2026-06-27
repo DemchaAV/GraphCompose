@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -16,7 +16,7 @@ import java.util.Objects;
  * RGB tuples, font names, or magic numbers.</p>
  *
  * <p>To define a new visual flavour: add a static factory here
- * returning a fresh {@code CvTheme} with custom sub-records. The
+ * returning a fresh {@code BrandTheme} with custom sub-records. The
  * existing preset code keeps working — only the theme handed to
  * {@code BoxedSections.create(theme)} changes.</p>
  *
@@ -25,15 +25,15 @@ import java.util.Objects;
  * @param spacing    paddings / margins / weights
  * @param decoration glyph / separator tokens
  */
-public record CvTheme(CvPalette palette,
-                      CvTypography typography,
-                      CvSpacing spacing,
-                      CvDecoration decoration) {
+public record BrandTheme(Palette palette,
+                      Typography typography,
+                      Spacing spacing,
+                      Decoration decoration) {
 
     /**
      * Validates that no sub-record is null.
      */
-    public CvTheme {
+    public BrandTheme {
         Objects.requireNonNull(palette, "palette");
         Objects.requireNonNull(typography, "typography");
         Objects.requireNonNull(spacing, "spacing");
@@ -42,21 +42,21 @@ public record CvTheme(CvPalette palette,
 
     /**
      * Backward-compatible 3-arg constructor that fills the
-     * {@link CvDecoration} slot with {@link CvDecoration#classic()}.
+     * {@link Decoration} slot with {@link Decoration#classic()}.
      * Retained so callers built before the decoration token landed
      * keep compiling and behaving identically.
      *
      * @param palette    colour tokens
      * @param typography font + size scale
      * @param spacing    paddings / margins / weights
-     * @deprecated since the introduction of {@link CvDecoration} —
+     * @deprecated since the introduction of {@link Decoration} —
      * pass an explicit decoration so callers can choose
      * a different bullet glyph or contact separator
      * without forking the renderer.
      */
     @Deprecated
-    public CvTheme(CvPalette palette, CvTypography typography, CvSpacing spacing) {
-        this(palette, typography, spacing, CvDecoration.classic());
+    public BrandTheme(Palette palette, Typography typography, Spacing spacing) {
+        this(palette, typography, spacing, Decoration.classic());
     }
 
     // -- canonical factories ---------------------------------------------
@@ -67,14 +67,14 @@ public record CvTheme(CvPalette palette,
      * separators. Visual signature of the original
      * {@code cv-boxed-sections.pdf} reference output.
      *
-     * @return a {@code CvTheme} for the "Boxed Sections" classic look
+     * @return a {@code BrandTheme} for the "Boxed Sections" classic look
      */
-    public static CvTheme boxedClassic() {
-        return new CvTheme(
-                CvPalette.classic(),
-                CvTypography.classic(),
-                CvSpacing.classic(),
-                CvDecoration.classic());
+    public static BrandTheme boxedClassic() {
+        return new BrandTheme(
+                Palette.classic(),
+                Typography.classic(),
+                Spacing.classic(),
+                Decoration.classic());
     }
 
     /**
@@ -85,17 +85,17 @@ public record CvTheme(CvPalette palette,
      * shared with any other v2 preset today.
      *
      * <p>When (or if) a second preset wants the same accent palette,
-     * extract those colours into a new field on {@link CvPalette} and
+     * extract those colours into a new field on {@link Palette} and
      * point both presets at it.</p>
      *
-     * @return a {@code CvTheme} for the "Modern Professional" look
+     * @return a {@code BrandTheme} for the "Modern Professional" look
      */
-    public static CvTheme modernProfessional() {
-        return new CvTheme(
-                CvPalette.classic(),
-                CvTypography.modernProfessional(),
-                CvSpacing.modernProfessional(),
-                CvDecoration.classic());
+    public static BrandTheme modernProfessional() {
+        return new BrandTheme(
+                Palette.classic(),
+                Typography.modernProfessional(),
+                Spacing.modernProfessional(),
+                Decoration.classic());
     }
 
     /**
@@ -105,14 +105,14 @@ public record CvTheme(CvPalette palette,
      * each module. Pipe contact separator matches the classic
      * decoration.
      *
-     * @return a {@code CvTheme} for the "Centered Headline" look
+     * @return a {@code BrandTheme} for the "Centered Headline" look
      */
-    public static CvTheme centeredHeadline() {
-        return new CvTheme(
-                CvPalette.centeredHeadline(),
-                CvTypography.centeredHeadline(),
-                CvSpacing.centeredHeadline(),
-                CvDecoration.classic());
+    public static BrandTheme centeredHeadline() {
+        return new BrandTheme(
+                Palette.centeredHeadline(),
+                Typography.centeredHeadline(),
+                Spacing.centeredHeadline(),
+                Decoration.classic());
     }
 
     /**
@@ -120,14 +120,14 @@ public record CvTheme(CvPalette palette,
      * tan rules, cream profile band, and the roomy pipe separator
      * from the classic decoration.
      *
-     * @return a {@code CvTheme} for the "Classic Serif" look
+     * @return a {@code BrandTheme} for the "Classic Serif" look
      */
-    public static CvTheme classicSerif() {
-        return new CvTheme(
-                CvPalette.classicSerif(),
-                CvTypography.classicSerif(),
-                CvSpacing.classicSerif(),
-                CvDecoration.classic());
+    public static BrandTheme classicSerif() {
+        return new BrandTheme(
+                Palette.classicSerif(),
+                Typography.classicSerif(),
+                Spacing.classicSerif(),
+                Decoration.classic());
     }
 
     /**
@@ -135,14 +135,14 @@ public record CvTheme(CvPalette palette,
      * deep blue-green ink, pale teal profile band/rules, and compact
      * two-column spacing.
      *
-     * @return a {@code CvTheme} for the "Nordic Clean" look
+     * @return a {@code BrandTheme} for the "Nordic Clean" look
      */
-    public static CvTheme nordicClean() {
-        return new CvTheme(
-                CvPalette.nordicClean(),
-                CvTypography.nordicClean(),
-                CvSpacing.nordicClean(),
-                CvDecoration.classic());
+    public static BrandTheme nordicClean() {
+        return new BrandTheme(
+                Palette.nordicClean(),
+                Typography.nordicClean(),
+                Spacing.nordicClean(),
+                Decoration.classic());
     }
 
     /**
@@ -150,14 +150,14 @@ public record CvTheme(CvPalette palette,
      * Mono labels, teal accents, pale left rail, and compact card
      * spacing.
      *
-     * @return a {@code CvTheme} for the "Compact Mono" look
+     * @return a {@code BrandTheme} for the "Compact Mono" look
      */
-    public static CvTheme compactMono() {
-        return new CvTheme(
-                CvPalette.compactMono(),
-                CvTypography.compactMono(),
-                CvSpacing.compactMono(),
-                CvDecoration.compactMono());
+    public static BrandTheme compactMono() {
+        return new BrandTheme(
+                Palette.compactMono(),
+                Typography.compactMono(),
+                Spacing.compactMono(),
+                Decoration.compactMono());
     }
 
     /**
@@ -165,14 +165,14 @@ public record CvTheme(CvPalette palette,
      * compact spacing, blue full-width section banners, and tighter
      * pipe separators.
      *
-     * @return a {@code CvTheme} for the "Blue Banner" look
+     * @return a {@code BrandTheme} for the "Blue Banner" look
      */
-    public static CvTheme blueBanner() {
-        return new CvTheme(
-                CvPalette.blueBanner(),
-                CvTypography.blueBanner(),
-                CvSpacing.blueBanner(),
-                CvDecoration.blueBanner());
+    public static BrandTheme blueBanner() {
+        return new BrandTheme(
+                Palette.blueBanner(),
+                Typography.blueBanner(),
+                Spacing.blueBanner(),
+                Decoration.blueBanner());
     }
 
     /**
@@ -180,14 +180,14 @@ public record CvTheme(CvPalette palette,
      * section rules, centred editorial header, and dense body
      * spacing.
      *
-     * @return a {@code CvTheme} for the "Editorial Blue" look
+     * @return a {@code BrandTheme} for the "Editorial Blue" look
      */
-    public static CvTheme editorialBlue() {
-        return new CvTheme(
-                CvPalette.editorialBlue(),
-                CvTypography.editorialBlue(),
-                CvSpacing.editorialBlue(),
-                CvDecoration.classic());
+    public static BrandTheme editorialBlue() {
+        return new BrandTheme(
+                Palette.editorialBlue(),
+                Typography.editorialBlue(),
+                Spacing.editorialBlue(),
+                Decoration.classic());
     }
 
     /**
@@ -200,14 +200,14 @@ public record CvTheme(CvPalette palette,
      * timeline. Visual signature ported from the v1
      * {@code SidebarPortraitCvTemplateComposer}.
      *
-     * @return a {@code CvTheme} for the "Sidebar Portrait" look
+     * @return a {@code BrandTheme} for the "Sidebar Portrait" look
      */
-    public static CvTheme sidebarPortrait() {
-        return new CvTheme(
-                CvPalette.sidebarPortrait(),
-                CvTypography.sidebarPortrait(),
-                CvSpacing.sidebarPortrait(),
-                CvDecoration.classic());
+    public static BrandTheme sidebarPortrait() {
+        return new BrandTheme(
+                Palette.sidebarPortrait(),
+                Typography.sidebarPortrait(),
+                Spacing.sidebarPortrait(),
+                Decoration.classic());
     }
 
     /**
@@ -219,14 +219,14 @@ public record CvTheme(CvPalette palette,
      * signature ported from the v1
      * {@code MonogramSidebarCvTemplateComposer}.
      *
-     * @return a {@code CvTheme} for the "Monogram Sidebar" look
+     * @return a {@code BrandTheme} for the "Monogram Sidebar" look
      */
-    public static CvTheme monogramSidebar() {
-        return new CvTheme(
-                CvPalette.monogramSidebar(),
-                CvTypography.monogramSidebar(),
-                CvSpacing.monogramSidebar(),
-                CvDecoration.classic());
+    public static BrandTheme monogramSidebar() {
+        return new BrandTheme(
+                Palette.monogramSidebar(),
+                Typography.monogramSidebar(),
+                Spacing.monogramSidebar(),
+                Decoration.classic());
     }
 
     /**
@@ -237,14 +237,14 @@ public record CvTheme(CvPalette palette,
      * Visual signature ported from the v1
      * {@code TechLeadCvTemplateComposer}.
      *
-     * @return a {@code CvTheme} for the "Engineering Resume" look
+     * @return a {@code BrandTheme} for the "Engineering Resume" look
      */
-    public static CvTheme engineeringResume() {
-        return new CvTheme(
-                CvPalette.engineeringResume(),
-                CvTypography.engineeringResume(),
-                CvSpacing.engineeringResume(),
-                CvDecoration.classic());
+    public static BrandTheme engineeringResume() {
+        return new BrandTheme(
+                Palette.engineeringResume(),
+                Typography.engineeringResume(),
+                Spacing.engineeringResume(),
+                Decoration.classic());
     }
 
     /**
@@ -255,14 +255,14 @@ public record CvTheme(CvPalette palette,
      * Visual signature ported from the v1
      * {@code TimelineMinimalCvTemplateComposer}.
      *
-     * @return a {@code CvTheme} for the "Timeline Minimal" look
+     * @return a {@code BrandTheme} for the "Timeline Minimal" look
      */
-    public static CvTheme timelineMinimal() {
-        return new CvTheme(
-                CvPalette.timelineMinimal(),
-                CvTypography.timelineMinimal(),
-                CvSpacing.timelineMinimal(),
-                CvDecoration.classic());
+    public static BrandTheme timelineMinimal() {
+        return new BrandTheme(
+                Palette.timelineMinimal(),
+                Typography.timelineMinimal(),
+                Spacing.timelineMinimal(),
+                Decoration.classic());
     }
 
     /**
@@ -272,14 +272,14 @@ public record CvTheme(CvPalette palette,
      * strip beneath each title. Visual signature ported from the v1
      * {@code PanelCvTemplateComposer} (ProductLeader tokens).
      *
-     * @return a {@code CvTheme} for the "Panel" look
+     * @return a {@code BrandTheme} for the "Panel" look
      */
-    public static CvTheme panel() {
-        return new CvTheme(
-                CvPalette.panel(),
-                CvTypography.panel(),
-                CvSpacing.panel(),
-                CvDecoration.classic());
+    public static BrandTheme panel() {
+        return new BrandTheme(
+                Palette.panel(),
+                Typography.panel(),
+                Spacing.panel(),
+                Decoration.classic());
     }
 
     /**
@@ -289,14 +289,14 @@ public record CvTheme(CvPalette palette,
      * Visual signature ported from the legacy
      * {@code ExecutiveSlateCvTemplate}.
      *
-     * @return a {@code CvTheme} for the "Executive" look
+     * @return a {@code BrandTheme} for the "Executive" look
      */
-    public static CvTheme executive() {
-        return new CvTheme(
-                CvPalette.executive(),
-                CvTypography.executive(),
-                CvSpacing.executive(),
-                CvDecoration.classic());
+    public static BrandTheme executive() {
+        return new BrandTheme(
+                Palette.executive(),
+                Typography.executive(),
+                Spacing.executive(),
+                Decoration.classic());
     }
 
     /**
@@ -309,14 +309,14 @@ public record CvTheme(CvPalette palette,
      * awards, references). Paired 1:1 with the Mint Editorial cover
      * letter, which reuses this exact theme.
      *
-     * @return a {@code CvTheme} for the "Mint Editorial" look
+     * @return a {@code BrandTheme} for the "Mint Editorial" look
      */
-    public static CvTheme mintEditorial() {
-        return new CvTheme(
-                CvPalette.mintEditorial(),
-                CvTypography.mintEditorial(),
-                CvSpacing.mintEditorial(),
-                CvDecoration.classic());
+    public static BrandTheme mintEditorial() {
+        return new BrandTheme(
+                Palette.mintEditorial(),
+                Typography.mintEditorial(),
+                Spacing.mintEditorial(),
+                Decoration.classic());
     }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle

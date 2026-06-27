@@ -5,7 +5,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 
@@ -19,7 +19,7 @@ import java.util.Objects;
  * — a centred PT-Serif spaced-caps name over a compact centred contact
  * row — then a single-column letter body via the shared
  * {@link LetterBody}. Both documents read everything from
- * {@link CvTheme#blueBanner()}.</p>
+ * {@link BrandTheme#blueBanner()}.</p>
  *
  * <p>The CV's signature blue banners decorate <em>section</em> titles,
  * which a letter has none of, so the brand identity here is carried by
@@ -53,7 +53,7 @@ public final class BlueBannerLetter {
      * @return a {@code DocumentTemplate} for the "Blue Banner Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.blueBanner());
+        return create(BrandTheme.blueBanner());
     }
 
     /**
@@ -63,12 +63,12 @@ public final class BlueBannerLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Blue Banner Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

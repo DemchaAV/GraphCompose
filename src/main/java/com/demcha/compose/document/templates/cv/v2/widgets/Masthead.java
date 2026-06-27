@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +29,11 @@ public final class Masthead {
      * @param identity the CV identity supplying name, contact, and links
      * @param theme    the active theme supplying palette, typography, and spacing
      * @param style    styling knobs for the masthead; {@code null} uses
-     *                 {@link Style#defaults(CvTheme)}
+     *                 {@link Style#defaults(BrandTheme)}
      */
     public static void centered(SectionBuilder host,
                                 CvIdentity identity,
-                                CvTheme theme,
+                                BrandTheme theme,
                                 Style style) {
         Style safeStyle = style == null ? Style.defaults(theme) : style;
         DocumentTextStyle nameStyle = safeStyle.nameStyle() == null
@@ -67,7 +67,7 @@ public final class Masthead {
 
     private static void addLinkRow(SectionBuilder host,
                                    CvIdentity identity,
-                                   CvTheme theme,
+                                   BrandTheme theme,
                                    Style style) {
         List<LinkPart> parts = linkParts(identity);
         if (parts.isEmpty()) {
@@ -170,7 +170,7 @@ public final class Masthead {
          * @param theme the active theme supplying the default styles
          * @return a {@code Style} populated from the theme defaults
          */
-        public static Style defaults(CvTheme theme) {
+        public static Style defaults(BrandTheme theme) {
             return builder()
                     .nameStyle(theme.headlineStyle())
                     .titleStyle(theme.bodyStyle())

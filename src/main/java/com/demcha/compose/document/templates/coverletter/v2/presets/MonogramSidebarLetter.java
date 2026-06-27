@@ -14,7 +14,7 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.font.FontName;
 
@@ -34,7 +34,7 @@ import java.util.Objects;
  * icon contact stack are sidebar-only and are dropped for the
  * single-column letter; the badge + name treatment is what makes the two
  * read as a set. Palette / typography come from
- * {@link CvTheme#monogramSidebar()}.</p>
+ * {@link BrandTheme#monogramSidebar()}.</p>
  *
  * <p>The gold accent, dark monogram ring, and the PT-Serif monogram font
  * are mirrored from the CV, where they are preset-local.</p>
@@ -92,7 +92,7 @@ public final class MonogramSidebarLetter {
      * @return a {@code DocumentTemplate} for the "Monogram Sidebar Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.monogramSidebar());
+        return create(BrandTheme.monogramSidebar());
     }
 
     /**
@@ -102,12 +102,12 @@ public final class MonogramSidebarLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Monogram Sidebar Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

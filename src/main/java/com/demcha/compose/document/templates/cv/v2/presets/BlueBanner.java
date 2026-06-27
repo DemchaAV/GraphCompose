@@ -10,7 +10,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
@@ -75,7 +75,7 @@ public final class BlueBanner {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.blueBanner());
+        return create(BrandTheme.blueBanner());
     }
 
     /**
@@ -86,12 +86,12 @@ public final class BlueBanner {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {
@@ -144,7 +144,7 @@ public final class BlueBanner {
 
     private static void renderBody(SectionBuilder host,
                                    CvSection section,
-                                   CvTheme theme) {
+                                   BrandTheme theme) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .padding(theme.spacing().sectionBodyPadding());
 
@@ -166,7 +166,7 @@ public final class BlueBanner {
 
     private static void renderRows(SectionBuilder host,
                                    RowsSection section,
-                                   CvTheme theme) {
+                                   BrandTheme theme) {
         if (section.style() == RowStyle.BULLETED_STACKED) {
             for (CvRow row : section.rows()) {
                 renderPlainProjectRow(host, row, theme);
@@ -180,7 +180,7 @@ public final class BlueBanner {
 
     private static void renderPlainProjectRow(SectionBuilder host,
                                               CvRow row,
-                                              CvTheme theme) {
+                                              BrandTheme theme) {
         ProjectRenderer.plainInline(host, row, theme.entryTitleStyle(),
                 theme.bodyStyle(), theme.typography().bodyLineSpacing(),
                 DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
@@ -189,7 +189,7 @@ public final class BlueBanner {
 
     private static void renderEntry(SectionBuilder section,
                                     CvEntry entry,
-                                    CvTheme theme) {
+                                    BrandTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
         DocumentTextStyle dateStyle = CvTextStyles.of(theme.typography().bodyFont(),
                 theme.typography().sizeEntryDate(),

@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.RichParagraphRenderer;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Shared cover-letter body renderer — the letter analog of
@@ -39,7 +39,7 @@ public final class LetterBody {
      *              paired CV preset so the body colour / font / size match
      */
     public static void render(SectionBuilder host, CoverLetterDocument doc,
-                              CvTheme theme) {
+                              BrandTheme theme) {
         render(host, doc, theme, theme.typography().sizeBody());
     }
 
@@ -57,7 +57,7 @@ public final class LetterBody {
      * @param bodySize body text size in points
      */
     public static void render(SectionBuilder host, CoverLetterDocument doc,
-                              CvTheme theme, double bodySize) {
+                              BrandTheme theme, double bodySize) {
         DocumentTextStyle bodyStyle = CvTextStyles.of(
                 theme.typography().bodyFont(),
                 bodySize,

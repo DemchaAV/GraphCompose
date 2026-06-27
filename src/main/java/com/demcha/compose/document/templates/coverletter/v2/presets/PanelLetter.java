@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.widgets.CardWidget;
 import com.demcha.compose.font.FontName;
 
@@ -30,7 +30,7 @@ import java.util.Objects;
  * {@link com.demcha.compose.document.templates.cv.v2.presets.Panel}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Card shell + body palette come from
- * {@link CvTheme#panel()}.</p>
+ * {@link BrandTheme#panel()}.</p>
  *
  * <p>The two masthead colours (deep-navy header text, teal accent) are
  * mirrored from the CV, where they are preset-local. The header card is
@@ -79,7 +79,7 @@ public final class PanelLetter {
      * @return a {@code DocumentTemplate} for the "Panel Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.panel());
+        return create(BrandTheme.panel());
     }
 
     /**
@@ -89,12 +89,12 @@ public final class PanelLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Panel Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

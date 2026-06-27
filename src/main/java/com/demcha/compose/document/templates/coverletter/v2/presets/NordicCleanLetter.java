@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 
@@ -29,7 +29,7 @@ import java.util.Objects;
  * {@link com.demcha.compose.document.templates.cv.v2.presets.NordicClean}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
- * {@link CvTheme#nordicClean()}; the CV's tinted profile band is a
+ * {@link BrandTheme#nordicClean()}; the CV's tinted profile band is a
  * CV-body element and is intentionally not part of the letter.</p>
  *
  * <p>The teal {@code ACCENT} is mirrored from the CV's default accent
@@ -66,7 +66,7 @@ public final class NordicCleanLetter {
      * @return a {@code DocumentTemplate} for the "Nordic Clean Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.nordicClean());
+        return create(BrandTheme.nordicClean());
     }
 
     /**
@@ -76,12 +76,12 @@ public final class NordicCleanLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Nordic Clean Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

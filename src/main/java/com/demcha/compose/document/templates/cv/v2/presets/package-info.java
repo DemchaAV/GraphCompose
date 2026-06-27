@@ -7,7 +7,7 @@
  * <ol>
  *   <li>A {@link com.demcha.compose.document.templates.cv.v2.data.CvDocument}
  *       supplied by the caller (the data).</li>
- *   <li>A {@link com.demcha.compose.document.templates.cv.v2.theme.CvTheme}
+ *   <li>A {@link com.demcha.compose.document.templates.core.theme.BrandTheme}
  *       picked at construction (the cosmetics).</li>
  *   <li>A loop over the document's sections that calls renderers
  *       from {@code cv/v2/components}.</li>

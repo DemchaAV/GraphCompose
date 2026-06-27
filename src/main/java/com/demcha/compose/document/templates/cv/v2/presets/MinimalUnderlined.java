@@ -7,7 +7,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
@@ -19,7 +19,7 @@ import java.util.Objects;
  * v2 demonstration preset — Minimal Underlined.
  *
  * <p>Same data model ({@link CvDocument}), same theme tokens
- * ({@link CvTheme}), same body renderers — but the section header
+ * ({@link BrandTheme}), same body renderers — but the section header
  * is drawn as a small left-aligned uppercase title with an
  * underline rule instead of a centred banner panel.</p>
  *
@@ -69,7 +69,7 @@ public final class MinimalUnderlined {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
     /**
@@ -78,12 +78,12 @@ public final class MinimalUnderlined {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

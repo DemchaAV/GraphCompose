@@ -12,7 +12,7 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 
 import java.util.Objects;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * circular portrait, icon contact stack, and pale sidebar column (painted
  * via {@code pageBackgrounds}) are sidebar-only and are intentionally
  * dropped for the single-column letter. Palette / typography come from
- * {@link CvTheme#sidebarPortrait()}.</p>
+ * {@link BrandTheme#sidebarPortrait()}.</p>
  */
 public final class SidebarPortraitLetter {
 
@@ -57,7 +57,7 @@ public final class SidebarPortraitLetter {
      * @return a {@code DocumentTemplate} for the "Sidebar Portrait Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.sidebarPortrait());
+        return create(BrandTheme.sidebarPortrait());
     }
 
     /**
@@ -67,12 +67,12 @@ public final class SidebarPortraitLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Sidebar Portrait Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.Locale;
 
@@ -69,7 +69,7 @@ public final class SectionHeader {
      * @param title the section title text
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void banner(SectionBuilder host, String title, CvTheme theme) {
+    public static void banner(SectionBuilder host, String title, BrandTheme theme) {
         host.softPanel(theme.palette().banner(),
                         theme.spacing().bannerCornerRadius(),
                         theme.spacing().bannerInnerPadding())
@@ -92,7 +92,7 @@ public final class SectionHeader {
      * @param title the section title text
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void fullWidthBanner(SectionBuilder host, String title, CvTheme theme) {
+    public static void fullWidthBanner(SectionBuilder host, String title, BrandTheme theme) {
         fullWidthBanner(host, title, theme, null);
     }
 
@@ -104,10 +104,10 @@ public final class SectionHeader {
      * @param theme              the active theme supplying palette, typography, and spacing
      * @param titleStyleOverride text style for the banner label; pass
      *                           {@code null} to use
-     *                           {@link CvTheme#bannerStyle()}
+     *                           {@link BrandTheme#bannerStyle()}
      */
     public static void fullWidthBanner(SectionBuilder host, String title,
-                                       CvTheme theme,
+                                       BrandTheme theme,
                                        DocumentTextStyle titleStyleOverride) {
         DocumentTextStyle titleStyle = titleStyleOverride != null
                 ? titleStyleOverride
@@ -131,7 +131,7 @@ public final class SectionHeader {
      * @param title the section title text
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void underlined(SectionBuilder host, String title, CvTheme theme) {
+    public static void underlined(SectionBuilder host, String title, BrandTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
         host.accentBottom(theme.palette().rule(),
                         theme.spacing().accentRuleWidth())
@@ -155,7 +155,7 @@ public final class SectionHeader {
      * @param theme the active theme supplying palette, typography, and spacing
      */
     public static void flat(SectionBuilder host, String title,
-                            DocumentColor color, CvTheme theme) {
+                            DocumentColor color, BrandTheme theme) {
         DocumentTextStyle titleStyle = DocumentTextStyle.builder()
                 .fontName(theme.typography().headlineFont())
                 .size(theme.typography().sizeBanner())
@@ -193,7 +193,7 @@ public final class SectionHeader {
      *                   fall back to the theme-derived default
      */
     public static void flatSpacedCaps(SectionBuilder host, String title,
-                                      DocumentColor color, CvTheme theme,
+                                      DocumentColor color, BrandTheme theme,
                                       DocumentTextStyle titleStyle) {
         DocumentTextStyle resolved = titleStyle != null
                 ? titleStyle
@@ -224,7 +224,7 @@ public final class SectionHeader {
      * @param tickWidth width of the short rule above the label
      */
     public static void tickLabel(SectionBuilder host, String title,
-                                 CvTheme theme, DocumentColor color,
+                                 BrandTheme theme, DocumentColor color,
                                  double tickWidth) {
         tickLabel(host, title, theme, color, tickWidth, null);
     }
@@ -244,7 +244,7 @@ public final class SectionHeader {
      *                   font and banner size
      */
     public static void tickLabel(SectionBuilder host, String title,
-                                 CvTheme theme, DocumentColor color,
+                                 BrandTheme theme, DocumentColor color,
                                  double tickWidth,
                                  DocumentTextStyle titleStyle) {
         DocumentTextStyle resolved = titleStyle != null
@@ -282,7 +282,7 @@ public final class SectionHeader {
      * @param ruleWidth  width in points of the rule beneath the label
      */
     public static void upperRule(SectionBuilder host, String title,
-                                 CvTheme theme, DocumentTextStyle titleStyle,
+                                 BrandTheme theme, DocumentTextStyle titleStyle,
                                  DocumentColor ruleColor, double ruleWidth) {
         host.spacing(3)
                 .addParagraph(paragraph -> paragraph
@@ -312,7 +312,7 @@ public final class SectionHeader {
      * @param ruleMargin    outer margin of the rule
      */
     public static void spacedCapsRule(SectionBuilder host, String title,
-                                      CvTheme theme, DocumentTextStyle titleStyle,
+                                      BrandTheme theme, DocumentTextStyle titleStyle,
                                       DocumentColor ruleColor,
                                       double ruleWidth,
                                       double ruleThickness,

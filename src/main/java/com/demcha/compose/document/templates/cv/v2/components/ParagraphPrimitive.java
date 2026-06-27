@@ -5,7 +5,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Internal primitive that owns the shared
@@ -35,7 +35,7 @@ final class ParagraphPrimitive {
      * lines, and plain rows.
      */
     static void writeBody(SectionBuilder host, String text,
-                          DocumentTextStyle style, CvTheme theme) {
+                          DocumentTextStyle style, BrandTheme theme) {
         write(host, text, style,
                 DocumentInsets.top((float) theme.spacing().paragraphMarginTop()),
                 theme.typography().bodyLineSpacing(),
@@ -53,7 +53,7 @@ final class ParagraphPrimitive {
                               DocumentTextStyle style,
                               String bulletGlyph,
                               DocumentInsets margin,
-                              CvTheme theme) {
+                              BrandTheme theme) {
         write(host, text, style,
                 margin,
                 theme.typography().bodyLineSpacing(),

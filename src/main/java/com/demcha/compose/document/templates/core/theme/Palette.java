@@ -1,11 +1,11 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import com.demcha.compose.document.style.DocumentColor;
 
 import java.util.Objects;
 
 /**
- * Colour tokens for a {@link CvTheme}.
+ * Colour tokens for a {@link BrandTheme}.
  *
  * @param ink      primary text colour — headlines, body, entry titles
  * @param muted    secondary text colour — italic subtitles (employer,
@@ -18,7 +18,7 @@ import java.util.Objects;
  *                 {@link DocumentColor#WHITE} for palettes that do not
  *                 need a custom main-area fill.
  */
-public record CvPalette(DocumentColor ink,
+public record Palette(DocumentColor ink,
                         DocumentColor muted,
                         DocumentColor rule,
                         DocumentColor banner,
@@ -27,7 +27,7 @@ public record CvPalette(DocumentColor ink,
     /**
      * Validates that no colour token is null.
      */
-    public CvPalette {
+    public Palette {
         Objects.requireNonNull(ink, "ink");
         Objects.requireNonNull(muted, "muted");
         Objects.requireNonNull(rule, "rule");
@@ -48,7 +48,7 @@ public record CvPalette(DocumentColor ink,
      * @param rule   thin horizontal rules + the contact-line pipe glyph
      * @param banner pale fill behind section title banners
      */
-    public CvPalette(DocumentColor ink,
+    public Palette(DocumentColor ink,
                      DocumentColor muted,
                      DocumentColor rule,
                      DocumentColor banner) {
@@ -59,10 +59,10 @@ public record CvPalette(DocumentColor ink,
      * The classic dark-grey / pale-grey palette used by the original
      * Boxed Sections preset.
      *
-     * @return a {@code CvPalette} for the classic flavour
+     * @return a {@code Palette} for the classic flavour
      */
-    public static CvPalette classic() {
-        return new CvPalette(
+    public static Palette classic() {
+        return new Palette(
                 DocumentColor.rgb(34, 34, 34),
                 DocumentColor.rgb(120, 120, 120),
                 DocumentColor.rgb(170, 170, 170),
@@ -81,10 +81,10 @@ public record CvPalette(DocumentColor ink,
      * style without leaving an obvious gap if a future preset reuses
      * this palette with a banner-style section header.</p>
      *
-     * @return a {@code CvPalette} for the Centered Headline flavour
+     * @return a {@code Palette} for the Centered Headline flavour
      */
-    public static CvPalette centeredHeadline() {
-        return new CvPalette(
+    public static Palette centeredHeadline() {
+        return new Palette(
                 DocumentColor.rgb(54, 54, 54),     // ink (#363636)
                 DocumentColor.rgb(105, 105, 105),  // muted / soft (#696969)
                 DocumentColor.rgb(188, 188, 188),  // rule (#BCBCBC)
@@ -97,10 +97,10 @@ public record CvPalette(DocumentColor ink,
      * its profile band; the bronze accent is preset-local because no
      * other preset shares that fifth colour token today.
      *
-     * @return a {@code CvPalette} for the Classic Serif flavour
+     * @return a {@code Palette} for the Classic Serif flavour
      */
-    public static CvPalette classicSerif() {
-        return new CvPalette(
+    public static Palette classicSerif() {
+        return new Palette(
                 DocumentColor.rgb(45, 43, 40),
                 DocumentColor.rgb(105, 101, 94),
                 DocumentColor.rgb(187, 177, 160),
@@ -113,10 +113,10 @@ public record CvPalette(DocumentColor ink,
      * stronger teal accent and rail fill are preset-local fifth/sixth
      * colours because no other preset shares those tokens yet.
      *
-     * @return a {@code CvPalette} for the Nordic Clean flavour
+     * @return a {@code Palette} for the Nordic Clean flavour
      */
-    public static CvPalette nordicClean() {
-        return new CvPalette(
+    public static Palette nordicClean() {
+        return new Palette(
                 DocumentColor.rgb(18, 39, 52),
                 DocumentColor.rgb(82, 104, 116),
                 DocumentColor.rgb(188, 219, 222),
@@ -128,10 +128,10 @@ public record CvPalette(DocumentColor ink,
      * quiet card rules, and the pale rail fill used by the compact
      * left column.
      *
-     * @return a {@code CvPalette} for the Compact Mono flavour
+     * @return a {@code Palette} for the Compact Mono flavour
      */
-    public static CvPalette compactMono() {
-        return new CvPalette(
+    public static Palette compactMono() {
+        return new Palette(
                 DocumentColor.rgb(28, 34, 42),
                 DocumentColor.rgb(102, 117, 132),
                 DocumentColor.rgb(188, 204, 215),
@@ -142,10 +142,10 @@ public record CvPalette(DocumentColor ink,
      * Blue Banner palette: compact dark ink, blue section fills, and
      * darker blue separator rules.
      *
-     * @return a {@code CvPalette} for the Blue Banner flavour
+     * @return a {@code Palette} for the Blue Banner flavour
      */
-    public static CvPalette blueBanner() {
-        return new CvPalette(
+    public static Palette blueBanner() {
+        return new Palette(
                 DocumentColor.rgb(20, 25, 35),
                 DocumentColor.rgb(85, 85, 85),
                 DocumentColor.rgb(58, 82, 118),
@@ -157,10 +157,10 @@ public record CvPalette(DocumentColor ink,
      * subtitles, vivid blue rules, and a neutral border token reused
      * by compact skill grids.
      *
-     * @return a {@code CvPalette} for the Editorial Blue flavour
+     * @return a {@code Palette} for the Editorial Blue flavour
      */
-    public static CvPalette editorialBlue() {
-        return new CvPalette(
+    public static Palette editorialBlue() {
+        return new Palette(
                 DocumentColor.rgb(60, 72, 106),
                 DocumentColor.rgb(150, 158, 178),
                 DocumentColor.rgb(86, 136, 255),
@@ -176,10 +176,10 @@ public record CvPalette(DocumentColor ink,
      * the same {@code ink}/{@code muted} pair because the preset uses
      * a restrained grey palette throughout.
      *
-     * @return a {@code CvPalette} for the Sidebar Portrait flavour
+     * @return a {@code Palette} for the Sidebar Portrait flavour
      */
-    public static CvPalette sidebarPortrait() {
-        return new CvPalette(
+    public static Palette sidebarPortrait() {
+        return new Palette(
                 DocumentColor.rgb(34, 34, 34),     // ink — V1 INK
                 DocumentColor.rgb(85, 85, 85),     // muted — V1 SOFT
                 DocumentColor.rgb(178, 178, 178),  // rule — V1 RULE
@@ -194,10 +194,10 @@ public record CvPalette(DocumentColor ink,
      * and muted-gold accent stay preset-local because no other v2
      * preset shares them today.
      *
-     * @return a {@code CvPalette} for the Monogram Sidebar flavour
+     * @return a {@code Palette} for the Monogram Sidebar flavour
      */
-    public static CvPalette monogramSidebar() {
-        return new CvPalette(
+    public static Palette monogramSidebar() {
+        return new Palette(
                 DocumentColor.rgb(37, 45, 58),     // ink — V1 INK
                 DocumentColor.rgb(112, 119, 125),  // muted — V1 SOFT
                 DocumentColor.rgb(138, 146, 148),  // rule — V1 SIDEBAR_RULE
@@ -213,10 +213,10 @@ public record CvPalette(DocumentColor ink,
      * cyan-green contact link colour stay preset-local as they are the
      * fifth+ tokens — no other v2 preset shares them today.
      *
-     * @return a {@code CvPalette} for the Engineering Resume flavour
+     * @return a {@code Palette} for the Engineering Resume flavour
      */
-    public static CvPalette engineeringResume() {
-        return new CvPalette(
+    public static Palette engineeringResume() {
+        return new Palette(
                 DocumentColor.rgb(32, 42, 55),     // ink — V1 INK body slate
                 DocumentColor.rgb(91, 105, 119),   // muted — V1 MUTED subtitles
                 DocumentColor.rgb(190, 212, 204),  // rule — V1 RULE pale teal-green
@@ -230,10 +230,10 @@ public record CvPalette(DocumentColor ink,
      * timeline axis and module underlines, and the dot token reused
      * for the three circles of the central timeline axis.
      *
-     * @return a {@code CvPalette} for the Timeline Minimal flavour
+     * @return a {@code Palette} for the Timeline Minimal flavour
      */
-    public static CvPalette timelineMinimal() {
-        return new CvPalette(
+    public static Palette timelineMinimal() {
+        return new Palette(
                 DocumentColor.rgb(74, 74, 74),     // ink — V1 INK
                 DocumentColor.rgb(122, 122, 122),  // muted — V1 SOFT
                 DocumentColor.rgb(195, 195, 195),  // rule — V1 RULE
@@ -249,10 +249,10 @@ public record CvPalette(DocumentColor ink,
      * panel fill are preset-local because they are the fifth/sixth/
      * seventh tokens — other v2 presets do not share them today.
      *
-     * @return a {@code CvPalette} for the Panel flavour
+     * @return a {@code Palette} for the Panel flavour
      */
-    public static CvPalette panel() {
-        return new CvPalette(
+    public static Palette panel() {
+        return new Palette(
                 DocumentColor.rgb(54, 68, 84),     // ink — V1 BODY_TEXT/HEADER_META slate
                 DocumentColor.rgb(105, 117, 132),  // muted — slightly lighter slate
                 DocumentColor.rgb(179, 214, 211),  // rule — V1 PANEL_STROKE pale teal
@@ -269,10 +269,10 @@ public record CvPalette(DocumentColor ink,
      * preset-local because they are the fifth and sixth tokens —
      * other v2 presets do not share them today.
      *
-     * @return a {@code CvPalette} for the Executive flavour
+     * @return a {@code Palette} for the Executive flavour
      */
-    public static CvPalette executive() {
-        return new CvPalette(
+    public static Palette executive() {
+        return new Palette(
                 DocumentColor.rgb(49, 58, 72),     // ink — V1 BODY slate
                 DocumentColor.rgb(105, 115, 130),  // muted — slightly lighter slate
                 DocumentColor.rgb(193, 201, 211),  // rule — V1 MUTED_RULE
@@ -289,10 +289,10 @@ public record CvPalette(DocumentColor ink,
      * {@code palette.banner()} as the single accent source, so the
      * matched set never forks the colour.
      *
-     * @return a {@code CvPalette} for the Mint Editorial flavour
+     * @return a {@code Palette} for the Mint Editorial flavour
      */
-    public static CvPalette mintEditorial() {
-        return new CvPalette(
+    public static Palette mintEditorial() {
+        return new Palette(
                 DocumentColor.rgb(24, 24, 24),     // ink (black)
                 DocumentColor.rgb(82, 82, 82),     // muted
                 DocumentColor.rgb(70, 70, 70),     // rule (skill-bar track)

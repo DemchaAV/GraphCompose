@@ -1,9 +1,9 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import java.util.Objects;
 
 /**
- * Glyph / separator tokens for a {@link CvTheme} — the small "what
+ * Glyph / separator tokens for a {@link BrandTheme} — the small "what
  * character renders here" decisions that vary per visual flavour but
  * never depend on the layout or the data.
  *
@@ -11,7 +11,7 @@ import java.util.Objects;
  * to {@code ▶}", "I want to use {@code  · } as the contact-line
  * separator instead of pipes", or "I want stacked-body lines to align
  * with a 3-space indent instead of 2". None of these need a custom
- * renderer — pass a different {@code CvDecoration} into your theme.</p>
+ * renderer — pass a different {@code Decoration} into your theme.</p>
  *
  * <p>Decorations live in the {@code theme} layer because they are
  * cosmetic. They are <strong>not</strong> renderer constants:
@@ -30,14 +30,14 @@ import java.util.Objects;
  *                         address / links on the contact row
  *                         (e.g. {@code "   |   "}, {@code "  ·  "})
  */
-public record CvDecoration(String bulletGlyph,
+public record Decoration(String bulletGlyph,
                            String stackedIndent,
                            String contactSeparator) {
 
     /**
      * Validates that no token is null.
      */
-    public CvDecoration {
+    public Decoration {
         Objects.requireNonNull(bulletGlyph, "bulletGlyph");
         Objects.requireNonNull(stackedIndent, "stackedIndent");
         Objects.requireNonNull(contactSeparator, "contactSeparator");
@@ -45,22 +45,22 @@ public record CvDecoration(String bulletGlyph,
 
     /**
      * The classic decoration: round bullet, two-space stacked indent,
-     * pipe contact separator. Used by {@link CvTheme#boxedClassic()}.
+     * pipe contact separator. Used by {@link BrandTheme#boxedClassic()}.
      *
-     * @return a {@code CvDecoration} for the classic look
+     * @return a {@code Decoration} for the classic look
      */
-    public static CvDecoration classic() {
-        return new CvDecoration("• ", "  ", "   |   ");
+    public static Decoration classic() {
+        return new Decoration("• ", "  ", "   |   ");
     }
 
     /**
      * Blue Banner keeps classic bullets but uses the tighter contact
      * separator spacing from the legacy preset.
      *
-     * @return a {@code CvDecoration} for the Blue Banner look
+     * @return a {@code Decoration} for the Blue Banner look
      */
-    public static CvDecoration blueBanner() {
-        return new CvDecoration("• ", "  ", "  |  ");
+    public static Decoration blueBanner() {
+        return new Decoration("• ", "  ", "  |  ");
     }
 
     /**
@@ -68,9 +68,9 @@ public record CvDecoration(String bulletGlyph,
      * command-bar header. Row bullets keep the classic glyph for
      * callers that reuse shared row renderers with this theme.
      *
-     * @return a {@code CvDecoration} for the Compact Mono look
+     * @return a {@code Decoration} for the Compact Mono look
      */
-    public static CvDecoration compactMono() {
-        return new CvDecoration("• ", "  ", "  /  ");
+    public static Decoration compactMono() {
+        return new Decoration("• ", "  ", "  /  ");
     }
 }

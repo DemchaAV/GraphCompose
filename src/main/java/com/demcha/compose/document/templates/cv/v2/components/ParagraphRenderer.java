@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Draws one prose paragraph (markdown-aware) in body style. Used by
@@ -24,7 +24,7 @@ public final class ParagraphRenderer {
      * @param text    paragraph text; blank inputs are silently skipped
      * @param theme   active theme
      */
-    public static void render(SectionBuilder section, String text, CvTheme theme) {
+    public static void render(SectionBuilder section, String text, BrandTheme theme) {
         if (text == null || text.isBlank()) {
             return;
         }

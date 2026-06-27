@@ -15,7 +15,7 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
 
@@ -28,7 +28,7 @@ import java.util.Objects;
  * Poppins name, a centred soft-mint accent tagline, and a full-width 6pt
  * mint accent rule — then a single-column letter body via the shared
  * {@link LetterBody}. Palette / typography / spacing come from the
- * <strong>same</strong> {@link CvTheme#mintEditorial()} the CV uses, and the
+ * <strong>same</strong> {@link BrandTheme#mintEditorial()} the CV uses, and the
  * mint accent is read from {@code theme.palette().banner()} exactly as in the
  * CV, so the CV and the letter read as one matched set. The CV's two-column
  * sidebar grids are a CV-body concern and are intentionally not part of the
@@ -90,7 +90,7 @@ public final class MintEditorialLetter {
      * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.mintEditorial(), Options.defaults());
+        return create(BrandTheme.mintEditorial(), Options.defaults());
     }
 
     /**
@@ -100,7 +100,7 @@ public final class MintEditorialLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         return create(theme, Options.defaults());
     }
 
@@ -111,7 +111,7 @@ public final class MintEditorialLetter {
      * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create(Options options) {
-        return create(CvTheme.mintEditorial(), options);
+        return create(BrandTheme.mintEditorial(), options);
     }
 
     /**
@@ -123,7 +123,7 @@ public final class MintEditorialLetter {
      * @param options masthead colour knobs (accent, rule, name, header band)
      * @return a {@code DocumentTemplate} for the "Mint Editorial Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme,
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme,
                                                                Options options) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(options, "options");
@@ -237,13 +237,13 @@ public final class MintEditorialLetter {
 
     private static final class Template implements DocumentTemplate<CoverLetterDocument> {
 
-        private final CvTheme theme;
+        private final BrandTheme theme;
         private final DocumentColor accent;
         private final DocumentColor ruleColor;
         private final DocumentColor nameColor;
         private final DocumentColor headerBandColor;
 
-        Template(CvTheme theme, Options options) {
+        Template(BrandTheme theme, Options options) {
             this.theme = theme;
             // Same accent source + Options defaults as the paired CV preset.
             this.accent = options.accentColor() != null

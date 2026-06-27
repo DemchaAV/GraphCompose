@@ -3,7 +3,7 @@ package com.demcha.compose.document.templates.cv.v2.widgets;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -34,7 +34,7 @@ public final class SectionModule {
     public static void tick(SectionBuilder parent,
                             String name,
                             String title,
-                            CvTheme theme,
+                            BrandTheme theme,
                             DocumentColor color,
                             double tickWidth,
                             DocumentTextStyle titleStyle,
@@ -59,7 +59,7 @@ public final class SectionModule {
     public static void upperRule(SectionBuilder parent,
                                  String name,
                                  String title,
-                                 CvTheme theme,
+                                 BrandTheme theme,
                                  DocumentTextStyle titleStyle,
                                  DocumentColor ruleColor,
                                  double ruleWidth,

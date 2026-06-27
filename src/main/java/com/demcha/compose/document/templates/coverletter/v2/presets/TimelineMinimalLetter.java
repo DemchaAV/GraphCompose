@@ -18,7 +18,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 
 import java.util.*;
@@ -33,7 +33,7 @@ import java.util.*;
  * header as
  * {@link com.demcha.compose.document.templates.cv.v2.presets.TimelineMinimal}.
  * Below it, a single-column letter body via the shared {@link LetterBody}.
- * Palette / typography come from {@link CvTheme#timelineMinimal()}; the
+ * Palette / typography come from {@link BrandTheme#timelineMinimal()}; the
  * CV's three-column timeline axis is a body element and is not part of
  * the letter.</p>
  *
@@ -80,7 +80,7 @@ public final class TimelineMinimalLetter {
      * @return a {@code DocumentTemplate} for the "Timeline Minimal Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.timelineMinimal());
+        return create(BrandTheme.timelineMinimal());
     }
 
     /**
@@ -90,12 +90,12 @@ public final class TimelineMinimalLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Timeline Minimal Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

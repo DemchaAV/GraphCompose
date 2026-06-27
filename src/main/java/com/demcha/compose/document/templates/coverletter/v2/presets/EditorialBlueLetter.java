@@ -10,7 +10,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Masthead;
 import com.demcha.compose.font.FontName;
 
@@ -25,7 +25,7 @@ import java.util.Objects;
  * contact metadata, and blue underlined profile links, via the shared
  * {@link Masthead#centered} widget — then a single-column letter body
  * via the shared {@link LetterBody}. Both documents read their palette /
- * typography from {@link CvTheme#editorialBlue()}.</p>
+ * typography from {@link BrandTheme#editorialBlue()}.</p>
  *
  * <p>Only the navy {@code NAME_COLOR} is mirrored from the CV (its
  * preset-local token); everything else flows through {@code Masthead}
@@ -62,7 +62,7 @@ public final class EditorialBlueLetter {
      * @return a {@code DocumentTemplate} for the "Editorial Blue Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.editorialBlue());
+        return create(BrandTheme.editorialBlue());
     }
 
     /**
@@ -72,12 +72,12 @@ public final class EditorialBlueLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Editorial Blue Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

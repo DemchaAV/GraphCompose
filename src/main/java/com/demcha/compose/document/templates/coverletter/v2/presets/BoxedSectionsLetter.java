@@ -5,7 +5,7 @@ import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 
@@ -19,7 +19,7 @@ import java.util.Objects;
  * — a centred letter-spaced PT-Serif name with a thin rule beneath it,
  * then a centred pipe-separated contact line with its own rule beneath
  * — then a single-column letter body via the shared {@link LetterBody}.
- * Both documents read everything from {@link CvTheme#boxedClassic()}.</p>
+ * Both documents read everything from {@link BrandTheme#boxedClassic()}.</p>
  *
  * <p>The header is composed entirely from shared widgets
  * ({@link Headline#spacedCentered} + {@link ContactLine#centered}) at
@@ -52,7 +52,7 @@ public final class BoxedSectionsLetter {
      * @return a {@code DocumentTemplate} for the "Boxed Sections Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
     /**
@@ -62,12 +62,12 @@ public final class BoxedSectionsLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Boxed Sections Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

@@ -5,8 +5,8 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTypography;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
+import com.demcha.compose.document.templates.core.theme.Typography;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 import org.apache.pdfbox.Loader;
@@ -55,7 +55,7 @@ class EngineeringResumeSmokeTest {
 
     @Test
     void custom_theme_factory_renders() throws Exception {
-        renderAndAssertNonEmpty(EngineeringResume.create(CvTheme.engineeringResume()),
+        renderAndAssertNonEmpty(EngineeringResume.create(BrandTheme.engineeringResume()),
                 fullDocument());
     }
 
@@ -188,9 +188,9 @@ class EngineeringResumeSmokeTest {
                 .build();
     }
 
-    private static CvTheme multiscriptTheme() {
-        CvTheme base = CvTheme.engineeringResume();
-        CvTypography typography = new CvTypography(
+    private static BrandTheme multiscriptTheme() {
+        BrandTheme base = BrandTheme.engineeringResume();
+        Typography typography = new Typography(
                 MULTISCRIPT_FONT,
                 MULTISCRIPT_FONT,
                 base.typography().sizeHeadline(),
@@ -201,7 +201,7 @@ class EngineeringResumeSmokeTest {
                 base.typography().sizeEntrySubtitle(),
                 base.typography().sizeBody(),
                 base.typography().bodyLineSpacing());
-        return new CvTheme(base.palette(), typography, base.spacing(), base.decoration());
+        return new BrandTheme(base.palette(), typography, base.spacing(), base.decoration());
     }
 
     private static Path resolveMultiscriptFont() {

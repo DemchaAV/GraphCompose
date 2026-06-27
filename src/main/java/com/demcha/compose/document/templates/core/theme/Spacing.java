@@ -1,16 +1,16 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.Objects;
 
 /**
- * Layout / spacing tokens for a {@link CvTheme}.
+ * Layout / spacing tokens for a {@link BrandTheme}.
  *
  * <p>Every magic numeric literal that used to live inside a renderer
  * (padding, margin, gap, weight, accent width) now lives here, so a
  * "compact" or "spacious" variant of the same visual is a new
- * {@code CvSpacing} record — not a forked renderer.</p>
+ * {@code Spacing} record — not a forked renderer.</p>
  *
  * @param pageFlowSpacing       gap between top-level page-flow rows
  * @param sectionBodySpacing    gap between paragraphs inside a
@@ -40,7 +40,7 @@ import java.util.Objects;
  *                              ends and the next begins. Not applied
  *                              before the first entry in a section.
  */
-public record CvSpacing(
+public record Spacing(
         double pageFlowSpacing,
         double sectionBodySpacing,
         DocumentInsets sectionBodyPadding,
@@ -59,7 +59,7 @@ public record CvSpacing(
     /**
      * Validates that no inset token is null.
      */
-    public CvSpacing {
+    public Spacing {
         Objects.requireNonNull(sectionBodyPadding, "sectionBodyPadding");
         Objects.requireNonNull(headlinePadding, "headlinePadding");
         Objects.requireNonNull(contactPadding, "contactPadding");
@@ -97,7 +97,7 @@ public record CvSpacing(
      * {@link #modernProfessional()}.
      */
     @Deprecated
-    public CvSpacing(double pageFlowSpacing,
+    public Spacing(double pageFlowSpacing,
                      double sectionBodySpacing,
                      DocumentInsets sectionBodyPadding,
                      DocumentInsets headlinePadding,
@@ -120,10 +120,10 @@ public record CvSpacing(
     /**
      * The classic spacing used by the original Boxed Sections preset.
      *
-     * @return a {@code CvSpacing} for the classic preset
+     * @return a {@code Spacing} for the classic preset
      */
-    public static CvSpacing classic() {
-        return new CvSpacing(
+    public static Spacing classic() {
+        return new Spacing(
                 7,                                       // pageFlowSpacing
                 4,                                       // sectionBodySpacing
                 new DocumentInsets(4, 4, 0, 4),          // sectionBodyPadding
@@ -148,10 +148,10 @@ public record CvSpacing(
      * unused (the preset uses {@code flatSpacedCaps} section headers,
      * not banners).
      *
-     * @return a {@code CvSpacing} for the Centered Headline preset
+     * @return a {@code Spacing} for the Centered Headline preset
      */
-    public static CvSpacing centeredHeadline() {
-        return new CvSpacing(
+    public static Spacing centeredHeadline() {
+        return new Spacing(
                 0,                                       // pageFlowSpacing (zero — rules supply visual gaps)
                 1.5,                                     // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -173,10 +173,10 @@ public record CvSpacing(
      * framed profile band, quiet cover skills module, and compact
      * detail modules.
      *
-     * @return a {@code CvSpacing} for the Classic Serif preset
+     * @return a {@code Spacing} for the Classic Serif preset
      */
-    public static CvSpacing classicSerif() {
-        return new CvSpacing(
+    public static Spacing classicSerif() {
+        return new Spacing(
                 8,                                       // pageFlowSpacing
                 4,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -197,10 +197,10 @@ public record CvSpacing(
      * Spacing for Nordic Clean: compact top header, soft profile band,
      * and a dense two-column body with a tinted sidebar rail.
      *
-     * @return a {@code CvSpacing} for the Nordic Clean preset
+     * @return a {@code Spacing} for the Nordic Clean preset
      */
-    public static CvSpacing nordicClean() {
-        return new CvSpacing(
+    public static Spacing nordicClean() {
+        return new Spacing(
                 7,                                       // pageFlowSpacing
                 3,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -221,10 +221,10 @@ public record CvSpacing(
      * Spacing for Compact Mono: command-bar header, dense rail
      * modules, and same-width cards in the right column.
      *
-     * @return a {@code CvSpacing} for the Compact Mono preset
+     * @return a {@code Spacing} for the Compact Mono preset
      */
-    public static CvSpacing compactMono() {
-        return new CvSpacing(
+    public static Spacing compactMono() {
+        return new Spacing(
                 9,                                       // pageFlowSpacing
                 3.5,                                     // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -248,10 +248,10 @@ public record CvSpacing(
      * are left non-zero so a future preset that wants to draw an MP
      * banner can read them; the canonical MP preset ignores them.
      *
-     * @return a {@code CvSpacing} for the Modern Professional preset
+     * @return a {@code Spacing} for the Modern Professional preset
      */
-    public static CvSpacing modernProfessional() {
-        return new CvSpacing(
+    public static Spacing modernProfessional() {
+        return new Spacing(
                 4,                                       // pageFlowSpacing
                 3,                                       // sectionBodySpacing
                 new DocumentInsets(2, 0, 0, 12),         // sectionBodyPadding (left=12 → body indents from blue section title)
@@ -272,10 +272,10 @@ public record CvSpacing(
      * Compact spacing for Blue Banner: tight body blocks, full-width
      * title banners, and no extra artificial gap between entries.
      *
-     * @return a {@code CvSpacing} for the Blue Banner preset
+     * @return a {@code Spacing} for the Blue Banner preset
      */
-    public static CvSpacing blueBanner() {
-        return new CvSpacing(
+    public static Spacing blueBanner() {
+        return new Spacing(
                 4,                                       // pageFlowSpacing
                 3,                                       // sectionBodySpacing
                 new DocumentInsets(3, 4, 0, 4),          // sectionBodyPadding
@@ -296,10 +296,10 @@ public record CvSpacing(
      * Compact spacing for Editorial Blue: section headers own their
      * rule/title rhythm, while bodies start close to the lower rule.
      *
-     * @return a {@code CvSpacing} for the Editorial Blue preset
+     * @return a {@code Spacing} for the Editorial Blue preset
      */
-    public static CvSpacing editorialBlue() {
-        return new CvSpacing(
+    public static Spacing editorialBlue() {
+        return new Spacing(
                 0,                                       // pageFlowSpacing
                 2,                                       // sectionBodySpacing
                 new DocumentInsets(8, 0, 0, 0),          // sectionBodyPadding
@@ -323,10 +323,10 @@ public record CvSpacing(
      * the preset draws its chrome inline (portrait photo, hero strip,
      * rules).
      *
-     * @return a {@code CvSpacing} for the Sidebar Portrait preset
+     * @return a {@code Spacing} for the Sidebar Portrait preset
      */
-    public static CvSpacing sidebarPortrait() {
-        return new CvSpacing(
+    public static Spacing sidebarPortrait() {
+        return new Spacing(
                 0,                                       // pageFlowSpacing
                 5,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -351,10 +351,10 @@ public record CvSpacing(
      * spacing; banner tokens are unused — the preset only draws the
      * monogram badge and sidebar heading rules inline.
      *
-     * @return a {@code CvSpacing} for the Monogram Sidebar preset
+     * @return a {@code Spacing} for the Monogram Sidebar preset
      */
-    public static CvSpacing monogramSidebar() {
-        return new CvSpacing(
+    public static Spacing monogramSidebar() {
+        return new Spacing(
                 0,                                       // pageFlowSpacing
                 5,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -377,10 +377,10 @@ public record CvSpacing(
      * a 2.5pt accent rule under the header and tight 1pt paragraph
      * top so the dense rail + card content reads as a single page.
      *
-     * @return a {@code CvSpacing} for the Engineering Resume preset
+     * @return a {@code Spacing} for the Engineering Resume preset
      */
-    public static CvSpacing engineeringResume() {
-        return new CvSpacing(
+    public static Spacing engineeringResume() {
+        return new Spacing(
                 8,                                       // pageFlowSpacing
                 4,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -403,10 +403,10 @@ public record CvSpacing(
      * Body content is text-only (no cards / banners), so banner
      * tokens are unused but kept at neutral defaults.
      *
-     * @return a {@code CvSpacing} for the Timeline Minimal preset
+     * @return a {@code Spacing} for the Timeline Minimal preset
      */
-    public static CvSpacing timelineMinimal() {
-        return new CvSpacing(
+    public static Spacing timelineMinimal() {
+        return new Spacing(
                 12,                                      // pageFlowSpacing (gap between header row + rule + body row)
                 5,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -429,10 +429,10 @@ public record CvSpacing(
      * so paddings and inter-card gaps are tight by design. Corner
      * radius and accent rule width match the V1 ProductLeader tokens.
      *
-     * @return a {@code CvSpacing} for the Panel preset
+     * @return a {@code Spacing} for the Panel preset
      */
-    public static CvSpacing panel() {
-        return new CvSpacing(
+    public static Spacing panel() {
+        return new Spacing(
                 6,                                       // pageFlowSpacing (tight inter-card gap)
                 3,                                       // sectionBodySpacing (inside a card)
                 DocumentInsets.zero(),                   // sectionBodyPadding (the card supplies its own padding)
@@ -454,10 +454,10 @@ public record CvSpacing(
      * an 8pt page-flow rhythm, compact module bodies, and a 1.1pt
      * full-width rule under the masthead.
      *
-     * @return a {@code CvSpacing} for the Executive preset
+     * @return a {@code Spacing} for the Executive preset
      */
-    public static CvSpacing executive() {
-        return new CvSpacing(
+    public static Spacing executive() {
+        return new Spacing(
                 8,                                       // pageFlowSpacing
                 3,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding
@@ -482,10 +482,10 @@ public record CvSpacing(
      * column gap are page-composition concerns owned by the preset, not
      * spacing tokens.
      *
-     * @return a {@code CvSpacing} for the Mint Editorial preset
+     * @return a {@code Spacing} for the Mint Editorial preset
      */
-    public static CvSpacing mintEditorial() {
-        return new CvSpacing(
+    public static Spacing mintEditorial() {
+        return new Spacing(
                 18,                                      // pageFlowSpacing (header / rule / grid rhythm)
                 5,                                       // sectionBodySpacing
                 DocumentInsets.zero(),                   // sectionBodyPadding

@@ -14,7 +14,7 @@ import java.nio.file.Path;
 /**
  * Renders the v2 Boxed Sections CV preset against the structured
  * {@code CvDocument} sample data using the default
- * {@code CvTheme.boxedClassic()} theme.
+ * {@code BrandTheme.boxedClassic()} theme.
  *
  * <p>Output:
  * {@code examples/target/generated-pdfs/templates/cv/cv-boxed-sections-v2.pdf}.</p>

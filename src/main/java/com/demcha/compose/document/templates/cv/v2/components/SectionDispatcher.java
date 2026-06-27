@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Single entry point that renders any {@link CvSection} body into a
@@ -33,7 +33,7 @@ public final class SectionDispatcher {
      * @param theme   the active theme supplying palette, typography, and spacing
      * @throws IllegalStateException if the section subtype is unhandled
      */
-    public static void renderBody(SectionBuilder host, CvSection section, CvTheme theme) {
+    public static void renderBody(SectionBuilder host, CvSection section, BrandTheme theme) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .padding(theme.spacing().sectionBodyPadding());
 

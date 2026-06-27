@@ -10,7 +10,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
 
@@ -27,19 +27,19 @@ class WidgetSmokeTest {
     @Test
     void headline_variants_render_without_throwing() throws Exception {
         renderWithSection(section -> {
-            Headline.spacedCentered(section, name(), CvTheme.boxedClassic());
+            Headline.spacedCentered(section, name(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            Headline.uppercaseCentered(section, name(), CvTheme.editorialBlue());
+            Headline.uppercaseCentered(section, name(), BrandTheme.editorialBlue());
         });
         renderWithSection(section -> {
-            Headline.uppercaseLeftAligned(section, name(), CvTheme.nordicClean());
+            Headline.uppercaseLeftAligned(section, name(), BrandTheme.nordicClean());
         });
         renderWithSection(section -> {
-            Headline.rightAligned(section, name(), CvTheme.boxedClassic());
+            Headline.rightAligned(section, name(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            Headline.render(section, name(), CvTheme.boxedClassic(),
+            Headline.render(section, name(), BrandTheme.boxedClassic(),
                     TextAlign.LEFT, false);
         });
     }
@@ -47,32 +47,32 @@ class WidgetSmokeTest {
     @Test
     void contactLine_variants_render_without_throwing() throws Exception {
         renderWithSection(section -> {
-            ContactLine.centered(section, identity(), CvTheme.boxedClassic());
+            ContactLine.centered(section, identity(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            ContactLine.centered(section, identity(), CvTheme.boxedClassic(),
+            ContactLine.centered(section, identity(), BrandTheme.boxedClassic(),
                     null, underlinedLinkStyle(), null);
         });
         renderWithSection(section -> {
-            ContactLine.rightAligned(section, identity(), CvTheme.boxedClassic());
+            ContactLine.rightAligned(section, identity(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            ContactLine.leftAligned(section, identity(), CvTheme.compactMono(),
+            ContactLine.leftAligned(section, identity(), BrandTheme.compactMono(),
                     null, underlinedLinkStyle(), null);
         });
         renderWithSection(section -> {
             ContactLine.rightAlignedStacked(section, identity(),
-                    CvTheme.nordicClean(), null, underlinedLinkStyle());
+                    BrandTheme.nordicClean(), null, underlinedLinkStyle());
         });
         renderWithSection(section -> {
-            ContactLine.render(section, identity(), CvTheme.boxedClassic(),
+            ContactLine.render(section, identity(), BrandTheme.boxedClassic(),
                     TextAlign.LEFT, ContactLine.Order.PHONE_FIRST);
         });
     }
 
     @Test
     void subheadline_variants_render_without_throwing() throws Exception {
-        CvTheme theme = CvTheme.centeredHeadline();
+        BrandTheme theme = BrandTheme.centeredHeadline();
         renderWithSection(section ->
                 Subheadline.centeredSpacedCaps(section, "Professional Title",
                         theme.bodyStyle()));
@@ -80,7 +80,7 @@ class WidgetSmokeTest {
 
     @Test
     void skillBar_renders_with_and_without_level() throws Exception {
-        CvTheme theme = CvTheme.mintEditorial();
+        BrandTheme theme = BrandTheme.mintEditorial();
         // Levelled skill → label + proficiency bar.
         renderWithSection(section ->
                 SkillBar.render(section, CvSkill.of("Java 21", 0.9), 120, theme));
@@ -91,7 +91,7 @@ class WidgetSmokeTest {
 
     @Test
     void iconTextRow_renders_with_and_without_link() throws Exception {
-        CvTheme theme = CvTheme.mintEditorial();
+        BrandTheme theme = BrandTheme.mintEditorial();
         SvgGlyph icon = SvgGlyph.fromResource("/templates/cv/mint-editorial/icons/phone.svg");
         DocumentColor iconColor = DocumentColor.rgb(47, 122, 106);
         // Linked row (whole row clickable) and plain row.
@@ -106,12 +106,12 @@ class WidgetSmokeTest {
 
     @Test
     void sectionHeader_variants_render_without_throwing() throws Exception {
-        CvTheme theme = CvTheme.boxedClassic();
+        BrandTheme theme = BrandTheme.boxedClassic();
         renderWithSection(section ->
                 SectionHeader.banner(section, "Professional Summary", theme));
         renderWithSection(section ->
                 SectionHeader.fullWidthBanner(section, "Professional Summary",
-                        CvTheme.blueBanner()));
+                        BrandTheme.blueBanner()));
         renderWithSection(section ->
                 SectionHeader.underlined(section, "Skills", theme));
         renderWithSection(section ->
@@ -122,11 +122,11 @@ class WidgetSmokeTest {
                         theme.palette().muted(), theme, null));
         renderWithSection(section ->
                 SectionHeader.tickLabel(section, "Projects",
-                        CvTheme.compactMono(),
+                        BrandTheme.compactMono(),
                         DocumentColor.rgb(0, 126, 151), 22));
         renderWithSection(section ->
                 SectionHeader.upperRule(section, "Skills",
-                        CvTheme.nordicClean(), bodyStyle(),
+                        BrandTheme.nordicClean(), bodyStyle(),
                         DocumentColor.rgb(28, 128, 135), 64));
         renderWithSection(section ->
                 SectionHeader.spacedCapsRule(section, "Experience", theme,
@@ -136,19 +136,19 @@ class WidgetSmokeTest {
 
     @Test
     void flowSectionHeader_variants_render_without_throwing() throws Exception {
-        CvTheme theme = CvTheme.blueBanner();
+        BrandTheme theme = BrandTheme.blueBanner();
         renderWithFlow(flow -> FlowSectionHeader.banner(flow, "FlowBanner",
                 "Experience", 240, theme, bodyStyle(),
                 DocumentInsets.top(2), DocumentInsets.bottom(2)));
         renderWithFlow(flow -> FlowSectionHeader.label(flow, "FlowLabel",
-                "PROJECTS", 240, CvTheme.editorialBlue(), bodyStyle(),
+                "PROJECTS", 240, BrandTheme.editorialBlue(), bodyStyle(),
                 DocumentInsets.top(2), DocumentInsets.of(2),
                 DocumentInsets.zero(), true));
     }
 
     @Test
     void moduleAndBand_widgets_render_without_throwing() throws Exception {
-        CvTheme theme = CvTheme.nordicClean();
+        BrandTheme theme = BrandTheme.nordicClean();
         renderWithSection(section -> ProfileBand.render(section, "Profile",
                 "**Markdown** body", ProfileBand.Style.builder()
                         .titleStyle(bodyStyle())
@@ -156,7 +156,7 @@ class WidgetSmokeTest {
                         .accentLeft(DocumentColor.rgb(28, 128, 135), 2)
                         .build()));
         renderWithSection(section -> SectionModule.tick(section, "Tick",
-                "Skills", CvTheme.compactMono(),
+                "Skills", BrandTheme.compactMono(),
                 DocumentColor.rgb(0, 126, 151), 24, bodyStyle(),
                 body -> body.addParagraph(p -> p.text("Java").textStyle(bodyStyle()))));
         renderWithSection(section -> SectionModule.upperRule(section, "Rule",
@@ -168,7 +168,7 @@ class WidgetSmokeTest {
 
     @Test
     void masthead_renders_without_throwing() throws Exception {
-        CvTheme theme = CvTheme.editorialBlue();
+        BrandTheme theme = BrandTheme.editorialBlue();
         renderWithSection(section -> Masthead.centered(section, identity(),
                 theme, Masthead.Style.builder()
                         .nameStyle(bodyStyle())
@@ -182,7 +182,7 @@ class WidgetSmokeTest {
 
     @Test
     void widgets_work_against_modernProfessional_theme() throws Exception {
-        CvTheme theme = CvTheme.modernProfessional();
+        BrandTheme theme = BrandTheme.modernProfessional();
         renderWithSection(section -> Headline.rightAligned(section, name(), theme));
         renderWithSection(section -> ContactLine.rightAligned(section, identity(), theme));
         renderWithSection(section -> SectionHeader.flat(section, "Summary",

@@ -57,10 +57,10 @@ public final class ModernProfessional {
      */
     public static final double RECOMMENDED_MARGIN = 18.0;
 
-    /** V1 {@code CvTheme} primary slate-blue used by the display name. */
+    /** V1 {@code BrandTheme} primary slate-blue used by the display name. */
     private static final DocumentColor V1_NAME_COLOR = DocumentColor.rgb(44, 62, 80);
 
-    /** V1 {@code CvTheme} secondary bright-blue used by section headings. */
+    /** V1 {@code BrandTheme} secondary bright-blue used by section headings. */
     private static final DocumentColor V1_SECTION_COLOR = DocumentColor.rgb(41, 128, 185);
 
     /** V1 link accent (royal blue) used by the contact link row. */

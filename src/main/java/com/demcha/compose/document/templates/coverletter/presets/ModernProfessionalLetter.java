@@ -36,7 +36,7 @@ public final class ModernProfessionalLetter {
     /** Human-readable display name. */
     public static final String DISPLAY_NAME = "Modern Professional Letter";
 
-    /** V1 {@code CvTheme} primary slate-blue used by the display name. */
+    /** V1 {@code BrandTheme} primary slate-blue used by the display name. */
     private static final DocumentColor NAME_COLOR = DocumentColor.rgb(44, 62, 80);
 
     /** V1 link accent (royal blue) used by the contact link row. */

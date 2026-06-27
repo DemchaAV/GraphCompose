@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.coverletter.v2.components.LetterBod
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
@@ -27,7 +27,7 @@ import java.util.Objects;
  * subheadline, and a centred contact line framed by thin full-width
  * rules — then a single-column letter body via the shared
  * {@link LetterBody}. Both documents read everything from
- * {@link CvTheme#centeredHeadline()}.</p>
+ * {@link BrandTheme#centeredHeadline()}.</p>
  *
  * <p>The subheadline uses the real {@link CvIdentity#jobTitle()} (the
  * CV preset still shows a hard-coded placeholder pending its own
@@ -62,7 +62,7 @@ public final class CenteredHeadlineLetter {
      * @return a {@code DocumentTemplate} for the "Centered Headline Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.centeredHeadline());
+        return create(BrandTheme.centeredHeadline());
     }
 
     /**
@@ -72,12 +72,12 @@ public final class CenteredHeadlineLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Centered Headline Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

@@ -10,8 +10,8 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -158,7 +158,7 @@ public final class MonogramSidebarLetter {
                         .layer(new ParagraphBuilder()
                                 .name("CoverLetterV2MonogramSidebarInitials")
                                 .text(initialsText)
-                                .textStyle(CvTextStyles.of(MONOGRAM_FONT, 44.0,
+                                .textStyle(TextStyles.of(MONOGRAM_FONT, 44.0,
                                         DocumentTextDecoration.BOLD, MONOGRAM_RING))
                                 .align(TextAlign.LEFT)
                                 .build(), LayerAlign.CENTER)
@@ -214,31 +214,31 @@ public final class MonogramSidebarLetter {
             }
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle subtitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.BOLD, ACCENT);
             }
 
             private DocumentTextStyle contactMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().muted());
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, ACCENT);
             }
 
             private DocumentTextStyle contactSeparatorStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().rule());
             }

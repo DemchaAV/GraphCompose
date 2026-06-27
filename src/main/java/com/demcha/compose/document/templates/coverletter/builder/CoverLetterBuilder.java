@@ -9,7 +9,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.components.Header;
-import com.demcha.compose.document.templates.components.MarkdownText;
+import com.demcha.compose.document.templates.core.text.MarkdownText;
 import com.demcha.compose.document.templates.coverletter.layouts.LetterFormat;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterHeader;
 import com.demcha.compose.document.templates.coverletter.spec.CoverLetterSpec;

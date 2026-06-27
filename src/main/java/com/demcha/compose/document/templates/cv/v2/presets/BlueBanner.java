@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -108,7 +110,7 @@ public final class BlueBanner {
                 Objects.requireNonNull(document, "document");
                 Objects.requireNonNull(doc, "doc");
 
-                DocumentTextStyle bannerTitleStyle = CvTextStyles.of(
+                DocumentTextStyle bannerTitleStyle = TextStyles.of(
                         theme.typography().bodyFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
@@ -191,11 +193,11 @@ public final class BlueBanner {
                                     CvEntry entry,
                                     BrandTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
-        DocumentTextStyle dateStyle = CvTextStyles.of(theme.typography().bodyFont(),
+        DocumentTextStyle dateStyle = TextStyles.of(theme.typography().bodyFont(),
                 theme.typography().sizeEntryDate(),
                 DocumentTextDecoration.BOLD,
                 theme.palette().ink());
-        DocumentTextStyle subtitleStyle = CvTextStyles.of(theme.typography().bodyFont(),
+        DocumentTextStyle subtitleStyle = TextStyles.of(theme.typography().bodyFont(),
                 theme.typography().sizeEntrySubtitle(),
                 DocumentTextDecoration.DEFAULT,
                 theme.palette().ink());

@@ -14,7 +14,7 @@ import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.components.MarkdownText;
+import com.demcha.compose.document.templates.core.text.MarkdownText;
 import com.demcha.compose.document.templates.blocks.Block;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;

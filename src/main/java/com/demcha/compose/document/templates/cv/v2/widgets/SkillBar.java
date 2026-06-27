@@ -5,8 +5,8 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
@@ -109,7 +109,7 @@ public final class SkillBar {
         Objects.requireNonNull(theme, "theme");
 
         boolean levelled = skill.level().isPresent();
-        DocumentTextStyle labelStyle = CvTextStyles.of(
+        DocumentTextStyle labelStyle = TextStyles.of(
                 theme.typography().bodyFont(),
                 theme.typography().sizeEntryTitle(),
                 DocumentTextDecoration.BOLD,

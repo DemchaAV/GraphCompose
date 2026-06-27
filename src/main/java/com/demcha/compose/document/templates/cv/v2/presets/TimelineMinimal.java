@@ -12,8 +12,8 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -404,63 +404,63 @@ public final class TimelineMinimal {
             // -- style factories ---------------------------------------------
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle jobTitleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         9.5,
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle contactTextStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().muted());
             }
 
             private DocumentTextStyle fallbackIconStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         8.0,
                         DocumentTextDecoration.BOLD,
                         theme.palette().muted());
             }
 
             private DocumentTextStyle sidebarTitleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeEntryTitle(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle sidebarBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntrySubtitle(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle mainTitleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle mainBulletStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle mainBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntryDate(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());

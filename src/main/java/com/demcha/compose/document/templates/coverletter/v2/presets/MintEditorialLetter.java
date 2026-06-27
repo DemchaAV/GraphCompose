@@ -12,8 +12,8 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
@@ -388,13 +388,13 @@ public final class MintEditorialLetter {
         }
 
         private DocumentTextStyle mastheadNameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
                     DocumentTextDecoration.DEFAULT, nameColor);
         }
 
         private DocumentTextStyle taglineStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.BOLD, accent);
         }

@@ -13,9 +13,9 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -210,24 +210,24 @@ public final class TimelineMinimalLetter {
             }
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle jobTitleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(), 9.5,
+                return TextStyles.of(theme.typography().headlineFont(), 9.5,
                         DocumentTextDecoration.BOLD, theme.palette().ink());
             }
 
             private DocumentTextStyle contactTextStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.BOLD, theme.palette().muted());
             }
 
             private DocumentTextStyle fallbackIconStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(), 8.0,
+                return TextStyles.of(theme.typography().headlineFont(), 8.0,
                         DocumentTextDecoration.BOLD, theme.palette().muted());
             }
         }

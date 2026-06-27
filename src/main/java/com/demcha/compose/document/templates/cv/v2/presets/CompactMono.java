@@ -1,5 +1,8 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.RichParagraphRenderer;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -310,52 +313,52 @@ public final class CompactMono {
             }
 
             private DocumentTextStyle headerNameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD,
                         DocumentColor.rgb(255, 255, 255));
             }
 
             private DocumentTextStyle headerMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         HEADER_SOFT);
             }
 
             private DocumentTextStyle headerLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         LINK_CYAN);
             }
 
             private DocumentTextStyle headerSeparatorStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         SEPARATOR_GRAY);
             }
 
             private DocumentTextStyle moduleLabelStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         ACCENT);
             }
 
             private DocumentTextStyle bodyStyle(double size, DocumentColor color) {
-                return CvTextStyles.of(theme.typography().bodyFont(), size,
+                return TextStyles.of(theme.typography().bodyFont(), size,
                         DocumentTextDecoration.DEFAULT, color);
             }
 
             private DocumentTextStyle bodyBoldStyle(double size) {
-                return CvTextStyles.of(theme.typography().bodyFont(), size,
+                return TextStyles.of(theme.typography().bodyFont(), size,
                         DocumentTextDecoration.BOLD, theme.palette().ink());
             }
 
             private DocumentTextStyle italicStyle(double size, DocumentColor color) {
-                return CvTextStyles.of(theme.typography().bodyFont(), size,
+                return TextStyles.of(theme.typography().bodyFont(), size,
                         DocumentTextDecoration.ITALIC, color);
             }
         }

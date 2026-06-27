@@ -9,7 +9,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
@@ -122,7 +122,7 @@ public final class CenteredHeadlineLetter {
             }
 
             private DocumentTextStyle subheadlineStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(), 8.6,
+                return TextStyles.of(theme.typography().headlineFont(), 8.6,
                         DocumentTextDecoration.DEFAULT, theme.palette().muted());
             }
 

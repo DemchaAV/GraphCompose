@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -14,7 +16,7 @@ import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.font.FontName;
 
@@ -139,7 +141,7 @@ public final class Executive {
                 flow.addSection("CvV2ExecutiveHeader", section -> {
                     section.spacing(2)
                             .padding(DocumentInsets.zero());
-                    Headline.uppercaseLeftAligned(section, identity.name(), theme,
+                    Headline.uppercaseLeftAligned(section, identity.name().full(), theme,
                             nameStyle());
                     String meta = joinPipe(identity.contact().address(),
                             identity.contact().phone());
@@ -180,7 +182,7 @@ public final class Executive {
                                         new DocumentLinkOptions("mailto:" + email));
                                 first = false;
                             }
-                            for (CvLink link : identity.links()) {
+                            for (Link link : identity.links()) {
                                 if (link.label().isBlank()) {
                                     continue;
                                 }

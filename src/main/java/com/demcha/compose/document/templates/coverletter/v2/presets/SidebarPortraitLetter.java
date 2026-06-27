@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
 
 import java.util.Objects;
 

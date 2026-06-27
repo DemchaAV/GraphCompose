@@ -11,8 +11,8 @@ import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.font.FontName;
 
@@ -158,7 +158,7 @@ public final class ModernProfessional {
                         .name("CvV2ModernRoot")
                         .spacing(theme.spacing().pageFlowSpacing())
                         .addSection("Header", section ->
-                                Headline.rightAligned(section, doc.identity().name(),
+                                Headline.rightAligned(section, doc.identity().name().full(),
                                         theme, nameStyle))
                         .addSection("Contact", section -> {
                             section.accentBottom(theme.palette().rule(),

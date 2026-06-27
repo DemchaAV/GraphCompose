@@ -12,10 +12,10 @@ import com.demcha.compose.document.templates.cv.v2.components.ProjectRenderer;
 import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
-import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
+import com.demcha.compose.document.templates.core.identity.Subheadline;
 
 import java.util.List;
 import java.util.Objects;
@@ -134,7 +134,7 @@ public final class CenteredHeadline {
                         .name("CenteredHeadlineRoot")
                         .spacing(theme.spacing().pageFlowSpacing())
                         .addSection("Headline", section -> {
-                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                            Headline.spacedCentered(section, doc.identity().name().full(), theme);
                             Subheadline.centeredSpacedCaps(section, SUBHEADLINE_CAPTION,
                                     subheadlineStyle());
                         })

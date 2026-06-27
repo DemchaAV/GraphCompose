@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -12,7 +14,6 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.widgets.CardWidget;
 import com.demcha.compose.font.FontName;
@@ -178,7 +179,7 @@ public final class PanelLetter {
                                         new DocumentLinkOptions("mailto:" + email));
                                 first = false;
                             }
-                            for (CvLink link : identity.links()) {
+                            for (Link link : identity.links()) {
                                 if (link.label().isBlank()) {
                                     continue;
                                 }

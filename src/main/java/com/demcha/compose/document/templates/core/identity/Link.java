@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.data;
+package com.demcha.compose.document.templates.core.identity;
 
 import java.util.Objects;
 
@@ -9,12 +9,12 @@ import java.util.Objects;
  * @param label visible link text (required, non-blank)
  * @param url   click target (required, non-blank)
  */
-public record CvLink(String label, String url) {
+public record Link(String label, String url) {
 
     /**
      * Validates that both fields are non-null and non-blank.
      */
-    public CvLink {
+    public Link {
         Objects.requireNonNull(label, "label");
         Objects.requireNonNull(url, "url");
         if (label.isBlank()) {
@@ -26,14 +26,14 @@ public record CvLink(String label, String url) {
     }
 
     /**
-     * Convenience factory mirroring {@code CvLink.of("LinkedIn",
+     * Convenience factory mirroring {@code Link.of("LinkedIn",
      * "https://...")} call sites.
      *
      * @param label visible link text (required, non-blank)
      * @param url   click target (required, non-blank)
-     * @return a {@code CvLink} with the given label and target
+     * @return a {@code Link} with the given label and target
      */
-    public static CvLink of(String label, String url) {
-        return new CvLink(label, url);
+    public static Link of(String label, String url) {
+        return new Link(label, url);
     }
 }

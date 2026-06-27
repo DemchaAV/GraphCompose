@@ -16,8 +16,8 @@ import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
-import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
+import com.demcha.compose.document.templates.core.identity.Headline;
+import com.demcha.compose.document.templates.core.identity.Subheadline;
 
 import java.util.Objects;
 
@@ -321,7 +321,7 @@ public final class MintEditorialLetter {
 
         private void addPlainMasthead(SectionBuilder section, CvIdentity identity) {
             // Style-override variant so only the name colour can change.
-            Headline.render(section, identity.name(), theme,
+            Headline.render(section, identity.name().full(), theme,
                     TextAlign.CENTER, true, mastheadNameStyle());
             String jobTitle = identity.jobTitle();
             if (jobTitle != null && !jobTitle.isBlank()) {

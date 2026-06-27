@@ -13,8 +13,8 @@ import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -117,7 +117,7 @@ public final class NordicCleanLetter {
                         .weights(1.2, 0.8)
                         .addSection("Identity", id -> {
                             id.spacing(3).padding(new DocumentInsets(1, 0, 2, 0));
-                            Headline.uppercaseLeftAligned(id, identity.name(), theme,
+                            Headline.uppercaseLeftAligned(id, identity.name().full(), theme,
                                     headlineStyle());
                             id.addShape(shape -> shape
                                     .name("CoverLetterV2NordicCleanNameAccent")

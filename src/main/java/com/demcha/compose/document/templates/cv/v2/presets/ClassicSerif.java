@@ -16,8 +16,8 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 import java.util.List;
@@ -135,7 +135,7 @@ public final class ClassicSerif {
                                    double width) {
                 flow.addSection("CvV2ClassicSerifHeader", section -> {
                     section.spacing(5);
-                    Headline.spacedCentered(section, doc.identity().name(), theme);
+                    Headline.spacedCentered(section, doc.identity().name().full(), theme);
                     section.addLine(line -> line
                             .name("CvV2ClassicSerifHeaderRule")
                             .horizontal(width)

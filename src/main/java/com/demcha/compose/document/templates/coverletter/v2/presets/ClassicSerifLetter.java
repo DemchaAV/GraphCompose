@@ -12,8 +12,8 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 import java.util.Objects;
 
@@ -114,7 +114,7 @@ public final class ClassicSerifLetter {
                                    double width) {
                 flow.addSection("CoverLetterV2ClassicSerifHeader", section -> {
                     section.spacing(5);
-                    Headline.spacedCentered(section, identity.name(), theme);
+                    Headline.spacedCentered(section, identity.name().full(), theme);
                     section.addLine(line -> line
                             .name("CoverLetterV2ClassicSerifHeaderRule")
                             .horizontal(width)

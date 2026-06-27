@@ -15,7 +15,7 @@ import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.font.FontName;
 
 import java.util.ArrayList;

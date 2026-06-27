@@ -1,13 +1,10 @@
-package com.demcha.compose.document.templates.cv.v2.widgets;
+package com.demcha.compose.document.templates.core.identity;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.data.CvContact;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
@@ -34,7 +31,7 @@ import java.util.List;
  * </ul>
  *
  * <p>Email is always rendered as a clickable {@code mailto:} link;
- * each optional {@link CvLink} becomes a clickable hyperlink with
+ * each optional {@link Link} becomes a clickable hyperlink with
  * the {@code label} as the visible text. The separator glyph comes
  * from {@code theme.decoration().contactSeparator()}.</p>
  */
@@ -52,14 +49,14 @@ public final class ContactLine {
      * @param identity the CV identity supplying contact fields and links
      * @param theme    the active theme supplying palette, typography, and spacing
      */
-    public static void centered(SectionBuilder host, CvIdentity identity, BrandTheme theme) {
+    public static void centered(SectionBuilder host, PartyIdentity identity, BrandTheme theme) {
         render(host, identity, theme, TextAlign.CENTER, Order.PHONE_FIRST);
     }
 
     /**
      * Centred contact row with explicit text-style overrides for
      * non-link text, clickable links, and separators. Same ordering as
-     * {@link #centered(SectionBuilder, CvIdentity, BrandTheme)}, but lets
+     * {@link #centered(SectionBuilder, PartyIdentity, BrandTheme)}, but lets
      * editorial presets tint / underline the links without forking the
      * contact assembly logic.
      *
@@ -76,7 +73,7 @@ public final class ContactLine {
      *                               {@code null} →
      *                               {@code theme.contactSeparatorStyle()}
      */
-    public static void centered(SectionBuilder host, CvIdentity identity,
+    public static void centered(SectionBuilder host, PartyIdentity identity,
                                 BrandTheme theme,
                                 DocumentTextStyle bodyStyleOverride,
                                 DocumentTextStyle linkStyleOverride,
@@ -94,7 +91,7 @@ public final class ContactLine {
      * @param identity the CV identity supplying contact fields and links
      * @param theme    the active theme supplying palette, typography, and spacing
      */
-    public static void rightAligned(SectionBuilder host, CvIdentity identity, BrandTheme theme) {
+    public static void rightAligned(SectionBuilder host, PartyIdentity identity, BrandTheme theme) {
         render(host, identity, theme, TextAlign.RIGHT, Order.ADDRESS_FIRST);
     }
 
@@ -107,7 +104,7 @@ public final class ContactLine {
      * @param identity the CV identity supplying contact fields and links
      * @param theme    the active theme supplying palette, typography, and spacing
      */
-    public static void leftAligned(SectionBuilder host, CvIdentity identity,
+    public static void leftAligned(SectionBuilder host, PartyIdentity identity,
                                    BrandTheme theme) {
         render(host, identity, theme, TextAlign.LEFT, Order.ADDRESS_FIRST);
     }
@@ -129,7 +126,7 @@ public final class ContactLine {
      *                               {@code null} ->
      *                               {@code theme.contactSeparatorStyle()}
      */
-    public static void leftAligned(SectionBuilder host, CvIdentity identity,
+    public static void leftAligned(SectionBuilder host, PartyIdentity identity,
                                    BrandTheme theme,
                                    DocumentTextStyle bodyStyleOverride,
                                    DocumentTextStyle linkStyleOverride,
@@ -151,7 +148,7 @@ public final class ContactLine {
      *   <li><strong>Row 2</strong> — email {@code |} link₁ {@code |} link₂ … (all clickable)</li>
      * </ul>
      *
-     * <p>Email and every {@link CvLink} are rendered as proper PDF
+     * <p>Email and every {@link Link} are rendered as proper PDF
      * hyperlinks (mailto: for the email, the link's URL for each
      * label) — not just styled text.</p>
      *
@@ -168,7 +165,7 @@ public final class ContactLine {
      *                               separator; {@code null} →
      *                               {@code theme.contactSeparatorStyle()}
      */
-    public static void twoRowRightAligned(SectionBuilder host, CvIdentity identity,
+    public static void twoRowRightAligned(SectionBuilder host, PartyIdentity identity,
                                           BrandTheme theme,
                                           DocumentTextStyle bodyStyleOverride,
                                           DocumentTextStyle linkStyleOverride,
@@ -180,7 +177,7 @@ public final class ContactLine {
         DocumentTextStyle separatorStyle = separatorStyleOverride != null
                 ? separatorStyleOverride : theme.contactSeparatorStyle();
 
-        CvContact c = identity.contact();
+        Contact c = identity.contact();
         host.spacing(0).padding(theme.spacing().contactPadding())
                 // Row 1 — address + phone.
                 .addParagraph(p -> p
@@ -200,7 +197,7 @@ public final class ContactLine {
                         .rich(rich -> {
                             rich.with(c.email(), linkStyle,
                                     new DocumentLinkOptions("mailto:" + c.email()));
-                            for (CvLink l : identity.links()) {
+                            for (Link l : identity.links()) {
                                 rich.style(" | ", separatorStyle);
                                 rich.with(l.label(), linkStyle,
                                         new DocumentLinkOptions(l.url()));
@@ -218,7 +215,7 @@ public final class ContactLine {
      * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void rightAlignedStacked(SectionBuilder host,
-                                           CvIdentity identity,
+                                           PartyIdentity identity,
                                            BrandTheme theme) {
         rightAlignedStacked(host, identity, theme, null, null);
     }
@@ -236,7 +233,7 @@ public final class ContactLine {
      *                          → resolved body style
      */
     public static void rightAlignedStacked(SectionBuilder host,
-                                           CvIdentity identity,
+                                           PartyIdentity identity,
                                            BrandTheme theme,
                                            DocumentTextStyle bodyStyleOverride,
                                            DocumentTextStyle linkStyleOverride) {
@@ -274,7 +271,7 @@ public final class ContactLine {
      * @param alignment horizontal text alignment for the row
      * @param order     the field order in the rendered line
      */
-    public static void render(SectionBuilder host, CvIdentity identity, BrandTheme theme,
+    public static void render(SectionBuilder host, PartyIdentity identity, BrandTheme theme,
                               TextAlign alignment, Order order) {
         List<Part> parts = parts(identity, order);
         DocumentTextStyle textStyle = theme.contactStyle();
@@ -302,7 +299,7 @@ public final class ContactLine {
                         }));
     }
 
-    private static void renderStyled(SectionBuilder host, CvIdentity identity,
+    private static void renderStyled(SectionBuilder host, PartyIdentity identity,
                                      BrandTheme theme, TextAlign alignment,
                                      Order order,
                                      DocumentTextStyle bodyStyleOverride,
@@ -352,8 +349,8 @@ public final class ContactLine {
         ADDRESS_FIRST
     }
 
-    private static List<Part> parts(CvIdentity identity, Order order) {
-        CvContact c = identity.contact();
+    private static List<Part> parts(PartyIdentity identity, Order order) {
+        Contact c = identity.contact();
         List<Part> parts = new ArrayList<>(4 + identity.links().size());
         DocumentLinkOptions email = new DocumentLinkOptions("mailto:" + c.email());
         switch (order) {
@@ -368,7 +365,7 @@ public final class ContactLine {
                 parts.add(new Part(c.email(), email));
             }
         }
-        for (CvLink link : identity.links()) {
+        for (Link link : identity.links()) {
             parts.add(new Part(link.label(), new DocumentLinkOptions(link.url())));
         }
         return parts;

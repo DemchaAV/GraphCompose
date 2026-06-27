@@ -1,5 +1,11 @@
 package com.demcha.compose.document.templates.cv.v2.widgets;
 
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
+import com.demcha.compose.document.templates.core.identity.Masthead;
+import com.demcha.compose.document.templates.core.identity.Subheadline;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
+
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.TextAlign;
@@ -27,19 +33,19 @@ class WidgetSmokeTest {
     @Test
     void headline_variants_render_without_throwing() throws Exception {
         renderWithSection(section -> {
-            Headline.spacedCentered(section, name(), BrandTheme.boxedClassic());
+            Headline.spacedCentered(section, name().full(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            Headline.uppercaseCentered(section, name(), BrandTheme.editorialBlue());
+            Headline.uppercaseCentered(section, name().full(), BrandTheme.editorialBlue());
         });
         renderWithSection(section -> {
-            Headline.uppercaseLeftAligned(section, name(), BrandTheme.nordicClean());
+            Headline.uppercaseLeftAligned(section, name().full(), BrandTheme.nordicClean());
         });
         renderWithSection(section -> {
-            Headline.rightAligned(section, name(), BrandTheme.boxedClassic());
+            Headline.rightAligned(section, name().full(), BrandTheme.boxedClassic());
         });
         renderWithSection(section -> {
-            Headline.render(section, name(), BrandTheme.boxedClassic(),
+            Headline.render(section, name().full(), BrandTheme.boxedClassic(),
                     TextAlign.LEFT, false);
         });
     }
@@ -183,7 +189,7 @@ class WidgetSmokeTest {
     @Test
     void widgets_work_against_modernProfessional_theme() throws Exception {
         BrandTheme theme = BrandTheme.modernProfessional();
-        renderWithSection(section -> Headline.rightAligned(section, name(), theme));
+        renderWithSection(section -> Headline.rightAligned(section, name().full(), theme));
         renderWithSection(section -> ContactLine.rightAligned(section, identity(), theme));
         renderWithSection(section -> SectionHeader.flat(section, "Summary",
                 DocumentColor.rgb(0, 0, 0), theme));

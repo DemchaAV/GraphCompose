@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -239,7 +241,7 @@ public final class EngineeringResume {
                     addPart(parts, email,
                             new DocumentLinkOptions("mailto:" + email));
                 }
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     addPart(parts, link.label(), link.url().isBlank()
                             ? null
                             : new DocumentLinkOptions(link.url().trim()));

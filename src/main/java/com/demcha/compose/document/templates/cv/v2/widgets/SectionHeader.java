@@ -45,7 +45,8 @@ import java.util.Locale;
  *       {@code ClassicSerif}.</li>
  * </ul>
  *
- * <p>Unlike {@link Headline} (one rendering shape, two text
+ * <p>Unlike {@link com.demcha.compose.document.templates.core.identity.Headline}
+ * (one rendering shape, two text
  * transforms), section headers are <strong>structurally</strong>
  * different per variant — soft-panel vs accentBottom vs plain
  * paragraph. That's why each variant gets its own factory method

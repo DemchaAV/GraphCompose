@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -12,7 +14,6 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
@@ -220,7 +221,7 @@ public final class EngineeringResumeLetter {
                 if (!email.isBlank()) {
                     addPart(parts, email, new DocumentLinkOptions("mailto:" + email));
                 }
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     addPart(parts, link.label(), link.url().isBlank()
                             ? null
                             : new DocumentLinkOptions(link.url().trim()));

@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
@@ -16,7 +18,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.font.FontName;
 
 import java.util.*;
@@ -852,7 +854,7 @@ public final class MonogramSidebar {
         }
         addContactItem(items, "location.svg", identity.contact().address(),
                 null);
-        for (CvLink link : identity.links()) {
+        for (Link link : identity.links()) {
             String label = link.label();
             if (label.isBlank()) {
                 continue;

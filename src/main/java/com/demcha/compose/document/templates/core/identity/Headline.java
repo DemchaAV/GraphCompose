@@ -1,11 +1,10 @@
-package com.demcha.compose.document.templates.cv.v2.widgets;
+package com.demcha.compose.document.templates.core.identity;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
@@ -55,7 +54,7 @@ public final class Headline {
      * @param name  name to render
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void spacedCentered(SectionBuilder host, CvName name, BrandTheme theme) {
+    public static void spacedCentered(SectionBuilder host, String name, BrandTheme theme) {
         render(host, name, theme, TextAlign.CENTER, true);
     }
 
@@ -68,7 +67,7 @@ public final class Headline {
      * @param name  name to render
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void uppercaseCentered(SectionBuilder host, CvName name,
+    public static void uppercaseCentered(SectionBuilder host, String name,
                                          BrandTheme theme) {
         uppercaseCentered(host, name, theme, null);
     }
@@ -83,10 +82,10 @@ public final class Headline {
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */
-    public static void uppercaseCentered(SectionBuilder host, CvName name,
+    public static void uppercaseCentered(SectionBuilder host, String name,
                                          BrandTheme theme,
                                          DocumentTextStyle styleOverride) {
-        renderText(host, name.full().toUpperCase(java.util.Locale.ROOT),
+        renderText(host, name.toUpperCase(java.util.Locale.ROOT),
                 theme, TextAlign.CENTER, styleOverride);
     }
 
@@ -99,7 +98,7 @@ public final class Headline {
      * @param name  name to render
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void uppercaseLeftAligned(SectionBuilder host, CvName name,
+    public static void uppercaseLeftAligned(SectionBuilder host, String name,
                                             BrandTheme theme) {
         uppercaseLeftAligned(host, name, theme, null);
     }
@@ -114,10 +113,10 @@ public final class Headline {
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */
-    public static void uppercaseLeftAligned(SectionBuilder host, CvName name,
+    public static void uppercaseLeftAligned(SectionBuilder host, String name,
                                             BrandTheme theme,
                                             DocumentTextStyle styleOverride) {
-        renderText(host, name.full().toUpperCase(java.util.Locale.ROOT),
+        renderText(host, name.toUpperCase(java.util.Locale.ROOT),
                 theme, TextAlign.LEFT, styleOverride);
     }
 
@@ -131,7 +130,7 @@ public final class Headline {
      * @param name  name to render
      * @param theme the active theme supplying palette, typography, and spacing
      */
-    public static void rightAligned(SectionBuilder host, CvName name, BrandTheme theme) {
+    public static void rightAligned(SectionBuilder host, String name, BrandTheme theme) {
         rightAligned(host, name, theme, null);
     }
 
@@ -147,7 +146,7 @@ public final class Headline {
      * @param styleOverride text style for the headline; pass {@code null}
      *                      to fall back to {@code theme.headlineStyle()}
      */
-    public static void rightAligned(SectionBuilder host, CvName name, BrandTheme theme,
+    public static void rightAligned(SectionBuilder host, String name, BrandTheme theme,
                                     DocumentTextStyle styleOverride) {
         render(host, name, theme, TextAlign.RIGHT, false, styleOverride);
     }
@@ -165,14 +164,14 @@ public final class Headline {
      * @param spacedCaps if true, transforms to letter-spaced
      *                   uppercase; if false, renders verbatim
      */
-    public static void render(SectionBuilder host, CvName name, BrandTheme theme,
+    public static void render(SectionBuilder host, String name, BrandTheme theme,
                               TextAlign alignment, boolean spacedCaps) {
         render(host, name, theme, alignment, spacedCaps, null);
     }
 
     /**
      * Lower-level entry with explicit style override. Same shape as
-     * the 5-arg {@link #render(SectionBuilder, CvName, BrandTheme, TextAlign, boolean)}
+     * the 5-arg {@link #render(SectionBuilder, String, BrandTheme, TextAlign, boolean)}
      * but lets the caller supply a custom {@link DocumentTextStyle}.
      *
      * @param host          host section
@@ -184,15 +183,15 @@ public final class Headline {
      * @param styleOverride explicit style; pass {@code null} to fall
      *                      back to {@code theme.headlineStyle()}
      */
-    public static void render(SectionBuilder host, CvName name, BrandTheme theme,
+    public static void render(SectionBuilder host, String name, BrandTheme theme,
                               TextAlign alignment, boolean spacedCaps,
                               DocumentTextStyle styleOverride) {
         DocumentTextStyle style = styleOverride != null
                 ? styleOverride
                 : theme.headlineStyle();
         String text = spacedCaps
-                ? TextOrnaments.spacedUpper(name.full())
-                : name.full();
+                ? TextOrnaments.spacedUpper(name)
+                : name;
 
         renderText(host, text, theme, alignment, style);
     }

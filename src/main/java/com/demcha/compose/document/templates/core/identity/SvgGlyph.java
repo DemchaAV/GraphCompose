@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.widgets;
+package com.demcha.compose.document.templates.core.identity;
 
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentPathSegment;
@@ -43,8 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <h2>Reuse</h2>
  *
- * <p>Lives in {@code cv/v2/widgets} as the shared glyph primitive behind
- * {@link IconTextRow} and the per-preset contact rows. Reuse it instead of
+ * <p>Lives in the core identity layer as the shared glyph primitive behind
+ * the header widgets and per-preset contact rows. Reuse it instead of
  * loading icon bytes by hand.</p>
  */
 public final class SvgGlyph {

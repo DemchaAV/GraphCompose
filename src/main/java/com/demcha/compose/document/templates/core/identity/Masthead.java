@@ -1,12 +1,10 @@
-package com.demcha.compose.document.templates.cv.v2.widgets;
+package com.demcha.compose.document.templates.core.identity;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
@@ -32,16 +30,16 @@ public final class Masthead {
      *                 {@link Style#defaults(BrandTheme)}
      */
     public static void centered(SectionBuilder host,
-                                CvIdentity identity,
+                                PartyIdentity identity,
                                 BrandTheme theme,
                                 Style style) {
         Style safeStyle = style == null ? Style.defaults(theme) : style;
         DocumentTextStyle nameStyle = safeStyle.nameStyle() == null
                 ? theme.headlineStyle()
                 : safeStyle.nameStyle();
-        Headline.uppercaseCentered(host, identity.name(), theme,
+        Headline.uppercaseCentered(host, identity.displayName(), theme,
                 nameStyle);
-        addOptionalLine(host, identity.jobTitle(), safeStyle.titleStyle(),
+        addOptionalLine(host, identity.tagline(), safeStyle.titleStyle(),
                 safeStyle.lineMargin());
         addOptionalLine(host,
                 join(safeStyle.metaJoiner(),
@@ -66,7 +64,7 @@ public final class Masthead {
     }
 
     private static void addLinkRow(SectionBuilder host,
-                                   CvIdentity identity,
+                                   PartyIdentity identity,
                                    BrandTheme theme,
                                    Style style) {
         List<LinkPart> parts = linkParts(identity);
@@ -103,14 +101,14 @@ public final class Masthead {
                 }));
     }
 
-    private static List<LinkPart> linkParts(CvIdentity identity) {
+    private static List<LinkPart> linkParts(PartyIdentity identity) {
         List<LinkPart> parts = new ArrayList<>();
         String email = identity.contact().email();
         if (!email.isBlank()) {
             parts.add(new LinkPart(email,
                     new DocumentLinkOptions("mailto:" + email)));
         }
-        for (CvLink link : identity.links()) {
+        for (Link link : identity.links()) {
             if (!link.label().isBlank()) {
                 parts.add(new LinkPart(link.label(), link.url().isBlank()
                         ? null

@@ -15,7 +15,7 @@ import java.util.Objects;
  *
  * <p>Decorations live in the {@code theme} layer because they are
  * cosmetic. They are <strong>not</strong> renderer constants:
- * components like {@code RowRenderer} and {@code ContactRenderer}
+ * components like {@code RowRenderer} and the {@code ContactLine} widget
  * read these strings from the active theme on every call.</p>
  *
  * @param bulletGlyph      glyph + trailing space used by row styles

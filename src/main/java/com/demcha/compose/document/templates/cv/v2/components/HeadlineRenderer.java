@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
  * centred-spaced-caps form. Kept as a thin delegating shim so v2
  * code written before the widgets layer keeps compiling unchanged.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class HeadlineRenderer {
 
     private HeadlineRenderer() {

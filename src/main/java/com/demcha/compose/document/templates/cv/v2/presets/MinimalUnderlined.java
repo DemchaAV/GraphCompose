@@ -27,7 +27,8 @@ import java.util.Objects;
  * compositional exercise. The pieces that change:</p>
  *
  * <ul>
- *   <li>{@link com.demcha.compose.document.templates.cv.v2.components.BannerRenderer}
+ *   <li>The centred banner section header
+ *       ({@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader})
  *       is <em>not</em> used.</li>
  *   <li>A small inline paragraph + an {@code accentBottom} draws the
  *       section title.</li>

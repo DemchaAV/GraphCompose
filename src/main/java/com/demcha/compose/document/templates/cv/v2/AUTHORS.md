@@ -88,9 +88,8 @@ CvTheme theme = new CvTheme(
 DocumentTemplate<CvDocument> template = BoxedSections.create(theme);
 ```
 
-That's it. No renderer code changes. `RowRenderer` and
-`ContactRenderer` read these strings from `theme.decoration()` on every
-call.
+That's it. No renderer code changes. `RowRenderer` and the `ContactLine`
+widget read these strings from `theme.decoration()` on every call.
 
 **Why the second-line indent is its own token:** when a stacked row
 (Projects style) wraps to a second line, the body text must align under
@@ -149,7 +148,7 @@ CvTheme compactTheme = new CvTheme(
 
 ---
 
-## Recipe 4 — write a new preset (reuse existing renderers)
+## Recipe 4 — write a new preset (reuse existing widgets)
 
 You want a different page layout — no banner panels, section titles
 underlined instead. Same data, same components, different composition.
@@ -181,15 +180,15 @@ public final class MyPreset {
                     .name("MyRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .addSection("Headline", s ->
-                            HeadlineRenderer.render(s, doc.identity().name(), theme))
+                            Headline.spacedCentered(s, doc.identity().name(), theme))
                     .addSection("Contact", s ->
-                            ContactRenderer.render(s, doc.identity(), theme));
+                            ContactLine.centered(s, doc.identity(), theme));
 
             for (int i = 0; i < doc.sections().size(); i++) {
                 final CvSection sec = doc.sections().get(i);
                 final int idx = i;
 
-                // Replace BannerRenderer with whatever title style you want.
+                // Replace SectionHeader.banner(...) with whatever title style you want.
                 pageFlow.addSection("Title_" + idx, host -> {
                     /* custom title rendering */
                 });
@@ -203,8 +202,9 @@ public final class MyPreset {
 }
 ```
 
-The renderers in `components/` are all `static` — your preset just
-calls them. No inheritance, no instance state to manage.
+The widgets in `widgets/` and the section renderers in `components/` are
+all `static` — your preset just calls them. No inheritance, no instance
+state to manage.
 
 ---
 

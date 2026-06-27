@@ -10,25 +10,13 @@ import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumen
  * semantic blocks into a caller-owned {@link DocumentSession}. Implementations
  * are usually immutable value objects configured by a theme.</p>
  *
- * <pre>{@code
- * CoverLetterTemplate template = new CoverLetterTemplateV1();
- * CoverLetterDocumentSpec coverLetter = CoverLetterDocumentSpec.builder()
- *         .header(header -> header
- *                 .name("Artem Demchyshyn")
- *                 .email("artem@demo.dev", "artem@demo.dev")
- *                 .linkedIn("https://linkedin.com/in/graphcompose", "LinkedIn"))
- *         .letter(letterBody)
- *         .job(job -> job
- *                 .company("Northwind Systems")
- *                 .title("Platform Engineer"))
- *         .build();
- *
- * try (DocumentSession document = GraphCompose.document(Path.of("cover-letter.pdf")).create()) {
- *     template.compose(document, coverLetter);
- *     document.buildPdf();
- * }
- * }</pre>
+ * @deprecated since 1.9.0; removed in 2.0. No type implements this interface —
+ *             the layered cover-letter presets implement the generic
+ *             {@link DocumentTemplate} seam
+ *             ({@code DocumentTemplate<CoverLetterDocumentSpec>}) instead.
+ *             Implement {@code DocumentTemplate<CoverLetterDocumentSpec>}.
  */
+@Deprecated(since = "1.9.0", forRemoval = true)
 public interface CoverLetterTemplate {
 
     /**

@@ -206,10 +206,10 @@ references. The reopen made an explicit trade-off:
   switch to the new factory (see migration table in `CHANGELOG.md`
   and `docs/roadmaps/migration-v1-5-to-v1-6.md`).
 - **Cinematic V2 templates remain.** `InvoiceTemplateV2` /
-  `ProposalTemplateV2` / `WeeklyScheduleTemplateV1` /
-  `BuiltInCvTemplateSupport` stay in `templates/builtins/`. The
-  builtins folder is not yet empty; final cleanup happens once
-  `ModernInvoice` / `ModernProposal` close cinematic feature parity.
+  `ProposalTemplateV2` / `WeeklyScheduleTemplateV1` stay in
+  `templates/builtins/`. The builtins folder is not yet empty; final
+  cleanup happens once `ModernInvoice` / `ModernProposal` close
+  cinematic feature parity.
 - **`templates/data/` is partially deferred.**
   `data/cv/CvDocumentSpec.java` and `data/coverletter/CoverLetterDocumentSpec.java`
   are dead code referenced only by tests; `data/invoice/*` /

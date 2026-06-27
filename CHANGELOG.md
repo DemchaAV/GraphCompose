@@ -265,6 +265,16 @@ PDF `GoTo` actions. External links are unchanged.
   in the PDF backend. `PdfVisualRegression` also gains direct `renderPages(session)` /
   `assertMatchesBaseline(name, session)` overloads on the same path.
 
+### Deprecations
+
+- **`templates.api.CoverLetterTemplate`** marked `@Deprecated(forRemoval = true)`.
+  Nothing implements it — the layered cover-letter presets implement the generic
+  `DocumentTemplate<CoverLetterDocumentSpec>` seam instead. Removed in 2.0.
+- **`cv.v2.components.HeadlineRenderer` / `ContactRenderer` / `BannerRenderer`**
+  (already-deprecated pre-widgets shims) are now `forRemoval` — use the
+  `cv.v2.widgets` `Headline` / `ContactLine` / `SectionHeader` widgets instead.
+  Removed in 2.0.
+
 ### Documentation
 
 - New runnable flagship example

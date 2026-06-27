@@ -741,7 +741,15 @@
                             </newVersion>
                             <parameter>
                                 <onlyModified>true</onlyModified>
-                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <!--
+                                    2.0 development line: the major intentionally breaks binary
+                                    compatibility (core extraction, v2-suffix drop, Gen-2 removal).
+                                    The gate runs report-only here so the japicmp report still
+                                    documents every break for the migration guide / api-stability §3
+                                    ledger, without failing the build. Re-enable (true) once the 2.0
+                                    baseline is published and japicmp.baseline points at it.
+                                -->
+                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
                                 <includeSynthetic>false</includeSynthetic>
                                 <reportOnlyFilename>true</reportOnlyFilename>

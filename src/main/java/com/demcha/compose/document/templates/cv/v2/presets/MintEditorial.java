@@ -19,7 +19,7 @@ import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.IconTextRow;
 import com.demcha.compose.document.templates.cv.v2.widgets.SkillBar;
@@ -265,7 +265,7 @@ public final class MintEditorial {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.mintEditorial(), Options.defaults());
+        return create(BrandTheme.mintEditorial(), Options.defaults());
     }
 
     /**
@@ -276,7 +276,7 @@ public final class MintEditorial {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         return create(theme, Options.defaults());
     }
 
@@ -288,7 +288,7 @@ public final class MintEditorial {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(Options options) {
-        return create(CvTheme.mintEditorial(), options);
+        return create(BrandTheme.mintEditorial(), options);
     }
 
     /**
@@ -300,7 +300,7 @@ public final class MintEditorial {
      * @param options masthead colour options
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme,
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme,
                                                       Options options) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(options, "options");
@@ -417,7 +417,7 @@ public final class MintEditorial {
 
     private static final class Template implements DocumentTemplate<CvDocument> {
 
-        private final CvTheme theme;
+        private final BrandTheme theme;
         /**
          * Accent for the tagline + section headings (defaults to mint).
          */
@@ -435,7 +435,7 @@ public final class MintEditorial {
          */
         private final DocumentColor headerBandColor;
 
-        Template(CvTheme theme, Options options) {
+        Template(BrandTheme theme, Options options) {
             this.theme = theme;
             // Mint carries its accent in the palette banner slot — single
             // source shared with the paired cover letter. Each Options knob

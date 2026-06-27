@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +37,7 @@ class ClassicSerifSmokeTest {
 
     @Test
     void custom_theme_factory_renders() throws Exception {
-        renderAndAssertNonEmpty(ClassicSerif.create(CvTheme.classicSerif()),
+        renderAndAssertNonEmpty(ClassicSerif.create(BrandTheme.classicSerif()),
                 fullDocument());
     }
 

@@ -5,7 +5,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvEntry;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Renders one {@link CvEntry} as the canonical four-zone timeline
@@ -37,7 +37,7 @@ public final class EntryRenderer {
      * @param entry   the entry supplying title, date, subtitle, and body
      * @param theme   the active theme supplying palette, typography, and spacing
      */
-    public static void render(SectionBuilder section, CvEntry entry, CvTheme theme) {
+    public static void render(SectionBuilder section, CvEntry entry, BrandTheme theme) {
         DocumentTextStyle titleStyle = theme.entryTitleStyle();
         DocumentTextStyle dateStyle = theme.entryDateStyle();
         DocumentTextStyle subtitleStyle = theme.entrySubtitleStyle();

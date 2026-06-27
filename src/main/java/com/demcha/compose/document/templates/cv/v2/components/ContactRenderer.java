@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 
 /**
@@ -26,7 +26,7 @@ public final class ContactRenderer {
      * @deprecated delegates to {@link ContactLine#centered}.
      */
     @Deprecated
-    public static void render(SectionBuilder section, CvIdentity identity, CvTheme theme) {
+    public static void render(SectionBuilder section, CvIdentity identity, BrandTheme theme) {
         ContactLine.centered(section, identity, theme);
     }
 }

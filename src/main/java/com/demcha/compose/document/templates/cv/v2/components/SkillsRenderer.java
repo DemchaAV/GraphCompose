@@ -5,7 +5,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Default renderer for a grouped {@link SkillsSection}.
@@ -32,7 +32,7 @@ public final class SkillsRenderer {
      */
     public static void render(SectionBuilder section,
                               SkillsSection skills,
-                              CvTheme theme) {
+                              BrandTheme theme) {
         DocumentTextStyle style = theme.bodyStyle();
         DocumentInsets margin = DocumentInsets.top(
                 (float) theme.spacing().paragraphMarginTop());

@@ -4,7 +4,7 @@
  * <p>Every class here is a static helper that takes a host
  * {@link com.demcha.compose.document.dsl.SectionBuilder}, a
  * {@code cv/v2/data} record, and a
- * {@link com.demcha.compose.document.templates.cv.v2.theme.CvTheme},
+ * {@link com.demcha.compose.document.templates.core.theme.BrandTheme},
  * and draws the data into the host using the theme's tokens.</p>
  *
  * <p>Components <strong>never</strong>:</p>

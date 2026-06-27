@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.Objects;
  * {@link com.demcha.compose.document.templates.cv.v2.presets.EngineeringResume}.
  * Below the band, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
- * {@link CvTheme#engineeringResume()}.</p>
+ * {@link BrandTheme#engineeringResume()}.</p>
  *
  * <p>The five navy-header colours are mirrored from the CV, where they
  * are preset-local (the theme only covers body ink / muted / rule /
@@ -88,7 +88,7 @@ public final class EngineeringResumeLetter {
      * @return a {@code DocumentTemplate} for the "Engineering Resume Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.engineeringResume());
+        return create(BrandTheme.engineeringResume());
     }
 
     /**
@@ -98,12 +98,12 @@ public final class EngineeringResumeLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Engineering Resume Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

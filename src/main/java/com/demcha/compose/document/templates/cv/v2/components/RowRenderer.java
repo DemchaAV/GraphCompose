@@ -5,7 +5,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvRow;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Unified renderer for a {@link CvRow} under any {@link RowStyle}.
@@ -32,7 +32,7 @@ public final class RowRenderer {
      *                bullet glyph, and stacked indent
      */
     public static void render(SectionBuilder section, CvRow row,
-                              RowStyle style, CvTheme theme) {
+                              RowStyle style, BrandTheme theme) {
         switch (style) {
             case PLAIN -> inline(section, row, null, theme);
             case BULLETED -> inline(section, row, theme.decoration().bulletGlyph(), theme);
@@ -47,7 +47,7 @@ public final class RowRenderer {
      * @param bulletGlyph bullet glyph to attach, or null for plain
      */
     private static void inline(SectionBuilder section, CvRow row,
-                               String bulletGlyph, CvTheme theme) {
+                               String bulletGlyph, BrandTheme theme) {
         DocumentTextStyle base = theme.bodyStyle();
         String source = labelColonValue(row);
         DocumentInsets margin = DocumentInsets.top(
@@ -66,7 +66,7 @@ public final class RowRenderer {
      * paragraphs draw through {@link ParagraphPrimitive#writeBulleted}
      * so only the bullet glyph / margin differs.
      */
-    private static void stacked(SectionBuilder section, CvRow row, CvTheme theme) {
+    private static void stacked(SectionBuilder section, CvRow row, BrandTheme theme) {
         DocumentTextStyle base = theme.bodyStyle();
         DocumentTextStyle nameStyle = theme.bodyBoldStyle();
         DocumentInsets topMargin = DocumentInsets.top(

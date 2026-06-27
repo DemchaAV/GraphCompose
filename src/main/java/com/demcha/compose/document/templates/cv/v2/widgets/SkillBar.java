@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.Objects;
 
@@ -103,7 +103,7 @@ public final class SkillBar {
      *                   colour, and the rule colour for the track
      */
     public static void render(SectionBuilder host, CvSkill skill,
-                              double trackWidth, CvTheme theme) {
+                              double trackWidth, BrandTheme theme) {
         Objects.requireNonNull(host, "host");
         Objects.requireNonNull(skill, "skill");
         Objects.requireNonNull(theme, "theme");

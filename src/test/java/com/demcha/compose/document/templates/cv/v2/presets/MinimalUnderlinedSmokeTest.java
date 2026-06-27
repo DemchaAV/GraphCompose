@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +43,7 @@ class MinimalUnderlinedSmokeTest {
     @Test
     void custom_theme_factory_renders() throws Exception {
         DocumentTemplate<CvDocument> template =
-                MinimalUnderlined.create(CvTheme.boxedClassic());
+                MinimalUnderlined.create(BrandTheme.boxedClassic());
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(420, 595)
                 .margin(DocumentInsets.of(24))

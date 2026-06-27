@@ -46,11 +46,11 @@
  *           ▼                                   ▼
  *   ┌──────────────────────┐         ┌──────────────────────────┐
  *   │  components/         │         │  theme/                  │
- *   │    RowRenderer       │ reads   │    CvPalette  (colours)  │
- *   │    EntryRenderer     │◀────────│    CvTypography (fonts)  │
- *   │    ParagraphRenderer │         │    CvSpacing  (margins)  │
- *   │    SectionDispatcher │         │    CvDecoration (glyphs) │
- *   │    ParagraphPrimitive│         │    CvTheme    (bundle)   │
+ *   │    RowRenderer       │ reads   │    Palette  (colours)  │
+ *   │    EntryRenderer     │◀────────│    Typography (fonts)  │
+ *   │    ParagraphRenderer │         │    Spacing  (margins)  │
+ *   │    SectionDispatcher │         │    Decoration (glyphs) │
+ *   │    ParagraphPrimitive│         │    BrandTheme    (bundle)   │
  *   │    MarkdownInline    │         └──────────────────────────┘
  *   │    TextOrnaments     │
  *   └──────────────────────┘
@@ -91,7 +91,7 @@
  *   <dt><b>{@code components/}</b></dt>
  *   <dd>The reusable drawing primitives. <em>"How is a section
  *       row laid out?"</em> Each renderer takes a host
- *       {@code SectionBuilder}, a data record, and a {@code CvTheme}.
+ *       {@code SectionBuilder}, a data record, and a {@code BrandTheme}.
  *       You rarely write a new one — usually you compose the
  *       existing ones in a new preset.</dd>
  *
@@ -132,14 +132,14 @@
  *
  * <pre>{@code
  * // Take the classic look
- * CvTheme theme = CvTheme.boxedClassic();
+ * BrandTheme theme = BrandTheme.boxedClassic();
  *
  * // ... or customise one piece, keep the rest
- * CvTheme custom = new CvTheme(
- *     CvPalette.classic(),
- *     CvTypography.classic(),
- *     CvSpacing.classic(),
- *     new CvDecoration("▶ ", "  ", "  ·  "));   // ▶ bullets, mid-dot separators
+ * BrandTheme custom = new BrandTheme(
+ *     Palette.classic(),
+ *     Typography.classic(),
+ *     Spacing.classic(),
+ *     new Decoration("▶ ", "  ", "  ·  "));   // ▶ bullets, mid-dot separators
  * }</pre>
  *
  * <h3>Step 3. Hand to a preset</h3>

@@ -5,7 +5,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
  * Page-flow section-header widget for presets whose title treatment
@@ -39,7 +39,7 @@ public final class FlowSectionHeader {
                               String name,
                               String title,
                               double ruleWidth,
-                              CvTheme theme,
+                              BrandTheme theme,
                               DocumentTextStyle titleStyle,
                               DocumentInsets topRuleMargin,
                               DocumentInsets bottomRuleMargin) {
@@ -64,7 +64,7 @@ public final class FlowSectionHeader {
                               String name,
                               String title,
                               double ruleWidth,
-                              CvTheme theme,
+                              BrandTheme theme,
                               DocumentTextStyle titleStyle,
                               DocumentColor ruleColor,
                               DocumentInsets topRuleMargin,
@@ -96,7 +96,7 @@ public final class FlowSectionHeader {
                              String name,
                              String title,
                              double ruleWidth,
-                             CvTheme theme,
+                             BrandTheme theme,
                              DocumentTextStyle titleStyle,
                              DocumentInsets topRuleMargin,
                              DocumentInsets titlePadding,
@@ -127,7 +127,7 @@ public final class FlowSectionHeader {
                              String name,
                              String title,
                              double ruleWidth,
-                             CvTheme theme,
+                             BrandTheme theme,
                              DocumentTextStyle titleStyle,
                              DocumentColor ruleColor,
                              DocumentInsets topRuleMargin,
@@ -154,7 +154,7 @@ public final class FlowSectionHeader {
                                 String name,
                                 double width,
                                 DocumentColor color,
-                                CvTheme theme,
+                                BrandTheme theme,
                                 DocumentInsets margin) {
         flow.addLine(line -> line
                 .name(name)

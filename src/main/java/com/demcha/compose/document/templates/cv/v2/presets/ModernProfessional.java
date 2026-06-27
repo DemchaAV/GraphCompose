@@ -10,7 +10,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
@@ -34,13 +34,13 @@ import java.util.Objects;
  * </ul>
  *
  * <p><strong>Why some colours live inside this preset and not in
- * {@link CvTheme}:</strong> the slate-blue display name and the
+ * {@link BrandTheme}:</strong> the slate-blue display name and the
  * bright-blue accent for section titles are unique to this preset —
  * no other v2 preset shares them today. Putting them in
- * {@link com.demcha.compose.document.templates.cv.v2.theme.CvPalette}
+ * {@link com.demcha.compose.document.templates.core.theme.Palette}
  * would pollute the palette with single-use fields. When (or if) a
  * second preset reaches for the same colours, extract them to
- * {@code CvPalette} and update both presets.</p>
+ * {@code Palette} and update both presets.</p>
  *
  * <p><strong>Architectural lesson learned in Phase 2:</strong>
  * single-column presets that don't fit the boxed-banner visual
@@ -88,12 +88,12 @@ public final class ModernProfessional {
 
     /**
      * Builds the preset with the Modern Professional theme
-     * ({@link CvTheme#modernProfessional()}).
+     * ({@link BrandTheme#modernProfessional()}).
      *
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.modernProfessional());
+        return create(BrandTheme.modernProfessional());
     }
 
     /**
@@ -104,12 +104,12 @@ public final class ModernProfessional {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

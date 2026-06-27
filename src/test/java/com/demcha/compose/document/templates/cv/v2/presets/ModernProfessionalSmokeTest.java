@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +37,7 @@ class ModernProfessionalSmokeTest {
     @Test
     void custom_theme_factory_renders() throws Exception {
         DocumentTemplate<CvDocument> template =
-                ModernProfessional.create(CvTheme.modernProfessional());
+                ModernProfessional.create(BrandTheme.modernProfessional());
         renderAndAssertNonEmpty(template, fullDocument());
     }
 
@@ -46,7 +46,7 @@ class ModernProfessionalSmokeTest {
         // Preset should not assume any specific theme — handing it the
         // boxedClassic theme must not throw.
         DocumentTemplate<CvDocument> template =
-                ModernProfessional.create(CvTheme.boxedClassic());
+                ModernProfessional.create(BrandTheme.boxedClassic());
         renderAndAssertNonEmpty(template, fullDocument());
     }
 

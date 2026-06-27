@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.ProfileBand;
@@ -33,14 +33,14 @@ import java.util.Objects;
  *
  * <h2>Customising the rail and colours</h2>
  *
- * <p>Use {@link #create(CvTheme, Options)} when you want the same
+ * <p>Use {@link #create(BrandTheme, Options)} when you want the same
  * Nordic layout with a different accent colour, rail fill, profile
  * band fill, or rail side. The default {@link #create()} stays
  * byte-for-byte compatible with the shipped teal-left-rail look.</p>
  *
  * <pre>{@code
  * DocumentTemplate<CvDocument> template = NordicClean.create(
- *         CvTheme.nordicClean(),
+ *         BrandTheme.nordicClean(),
  *         NordicClean.Options.builder()
  *                 .railSide(NordicClean.RailSide.RIGHT)
  *                 .accentColor(DocumentColor.rgb(40, 110, 120))
@@ -93,7 +93,7 @@ public final class NordicClean {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.nordicClean(), Options.defaults());
+        return create(BrandTheme.nordicClean(), Options.defaults());
     }
 
     /**
@@ -102,7 +102,7 @@ public final class NordicClean {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         return create(theme, Options.defaults());
     }
 
@@ -114,7 +114,7 @@ public final class NordicClean {
      * @param options Nordic-specific layout and colour options
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme,
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme,
                                                       Options options) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(options, "options");
@@ -166,7 +166,7 @@ public final class NordicClean {
 
         /**
          * Default Nordic look: left rail, teal accent, pale rail fill,
-         * and profile fill read from {@code CvTheme.nordicClean()}.
+         * and profile fill read from {@code BrandTheme.nordicClean()}.
          *
          * @return the default Nordic options
          */
@@ -183,7 +183,7 @@ public final class NordicClean {
             return new Builder();
         }
 
-        private DocumentColor resolvedProfileFill(CvTheme theme) {
+        private DocumentColor resolvedProfileFill(BrandTheme theme) {
             return profileFillColor == null
                     ? theme.palette().banner()
                     : profileFillColor;
@@ -257,7 +257,7 @@ public final class NordicClean {
         }
     }
 
-    private record Template(CvTheme theme, Options options) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme, Options options) implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {

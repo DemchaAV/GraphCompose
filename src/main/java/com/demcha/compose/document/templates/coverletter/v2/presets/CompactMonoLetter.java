@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.coverletter.v2.components.LetterBod
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 
@@ -27,7 +27,7 @@ import java.util.Objects;
  * {@link com.demcha.compose.document.templates.cv.v2.presets.CompactMono}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
- * {@link CvTheme#compactMono()}.</p>
+ * {@link BrandTheme#compactMono()}.</p>
  *
  * <p>The four command-bar colours are mirrored from the CV, where they
  * are preset-local. A near-invisible width rule (band-coloured, 0.1pt)
@@ -80,7 +80,7 @@ public final class CompactMonoLetter {
      * @return a {@code DocumentTemplate} for the "Compact Mono Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.compactMono());
+        return create(BrandTheme.compactMono());
     }
 
     /**
@@ -90,12 +90,12 @@ public final class CompactMonoLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Compact Mono Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

@@ -9,7 +9,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
 import com.demcha.compose.font.FontName;
@@ -25,7 +25,7 @@ import java.util.Objects;
  * right-aligned contact stack with royal-blue underlined links and a
  * bottom accent rule — then a single-column letter body via the shared
  * {@link LetterBody}. Both documents read their scale and palette from
- * {@link CvTheme#modernProfessional()}.</p>
+ * {@link BrandTheme#modernProfessional()}.</p>
  *
  * <p>Unlike Executive, the header is composed almost entirely from
  * shared widgets ({@link Headline#rightAligned} +
@@ -70,7 +70,7 @@ public final class ModernProfessionalLetter {
      * @return a {@code DocumentTemplate} for the "Modern Professional Letter"
      */
     public static DocumentTemplate<CoverLetterDocument> create() {
-        return create(CvTheme.modernProfessional());
+        return create(BrandTheme.modernProfessional());
     }
 
     /**
@@ -80,12 +80,12 @@ public final class ModernProfessionalLetter {
      * @param theme the active theme supplying palette, typography, and spacing
      * @return a {@code DocumentTemplate} for the "Modern Professional Letter"
      */
-    public static DocumentTemplate<CoverLetterDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CoverLetterDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
-    private record Template(CvTheme theme) implements DocumentTemplate<CoverLetterDocument> {
+    private record Template(BrandTheme theme) implements DocumentTemplate<CoverLetterDocument> {
 
         @Override
             public String id() {

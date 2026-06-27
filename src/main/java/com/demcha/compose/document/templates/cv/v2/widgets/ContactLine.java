@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.v2.data.CvContact;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,14 +52,14 @@ public final class ContactLine {
      * @param identity the CV identity supplying contact fields and links
      * @param theme    the active theme supplying palette, typography, and spacing
      */
-    public static void centered(SectionBuilder host, CvIdentity identity, CvTheme theme) {
+    public static void centered(SectionBuilder host, CvIdentity identity, BrandTheme theme) {
         render(host, identity, theme, TextAlign.CENTER, Order.PHONE_FIRST);
     }
 
     /**
      * Centred contact row with explicit text-style overrides for
      * non-link text, clickable links, and separators. Same ordering as
-     * {@link #centered(SectionBuilder, CvIdentity, CvTheme)}, but lets
+     * {@link #centered(SectionBuilder, CvIdentity, BrandTheme)}, but lets
      * editorial presets tint / underline the links without forking the
      * contact assembly logic.
      *
@@ -77,7 +77,7 @@ public final class ContactLine {
      *                               {@code theme.contactSeparatorStyle()}
      */
     public static void centered(SectionBuilder host, CvIdentity identity,
-                                CvTheme theme,
+                                BrandTheme theme,
                                 DocumentTextStyle bodyStyleOverride,
                                 DocumentTextStyle linkStyleOverride,
                                 DocumentTextStyle separatorStyleOverride) {
@@ -94,7 +94,7 @@ public final class ContactLine {
      * @param identity the CV identity supplying contact fields and links
      * @param theme    the active theme supplying palette, typography, and spacing
      */
-    public static void rightAligned(SectionBuilder host, CvIdentity identity, CvTheme theme) {
+    public static void rightAligned(SectionBuilder host, CvIdentity identity, BrandTheme theme) {
         render(host, identity, theme, TextAlign.RIGHT, Order.ADDRESS_FIRST);
     }
 
@@ -108,7 +108,7 @@ public final class ContactLine {
      * @param theme    the active theme supplying palette, typography, and spacing
      */
     public static void leftAligned(SectionBuilder host, CvIdentity identity,
-                                   CvTheme theme) {
+                                   BrandTheme theme) {
         render(host, identity, theme, TextAlign.LEFT, Order.ADDRESS_FIRST);
     }
 
@@ -130,7 +130,7 @@ public final class ContactLine {
      *                               {@code theme.contactSeparatorStyle()}
      */
     public static void leftAligned(SectionBuilder host, CvIdentity identity,
-                                   CvTheme theme,
+                                   BrandTheme theme,
                                    DocumentTextStyle bodyStyleOverride,
                                    DocumentTextStyle linkStyleOverride,
                                    DocumentTextStyle separatorStyleOverride) {
@@ -169,7 +169,7 @@ public final class ContactLine {
      *                               {@code theme.contactSeparatorStyle()}
      */
     public static void twoRowRightAligned(SectionBuilder host, CvIdentity identity,
-                                          CvTheme theme,
+                                          BrandTheme theme,
                                           DocumentTextStyle bodyStyleOverride,
                                           DocumentTextStyle linkStyleOverride,
                                           DocumentTextStyle separatorStyleOverride) {
@@ -219,7 +219,7 @@ public final class ContactLine {
      */
     public static void rightAlignedStacked(SectionBuilder host,
                                            CvIdentity identity,
-                                           CvTheme theme) {
+                                           BrandTheme theme) {
         rightAlignedStacked(host, identity, theme, null, null);
     }
 
@@ -237,7 +237,7 @@ public final class ContactLine {
      */
     public static void rightAlignedStacked(SectionBuilder host,
                                            CvIdentity identity,
-                                           CvTheme theme,
+                                           BrandTheme theme,
                                            DocumentTextStyle bodyStyleOverride,
                                            DocumentTextStyle linkStyleOverride) {
         DocumentTextStyle bodyStyle = bodyStyleOverride != null
@@ -274,7 +274,7 @@ public final class ContactLine {
      * @param alignment horizontal text alignment for the row
      * @param order     the field order in the rendered line
      */
-    public static void render(SectionBuilder host, CvIdentity identity, CvTheme theme,
+    public static void render(SectionBuilder host, CvIdentity identity, BrandTheme theme,
                               TextAlign alignment, Order order) {
         List<Part> parts = parts(identity, order);
         DocumentTextStyle textStyle = theme.contactStyle();
@@ -303,7 +303,7 @@ public final class ContactLine {
     }
 
     private static void renderStyled(SectionBuilder host, CvIdentity identity,
-                                     CvTheme theme, TextAlign alignment,
+                                     BrandTheme theme, TextAlign alignment,
                                      Order order,
                                      DocumentTextStyle bodyStyleOverride,
                                      DocumentTextStyle linkStyleOverride,

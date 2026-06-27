@@ -123,7 +123,7 @@ public final class GraphCompose {
      * Returns the logical font families bundled with GraphCompose out of the box.
      *
      * <p>The returned names are the identifiers used by {@code DocumentTextStyle},
-     * {@code CvTheme}, and the font library. They describe what can be referenced
+     * {@code BrandTheme}, and the font library. They describe what can be referenced
      * immediately without registering custom font families.</p>
      */
     public static List<FontName> availableFonts() {

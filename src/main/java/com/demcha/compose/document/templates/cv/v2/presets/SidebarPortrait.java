@@ -17,7 +17,7 @@ import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 
 import java.io.IOException;
@@ -188,7 +188,7 @@ public final class SidebarPortrait {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.sidebarPortrait(), Options.defaults());
+        return create(BrandTheme.sidebarPortrait(), Options.defaults());
     }
 
     /**
@@ -198,7 +198,7 @@ public final class SidebarPortrait {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         return create(theme, Options.defaults());
     }
 
@@ -211,7 +211,7 @@ public final class SidebarPortrait {
      * @param options sidebar colour options
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme,
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme,
                                                       Options options) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(options, "options");
@@ -310,12 +310,12 @@ public final class SidebarPortrait {
 
     private static final class Template implements DocumentTemplate<CvDocument> {
 
-        private final CvTheme theme;
+        private final BrandTheme theme;
         private final DocumentColor sidebarFill;
         private final DocumentColor mainFill;
         private final DocumentColor accent;
 
-        Template(CvTheme theme, Options options) {
+        Template(BrandTheme theme, Options options) {
             this.theme = theme;
             this.sidebarFill = options.sidebarFillColor() != null
                     ? options.sidebarFillColor()

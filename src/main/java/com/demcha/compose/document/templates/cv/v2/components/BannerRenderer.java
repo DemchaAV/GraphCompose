@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 /**
@@ -26,7 +26,7 @@ public final class BannerRenderer {
      * @deprecated delegates to {@link SectionHeader#banner}.
      */
     @Deprecated
-    public static void render(SectionBuilder section, String title, CvTheme theme) {
+    public static void render(SectionBuilder section, String title, BrandTheme theme) {
         SectionHeader.banner(section, title, theme);
     }
 }

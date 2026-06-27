@@ -11,7 +11,7 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.theme.CvTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
 import com.demcha.compose.font.FontName;
 
@@ -132,7 +132,7 @@ public final class MonogramSidebar {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.monogramSidebar(), Options.defaults());
+        return create(BrandTheme.monogramSidebar(), Options.defaults());
     }
 
     /**
@@ -142,7 +142,7 @@ public final class MonogramSidebar {
      * @param theme active theme
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         return create(theme, Options.defaults());
     }
 
@@ -155,7 +155,7 @@ public final class MonogramSidebar {
      * @param options sidebar colour options
      * @return ready-to-use template
      */
-    public static DocumentTemplate<CvDocument> create(CvTheme theme,
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme,
                                                       Options options) {
         Objects.requireNonNull(theme, "theme");
         Objects.requireNonNull(options, "options");
@@ -272,13 +272,13 @@ public final class MonogramSidebar {
 
     private static final class Template implements DocumentTemplate<CvDocument> {
 
-        private final CvTheme theme;
+        private final BrandTheme theme;
         private final DocumentColor sidebarFill;
         private final DocumentColor mainFill;
         private final DocumentColor accent;
         private final DocumentColor monogramRing;
 
-        Template(CvTheme theme, Options options) {
+        Template(BrandTheme theme, Options options) {
             this.theme = theme;
             this.sidebarFill = options.sidebarFillColor() != null
                     ? options.sidebarFillColor()

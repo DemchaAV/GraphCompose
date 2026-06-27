@@ -1,15 +1,15 @@
-package com.demcha.compose.document.templates.cv.v2.theme;
+package com.demcha.compose.document.templates.core.theme;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class CvDecorationTest {
+class DecorationTest {
 
     @Test
     void classic_carries_the_canonical_glyphs() {
-        CvDecoration d = CvDecoration.classic();
+        Decoration d = Decoration.classic();
         assertThat(d.bulletGlyph()).isEqualTo("• ");
         assertThat(d.stackedIndent()).isEqualTo("  ");
         assertThat(d.contactSeparator()).isEqualTo("   |   ");
@@ -17,14 +17,14 @@ class CvDecorationTest {
 
     @Test
     void rejects_null_field() {
-        assertThatThrownBy(() -> new CvDecoration(null, "  ", " | "))
+        assertThatThrownBy(() -> new Decoration(null, "  ", " | "))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("bulletGlyph");
     }
 
     @Test
     void custom_decoration_is_carried_verbatim() {
-        CvDecoration d = new CvDecoration("▶ ", "   ", "  ·  ");
+        Decoration d = new Decoration("▶ ", "   ", "  ·  ");
         assertThat(d.bulletGlyph()).isEqualTo("▶ ");
         assertThat(d.stackedIndent()).isEqualTo("   ");
         assertThat(d.contactSeparator()).isEqualTo("  ·  ");
@@ -36,27 +36,27 @@ class CvDecorationTest {
         // The pre-decoration call shape must keep working and yield
         // the classic decoration, so older callers keep rendering
         // pixel-identical output.
-        CvTheme theme = new CvTheme(
-                CvPalette.classic(),
-                CvTypography.classic(),
-                CvSpacing.classic());
-        assertThat(theme.decoration()).isEqualTo(CvDecoration.classic());
+        BrandTheme theme = new BrandTheme(
+                Palette.classic(),
+                Typography.classic(),
+                Spacing.classic());
+        assertThat(theme.decoration()).isEqualTo(Decoration.classic());
     }
 
     @Test
     void canonical_four_arg_theme_constructor_carries_custom_decoration() {
-        CvDecoration custom = new CvDecoration("· ", "  ", "  /  ");
-        CvTheme theme = new CvTheme(
-                CvPalette.classic(),
-                CvTypography.classic(),
-                CvSpacing.classic(),
+        Decoration custom = new Decoration("· ", "  ", "  /  ");
+        BrandTheme theme = new BrandTheme(
+                Palette.classic(),
+                Typography.classic(),
+                Spacing.classic(),
                 custom);
         assertThat(theme.decoration()).isSameAs(custom);
     }
 
     @Test
     void boxedClassic_carries_classic_decoration() {
-        assertThat(CvTheme.boxedClassic().decoration())
-                .isEqualTo(CvDecoration.classic());
+        assertThat(BrandTheme.boxedClassic().decoration())
+                .isEqualTo(Decoration.classic());
     }
 }

@@ -174,7 +174,7 @@ public final class EngineShowcase {
                                     "Identical input, identical PDF — byte-comparable. Layout snapshots, JMH-benchmarked hot paths."))
                             .addSection("CapTheme", section -> capabilityColumn(section,
                                     "CINEMATIC THEMING",
-                                    "BusinessTheme · CvTheme palettes, component-level tokens, v2 layered preset architecture.")))
+                                    "BusinessTheme · BrandTheme palettes, component-level tokens, v2 layered preset architecture.")))
 
                     // ── Footer brand stripe ───────────────────────
                     .addShape(s -> s.size(516, 0.6).fillColor(RULE)

@@ -277,6 +277,11 @@ PDF `GoTo` actions. External links are unchanged.
 
 ### Documentation
 
+- New runnable flagship example
+  `examples/src/main/java/com/demcha/examples/features/title/BookTemplateExample.java`
+  — a full novel front (full-bleed wave cover, clickable dotted-leader table of
+  contents with live page numbers, chapters) assembled in one `DocumentSession`
+  using the v1.9 book primitives, with no external PDF merge or two-pass probe.
 - New runnable example
   `examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java`
   — a clickable table of contents plus a bidirectional footnote.

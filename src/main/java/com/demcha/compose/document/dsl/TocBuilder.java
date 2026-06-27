@@ -1,8 +1,10 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentLeader;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -28,6 +30,13 @@ import java.util.List;
 public final class TocBuilder {
 
     private static final DocumentColor DEFAULT_LEADER_COLOR = DocumentColor.rgb(150, 150, 150);
+
+    // A bottom-aligned thin line lands on the descender line; lifting it by roughly the
+    // font's descent seats it on the text baseline. The exact descent is a font metric
+    // not reachable from the DSL layer, so this is a deliberate approximation tuned for
+    // typical text faces. It assumes the entry and page-number styles share a size — the
+    // common case; if they differ they sit on different baselines regardless.
+    private static final double LEADER_BASELINE_LIFT_RATIO = 0.2;
 
     private String title = "";
     private DocumentTextStyle titleStyle = DocumentTextStyle.DEFAULT.withSize(16);
@@ -147,15 +156,21 @@ public final class TocBuilder {
     }
 
     private DocumentNode buildEntryRow(Entry entry) {
+        // Bottom-align so the leader sits on the entries' baseline rather than
+        // riding along the top of the line.
         RowBuilder row = new RowBuilder()
                 .gap(6)
+                .verticalAlign(RowVerticalAlign.BOTTOM)
                 .columns(DocumentRowColumn.auto(), DocumentRowColumn.weight(1), DocumentRowColumn.auto());
         row.addParagraph(p -> p.text(entry.label()).textStyle(entryStyle).linkTo(entry.anchor()));
         if (leader == DocumentLeader.NONE) {
             row.addSpacer(s -> s.width(1).height(1));
         } else {
+            // Lift the leader off the descender line onto the baseline (see the ratio above).
+            double baselineLift = entryStyle.size() * LEADER_BASELINE_LIFT_RATIO;
             row.addLine(line -> {
-                line.fill().stroke(DocumentStroke.of(leaderColor, 1.0));
+                line.fill().stroke(DocumentStroke.of(leaderColor, 1.0))
+                        .margin(DocumentInsets.bottom(baselineLift));
                 if (leader == DocumentLeader.DOTS) {
                     line.dashed(0.1, 4).lineCap(DocumentLineCap.ROUND);
                 } else {

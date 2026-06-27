@@ -8,7 +8,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.components.MarkdownText;
+import com.demcha.compose.document.templates.core.text.MarkdownText;
 import com.demcha.compose.document.templates.proposal.spec.ProposalSpec;
 import com.demcha.compose.document.templates.themes.Spacing;
 

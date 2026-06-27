@@ -1,5 +1,8 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.RichParagraphRenderer;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -163,11 +166,11 @@ public final class EditorialBlue {
             }
 
             private void renderExperienceEntry(SectionBuilder section, CvEntry entry) {
-                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         11.0, DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle dateStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         11.0, DocumentTextDecoration.BOLD, theme.palette().rule());
-                DocumentTextStyle subtitleStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle subtitleStyle = TextStyles.of(FontName.HELVETICA,
                         9.4, DocumentTextDecoration.ITALIC, theme.palette().ink());
 
                 EntryCompactRenderer.titleDateBody(section, entry, titleStyle,
@@ -177,11 +180,11 @@ public final class EditorialBlue {
             }
 
             private void renderEducationEntry(SectionBuilder section, CvEntry entry) {
-                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         10.6, DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle dateStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         10.0, DocumentTextDecoration.BOLD, theme.palette().rule());
-                DocumentTextStyle subtitleStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle subtitleStyle = TextStyles.of(FontName.HELVETICA,
                         9.2, DocumentTextDecoration.ITALIC, theme.palette().ink());
 
                 EntryCompactRenderer.titleDateBody(section, entry, titleStyle,
@@ -207,9 +210,9 @@ public final class EditorialBlue {
             }
 
             private void renderProject(SectionBuilder section, CvRow row) {
-                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         10.6, DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle stackStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle stackStyle = TextStyles.of(FontName.HELVETICA,
                         9.3, DocumentTextDecoration.ITALIC, theme.palette().rule());
                 ProjectRenderer.titleThenBody(section, row, titleStyle, stackStyle,
                         theme.bodyStyle(), 1.45, DocumentInsets.top(1),
@@ -217,7 +220,7 @@ public final class EditorialBlue {
             }
 
             private void renderKeyValue(SectionBuilder section, CvRow row) {
-                DocumentTextStyle keyStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle keyStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
                 LabelValueRenderer.render(section, row.label(), row.body(),
@@ -239,7 +242,7 @@ public final class EditorialBlue {
                 if (groups.isEmpty()) {
                     return;
                 }
-                DocumentTextStyle cellStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle cellStyle = TextStyles.of(FontName.HELVETICA,
                         8.6, DocumentTextDecoration.DEFAULT, theme.palette().ink());
                 TableWidget.Style tableStyle = TableWidget.Style.builder()
                         .name("CvV2EditorialBlueSkillsTable")
@@ -264,7 +267,7 @@ public final class EditorialBlue {
                         .padding(new DocumentInsets(2, 0, 0, 0))
                         .addParagraph(paragraph -> paragraph
                                 .text("References available upon request.")
-                                .textStyle(CvTextStyles.of(FontName.HELVETICA,
+                                .textStyle(TextStyles.of(FontName.HELVETICA,
                                         8.4, DocumentTextDecoration.ITALIC,
                                         theme.palette().muted()))
                                 .align(TextAlign.CENTER)
@@ -297,20 +300,20 @@ public final class EditorialBlue {
             }
 
             private DocumentTextStyle sectionTitleStyle() {
-                return CvTextStyles.of(FontName.HELVETICA_BOLD,
+                return TextStyles.of(FontName.HELVETICA_BOLD,
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().rule());
             }
 
             private Masthead.Style mastheadStyle() {
-                DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,
                         10.0, DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
-                DocumentTextStyle linkStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle linkStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         theme.palette().rule());

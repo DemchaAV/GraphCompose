@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

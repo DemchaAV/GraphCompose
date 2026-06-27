@@ -9,8 +9,8 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
@@ -129,7 +129,7 @@ public final class NordicCleanLetter {
                                 id.addParagraph(paragraph -> paragraph
                                         .text(MarkdownInline.plainText(identity.jobTitle())
                                                 .toUpperCase(Locale.ROOT))
-                                        .textStyle(CvTextStyles.of(
+                                        .textStyle(TextStyles.of(
                                                 theme.typography().bodyFont(), 7.7,
                                                 DocumentTextDecoration.BOLD,
                                                 theme.palette().muted()))
@@ -142,19 +142,19 @@ public final class NordicCleanLetter {
             }
 
             private DocumentTextStyle headlineStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, theme.palette().ink());
             }
 
             private DocumentTextStyle contactMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().muted());
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, ACCENT);
             }

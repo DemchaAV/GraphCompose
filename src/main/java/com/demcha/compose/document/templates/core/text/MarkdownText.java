@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.components;
+package com.demcha.compose.document.templates.core.text;
 
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;

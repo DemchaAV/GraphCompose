@@ -1,5 +1,8 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -307,7 +310,7 @@ public final class NordicClean {
                                         .text(MarkdownInline.plainText(
                                                         doc.identity().jobTitle())
                                                 .toUpperCase(Locale.ROOT))
-                                        .textStyle(CvTextStyles.of(theme.typography().bodyFont(),
+                                        .textStyle(TextStyles.of(theme.typography().bodyFont(),
                                                 7.7,
                                                 DocumentTextDecoration.BOLD,
                                                 theme.palette().muted()))
@@ -402,7 +405,7 @@ public final class NordicClean {
                         options.accentColor(), 82, host -> {
                             for (CvEntry entry : education.entries()) {
                                 EntryCompactRenderer.slashSubtitleDate(host, entry,
-                                        CvTextStyles.of(theme.typography().bodyFont(), 7.05,
+                                        TextStyles.of(theme.typography().bodyFont(), 7.05,
                                                 DocumentTextDecoration.BOLD,
                                                 theme.palette().ink()),
                                         bodyStyle(7.05, theme.palette().muted()),
@@ -460,7 +463,7 @@ public final class NordicClean {
             private void addWorkEntry(SectionBuilder host, CvEntry entry) {
                 EntryCompactRenderer.titleDateBody(host, entry,
                         theme.entryTitleStyle(),
-                        CvTextStyles.of(theme.typography().bodyFont(),
+                        TextStyles.of(theme.typography().bodyFont(),
                                 theme.typography().sizeEntryDate(),
                                 DocumentTextDecoration.BOLD,
                                 options.accentColor()),
@@ -477,7 +480,7 @@ public final class NordicClean {
 
             private void addProject(SectionBuilder host, CvRow row) {
                 ProjectRenderer.inline(host, row,
-                        CvTextStyles.of(theme.typography().bodyFont(), 7.35,
+                        TextStyles.of(theme.typography().bodyFont(), 7.35,
                                 DocumentTextDecoration.BOLD, theme.palette().ink()),
                         bodyStyle(6.95, theme.palette().muted()),
                         bodyStyle(7.2, theme.palette().ink()),
@@ -487,7 +490,7 @@ public final class NordicClean {
             private void addLabelValueLine(SectionBuilder host, String label,
                                            String value, double size,
                                            double lineSpacing) {
-                DocumentTextStyle labelStyle = CvTextStyles.of(theme.typography().bodyFont(),
+                DocumentTextStyle labelStyle = TextStyles.of(theme.typography().bodyFont(),
                         size, DocumentTextDecoration.BOLD, theme.palette().ink());
                 DocumentTextStyle valueStyle = bodyStyle(size,
                         theme.palette().muted());
@@ -497,35 +500,35 @@ public final class NordicClean {
             }
 
             private DocumentTextStyle headlineStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle sectionTitleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         options.accentColor());
             }
 
             private DocumentTextStyle contactMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().muted());
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         options.accentColor());
             }
 
             private DocumentTextStyle bodyStyle(double size, DocumentColor color) {
-                return CvTextStyles.of(theme.typography().bodyFont(), size,
+                return TextStyles.of(theme.typography().bodyFont(), size,
                         DocumentTextDecoration.DEFAULT, color);
             }
         }

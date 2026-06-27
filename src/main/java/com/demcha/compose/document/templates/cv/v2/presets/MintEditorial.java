@@ -14,10 +14,10 @@ import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
@@ -1074,7 +1074,7 @@ public final class MintEditorial {
                 return gridCell(line, cellStyle);
             }
             DocumentLinkOptions link = new DocumentLinkOptions("mailto:" + email);
-            DocumentTextStyle linkStyle = CvTextStyles.of(
+            DocumentTextStyle linkStyle = TextStyles.of(
                     theme.typography().bodyFont(),
                     theme.typography().sizeEntryDate(),
                     DocumentTextDecoration.UNDERLINE, theme.palette().muted());
@@ -1123,43 +1123,43 @@ public final class MintEditorial {
          * colour differs when a caller overrides {@code nameColor}.
          */
         private DocumentTextStyle mastheadNameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
                     DocumentTextDecoration.DEFAULT, nameColor);
         }
 
         private DocumentTextStyle taglineStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.BOLD, accent);
         }
 
         private DocumentTextStyle headingStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeBanner(),
                     DocumentTextDecoration.BOLD, accent);
         }
 
         private DocumentTextStyle labelStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryTitle(),
                     DocumentTextDecoration.BOLD, theme.palette().ink());
         }
 
         private DocumentTextStyle bodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeBody(),
                     DocumentTextDecoration.DEFAULT, theme.palette().ink());
         }
 
         private DocumentTextStyle contactStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.DEFAULT, theme.palette().muted());
         }
 
         private DocumentTextStyle smallStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryDate(),
                     DocumentTextDecoration.DEFAULT, theme.palette().muted());
         }

@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
+
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;

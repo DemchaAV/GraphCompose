@@ -6,7 +6,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.Locale;

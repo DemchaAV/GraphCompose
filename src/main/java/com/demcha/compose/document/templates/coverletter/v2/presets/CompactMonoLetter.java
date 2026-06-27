@@ -9,7 +9,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
@@ -150,25 +150,25 @@ public final class CompactMonoLetter {
             }
 
             private DocumentTextStyle headerNameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, DocumentColor.WHITE);
             }
 
             private DocumentTextStyle headerMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, HEADER_SOFT);
             }
 
             private DocumentTextStyle headerLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, LINK_CYAN);
             }
 
             private DocumentTextStyle headerSeparatorStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, SEPARATOR_GRAY);
             }

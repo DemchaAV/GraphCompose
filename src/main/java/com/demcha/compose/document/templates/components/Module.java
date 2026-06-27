@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.components;
 
+import com.demcha.compose.document.templates.core.text.MarkdownText;
+
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;

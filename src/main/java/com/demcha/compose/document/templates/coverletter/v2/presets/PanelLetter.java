@@ -9,8 +9,8 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -212,25 +212,25 @@ public final class PanelLetter {
             }
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(FontName.POPPINS,
+                return TextStyles.of(FontName.POPPINS,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, HEADER_TEXT);
             }
 
             private DocumentTextStyle headerBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle headerMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle headerLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, ACCENT);
             }

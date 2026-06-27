@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.components;
+package com.demcha.compose.document.templates.core.text;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
@@ -6,7 +6,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
 /**
- * Reusable rich paragraph primitive for CV presets that need explicit
+ * Reusable rich paragraph primitive for any preset that needs explicit
  * style, line spacing, and margin while still honouring inline markdown.
  */
 public final class RichParagraphRenderer {

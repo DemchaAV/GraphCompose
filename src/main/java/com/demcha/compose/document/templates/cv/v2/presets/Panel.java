@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -450,35 +452,35 @@ public final class Panel {
             }
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(FontName.POPPINS,
+                return TextStyles.of(FontName.POPPINS,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD,
                         HEADER_TEXT);
             }
 
             private DocumentTextStyle headerBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle headerMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle headerLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         ACCENT);
             }
 
             private DocumentTextStyle moduleTitleStyle() {
-                return CvTextStyles.of(FontName.POPPINS,
+                return TextStyles.of(FontName.POPPINS,
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         ACCENT);

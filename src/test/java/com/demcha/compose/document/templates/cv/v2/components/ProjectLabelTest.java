@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.components;
 
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

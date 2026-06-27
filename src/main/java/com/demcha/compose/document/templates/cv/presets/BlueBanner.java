@@ -20,7 +20,7 @@ import com.demcha.compose.document.templates.blocks.KeyValueBlock;
 import com.demcha.compose.document.templates.blocks.MultiParagraphBlock;
 import com.demcha.compose.document.templates.blocks.NumberedListBlock;
 import com.demcha.compose.document.templates.blocks.ParagraphBlock;
-import com.demcha.compose.document.templates.components.MarkdownText;
+import com.demcha.compose.document.templates.core.text.MarkdownText;
 import com.demcha.compose.document.templates.cv.spec.CvHeader;
 import com.demcha.compose.document.templates.cv.spec.CvModule;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;

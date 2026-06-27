@@ -9,8 +9,8 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
@@ -138,25 +138,25 @@ public final class SidebarPortraitLetter {
             }
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, theme.palette().ink());
             }
 
             private DocumentTextStyle subtitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntryDate(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle contactStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, theme.palette().muted());
             }

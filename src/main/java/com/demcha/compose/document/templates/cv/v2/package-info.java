@@ -51,9 +51,7 @@
  *   │    ParagraphRenderer │         │    Spacing  (margins)  │
  *   │    SectionDispatcher │         │    Decoration (glyphs) │
  *   │    ParagraphPrimitive│         │    BrandTheme    (bundle)   │
- *   │    MarkdownInline    │         └──────────────────────────┘
- *   │    TextOrnaments     │
- *   └──────────────────────┘
+ *   └──────────────────────┘         └──────────────────────────┘
  *           │ renders
  *           ▼
  *   ┌─────────────────────────────────────────────────────────────┐

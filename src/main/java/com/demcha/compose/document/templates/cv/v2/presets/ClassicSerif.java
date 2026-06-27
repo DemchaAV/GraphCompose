@@ -1,5 +1,9 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.RichParagraphRenderer;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -158,7 +162,7 @@ public final class ClassicSerif {
                             .accentBottom(theme.palette().rule(), 0.45);
                     addCenteredTitle(host, "Professional Profile");
                     RichParagraphRenderer.render(host, summary.body(),
-                            CvTextStyles.of(theme.typography().bodyFont(), 9.8,
+                            TextStyles.of(theme.typography().bodyFont(), 9.8,
                                     DocumentTextDecoration.DEFAULT,
                                     theme.palette().ink()),
                             1.55, DocumentInsets.zero(), TextAlign.CENTER);
@@ -244,7 +248,7 @@ public final class ClassicSerif {
                         "CvV2ClassicSerifEntryHeader",
                         theme.entryTitleStyle(), theme.entryDateStyle(),
                         theme.entrySubtitleStyle(),
-                        CvTextStyles.of(theme.typography().bodyFont(), 8.8,
+                        TextStyles.of(theme.typography().bodyFont(), 8.8,
                                 DocumentTextDecoration.DEFAULT,
                                 theme.palette().ink()),
                         theme.spacing().entryHeaderRowSpacing(),
@@ -272,10 +276,10 @@ public final class ClassicSerif {
 
             private void renderProject(SectionBuilder host, CvRow row) {
                 ProjectRenderer.titleThenBody(host, row, theme.entryTitleStyle(),
-                        CvTextStyles.of(theme.typography().bodyFont(), 8.7,
+                        TextStyles.of(theme.typography().bodyFont(), 8.7,
                                 DocumentTextDecoration.ITALIC,
                                 theme.palette().muted()),
-                        CvTextStyles.of(theme.typography().bodyFont(), 8.8,
+                        TextStyles.of(theme.typography().bodyFont(), 8.8,
                                 DocumentTextDecoration.DEFAULT,
                                 theme.palette().ink()),
                         theme.typography().bodyLineSpacing(),
@@ -306,28 +310,28 @@ public final class ClassicSerif {
             }
 
             private DocumentTextStyle titleStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         ACCENT);
             }
 
             private DocumentTextStyle contactMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().muted());
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         ACCENT);
             }
 
             private DocumentTextStyle contactSeparatorStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().rule());

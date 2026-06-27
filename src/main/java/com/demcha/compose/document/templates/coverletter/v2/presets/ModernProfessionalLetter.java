@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
@@ -102,16 +102,16 @@ public final class ModernProfessionalLetter {
                 Objects.requireNonNull(document, "document");
                 Objects.requireNonNull(doc, "doc");
 
-                DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle contactBodyStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle contactBodyStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().ink());
-                DocumentTextStyle contactLinkStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle contactLinkStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE, LINK_COLOR);
-                DocumentTextStyle contactSeparatorStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle contactSeparatorStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT, theme.palette().rule());
 

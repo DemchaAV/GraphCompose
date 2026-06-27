@@ -7,8 +7,8 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.ProjectLabel;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
@@ -535,133 +535,133 @@ public final class EngineeringResume {
             // -- Style factories ------------------------------------------------
 
             private DocumentTextStyle nameStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD,
                         DocumentColor.WHITE);
             }
 
             private DocumentTextStyle subtitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         7.6,
                         DocumentTextDecoration.BOLD,
                         SUBTITLE_COLOR);
             }
 
             private DocumentTextStyle contactMetaStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.DEFAULT,
                         CONTACT_META);
             }
 
             private DocumentTextStyle contactLinkStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         CONTACT_LINK);
             }
 
             private DocumentTextStyle railHeadingStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         7.4,
                         DocumentTextDecoration.BOLD,
                         GREEN);
             }
 
             private DocumentTextStyle railBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         6.95,
                         DocumentTextDecoration.DEFAULT,
                         RAIL_TEXT);
             }
 
             private DocumentTextStyle railLabelStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         6.95,
                         DocumentTextDecoration.BOLD,
                         GREEN);
             }
 
             private DocumentTextStyle railTitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         6.95,
                         DocumentTextDecoration.BOLD,
                         DocumentColor.WHITE);
             }
 
             private DocumentTextStyle railDateStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         6.7,
                         DocumentTextDecoration.DEFAULT,
                         RAIL_DATE);
             }
 
             private DocumentTextStyle mainHeadingStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         GREEN);
             }
 
             private DocumentTextStyle profileHeadingStyle() {
-                return CvTextStyles.of(theme.typography().headlineFont(),
+                return TextStyles.of(theme.typography().headlineFont(),
                         8.0,
                         DocumentTextDecoration.BOLD,
                         GREEN);
             }
 
             private DocumentTextStyle profileBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         7.75,
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle roleTitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntryTitle(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle roleDateStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntryDate(),
                         DocumentTextDecoration.BOLD,
                         GREEN);
             }
 
             private DocumentTextStyle subtitleBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeEntrySubtitle(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().muted());
             }
 
             private DocumentTextStyle roleBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle projectTitleStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         7.35,
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
 
             private DocumentTextStyle projectContextStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         6.85,
                         DocumentTextDecoration.DEFAULT,
                         GREEN);
             }
 
             private DocumentTextStyle projectBodyStyle() {
-                return CvTextStyles.of(theme.typography().bodyFont(),
+                return TextStyles.of(theme.typography().bodyFont(),
                         7.1,
                         DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());

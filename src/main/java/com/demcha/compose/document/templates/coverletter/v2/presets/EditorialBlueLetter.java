@@ -9,7 +9,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
+import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.Masthead;
 import com.demcha.compose.font.FontName;
@@ -110,13 +110,13 @@ public final class EditorialBlueLetter {
             }
 
             private Masthead.Style mastheadStyle() {
-                DocumentTextStyle nameStyle = CvTextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle titleStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,
                         10.0, DocumentTextDecoration.DEFAULT,
                         theme.palette().ink());
-                DocumentTextStyle linkStyle = CvTextStyles.of(FontName.HELVETICA,
+                DocumentTextStyle linkStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeContact(),
                         DocumentTextDecoration.UNDERLINE,
                         theme.palette().rule());

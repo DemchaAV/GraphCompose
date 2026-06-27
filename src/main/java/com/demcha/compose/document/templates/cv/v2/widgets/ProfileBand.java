@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.components.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 
 import java.util.Objects;
 

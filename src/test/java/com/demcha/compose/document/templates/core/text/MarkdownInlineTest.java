@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.components;
+package com.demcha.compose.document.templates.core.text;
 
 import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.node.DocumentLinkOptions;

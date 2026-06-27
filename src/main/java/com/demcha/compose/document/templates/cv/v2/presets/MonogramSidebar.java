@@ -1,5 +1,9 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.PageBackgroundFill;
 import com.demcha.compose.document.dsl.EllipseBuilder;
@@ -396,7 +400,7 @@ public final class MonogramSidebar {
                     .layer(new ParagraphBuilder()
                             .name("CvV2MonogramSidebarInitials")
                             .text(initialsText)
-                            .textStyle(CvTextStyles.of(MONOGRAM_FONT, 44.0,
+                            .textStyle(TextStyles.of(MONOGRAM_FONT, 44.0,
                                     DocumentTextDecoration.BOLD, monogramRing))
                             .align(TextAlign.LEFT)
                             .build(), LayerAlign.CENTER)
@@ -725,84 +729,84 @@ public final class MonogramSidebar {
         // -- Style factories ----------------------------------------------
 
         private DocumentTextStyle nameStyle() {
-            return CvTextStyles.of(theme.typography().headlineFont(),
+            return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle subtitleStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.BOLD,
                     accent);
         }
 
         private DocumentTextStyle sidebarHeaderStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     8.0,
                     DocumentTextDecoration.BOLD,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle sidebarBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().muted());
         }
 
         private DocumentTextStyle sidebarEntryTitleStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     7.6,
                     DocumentTextDecoration.BOLD,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle sidebarEntrySubtitleStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle sidebarEntryDateStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     7.2,
                     DocumentTextDecoration.DEFAULT,
                     accent);
         }
 
         private DocumentTextStyle sidebarSkillStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().muted());
         }
 
         private DocumentTextStyle mainHeaderStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeBanner(),
                     DocumentTextDecoration.BOLD,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle mainBodyStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeBody(),
                     DocumentTextDecoration.DEFAULT,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle mainEntryTitleStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryTitle(),
                     DocumentTextDecoration.BOLD,
                     theme.palette().ink());
         }
 
         private DocumentTextStyle mainEntryDateStyle() {
-            return CvTextStyles.of(theme.typography().bodyFont(),
+            return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryDate(),
                     DocumentTextDecoration.BOLD,
                     accent);

@@ -1,10 +1,9 @@
-package com.demcha.compose.document.templates.cv.v2.components;
+package com.demcha.compose.document.templates.core.text;
 
 import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.components.MarkdownText;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,8 +14,8 @@ import java.util.regex.Pattern;
  * (non-emphasised) segments.
  *
  * <p>Honours {@code **bold**}, {@code *italic*}, {@code _italic_} via
- * the shared {@link MarkdownText} parser. Lives in the components
- * layer because every body / row / entry renderer calls it.</p>
+ * the shared {@link MarkdownText} parser. Part of the neutral core text
+ * layer, shared by every template family's body / row / entry rendering.</p>
  *
  * <p><strong>Inline links (since v1.6.8).</strong> Recognises the
  * standard Markdown {@code [label](url)} syntax and emits a clickable

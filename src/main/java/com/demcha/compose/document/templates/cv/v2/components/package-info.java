@@ -13,9 +13,9 @@
  *       so the same component renders any theme without reflection
  *       or singletons;</li>
  *   <li>own business parsing — specs own the semantic model; shared
- *       adapters may normalize legacy free-form labels or bridge
- *       markdown into rich text, but presets should not duplicate
- *       local parsers;</li>
+ *       adapters may normalize legacy free-form labels, but presets
+ *       should not duplicate local parsers (markdown parsing lives in
+ *       the neutral {@code core.text} layer);</li>
  *   <li>read magic numbers — every value reads from the theme.</li>
  * </ul>
  *

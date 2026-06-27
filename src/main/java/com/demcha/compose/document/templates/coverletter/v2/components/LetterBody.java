@@ -5,8 +5,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.components.CvTextStyles;
-import com.demcha.compose.document.templates.cv.v2.components.RichParagraphRenderer;
+import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.core.text.RichParagraphRenderer;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
@@ -58,7 +58,7 @@ public final class LetterBody {
      */
     public static void render(SectionBuilder host, CoverLetterDocument doc,
                               BrandTheme theme, double bodySize) {
-        DocumentTextStyle bodyStyle = CvTextStyles.of(
+        DocumentTextStyle bodyStyle = TextStyles.of(
                 theme.typography().bodyFont(),
                 bodySize,
                 DocumentTextDecoration.DEFAULT,
@@ -80,7 +80,7 @@ public final class LetterBody {
         // The signed name sits on the line directly below the sign-off
         // (standard letter convention), so it gets only a small gap.
         double signatureGap = bodySize * 0.4;
-        DocumentTextStyle signatureStyle = CvTextStyles.of(
+        DocumentTextStyle signatureStyle = TextStyles.of(
                 theme.typography().bodyFont(),
                 bodySize,
                 DocumentTextDecoration.ITALIC,

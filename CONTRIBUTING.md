@@ -272,7 +272,7 @@ implementation; read it before starting yours.
 variant alongside `ModernProfessional`, a new invoice preset
 alongside `InvoiceTemplateV2`):
 
-- Constructor takes a `BusinessTheme` (or `CvTheme` for CV
+- Constructor takes a `BusinessTheme` (or `BrandTheme` for CV
   templates). Provide a no-arg overload that picks a default theme.
 - Compose against `DocumentDsl` — no PDF-specific imports.
 - Route every visible token through `theme.palette()` /

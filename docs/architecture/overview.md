@@ -93,8 +93,8 @@ need to reach below it.
   (`DocumentImageData`, `DocumentImageFitMode`).
 - **`document.theme`** — `BusinessTheme` design tokens
   (`DocumentPalette`, `SpacingScale`, `TextScale`, `TablePreset`). The
-  layered CV theme `CvTheme` lives separately under
-  `…templates.cv.v2.theme`.
+  layered CV theme `BrandTheme` lives separately under
+  `…templates.core.theme`.
 - **`document.output`** — backend-neutral output options
   (`DocumentMetadata`, `DocumentWatermark`, `DocumentProtection`,
   `DocumentHeaderFooter`).
@@ -128,7 +128,7 @@ the same `DocumentDsl` an application would use directly.
 - **`...templates.builtins`** — concrete built-ins
   (`InvoiceTemplateV1`, `InvoiceTemplateV2`, `ProposalTemplateV1`,
   `ProposalTemplateV2`, `CvTemplateV1`, plus a CV gallery that takes a
-  `BusinessTheme` or `CvTheme` in their constructor).
+  `BusinessTheme` or `BrandTheme` in their constructor).
 - **`...templates.support`** — backend-neutral scene composers per
   domain (`...support.cv`, `...support.business`, `...support.schedule`)
   plus shared composition primitives in `...support.common`.

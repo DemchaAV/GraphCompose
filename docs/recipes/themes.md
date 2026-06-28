@@ -103,8 +103,8 @@ side; V2 is the cinematic theme-driven path.
 ## CV themes
 
 CV templates are themed independently of `BusinessTheme`. The layered
-CV presets (`cv.v2.presets.*`) carry their own theme type, `CvTheme`
-(in `com.demcha.compose.document.templates.cv.v2.theme`), so CV tokens
+CV presets (`cv.v2.presets.*`) carry their own theme type, `BrandTheme`
+(in `com.demcha.compose.document.templates.core.theme`), so CV tokens
 stay separate from invoice / proposal vocabulary. Each preset ships a
 default theme; render one against a `CvDocument` with its `create()`
 factory:
@@ -118,7 +118,7 @@ DocumentTemplate<CvDocument> cv = ModernProfessional.create();
 cv.compose(session, cvDocument);
 ```
 
-To restyle, pass a custom `CvTheme` to the preset's `create(...)`
+To restyle, pass a custom `BrandTheme` to the preset's `create(...)`
 overload, or use its `Options` builder where one is provided (for
 example `MintEditorial.Options.builder().headerBandColor(...).build()`
 → `MintEditorial.create(options)`). See

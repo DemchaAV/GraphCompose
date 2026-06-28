@@ -11,7 +11,7 @@ GraphCompose's templates v2 (layered) gives you:
 
 - **Records describing content** — `CvDocument`, `CvIdentity`,
   `CvSection`. No styling, no rendering, just structured data.
-- **Themes describing visuals** — `CvTheme` (palette + typography +
+- **Themes describing visuals** — `BrandTheme` (palette + typography +
   spacing + decoration). Swap a theme to change colours, fonts,
   bullet glyphs without touching renderers.
 - **Widgets as visual LEGO bricks** — `Headline`, `Subheadline`,
@@ -105,11 +105,11 @@ Same data, different visual. That's the layering.
         ▼                  ▼
 ┌─────────────────────┐  ┌──────────────────────────────────┐
 │  components/         │  │  theme/                          │
-│    SectionDispatcher │  │    CvPalette  (colours)          │
-│    EntryRenderer     │  │    CvTypography (fonts + sizes)  │
-│    RowRenderer       │  │    CvSpacing  (margins + gaps)   │
-│    ParagraphRenderer │  │    CvDecoration (bullet, sep)    │
-│    + primitives      │  │    CvTheme (bundle + factories)  │
+│    SectionDispatcher │  │    Palette  (colours)          │
+│    EntryRenderer     │  │    Typography (fonts + sizes)  │
+│    RowRenderer       │  │    Spacing  (margins + gaps)   │
+│    ParagraphRenderer │  │    Decoration (bullet, sep)    │
+│    + primitives      │  │    BrandTheme (bundle + factories)  │
 └─────────────────────┘  └──────────────────────────────────┘
         │ renders into DSL
         ▼

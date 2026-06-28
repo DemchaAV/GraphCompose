@@ -107,13 +107,13 @@ plus a theme + data-record swap (introduced below):
 
 -// before: CvSpec + BusinessTheme
 -NordicClean.create(BusinessTheme.nordicClean()).render(session, cvSpec);
-+// after:  CvDocument + CvTheme — see the two shape changes below
++// after:  CvDocument + BrandTheme — see the two shape changes below
 +NordicClean.create(cvTheme).render(session, cvDocument);
 ```
 
 Two real shape changes accompany the swap:
 
-1. **Theme.** `BusinessTheme.X()` → `CvTheme.X()`. The CV-specific
+1. **Theme.** `BusinessTheme.X()` → `BrandTheme.X()`. The CV-specific
    tokens (palette / typography / spacing) are split out so `cv.v2`
    themes don't carry invoice / proposal vocabulary they don't use.
 2. **Data record.** `CvSpec` → `CvDocument`. The data shape becomes
@@ -193,8 +193,8 @@ private taskboard.
 | `DocumentSession.builder()` (deprecated alias) | Pre-rebuild builder entry point. | `GraphCompose.document()`. |
 | `DocumentDsl.text(...)` (deprecated alias) | Pre-rebuild text shortcut. | `paragraph(...)` builders inside `pageFlow`. |
 | `DocumentPalette.of(...)` (deprecated alias) | Pre-rebuild palette factory. | `DocumentPalette.from(...)` (or theme-specific factories). |
-| PDF-specific chrome overloads on `BusinessTheme` | Coupled CV-specific tokens with PDF-specific decisions. | Layered `CvTheme` + render-time `pageBackgrounds(...)`. |
-| `templates.theme` + `templates.themes` (two near-identical packages) | Confusingly similar names: `theme` (singular) holds built-in theme objects (`WeeklyScheduleTheme`); `themes` (plural) holds v2 token records (`Spacing`, `Typography`). | Merge into one **singular** `templates.theme` (matching `document.theme` / `cv.v2.theme`). Deferred to 2.0 because these are public types — the package move is binary-incompatible and would fail the japicmp gate. |
+| PDF-specific chrome overloads on `BusinessTheme` | Coupled CV-specific tokens with PDF-specific decisions. | Layered `BrandTheme` + render-time `pageBackgrounds(...)`. |
+| `templates.theme` + `templates.themes` (two near-identical packages) | Confusingly similar names: `theme` (singular) holds built-in theme objects (`WeeklyScheduleTheme`); `themes` (plural) holds v2 token records (`Spacing`, `Typography`). | Merge into one **singular** `templates.theme` (matching `document.theme` / `core.theme`). Deferred to 2.0 because these are public types — the package move is binary-incompatible and would fail the japicmp gate. |
 
 ### Open questions for 2.0 (no decision yet)
 

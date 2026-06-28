@@ -15,7 +15,7 @@ import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionModule;
-import com.demcha.compose.document.templates.widgets.CardWidget;
+import com.demcha.compose.document.templates.core.widgets.CardWidget;
 
 import java.util.List;
 import java.util.Objects;

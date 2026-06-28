@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.decorations;
+package com.demcha.compose.document.templates.core.widgets;
 
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ShapeNode;

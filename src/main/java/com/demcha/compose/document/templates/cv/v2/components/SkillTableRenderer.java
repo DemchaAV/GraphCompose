@@ -2,7 +2,7 @@ package com.demcha.compose.document.templates.cv.v2.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.cv.v2.data.SkillGroup;
-import com.demcha.compose.document.templates.widgets.TableWidget;
+import com.demcha.compose.document.templates.core.widgets.TableWidget;
 
 import java.util.ArrayList;
 import java.util.List;

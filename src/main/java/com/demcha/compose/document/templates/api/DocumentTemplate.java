@@ -10,12 +10,14 @@ import com.demcha.compose.document.api.DocumentSession;
  * {@link DocumentSession}. The interface is intentionally minimal — just
  * identity (for registry lookup) and one composition seam.</p>
  *
- * <p><strong>Templates v2 contract</strong> (introduced in v1.6 alongside
- * the templates restructure):</p>
+ * <p>Implementation contract:</p>
  * <ul>
- *   <li>Implementations should be plain factory-style classes whose
- *       {@code create(BusinessTheme)} method returns a configured
- *       {@code DocumentTemplate<S>}.</li>
+ *   <li>Implementations are plain factory-style classes — a static
+ *       {@code create(theme)} method returns a configured
+ *       {@code DocumentTemplate<S>}. The theme type is the family's own:
+ *       the layered cv / cover-letter presets take a {@code BrandTheme};
+ *       the layered invoice / proposal presets take a
+ *       {@code BusinessTheme}.</li>
  *   <li>Implementations are stateless after construction — composing the
  *       same spec twice produces the same output.</li>
  *   <li>Implementations do not call {@code session.buildPdf()}; the caller
@@ -23,12 +25,7 @@ import com.demcha.compose.document.api.DocumentSession;
  *       session DSL.</li>
  * </ul>
  *
- * <p>Domain-specific interfaces ({@code CvTemplate}, {@code InvoiceTemplate},
- * etc.) remain in this package during the v1.6 migration window for
- * backward compatibility. New templates should implement
- * {@code DocumentTemplate<S>} directly.</p>
- *
- * @param <S> the spec type rendered by this template (e.g. {@code CvSpec},
+ * @param <S> the spec type rendered by this template (e.g. {@code CvDocument},
  *            {@code InvoiceSpec}, {@code ProposalSpec})
  */
 public interface DocumentTemplate<S> {

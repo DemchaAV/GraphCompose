@@ -20,7 +20,7 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
-import com.demcha.compose.document.templates.widgets.TimelineAxisWidget;
+import com.demcha.compose.document.templates.core.widgets.TimelineAxisWidget;
 
 import java.util.*;
 

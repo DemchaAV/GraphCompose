@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.widgets;
+package com.demcha.compose.document.templates.core.widgets;
 
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;

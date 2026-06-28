@@ -14,7 +14,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.widgets.CardWidget;
+import com.demcha.compose.document.templates.core.widgets.CardWidget;
 import com.demcha.compose.font.FontName;
 
 import java.util.List;

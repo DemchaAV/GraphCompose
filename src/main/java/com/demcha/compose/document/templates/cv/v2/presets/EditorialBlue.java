@@ -17,7 +17,7 @@ import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader;
 import com.demcha.compose.document.templates.core.identity.Masthead;
-import com.demcha.compose.document.templates.widgets.TableWidget;
+import com.demcha.compose.document.templates.core.widgets.TableWidget;
 import com.demcha.compose.font.FontName;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.widgets;
+package com.demcha.compose.document.templates.core.widgets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;

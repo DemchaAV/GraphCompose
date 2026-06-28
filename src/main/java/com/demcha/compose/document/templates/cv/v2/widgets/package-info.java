@@ -72,11 +72,11 @@
  * </ul>
  *
  * <p>Generic widgets that are useful beyond CVs live in
- * {@link com.demcha.compose.document.templates.widgets}; for example
- * {@link com.demcha.compose.document.templates.widgets.TableWidget}
+ * {@link com.demcha.compose.document.templates.core.widgets}; for example
+ * {@link com.demcha.compose.document.templates.core.widgets.TableWidget}
  * provides configurable fixed-column and grid tables with border,
  * fill, zebra, padding, and typography options, while
- * {@link com.demcha.compose.document.templates.widgets.CardWidget}
+ * {@link com.demcha.compose.document.templates.core.widgets.CardWidget}
  * provides a reusable styled card/container shell.</p>
  *
  * <p>Each widget delegates internally to the lower-level renderers

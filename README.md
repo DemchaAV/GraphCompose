@@ -19,7 +19,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.8.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.8.0) &mdash; codenamed **"illustrative"**: native vector charts, SVG &amp; gradient graphics, free-form clipping, and a leaner engine artifact. **[What's new in v1.8 &darr;](#whats-new-in-v18)**
+> 🟢 **Latest stable**: [v1.9.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.0) &mdash; codenamed **"navigable"**: in-document navigation (anchors, internal links, a clickable TOC, page references &amp; bookmarks), multi-section documents, and inline chips / SVG icons / colour emoji. **[What's new in v1.9 &darr;](#whats-new-in-v19)**
 
 > &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -51,22 +51,19 @@
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
-## What's new in v1.8
+## What's new in v1.9
 
-The **"illustrative"** release &mdash; the engine gains a vector-graphics dimension.
+The **"navigable"** release &mdash; a rendered PDF becomes a document you can move through.
 
-<p align="center">
-  <img src="./assets/readme/chart-showcase.png" alt="GraphCompose native vector charts" width="720"/>
-</p>
+- **In-document navigation** &mdash; named `anchor(...)` targets and internal `link(...)` jumps emitted as native PDF `GoTo` actions: clickable cross-references, `[text](#heading)`-style links, and bidirectional footnotes (`DocumentLinkTarget` unifies internal and external links).
+- **Native table of contents &amp; page references** &mdash; `addTableOfContents(toc -> toc.entry(label, anchor))` builds a clickable TOC with dot leaders and auto-resolved page numbers; `addPageReference(anchor)` prints a native "see page N" cross-reference; `DocumentSession.pageIndex()` resolves any anchor to its page.
+- **Bookmarks &amp; viewer preferences** &mdash; `section.bookmark(...)` makes any section or container a PDF outline (bookmark-panel) target, and `chrome().viewerPreferences(...)` opens the reader on the outline panel, a chosen page layout, or the doc title in the window.
+- **Multi-section documents** &mdash; `GraphCompose.documents()` concatenates independently authored sections &mdash; each with its own page size, margins, and footer numbering &mdash; into one PDF, with anchors, links, and the outline resolving across section boundaries.
+- **Richer row &amp; page layout** &mdash; `row.columns(auto(), weight(1), fixed(80))`, main-axis `flexSpacer()` / `arrangement(...)`, cross-axis `verticalAlign(...)`, per-page `pageMargins(...)`, and full-bleed `bleed(...)`.
+- **Inline chips, SVG icons &amp; colour emoji** &mdash; text on a rounded highlight chip, a parsed `SvgIcon` on the text baseline, and `RichText.emoji(":star:", size)` colour emoji via the new independently-versioned `graph-compose-emoji` module.
+- **Render straight to images** &mdash; `DocumentSession` renders directly to `BufferedImage`s with no PDF round-trip; plus page-number offset / restart / style and round / dotted line caps.
 
-- **Native vector charts** &mdash; bar / line / pie, inline sparklines, and `MONOTONE` / `SMOOTH` line interpolation, drawn as native PDF Béziers (no rasterization): `section.chart(ChartSpec.line()&hellip;, style)`.
-- **SVG path &amp; icon import** &mdash; `SvgIcon.parse(svg)` turns SVG into native vector geometry; recolour per use and place with `addSvgIcon(icon, width, align)`.
-- **Gradients &amp; free-form clipping** &mdash; linear / radial `DocumentPaint` fills and arbitrary `ShapeOutline.Path` clip regions.
-- **Block-level alignment** &mdash; `addAligned(HorizontalAlign.CENTER, node)` centres or right-aligns any fixed node without a wrapper container.
-- **`keepTogether()` pagination** &mdash; keep a section from splitting across a page break.
-- **Leaner publication** &mdash; the bundled Google fonts moved to the independently-versioned `graph-compose-fonts` artifact, so the engine jar dropped from ~20&nbsp;MB to ~2&nbsp;MB. Pure-text / standard-14 documents need nothing extra; add `graph-compose-fonts` (or `graph-compose-bundle`) to keep the bundled families &mdash; see the [migration note](./docs/migration/v1.8.0-fonts.md).
-
-Core document APIs stay source- and binary-compatible with v1.7 (`ConfigLoader` is the one removal). Full notes in [`CHANGELOG.md`](./CHANGELOG.md).
+Core document APIs stay source- and binary-compatible with v1.8 &mdash; v1.9 is purely additive (two cover-letter / CV shim types are newly `@Deprecated` for 2.0). Full notes in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Installation
 

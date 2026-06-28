@@ -121,7 +121,7 @@ copy-and-tweak entry point for callers extending their own branding.
 
 ## Authoring features built into every preset
 
-- **Inline markdown** &mdash; body strings carrying `**bold**` and `*italic*` markers render with proper `DocumentTextDecoration` via `templates.components.MarkdownText`.
+- **Inline markdown** &mdash; body strings carrying `**bold**` and `*italic*` markers render with proper `DocumentTextDecoration` via `templates.core.text.MarkdownText`.
 - **Active hyperlinks** &mdash; header email + LinkedIn / GitHub labels become clickable `mailto:` / `https:` runs via `DocumentLinkOptions`.
 - **Slot-based layouts** &mdash; multi-column presets (`Panel`, `SidebarPortrait`, `MonogramSidebar`) declare named slots (`MAIN`, `SIDEBAR`); custom presets rearrange modules via `.place(slot, "Module Name", ...)`.
 - **Adaptive sidebar fill** &mdash; sidebar layouts size the trailing spacer dynamically from `canvas().innerHeight()` so background panels reach the page bottom on A4 / Letter / smaller fixtures without overflow.

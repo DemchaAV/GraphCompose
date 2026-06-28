@@ -27,7 +27,7 @@ it sets up the conceptual model in 5 minutes.
 
 ```java
 CvDocument  doc      = …;                  // your content
-CvTheme     theme    = CvTheme.boxedClassic();   // optional override
+BrandTheme     theme    = BrandTheme.boxedClassic();   // optional override
 DocumentTemplate<CvDocument> tpl = BoxedSections.create(theme);
 
 try (DocumentSession s = GraphCompose.document(path).create()) {
@@ -38,7 +38,7 @@ try (DocumentSession s = GraphCompose.document(path).create()) {
 
 Three lines of "what":
 - **`CvDocument`** — your content. Built via builder.
-- **`CvTheme`** — visual style. Use a shipped factory or build your own.
+- **`BrandTheme`** — visual style. Use a shipped factory or build your own.
 - **A preset** — orchestrates them into a page flow.
 
 ---
@@ -203,11 +203,11 @@ Nine shipped today:
 | `CompactMono.create()` | Dark command-bar header, pale left rail, same-width right-column cards |
 
 Each factory has a no-arg form (uses a sensible default theme) and
-a `create(CvTheme)` form (custom theme).
+a `create(BrandTheme)` form (custom theme).
 
 ```java
 BoxedSections.create()                          // default theme
-BoxedSections.create(CvTheme.boxedClassic())    // explicit
+BoxedSections.create(BrandTheme.boxedClassic())    // explicit
 BoxedSections.create(myCustomTheme)             // your own
 ```
 
@@ -218,7 +218,7 @@ band fill.
 
 ```java
 NordicClean.create(
-    CvTheme.nordicClean(),
+    BrandTheme.nordicClean(),
     NordicClean.Options.builder()
         .railSide(NordicClean.RailSide.RIGHT)   // skills rail on the right
         .accentColor(DocumentColor.rgb(40, 110, 120))
@@ -236,26 +236,26 @@ Themes are records made of four sub-records:
 
 | Sub-record | What it controls |
 |---|---|
-| `CvPalette` | Colours (`ink`, `muted`, `rule`, `banner`) |
-| `CvTypography` | Fonts + size scale (8 sizes + line spacing) |
-| `CvSpacing` | Margins, padding, weights, gaps |
-| `CvDecoration` | Bullet glyph, stacked indent, contact separator |
+| `Palette` | Colours (`ink`, `muted`, `rule`, `banner`) |
+| `Typography` | Fonts + size scale (8 sizes + line spacing) |
+| `Spacing` | Margins, padding, weights, gaps |
+| `Decoration` | Bullet glyph, stacked indent, contact separator |
 
 **Swap one piece, keep the rest:**
 
 ```java
 // Navy palette, classic everything else
-CvPalette navy = new CvPalette(
+Palette navy = new Palette(
     DocumentColor.rgb(15, 34, 80),     // ink — primary text
     DocumentColor.rgb(90, 110, 150),   // muted — italic subtitles
     DocumentColor.rgb(120, 140, 180),  // rule — separator lines
     DocumentColor.rgb(220, 230, 240)); // banner — pale fill
 
-CvTheme navyTheme = new CvTheme(
+BrandTheme navyTheme = new BrandTheme(
     navy,
-    CvTypography.classic(),
-    CvSpacing.classic(),
-    CvDecoration.classic());
+    Typography.classic(),
+    Spacing.classic(),
+    Decoration.classic());
 
 BoxedSections.create(navyTheme);
 ```
@@ -263,27 +263,27 @@ BoxedSections.create(navyTheme);
 **Change a glyph** (bullet, separator):
 
 ```java
-CvDecoration arrowDecoration = new CvDecoration(
+Decoration arrowDecoration = new Decoration(
     "▶ ",       // bullet glyph
     "  ",       // stacked-row second-line indent
     "  ·  ");   // contact-line separator
 
-CvTheme theme = new CvTheme(
-    CvPalette.classic(),
-    CvTypography.classic(),
-    CvSpacing.classic(),
+BrandTheme theme = new BrandTheme(
+    Palette.classic(),
+    Typography.classic(),
+    Spacing.classic(),
     arrowDecoration);
 ```
 
 **Change a font** (`Helvetica` instead of `PT Serif`):
 
 ```java
-CvTypography sans = new CvTypography(
+Typography sans = new Typography(
     FontName.HELVETICA_BOLD, FontName.HELVETICA,
     21.5, 8.5, 9.6, 9.2, 8.8, 8.4, 8.6, 1.4);  // sizes per role
 
-CvTheme theme = new CvTheme(
-    CvPalette.classic(), sans, CvSpacing.classic(), CvDecoration.classic());
+BrandTheme theme = new BrandTheme(
+    Palette.classic(), sans, Spacing.classic(), Decoration.classic());
 ```
 
 For more recipes (compact spacing, alternative typography scales,

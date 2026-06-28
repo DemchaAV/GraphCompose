@@ -72,14 +72,14 @@ but every recipe below works the same way for any persona.
 You want `▶` instead of `•`, or numbered bullets, or em-dashes.
 
 This is a **theme** change, not a renderer change. Build a custom
-`CvDecoration` and hand it to a fresh `CvTheme`:
+`Decoration` and hand it to a fresh `BrandTheme`:
 
 ```java
-CvTheme theme = new CvTheme(
-        CvPalette.classic(),
-        CvTypography.classic(),
-        CvSpacing.classic(),
-        new CvDecoration(
+BrandTheme theme = new BrandTheme(
+        Palette.classic(),
+        Typography.classic(),
+        Spacing.classic(),
+        new Decoration(
                 "▶ ",      // bullet glyph
                 "  ",      // stacked-row second-line indent (same visual width as bullet)
                 "  ·  "    // contact-line separator
@@ -104,17 +104,17 @@ pick a wider bullet you'll likely want a wider stacked-indent too.
 You want the same Boxed Sections look but in navy instead of grey.
 
 ```java
-CvPalette navy = new CvPalette(
+Palette navy = new Palette(
         DocumentColor.rgb(15, 34, 80),     // ink — primary text
         DocumentColor.rgb(90, 110, 150),   // muted — italic subtitles
         DocumentColor.rgb(120, 140, 180),  // rule — separator lines
         DocumentColor.rgb(220, 230, 240)); // banner — pale fill behind titles
 
-CvTheme navyTheme = new CvTheme(
+BrandTheme navyTheme = new BrandTheme(
         navy,
-        CvTypography.classic(),
-        CvSpacing.classic(),
-        CvDecoration.classic());
+        Typography.classic(),
+        Spacing.classic(),
+        Decoration.classic());
 
 DocumentTemplate<CvDocument> template = BoxedSections.create(navyTheme);
 ```
@@ -128,7 +128,7 @@ Same shape — sub-record swap, keep the rest of the theme.
 You want a sans-serif body or a tighter scale.
 
 ```java
-CvTypography compact = new CvTypography(
+Typography compact = new Typography(
         FontName.INTER, FontName.INTER,
         18.0,    // headline (was 21.5)
         7.8,     // contact
@@ -139,11 +139,11 @@ CvTypography compact = new CvTypography(
         7.8,     // body
         1.3);    // line spacing (was 1.4)
 
-CvTheme compactTheme = new CvTheme(
-        CvPalette.classic(),
+BrandTheme compactTheme = new BrandTheme(
+        Palette.classic(),
         compact,
-        CvSpacing.classic(),
-        CvDecoration.classic());
+        Spacing.classic(),
+        Decoration.classic());
 ```
 
 ---
@@ -159,17 +159,17 @@ See `presets/MinimalUnderlined.java` for a worked example. The pattern:
 public final class MyPreset {
 
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
     private static final class Template implements DocumentTemplate<CvDocument> {
-        private final CvTheme theme;
-        Template(CvTheme theme) { this.theme = theme; }
+        private final BrandTheme theme;
+        Template(BrandTheme theme) { this.theme = theme; }
 
         @Override public String id() { return "my-preset"; }
         @Override public String displayName() { return "My Preset"; }
@@ -244,7 +244,7 @@ public sealed interface CvSection
 ```java
 public final class QuoteRenderer {
     private QuoteRenderer() {}
-    public static void render(SectionBuilder section, QuoteSection q, CvTheme theme) {
+    public static void render(SectionBuilder section, QuoteSection q, BrandTheme theme) {
         // …compose the visual using ParagraphPrimitive + theme tokens…
     }
 }
@@ -314,7 +314,10 @@ sidebar content to flow inline with main.
 ## Widget cookbook — the LEGO bricks
 
 When you build a preset, you compose your `compose()` method from
-**widgets** that live in
+**widgets**. The neutral header widgets (`Headline`, `Subheadline`,
+`ContactLine`, `Masthead`, `SvgGlyph`) live in
+`com.demcha.compose.document.templates.core.identity`; the CV-specific
+section widgets (`SectionHeader` and friends) live in
 `com.demcha.compose.document.templates.cv.v2.widgets`. Each widget
 captures one visual idea, with named variants per visual style.
 
@@ -350,7 +353,7 @@ as DSL plumbing. Below is the current catalog.
 | `ContactLine.render(host, identity, theme, align, order)` | low-level: pick alignment + field order | — |
 
 The separator glyph comes from
-`theme.decoration().contactSeparator()` — swap `CvDecoration` to
+`theme.decoration().contactSeparator()` — swap `Decoration` to
 change `   |   ` to `  ·  ` or anything else.
 
 ### `SectionHeader` — title above a section body
@@ -379,7 +382,7 @@ rather than burying it in the theme.
 
 ### Preset-specific options
 
-Most presets need only `create()` or `create(CvTheme)`. When a visual
+Most presets need only `create()` or `create(BrandTheme)`. When a visual
 choice is structural, keep it scoped to that preset. `NordicClean`
 does this with `NordicClean.Options`: authors can move the
 skills/education rail to the right and override the accent colour,
@@ -388,7 +391,7 @@ or affecting other presets.
 
 ```java
 NordicClean.create(
-        CvTheme.nordicClean(),
+        BrandTheme.nordicClean(),
         NordicClean.Options.builder()
                 .railSide(NordicClean.RailSide.RIGHT)
                 .accentColor(DocumentColor.rgb(40, 110, 120))
@@ -510,7 +513,7 @@ so future readers can navigate the same way:
 - **Theme as parameter**, not as a static or instance field. Renderers
   must work for any theme passed to them.
 - **No magic numbers** in renderer code. Every literal that affects
-  visuals goes into `CvSpacing`, `CvTypography`, or `CvDecoration`.
+  visuals goes into `Spacing`, `Typography`, or `Decoration`.
 - **No instanceof on the data** outside `SectionDispatcher`. That class
   is the single dispatch point.
 - **JavaDoc the public surface.** Sub-records and section types get a
@@ -524,12 +527,12 @@ so future readers can navigate the same way:
      behavior, write a new preset that composes them differently, or
      add a new theme token if it's cosmetic.
 - ❌ Read raw `DocumentColor.rgb(...)` literals in renderer code. Add
-     them to `CvPalette` so a theme can swap them.
+     them to `Palette` so a theme can swap them.
 - ❌ Use `instanceof` on `CvSection` outside `SectionDispatcher`.
      The dispatcher is the only place that knows about variants.
 - ❌ Add behavior to data records. Records are inert.
 - ❌ Break the public v2 API. If you must change a signature, add the
-     new one and mark the old `@Deprecated` — see `CvTheme`'s 3-arg
+     new one and mark the old `@Deprecated` — see `BrandTheme`'s 3-arg
      constructor for the pattern.
 
 ---
@@ -538,8 +541,8 @@ so future readers can navigate the same way:
 
 | You want to change… | Add a new… |
 |---|---|
-| Colour / font / size | `CvPalette` / `CvTypography` (theme) |
-| Bullet / separator glyph | `CvDecoration` (theme) |
+| Colour / font / size | `Palette` / `Typography` (theme) |
+| Bullet / separator glyph | `Decoration` (theme) |
 | Layout / page-flow / which renderers run | **preset** |
 | The data shape itself (new section type) | `CvSection` permits + renderer + dispatch branch |
 

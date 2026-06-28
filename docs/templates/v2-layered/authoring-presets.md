@@ -60,11 +60,15 @@ visual decision you can read like a recipe.
 <a id="the-widget-catalog"></a>
 ## The widget catalog
 
-The CV widget classes live in
-`com.demcha.compose.document.templates.cv.v2.widgets`. Each has a
-small set of named variants. Generic widgets that can be reused by
-CVs, proposals, invoices, and cover letters live one package higher
-in `com.demcha.compose.document.templates.widgets`.
+The neutral header widgets — `Headline`, `Subheadline`, `ContactLine`,
+`Masthead`, `SvgGlyph` — live in
+`com.demcha.compose.document.templates.core.identity`. The CV-specific
+section widgets (`SectionHeader` and friends) stay in
+`com.demcha.compose.document.templates.cv.v2.widgets`. The generic
+`CardWidget` / `TableWidget` / `TimelineAxisWidget` reusable by CVs,
+proposals, invoices, and cover letters live in
+`com.demcha.compose.document.templates.core.widgets`. Each has a small
+set of named variants.
 
 ### `Headline` — top-of-document name
 
@@ -143,14 +147,14 @@ Used for the icon-led contact and social rows in sidebar CV layouts
 
 The separator glyph used by `ContactLine`, the bullet glyph used by
 `RowRenderer`, and other character-level choices come from
-`theme.decoration()` — swap a `CvDecoration` to change them
+`theme.decoration()` — swap a `Decoration` to change them
 globally.
 
 Some presets also expose narrow preset-specific options when the
 visual decision is structural rather than a reusable widget. Example:
 `NordicClean.Options` lets authors move the skills rail to the right
 and override the accent colour, rail fill, or profile-band fill
-without mutating shared `CvTheme` defaults or changing other presets.
+without mutating shared `BrandTheme` defaults or changing other presets.
 
 ---
 
@@ -169,17 +173,17 @@ public final class MyPreset {
     private MyPreset() { }
 
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
     private static final class Template implements DocumentTemplate<CvDocument> {
-        private final CvTheme theme;
-        Template(CvTheme theme) { this.theme = theme; }
+        private final BrandTheme theme;
+        Template(BrandTheme theme) { this.theme = theme; }
 
         @Override public String id()          { return ID; }
         @Override public String displayName() { return DISPLAY_NAME; }
@@ -192,7 +196,7 @@ public final class MyPreset {
 }
 ```
 
-Two factories (`create()` and `create(CvTheme)`), three constants
+Two factories (`create()` and `create(BrandTheme)`), three constants
 (`ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`), one inner `Template`
 class implementing `DocumentTemplate<CvDocument>`. Stable.
 
@@ -216,18 +220,18 @@ public final class CardStyle {
     private CardStyle() { }
 
     public static DocumentTemplate<CvDocument> create() {
-        return create(CvTheme.boxedClassic());
+        return create(BrandTheme.boxedClassic());
     }
 
-    public static DocumentTemplate<CvDocument> create(CvTheme theme) {
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
         Objects.requireNonNull(theme, "theme");
         return new Template(theme);
     }
 
     private static final class Template implements DocumentTemplate<CvDocument> {
 
-        private final CvTheme theme;
-        Template(CvTheme theme) { this.theme = theme; }
+        private final BrandTheme theme;
+        Template(BrandTheme theme) { this.theme = theme; }
 
         @Override public String id()          { return ID; }
         @Override public String displayName() { return DISPLAY_NAME; }
@@ -365,7 +369,7 @@ When you do add a new widget:
 2. **`public final class`** with a private constructor.
 3. **1-3 named factories** + a lower-level `.render(...)` when useful.
 4. **First parameter is always `SectionBuilder host`**.
-5. **Pass `CvTheme theme` when the widget reads shared tokens**;
+5. **Pass `BrandTheme theme` when the widget reads shared tokens**;
    pass an explicit style only when the preset owns that unique style.
 6. **No instance state** — all static, all stateless.
 7. **JavaDoc the visual** — what does this look like? Who uses it?

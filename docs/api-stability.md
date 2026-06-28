@@ -28,7 +28,7 @@ matrix.
 
 | Tier | Marker | Used for | Breaking changes allowed in |
 |---|---|---|---|
-| **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BusinessTheme` and `CvTheme` factories, the recommended template presets in `cv.v2.*` and `coverletter.v2.*`. | **Major releases only.** |
+| **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BusinessTheme` and `BrandTheme` factories, the recommended template presets in `cv.v2.*` and `coverletter.v2.*`. | **Major releases only.** |
 | **Supported** | _(no annotation; called out in the page's Javadoc)_ | A canonical surface that ships through 1.x but won't be in 2.0 — its replacement is already the Stable path. The `cv.presets.*` "classic" CV preset surface is the only Supported tier in 1.x today (replaced by `cv.v2.*` per [`which-template-system.md`](templates/which-template-system.md)). Bug fixes + behaviour-preserving refactors only. | **Minor releases for behaviour-preserving refactors; removed wholesale in 2.0.** |
 | **Extension SPI** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java), custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
 | **Experimental** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) _(same annotation as Extension SPI; the distinction lives in the docstring on the annotated element)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
@@ -178,7 +178,7 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 |---|---|---|---|---|---|---|
 | `DocumentSession.pageMargins(List<PageMarginRule>)` / `PageMarginRule` | Stable | planned | Per-page margins resolve a block's content width by the page it *begins* on (the engine measures each block once, before pagination). A margin that changes the content width therefore does not re-wrap a block mid-flow across a page boundary. | Revisit a page-aware per-line/per-fragment width model so a block can re-wrap when it crosses a margin boundary, if demand warrants. | — | — |
 | `templates.api.CoverLetterTemplate` | Stable | deprecated 1.9 | Orphan interface — nothing implements it; cover-letter presets implement the generic `DocumentTemplate<CoverLetterDocumentSpec>` seam. | Remove; callers implement `DocumentTemplate<CoverLetterDocumentSpec>`. | — | — |
-| `templates.cv.v2.components.HeadlineRenderer` / `ContactRenderer` / `BannerRenderer` | Stable | deprecated 1.9 | Pre-widgets delegating shims superseded by the `cv.v2.widgets` `Headline` / `ContactLine` / `SectionHeader` widgets; no callers. | Remove; use the widgets. | — | — |
+| `templates.cv.v2.components.HeadlineRenderer` / `ContactRenderer` / `BannerRenderer` | Stable | deprecated 1.9 | Pre-widgets delegating shims superseded by the `Headline` / `ContactLine` / `SectionHeader` widgets; no callers. | Remove; use the widgets. | — | — |
 
 ---
 
@@ -194,7 +194,7 @@ Javadoc per element.
 | `com.demcha.compose.document.dsl` | **Stable** | All builder types (`RowBuilder`, `SectionBuilder`, `ParagraphBuilder`, etc.). |
 | `com.demcha.compose.document.node` | **Stable** | Node records (`RowNode`, `SectionNode`, `ParagraphNode`, ...). Sealed where relevant — see § 2. |
 | `com.demcha.compose.document.style` | **Stable** | `DocumentColor`, `DocumentInsets`, `DocumentTextStyle`, `DocumentTransform`, ... |
-| `com.demcha.compose.document.templates.cv.v2.*` | **Stable** | Layered CV presets, `CvDocument`, `CvTheme`. Recommended template surface. |
+| `com.demcha.compose.document.templates.cv.v2.*` | **Stable** | Layered CV presets, `CvDocument`, `BrandTheme`. Recommended template surface. |
 | `com.demcha.compose.document.templates.coverletter.v2.*` | **Stable** | Layered cover-letter presets. |
 | `com.demcha.compose.document.templates.builtins` | **Stable** | `InvoiceTemplateV2`, `ProposalTemplateV2`, `BusinessTheme`. |
 | `com.demcha.compose.document.templates.cv.presets.*` | **Stable but Supported** | The "classic" v1.6 rebuild surface. See [`which-template-system.md`](templates/which-template-system.md). Supported through 1.x; removed in 2.0. |

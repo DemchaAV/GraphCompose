@@ -115,7 +115,7 @@ differ.
 ## Naming rules
 
 - **Family prefix** on top-level records to avoid name collisions.
-  CV uses `CvName`, `CvContact`, `CvTheme`. Invoice should use
+  CV uses `CvName`, `CvIdentity`, `CvSection`. Invoice should use
   `InvoiceParty`, `InvoiceLine`, `InvoiceTheme`. Cover letter:
   `CoverLetterRecipient`, `CoverLetterTheme`. Etc.
 - **`<Family>Document`** for the root record. (`CvDocument`,

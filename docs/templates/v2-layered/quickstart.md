@@ -14,14 +14,15 @@ GraphCompose's templates v2 (layered) gives you:
 - **Themes describing visuals** — `BrandTheme` (palette + typography +
   spacing + decoration). Swap a theme to change colours, fonts,
   bullet glyphs without touching renderers.
-- **Widgets as visual LEGO bricks** — `Headline`, `Subheadline`,
-  `ContactLine`, `SectionHeader`. Each one is a named visual decision
-  you can drop into a preset.
+- **Widgets as visual LEGO bricks** — the neutral header bricks
+  (`Headline`, `Subheadline`, `ContactLine`) live in the shared
+  `templates.core.identity`; CV-specific ones (`SectionHeader` and
+  friends) in `cv.v2.widgets`. Each is a named visual decision you
+  drop into a preset.
 - **Presets as compositions** — a preset orchestrates widgets in a
-  page flow. `BoxedSections`, `MinimalUnderlined`,
-  `ModernProfessional`, `CenteredHeadline`, `BlueBanner`,
-  `EditorialBlue`, `ClassicSerif`, `NordicClean`, and `CompactMono`
-  ship today; writing your own is ~150 lines.
+  page flow. Sixteen ship today (`BoxedSections`, `ModernProfessional`,
+  `NordicClean`, `EditorialBlue`, `Executive`, `EngineeringResume`,
+  `TimelineMinimal`, …); writing your own is ~150 lines.
 
 You hand a `CvDocument` to a preset, you get a PDF. The preset
 internally composes widgets that read theme tokens that ultimately
@@ -84,42 +85,42 @@ Same data, different visual. That's the layering.
 
 ---
 
-## The 5 layers
+## The layers
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  presets/   BoxedSections, MinimalUnderlined,               │
-│             ModernProfessional, CenteredHeadline,           │
-│             BlueBanner, EditorialBlue, ClassicSerif,         │
-│             NordicClean, CompactMono                         │
-│             — composition of widgets in a page flow         │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│  presets/    16 CV compositions                                            │
+│    BoxedSections, ModernProfessional, NordicClean, ...                     │
+│    -- widgets composed in a page flow                                      │
+└────────────────────────────────────────────────────────────────────────────┘
         │ compose from widgets
         ▼
-┌─────────────────────────────────────────────────────────────┐
-│  widgets/   Headline, Subheadline, ContactLine,             │
-│             SectionHeader                                   │
-│             — named visual LEGO bricks                      │
-└─────────────────────────────────────────────────────────────┘
-        │ delegate to ↓    │ read tokens from ↓
-        ▼                  ▼
-┌─────────────────────┐  ┌──────────────────────────────────┐
-│  components/         │  │  theme/                          │
-│    SectionDispatcher │  │    Palette  (colours)          │
-│    EntryRenderer     │  │    Typography (fonts + sizes)  │
-│    RowRenderer       │  │    Spacing  (margins + gaps)   │
-│    ParagraphRenderer │  │    Decoration (bullet, sep)    │
-│    + primitives      │  │    BrandTheme (bundle + factories)  │
-└─────────────────────┘  └──────────────────────────────────┘
-        │ renders into DSL
+┌────────────────────────────────────────────────────────────────────────────┐
+│  widgets/    CV-specific visual bricks                                     │
+│    SectionHeader, FlowSectionHeader, SkillBar, SectionModule, ...          │
+│    (neutral header bricks -- Headline, Subheadline, ContactLine,           │
+│     Masthead, SvgGlyph -- live in core.identity)                           │
+└────────────────────────────────────────────────────────────────────────────┘
+        │ delegate to
         ▼
-┌─────────────────────────────────────────────────────────────┐
-│  data/      CvDocument, CvIdentity, CvSection (sealed),     │
-│             ParagraphSection / SkillsSection / RowsSection  │
-│             / EntriesSection,                               │
-│             CvRow, CvEntry, Slot                            │
-│             — pure records, zero rendering deps             │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│  components/    CV section renderers                                       │
+│    SectionDispatcher, EntryRenderer, RowRenderer, ParagraphRenderer        │
+└────────────────────────────────────────────────────────────────────────────┘
+        │ render into
+        ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│  data/    CvDocument, CvIdentity, CvSection (sealed),                      │
+│    ParagraphSection / SkillsSection / RowsSection / EntriesSection,        │
+│    CvRow, CvEntry, Slot  -- pure records, zero rendering deps              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  ...all built on the shared, family-neutral core (templates.core.*):
+┌────────────────────────────────────────────────────────────────────────────┐
+│  core.theme       BrandTheme = Palette / Typography / Spacing / Decoration │
+│  core.identity    Headline, Subheadline, ContactLine, Masthead, SvgGlyph   │
+│  core.text        MarkdownText, RichParagraphRenderer, TextStyles          │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **What each layer is for** (in plain English):
@@ -127,7 +128,7 @@ Same data, different visual. That's the layering.
 | Layer | "Answers the question…" |
 |---|---|
 | `data/` | "What goes on the page?" — content, no styling. |
-| `theme/` | "How does it look?" — colours, fonts, glyphs. |
+| `core.theme` | "How does it look?" — colours, fonts, glyphs (shared `BrandTheme`). |
 | `components/` | "How is one element drawn?" — paragraph, row, entry primitives. |
 | `widgets/` | "Which visual building block do I want here?" — named LEGO bricks. |
 | `presets/` | "In what order, with which widgets, on which page flow?" — composition. |

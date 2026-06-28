@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * One source of truth for all template spacing tokens.
  *
- * <p>Replaces the historical {@code BrandTheme.spacing}/{@code BrandTheme.spacingModuleName}
+ * <p>Replaces the historical per-theme {@code spacing} / {@code spacingModuleName}
  * fields plus the hard-coded {@code MINIMUM_TOP_LEVEL_MODULE_SPACING}
  * constant scattered throughout the legacy composers. Templates v2 presets
  * read every spacing decision from a {@code Spacing} instance and pass it

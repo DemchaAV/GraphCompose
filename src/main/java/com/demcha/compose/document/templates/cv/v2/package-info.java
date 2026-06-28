@@ -13,54 +13,42 @@
  * section titles are free strings and links are optional. See
  * {@code AUTHORS.md} for a non-IT example.</p>
  *
- * <h2>Four layers, one responsibility each</h2>
+ * <h2>Four CV layers, built on the shared core</h2>
  *
  * <pre>
- *   ┌─────────────────────────────────────────────────────────────┐
- *   │  presets/                                                   │
- *   │    BoxedSections      ← composition: data + theme + render  │
- *   │    MinimalUnderlined  ← another composition, same pieces    │
- *   │    ModernProfessional ← corporate composition variant       │
- *   │    CenteredHeadline   ← classic centred headline variant    │
- *   │    BlueBanner         ← full-width banner composition       │
- *   │    EditorialBlue      ← compact editorial composition       │
- *   │    ClassicSerif       ← serif cover/detail preset           │
- *   │    NordicClean        ← teal two-column rail preset         │
- *   │    CompactMono        ← dark header + rail/card preset      │
- *   └─────────────────────────────────────────────────────────────┘
+ *
+ *   ┌───────────────────────────────────────────────────────────────────────┐
+ *   │  presets/    16 CV compositions                                       │
+ *   │    BoxedSections, ModernProfessional, NordicClean, EditorialBlue, ... │
+ *   └───────────────────────────────────────────────────────────────────────┘
  *           │ compose from
  *           ▼
- *   ┌─────────────────────────────────────────────────────────────┐
- *   │  widgets/  ← named visual building blocks (LEGO bricks)    │
- *   │    Headline       .spacedCentered | .uppercaseCentered      │
- *   │                   | .uppercaseLeftAligned | .rightAligned  │
- *   │    Subheadline    .centeredSpacedCaps                       │
- *   │    ContactLine    .centered | .centered(...styles)          │
- *   │                   .rightAligned | .leftAligned              │
- *   │                   .rightAlignedStacked                      │
- *   │                   .twoRowRightAligned                       │
- *   │    SectionHeader  .banner | .fullWidthBanner | .underlined  │
- *   │                   .flat | .flatSpacedCaps | .tickLabel      │
- *   └─────────────────────────────────────────────────────────────┘
- *           │ delegate to                       │ read tokens from
- *           ▼                                   ▼
- *   ┌──────────────────────┐         ┌──────────────────────────┐
- *   │  components/         │         │  theme/                  │
- *   │    RowRenderer       │ reads   │    Palette  (colours)  │
- *   │    EntryRenderer     │◀────────│    Typography (fonts)  │
- *   │    ParagraphRenderer │         │    Spacing  (margins)  │
- *   │    SectionDispatcher │         │    Decoration (glyphs) │
- *   │    ParagraphPrimitive│         │    BrandTheme    (bundle)   │
- *   └──────────────────────┘         └──────────────────────────┘
- *           │ renders
+ *   ┌───────────────────────────────────────────────────────────────────────┐
+ *   │  widgets/    CV-specific visual bricks                                │
+ *   │    SectionHeader, FlowSectionHeader, SkillBar,                        │
+ *   │    SectionModule, ProfileBand, IconTextRow                            │
+ *   └───────────────────────────────────────────────────────────────────────┘
+ *           │ delegate to
  *           ▼
- *   ┌─────────────────────────────────────────────────────────────┐
- *   │  data/                                                      │
- *   │    CvIdentity   ← name, optional job title, contact, links  │
- *   │    CvSection    ← sealed: Paragraph | Rows | Entries | Skills│
- *   │    CvDocument   ← identity + Placement(slot, section)       │
- *   │    Slot         ← MAIN | SIDEBAR | FOOTER                   │
- *   └─────────────────────────────────────────────────────────────┘
+ *   ┌───────────────────────────────────────────────────────────────────────┐
+ *   │  components/    CV section renderers                                  │
+ *   │    SectionDispatcher, EntryRenderer, RowRenderer,                     │
+ *   │    ParagraphRenderer, ParagraphPrimitive                              │
+ *   └───────────────────────────────────────────────────────────────────────┘
+ *           │ render into
+ *           ▼
+ *   ┌───────────────────────────────────────────────────────────────────────┐
+ *   │  data/    CvIdentity, CvSection (sealed), CvDocument, Slot            │
+ *   └───────────────────────────────────────────────────────────────────────┘
+ *
+ *     ...built on the shared, family-neutral core in templates.core.* :
+ *   ┌───────────────────────────────────────────────────────────────────────┐
+ *   │  core.theme       BrandTheme = Palette / Typography /                 │
+ *   │                   Spacing / Decoration tokens                         │
+ *   │  core.identity    Headline, Subheadline, ContactLine, Masthead,       │
+ *   │                   SvgGlyph  (neutral header bricks)                   │
+ *   │  core.text        MarkdownText, RichParagraphRenderer, TextStyles     │
+ *   └───────────────────────────────────────────────────────────────────────┘
  * </pre>
  *
  * <h2>What goes where — when you write your own template</h2>
@@ -71,20 +59,23 @@
  *       No colours, no fonts, no sizes. Pure records. If you're
  *       describing a person's job history, this is where you live.</dd>
  *
- *   <dt><b>{@code theme/}</b></dt>
+ *   <dt><b>{@code templates.core.theme}</b></dt>
  *   <dd>The cosmetic decisions. <em>"How does it look?"</em>
- *       Colours, fonts, sizes, margins, glyphs. Swap-able without
- *       touching renderers. If you want a navy theme or a different
- *       bullet character, this is where you live.</dd>
+ *       Colours, fonts, sizes, margins, glyphs — the family-neutral
+ *       {@code BrandTheme} bundle, shared by every template family.
+ *       Swap-able without touching renderers. If you want a navy theme
+ *       or a different bullet character, this is where you live.</dd>
  *
  *   <dt><b>{@code widgets/}</b></dt>
  *   <dd>The LEGO bricks. <em>"Which visual building block do I
  *       want here — a banner, an underlined title, a right-aligned
- *       headline?"</em> Each widget has a small set of named
- *       variants and, where useful, a lower-level entry for ad-hoc
- *       parameter combinations. This
- *       is where most preset code lives — picking widgets and
- *       composing them.</dd>
+ *       headline?"</em> CV-specific bricks ({@code SectionHeader}
+ *       and friends) live here; the neutral header bricks
+ *       ({@code Headline}, {@code Subheadline}, {@code ContactLine},
+ *       {@code Masthead}, {@code SvgGlyph}) live in
+ *       {@code templates.core.identity}. Each widget has a small set
+ *       of named variants — this is where most preset code lives,
+ *       picking widgets and composing them.</dd>
  *
  *   <dt><b>{@code components/}</b></dt>
  *   <dd>The reusable drawing primitives. <em>"How is a section

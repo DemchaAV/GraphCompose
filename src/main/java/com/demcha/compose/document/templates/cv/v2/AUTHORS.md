@@ -5,8 +5,9 @@ on top of the v2 surface. It complements the JavaDoc in
 `package-info.java` with longer, copy-pasteable recipes.
 
 If you have never used this package before, read
-[the package overview](./package-info.java) first. The four layers
-(`data/` · `theme/` · `components/` · `presets/`) and what each is for
+[the package overview](./package-info.java) first. The four CV layers
+(`data/` · `components/` · `widgets/` · `presets/`) — plus the shared
+theme / text / identity in `templates.core.*` — and what each is for
 are explained there.
 
 This guide answers the **"how do I…"** questions.

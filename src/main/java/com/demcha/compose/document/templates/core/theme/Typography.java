@@ -362,4 +362,24 @@ public record Typography(
                 8.0,     // body (profile / experience)
                 1.3);    // line spacing
     }
+
+    /**
+     * Helvetica scale for the Modern Invoice preset — a clear invoice
+     * title, compact bold labels (FROM / BILL TO / table header), and a
+     * readable body for party blocks and line-item cells.
+     *
+     * @return a {@code Typography} scale for the Modern Invoice preset
+     */
+    public static Typography invoiceModern() {
+        return new Typography(
+                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                22.0,    // headline (invoice title)
+                9.0,     // contact (unused by invoice; kept for the record shape)
+                9.5,     // banner (FROM / BILL TO / column labels)
+                10.0,    // entry title
+                9.5,     // entry date
+                9.0,     // entry subtitle (footer note)
+                9.5,     // body (party blocks, table cells)
+                1.3);    // line spacing
+    }
 }

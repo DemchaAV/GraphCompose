@@ -318,6 +318,23 @@ public record BrandTheme(Palette palette,
                 Spacing.mintEditorial(),
                 Decoration.classic());
     }
+
+    /**
+     * The "Modern Invoice" look — Helvetica, slate ink, a pale-blue
+     * rounded hero panel with a blue accent strip, and light table
+     * rules. The first layered <em>invoice</em> flavour: the invoice
+     * presets read it exactly the way the CV presets read their own
+     * flavours, so the two families share one theme model.
+     *
+     * @return a {@code BrandTheme} for the "Modern Invoice" look
+     */
+    public static BrandTheme invoiceModern() {
+        return new BrandTheme(
+                Palette.invoiceModern(),
+                Typography.invoiceModern(),
+                Spacing.invoiceModern(),
+                Decoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

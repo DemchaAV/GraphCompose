@@ -501,4 +501,31 @@ public record Spacing(
                 0.45,                                    // entryDateWeight
                 12.0);                                   // entrySeparation (roomy editorial gap)
     }
+
+    /**
+     * Spacing for the Modern Invoice preset: a 14pt page-flow rhythm
+     * matching the cinematic invoice, a rounded hero panel (10pt radius,
+     * 14pt inner padding), and a 4pt accent strip down the hero's left
+     * edge. Entry-row tokens are unused by the invoice layout but kept
+     * at neutral defaults for the shared record shape.
+     *
+     * @return a {@code Spacing} for the Modern Invoice preset
+     */
+    public static Spacing invoiceModern() {
+        return new Spacing(
+                14,                                      // pageFlowSpacing (matches the cinematic invoice)
+                4,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                10.0,                                    // bannerCornerRadius (hero panel radius)
+                14.0,                                    // bannerInnerPadding (hero panel padding)
+                DocumentInsets.zero(),                   // bannerMargin
+                4.0,                                     // accentRuleWidth (hero accent strip width)
+                2.0,                                     // paragraphMarginTop
+                8.0,                                     // entryHeaderRowSpacing
+                1.0,                                     // entryTitleWeight
+                0.45,                                    // entryDateWeight
+                3.0);                                    // entrySeparation
+    }
 }

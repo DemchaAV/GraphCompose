@@ -298,4 +298,23 @@ public record Palette(DocumentColor ink,
                 DocumentColor.rgb(70, 70, 70),     // rule (skill-bar track)
                 DocumentColor.rgb(139, 207, 190)); // banner — reused as mint accent
     }
+
+    /**
+     * Modern Invoice palette: slate body ink, grey metadata, light
+     * table-border rules, and a pale-blue fill carried in the
+     * {@code banner} slot for the invoice hero panel and table zebra
+     * rows. The stronger accent blue used for the hero strip / status
+     * is preset-local in {@code ModernInvoice} because no other v2
+     * preset shares it today.
+     *
+     * @return a {@code Palette} for the Modern Invoice flavour
+     */
+    public static Palette invoiceModern() {
+        return new Palette(
+                DocumentColor.rgb(33, 37, 41),     // ink — slate body text
+                DocumentColor.rgb(108, 117, 125),  // muted — metadata
+                DocumentColor.rgb(206, 212, 218),  // rule — table borders / separators
+                DocumentColor.rgb(232, 240, 254),  // banner — pale-blue hero panel / zebra fill
+                DocumentColor.WHITE);              // mainFill — table surface
+    }
 }

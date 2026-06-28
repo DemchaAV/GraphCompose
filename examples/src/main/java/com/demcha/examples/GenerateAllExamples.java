@@ -81,6 +81,7 @@ import com.demcha.examples.templates.cv.v2.CvSidebarPortraitExample;
 import com.demcha.examples.templates.cv.v2.CvTimelineMinimalExample;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
 import com.demcha.examples.templates.invoice.InvoiceFileExample;
+import com.demcha.examples.templates.invoice.v2.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
 import com.demcha.examples.templates.proposal.ProposalFileExample;
@@ -138,6 +139,7 @@ public final class GenerateAllExamples {
         // Invoices
         System.out.println("Generated: " + InvoiceFileExample.generate());
         System.out.println("Generated: " + InvoiceCinematicFileExample.generate());
+        System.out.println("Generated: " + ModernInvoiceV2Example.generate());
 
         // Proposals
         System.out.println("Generated: " + ProposalFileExample.generate());

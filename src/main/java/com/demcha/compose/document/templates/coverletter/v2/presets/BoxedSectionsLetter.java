@@ -6,8 +6,8 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 import java.util.Objects;
 
@@ -91,7 +91,7 @@ public final class BoxedSectionsLetter {
                         .addSection("CoverLetterV2BoxedHeadline", section -> {
                             section.accentBottom(theme.palette().rule(),
                                     theme.spacing().accentRuleWidth());
-                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                            Headline.spacedCentered(section, doc.identity().name().full(), theme);
                         })
                         .addSection("CoverLetterV2BoxedContact", section -> {
                             section.accentBottom(theme.palette().rule(),

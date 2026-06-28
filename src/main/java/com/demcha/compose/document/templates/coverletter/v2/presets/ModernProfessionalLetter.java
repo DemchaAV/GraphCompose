@@ -10,8 +10,8 @@ import com.demcha.compose.document.templates.coverletter.v2.components.LetterBod
 import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.font.FontName;
 
 import java.util.Objects;
@@ -120,7 +120,7 @@ public final class ModernProfessionalLetter {
                         .name("CoverLetterV2ModernRoot")
                         .spacing(theme.spacing().pageFlowSpacing())
                         .addSection("Header", section ->
-                                Headline.rightAligned(section, doc.identity().name(),
+                                Headline.rightAligned(section, doc.identity().name().full(),
                                         theme, nameStyle))
                         .addSection("Contact", section -> {
                             section.accentBottom(theme.palette().rule(),

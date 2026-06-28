@@ -12,9 +12,9 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
-import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
+import com.demcha.compose.document.templates.core.identity.Subheadline;
 
 import java.util.Objects;
 
@@ -102,7 +102,7 @@ public final class CenteredHeadlineLetter {
                         .name("CoverLetterV2CenteredHeadlineRoot")
                         .spacing(theme.spacing().pageFlowSpacing())
                         .addSection("CoverLetterV2CenteredHeadlineHeadline", section -> {
-                            Headline.spacedCentered(section, identity.name(), theme);
+                            Headline.spacedCentered(section, identity.name().full(), theme);
                             if (!identity.jobTitle().isBlank()) {
                                 Subheadline.centeredSpacedCaps(section,
                                         identity.jobTitle(), subheadlineStyle());

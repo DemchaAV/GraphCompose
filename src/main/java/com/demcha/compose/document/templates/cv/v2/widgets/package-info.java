@@ -41,19 +41,19 @@
  * <h3>Current widget catalog</h3>
  *
  * <ul>
- *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Headline}
+ *   <li>{@link com.demcha.compose.document.templates.core.identity.Headline}
  *       — top-of-document name in 4 variants
  *       ({@code spacedCentered}, {@code uppercaseCentered},
  *       {@code uppercaseLeftAligned}, {@code rightAligned}).</li>
- *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Subheadline}
+ *   <li>{@link com.demcha.compose.document.templates.core.identity.Subheadline}
  *       — secondary tagline under the name in 1 variant
  *       ({@code centeredSpacedCaps}).</li>
- *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.ContactLine}
+ *   <li>{@link com.demcha.compose.document.templates.core.identity.ContactLine}
  *       — contact + links row/stack in 5 variants
  *       ({@code centered}, {@code rightAligned},
  *       {@code leftAligned}, {@code rightAlignedStacked},
  *       {@code twoRowRightAligned}).</li>
- *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.Masthead}
+ *   <li>{@link com.demcha.compose.document.templates.core.identity.Masthead}
  *       — centred editorial identity block: name, optional title,
  *       compact metadata, and link row.</li>
  *   <li>{@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader}

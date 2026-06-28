@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.cv.v2.data;
+package com.demcha.compose.document.templates.core.identity;
 
 import java.util.Objects;
 
@@ -13,12 +13,12 @@ import java.util.Objects;
  * @param email   non-blank email (rendered as a clickable mailto link)
  * @param address non-blank location / postal address line
  */
-public record CvContact(String phone, String email, String address) {
+public record Contact(String phone, String email, String address) {
 
     /**
      * Validates that every field is non-null and non-blank.
      */
-    public CvContact {
+    public Contact {
         Objects.requireNonNull(phone, "phone");
         Objects.requireNonNull(email, "email");
         Objects.requireNonNull(address, "address");

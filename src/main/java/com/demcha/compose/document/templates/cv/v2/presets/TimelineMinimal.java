@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -17,7 +19,7 @@ import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.templates.widgets.TimelineAxisWidget;
 
 import java.util.*;
@@ -286,7 +288,7 @@ public final class TimelineMinimal {
                     addContactItem(items, "@", "email.svg", email,
                             new DocumentLinkOptions("mailto:" + email));
                 }
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     String label = link.label();
                     if (label.isBlank()) {
                         continue;

@@ -1,5 +1,9 @@
 package com.demcha.compose.document.templates.cv.v2.data;
 
+import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.Link;
+import com.demcha.compose.document.templates.core.identity.PartyIdentity;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +14,7 @@ import java.util.Objects;
  * outbound links.
  *
  * <p>Required pieces have their own types ({@link CvName},
- * {@link CvContact}); optional links are accumulated through the
+ * {@link Contact}); optional links are accumulated through the
  * builder's {@code link(...)} method — added when the author wants
  * them, simply omitted otherwise.</p>
  *
@@ -22,7 +26,8 @@ import java.util.Objects;
  * @param links    ordered list of optional outbound links; never null
  */
 public record CvIdentity(CvName name, String jobTitle,
-                         CvContact contact, List<CvLink> links) {
+                         Contact contact, List<Link> links)
+        implements PartyIdentity {
 
     /**
      * Validates that {@code name} and {@code contact} are non-null,
@@ -45,8 +50,28 @@ public record CvIdentity(CvName name, String jobTitle,
      * @param contact phone / email / address — all three required
      * @param links   ordered list of optional outbound links; never null
      */
-    public CvIdentity(CvName name, CvContact contact, List<CvLink> links) {
+    public CvIdentity(CvName name, Contact contact, List<Link> links) {
         this(name, "", contact, links);
+    }
+
+    /**
+     * {@inheritDoc} For a CV this is the candidate's full name.
+     *
+     * @return {@link CvName#full()}
+     */
+    @Override
+    public String displayName() {
+        return name.full();
+    }
+
+    /**
+     * {@inheritDoc} For a CV this is the professional title.
+     *
+     * @return the job title, blank when absent
+     */
+    @Override
+    public String tagline() {
+        return jobTitle;
     }
 
     /**
@@ -64,8 +89,8 @@ public record CvIdentity(CvName name, String jobTitle,
     public static final class Builder {
         private CvName name;
         private String jobTitle = "";
-        private CvContact contact;
-        private final List<CvLink> links = new ArrayList<>();
+        private Contact contact;
+        private final List<Link> links = new ArrayList<>();
 
         private Builder() {
         }
@@ -124,7 +149,7 @@ public record CvIdentity(CvName name, String jobTitle,
          * @param value the contact block to use
          * @return this builder for chaining
          */
-        public Builder contact(CvContact value) {
+        public Builder contact(Contact value) {
             this.contact = value;
             return this;
         }
@@ -138,7 +163,7 @@ public record CvIdentity(CvName name, String jobTitle,
          * @return this builder for chaining
          */
         public Builder contact(String phone, String email, String address) {
-            this.contact = new CvContact(phone, email, address);
+            this.contact = new Contact(phone, email, address);
             return this;
         }
 
@@ -148,7 +173,7 @@ public record CvIdentity(CvName name, String jobTitle,
          * @param link the link to append (non-null)
          * @return this builder for chaining
          */
-        public Builder link(CvLink link) {
+        public Builder link(Link link) {
             this.links.add(Objects.requireNonNull(link, "link"));
             return this;
         }
@@ -161,7 +186,7 @@ public record CvIdentity(CvName name, String jobTitle,
          * @return this builder for chaining
          */
         public Builder link(String label, String url) {
-            this.links.add(new CvLink(label, url));
+            this.links.add(new Link(label, url));
             return this;
         }
 

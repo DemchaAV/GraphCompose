@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.coverletter.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
@@ -17,9 +19,8 @@ import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvLink;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 
 import java.util.*;
 
@@ -192,7 +193,7 @@ public final class TimelineMinimalLetter {
                     addContactItem(items, "@", "email.svg", email,
                             new DocumentLinkOptions("mailto:" + email));
                 }
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     String label = link.label();
                     if (label.isBlank()) {
                         continue;

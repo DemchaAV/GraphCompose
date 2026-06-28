@@ -13,7 +13,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.templates.blocks.Block;
 import com.demcha.compose.document.templates.blocks.BulletListBlock;
 import com.demcha.compose.document.templates.blocks.IndentedBlock;

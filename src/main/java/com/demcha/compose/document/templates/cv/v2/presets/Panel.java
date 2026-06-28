@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.templates.core.text.TextStyles;
 
 import com.demcha.compose.document.api.DocumentSession;
@@ -275,7 +277,7 @@ public final class Panel {
                                         new DocumentLinkOptions("mailto:" + email));
                                 first = false;
                             }
-                            for (CvLink link : identity.links()) {
+                            for (Link link : identity.links()) {
                                 if (link.label().isBlank()) {
                                     continue;
                                 }

@@ -12,8 +12,8 @@ import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocu
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 import java.util.Objects;
 
@@ -134,7 +134,7 @@ public final class CompactMonoLetter {
                             .fillColor(HEADER)
                             .cornerRadius(3);
                     section.addSection("Name", name ->
-                            Headline.uppercaseLeftAligned(name, identity.name(),
+                            Headline.uppercaseLeftAligned(name, identity.name().full(),
                                     theme, headerNameStyle()));
                     section.addSection("Contact", contact ->
                             ContactLine.leftAligned(contact, identity, theme,

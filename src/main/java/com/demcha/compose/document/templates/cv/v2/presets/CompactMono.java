@@ -11,8 +11,8 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionModule;
 import com.demcha.compose.document.templates.widgets.CardWidget;
@@ -148,7 +148,7 @@ public final class CompactMono {
                             .cornerRadius(3);
                     section.addSection("Name", name ->
                             Headline.uppercaseLeftAligned(name,
-                                    doc.identity().name(), theme,
+                                    doc.identity().name().full(), theme,
                                     headerNameStyle()));
                     section.addSection("Contact", contact ->
                             ContactLine.leftAligned(contact, doc.identity(), theme,

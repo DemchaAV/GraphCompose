@@ -11,8 +11,8 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.ProfileBand;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionModule;
 
@@ -297,7 +297,7 @@ public final class NordicClean {
                             identity.spacing(3)
                                     .padding(new DocumentInsets(1, 0, 2, 0));
                             Headline.uppercaseLeftAligned(identity,
-                                    doc.identity().name(), theme,
+                                    doc.identity().name().full(), theme,
                                     headlineStyle());
                             identity.addShape(shape -> shape
                                     .name("CvV2NordicCleanNameAccent")

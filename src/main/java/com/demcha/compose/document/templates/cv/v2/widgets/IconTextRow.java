@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.widgets;
 
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
+
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;

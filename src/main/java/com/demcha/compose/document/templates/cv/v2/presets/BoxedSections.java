@@ -8,8 +8,8 @@ import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvSection;
 import com.demcha.compose.document.templates.cv.v2.data.Slot;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 import java.util.List;
@@ -107,7 +107,7 @@ public final class BoxedSections {
                         .addSection("CvV2Headline", section -> {
                             section.accentBottom(theme.palette().rule(),
                                     theme.spacing().accentRuleWidth());
-                            Headline.spacedCentered(section, doc.identity().name(), theme);
+                            Headline.spacedCentered(section, doc.identity().name().full(), theme);
                         })
                         .addSection("CvV2Contact", section -> {
                             section.accentBottom(theme.palette().rule(),

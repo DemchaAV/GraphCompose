@@ -13,9 +13,9 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.v2.components.*;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.ContactLine;
+import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.cv.v2.widgets.FlowSectionHeader;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +122,7 @@ public final class BlueBanner {
                         .spacing(theme.spacing().pageFlowSpacing())
                         .addSection("Header", section ->
                                 Headline.spacedCentered(section,
-                                        doc.identity().name(), theme))
+                                        doc.identity().name().full(), theme))
                         .addSection("Contact", section ->
                                 ContactLine.centered(section, doc.identity(), theme));
 

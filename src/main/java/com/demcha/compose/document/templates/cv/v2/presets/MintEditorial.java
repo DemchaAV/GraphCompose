@@ -1,5 +1,7 @@
 package com.demcha.compose.document.templates.cv.v2.presets;
 
+import com.demcha.compose.document.templates.core.identity.Link;
+
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
@@ -20,11 +22,11 @@ import com.demcha.compose.document.templates.cv.v2.components.SectionLookup;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.cv.v2.widgets.IconTextRow;
 import com.demcha.compose.document.templates.cv.v2.widgets.SkillBar;
-import com.demcha.compose.document.templates.cv.v2.widgets.Subheadline;
-import com.demcha.compose.document.templates.cv.v2.widgets.SvgGlyph;
+import com.demcha.compose.document.templates.core.identity.Subheadline;
+import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.svg.SvgIcon;
 
 import java.io.IOException;
@@ -572,7 +574,7 @@ public final class MintEditorial {
             // Render the name through Headline's style-override variant so only
             // the colour can change — alignment, spaced-caps transform, font and
             // size all stay exactly as Headline.spacedCentered produced them.
-            Headline.render(section, identity.name(), theme,
+            Headline.render(section, identity.name().full(), theme,
                     TextAlign.CENTER, true, mastheadNameStyle());
             String jobTitle = identity.jobTitle();
             if (jobTitle != null && !jobTitle.isBlank()) {
@@ -693,7 +695,7 @@ public final class MintEditorial {
                             CONTACT_ICON_SIZE, address, style, null,
                             DocumentInsets.bottom(13));
                 }
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     if (link.label().isBlank()) {
                         continue;
                     }
@@ -825,7 +827,7 @@ public final class MintEditorial {
                 block.spacing(0).padding(DocumentInsets.zero());
                 addBlockHeading(block, "Social");
                 DocumentTextStyle style = labelStyle();
-                for (CvLink link : identity.links()) {
+                for (Link link : identity.links()) {
                     if (link.label().isBlank()) {
                         continue;
                     }

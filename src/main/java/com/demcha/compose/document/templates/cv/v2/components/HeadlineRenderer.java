@@ -3,11 +3,11 @@ package com.demcha.compose.document.templates.cv.v2.components;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.cv.v2.data.CvName;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.cv.v2.widgets.Headline;
+import com.demcha.compose.document.templates.core.identity.Headline;
 
 /**
  * @deprecated Use
- * {@link com.demcha.compose.document.templates.cv.v2.widgets.Headline#spacedCentered}
+ * {@link com.demcha.compose.document.templates.core.identity.Headline#spacedCentered}
  * instead — the widget gives you a named API plus alignment +
  * spaced-caps variants, while this class only ever did the
  * centred-spaced-caps form. Kept as a thin delegating shim so v2
@@ -27,6 +27,6 @@ public final class HeadlineRenderer {
      */
     @Deprecated
     public static void render(SectionBuilder section, CvName name, BrandTheme theme) {
-        Headline.spacedCentered(section, name, theme);
+        Headline.spacedCentered(section, name.full(), theme);
     }
 }

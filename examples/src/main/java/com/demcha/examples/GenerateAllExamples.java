@@ -84,6 +84,7 @@ import com.demcha.examples.templates.invoice.InvoiceFileExample;
 import com.demcha.examples.templates.invoice.v2.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
+import com.demcha.examples.templates.proposal.v2.ModernProposalV2Example;
 import com.demcha.examples.templates.proposal.ProposalFileExample;
 import com.demcha.examples.templates.schedule.WeeklyScheduleFileExample;
 
@@ -144,6 +145,7 @@ public final class GenerateAllExamples {
         // Proposals
         System.out.println("Generated: " + ProposalFileExample.generate());
         System.out.println("Generated: " + ProposalCinematicFileExample.generate());
+        System.out.println("Generated: " + ModernProposalV2Example.generate());
         System.out.println("Generated: " + CinematicProposalFileExample.generate());
 
         // Schedule

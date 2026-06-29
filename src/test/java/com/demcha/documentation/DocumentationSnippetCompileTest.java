@@ -54,17 +54,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Each marked block is wrapped into a compilation unit according to its
  * {@code mode} and compiled in-memory against the test runtime classpath (the
  * same canonical classes and dependencies the rest of the suite sees). Compiler
- * <em>errors</em> fail the test; warnings are ignored.
+ * <em>errors</em> fail the test; warnings are ignored. Leading {@code import}
+ * lines are lifted above the wrapper.
  *
  * <dl>
  *   <dt>{@code mode=method}</dt><dd>statements; wrapped in a {@code void} method
- *   that {@code throws Exception}. Leading {@code import} lines are lifted above
- *   the wrapper.</dd>
+ *   that {@code throws Exception}.</dd>
  *   <dt>{@code mode=members}</dt><dd>field/method declarations; inserted as class
- *   members. Leading imports are lifted.</dd>
- *   <dt>{@code mode=class}</dt><dd>a complete compilation unit; compiled
- *   verbatim.</dd>
+ *   members.</dd>
  * </dl>
+ *
+ * <p>The guard self-tests both directions: {@link #compilerReportsErrorForBrokenSnippet()}
+ * proves a broken snippet is actually surfaced as a failure, and
+ * {@link #knownCanonicalTypeResolvesOnTestClasspath()} proves the compile classpath
+ * resolves canonical types — so a classpath regression is distinguishable from a
+ * real doc break.
  */
 class DocumentationSnippetCompileTest {
 
@@ -75,9 +79,9 @@ class DocumentationSnippetCompileTest {
             Pattern.compile("^<!--\\s*doc-example:\\s*(.+?)\\s*-->\\s*$");
     private static final Pattern IMPORT_LINE =
             Pattern.compile("^\\s*import\\s+(?:static\\s+)?[\\w.]+(?:\\.\\*)?\\s*;\\s*$");
-    private static final Pattern TYPE_NAME =
-            Pattern.compile("\\b(?:class|interface|record|enum)\\s+(\\w+)");
-    private static final Set<String> SUPPORTED_MODES = Set.of("method", "members", "class");
+    private static final Pattern JAVA_FENCE =
+            Pattern.compile("^```java\\s*$");
+    private static final Set<String> SUPPORTED_MODES = Set.of("method", "members");
 
     @Test
     void publishedJavaSnippetsShouldCompile() throws IOException {
@@ -89,49 +93,44 @@ class DocumentationSnippetCompileTest {
                 .describedAs("No doc-example markers found under %s — the guard would cover nothing", DOCS_ROOT)
                 .isNotEmpty();
 
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        assertThat(compiler)
-                .describedAs("A JDK compiler is required to compile doc snippets; run the build on a JDK, not a JRE")
-                .isNotNull();
+        assertThat(compile(examples))
+                .describedAs("Every marked Java snippet under docs/ must compile against the current API")
+                .isEmpty();
+    }
 
-        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-        StandardJavaFileManager fileManager =
-                compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8);
+    @Test
+    void compilerReportsErrorForBrokenSnippet() throws IOException {
+        // Drives the full mechanism (wrap -> compile -> collect -> attribute) on a
+        // snippet that references a symbol that does not exist. Proves the guard
+        // actually fails — and names the offending snippet — instead of passing
+        // vacuously if any stage regressed.
+        Example broken = new Example(
+                "synthetic-broken-snippet", "method",
+                "thisMethodDoesNotExistOnAnyType();\n",
+                PROJECT_ROOT.resolve("docs/(synthetic).md"));
 
-        Path classOutput = Files.createTempDirectory("doc-snippets-classes");
-        Map<String, Example> byUnitName = new LinkedHashMap<>();
-        List<JavaFileObject> units = new ArrayList<>();
-        for (Example example : examples) {
-            String unitName = example.unitName();
-            byUnitName.put(unitName, example);
-            units.add(new StringSource(unitName, example.toCompilationUnit()));
-        }
-
-        try {
-            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, List.of(classOutput.toFile()));
-            List<String> options = List.of(
-                    "-proc:none",
-                    "-classpath", System.getProperty("java.class.path"));
-            compiler.getTask(null, fileManager, diagnostics, options, null, units).call();
-        } finally {
-            fileManager.close();
-            deleteRecursively(classOutput);
-        }
-
-        List<String> errors = new ArrayList<>();
-        for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-            if (diagnostic.getKind() != Diagnostic.Kind.ERROR) {
-                continue;
-            }
-            Example example = exampleFor(diagnostic, byUnitName);
-            String origin = example == null
-                    ? "(unknown unit)"
-                    : example.id + " — " + relative(example.file);
-            errors.add("[%s] %s".formatted(origin, diagnostic.getMessage(null).replaceAll("\\s+", " ").trim()));
-        }
+        List<String> errors = compile(List.of(broken));
 
         assertThat(errors)
-                .describedAs("Every marked Java snippet under docs/ must compile against the current API")
+                .describedAs("A snippet referencing a missing symbol must be reported as an error")
+                .isNotEmpty()
+                .allSatisfy(error -> assertThat(error).contains("synthetic-broken-snippet"));
+    }
+
+    @Test
+    void knownCanonicalTypeResolvesOnTestClasspath() throws IOException {
+        // A trivial snippet that imports and calls a known canonical type. If this
+        // fails, the compile classpath is not resolving the library — a classpath /
+        // Surefire booter problem, NOT a documentation defect. Keeping it separate
+        // makes that distinction unambiguous when the suite goes red.
+        Example probe = new Example(
+                "synthetic-classpath-probe", "method",
+                "import com.demcha.compose.GraphCompose;\nGraphCompose.document();\n",
+                PROJECT_ROOT.resolve("docs/(synthetic).md"));
+
+        assertThat(compile(List.of(probe)))
+                .describedAs("A known canonical type must resolve on the test classpath; "
+                        + "a failure here is a classpath problem, not a docs problem")
                 .isEmpty();
     }
 
@@ -139,6 +138,7 @@ class DocumentationSnippetCompileTest {
     void docExampleMarkersShouldBeWellFormed() throws IOException {
         List<String> problems = new ArrayList<>();
         Map<String, String> idToFile = new LinkedHashMap<>();
+        Map<String, String> unitNameToId = new LinkedHashMap<>();
 
         for (Path doc : markdownFiles()) {
             List<String> lines = Files.readAllLines(doc, StandardCharsets.UTF_8);
@@ -159,6 +159,12 @@ class DocumentationSnippetCompileTest {
                             .formatted(rel, i + 1, id, idToFile.get(id)));
                 } else {
                     idToFile.put(id, rel + ":" + (i + 1));
+                    String unitName = Example.unitNameFor(id);
+                    String clash = unitNameToId.put(unitName, id);
+                    if (clash != null) {
+                        problems.add("%s:%d — doc-example id '%s' sanitizes to the same unit name as '%s'"
+                                .formatted(rel, i + 1, id, clash));
+                    }
                 }
 
                 if (mode == null || !SUPPORTED_MODES.contains(mode)) {
@@ -174,8 +180,56 @@ class DocumentationSnippetCompileTest {
         }
 
         assertThat(problems)
-                .describedAs("doc-example markers must be well-formed (unique id, supported mode, followed by a java fence)")
+                .describedAs("doc-example markers must be well-formed (unique id + unit name, supported mode, followed by a java fence)")
                 .isEmpty();
+    }
+
+    /** Compiles the given examples in-memory and returns one string per compiler error, attributed to its example. */
+    private static List<String> compile(List<Example> examples) throws IOException {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assertThat(compiler)
+                .describedAs("A JDK compiler is required to compile doc snippets; run the build on a JDK, not a JRE")
+                .isNotNull();
+
+        DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+        StandardJavaFileManager fileManager =
+                compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8);
+
+        Map<JavaFileObject, Example> bySource = new LinkedHashMap<>();
+        List<JavaFileObject> units = new ArrayList<>();
+        for (Example example : examples) {
+            JavaFileObject source = new StringSource(example.unitName(), example.toCompilationUnit());
+            bySource.put(source, example);
+            units.add(source);
+        }
+
+        Path classOutput = null;
+        try {
+            classOutput = Files.createTempDirectory("doc-snippets-classes");
+            fileManager.setLocation(StandardLocation.CLASS_OUTPUT, List.of(classOutput.toFile()));
+            List<String> options = List.of(
+                    "-proc:none",
+                    "-classpath", System.getProperty("java.class.path"));
+            compiler.getTask(null, fileManager, diagnostics, options, null, units).call();
+        } finally {
+            fileManager.close();
+            if (classOutput != null) {
+                deleteRecursively(classOutput);
+            }
+        }
+
+        List<String> errors = new ArrayList<>();
+        for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+            if (diagnostic.getKind() != Diagnostic.Kind.ERROR) {
+                continue;
+            }
+            Example example = bySource.get(diagnostic.getSource());
+            String origin = example == null
+                    ? "(unknown unit)"
+                    : example.id + " — " + relative(example.file);
+            errors.add("[%s] %s".formatted(origin, diagnostic.getMessage(null).replaceAll("\\s+", " ").trim()));
+        }
+        return errors;
     }
 
     private List<Example> collectExamples() throws IOException {
@@ -220,7 +274,7 @@ class DocumentationSnippetCompileTest {
         while (i < lines.size() && lines.get(i).isBlank()) {
             i++;
         }
-        if (i >= lines.size() || !lines.get(i).trim().startsWith("```java")) {
+        if (i >= lines.size() || !JAVA_FENCE.matcher(lines.get(i).trim()).matches()) {
             return null;
         }
         StringBuilder body = new StringBuilder();
@@ -244,20 +298,6 @@ class DocumentationSnippetCompileTest {
         return attributes;
     }
 
-    private static Example exampleFor(Diagnostic<? extends JavaFileObject> diagnostic, Map<String, Example> byUnitName) {
-        JavaFileObject source = diagnostic.getSource();
-        if (source == null) {
-            return null;
-        }
-        String name = source.getName();
-        for (Map.Entry<String, Example> entry : byUnitName.entrySet()) {
-            if (name.contains(entry.getKey())) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
     private static String relative(Path path) {
         return PROJECT_ROOT.relativize(path).toString().replace('\\', '/');
     }
@@ -278,29 +318,29 @@ class DocumentationSnippetCompileTest {
 
     private record Example(String id, String mode, String fence, Path file) {
 
-        String unitName() {
-            if (mode.equals("class")) {
-                Matcher typeName = TYPE_NAME.matcher(fence);
-                if (typeName.find()) {
-                    return typeName.group(1);
-                }
-            }
+        static String unitNameFor(String id) {
             return "DocExample_" + id.replaceAll("[^A-Za-z0-9]", "_");
         }
 
-        String toCompilationUnit() {
-            if (mode.equals("class")) {
-                return fence;
-            }
+        String unitName() {
+            return unitNameFor(id);
+        }
 
+        String toCompilationUnit() {
+            // Lift only the leading run of import lines; an import-shaped line that
+            // appears after real code (e.g. inside a text block) stays in the body.
             List<String> imports = new ArrayList<>();
             StringBuilder body = new StringBuilder();
+            boolean inBody = false;
             for (String line : fence.split("\\n", -1)) {
-                if (IMPORT_LINE.matcher(line).matches()) {
+                if (!inBody && IMPORT_LINE.matcher(line).matches()) {
                     imports.add(line.trim());
-                } else {
-                    body.append(line).append('\n');
+                    continue;
                 }
+                if (!inBody && !line.isBlank()) {
+                    inBody = true;
+                }
+                body.append(line).append('\n');
             }
 
             StringBuilder unit = new StringBuilder();

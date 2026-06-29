@@ -432,6 +432,24 @@
           "label": "Shapes & Containers",
           "examples": [
             {
+              "id": "line-cap",
+              "title": "Line Cap",
+              "description": "Generated showcase for features / shapes.",
+              "tags": ["features", "shapes"],
+              "pdf": "showcase/pdf/features/shapes/line-cap.pdf",
+              "screenshot": "showcase/screenshots/features/shapes/line-cap.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "line-fill",
+              "title": "Line Fill",
+              "description": "Generated showcase for features / shapes.",
+              "tags": ["features", "shapes"],
+              "pdf": "showcase/pdf/features/shapes/line-fill.pdf",
+              "screenshot": "showcase/screenshots/features/shapes/line-fill.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
               "id": "photo-clip",
               "title": "Photo Clip (silhouette)",
               "description": "A raster photo clipped to a free-form silhouette — circle, SVG heart, star — via ShapeContainer.path(...) + ClipPolicy.CLIP_PATH; the image COVER-fills each box so the native-curve outline crops it crisply at any zoom.",
@@ -480,12 +498,66 @@
           "label": "Rich Text",
           "examples": [
             {
+              "id": "emoji-clip-path",
+              "title": "Emoji Clip Path",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/emoji-clip-path.pdf",
+              "screenshot": "showcase/screenshots/features/text/emoji-clip-path.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "emoji-gallery",
+              "title": "Emoji Gallery",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/emoji-gallery.pdf",
+              "screenshot": "showcase/screenshots/features/text/emoji-gallery.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "emoji-shortcodes",
+              "title": "Emoji Shortcodes",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/emoji-shortcodes.pdf",
+              "screenshot": "showcase/screenshots/features/text/emoji-shortcodes.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "emoji-svg-vs-png",
+              "title": "Emoji Svg Vs Png",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/emoji-svg-vs-png.pdf",
+              "screenshot": "showcase/screenshots/features/text/emoji-svg-vs-png.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "inline-highlight-chips",
+              "title": "Inline Highlight Chips",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/inline-highlight-chips.pdf",
+              "screenshot": "showcase/screenshots/features/text/inline-highlight-chips.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
               "id": "inline-shapes",
               "title": "Inline Shapes",
               "description": "Generated showcase for features / text.",
               "tags": ["features", "text"],
               "pdf": "showcase/pdf/features/text/inline-shapes.pdf",
               "screenshot": "showcase/screenshots/features/text/inline-shapes.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "inline-svg-icons",
+              "title": "Inline Svg Icons",
+              "description": "Generated showcase for features / text.",
+              "tags": ["features", "text"],
+              "pdf": "showcase/pdf/features/text/inline-svg-icons.pdf",
+              "screenshot": "showcase/screenshots/features/text/inline-svg-icons.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             },
             {
@@ -543,6 +615,15 @@
           "label": "PDF Chrome (header / footer / watermark)",
           "examples": [
             {
+              "id": "page-numbering",
+              "title": "Page Numbering",
+              "description": "Generated showcase for features / chrome.",
+              "tags": ["features", "chrome"],
+              "pdf": "showcase/pdf/features/chrome/page-numbering.pdf",
+              "screenshot": "showcase/screenshots/features/chrome/page-numbering.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
               "id": "pdf-chrome",
               "title": "PDF Chrome",
               "description": "Headers, footers, watermarks, metadata, document protection / encryption.",
@@ -550,6 +631,15 @@
               "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
               "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
+            },
+            {
+              "id": "viewer-preferences",
+              "title": "Viewer Preferences",
+              "description": "Generated showcase for features / chrome.",
+              "tags": ["features", "chrome"],
+              "pdf": "showcase/pdf/features/chrome/viewer-preferences.pdf",
+              "screenshot": "showcase/screenshots/features/chrome/viewer-preferences.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             }
           ]
         },
@@ -640,6 +730,108 @@
               "pdf": "showcase/pdf/features/layout/block-align.pdf",
               "screenshot": "showcase/screenshots/features/layout/block-align.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/layout/Block Align"
+            },
+            {
+              "id": "content-bleed",
+              "title": "Content Bleed",
+              "description": "Generated showcase for features / layout.",
+              "tags": ["features", "layout"],
+              "pdf": "showcase/pdf/features/layout/content-bleed.pdf",
+              "screenshot": "showcase/screenshots/features/layout/content-bleed.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "per-page-margin",
+              "title": "Per Page Margin",
+              "description": "Generated showcase for features / layout.",
+              "tags": ["features", "layout"],
+              "pdf": "showcase/pdf/features/layout/per-page-margin.pdf",
+              "screenshot": "showcase/screenshots/features/layout/per-page-margin.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "row-columns",
+              "title": "Row Columns",
+              "description": "Generated showcase for features / layout.",
+              "tags": ["features", "layout"],
+              "pdf": "showcase/pdf/features/layout/row-columns.pdf",
+              "screenshot": "showcase/screenshots/features/layout/row-columns.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "row-flex",
+              "title": "Row Flex",
+              "description": "Generated showcase for features / layout.",
+              "tags": ["features", "layout"],
+              "pdf": "showcase/pdf/features/layout/row-flex.pdf",
+              "screenshot": "showcase/screenshots/features/layout/row-flex.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "row-vertical-align",
+              "title": "Row Vertical Align",
+              "description": "Generated showcase for features / layout.",
+              "tags": ["features", "layout"],
+              "pdf": "showcase/pdf/features/layout/row-vertical-align.pdf",
+              "screenshot": "showcase/screenshots/features/layout/row-vertical-align.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            }
+          ]
+        },
+        {
+          "id": "navigation",
+          "label": "Navigation",
+          "examples": [
+            {
+              "id": "container-bookmark",
+              "title": "Container Bookmark",
+              "description": "Generated showcase for features / navigation.",
+              "tags": ["features", "navigation"],
+              "pdf": "showcase/pdf/features/navigation/container-bookmark.pdf",
+              "screenshot": "showcase/screenshots/features/navigation/container-bookmark.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "in-pdf-navigation",
+              "title": "In Pdf Navigation",
+              "description": "Generated showcase for features / navigation.",
+              "tags": ["features", "navigation"],
+              "pdf": "showcase/pdf/features/navigation/in-pdf-navigation.pdf",
+              "screenshot": "showcase/screenshots/features/navigation/in-pdf-navigation.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "page-reference",
+              "title": "Page Reference",
+              "description": "Generated showcase for features / navigation.",
+              "tags": ["features", "navigation"],
+              "pdf": "showcase/pdf/features/navigation/page-reference.pdf",
+              "screenshot": "showcase/screenshots/features/navigation/page-reference.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            },
+            {
+              "id": "table-of-contents",
+              "title": "Table Of Contents",
+              "description": "Generated showcase for features / navigation.",
+              "tags": ["features", "navigation"],
+              "pdf": "showcase/pdf/features/navigation/table-of-contents.pdf",
+              "screenshot": "showcase/screenshots/features/navigation/table-of-contents.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+            }
+          ]
+        },
+        {
+          "id": "structure",
+          "label": "Structure",
+          "examples": [
+            {
+              "id": "multi-section-document",
+              "title": "Multi Section Document",
+              "description": "Generated showcase for features / structure.",
+              "tags": ["features", "structure"],
+              "pdf": "showcase/pdf/features/structure/multi-section-document.pdf",
+              "screenshot": "showcase/screenshots/features/structure/multi-section-document.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             }
           ]
         },
@@ -655,6 +847,21 @@
               "pdf": "showcase/pdf/features/svg/svg-icon-gallery.pdf",
               "screenshot": "showcase/screenshots/features/svg/svg-icon-gallery.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/svg/Svg Icon Gallery"
+            }
+          ]
+        },
+        {
+          "id": "title",
+          "label": "Title",
+          "examples": [
+            {
+              "id": "book-template",
+              "title": "Book Template",
+              "description": "Generated showcase for features / title.",
+              "tags": ["features", "title"],
+              "pdf": "showcase/pdf/features/title/book-template.pdf",
+              "screenshot": "showcase/screenshots/features/title/book-template.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
             }
           ]
         }

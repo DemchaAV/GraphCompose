@@ -13,12 +13,12 @@ import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
 import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
@@ -85,9 +85,9 @@ public final class CurrentSpeedBenchmark {
             .color(DocumentColor.of(new Color(58, 69, 84)))
             .build();
 
-    private final InvoiceTemplateV1 invoiceTemplate = new InvoiceTemplateV1();
+    private final DocumentTemplate<InvoiceDocumentSpec> invoiceTemplate = ModernInvoice.create();
     private final DocumentTemplate<CvSpec> cvTemplate = ModernProfessional.create(BusinessTheme.modern());
-    private final ProposalTemplateV1 proposalTemplate = new ProposalTemplateV1();
+    private final DocumentTemplate<ProposalDocumentSpec> proposalTemplate = ModernProposal.create();
     private final InvoiceDocumentSpec invoice = CanonicalBenchmarkSupport.canonicalInvoice();
     private final ProposalDocumentSpec proposal = CanonicalBenchmarkSupport.canonicalProposal();
     private final CvSpec cv = CanonicalBenchmarkSupport.canonicalCv();

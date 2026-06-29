@@ -2,10 +2,11 @@ package com.demcha.compose;
 
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
-import com.demcha.compose.document.templates.builtins.ProposalTemplateV1;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -46,9 +47,9 @@ public final class AllocationRateProbe {
         enableAllocationMeasurement();
 
         InvoiceDocumentSpec invoice = CanonicalBenchmarkSupport.canonicalInvoice();
-        InvoiceTemplateV1 invoiceTemplate = new InvoiceTemplateV1();
+        DocumentTemplate<InvoiceDocumentSpec> invoiceTemplate = ModernInvoice.create();
         ProposalDocumentSpec proposal = CanonicalBenchmarkSupport.canonicalProposal();
-        ProposalTemplateV1 proposalTemplate = new ProposalTemplateV1();
+        DocumentTemplate<ProposalDocumentSpec> proposalTemplate = ModernProposal.create();
 
         System.out.println("GraphCompose allocation-rate / GC-pressure probe (" + MEASURE + " warm renders each)");
         System.out.printf("%-12s | %14s | %10s | %12s | %12s%n",

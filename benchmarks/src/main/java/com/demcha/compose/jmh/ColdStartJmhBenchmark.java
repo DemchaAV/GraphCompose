@@ -5,10 +5,10 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
 import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
 import com.demcha.compose.document.templates.cv.spec.CvSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * reported number is a distribution of cold first-renders, not one lucky start.
  * The spec/template objects are built in {@link #setUp()} so the measured shot is
  * the cold render path, not fixture assembly. Same workloads as the warm benches
- * ({@code engine-simple} inline, {@code InvoiceTemplateV1}, {@code ModernProfessional})
+ * ({@code engine-simple} inline, {@code ModernInvoice}, {@code ModernProfessional})
  * so cold and warm numbers are directly comparable.</p>
  *
  * <pre>
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 public class ColdStartJmhBenchmark {
 
     private InvoiceDocumentSpec invoice;
-    private InvoiceTemplateV1 invoiceTemplate;
+    private DocumentTemplate<InvoiceDocumentSpec> invoiceTemplate;
     private CvSpec cv;
     private DocumentTemplate<CvSpec> cvTemplate;
 
@@ -64,7 +64,7 @@ public class ColdStartJmhBenchmark {
     @Setup
     public void setUp() {
         invoice = CanonicalBenchmarkSupport.canonicalInvoice();
-        invoiceTemplate = new InvoiceTemplateV1();
+        invoiceTemplate = ModernInvoice.create();
         cv = CanonicalBenchmarkSupport.canonicalCv();
         cvTemplate = ModernProfessional.create(BusinessTheme.modern());
     }
@@ -96,7 +96,7 @@ public class ColdStartJmhBenchmark {
     }
 
     /**
-     * Cold first render of the canonical invoice through {@code InvoiceTemplateV1}.
+     * Cold first render of the canonical invoice through {@code ModernInvoice}.
      *
      * @return the rendered PDF bytes (consumed by JMH)
      * @throws Exception if rendering fails

@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
  * {@link DocumentSession}.</p>
  *
  * <pre>{@code
- * InvoiceTemplate template = new InvoiceTemplateV1();
+ * InvoiceTemplate template = new InvoiceTemplateV2();
  * InvoiceDocumentSpec invoice = InvoiceDocumentSpec.builder()
  *         .invoiceNumber("GC-2026-041")
  *         .fromParty(party -> party.name("GraphCompose Studio"))

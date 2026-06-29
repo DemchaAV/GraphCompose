@@ -4,9 +4,9 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.image.DocumentImageFitMode;
-import com.demcha.compose.document.templates.api.InvoiceTemplate;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV1;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -163,7 +163,7 @@ class DocumentationExamplesTest {
     @Test
     void shouldRenderComposeFirstBuiltInTemplateExampleToFile() throws Exception {
         Path outputFile = VisualTestOutputs.preparePdf("compose-first-invoice-template", "clean", "documentation");
-        InvoiceTemplate template = new InvoiceTemplateV1();
+        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create();
 
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)

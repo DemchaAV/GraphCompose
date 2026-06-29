@@ -78,11 +78,9 @@ final class ShowcaseMetadata {
         letter("cover-letter-mint-editorial-v2", "CvMintEditorialLetterV2Example", "Mint Editorial letter", "Letter paired with Mint Editorial CV — magazine-style mint accent.");
 
         // ===== Templates / Invoice =====
-        invoice("invoice", "Invoice (canonical)", "Single-page invoice with line items, totals, and structured chrome — InvoiceTemplateV1.", "invoice");
         invoice("invoice-cinematic", "Cinematic Invoice", "Polished V2 invoice template with theme-driven layout, advanced tables, and totals.", "invoice", "cinematic");
 
         // ===== Templates / Proposal =====
-        proposal("proposal", "Proposal (canonical)", "Multi-section proposal with cover, scope, deliverables, and pricing — ProposalTemplateV1.", "proposal");
         proposal("proposal-cinematic", "Cinematic Proposal", "Cinematic V2 proposal layout with cover panel, hero spread, and rich typography.", "proposal", "cinematic");
         proposal("project-proposal-cinematic", "Project Proposal (cinematic)", "End-to-end project proposal with mountain hero, scope panels, and pricing summary.", "proposal", "cinematic");
 
@@ -183,16 +181,13 @@ final class ShowcaseMetadata {
     }
 
     private static void invoice(String id, String title, String desc, String... tags) {
-        String file = id.contains("cinematic") ? "InvoiceCinematicFileExample" : "InvoiceFileExample";
         ENTRIES.put(id, entry(title, desc, withCategory("invoice", tags),
-                EX_BASE + "/templates/invoice/" + file + ".java"));
+                EX_BASE + "/templates/invoice/InvoiceCinematicFileExample.java"));
     }
 
     private static void proposal(String id, String title, String desc, String... tags) {
-        String file;
-        if (id.equals("project-proposal-cinematic")) file = "CinematicProposalFileExample";
-        else if (id.contains("cinematic")) file = "ProposalCinematicFileExample";
-        else file = "ProposalFileExample";
+        String file = id.equals("project-proposal-cinematic")
+                ? "CinematicProposalFileExample" : "ProposalCinematicFileExample";
         ENTRIES.put(id, entry(title, desc, withCategory("proposal", tags),
                 EX_BASE + "/templates/proposal/" + file + ".java"));
     }

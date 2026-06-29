@@ -48,11 +48,14 @@ import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 /**
  * Flagship "what is GraphCompose" capability deck — a multi-page landscape
@@ -100,8 +103,35 @@ import java.util.Objects;
  */
 public final class EngineDeckExample {
 
-    private static final String VERSION = "1.8.0";
-    private static final String CODENAME = "illustrative";
+    /**
+     * Release version + codename shown on the banner. Sourced from the filtered
+     * {@code banner.properties} ({@code version} = Maven {@code @project.version@},
+     * {@code codename} = the per-minor release name), so the hero is always
+     * current with the release the build was cut from rather than a hand-bumped
+     * literal. Falls back to {@code "dev"} when run without Maven resource
+     * filtering (e.g. straight from an IDE), so the banner never prints the raw
+     * {@code @…@} token.
+     */
+    private static final String VERSION;
+    private static final String CODENAME;
+
+    static {
+        Properties banner = new Properties();
+        try (InputStream in = EngineDeckExample.class.getResourceAsStream("/banner.properties")) {
+            if (in != null) {
+                banner.load(in);
+            }
+        } catch (IOException ignored) {
+            // Missing/unreadable metadata falls through to the defaults below.
+        }
+        VERSION = resolved(banner.getProperty("version"), "dev");
+        CODENAME = resolved(banner.getProperty("codename"), "");
+    }
+
+    /** Returns {@code value} unless it is blank or an unfiltered {@code @…@} token. */
+    private static String resolved(String value, String fallback) {
+        return value == null || value.isBlank() || value.startsWith("@") ? fallback : value.trim();
+    }
 
     private EngineDeckExample() {
     }
@@ -125,22 +155,24 @@ public final class EngineDeckExample {
     }
 
     /**
-     * Renders page&nbsp;1's banner as a standalone, full-bleed hero. The dark
-     * violet field is painted as the canonical {@code pageBackground}, so it
-     * fills the whole landscape page — margins and corners included — and the
-     * rasterised image carries no white frame, only the banner itself. This is
-     * the source of the repository README hero
-     * ({@code assets/readme/repository_showcase_render.png}, produced by
-     * {@link com.demcha.examples.support.PdfPageRasterizer}); re-render it after a
-     * version bump — the banner reads {@link #VERSION} / {@link #CODENAME}, so
-     * the hero stays current with one rebuild.
+     * Renders the standalone hero banner to a raster image straight from the
+     * engine via {@link DocumentSession#toImage(int, int)} ({@code @since 1.9.0})
+     * — no intermediate PDF and no external rasterizer. This is the source of the
+     * repository README hero ({@code assets/readme/repository_showcase_render.png},
+     * written by {@link com.demcha.examples.support.ReadmeBannerRenderer}). The
+     * dark violet field is the canonical {@code pageBackground} on a page cropped
+     * to wrap the content, so the image is all banner and no white frame. The
+     * version pill reads {@link #VERSION} / {@link #CODENAME} from the filtered
+     * {@code banner.properties}, so the hero stays current with the release the
+     * build was cut from; {@code cut-release.ps1} re-renders it on every tag.
      *
-     * @return the generated single-page banner PDF path
+     * @param dpi raster resolution in dots per inch; 200 matches the committed asset
+     * @return the rendered banner image
      * @throws Exception when rendering or icon IO fails
+     * @since 1.9.0
      */
-    public static Path generateBanner() throws Exception {
-        Path outputFile = ExampleOutputPaths.prepare("flagships", "engine-banner.pdf");
-        try (DocumentSession document = GraphCompose.document(outputFile)
+    public static BufferedImage renderBannerImage(int dpi) throws Exception {
+        try (DocumentSession document = GraphCompose.document()
                 // The banner content is a top-anchored stack; the default
                 // A4-landscape page left a thick dead dark border around it.
                 // Crop the page to wrap the content tightly — width fits the
@@ -150,19 +182,44 @@ public final class EngineDeckExample {
                 .pageBackground(HERO_BG)
                 .margin(8, 8, 8, 8)
                 .create()) {
-            document.metadata(DocumentMetadata.builder()
-                    .title("GraphCompose v" + VERSION + " — " + CODENAME)
-                    .author("GraphCompose")
-                    .subject("GraphCompose banner — the engine's own brand hero")
-                    .producer("GraphCompose (PDFBox 3.0)")
-                    .build());
-            document.pageFlow()
-                    .name("EngineBanner")
-                    .addSection("Banner", EngineDeckExample::banner)
-                    .build();
+            composeBannerInto(document);
+            return document.toImage(0, dpi);
+        }
+    }
+
+    /**
+     * Renders the same standalone banner to a PDF — kept for a vector/print copy
+     * of the hero and as the layout the snapshot test guards. The committed
+     * README image comes from {@link #renderBannerImage(int)}, not this file.
+     *
+     * @return the generated single-page banner PDF path
+     * @throws Exception when rendering or icon IO fails
+     */
+    public static Path generateBanner() throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare("flagships", "engine-banner.pdf");
+        try (DocumentSession document = GraphCompose.document(outputFile)
+                .pageSize(801, 525)
+                .pageBackground(HERO_BG)
+                .margin(8, 8, 8, 8)
+                .create()) {
+            composeBannerInto(document);
             document.buildPdf();
         }
         return outputFile;
+    }
+
+    /** Banner metadata + the single banner section — shared by the image and PDF renders. */
+    private static void composeBannerInto(DocumentSession document) {
+        document.metadata(DocumentMetadata.builder()
+                .title("GraphCompose v" + VERSION + " — " + CODENAME)
+                .author("GraphCompose")
+                .subject("GraphCompose banner — the engine's own brand hero")
+                .producer("GraphCompose (PDFBox 3.0)")
+                .build());
+        document.pageFlow()
+                .name("EngineBanner")
+                .addSection("Banner", EngineDeckExample::banner)
+                .build();
     }
 
     /**

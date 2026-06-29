@@ -98,6 +98,28 @@
     </dependencies>
 
     <build>
+        <resources>
+            <!--
+                Only banner.properties is filtered (it carries @project.version@
+                so the README hero is stamped with the reactor version, never a
+                hand-bumped literal). Every other resource is copied verbatim so
+                binary assets (icons, fonts, sample data) stay byte-intact.
+            -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>banner.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>banner.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

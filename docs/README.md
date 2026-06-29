@@ -13,7 +13,8 @@ back here.
 
 | You are… | Read |
 |---|---|
-| **New to GraphCompose** — what is it, how do I render my first PDF | [Getting started](getting-started.md) → [Hello world in root README](../README.md#hello-world) |
+| **New to GraphCompose** — what is it, how do I render my first PDF | [Your first document](first-document.md) → [Getting started](getting-started.md) |
+| **Author rendering an invoice or proposal** | [Built-in business templates](templates/business-templates.md) |
 | **Author rendering a CV** with your own data | [Templates v2 (layered) — quickstart](templates/v2-layered/quickstart.md) |
 | **Designer / author** wanting a custom visual style for CVs | [Templates v2 (layered) — authoring presets](templates/v2-layered/authoring-presets.md) |
 | **Author using legacy v1.6 templates** (CV / cover-letter / invoice / proposal still using `*Spec` + builders) | [Templates v1-classic — landing](templates/v1-classic/README.md) |
@@ -26,10 +27,14 @@ back here.
 ## 📁 By category
 
 ### Getting started
+- **[first-document.md](first-document.md)** — the five-minute path from an empty project to a rendered PDF.
 - **[getting-started.md](getting-started.md)** — DSL vs templates, first-render walk-through, decision tree.
+- **[capabilities.md](capabilities.md)** — one-glance map of every feature with its stability tier and guide link.
+- **[diagrams.md](diagrams.md)** — visual decision diagrams (authoring path, layout, output, lifecycle).
 - **[troubleshooting.md](troubleshooting.md)** — symptom-first fixes for common gotchas: stray `?` glyphs, silent DOCX drops, optional-dependency `NoClassDefFoundError`, running the bundled examples.
 
 ### Templates
+- **[templates/business-templates.md](templates/business-templates.md)** — built-in invoice & proposal templates: the compose-first contract, end to end.
 - **[templates/v2-layered/](templates/v2-layered/)** — 🆕 canonical going-forward pattern (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
 - **[templates/v1-classic/](templates/v1-classic/)** — the spec/builder/presets surface used by v1.6 CV, cover-letter, invoice, proposal templates. Still ships, still supported.
 

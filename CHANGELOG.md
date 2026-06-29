@@ -3,6 +3,15 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.0.0 — Planned
+
+The 2.0 development line. Binary-breaking by design — japicmp runs report-only
+for this cycle.
+
+### Build
+- Move the 2.0 line to `2.0.0-SNAPSHOT`. The README and showcase install
+  snippets now advertise the planned `2.0.0` coordinate.
+
 ## v1.9.0 — 2026-06-29
 
 In-document navigation. Rendered PDFs can now declare named **anchors** and

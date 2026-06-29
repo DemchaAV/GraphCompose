@@ -73,12 +73,12 @@ Core document APIs stay source- and binary-compatible with v1.8 &mdash; v1.9 is 
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>1.9.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:1.9.0") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 ```
 
 > **Bundled fonts (from v1.8.0).** The curated Google fonts no longer ship

@@ -5,8 +5,8 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.compose.testing.layout.LayoutSnapshotJson;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -56,7 +56,7 @@ public final class LayoutSnapshotRegressionExample {
     }
 
     /**
-     * Composes the sample invoice through {@link InvoiceTemplateV2},
+     * Composes the sample invoice through {@code ModernInvoice},
      * extracts the layout snapshot, writes (or verifies) a JSON
      * baseline alongside the PDF, and renders the PDF for visual
      * inspection.
@@ -65,16 +65,16 @@ public final class LayoutSnapshotRegressionExample {
      * @throws Exception if rendering, snapshot extraction, or baseline IO fails
      */
     public static Path generate() throws Exception {
-        BusinessTheme theme = BusinessTheme.modern();
+        BrandTheme theme = BrandTheme.invoiceModern();
         Path pdfFile = ExampleOutputPaths.prepare("features/snapshots", "invoice-snapshot-regression.pdf");
         Path baselineFile = ExampleOutputPaths.prepare("features/snapshots", "invoice-snapshot-regression.layout.json");
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(theme.palette().mainFill())
                 .margin(DocumentInsets.of(28))
                 .create()) {
-            new InvoiceTemplateV2(theme).compose(document, ExampleDataFactory.sampleInvoice());
+            ModernInvoice.create(theme).compose(document, ExampleDataFactory.sampleInvoice());
 
             // Step 1: extract the deterministic post-layout snapshot.
             LayoutSnapshot snapshot = document.layoutSnapshot();

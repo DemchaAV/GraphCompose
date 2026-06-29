@@ -5,9 +5,9 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.compose.testing.layout.LayoutSnapshotJson;
 import org.junit.jupiter.api.Test;
 
@@ -42,11 +42,11 @@ class LayoutSnapshotRegressionDemoTest {
         String firstJson;
         String secondJson;
         try (DocumentSession a = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(a, sampleInvoice(1));
+            ModernInvoice.create().compose(a, sampleInvoice(1));
             firstJson = LayoutSnapshotJson.toJson(a.layoutSnapshot());
         }
         try (DocumentSession b = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(b, sampleInvoice(1));
+            ModernInvoice.create().compose(b, sampleInvoice(1));
             secondJson = LayoutSnapshotJson.toJson(b.layoutSnapshot());
         }
         assertThat(secondJson)
@@ -63,11 +63,11 @@ class LayoutSnapshotRegressionDemoTest {
         String oneRow;
         String tenRows;
         try (DocumentSession a = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(a, sampleInvoice(1));
+            ModernInvoice.create().compose(a, sampleInvoice(1));
             oneRow = LayoutSnapshotJson.toJson(a.layoutSnapshot());
         }
         try (DocumentSession b = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(b, sampleInvoice(20));
+            ModernInvoice.create().compose(b, sampleInvoice(20));
             tenRows = LayoutSnapshotJson.toJson(b.layoutSnapshot());
         }
         assertThat(tenRows)
@@ -78,7 +78,7 @@ class LayoutSnapshotRegressionDemoTest {
     @Test
     void snapshotReportsPagesAndNodes() throws Exception {
         try (DocumentSession document = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(document, sampleInvoice(1));
+            ModernInvoice.create().compose(document, sampleInvoice(1));
             LayoutSnapshot snapshot = document.layoutSnapshot();
             assertThat(snapshot.totalPages()).isPositive();
             assertThat(snapshot.nodes()).isNotEmpty();
@@ -87,10 +87,9 @@ class LayoutSnapshotRegressionDemoTest {
     }
 
     private static DocumentSession newSession() {
-        BusinessTheme theme = BusinessTheme.modern();
         return GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(BrandTheme.invoiceModern().palette().mainFill())
                 .margin(DocumentInsets.of(28))
                 .create();
     }

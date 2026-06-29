@@ -4,9 +4,10 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -74,7 +75,7 @@ public final class HttpStreamingExample {
 
     /**
      * Renders the supplied invoice into the supplied output stream
-     * via {@code InvoiceTemplateV2} on {@link BusinessTheme#modern()}.
+     * via {@code ModernInvoice} on {@link BrandTheme#invoiceModern()}.
      *
      * <p>The stream is intentionally <strong>not closed</strong> by
      * this method — that lets the same code be used from a Servlet,
@@ -87,12 +88,12 @@ public final class HttpStreamingExample {
      * @throws Exception if PDF rendering fails
      */
     public static void streamInvoiceTo(InvoiceDocumentSpec invoice, OutputStream sink) throws Exception {
-        BusinessTheme theme = BusinessTheme.modern();
-        InvoiceTemplateV2 template = new InvoiceTemplateV2(theme);
+        BrandTheme theme = BrandTheme.invoiceModern();
+        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(theme.palette().mainFill())
                 .margin(DocumentInsets.of(28))
                 .create()) {
             template.compose(document, invoice);

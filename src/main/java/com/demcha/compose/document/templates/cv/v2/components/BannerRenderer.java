@@ -5,7 +5,7 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
 
 /**
- * @deprecated Use
+ * @deprecated since 1.9.0; removed in 2.0. Use
  * {@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader#banner}
  * instead — the widget groups the banner alongside its sibling
  * variants ({@code underlined}, {@code flat}) so picking a section-
@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader;
  * delegating shim so v2 code written before the widgets layer keeps
  * compiling unchanged.
  */
-@Deprecated(forRemoval = true)
+@Deprecated(since = "1.9.0", forRemoval = true)
 public final class BannerRenderer {
 
     private BannerRenderer() {

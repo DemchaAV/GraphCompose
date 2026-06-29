@@ -106,6 +106,28 @@ class VersionConsistencyGuardTest {
                 .isFalse();
     }
 
+    /**
+     * The README hero banner reads its version pill from the filtered examples
+     * {@code banner.properties}; its {@code version} line must be the Maven
+     * {@code @project.version@} token so the rendered hero always carries the
+     * release version instead of a hand-bumped literal (the drift that left the
+     * banner reading v1.8.0 while the repo was on v1.9.0). {@code cut-release.ps1}
+     * re-renders the banner on release, and this fails the verify gate the moment
+     * the source is hardcoded again.
+     */
+    @Test
+    void readmeBannerVersionDerivesFromProjectVersion() throws Exception {
+        String props = Files.readString(
+                PROJECT_ROOT.resolve("examples/src/main/resources/banner.properties"));
+
+        assertThat(Pattern.compile("(?m)^\\s*version\\s*=\\s*@project\\.version@\\s*$").matcher(props).find())
+                .describedAs("examples/src/main/resources/banner.properties must source the hero version from @project.version@, not a literal")
+                .isTrue();
+        assertThat(Pattern.compile("(?m)^\\s*version\\s*=\\s*v?\\d").matcher(props).find())
+                .describedAs("banner.properties must not hardcode a numeric version — that reintroduces the stale-hero drift")
+                .isFalse();
+    }
+
     @Test
     void readmeInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();

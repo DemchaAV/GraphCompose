@@ -7,6 +7,8 @@ with `writePdf(...)`, `buildPdf()`, or `toPdfBytes()`.
 
 > **Prerequisites:** Java 17+ and the `io.github.demchaav:graph-compose` dependency — see the [README install snippet](../README.md#installation).
 
+> **New to GraphCompose?** Start with [Your First Document](first-document.md) — a five-minute, copy-paste path from an empty project to a rendered PDF, then come back here for themes, layer stacks, and built-in templates.
+
 ## Templates vs DSL — pick the right starting point
 
 GraphCompose has two layers a caller can target. Use this decision

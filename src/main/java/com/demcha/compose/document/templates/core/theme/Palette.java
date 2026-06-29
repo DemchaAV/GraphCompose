@@ -300,21 +300,23 @@ public record Palette(DocumentColor ink,
     }
 
     /**
-     * Modern Invoice palette: slate body ink, grey metadata, light
-     * table-border rules, and a pale-blue fill carried in the
-     * {@code banner} slot for the invoice hero panel and table zebra
-     * rows. The stronger accent blue used for the hero strip / status
-     * is preset-local in {@code ModernInvoice} because no other v2
-     * preset shares it today.
+     * Modern Invoice palette mirroring the cinematic business "modern"
+     * look: slate body ink, grey metadata, light table-border rules, a
+     * soft-tan fill in the {@code banner} slot (the hero panel + table
+     * zebra rows), and a cream {@code mainFill} used as both the page
+     * background and the table surface. The deep-teal title / table
+     * header and the gold hero accent are preset-local in
+     * {@code ModernInvoice} because the layered palette has no
+     * primary / accent slot.
      *
      * @return a {@code Palette} for the Modern Invoice flavour
      */
     public static Palette invoiceModern() {
         return new Palette(
-                DocumentColor.rgb(33, 37, 41),     // ink — slate body text
-                DocumentColor.rgb(108, 117, 125),  // muted — metadata
-                DocumentColor.rgb(206, 212, 218),  // rule — table borders / separators
-                DocumentColor.rgb(232, 240, 254),  // banner — pale-blue hero panel / zebra fill
-                DocumentColor.WHITE);              // mainFill — table surface
+                DocumentColor.rgb(34, 38, 50),     // ink — body text (modern textPrimary)
+                DocumentColor.rgb(110, 110, 120),  // muted — metadata (modern textMuted)
+                DocumentColor.rgb(212, 200, 178),  // rule — table borders (modern rule)
+                DocumentColor.rgb(244, 238, 228),  // banner — soft-tan hero panel / zebra (modern surfaceMuted)
+                DocumentColor.rgb(252, 248, 240)); // mainFill — cream surface + page background (modern surface)
     }
 }

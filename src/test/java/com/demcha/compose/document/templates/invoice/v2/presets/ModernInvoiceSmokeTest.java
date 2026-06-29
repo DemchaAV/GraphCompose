@@ -91,7 +91,9 @@ class ModernInvoiceSmokeTest {
 
     @Test
     void readsAnyTheme() throws Exception {
-        // Proves the preset reads the theme rather than assuming invoiceModern() slots.
+        // Renders under a non-invoice theme without crashing: the hero, labels,
+        // header, totals, and footer follow the theme; the line-item body cells
+        // inherit the DSL default (as in the cinematic builtin).
         render(ModernInvoice.create(BrandTheme.boxedClassic()), sampleSpec());
     }
 

@@ -31,9 +31,11 @@ import java.util.Objects;
  * {@link DocumentTemplate} whose {@code compose} sequences a hero panel,
  * the FROM / BILL&nbsp;TO parties, the line-items table, and a notes /
  * payment-terms footer. The visual intent is ported from the cinematic
- * {@code builtins.InvoiceTemplateV2}; this preset reads every colour,
- * font, size, and spacing value from the theme instead of a
- * {@code BusinessTheme}.</p>
+ * {@code builtins.InvoiceTemplateV2}; the hero, party labels, table
+ * header, totals, and footer read their colours / fonts / sizes from the
+ * theme (replacing the {@code BusinessTheme} the builtin used). The
+ * line-item body cells intentionally inherit the DSL default table-cell
+ * text to stay a pixel match for the builtin — see {@code compose}.</p>
  *
  * <p><strong>Why the parties render inline rather than through
  * {@code core.identity.PartyIdentity}:</strong> an invoice carries two
@@ -64,13 +66,19 @@ public final class ModernInvoice {
     private static final double TABLE_PADDING = 7.0;
 
     /**
-     * Strong accent blue for the hero accent strip and the status read
-     * out. Preset-local because no other v2 preset shares it today; if a
-     * second invoice preset reaches for it, promote it to a
-     * {@link com.demcha.compose.document.templates.core.theme.Palette}
-     * slot.
+     * Deep teal used for the invoice title and the line-items table header
+     * fill (the modern business primary). Preset-local — no other v2 preset
+     * shares it today; promote to a {@link
+     * com.demcha.compose.document.templates.core.theme.Palette} slot if a
+     * second invoice preset reaches for it.
      */
-    private static final DocumentColor ACCENT = DocumentColor.rgb(41, 128, 185);
+    private static final DocumentColor PRIMARY = DocumentColor.rgb(20, 60, 75);
+
+    /**
+     * Gold accent for the hero accent strip and the status read-out (the
+     * modern business accent). Preset-local, same rationale as {@link #PRIMARY}.
+     */
+    private static final DocumentColor ACCENT = DocumentColor.rgb(196, 153, 76);
 
     private ModernInvoice() {
     }
@@ -115,21 +123,38 @@ public final class ModernInvoice {
             Objects.requireNonNull(document, "document");
             InvoiceData data = Objects.requireNonNull(spec, "spec").invoice();
 
-            DocumentColor panelFill = theme.palette().banner();
+            DocumentColor panelFill = theme.palette().banner();   // soft tan
             DocumentColor rule = theme.palette().rule();
-            DocumentColor surface = theme.palette().mainFill();
+            DocumentColor surface = theme.palette().mainFill();   // cream
 
-            DocumentTextStyle titleStyle = theme.headlineStyle();
-            DocumentTextStyle labelStyle = theme.bannerStyle();
+            // Title + table header use the deep teal PRIMARY; FROM / BILL TO
+            // labels + body read from the theme; the footer note is a quiet
+            // caption. Mirrors the cinematic builtin's modern look.
+            DocumentTextStyle titleStyle = DocumentTextStyle.builder()
+                    .fontName(theme.typography().headlineFont())
+                    .size(theme.typography().sizeHeadline())
+                    .decoration(DocumentTextDecoration.BOLD)
+                    .color(PRIMARY)
+                    .build();
+            DocumentTextStyle labelStyle = theme.bodyBoldStyle();
             DocumentTextStyle bodyStyle = theme.bodyStyle();
+            DocumentTextStyle captionStyle = DocumentTextStyle.builder()
+                    .fontName(theme.typography().bodyFont())
+                    .size(theme.typography().sizeEntrySubtitle())
+                    .color(theme.palette().muted())
+                    .build();
 
+            // Line-item cells intentionally carry NO textStyle — they inherit
+            // the DSL default table-cell text, exactly as the cinematic builtin's
+            // defaultCellStyle does. That is what makes this a pixel-for-pixel
+            // match; do NOT add a textStyle here (it would break parity). The
+            // theme-driven surfaces are the hero, labels, header, totals, footer.
             DocumentTableStyle bordered = DocumentTableStyle.builder()
                     .stroke(DocumentStroke.of(rule, 0.6))
                     .padding(DocumentInsets.of(TABLE_PADDING))
-                    .textStyle(bodyStyle)
                     .build();
             DocumentTableStyle headerStyle = DocumentTableStyle.builder()
-                    .fillColor(theme.palette().ink())
+                    .fillColor(PRIMARY)
                     .stroke(DocumentStroke.of(rule, 0.6))
                     .padding(DocumentInsets.of(TABLE_PADDING + 1))
                     .textStyle(DocumentTextStyle.builder()
@@ -261,7 +286,7 @@ public final class ModernInvoice {
                         .name("InvoiceV2ModernFooter")
                         .addParagraph(p -> p
                                 .text(data.footerNote())
-                                .textStyle(theme.entrySubtitleStyle())
+                                .textStyle(captionStyle)
                                 .margin(new DocumentInsets(14, 0, 0, 0)))
                         .build();
             }

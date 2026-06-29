@@ -373,13 +373,13 @@ public record Typography(
     public static Typography invoiceModern() {
         return new Typography(
                 FontName.HELVETICA_BOLD, FontName.HELVETICA,
-                22.0,    // headline (invoice title)
-                9.0,     // contact (unused by invoice; kept for the record shape)
-                9.5,     // banner (FROM / BILL TO / column labels)
-                10.0,    // entry title
-                9.5,     // entry date
-                9.0,     // entry subtitle (footer note)
-                9.5,     // body (party blocks, table cells)
+                28.0,    // headline (invoice title — modern h1)
+                10.0,    // contact (unused by invoice; kept for the record shape)
+                11.0,    // banner (FROM / BILL TO / table header labels — modern body-bold)
+                11.0,    // entry title
+                11.0,    // entry date
+                10.0,    // entry subtitle (footer caption — modern caption)
+                11.0,    // body (party blocks, table cells — modern body)
                 1.3);    // line spacing
     }
 }

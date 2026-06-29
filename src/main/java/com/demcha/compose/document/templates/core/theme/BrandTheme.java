@@ -320,11 +320,12 @@ public record BrandTheme(Palette palette,
     }
 
     /**
-     * The "Modern Invoice" look — Helvetica, slate ink, a pale-blue
-     * rounded hero panel with a blue accent strip, and light table
-     * rules. The first layered <em>invoice</em> flavour: the invoice
-     * presets read it exactly the way the CV presets read their own
-     * flavours, so the two families share one theme model.
+     * The "Modern Invoice" look — Helvetica on a cream page, a soft-tan
+     * rounded hero panel with a gold accent strip, a deep-teal title and
+     * table header, and light table rules. Mirrors the cinematic business
+     * "modern" theme. The first layered <em>invoice</em> flavour: the
+     * invoice presets read it exactly the way the CV presets read their
+     * own flavours, so the two families share one theme model.
      *
      * @return a {@code BrandTheme} for the "Modern Invoice" look
      */

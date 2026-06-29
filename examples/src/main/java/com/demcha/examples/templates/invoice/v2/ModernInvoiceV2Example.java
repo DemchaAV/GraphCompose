@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.examples.support.ExampleDataFactory;
@@ -36,11 +37,13 @@ public final class ModernInvoiceV2Example {
         Path outputFile = ExampleOutputPaths.prepare(
                 "templates/invoice", "invoice-modern-v2.pdf");
         InvoiceDocumentSpec spec = ExampleDataFactory.sampleInvoice();
-        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create();
+        BrandTheme theme = BrandTheme.invoiceModern();
+        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
 
         float m = (float) ModernInvoice.RECOMMENDED_MARGIN;
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
+                .pageBackground(theme.palette().mainFill())
                 .margin(m, m, m, m)
                 .create()) {
             template.compose(document, spec);

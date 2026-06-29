@@ -336,6 +336,27 @@ public record BrandTheme(Palette palette,
                 Spacing.invoiceModern(),
                 Decoration.classic());
     }
+
+    /**
+     * The "Modern Proposal" look — the same cinematic "modern business"
+     * surfaces as {@link #invoiceModern()} (cream page, soft-tan panels,
+     * deep-teal title + table headers, gold accent) with the richer h1 /
+     * h2 / h3 type scale a proposal needs. Mirrors the cinematic
+     * {@code builtins.ProposalTemplateV2}.
+     *
+     * <p>Reuses the invoice palette + spacing tokens — the two families
+     * share one modern business look; a future cleanup may rename those
+     * shared factories to a neutral {@code businessModern()}.</p>
+     *
+     * @return a {@code BrandTheme} for the "Modern Proposal" look
+     */
+    public static BrandTheme proposalModern() {
+        return new BrandTheme(
+                Palette.invoiceModern(),
+                Typography.proposalModern(),
+                Spacing.invoiceModern(),
+                Decoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

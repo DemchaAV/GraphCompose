@@ -382,4 +382,26 @@ public record Typography(
                 11.0,    // body (party blocks, table cells — modern body)
                 1.3);    // line spacing
     }
+
+    /**
+     * Helvetica scale for the Modern Proposal preset — the same modern
+     * business face as the invoice, with the richer heading ladder a
+     * proposal needs: a 28pt title (h1), 17pt section headings (h2 — the
+     * {@code banner} slot), and a 13pt project subtitle (h3 — the
+     * {@code entryTitle} slot).
+     *
+     * @return a {@code Typography} scale for the Modern Proposal preset
+     */
+    public static Typography proposalModern() {
+        return new Typography(
+                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                28.0,    // headline (proposal title — modern h1)
+                10.0,    // contact (unused by proposal)
+                17.0,    // banner (section headings — modern h2)
+                13.0,    // entry title (project subtitle — modern h3)
+                11.0,    // entry date (unused)
+                10.0,    // entry subtitle (footer caption — modern caption)
+                11.0,    // body (summary, sections, parties, cells — modern body)
+                1.3);    // line spacing
+    }
 }

@@ -344,19 +344,22 @@ function Render-ReadmeBanner {
     # Re-renders assets/readme/repository_showcase_render.png straight from the
     # engine (DocumentSession.toImage, @since 1.9.0) so the hero's version pill
     # carries the just-bumped ${project.version} (read from the filtered
-    # banner.properties). Runs after Run-ShowcaseSync, which already installed the
-    # root artifact into the local m2 cache so the examples module resolves it.
+    # banner.properties). The `compile` is REQUIRED: banner.properties is filtered
+    # at examples-compile time, so the examples module must be recompiled AFTER the
+    # Step-1 version bump — otherwise the banner would carry the previous release
+    # version. Runs after Run-ShowcaseSync, which already installed the bumped root
+    # artifact into the local m2 cache so the examples module resolves it.
     Write-Host "  > Re-render the version-stamped README hero banner" -ForegroundColor Cyan
     $banner = Join-Path $repoRoot 'assets/readme/repository_showcase_render.png'
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ReadmeBannerRenderer"'
     $execArgs = "`"-Dexec.args=$banner`""
     if ($DryRun) {
-        Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java $execProp $execArgs" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml -DskipTests compile exec:java $execProp $execArgs" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
     try {
-        & $mvnw -B -ntp -f examples/pom.xml -DskipTests exec:java $execProp $execArgs 2>&1 | ForEach-Object {
+        & $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp $execArgs 2>&1 | ForEach-Object {
             if ($_ -match 'Rendered README banner|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                 Write-Host "    $_" -ForegroundColor DarkGray
             }

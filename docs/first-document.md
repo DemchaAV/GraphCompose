@@ -12,6 +12,7 @@ with a page flow, and render. No coordinates, no manual page breaks.
 Open a session for a file path, add one page flow, render. The engine handles
 placement and pagination.
 
+<!-- doc-example: id=first-document-smallest mode=method -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -41,6 +42,7 @@ modules, sections, paragraphs, lists, tables, and rows are added top to bottom.
 The same Flow model scales to a multi-section document. There are still no
 coordinates and no manual page breaks — just structure in reading order.
 
+<!-- doc-example: id=first-document-custom mode=method -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;

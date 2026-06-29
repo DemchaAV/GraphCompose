@@ -80,12 +80,10 @@ import com.demcha.examples.templates.cv.v2.CvPanelExample;
 import com.demcha.examples.templates.cv.v2.CvSidebarPortraitExample;
 import com.demcha.examples.templates.cv.v2.CvTimelineMinimalExample;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
-import com.demcha.examples.templates.invoice.InvoiceFileExample;
 import com.demcha.examples.templates.invoice.v2.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
 import com.demcha.examples.templates.proposal.v2.ModernProposalV2Example;
-import com.demcha.examples.templates.proposal.ProposalFileExample;
 import com.demcha.examples.templates.schedule.WeeklyScheduleFileExample;
 
 /**
@@ -138,12 +136,10 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvTimelineMinimalLetterV2Example.generate());
 
         // Invoices
-        System.out.println("Generated: " + InvoiceFileExample.generate());
         System.out.println("Generated: " + InvoiceCinematicFileExample.generate());
         System.out.println("Generated: " + ModernInvoiceV2Example.generate());
 
         // Proposals
-        System.out.println("Generated: " + ProposalFileExample.generate());
         System.out.println("Generated: " + ProposalCinematicFileExample.generate());
         System.out.println("Generated: " + ModernProposalV2Example.generate());
         System.out.println("Generated: " + CinematicProposalFileExample.generate());

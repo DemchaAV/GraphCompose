@@ -127,10 +127,8 @@ are with the canonical DSL, then jump to its detailed section below.
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [Invoice (V1)](#invoice-v1) | `InvoiceTemplateV1` driven from `InvoiceDocumentSpec` — pre-rebuild surface, supported only | [PDF](../assets/readme/examples/invoice.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java) |
-| [Proposal (V1)](#proposal-v1) | `ProposalTemplateV1` driven from `ProposalDocumentSpec` — pre-rebuild surface, supported only | [PDF](../assets/readme/examples/proposal.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java) |
 | [Handcrafted Proposal](#handcrafted-proposal) | v1.4-style cinematic proposal composed by hand — pre-template authoring; kept for parity reference | [PDF](../assets/readme/examples/project-proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) |
-| [Weekly schedule](#weekly-schedule) | Bar / restaurant shift schedule via `WeeklyScheduleRenderer` (`WeeklyScheduleTemplateV1` — no V2 yet; will be re-shaped before 2.0) | [PDF](../assets/readme/examples/weekly-schedule.pdf) · [Source](src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java) |
+| [Weekly schedule](#weekly-schedule) | Bar / restaurant shift schedule via `WeeklyScheduleRenderer` | [PDF](../assets/readme/examples/weekly-schedule.pdf) · [Source](src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java) |
 
 ---
 
@@ -176,45 +174,6 @@ try (DocumentSession document = GraphCompose.document(outputFile)
 
 [📄 View PDF](../assets/readme/examples/cover-letter.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java)
-
-### Invoice (V1)
-
-`InvoiceTemplateV1.compose(document, spec)` handles the full layout —
-header band, parties row, line-items table, totals row, payment-terms
-footer — driven from a `InvoiceDocumentSpec`. Use this when you want
-the legacy hard-coded theme; for V2 cinematic, see below.
-
-```java
-InvoiceDocumentSpec spec = InvoiceDocumentSpec.builder()
-        .invoiceNumber("GC-2026-041")
-        .issueDate("02 Apr 2026")
-        .dueDate("16 Apr 2026")
-        .fromParty(p -> p.name("GraphCompose Studio"))
-        .billToParty(p -> p.name("Northwind Systems"))
-        .lineItem("Template architecture", "Reusable invoice flow", "2", "GBP 980", "GBP 1,960")
-        .totalRow("Total", "GBP 1,960")
-        .build();
-
-try (DocumentSession document = GraphCompose.document(outputFile)
-        .pageSize(DocumentPageSize.A4)
-        .margin(28, 28, 28, 28)
-        .create()) {
-    new InvoiceTemplateV1().compose(document, spec);
-    document.buildPdf();
-}
-```
-
-[📄 View PDF](../assets/readme/examples/invoice.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/templates/invoice/InvoiceFileExample.java)
-
-### Proposal (V1)
-
-`ProposalTemplateV1` rendered against a `ProposalDocumentSpec` —
-sections, scope items, deliverables, sign-off. Pairs naturally with
-`InvoiceTemplateV1` for consistent "spec → PDF" pipelines.
-
-[📄 View PDF](../assets/readme/examples/proposal.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/templates/proposal/ProposalFileExample.java)
 
 ### Module-first profile
 

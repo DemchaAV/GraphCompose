@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
  * {@link DocumentSession}.</p>
  *
  * <pre>{@code
- * ProposalTemplate template = new ProposalTemplateV1();
+ * ProposalTemplate template = new ProposalTemplateV2();
  * ProposalDocumentSpec proposal = ProposalDocumentSpec.builder()
  *         .projectTitle("GraphCompose rollout")
  *         .section("Scope", "Introduce reusable invoice and proposal templates.")

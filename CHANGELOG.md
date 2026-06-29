@@ -305,6 +305,18 @@ PDF `GoTo` actions. External links are unchanged.
   — a paginated catalogue of the entire bundled emoji set (every indexed glyph,
   drawn inline).
 
+### Build
+
+- **The README hero banner is now version-stamped and re-rendered on release.**
+  `EngineDeckExample` reads its version and codename from a filtered
+  `banner.properties` (`@project.version@`) instead of hardcoded constants, and
+  the new `ReadmeBannerRenderer` writes
+  `assets/readme/repository_showcase_render.png` straight from the engine via
+  `DocumentSession.toImage(...)` — no PDF-rasterize round-trip.
+  `cut-release.ps1` re-renders and stages the hero on every tag, and
+  `VersionConsistencyGuardTest` fails the build if the banner version is ever
+  hardcoded again.
+
 ### Tests
 
 - `InternalLinkAnchorTest` (PDFBox assertions): forward and backward references

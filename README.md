@@ -100,6 +100,23 @@ dependencies { implementation("io.github.demchaav:graph-compose:1.8.0") }
 > above) to pull the engine + fonts together. Full details and upgrade steps:
 > the [v1.8.0 fonts migration note](./docs/migration/v1.8.0-fonts.md).
 
+> **Colour emoji (from v1.9.0).** `RichText.emoji(":star:", size)` resolves
+> GitHub-style shortcodes to inline vector glyphs from an independently-versioned
+> companion artifact (the same split model as the fonts above). Text without
+> emoji needs nothing extra; to render colour emoji, add:
+>
+> ```xml
+> <dependency>
+>     <groupId>io.github.demchaav</groupId>
+>     <artifactId>graph-compose-emoji</artifactId>
+>     <version>1.0.0</version>
+> </dependency>
+> ```
+>
+> An unknown shortcode falls back to its literal text, so a document that uses no
+> emoji &mdash; or runs without the artifact &mdash; renders unchanged. The
+> `graph-compose-bundle` stays fonts-only; emoji is opt-in.
+
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
 > (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
 > [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)

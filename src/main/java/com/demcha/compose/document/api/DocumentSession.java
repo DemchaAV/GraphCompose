@@ -475,6 +475,7 @@ public final class DocumentSession implements AutoCloseable {
      * @param rules ordered list of per-page margin overrides, or {@code null}/empty to clear
      * @return this session
      * @throws IllegalStateException if this session has already been closed
+     * @since 1.9.0
      */
     public DocumentSession pageMargins(List<PageMarginRule> rules) {
         ensureOpen();

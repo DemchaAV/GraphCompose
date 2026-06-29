@@ -6,14 +6,14 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.Headline;
 
 /**
- * @deprecated Use
+ * @deprecated since 1.9.0; removed in 2.0. Use
  * {@link com.demcha.compose.document.templates.core.identity.Headline#spacedCentered}
  * instead — the widget gives you a named API plus alignment +
  * spaced-caps variants, while this class only ever did the
  * centred-spaced-caps form. Kept as a thin delegating shim so v2
  * code written before the widgets layer keeps compiling unchanged.
  */
-@Deprecated(forRemoval = true)
+@Deprecated(since = "1.9.0", forRemoval = true)
 public final class HeadlineRenderer {
 
     private HeadlineRenderer() {

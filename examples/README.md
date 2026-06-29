@@ -69,6 +69,9 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
 | [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
+| [Inline highlight chips](#inline-highlight-chips) | `RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg, radius, padding)` — text on a rounded padded fill (inline code + status badges), wrapping across lines | [PDF](../assets/readme/examples/inline-highlight-chips.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java) |
+| [Inline SVG icons](#inline-svg-icons) | `RichText.svgIcon(icon, size)` — a parsed multi-colour `SvgIcon` on the text baseline, crisp at any zoom and carrying its own colours | [PDF](../assets/readme/examples/inline-svg-icons.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java) |
+| [Colour emoji](#colour-emoji) | `RichText.emoji(":star:", size)` — GitHub-style shortcodes resolve to inline vector glyphs via the `graph-compose-emoji` artifact; unknown codes fall back to literal text | [PDF](../assets/readme/examples/emoji-shortcodes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java) |
 | [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
 | [Nested lists](#nested-lists-v16) | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
 | [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
@@ -105,6 +108,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
 | [Viewer preferences](#viewer-preferences) | `chrome().viewerPreferences(...)` — open with the bookmark panel (`USE_OUTLINES`), set page layout, or show the doc title in the window | [PDF](../assets/readme/examples/viewer-preferences.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java) |
+| [In-PDF navigation](#in-pdf-navigation) | `anchor(...)` destinations + internal `linkTo(...)` / `inlineLinkTo(...)` / `shapeLinkTo(...)` — clickable cross-references and footnotes as native PDF GoTo actions; forward references resolve in a deferred pass | [PDF](../assets/readme/examples/in-pdf-navigation.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
 | [Table of contents](#table-of-contents) | `addTableOfContents(toc -> toc.entry(label, anchor))` — a native clickable TOC with dot leaders and auto-resolved page numbers | [PDF](../assets/readme/examples/table-of-contents.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/TocExample.java) |
 | [Container bookmarks](#container-bookmarks) | `section.bookmark(new DocumentBookmarkOptions(title))` — make a section / container a PDF outline (bookmark-panel) target | [PDF](../assets/readme/examples/container-bookmark.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java) |
@@ -642,6 +646,62 @@ via `CheckmarkStyle` / `ArrowStyle`.
 [📄 View PDF](../assets/readme/examples/inline-shapes.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java)
 
+### Inline highlight chips
+
+`RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg,
+radius, padding)` (`@since 1.9.0`) draw text on a rounded, padded background
+fill on the baseline — the GitHub inline `code` look and inline status badges.
+`code` ships engine defaults (monospace + a light chip), `chip` colours a
+badge, and `highlight` is the full primitive. A multi-word highlight wraps
+across lines, painting one continuous rounded fill per visual fragment. On
+`ParagraphBuilder` the calls are `inlineCode` / `inlineChip` / `inlineHighlight`.
+
+```java
+.addRich(rich -> rich
+        .plain("Run ").code("./mvnw verify").plain(" — status ")
+        .chip(" Paid ", paidFg, paidBg)
+        .highlight("rounded", style, fill, 8.0, DocumentInsets.symmetric(2, 8)))
+```
+
+[📄 View PDF](../assets/readme/examples/inline-highlight-chips.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java)
+
+### Inline SVG icons
+
+`RichText.svgIcon(icon, size)` / `ParagraphBuilder.inlineSvgIcon(...)`
+(`@since 1.9.0`) place a parsed `SvgIcon` on the text baseline, so multi-colour
+vector glyphs flow inside a line of text — crisp at any zoom, carrying their own
+colours, with no dependence on the active font's glyph coverage. `size` is the
+glyph height in points; width follows the icon's aspect ratio. This is the
+engine path behind vector colour emoji.
+
+```java
+.addRich(rich -> rich
+        .svgIcon(check, 10).plain(" Deploy succeeded   ")
+        .svgIcon(warn, 10).plain(" Disk almost full"))
+```
+
+[📄 View PDF](../assets/readme/examples/inline-svg-icons.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java)
+
+### Colour emoji
+
+`RichText.emoji(":star:", size)` / `ParagraphBuilder.inlineEmoji(...)`
+(`@since 1.9.0`) resolve a GitHub-style shortcode to an inline vector colour
+glyph on the baseline — crisp at any zoom, no emoji font required. Glyphs come
+from the `graph-compose-emoji` companion artifact on the classpath. Resolution
+is lenient: an unknown shortcode falls back to its literal text, exactly the way
+GitHub renders an unrecognised `:code:`.
+
+```java
+.addRich(rich -> rich
+        .plain("Ship it ").emoji(":rocket:", 11).plain(" ")
+        .emoji(":white_check_mark:", 11).plain(" ").emoji(":tada:", 11))
+```
+
+[📄 View PDF](../assets/readme/examples/emoji-shortcodes.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java)
+
 ### Section presets
 
 `pageBackground`, `band`, `softPanel`, the four
@@ -779,6 +839,25 @@ document.chrome().viewerPreferences(DocumentViewerPreferences.builder()
 
 [📄 View PDF](../assets/readme/examples/viewer-preferences.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java)
+
+### In-PDF navigation
+
+`anchor(name)` marks a destination on a section, paragraph, or inline run;
+`linkTo(label, style, anchor)` / `inlineLinkTo(text, anchor)` /
+`shapeLinkTo(shape, color, anchor)` (`@since 1.9.0`) jump to it as native PDF
+`GoTo` actions — a clickable table of contents, `[text](#heading)`-style links,
+and bidirectional footnotes. Anchors resolve in a deferred pass, so a link may
+target an anchor that appears later in the document (a forward reference).
+External `link(label, new DocumentLinkOptions(url))` is unchanged.
+
+```java
+.addRich(RichText.text("See the ").linkTo("overview", linkStyle, "overview"))
+// …further down…
+.addSection("Overview", s -> s.anchor("overview") /* … */)
+```
+
+[📄 View PDF](../assets/readme/examples/in-pdf-navigation.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java)
 
 ### Page references
 

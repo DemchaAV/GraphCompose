@@ -50,6 +50,10 @@ benchmarks/logs/
 # preview PDFs (hello/invoice/cv) bundled with site/public/previews/.
 !site/public/showcase/**/*.pdf
 !site/public/previews/*.pdf
+# Same whitelist for the live GitHub Pages showcase under web/. The showcase
+# moved out of docs/ into web/ but this list was not updated, so every newly
+# added example PDF was silently ignored and 404'd on the deployed site.
+!web/showcase/**/*.pdf
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf

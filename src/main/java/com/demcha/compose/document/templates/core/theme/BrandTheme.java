@@ -341,8 +341,8 @@ public record BrandTheme(Palette palette,
      * The "Modern Proposal" look — the same cinematic "modern business"
      * surfaces as {@link #invoiceModern()} (cream page, soft-tan panels,
      * deep-teal title + table headers, gold accent) with the richer h1 /
-     * h2 / h3 type scale a proposal needs. Mirrors the cinematic
-     * {@code builtins.ProposalTemplateV2}.
+     * h2 / h3 type scale a proposal needs. Drives the cinematic
+     * {@code ModernProposal} preset.
      *
      * <p>Reuses the invoice palette + spacing tokens — the two families
      * share one modern business look; a future cleanup may rename those

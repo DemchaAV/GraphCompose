@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * <p>Each preset renders the same canonical {@link InvoiceDocumentSpec}
  * on A4 at the preset's {@code RECOMMENDED_MARGIN}; the PDF is rasterised
  * page-by-page and compared per-pixel against a checked-in baseline PNG.
- * {@code ModernInvoice} reproduces the cinematic {@code InvoiceTemplateV2}
+ * {@code ModernInvoice} renders the cinematic "modern business" invoice
  * look on a {@code BrandTheme}, so this gate locks that look against drift.</p>
  *
  * <p><strong>Re-blessing baselines</strong> — after a deliberate visual

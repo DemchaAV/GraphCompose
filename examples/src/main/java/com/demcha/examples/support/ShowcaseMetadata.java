@@ -100,7 +100,6 @@ final class ShowcaseMetadata {
         feature("transforms", "transforms", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
         feature("text", "section-presets", "Section Presets", "Pre-baked section bands, accent strips, soft panels for templates.", "text", "sections");
-        feature("themes", "invoice-custom-theme", "Custom BusinessTheme", "Authoring a custom palette + typography scale and feeding it through templates.", "themes");
         feature("barcodes", "barcode-showcase", "Barcodes & QR", "QR code, Code128, EAN-13, PDF417 — every supported barcode + per-barcode styling.", "barcodes", "qr");
         feature("chrome", "pdf-chrome", "PDF Chrome", "Headers, footers, watermarks, metadata, document protection / encryption.", "chrome", "metadata", "watermark");
         feature("streaming", "invoice-http-stream", "HTTP Streaming", "Stream PDF directly to a Servlet response with no buffering.", "streaming", "http");
@@ -140,7 +139,6 @@ final class ShowcaseMetadata {
             case "features/transforms" -> "Transforms & Layers";
             case "features/text" -> "Rich Text";
             case "features/barcodes" -> "Barcodes & QR";
-            case "features/themes" -> "Themes";
             case "features/chrome" -> "PDF Chrome (header / footer / watermark)";
             case "features/streaming" -> "Streaming & I/O";
             case "features/snapshots" -> "Snapshot Testing";
@@ -205,7 +203,6 @@ final class ShowcaseMetadata {
             case "shapes" -> id.equals("photo-clip") ? "shapes/PhotoClipExample.java" : "shapes/ShapeContainerExample.java";
             case "transforms" -> "transforms/TransformsExample.java";
             case "text" -> id.equals("section-presets") ? "text/SectionPresetsExample.java" : "text/RichTextShowcaseExample.java";
-            case "themes" -> "themes/CustomBusinessThemeExample.java";
             case "barcodes" -> "barcodes/BarcodeShowcaseExample.java";
             case "chrome" -> "chrome/PdfChromeExample.java";
             case "streaming" -> "streaming/HttpStreamingExample.java";

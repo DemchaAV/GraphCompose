@@ -30,12 +30,11 @@ import java.util.Objects;
  * {@code create(BrandTheme)} factory returns a thin
  * {@link DocumentTemplate} whose {@code compose} sequences a hero panel,
  * the FROM / BILL&nbsp;TO parties, the line-items table, and a notes /
- * payment-terms footer. The visual intent is ported from the cinematic
- * {@code builtins.InvoiceTemplateV2}; the hero, party labels, table
- * header, totals, and footer read their colours / fonts / sizes from the
- * theme (replacing the {@code BusinessTheme} the builtin used). The
- * line-item body cells intentionally inherit the DSL default table-cell
- * text to stay a pixel match for the builtin — see {@code compose}.</p>
+ * payment-terms footer. The visual intent is the cinematic "modern
+ * business" invoice look, fully theme-driven: the hero, party labels,
+ * table header, totals, and footer read their colours / fonts / sizes
+ * from the {@code BrandTheme}. The line-item body cells intentionally
+ * inherit the DSL default table-cell text — see {@code compose}.</p>
  *
  * <p><strong>Why the parties render inline rather than through
  * {@code core.identity.PartyIdentity}:</strong> an invoice carries two

@@ -91,7 +91,6 @@ are with the canonical DSL, then jump to its detailed section below.
 | [CV — template gallery](#cv-template-gallery) | The v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java) |
 | [Cover letter — template gallery](#cover-letter-template-gallery) | All paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java) |
 | [Proposal — cinematic V2](#proposal-cinematic-v2) | `ProposalTemplateV2 + BusinessTheme.modern()` | [PDF](../assets/readme/examples/proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java) |
-| [Custom Business Theme](#custom-business-theme) | Hand-built `BusinessTheme` driving `InvoiceTemplateV2` — theme-token customisation entry point | [PDF](../assets/readme/examples/invoice-custom-theme.pdf) · [Source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |
 
 ### 🔧 Advanced SPI
 
@@ -535,26 +534,6 @@ table.columns(...)
 
 [📄 View PDF](../assets/readme/examples/table-advanced.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java)
-
-### Custom Business Theme
-
-Build a `BusinessTheme` from raw `DocumentPalette` / `SpacingScale` /
-`TextScale` / `TablePreset` records — no factory shortcut. Plug it
-straight into `InvoiceTemplateV2` to retheme the whole template
-without touching any code that uses it.
-
-```java
-BusinessTheme studioEmerald = new BusinessTheme(
-        new DocumentPalette(/* page, surface, surfaceMuted, ink, accent, … */),
-        SpacingScale.cinematic(),
-        new TextScale(/* h1, h2, body, caption fonts … */),
-        TablePreset.cinematic());
-
-new InvoiceTemplateV2(studioEmerald).compose(document, invoice);
-```
-
-[📄 View PDF](../assets/readme/examples/invoice-custom-theme.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java)
 
 ---
 

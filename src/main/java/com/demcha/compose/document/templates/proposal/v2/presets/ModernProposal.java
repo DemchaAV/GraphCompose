@@ -32,13 +32,11 @@ import java.util.Objects;
  * {@link DocumentTemplate} whose {@code compose} sequences a hero panel,
  * an executive-summary panel, the FROM / TO parties, the body sections,
  * the timeline + pricing tables, the acceptance terms, and a footer. The
- * visual intent is ported from the cinematic
- * {@code builtins.ProposalTemplateV2}; the hero, summary, party labels,
- * section headings, table headers, totals, and footer read their colours
- * / fonts / sizes from the theme (replacing the {@code BusinessTheme} the
- * builtin used). The table body cells intentionally inherit the DSL
- * default table-cell text to stay a pixel match for the builtin — see
- * {@code compose}.</p>
+ * visual intent is the cinematic "modern business" proposal look, fully
+ * theme-driven: the hero, summary, party labels, section headings, table
+ * headers, totals, and footer read their colours / fonts / sizes from the
+ * {@code BrandTheme}. The table body cells intentionally inherit the DSL
+ * default table-cell text — see {@code compose}.</p>
  *
  * <p><strong>Why the parties render inline rather than through
  * {@code core.identity.PartyIdentity}:</strong> a proposal carries two
@@ -213,11 +211,9 @@ public final class ModernProposal {
                                     data.sender(), labelStyle, bodyStyle))
                             .addSection("ProposalRecipient", col -> partyBlock(col, "TO",
                                     data.recipient(), labelStyle, bodyStyle)))
-                    // NB: the cinematic builtin ProposalTemplateV2 omits this build()
-                    // on its first page-flow, so its hero / summary / parties never
-                    // render — a latent bug. The layered preset fixes it: build the
-                    // root flow so the title, executive summary, and FROM/TO parties
-                    // are emitted before the section/timeline/pricing flows below.
+                    // Build the root page-flow so the title, executive summary, and
+                    // FROM/TO parties are emitted before the section/timeline/pricing
+                    // flows below — without this build() the root flow's content drops.
                     .build();
 
             for (ProposalSection section : data.sections()) {

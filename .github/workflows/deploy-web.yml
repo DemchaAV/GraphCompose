@@ -10,19 +10,19 @@ name: Deploy web showcase to GitHub Pages
 # (one-time switch from "Deploy from a branch"). Until that switch is made,
 # this workflow builds the artifact but Pages keeps serving the old source.
 #
-# Triggers: every push to `main` AND every `v*` release tag. The tag trigger
-# is the reliable one for releases — the v1.8.0 release fast-forwarded `main`
-# with 67 changed `web/` files yet the old `paths: web/**` filter silently
-# skipped the deploy, so the live site kept serving the previous release. We
-# dropped the paths filter rather than depend on it: `main` is only pushed at
-# releases / hotfixes, so deploying unconditionally is cheap and correct, and
-# the `v*` tag is a second guaranteed trigger. `concurrency` de-dupes the two
-# triggers a release fires.
+# Triggers: every push to `main` (no `paths` filter). `main` is only pushed at
+# releases / hotfixes, so deploying unconditionally is cheap and correct — the
+# v1.8.0 release fast-forwarded `main` with 67 changed `web/` files yet the old
+# `paths: web/**` filter silently skipped the deploy, leaving the live site on
+# the previous release. A `v*` tag trigger was tried as a backup but removed:
+# GitHub Pages refuses to deploy from a tag ref (the `github-pages` environment
+# only allows `main`), so it failed every release without ever deploying — and
+# via `cancel-in-progress` could even cancel the good `main` run. The
+# unconditional `main` trigger covers releases reliably on its own.
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:

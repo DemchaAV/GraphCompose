@@ -26,7 +26,7 @@ import com.demcha.compose.document.api.DocumentSession;
  * </ul>
  *
  * @param <S> the spec type rendered by this template (e.g. {@code CvDocument},
- *            {@code InvoiceSpec}, {@code ProposalSpec})
+ *            {@code InvoiceDocumentSpec}, {@code ProposalDocumentSpec})
  */
 public interface DocumentTemplate<S> {
 

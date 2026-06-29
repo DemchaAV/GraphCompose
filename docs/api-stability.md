@@ -177,8 +177,6 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 | Element | Tier now | Status | Why the 1.x shape is a compromise | 2.0 action | ADR | Issue |
 |---|---|---|---|---|---|---|
 | `DocumentSession.pageMargins(List<PageMarginRule>)` / `PageMarginRule` | Stable | planned | Per-page margins resolve a block's content width by the page it *begins* on (the engine measures each block once, before pagination). A margin that changes the content width therefore does not re-wrap a block mid-flow across a page boundary. | Revisit a page-aware per-line/per-fragment width model so a block can re-wrap when it crosses a margin boundary, if demand warrants. | — | — |
-| `templates.api.CoverLetterTemplate` | Stable | deprecated 1.9 | Orphan interface — nothing implements it; cover-letter presets implement the generic `DocumentTemplate<CoverLetterDocumentSpec>` seam. | Remove; callers implement `DocumentTemplate<CoverLetterDocumentSpec>`. | — | — |
-| `templates.cv.v2.components.HeadlineRenderer` / `ContactRenderer` / `BannerRenderer` | Stable | deprecated 1.9 | Pre-widgets delegating shims superseded by the `Headline` / `ContactLine` / `SectionHeader` widgets; no callers. | Remove; use the widgets. | — | — |
 
 ---
 

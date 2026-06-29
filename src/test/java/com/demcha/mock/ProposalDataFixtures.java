@@ -47,14 +47,14 @@ public final class ProposalDataFixtures {
                                 repeatSentence("Weekly checkpoints will focus on visual deltas, example ergonomics, and whether the generated outputs are understandable for both library consumers and internal maintainers.", 4),
                                 repeatSentence("Each milestone includes a review of template polish, code readability, and whether the generated examples are strong enough to support README and demo usage.", 4)))),
                 List.of(
-                        new ProposalTimelineItem("Week 1", "5 days", "API alignment, DTO modeling, invoice template implementation, and review-ready render tests."),
-                        new ProposalTimelineItem("Week 2", "5 days", "Proposal template implementation, long-content pagination verification, and examples module setup."),
-                        new ProposalTimelineItem("Week 3", "3 days", "README refresh, final PDF review, and delivery handoff package.")),
+                        new ProposalTimelineItem("Week 1", "5 days", "API alignment, DTO modeling, render tests."),
+                        new ProposalTimelineItem("Week 2", "5 days", "Proposal template + pagination checks."),
+                        new ProposalTimelineItem("Week 3", "3 days", "README refresh, final review, handoff.")),
                 List.of(
-                        new ProposalPricingRow("Foundation", "Public template APIs, DTOs, and cleanup of devtool production scope.", "GBP 3,200", false),
-                        new ProposalPricingRow("Template delivery", "Invoice and proposal layouts with render tests and polished defaults.", "GBP 4,450", false),
-                        new ProposalPricingRow("Examples package", "Runnable examples module, sample data, and usage documentation.", "GBP 1,850", false),
-                        new ProposalPricingRow("Total investment", "Fixed-price delivery for the agreed scope.", "GBP 9,500", true)),
+                        new ProposalPricingRow("Foundation", "Public template APIs and cleanup.", "GBP 3,200", false),
+                        new ProposalPricingRow("Template delivery", "Invoice and proposal layouts + tests.", "GBP 4,450", false),
+                        new ProposalPricingRow("Examples package", "Runnable examples module + docs.", "GBP 1,850", false),
+                        new ProposalPricingRow("Total investment", "Fixed-price delivery, agreed scope.", "GBP 9,500", true)),
                 List.of(
                         "Proposal pricing is valid until the stated expiration date.",
                         "Any additional template families beyond the agreed four examples are scoped separately.",

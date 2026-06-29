@@ -3,19 +3,20 @@ package com.demcha.examples.templates.invoice;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
 import java.nio.file.Path;
 
 /**
- * Phase E.1 — runnable showcase for {@code InvoiceTemplateV2}, the
- * cinematic theme-driven invoice template. Renders the same
- * {@link com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec}
- * as the v1 template through the modern business theme so reviewers can
- * compare the two outputs side by side.
+ * Runnable showcase for the cinematic invoice look on the layered
+ * {@code invoice.v2} surface — {@link ModernInvoice} on
+ * {@link BrandTheme#invoiceModern()}, rendering the shared
+ * {@link InvoiceDocumentSpec} sample on the cream page background.
  *
  * @author Artem Demchyshyn
  */
@@ -26,12 +27,12 @@ public final class InvoiceCinematicFileExample {
 
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("templates/invoice", "invoice-cinematic.pdf");
-        BusinessTheme theme = BusinessTheme.modern();
-        InvoiceTemplateV2 template = new InvoiceTemplateV2(theme);
+        BrandTheme theme = BrandTheme.invoiceModern();
+        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
 
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(theme.palette().mainFill())
                 .margin(28, 28, 28, 28)
                 .create()) {
             template.compose(document, ExampleDataFactory.sampleInvoice());

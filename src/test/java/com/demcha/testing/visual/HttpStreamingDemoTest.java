@@ -4,9 +4,9 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ class HttpStreamingDemoTest {
 
         byte[] bufferedBytes;
         try (DocumentSession document = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern())
+            ModernInvoice.create()
                     .compose(document, sampleInvoice());
             bufferedBytes = document.toPdfBytes();
         }
@@ -86,17 +86,16 @@ class HttpStreamingDemoTest {
 
     private static void renderInvoice(OutputStream sink) throws Exception {
         try (DocumentSession document = newSession()) {
-            new InvoiceTemplateV2(BusinessTheme.modern())
+            ModernInvoice.create()
                     .compose(document, sampleInvoice());
             document.writePdf(sink);
         }
     }
 
     private static DocumentSession newSession() {
-        BusinessTheme theme = BusinessTheme.modern();
         return GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(BrandTheme.invoiceModern().palette().mainFill())
                 .margin(DocumentInsets.of(28))
                 .create();
     }

@@ -7,7 +7,6 @@
  * authoring/runtime layers in {@code com.demcha.compose.document.*}. Most
  * applications should consume the public template interfaces instead of these
  * support types directly. Common composition primitives live in
- * {@code support.common}; domain scene composers live in packages such as
- * {@code support.cv}, {@code support.business}, and {@code support.schedule}.</p>
+ * {@code support.common}.</p>
  */
 package com.demcha.compose.document.templates.support;

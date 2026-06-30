@@ -3,16 +3,13 @@ package com.demcha.compose.document.templates;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceData;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.data.coverletter.JobDetails;
 import com.demcha.compose.document.templates.data.proposal.ProposalData;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.font.FontName;
-import com.demcha.mock.CoverLetterMock;
 import com.demcha.mock.InvoiceDataFixtures;
 import com.demcha.mock.ProposalDataFixtures;
 import com.demcha.mock.WeeklyScheduleDataFixtures;
@@ -48,21 +45,6 @@ public final class TemplateTestSupport {
             "target", "visual-tests", "layout-snapshots", "canonical-templates");
 
     private TemplateTestSupport() {
-    }
-
-    public static String coverLetter(String companyName) {
-        return CoverLetterMock.letter.replace("${companyName}", companyName);
-    }
-
-    public static JobDetails jobDetails(String companyName) {
-        return new JobDetails(
-                "https://linkedin.com/jobs/view/visual-test",
-                "Software Engineer",
-                companyName,
-                "Remote",
-                "Visual verification test",
-                "Mid",
-                "Full-time");
     }
 
     public static InvoiceData canonicalInvoiceData() {

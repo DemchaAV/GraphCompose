@@ -15,10 +15,6 @@
  *       sub-heading, body, small body, caption).</li>
  * </ul>
  *
- * <p>Future Templates v2 phases will add {@code Palette} (full colour
- * tokens) and migrate {@code BusinessTheme} from the legacy
- * {@code templates.theme} package alongside these tokens.</p>
- *
  * <p>This package is purely value-record types; it has no dependencies on
  * the templates engine, the layout compiler, or any session-side state.</p>
  *

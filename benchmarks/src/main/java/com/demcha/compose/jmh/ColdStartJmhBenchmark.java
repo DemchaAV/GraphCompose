@@ -5,11 +5,10 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
-import com.demcha.compose.document.templates.cv.spec.CvSpec;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
-import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -57,8 +56,8 @@ public class ColdStartJmhBenchmark {
 
     private InvoiceDocumentSpec invoice;
     private DocumentTemplate<InvoiceDocumentSpec> invoiceTemplate;
-    private CvSpec cv;
-    private DocumentTemplate<CvSpec> cvTemplate;
+    private CvDocument cv;
+    private DocumentTemplate<CvDocument> cvTemplate;
 
     /** Builds the specs and templates once per fork, outside the measured cold shot. */
     @Setup
@@ -66,7 +65,7 @@ public class ColdStartJmhBenchmark {
         invoice = CanonicalBenchmarkSupport.canonicalInvoice();
         invoiceTemplate = ModernInvoice.create();
         cv = CanonicalBenchmarkSupport.canonicalCv();
-        cvTemplate = ModernProfessional.create(BusinessTheme.modern());
+        cvTemplate = ModernProfessional.create();
     }
 
     /**

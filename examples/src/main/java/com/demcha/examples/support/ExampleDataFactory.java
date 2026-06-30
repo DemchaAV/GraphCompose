@@ -11,7 +11,6 @@ import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
 import com.demcha.compose.document.templates.data.common.EmailYaml;
 import com.demcha.compose.document.templates.data.common.Header;
-import com.demcha.compose.document.templates.data.coverletter.CoverLetterDocumentSpec;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
@@ -62,33 +61,6 @@ public final class ExampleDataFactory {
                         .build())
                 .linkedIn("https://linkedin.com/in/jordan-rivera-demo", "LinkedIn")
                 .gitHub("https://github.com/jrivera-demo", "GitHub")
-                .build();
-    }
-
-    public static String sampleCoverLetter() {
-        return """
-                Hiring team at ${companyName},
-
-                I am excited to share my interest in the Senior Platform Engineer role. My recent work has focused on building reusable document-generation systems that balance public API design, render quality, and maintainability.
-
-                I enjoy translating fuzzy workflow requirements into clear template abstractions, reliable test coverage, and examples that make adoption easier for the rest of the team.
-
-                I would welcome the opportunity to bring that same mix of engineering rigor and product thinking to your platform group.
-                """;
-    }
-
-    public static CoverLetterDocumentSpec sampleCoverLetterDocument() {
-        return CoverLetterDocumentSpec.builder()
-                .header(sampleHeader())
-                .letter(sampleCoverLetter())
-                .job(job -> job
-                        .url("https://northwind.example/jobs/platform")
-                        .title("Senior Platform Engineer")
-                        .company("Northwind Systems")
-                        .location("London / Remote")
-                        .description("Lead reusable internal platform capabilities.")
-                        .seniorityLevel("Senior")
-                        .employmentType("Full-time"))
                 .build();
     }
 

@@ -205,9 +205,9 @@ public final class MasterShowcaseExample {
                                     .plain(", ")
                                     .bold("advanced tables (row span, zebra, totals, repeating header)")
                                     .plain(", and two cinematic templates ")
-                                    .accent("InvoiceTemplateV2 / ProposalTemplateV2", BRAND)
+                                    .accent("ModernInvoice / ModernProposal", BRAND)
                                     .plain(" driven by ")
-                                    .accent("BusinessTheme", BRAND)
+                                    .accent("BrandTheme", BRAND)
                                     .plain(".")))
 
                     // ───── Quarterly numbers — full advanced table ─────
@@ -281,8 +281,8 @@ public final class MasterShowcaseExample {
                             .weights(1, 1, 1)
                             .addSection("Card1", section -> highlightCard(section,
                                     "Cinematic templates",
-                                    "InvoiceTemplateV2",
-                                    "Same data renders through classic / modern / executive themes — switch the constructor argument, ship a new look."))
+                                    "ModernInvoice",
+                                    "Same data renders through a BrandTheme — pass a different theme to create(...), ship a new look."))
                             .addSection("Card2", section -> highlightCard(section,
                                     "Shape-as-container",
                                     "addCircle + clip path",

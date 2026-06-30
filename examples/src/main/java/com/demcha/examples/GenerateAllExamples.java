@@ -39,7 +39,6 @@ import com.demcha.examples.features.navigation.TocExample;
 import com.demcha.examples.features.structure.MultiSectionExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
-import com.demcha.examples.features.themes.CustomBusinessThemeExample;
 import com.demcha.examples.features.title.BookTemplateExample;
 import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
@@ -186,7 +185,6 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + MultiSectionExample.generate());
 
         // Theming + chrome
-        System.out.println("Generated: " + CustomBusinessThemeExample.generate());
         System.out.println("Generated: " + PdfChromeExample.generate());
         System.out.println("Generated: " + PageNumberingExample.generate());
         System.out.println("Generated: " + ViewerPreferencesExample.generate());

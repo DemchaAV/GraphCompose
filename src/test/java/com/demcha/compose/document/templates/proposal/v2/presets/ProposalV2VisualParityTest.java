@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * <p>Each preset renders the same canonical {@link ProposalDocumentSpec}
  * on A4 at the preset's {@code RECOMMENDED_MARGIN}; the PDF is rasterised
  * page-by-page and compared per-pixel against a checked-in baseline PNG.
- * {@code ModernProposal} reproduces the cinematic {@code ProposalTemplateV2}
+ * {@code ModernProposal} renders the cinematic "modern business" proposal
  * look on a {@code BrandTheme}, so this gate locks that look against drift.</p>
  *
  * <p><strong>Re-blessing baselines</strong> — after a deliberate visual

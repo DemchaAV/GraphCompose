@@ -14,10 +14,8 @@ import com.demcha.compose.document.api.DocumentSession;
  * <ul>
  *   <li>Implementations are plain factory-style classes — a static
  *       {@code create(theme)} method returns a configured
- *       {@code DocumentTemplate<S>}. The theme type is the family's own:
- *       the layered cv / cover-letter presets take a {@code BrandTheme};
- *       the layered invoice / proposal presets take a
- *       {@code BusinessTheme}.</li>
+ *       {@code DocumentTemplate<S>}, where the theme is a {@code BrandTheme}
+ *       (each layered family exposes its own {@code BrandTheme} factory).</li>
  *   <li>Implementations are stateless after construction — composing the
  *       same spec twice produces the same output.</li>
  *   <li>Implementations do not call {@code session.buildPdf()}; the caller

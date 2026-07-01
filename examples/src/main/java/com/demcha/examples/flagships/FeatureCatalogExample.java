@@ -30,7 +30,7 @@ import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapePoint;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.svg.SvgPath;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 

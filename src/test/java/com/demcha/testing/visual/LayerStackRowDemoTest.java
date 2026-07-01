@@ -16,7 +16,6 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
@@ -48,7 +47,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class LayerStackRowDemoTest {
 
-    private static final BusinessTheme THEME = BusinessTheme.modern();
     private static final DocumentColor DARK = DocumentColor.rgb(28, 32, 44);
     private static final DocumentColor SIDEBAR_BG = DocumentColor.rgb(244, 240, 232);
 
@@ -114,9 +112,9 @@ class LayerStackRowDemoTest {
         return new SectionNode(
                 "Sidebar",
                 List.of(
-                        paragraph("CONTACT", THEME.text().h3()),
-                        paragraph("hello@example.com", THEME.text().body()),
-                        paragraph("+44 20 5555 1000", THEME.text().body())),
+                        paragraph("CONTACT", DemoStyles.H3),
+                        paragraph("hello@example.com", DemoStyles.BODY),
+                        paragraph("+44 20 5555 1000", DemoStyles.BODY)),
                 6.0,
                 DocumentInsets.of(20),
                 DocumentInsets.zero(),
@@ -128,12 +126,12 @@ class LayerStackRowDemoTest {
         return new SectionNode(
                 "Main",
                 List.of(
-                        paragraph("Jordan Rivera", THEME.text().h1()),
-                        paragraph("Principal Engineer", THEME.text().h3()),
+                        paragraph("Jordan Rivera", DemoStyles.H1),
+                        paragraph("Principal Engineer", DemoStyles.H3),
                         paragraph(
                                 "Builds engine internals and document layouts that other "
                                         + "engineers can extend without reading the source.",
-                                THEME.text().body())),
+                                DemoStyles.BODY)),
                 10.0,
                 DocumentInsets.of(30),
                 DocumentInsets.zero(),

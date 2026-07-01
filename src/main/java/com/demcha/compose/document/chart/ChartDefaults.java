@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Built-in, theme-independent defaults for the chart subsystem.
  *
- * <p>The active {@code BusinessTheme} is baked into nodes at authoring time and
+ * <p>The active theme is baked into nodes at authoring time and
  * is not reachable during the layout pass, so a chart must be able to render
  * fully styled from these constants alone. A future enhancement can let the DSL
  * builder resolve a document-matched {@link ChartTheme} at authoring time; until

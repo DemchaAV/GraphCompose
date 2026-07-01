@@ -3,7 +3,6 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
-import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DevelopTest {
 
-    private static final BusinessTheme THEME = BusinessTheme.modern();
 
     @Test
     void scratch() throws Exception {
@@ -48,20 +46,20 @@ class DevelopTest {
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
-                .pageBackground(THEME.pageBackground())
+                .pageBackground(DemoStyles.PAGE_BACKGROUND)
                 .margin(DocumentInsets.of(28))
                 .create()) {
 
             document.pageFlow(page -> page
                     .addSection("Hero", section -> section
-                            .softPanel(THEME.palette().surfaceMuted(), 10, 14)
-                            .accentLeft(THEME.palette().accent(), 4)
+                            .softPanel(DemoStyles.SURFACE_MUTED, 10, 14)
+                            .accentLeft(DemoStyles.ACCENT, 4)
                             .addParagraph(p -> p.text("DevelopTest")
-                                    .textStyle(THEME.text().h1()))
+                                    .textStyle(DemoStyles.H1))
                             .addParagraph(p -> p.text(
                                             "Scratch space for manual API experiments. "
                                                     + "Render -> open -> think -> iterate.")
-                                    .textStyle(THEME.text().body())))
+                                    .textStyle(DemoStyles.BODY)))
 
                     .addSection("Body", section -> section
                             .addParagraph(p -> p.text(
@@ -69,7 +67,7 @@ class DevelopTest {
                                                     + "After v1.6.2: emoji, dots, unicode are safe. "
                                                     + "After v1.7+: .h1(), .addFieldRow(), .twoColumn(), "
                                                     + ".addHeadingBar(), .ratingDots(), .pageTopBand().")
-                                    .textStyle(THEME.text().body()))));
+                                    .textStyle(DemoStyles.BODY))));
 
             Files.write(output, document.toPdfBytes());
         }

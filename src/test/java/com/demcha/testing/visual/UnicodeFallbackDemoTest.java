@@ -11,7 +11,6 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
-import com.demcha.compose.document.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class UnicodeFallbackDemoTest {
 
-    private static final BusinessTheme THEME = BusinessTheme.modern();
     private static final DocumentColor INK = DocumentColor.rgb(34, 38, 50);
     private static final DocumentColor MUTED = DocumentColor.rgb(112, 116, 128);
 
@@ -52,7 +50,7 @@ class UnicodeFallbackDemoTest {
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
-                .pageBackground(THEME.pageBackground())
+                .pageBackground(DemoStyles.PAGE_BACKGROUND)
                 .margin(DocumentInsets.of(36))
                 .create()) {
 
@@ -75,7 +73,7 @@ class UnicodeFallbackDemoTest {
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
-                .pageBackground(THEME.pageBackground())
+                .pageBackground(DemoStyles.PAGE_BACKGROUND)
                 .margin(DocumentInsets.of(36))
                 .create()) {
 
@@ -101,7 +99,7 @@ class UnicodeFallbackDemoTest {
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
-                .pageBackground(THEME.pageBackground())
+                .pageBackground(DemoStyles.PAGE_BACKGROUND)
                 .margin(DocumentInsets.of(36))
                 .create()) {
 
@@ -132,7 +130,7 @@ class UnicodeFallbackDemoTest {
 
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
-                .pageBackground(THEME.pageBackground())
+                .pageBackground(DemoStyles.PAGE_BACKGROUND)
                 .margin(48, 34, 48, 34)
                 .create()) {
 

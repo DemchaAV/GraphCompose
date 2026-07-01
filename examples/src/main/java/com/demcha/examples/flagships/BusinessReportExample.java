@@ -11,7 +11,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 

@@ -1,4 +1,4 @@
-package com.demcha.compose.document.theme;
+package com.demcha.examples.support.theme;
 
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableStyle;

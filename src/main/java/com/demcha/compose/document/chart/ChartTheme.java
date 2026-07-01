@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  * Chart-specific design tokens, the TOP tier of the style cascade
  * ({@code theme → ChartStyle → per-series}). A built-in default lives in
- * {@link ChartDefaults#DEFAULT_THEME}; a future {@code BusinessTheme} integration
+ * {@link ChartDefaults#DEFAULT_THEME}; a future document-theme integration
  * can supply a document-matched instance at authoring time so a chart authored
  * with no {@link ChartStyle} still matches the document's palette and typography
  * automatically.

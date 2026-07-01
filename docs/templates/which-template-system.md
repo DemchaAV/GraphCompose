@@ -1,238 +1,130 @@
 # Which template system should I use?
 
-**Short answer.** For any **new** code on GraphCompose 1.6.x and later, use
-the [**layered**](v2-layered/README.md) template surface
-(`com.demcha.compose.document.templates.cv.*`, paired with
-`*Letter` cover-letter presets in `…coverletter.v2.*`). The older
-[**classic**](v1-classic/README.md) surface still ships, still works,
-and stays supported through the 1.x line, but **the layered surface is
-the path forward** and is the only template family that will be in
-GraphCompose 2.0.
+**Short answer.** There is one: the [**layered**](v2-layered/README.md)
+template surface — `com.demcha.compose.document.templates.{cv, coverletter,
+invoice, proposal}`, every preset a final class with a
+`create(BrandTheme)` factory returning a `DocumentTemplate<…>`. GraphCompose
+2.0 ships no other template system.
 
-This page is the decision guide. It exists because the project ships
-**two parallel canonical template surfaces** today, with confusingly
-similar names, and a new contributor needs to know which one to read
-and which one to write against.
+Through the 1.x line this page was a decision guide between two parallel
+surfaces. On the 2.0 line the decision is gone; what remains here is the
+naming history (so old commit messages and ADRs still make sense) and the
+migration map for callers arriving from a pre-2.0 surface.
 
 ---
 
-## 0. The naming, once
+## 1. The naming, once
 
-The two surfaces have collided naming because the *codebase* and the
-*docs* labelled them at different points in time:
+Two template generations coexisted through 1.x, with confusingly similar
+names. Both older labels refer to surfaces that **no longer exist in 2.0**:
 
-| What you'll see | Where it lives | What it actually is |
+| Historical label | What it was | Fate |
 |---|---|---|
-| **"Templates v2" (in commit messages, ADR 0011, package names like `cv.v2`)** | `com.demcha.compose.document.templates.cv.*` | The **layered** architecture — *data / theme / components / widgets / presets*, paired with `CvDocument` builder. Recommended. |
-| **"Templates v1.6" / "templates rebuild"** | `com.demcha.compose.document.templates.cv.presets.*` | The 1.6 rebuilt canonical surface — `CvSpec` + `CvBuilder` + presets + `BusinessTheme`. Still supported. |
-| **Folder `docs/templates/v1-classic/`** | docs only | Documents the **non-layered** surface (`cv.presets.*`). The doc folder name is *not* the same axis as the package's `v2` suffix. |
-| **Folder `docs/templates/v2-layered/`** | docs only | Documents the layered surface (`cv.v2.*`). |
+| **"classic"** / "Templates v1.6" / "templates rebuild" (`cv.presets.*`, `CvSpec` + `CvBuilder` + `BusinessTheme`) | The 1.6 rebuilt canonical surface, documented in [`v1-classic/`](v1-classic/README.md) (now archived). | Removed in 2.0. Same-named layered presets replace it (§ 3). |
+| **"Templates v2"** / "layered" (package suffix `cv.v2` etc.) | The layered architecture — *data / theme / components / widgets / presets* on `BrandTheme`, introduced by [ADR-0015](../adr/0015-layered-template-architecture.md). | **This is the 2.0 surface.** The `.v2` package suffix was dropped in 2.0 (`templates.cv.v2.*` → `templates.cv.*`); the docs folder keeps its historical [`v2-layered/`](v2-layered/README.md) name. |
+| **Built-in `*TemplateV1` / `*TemplateV2`** (Invoice / Proposal / WeeklySchedule) | Standalone one-class templates on `BusinessTheme`, predating the layered families. | Removed in 2.0. Invoice / proposal are layered families now (§ 3); weekly schedule has no 2.0 template yet. |
+| **Legacy PDF API** (`GraphCompose.pdf(...)`, `PdfComposer`, `com.demcha.compose.v2.*`, `com.demcha.templates.*`) | The original pre-1.6, PDF-direct authoring path. | Removed in 2.0. Migration target is the canonical DSL directly (§ 3). |
 
-From here, this page uses one name per surface, consistently:
-
-- **`classic`** → `cv.presets.*`, documented in `docs/templates/v1-classic/` — pre-layered, still supported.
-- **`layered`** → `cv.v2.*` + `coverletter.v2.*`, documented in `docs/templates/v2-layered/` — recommended.
-
-ADR references: [ADR-0011 templates-v2-architecture](../adr/0011-templates-v2-architecture.md) introduces the `classic` surface;
-[ADR-0015 layered-template-architecture](../adr/0015-layered-template-architecture.md) introduces the `layered` one and supersedes 0011 for new template families.
+ADR references: [ADR-0011](../adr/0011-templates-v2-architecture.md)
+introduced the classic surface; [ADR-0015](../adr/0015-layered-template-architecture.md)
+introduced the layered one and superseded 0011.
 
 ---
 
-## 1. Status matrix
+## 2. Status matrix
 
-| Surface | Status | Stability | Use for new code? | Will exist in 2.0? | First read |
-|---|---|---|---|---|---|
-| **Layered** (`cv.v2.*`, `coverletter.v2.*`) | **Recommended** | Stable (additive changes only) | ✅ Yes | ✅ Yes (canonical) | [v2-layered/quickstart](v2-layered/quickstart.md) |
-| **Classic** (`cv.presets.*`, paired classic letter presets) | **Supported** | Stable, no new features | 🟡 Only if migrating an existing v1.5-era caller | ❌ Removed (full migration to layered) | [v1-classic/README](v1-classic/README.md) |
-| **Built-in `*TemplateV2`** (Invoice / Proposal) | **Recommended** | Stable | ✅ Yes | ✅ Yes | [v1-classic/README](v1-classic/README.md) — InvoiceTemplateV2 / ProposalTemplateV2 sections (documented historically inside the v1-classic folder; pending a dedicated `built-ins/` section) |
-| **Built-in `*TemplateV1`** (Invoice / Proposal / WeeklySchedule) | **Legacy** | Stable, no new features | ❌ No (use V2 versions; WeeklySchedule has no V2 yet) | ❌ Removed | (no top-level doc — see source Javadoc) |
-| **Canonical DSL** (`GraphCompose.document()` + `DocumentSession` + `DocumentDsl`) | **Recommended** | Stable | ✅ Yes — required substrate for both template surfaces and direct authoring | ✅ Yes | [Main README — Hello world](../../README.md) |
-| **Legacy PDF API** (`GraphCompose.pdf(...)`, `PdfComposer`, `com.demcha.compose.v2.*`, `com.demcha.templates.*`) | **Legacy** | Frozen — bug fixes only | ❌ No | ❌ Removed | `graphcompose-legacy-architect` skill (internal Claude / Codex artifact, not a repo page) |
-| **Engine surface** (`com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render handlers) | **Internal** | Stable in practice, not part of the public contract; can change in any minor release without a CHANGELOG entry | ❌ No | 🟡 Mostly — package boundaries will tighten further behind `@Internal` | `graphcompose-shared-engine-architect` skill (internal Claude / Codex artifact); [ADR-0015](../adr/0015-layered-template-architecture.md) for the canonical/engine seam |
-
-> **Status definitions.** *Recommended* = the path GraphCompose 2.0 will
-> ship; new code targets it. *Supported* = bug fixes + behaviour-preserving
-> refactors only, no new features; exists through 1.x. *Internal* = engine
-> surface, not part of the public contract; can change in any minor
-> release without a CHANGELOG entry. *Legacy* = bug fixes only, removed
-> in 2.0; do not start new code here.
-
----
-
-## 2. Decision tree
-
-```
-I want to render a business document on GraphCompose.
-
-├─ Is it a CV or cover letter?
-│   ├─ Yes → use a `layered` preset (cv.v2 / coverletter.v2).
-│   │       See [v2-layered/using-templates.md](v2-layered/using-templates.md).
-│   │       Existing `classic` (cv.presets.*) caller? Read § 3 below; the
-│   │       layered preset with the same name is a drop-in replacement
-│   │       for almost every case.
-│   │
-│   └─ No → continue.
-│
-├─ Is it an invoice or proposal?
-│   └─ Use `InvoiceTemplateV2` or `ProposalTemplateV2` (the `V2` variants).
-│       The `V1` variants exist for backward compatibility; do not start
-│       new code on them.
-│
-├─ Is it a weekly schedule?
-│   └─ Use `WeeklyScheduleTemplateV1`. There is no V2 yet — the V1 API
-│       will be re-shaped before 2.0 (no concrete plan yet); track in
-│       the public release roadmap before adopting it long-term.
-│
-└─ It's something else (custom shape, brochure, report)?
-    └─ Author directly on the canonical DSL: `GraphCompose.document()`
-       + `pageFlow(...)` or `dsl().pageFlow(...)`. Reuse `BusinessTheme`
-       and layered widgets (`SectionDispatcher`, `EntryCompactRenderer`,
-       `RichParagraphRenderer`, `CardWidget`) wherever they fit; lift
-       new reusable widgets into the `cv.v2/components` and
-       `cv.v2/widgets` packages so the next template family can share
-       them.
-```
-
----
-
-## 3. Migration table — `classic` → `layered`
-
-Every CV preset that shipped in `cv.presets.*` has a same-named drop-in
-replacement in `cv.v2.presets.*`. Migrating a caller is the import swap
-plus a theme + data-record swap (introduced below):
-
-```diff
--import com.demcha.compose.document.templates.cv.presets.NordicClean;
-+import com.demcha.compose.document.templates.cv.presets.NordicClean;
-
--// before: CvSpec + BusinessTheme
--NordicClean.create(BusinessTheme.nordicClean()).render(session, cvSpec);
-+// after:  CvDocument + BrandTheme — see the two shape changes below
-+NordicClean.create(cvTheme).render(session, cvDocument);
-```
-
-Two real shape changes accompany the swap:
-
-1. **Theme.** `BusinessTheme.X()` → `BrandTheme.X()`. The CV-specific
-   tokens (palette / typography / spacing) are split out so `cv.v2`
-   themes don't carry invoice / proposal vocabulary they don't use.
-2. **Data record.** `CvSpec` → `CvDocument`. The data shape becomes
-   strongly-typed sections (`SectionGroup`, `EntryGroup`, `SkillGroup`,
-   …) instead of a flat `Block` permit list. The
-   [contributor-guide](v2-layered/contributor-guide.md) walks through
-   the section types end-to-end.
-
-### CV presets — one-to-one mapping
-
-| `classic` (`cv.presets.*`) | `layered` (`cv.v2.presets.*`) | Cover letter (`coverletter.v2.presets.*`) | Notes |
+| Surface | Status | Use for new code? | First read |
 |---|---|---|---|
-| `BlueBanner` | `BlueBanner` | `BlueBannerLetter` | |
-| `BoxedSections` | `BoxedSections` | `BoxedSectionsLetter` | Reference preset for the layered architecture. |
-| `CenteredHeadline` | `CenteredHeadline` | `CenteredHeadlineLetter` | Layered-only in 1.6.5+; classic version is the rebuilt one. |
-| `ClassicSerif` | `ClassicSerif` | `ClassicSerifLetter` | |
-| `CompactMono` | `CompactMono` | `CompactMonoLetter` | |
-| `EditorialBlue` | `EditorialBlue` | `EditorialBlueLetter` | |
-| `EngineeringResume` | `EngineeringResume` | `EngineeringResumeLetter` | |
-| `Executive` | `Executive` | `ExecutiveLetter` | |
-| `ModernProfessional` | `ModernProfessional` | `ModernProfessionalLetter` | |
-| `MonogramSidebar` | `MonogramSidebar` | `MonogramSidebarLetter` | Layered version uses `pageBackgrounds(...)` for sidebar chrome (multi-page-safe). |
-| `NordicClean` | `NordicClean` | `NordicCleanLetter` | Layered version ships public `NordicClean.Options`. |
-| `Panel` | `Panel` | `PanelLetter` | |
-| `SidebarPortrait` | `SidebarPortrait` | `SidebarPortraitLetter` | Layered version uses `pageBackgrounds(...)`. |
-| `TimelineMinimal` | `TimelineMinimal` | `TimelineMinimalLetter` | |
-| _(no classic)_ | `MinimalUnderlined` | _(no letter yet)_ | Layered-only. |
-| _(no classic)_ | `MintEditorial` | `MintEditorialLetter` | Layered-only (shipped in v1.6.5). |
+| **Layered templates** (`templates.cv.*`, `templates.coverletter.*`, `templates.invoice.*`, `templates.proposal.*` on `BrandTheme`) | **Stable** — the template surface | ✅ Yes | [v2-layered/quickstart](v2-layered/quickstart.md) |
+| **Canonical DSL** (`GraphCompose.document()` + `DocumentSession` + builders) | **Stable** — the authoring substrate under the templates, and the direct path for custom shapes | ✅ Yes | [Main README — Hello world](../../README.md) |
+| **Engine surface** (`com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render handlers) | **Internal** — not part of the public contract; can change in any release | ❌ No | [ADR-0015](../adr/0015-layered-template-architecture.md) for the canonical/engine seam |
 
-If your caller uses a name on the left, the row tells you what to import
-on the right and which cover-letter preset pairs with it.
-
-### Built-ins (Invoice / Proposal / WeeklySchedule)
-
-| V1 | V2 | Migration |
-|---|---|---|
-| `InvoiceTemplateV1` | `InvoiceTemplateV2` | Same data record (`InvoiceSpec`), same `BusinessTheme`. Renderer rewrite uses layered widgets; output is visually equivalent and snapshot-tested. |
-| `ProposalTemplateV1` | `ProposalTemplateV2` | Same data record (`ProposalSpec`), same `BusinessTheme`. Same migration pattern as invoice. |
-| `WeeklyScheduleTemplateV1` | _(no V2 yet)_ | Stay on V1 until a V2 ships. |
-
-### Things that are **not** in either canonical surface (still legacy)
-
-These live under `com.demcha.compose.v2.*`, `com.demcha.templates.*`, or
-the `GraphCompose.pdf(...)` factory. They are the original (pre-1.6)
-PDF-direct authoring path. They will be removed in 2.0:
-
-- `GraphCompose.pdf(outputFile)` and `PdfComposer`.
-- `com.demcha.templates.MainPageCV`, `MainPageCvDTO`, `ModuleYml`,
-  `TemplateBuilder` and friends.
-- `com.demcha.compose.v2.*` (engine-direct builders predating the
-  canonical DSL).
-
-If a caller still imports any of these, the migration target is
-**directly the canonical DSL** (`GraphCompose.document()`) — there is no
-1:1 equivalent in the template surfaces, because these classes were
-never canonical templates, they were a PDF authoring shortcut. The
-[migration-v1-5-to-v1-6 roadmap](../roadmaps/migration-v1-5-to-v1-6.md)
-walks through the swap for the common shapes.
+Choosing is simple: rendering a CV, cover letter, invoice, or proposal →
+pick a layered preset. Anything else (report, brochure, custom shape) →
+author directly on the canonical DSL, reusing `templates.core` widgets
+where they fit.
 
 ---
 
-## 4. Deprecation inventory — 1.x → 2.0
+## 3. Migrating a pre-2.0 caller
 
-Read this when planning long-lived code or when auditing dependencies
-that may already use one of the slated-for-removal types. None of these
-are deleted in 1.x; the work below is anti-roadmap and lives in the
-private taskboard.
+### Classic CV / cover-letter presets → layered
 
-### Removed in 2.0
+Every classic CV preset has a **same-named** layered replacement; the
+migration is the theme + data-record swap:
 
-| Item | Reason | Replacement |
+1. **Theme.** `BusinessTheme.X()` → `BrandTheme.X()` (per-family factories,
+   e.g. `BrandTheme.boxedClassic()`, `BrandTheme.invoiceModern()`).
+2. **Data record.** `CvSpec` → `CvDocument` — strongly-typed sections
+   (`ParagraphSection`, `SkillsSection`, `EntriesSection`, …) instead of a
+   flat block list. The [contributor guide](v2-layered/contributor-guide.md)
+   walks the section types end-to-end.
+
+| Classic preset (removed) | Layered CV preset | Paired cover letter |
 |---|---|---|
-| `GraphCompose.pdf(...)` factory + `PdfComposer` | PDF-direct path predates the canonical DSL; bypasses layout and rendering invariants. | `GraphCompose.document(...)` + `DocumentSession.buildPdf()`. |
-| `com.demcha.compose.v2.*` (the entire package) | Engine-direct builders predating canonical DSL. Mixes layout vocabulary with rendering vocabulary. | Canonical DSL surface (`document.api`, `document.dsl`, `document.node`, `document.style`). |
-| `com.demcha.templates.MainPageCV`, `MainPageCvDTO`, `ModuleYml`, `TemplateBuilder` | The original CV template pre-rebuild. Replaced by `cv.presets.*` (classic) in 1.6, now slated to be replaced again by `cv.v2.*` (layered). | A `cv.v2.presets.*` preset, or direct canonical DSL authoring. |
-| Entire `cv.presets.*` package (the `classic` surface) | Superseded by `cv.v2.presets.*` (layered). Every preset on the left has a same-named layered replacement (see § 3). | `cv.v2.presets.*`. |
-| `DocumentSession.builder()` (deprecated alias) | Pre-rebuild builder entry point. | `GraphCompose.document()`. |
-| `DocumentDsl.text(...)` (deprecated alias) | Pre-rebuild text shortcut. | `paragraph(...)` builders inside `pageFlow`. |
-| `DocumentPalette.of(...)` (deprecated alias) | Pre-rebuild palette factory. | `DocumentPalette.from(...)` (or theme-specific factories). |
-| PDF-specific chrome overloads on `BusinessTheme` | Coupled CV-specific tokens with PDF-specific decisions. | Layered `BrandTheme` + render-time `pageBackgrounds(...)`. |
-| `templates.theme` + `templates.themes` (two near-identical packages) | Confusingly similar names: `theme` (singular) holds built-in theme objects (`WeeklyScheduleTheme`); `themes` (plural) holds v2 token records (`Spacing`, `Typography`). | Merge into one **singular** `templates.theme` (matching `document.theme` / `core.theme`). Deferred to 2.0 because these are public types — the package move is binary-incompatible and would fail the japicmp gate. |
+| `BlueBanner` | `BlueBanner` | `BlueBannerLetter` |
+| `BoxedSections` | `BoxedSections` | `BoxedSectionsLetter` |
+| `CenteredHeadline` | `CenteredHeadline` | `CenteredHeadlineLetter` |
+| `ClassicSerif` | `ClassicSerif` | `ClassicSerifLetter` |
+| `CompactMono` | `CompactMono` | `CompactMonoLetter` |
+| `EditorialBlue` | `EditorialBlue` | `EditorialBlueLetter` |
+| `EngineeringResume` | `EngineeringResume` | `EngineeringResumeLetter` |
+| `Executive` | `Executive` | `ExecutiveLetter` |
+| `ModernProfessional` | `ModernProfessional` | `ModernProfessionalLetter` |
+| `MonogramSidebar` | `MonogramSidebar` | `MonogramSidebarLetter` |
+| `NordicClean` | `NordicClean` | `NordicCleanLetter` |
+| `Panel` | `Panel` | `PanelLetter` |
+| `SidebarPortrait` | `SidebarPortrait` | `SidebarPortraitLetter` |
+| `TimelineMinimal` | `TimelineMinimal` | `TimelineMinimalLetter` |
+| _(layered-only)_ | `MinimalUnderlined`, `MintEditorial` | `MintEditorialLetter` |
 
-### Open questions for 2.0 (no decision yet)
+### Built-in templates → layered families
 
-- `WeeklyScheduleTemplateV1` — whether to ship a V2 along the layered
-  architecture or to deprecate weekly schedule entirely.
-- `InlineRow` / `SplittableRow` / `GridNode` decisions deferred from
-  1.7 — may unblock magazine-style multi-column flow without needing a
-  `GridNode` primitive. Tracked in the maintainers' internal release-
-  readiness notes; will surface here once a public 1.8 engine-refactor
-  roadmap is published.
+| Removed built-in | 2.0 replacement |
+|---|---|
+| `InvoiceTemplateV1` / `InvoiceTemplateV2` | `templates.invoice.presets.ModernInvoice` — `create()` or `create(BrandTheme)`, data record `InvoiceDocumentSpec`. |
+| `ProposalTemplateV1` / `ProposalTemplateV2` | `templates.proposal.presets.ModernProposal` — same shape, data record `ProposalDocumentSpec`. |
+| `WeeklyScheduleTemplateV1` | No 2.0 template yet. The `templates.data.schedule` records still ship; author the rendering on the canonical DSL. |
+
+### Legacy PDF API → canonical DSL
+
+`GraphCompose.pdf(...)`, `PdfComposer`, `com.demcha.templates.*`, and
+`com.demcha.compose.v2.*` have no 1:1 template equivalent — they were a
+PDF-authoring shortcut, not templates. The migration target is the
+canonical DSL directly: `GraphCompose.document(...)` + `pageFlow(...)` +
+`DocumentSession.buildPdf()`. The
+[v1.5 → v1.6 migration roadmap](../roadmaps/migration-v1-5-to-v1-6.md)
+walks through the swap for the common shapes.
 
 ### Maven coordinates do **not** change in 2.0
 
-The library `pom.xml` artifact id stays `graph-compose`. The Maven Central
-coordinates introduced in 1.6.6 (`io.github.demchaav:graph-compose:<X>`)
-carry through to 2.0 unchanged. The legacy JitPack URL
-(`com.github.DemchaAV:GraphCompose:v<X>`) remains resolvable for callers
-pinned to v1.6.5 and earlier but is not the documented install channel.
+The artifact stays `io.github.demchaav:graph-compose:<X>` on Maven
+Central. The legacy JitPack URL (`com.github.DemchaAV:GraphCompose:v<X>`)
+remains resolvable for callers pinned to v1.6.5 and earlier but is not
+the documented install channel.
 
 ---
 
-## 5. Cross-links
+## 4. Cross-links
 
-- **First-class architecture references**
-  - [ADR-0011 Templates v2 architecture](../adr/0011-templates-v2-architecture.md) (the `classic` surface)
-  - [ADR-0015 Layered template architecture](../adr/0015-layered-template-architecture.md) (the `layered` surface; supersedes 0011 for new families)
-- **Layered (recommended) docs**
-  - [README](v2-layered/README.md) · [Quickstart](v2-layered/quickstart.md) · [Using templates](v2-layered/using-templates.md) · [Authoring presets](v2-layered/authoring-presets.md) · [Contributor guide](v2-layered/contributor-guide.md)
-- **Classic (supported) docs**
-  - [README](v1-classic/README.md) · [Authoring](v1-classic/authoring.md)
-- **Migration roadmaps**
-  - [v1.4 → v1.5](../roadmaps/migration-v1-4-to-v1-5.md)
-  - [v1.5 → v1.6](../roadmaps/migration-v1-5-to-v1-6.md)
+- **Layered (current) docs** —
+  [README](v2-layered/README.md) · [Quickstart](v2-layered/quickstart.md) ·
+  [Using templates](v2-layered/using-templates.md) ·
+  [Authoring presets](v2-layered/authoring-presets.md) ·
+  [Contributor guide](v2-layered/contributor-guide.md)
+- **Architecture** —
+  [ADR-0015 Layered template architecture](../adr/0015-layered-template-architecture.md) ·
+  [API stability policy](../api-stability.md)
+- **Historical (archived)** —
+  [v1-classic README](v1-classic/README.md) · [v1-classic authoring](v1-classic/authoring.md) ·
+  [ADR-0011 Templates v2 architecture](../adr/0011-templates-v2-architecture.md)
+- **Migration roadmaps** —
+  [v1.4 → v1.5](../roadmaps/migration-v1-4-to-v1-5.md) ·
+  [v1.5 → v1.6](../roadmaps/migration-v1-5-to-v1-6.md)
 
 ---
 
-*This page is maintained alongside the templates surfaces. When a new
-preset, built-in, or deprecation lands, update §1 (status matrix) and
-§3 (migration table) in the same commit. The `CanonicalSurfaceGuardTest`
-documentation-coverage check enforces that no legacy API token leaks
-into this doc.*
+*When a new preset or family lands, update § 2 (status matrix) and § 3
+(migration table) in the same commit. This page is allowlisted in
+`CanonicalSurfaceGuardTest` so it may name retired API tokens — keep
+such mentions scoped to the migration guidance above.*

@@ -28,12 +28,12 @@ matrix.
 
 | Tier | Marker | Used for | Breaking changes allowed in |
 |---|---|---|---|
-| **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BusinessTheme` and `BrandTheme` factories, the recommended template presets in `cv.v2.*` and `coverletter.v2.*`. | **Major releases only.** |
-| **Supported** | _(no annotation; called out in the page's Javadoc)_ | A canonical surface that ships through 1.x but won't be in 2.0 — its replacement is already the Stable path. The `cv.presets.*` "classic" CV preset surface is the only Supported tier in 1.x today (replaced by `cv.v2.*` per [`which-template-system.md`](templates/which-template-system.md)). Bug fixes + behaviour-preserving refactors only. | **Minor releases for behaviour-preserving refactors; removed wholesale in 2.0.** |
+| **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BrandTheme` factories, and the layered template presets (`templates.cv.*`, `templates.coverletter.*`, `templates.invoice.*`, `templates.proposal.*`). | **Major releases only.** |
+| **Supported** | _(no annotation; called out in the page's Javadoc)_ | A canonical surface that ships through a major line but won't be in the next one — its replacement is already the Stable path. Bug fixes + behaviour-preserving refactors only. *(No package holds this tier on the 2.0 line; the classic `cv.presets.*` CV surface held it through 1.x and was removed in 2.0 per [`which-template-system.md`](templates/which-template-system.md).)* | **Minor releases for behaviour-preserving refactors; removed wholesale in the next major.** |
 | **Extension SPI** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java), custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
 | **Experimental** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) _(same annotation as Extension SPI; the distinction lives in the docstring on the annotated element)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
 | **Internal** | [`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java) (per-element or per-package) | Engine surface: everything in `com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render-pipeline payload records, `LayoutCompiler`, `NodeDefinitionSupport`, the placement / measure / split contracts. Technically `public` for cross-package collaboration; not part of the contract. Canonical list lives in [ADR-0003](adr/0003-api-stability-and-internal-marker.md) § *Coverage*. | **Any release.** No deprecation window, no CHANGELOG entry required. |
-| **Legacy** | _(no annotation today; flagged in [`which-template-system.md`](templates/which-template-system.md) § 4 and in CHANGELOG `### Deprecations`)_ | Pre-rebuild surface kept only so downstream callers from before the v1.6 rebuild keep compiling: `com.demcha.templates.*` (the original `MainPageCV` / `MainPageCvDTO` / `ModuleYml` / `TemplateBuilder` family), `com.demcha.compose.v2.*` (the original engine-direct builders). Frozen — bug fixes only. | **Removed in 2.0**; no patch / minor changes other than security fixes. |
+| **Legacy** | _(no annotation; flagged in [`which-template-system.md`](templates/which-template-system.md) and in CHANGELOG `### Deprecations`)_ | Pre-rebuild surface kept only so callers from before a major rebuild keep compiling. Frozen — bug fixes only. *(No package holds this tier on the 2.0 line; `com.demcha.templates.*` and `com.demcha.compose.v2.*` held it through 1.x and were removed in 2.0 — the migration target is the canonical DSL.)* | **Removed in the next major**; no patch / minor changes other than security fixes. |
 
 > Both marker annotations
 > ([`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java)
@@ -62,11 +62,9 @@ GraphCompose uses sealed interfaces in several places to keep visitor
 code exhaustive. The public ones — the ones this policy actually covers —
 are:
 
-- [`Block`](../src/main/java/com/demcha/compose/document/templates/blocks/Block.java) (Stable)
-- [`CvSection`](../src/main/java/com/demcha/compose/document/templates/cv/v2/data/CvSection.java) (Stable)
+- [`CvSection`](../src/main/java/com/demcha/compose/document/templates/cv/data/CvSection.java) (Stable)
 - [`InlineRun`](../src/main/java/com/demcha/compose/document/node/InlineRun.java) (Stable)
 - [`ShapeOutline`](../src/main/java/com/demcha/compose/document/style/ShapeOutline.java) (Stable)
-- [`TemplateModuleBlock`](../src/main/java/com/demcha/compose/document/templates/support/common/TemplateModuleBlock.java) (Extension SPI)
 
 Sealed types under `@Internal` packages — `ParagraphSpan` and
 `PlacementContext` — are outside this policy by definition; their permit
@@ -84,10 +82,10 @@ though it's purely additive at the source level.
 1. **Stable sealed hierarchies are additive in minor releases only when
    the new variant carries a sensible default rendering for callers
    that did not switch on it.** Concretely: if a caller pattern-matches
-   on `Block` and hits a `NewlyAddedBlock` it didn't expect, the
-   default rendering must visually degrade gracefully — typically by
-   delegating to the closest stable variant (often `ParagraphBlock`)
-   rather than throwing.
+   on `CvSection` and hits a newly added section variant it didn't
+   expect, the default rendering must visually degrade gracefully —
+   typically by delegating to the closest stable variant (often
+   `ParagraphSection`) rather than throwing.
 2. **The CHANGELOG entry for the minor release names the new permit
    explicitly** under `### Public API` so callers know to audit their
    visitor code. Example wording, from the v1.6.4 cut:
@@ -149,12 +147,13 @@ deprecation is *"this will simply go away in 2.0 and there is no
 replacement because the problem itself moved,"* say so explicitly in
 prose so the reader knows not to look for one.
 
-### Currently slated for removal in 2.0
+### Currently slated for removal in the next major
 
 Two inventories track what is deferred to the next major:
 
-- **Template surfaces and pre-rebuild aliases** —
-  [`docs/templates/which-template-system.md` § 4](templates/which-template-system.md#4-deprecation-inventory--1x--20).
+- **Template surfaces and pre-rebuild aliases** — the 1.x → 2.0 removals
+  are done on the 2.0 line; the migration map lives in
+  [`docs/templates/which-template-system.md` § 3](templates/which-template-system.md#3-migrating-a-pre-20-caller).
 - **Every other public-API rework, simplification, or deprecation** — the ledger below.
 
 #### 2.0 breaking-changes ledger
@@ -192,15 +191,15 @@ Javadoc per element.
 | `com.demcha.compose.document.dsl` | **Stable** | All builder types (`RowBuilder`, `SectionBuilder`, `ParagraphBuilder`, etc.). |
 | `com.demcha.compose.document.node` | **Stable** | Node records (`RowNode`, `SectionNode`, `ParagraphNode`, ...). Sealed where relevant — see § 2. |
 | `com.demcha.compose.document.style` | **Stable** | `DocumentColor`, `DocumentInsets`, `DocumentTextStyle`, `DocumentTransform`, ... |
-| `com.demcha.compose.document.templates.cv.*` | **Stable** | Layered CV presets, `CvDocument`, `BrandTheme`. Recommended template surface. |
-| `com.demcha.compose.document.templates.coverletter.v2.*` | **Stable** | Layered cover-letter presets. |
-| `com.demcha.compose.document.templates.builtins` | **Stable** | `InvoiceTemplateV2`, `ProposalTemplateV2`, `BusinessTheme`. |
-| `com.demcha.compose.document.templates.cv.presets.*` | **Stable but Supported** | The "classic" v1.6 rebuild surface. See [`which-template-system.md`](templates/which-template-system.md). Supported through 1.x; removed in 2.0. |
-| `com.demcha.compose.document.templates.support.common` | **Extension SPI** | Helpers template authors build new presets against. `@Beta` arrives in Track H2. |
+| `com.demcha.compose.document.templates.api` | **Stable** | The `DocumentTemplate<S>` seam every preset factory returns. |
+| `com.demcha.compose.document.templates.core.*` | **Stable** | The shared, family-neutral template layer — `BrandTheme` tokens (`core.theme`), neutral header bricks (`core.identity`), text helpers (`core.text`), shared widgets (`core.widgets`). |
+| `com.demcha.compose.document.templates.cv.*` | **Stable** | Layered CV family — `CvDocument` data, components, widgets, presets. |
+| `com.demcha.compose.document.templates.coverletter.*` | **Stable** | Layered cover-letter family. |
+| `com.demcha.compose.document.templates.invoice.*` | **Stable** | Layered invoice family — `ModernInvoice` on `InvoiceDocumentSpec`. |
+| `com.demcha.compose.document.templates.proposal.*` | **Stable** | Layered proposal family — `ModernProposal` on `ProposalDocumentSpec`. |
+| `com.demcha.compose.document.templates.data.*` | **Stable** | Family-neutral document data records (invoice / proposal / schedule specs). |
 | `com.demcha.compose.document.layout.*` | **Internal** | Marked `@Internal` at the package level. Engine surface. |
 | `com.demcha.compose.engine.*` | **Internal** | Engine surface; not part of the public contract regardless of `public` keyword. |
-| `com.demcha.templates.*` | **Legacy** | Pre-rebuild surface; removed in 2.0. See [`which-template-system.md`](templates/which-template-system.md). |
-| `com.demcha.compose.v2.*` | **Legacy** | Pre-rebuild engine-direct surface; removed in 2.0. |
 
 ---
 
@@ -219,9 +218,9 @@ Javadoc per element.
   output is visually identical. Compare semantically, not by file hash.
 - **Internal package shape across releases.** See § 1, tier Internal.
 - **Sealed hierarchy permits' exhaustiveness across minor releases for
-  Stable hierarchies.** See § 2. Switching on a sealed `Block` without
-  a `default` branch *will* fail to compile cleanly on the next minor
-  release that adds a new permit — by design.
+  Stable hierarchies.** See § 2. Switching on a sealed `CvSection`
+  without a `default` branch *will* fail to compile cleanly on the next
+  minor release that adds a new permit — by design.
 
 ---
 
@@ -232,14 +231,14 @@ Javadoc per element.
   guards that enforce it).
 - [ADR-0004 — PDF fragment render handler SPI is public](adr/0004-pdf-handler-spi-extension.md)
   — a worked example of opening an Extension SPI seam.
-- [ADR-0011 — Templates v2 architecture](adr/0011-templates-v2-architecture.md)
-  and [ADR-0015 — Layered template architecture](adr/0015-layered-template-architecture.md)
-  — the architectural justification for the `classic` / `layered`
-  template tiers in § 4.
+- [ADR-0015 — Layered template architecture](adr/0015-layered-template-architecture.md)
+  — the architectural justification for the layered template packages in
+  § 4 ([ADR-0011](adr/0011-templates-v2-architecture.md) documents the
+  removed classic predecessor).
 - [`docs/templates/which-template-system.md`](templates/which-template-system.md)
-  — the recommended-vs-legacy decision guide for template surfaces;
-  this stability policy lives one level up and covers all packages,
-  not just templates.
+  — the template naming history and the migration map for pre-2.0
+  callers; this stability policy lives one level up and covers all
+  packages, not just templates.
 - [`InternalAnnotationCoverageTest`](../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
   and [`InternalAnnotationDocumentationTest`](../src/test/java/com/demcha/compose/document/api/InternalAnnotationDocumentationTest.java)
   — the architecture guards that fail the build if the package-level

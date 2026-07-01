@@ -1125,10 +1125,10 @@ from `GenerateAllExamples`** (`generate()` returns the output path),
 and **deterministic** — the same data + same code always produces the
 same bytes (verified by `LayoutSnapshotRegressionExample`).
 
-For the canonical authoring patterns — builder hierarchy, theme
-tokens, table presets, golden / anti-patterns, and a 40-line skeleton
-for new templates — read
-[**`docs/templates/v1-classic/authoring.md`**](../docs/templates/v1-classic/authoring.md)
+For the canonical authoring patterns — the layered data / theme /
+components / widgets / presets split, golden / anti-patterns, and the
+preset skeleton — read
+[**`docs/templates/v2-layered/authoring-presets.md`**](../docs/templates/v2-layered/authoring-presets.md)
 once before writing your own.
 
 ## Where things live
@@ -1139,5 +1139,5 @@ once before writing your own.
 | `examples/src/main/java/com/demcha/examples/support/` | Reusable helpers (`ExampleOutputPaths`, `WeeklyScheduleRenderer`) |
 | `examples/target/generated-pdfs/` | Output of running the examples (gitignored) |
 | `assets/readme/examples/` | Committed PDF previews linked from this gallery |
-| `docs/templates/v1-classic/authoring.md` | Template authoring cheatsheet |
+| `docs/templates/v2-layered/authoring-presets.md` | Template authoring cheatsheet |
 | `CHANGELOG.md` | Per-version surface changes (every example link is current to v1.6) |

@@ -14,10 +14,10 @@ back here.
 | You are… | Read |
 |---|---|
 | **New to GraphCompose** — what is it, how do I render my first PDF | [Your first document](first-document.md) → [Getting started](getting-started.md) |
-| **Author rendering an invoice or proposal** | [Built-in business templates](templates/business-templates.md) |
+| **Author rendering an invoice or proposal** | [Templates v2 (layered) — using templates](templates/v2-layered/using-templates.md) |
 | **Author rendering a CV** with your own data | [Templates v2 (layered) — quickstart](templates/v2-layered/quickstart.md) |
 | **Designer / author** wanting a custom visual style for CVs | [Templates v2 (layered) — authoring presets](templates/v2-layered/authoring-presets.md) |
-| **Author using legacy v1.6 templates** (CV / cover-letter / invoice / proposal still using `*Spec` + builders) | [Templates v1-classic — landing](templates/v1-classic/README.md) |
+| **Maintainer of a pre-2.0 caller** (classic `*Spec` + builder templates, removed in 2.0) | [Which template system? — migration map](templates/which-template-system.md) |
 | **Contributor adding a new template family** to the library | [Templates v2 (layered) — contributor guide](templates/v2-layered/contributor-guide.md) |
 | **Contributor extending the engine** (new node type, new backend handler) | [Extension guide](contributing/extension-guide.md) → [Implementation guide](contributing/implementation-guide.md) |
 | **Operator** running GraphCompose in production | [Production rendering](operations/production-rendering.md) → [Performance](operations/performance.md) → [Logging](operations/logging.md) |
@@ -34,9 +34,9 @@ back here.
 - **[troubleshooting.md](troubleshooting.md)** — symptom-first fixes for common gotchas: stray `?` glyphs, silent DOCX drops, optional-dependency `NoClassDefFoundError`, running the bundled examples.
 
 ### Templates
-- **[templates/business-templates.md](templates/business-templates.md)** — built-in invoice & proposal templates: the compose-first contract, end to end.
-- **[templates/v2-layered/](templates/v2-layered/)** — 🆕 canonical going-forward pattern (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
-- **[templates/v1-classic/](templates/v1-classic/)** — the spec/builder/presets surface used by v1.6 CV, cover-letter, invoice, proposal templates. Still ships, still supported.
+- **[templates/business-templates.md](templates/business-templates.md)** — invoice & proposal templates: the compose-first contract, end to end. ⚠️ Being reworked for the layered `ModernInvoice` / `ModernProposal` surface.
+- **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
+- **[templates/v1-classic/](templates/v1-classic/)** — 🗄️ archived: the classic spec/builder/presets surface removed in 2.0; kept for pre-2.0 callers.
 
 ### Architecture
 - **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).

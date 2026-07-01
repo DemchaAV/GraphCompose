@@ -6,7 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 

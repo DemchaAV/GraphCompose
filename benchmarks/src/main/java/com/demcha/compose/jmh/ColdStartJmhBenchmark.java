@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

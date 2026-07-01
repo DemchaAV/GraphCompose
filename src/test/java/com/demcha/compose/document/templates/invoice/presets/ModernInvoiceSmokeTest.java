@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.invoice.v2.presets;
+package com.demcha.compose.document.templates.invoice.presets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Smoke test for the layered {@code invoice.v2} pipeline through
+ * Smoke test for the layered invoice pipeline through
  * {@link ModernInvoice} — proves the preset renders an
  * {@link InvoiceDocumentSpec} end-to-end on a {@link BrandTheme}, via
  * both factory variants, with any theme, and on an empty invoice.

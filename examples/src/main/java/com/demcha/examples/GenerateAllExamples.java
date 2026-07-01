@@ -79,7 +79,7 @@ import com.demcha.examples.templates.cv.v2.CvPanelExample;
 import com.demcha.examples.templates.cv.v2.CvSidebarPortraitExample;
 import com.demcha.examples.templates.cv.v2.CvTimelineMinimalExample;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
-import com.demcha.examples.templates.invoice.v2.ModernInvoiceV2Example;
+import com.demcha.examples.templates.invoice.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
 import com.demcha.examples.templates.proposal.v2.ModernProposalV2Example;

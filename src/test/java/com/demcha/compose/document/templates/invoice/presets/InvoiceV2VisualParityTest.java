@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.invoice.v2.presets;
+package com.demcha.compose.document.templates.invoice.presets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;

@@ -9,10 +9,7 @@ import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
 import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
 import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
-import com.demcha.compose.document.templates.data.common.EmailYaml;
-import com.demcha.compose.document.templates.data.common.Header;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.data.cv.CvDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
 import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
@@ -23,45 +20,6 @@ import java.util.List;
 public final class ExampleDataFactory {
 
     private ExampleDataFactory() {
-    }
-
-    public static CvDocumentSpec sampleCv() {
-        return CvDocumentSpec.builder()
-                .header(sampleHeader())
-                .summary("Platform engineer building resilient PDF and document-generation workflows for reliable business output.")
-                .technicalSkills(
-                        "Java 21, PDFBox, Maven, REST APIs",
-                        "Template design systems, pagination, semantic layout composition",
-                        "Testing strategy, CI pipelines, developer enablement")
-                .education(
-                        "**MSc Computer Science** - University of Manchester | 2021",
-                        "**Oracle Java Certification** - Professional track | 2023")
-                .projects(
-                        "**GraphCompose** - Declarative PDF layout engine for reusable document generation",
-                        "**Template Studio** - Internal tool for evaluating CV, proposal, and invoice output")
-                .experience(
-                        "**Senior Platform Engineer**, Northwind Systems | *2024-Present* - Led reusable document flows for reporting, billing, and hiring operations.",
-                        "**Software Engineer**, BrightLeaf Labs | *2021-2024* - Built backend services and production document rendering pipelines.")
-                .additional(
-                        "Based in London and available for hybrid or remote collaboration.",
-                        "Interested in platform architecture, DX, and document-quality automation.")
-                .build();
-    }
-
-    public static Header sampleHeader() {
-        return Header.builder()
-                .name("Jordan Rivera")
-                .address("London, UK")
-                .phoneNumber("+44 20 5555 1000")
-                .email(EmailYaml.builder()
-                        .to("jordan.rivera@example.com")
-                        .subject("Job Application")
-                        .body("Hello")
-                        .displayText("jordan.rivera@example.com")
-                        .build())
-                .linkedIn("https://linkedin.com/in/jordan-rivera-demo", "LinkedIn")
-                .gitHub("https://github.com/jrivera-demo", "GitHub")
-                .build();
     }
 
     public static InvoiceDocumentSpec sampleInvoice() {

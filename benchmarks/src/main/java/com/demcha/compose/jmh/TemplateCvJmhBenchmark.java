@@ -6,9 +6,8 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
-import com.demcha.compose.document.templates.cv.spec.CvSpec;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -44,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 @Fork(1)
 public class TemplateCvJmhBenchmark {
 
-    private CvSpec cv;
-    private DocumentTemplate<CvSpec> template;
+    private CvDocument cv;
+    private DocumentTemplate<CvDocument> template;
 
     /**
      * Builds the canonical CV spec and the template once, outside measurement.
@@ -53,7 +52,7 @@ public class TemplateCvJmhBenchmark {
     @Setup
     public void setUp() {
         cv = CanonicalBenchmarkSupport.canonicalCv();
-        template = ModernProfessional.create(BusinessTheme.modern());
+        template = ModernProfessional.create();
     }
 
     /**

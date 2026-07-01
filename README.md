@@ -46,7 +46,7 @@
 
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.
 - **Deterministic by design.** Two-pass layout. Snapshots are stable across machines, so layout regressions are catchable in tests before any byte ships.
-- **Cinematic by default.** `BusinessTheme`, soft panels, accent strips, transforms, native vector charts, and gradients are first-class primitives, not workarounds.
+- **Cinematic by default.** Soft panels, accent strips, transforms, native vector charts, and gradients are first-class primitives, not workarounds.
 - **PDFBox isolated, DOCX optional.** Single backend interface. Apache POI&ndash;backed DOCX export is available for compatible semantic content &mdash; see [support matrix](#output-support) for limitations.
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
@@ -132,27 +132,40 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.FontName;
 
 import java.nio.file.Path;
 
 class Hello {
     public static void main(String[] args) throws Exception {
-        BusinessTheme theme = BusinessTheme.modern();
+        // A small inline palette — swap these for your own brand colours.
+        DocumentColor cream = DocumentColor.rgb(252, 248, 240);
+        DocumentColor panel = DocumentColor.rgb(244, 238, 228);
+        DocumentColor accent = DocumentColor.rgb(196, 153, 76);
+        DocumentTextStyle h1 = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA_BOLD).size(28)
+                .decoration(DocumentTextDecoration.BOLD)
+                .color(DocumentColor.rgb(20, 60, 75)).build();
+        DocumentTextStyle body = DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA).size(11)
+                .color(DocumentColor.rgb(34, 38, 50)).build();
 
         try (DocumentSession document = GraphCompose.document(Path.of("hello.pdf"))
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(theme.pageBackground())
+                .pageBackground(cream)
                 .margin(28, 28, 28, 28)
                 .create()) {
 
             document.pageFlow(page -> page
                     .addSection("Hero", section -> section
-                            .softPanel(theme.palette().surfaceMuted(), 10, 14)
-                            .accentLeft(theme.palette().accent(), 4)
-                            .addParagraph(p -> p.text("GraphCompose").textStyle(theme.text().h1()))
-                            .addParagraph(p -> p.text("A theme-driven hero, no manual coordinates.")
-                                    .textStyle(theme.text().body()))));
+                            .softPanel(panel, 10, 14)
+                            .accentLeft(accent, 4)
+                            .addParagraph(p -> p.text("GraphCompose").textStyle(h1))
+                            .addParagraph(p -> p.text("A cinematic hero, no manual coordinates.")
+                                    .textStyle(body))));
 
             document.buildPdf();
         }

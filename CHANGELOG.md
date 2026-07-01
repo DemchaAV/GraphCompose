@@ -8,9 +8,25 @@ follow semantic versioning; release dates are ISO 8601.
 The 2.0 development line. Binary-breaking by design — japicmp runs report-only
 for this cycle.
 
-### Build
-- Move the 2.0 line to `2.0.0-SNAPSHOT`. The README and showcase install
-  snippets now advertise the planned `2.0.0` coordinate.
+### Removed
+
+- The classic (pre-layered) CV and cover-letter template presets have been removed.
+  The layered template stack — `templates.cv.*`, `templates.coverletter.*`,
+  `templates.invoice.*`, and `templates.proposal.*`, all on `BrandTheme` — is now the
+  single template surface.
+- The standalone `BusinessTheme` design-token bundle (and its `DocumentPalette` /
+  `SpacingScale` / `TextScale` / `TablePreset` companions) is no longer part of the
+  library. It lives on only as a styling helper inside the examples module; author
+  documents with explicit `DocumentColor` / `DocumentTextStyle` values or a template
+  `BrandTheme`.
+
+### Public API
+
+- The layered template packages dropped their `.v2` suffix:
+  `com.demcha.compose.document.templates.<family>.v2.*` →
+  `com.demcha.compose.document.templates.<family>.*` for `cv`, `coverletter`,
+  `invoice`, and `proposal`. Update imports accordingly — behaviour and rendering are
+  unchanged; this is a package rename only.
 
 ## v1.9.0 — 2026-06-29
 

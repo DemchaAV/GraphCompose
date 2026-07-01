@@ -1,14 +1,14 @@
 package com.demcha.examples.support;
 
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
+import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvSkill;
+import com.demcha.compose.document.templates.cv.data.EntriesSection;
+import com.demcha.compose.document.templates.cv.data.ParagraphSection;
+import com.demcha.compose.document.templates.cv.data.RowStyle;
+import com.demcha.compose.document.templates.cv.data.RowsSection;
+import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.data.schedule.ScheduleSlot;
@@ -233,7 +233,7 @@ public final class ExampleDataFactory {
      * Returns a sample {@code CvDocument} for the v2 CV pipeline —
      * the canonical Jordan Rivera content expressed in the v2
      * sealed section hierarchy
-     * ({@link com.demcha.compose.document.templates.cv.v2.data.ParagraphSection},
+     * ({@link com.demcha.compose.document.templates.cv.data.ParagraphSection},
      * {@link SkillsSection},
      * {@link RowsSection},
      * {@link EntriesSection}).

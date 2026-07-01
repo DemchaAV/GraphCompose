@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.core.identity.Headline;
@@ -26,7 +26,7 @@ import java.util.Objects;
  * Barlow name with a short <strong>teal accent bar</strong> beneath it
  * and an UPPERCASE role sub-line, balanced by a right-aligned stacked
  * contact list with teal links — the same masthead as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.NordicClean}.
+ * {@link com.demcha.compose.document.templates.cv.presets.NordicClean}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
  * {@link BrandTheme#nordicClean()}; the CV's tinted profile band is a

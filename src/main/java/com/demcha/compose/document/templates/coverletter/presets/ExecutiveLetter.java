@@ -16,7 +16,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.font.FontName;
@@ -27,7 +27,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code Executive} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.Executive}
+ * {@link com.demcha.compose.document.templates.cv.presets.Executive}
  * — UPPERCASE name in deep slate, a {@code address | phone} meta line, a
  * bronze-underlined link row, and a thin full-width muted rule — then a
  * single-column letter body (greeting, paragraphs, closing) via the

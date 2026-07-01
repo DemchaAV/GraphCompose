@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.widgets.CardWidget;
 import com.demcha.compose.font.FontName;
@@ -28,7 +28,7 @@ import java.util.Objects;
  * into the letter: a full-width rounded card (thin teal stroke) holding
  * the centred UPPERCASE Poppins name, job title, centred meta line, and
  * a centred link row with teal accent links — the same header card as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.Panel}.
+ * {@link com.demcha.compose.document.templates.cv.presets.Panel}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Card shell + body palette come from
  * {@link BrandTheme#panel()}.</p>

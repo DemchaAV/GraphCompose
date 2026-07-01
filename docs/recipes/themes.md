@@ -111,8 +111,8 @@ factory:
 
 ```java
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
+import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.presets.ModernProfessional;
 
 DocumentTemplate<CvDocument> cv = ModernProfessional.create();
 cv.compose(session, cvDocument);

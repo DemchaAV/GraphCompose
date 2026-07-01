@@ -11,7 +11,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.ContactLine;
 

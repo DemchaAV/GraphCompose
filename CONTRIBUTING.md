@@ -265,7 +265,7 @@ the canonical layered architecture documented in
 [**docs/templates/v2-layered/contributor-guide.md**](./docs/templates/v2-layered/contributor-guide.md).
 Five sub-packages (`data/` / `theme/` / `components/` / `widgets/`
 / `presets/`), each with a clear contract. CV v2
-(`com.demcha.compose.document.templates.cv.v2`) is the reference
+(`com.demcha.compose.document.templates.cv`) is the reference
 implementation; read it before starting yours.
 
 **For a new preset inside an existing v1-classic family** (a new CV

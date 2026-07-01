@@ -14,7 +14,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.Headline;
 import com.demcha.compose.document.templates.core.identity.Subheadline;
@@ -35,7 +35,7 @@ import java.util.Objects;
  * letter.</p>
  *
  * <p>The same {@link Options} colour knobs as the paired
- * {@link com.demcha.compose.document.templates.cv.v2.presets.MintEditorial}
+ * {@link com.demcha.compose.document.templates.cv.presets.MintEditorial}
  * preset recolour the letter masthead (accent, rule, name, optional header
  * band), with identical defaults so the matched set stays in sync.</p>
  */

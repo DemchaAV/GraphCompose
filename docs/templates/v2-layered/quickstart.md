@@ -37,8 +37,8 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.data.*;
-import com.demcha.compose.document.templates.cv.v2.presets.BoxedSections;
+import com.demcha.compose.document.templates.cv.data.*;
+import com.demcha.compose.document.templates.cv.presets.BoxedSections;
 
 import java.nio.file.Path;
 

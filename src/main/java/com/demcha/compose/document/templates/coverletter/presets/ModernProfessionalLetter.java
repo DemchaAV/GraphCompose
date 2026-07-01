@@ -20,7 +20,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code ModernProfessional} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional}
+ * {@link com.demcha.compose.document.templates.cv.presets.ModernProfessional}
  * — a right-aligned slate-blue Helvetica display name over a two-row,
  * right-aligned contact stack with royal-blue underlined links and a
  * bottom accent rule — then a single-column letter body via the shared

@@ -20,7 +20,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code EditorialBlue} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.EditorialBlue}
+ * {@link com.demcha.compose.document.templates.cv.presets.EditorialBlue}
  * — a centred navy Helvetica name (with the job-title subtitle), centred
  * contact metadata, and blue underlined profile links, via the shared
  * {@link Masthead#centered} widget — then a single-column letter body

@@ -15,7 +15,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code BlueBanner} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.BlueBanner}
+ * {@link com.demcha.compose.document.templates.cv.presets.BlueBanner}
  * — a centred PT-Serif spaced-caps name over a compact centred contact
  * row — then a single-column letter body via the shared
  * {@link LetterBody}. Both documents read everything from

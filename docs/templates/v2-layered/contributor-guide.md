@@ -406,7 +406,7 @@ Compare to cv/v2 baseline (PR #45) which was 2082 lines including
 ## See also
 
 - The **CV v2** package
-  (`com.demcha.compose.document.templates.cv.v2`) is the reference
+  (`com.demcha.compose.document.templates.cv`) is the reference
   implementation. Read it end-to-end before starting a new family
   — every convention listed here is visible there.
 - [authoring-presets.md](authoring-presets.md) — how preset authors

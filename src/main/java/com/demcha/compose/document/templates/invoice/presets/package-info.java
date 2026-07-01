@@ -3,7 +3,7 @@
  * on a {@link com.demcha.compose.document.templates.core.theme.BrandTheme}
  * plus the canonical DSL.
  *
- * <p>This package mirrors {@code cv.v2.presets}: each preset is a
+ * <p>This package mirrors {@code cv.presets}: each preset is a
  * {@code final} class with a {@code create(BrandTheme)} factory returning
  * a {@link com.demcha.compose.document.templates.api.DocumentTemplate}
  * parameterised on

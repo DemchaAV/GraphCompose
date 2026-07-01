@@ -64,7 +64,7 @@ The neutral header widgets — `Headline`, `Subheadline`, `ContactLine`,
 `Masthead`, `SvgGlyph` — live in
 `com.demcha.compose.document.templates.core.identity`. The CV-specific
 section widgets (`SectionHeader` and friends) stay in
-`com.demcha.compose.document.templates.cv.v2.widgets`. The generic
+`com.demcha.compose.document.templates.cv.widgets`. The generic
 `CardWidget` / `TableWidget` / `TimelineAxisWidget` reusable by CVs,
 proposals, invoices, and cover letters live in
 `com.demcha.compose.document.templates.core.widgets`. Each has a small

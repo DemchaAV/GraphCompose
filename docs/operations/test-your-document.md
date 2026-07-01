@@ -258,6 +258,6 @@ about, at near-zero cost per run.
 - [`LayoutSnapshotPublicApiDogfoodTest`](../../src/test/java/com/demcha/testing/layout/LayoutSnapshotPublicApiDogfoodTest.java)
   — a working integration test that drives the snapshot API
   entirely through the published surface. Copyable starting point.
-- [`CvV2VisualParityTest`](../../src/test/java/com/demcha/compose/document/templates/cv/v2/presets/CvV2VisualParityTest.java)
+- [`CvV2VisualParityTest`](../../src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
   — example of the pixel-level pattern (currently test-only;
   becoming public via Track N).

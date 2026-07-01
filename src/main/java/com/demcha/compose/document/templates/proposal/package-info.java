@@ -1,10 +1,9 @@
 /**
  * Proposal / statement-of-work template family.
  *
- * <p>The shipping proposal surface is the layered preset stack under
- * {@code proposal.v2}, built on the shared {@code templates.core} layer and a
- * {@code BrandTheme}. {@code proposal.v2.presets.ModernProposal} is the
- * reference preset.</p>
+ * <p>The proposal surface is a layered preset stack built on the shared
+ * {@code templates.core} layer and a {@code BrandTheme}.
+ * {@code proposal.presets.ModernProposal} is the reference preset.</p>
  *
  * @since 1.6.0
  */

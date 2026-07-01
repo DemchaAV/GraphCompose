@@ -82,7 +82,7 @@ import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
 import com.demcha.examples.templates.invoice.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
-import com.demcha.examples.templates.proposal.v2.ModernProposalV2Example;
+import com.demcha.examples.templates.proposal.ModernProposalV2Example;
 import com.demcha.examples.templates.schedule.WeeklyScheduleFileExample;
 
 /**

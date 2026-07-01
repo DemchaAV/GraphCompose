@@ -1,4 +1,4 @@
-package com.demcha.examples.templates.proposal.v2;
+package com.demcha.examples.templates.proposal;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -6,7 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
+import com.demcha.compose.document.templates.proposal.presets.ModernProposal;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 

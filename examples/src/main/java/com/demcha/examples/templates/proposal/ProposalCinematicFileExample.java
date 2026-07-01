@@ -6,7 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
+import com.demcha.compose.document.templates.proposal.presets.ModernProposal;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -14,7 +14,7 @@ import java.nio.file.Path;
 
 /**
  * Runnable showcase for the cinematic proposal look on the layered
- * {@code proposal.v2} surface — {@link ModernProposal} on
+ * layered proposal surface — {@link ModernProposal} on
  * {@link BrandTheme#proposalModern()}, rendering the shared
  * {@link ProposalDocumentSpec} sample on the cream page background.
  *

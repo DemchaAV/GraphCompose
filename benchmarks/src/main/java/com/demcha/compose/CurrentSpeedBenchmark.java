@@ -18,7 +18,7 @@ import com.demcha.compose.document.templates.cv.v2.presets.ModernProfessional;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
-import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
+import com.demcha.compose.document.templates.proposal.presets.ModernProposal;
 import com.demcha.compose.engine.components.style.Margin;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 

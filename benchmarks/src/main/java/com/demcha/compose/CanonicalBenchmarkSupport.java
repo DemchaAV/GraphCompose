@@ -6,7 +6,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.engine.components.style.Margin;

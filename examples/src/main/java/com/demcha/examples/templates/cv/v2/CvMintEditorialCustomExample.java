@@ -5,8 +5,8 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.presets.MintEditorial;
+import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.presets.MintEditorial;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 

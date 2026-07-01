@@ -2,7 +2,7 @@
 
 **Short answer.** For any **new** code on GraphCompose 1.6.x and later, use
 the [**layered**](v2-layered/README.md) template surface
-(`com.demcha.compose.document.templates.cv.v2.*`, paired with
+(`com.demcha.compose.document.templates.cv.*`, paired with
 `*Letter` cover-letter presets in `…coverletter.v2.*`). The older
 [**classic**](v1-classic/README.md) surface still ships, still works,
 and stays supported through the 1.x line, but **the layered surface is
@@ -23,7 +23,7 @@ The two surfaces have collided naming because the *codebase* and the
 
 | What you'll see | Where it lives | What it actually is |
 |---|---|---|
-| **"Templates v2" (in commit messages, ADR 0011, package names like `cv.v2`)** | `com.demcha.compose.document.templates.cv.v2.*` | The **layered** architecture — *data / theme / components / widgets / presets*, paired with `CvDocument` builder. Recommended. |
+| **"Templates v2" (in commit messages, ADR 0011, package names like `cv.v2`)** | `com.demcha.compose.document.templates.cv.*` | The **layered** architecture — *data / theme / components / widgets / presets*, paired with `CvDocument` builder. Recommended. |
 | **"Templates v1.6" / "templates rebuild"** | `com.demcha.compose.document.templates.cv.presets.*` | The 1.6 rebuilt canonical surface — `CvSpec` + `CvBuilder` + presets + `BusinessTheme`. Still supported. |
 | **Folder `docs/templates/v1-classic/`** | docs only | Documents the **non-layered** surface (`cv.presets.*`). The doc folder name is *not* the same axis as the package's `v2` suffix. |
 | **Folder `docs/templates/v2-layered/`** | docs only | Documents the layered surface (`cv.v2.*`). |
@@ -103,7 +103,7 @@ plus a theme + data-record swap (introduced below):
 
 ```diff
 -import com.demcha.compose.document.templates.cv.presets.NordicClean;
-+import com.demcha.compose.document.templates.cv.v2.presets.NordicClean;
++import com.demcha.compose.document.templates.cv.presets.NordicClean;
 
 -// before: CvSpec + BusinessTheme
 -NordicClean.create(BusinessTheme.nordicClean()).render(session, cvSpec);

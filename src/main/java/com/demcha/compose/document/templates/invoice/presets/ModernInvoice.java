@@ -26,7 +26,7 @@ import java.util.Objects;
  *
  * <p>It composes an invoice on a
  * {@link com.demcha.compose.document.templates.core.theme.BrandTheme}
- * plus the canonical DSL, mirroring the {@code cv.v2} preset shape: a
+ * plus the canonical DSL, mirroring the {@code cv} preset shape: a
  * {@code create(BrandTheme)} factory returns a thin
  * {@link DocumentTemplate} whose {@code compose} sequences a hero panel,
  * the FROM / BILL&nbsp;TO parties, the line-items table, and a notes /

@@ -15,7 +15,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code BoxedSections} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.BoxedSections}
+ * {@link com.demcha.compose.document.templates.cv.presets.BoxedSections}
  * — a centred letter-spaced PT-Serif name with a thin rule beneath it,
  * then a centred pipe-separated contact line with its own rule beneath
  * — then a single-column letter body via the shared {@link LetterBody}.

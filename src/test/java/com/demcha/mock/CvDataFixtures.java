@@ -1,13 +1,13 @@
 package com.demcha.mock;
 
-import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
-import com.demcha.compose.document.templates.cv.v2.data.CvSkill;
-import com.demcha.compose.document.templates.cv.v2.data.EntriesSection;
-import com.demcha.compose.document.templates.cv.v2.data.ParagraphSection;
-import com.demcha.compose.document.templates.cv.v2.data.RowStyle;
-import com.demcha.compose.document.templates.cv.v2.data.RowsSection;
-import com.demcha.compose.document.templates.cv.v2.data.SkillsSection;
+import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvSkill;
+import com.demcha.compose.document.templates.cv.data.EntriesSection;
+import com.demcha.compose.document.templates.cv.data.ParagraphSection;
+import com.demcha.compose.document.templates.cv.data.RowStyle;
+import com.demcha.compose.document.templates.cv.data.RowsSection;
+import com.demcha.compose.document.templates.cv.data.SkillsSection;
 
 import java.util.List;
 

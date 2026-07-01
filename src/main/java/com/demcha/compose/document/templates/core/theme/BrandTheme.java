@@ -9,7 +9,7 @@ import java.util.Objects;
 
 /**
  * Aggregate cosmetic theme — palette + typography + spacing — passed
- * to every component renderer in {@code cv/v2/components}.
+ * to every component renderer in {@code cv/components}.
  *
  * <p>This is the <strong>only</strong> place a CV preset reads colour,
  * font, size, or spacing values from. Renderers never inline literal

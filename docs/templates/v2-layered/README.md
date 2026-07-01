@@ -3,7 +3,7 @@
 > ⚠️ **Naming clarification.** This is the **layered** template
 > architecture (data / theme / components / widgets / presets), the
 > going-forward canonical pattern. Package:
-> `com.demcha.compose.document.templates.cv.v2`.
+> `com.demcha.compose.document.templates.cv`.
 >
 > **Not to be confused with** the older v1.6 "Templates v2" surface
 > (`CvSpec`, `CvBuilder`, presets with `BusinessTheme`) — that lives
@@ -12,7 +12,7 @@
 
 The **canonical going-forward pattern** for building business documents
 on GraphCompose. CV is the reference implementation today
-(`com.demcha.compose.document.templates.cv.v2`); invoice, cover-letter,
+(`com.demcha.compose.document.templates.cv`); invoice, cover-letter,
 proposal, and any new template family will follow the same shape as
 they're migrated.
 

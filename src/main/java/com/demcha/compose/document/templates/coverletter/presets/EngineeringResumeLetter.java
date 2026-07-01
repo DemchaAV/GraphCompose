@@ -13,7 +13,7 @@ import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * accent strip beneath) holding the UPPERCASE name + role subtitle on
  * the left and a right-aligned contact stack with cyan-green underlined
  * links — the same masthead as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.EngineeringResume}.
+ * {@link com.demcha.compose.document.templates.cv.presets.EngineeringResume}.
  * Below the band, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
  * {@link BrandTheme#engineeringResume()}.</p>

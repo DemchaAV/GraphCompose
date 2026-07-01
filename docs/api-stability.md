@@ -192,7 +192,7 @@ Javadoc per element.
 | `com.demcha.compose.document.dsl` | **Stable** | All builder types (`RowBuilder`, `SectionBuilder`, `ParagraphBuilder`, etc.). |
 | `com.demcha.compose.document.node` | **Stable** | Node records (`RowNode`, `SectionNode`, `ParagraphNode`, ...). Sealed where relevant — see § 2. |
 | `com.demcha.compose.document.style` | **Stable** | `DocumentColor`, `DocumentInsets`, `DocumentTextStyle`, `DocumentTransform`, ... |
-| `com.demcha.compose.document.templates.cv.v2.*` | **Stable** | Layered CV presets, `CvDocument`, `BrandTheme`. Recommended template surface. |
+| `com.demcha.compose.document.templates.cv.*` | **Stable** | Layered CV presets, `CvDocument`, `BrandTheme`. Recommended template surface. |
 | `com.demcha.compose.document.templates.coverletter.v2.*` | **Stable** | Layered cover-letter presets. |
 | `com.demcha.compose.document.templates.builtins` | **Stable** | `InvoiceTemplateV2`, `ProposalTemplateV2`, `BusinessTheme`. |
 | `com.demcha.compose.document.templates.cv.presets.*` | **Stable but Supported** | The "classic" v1.6 rebuild surface. See [`which-template-system.md`](templates/which-template-system.md). Supported through 1.x; removed in 2.0. |

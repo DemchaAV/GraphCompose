@@ -10,7 +10,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.core.identity.Headline;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * v2 cover-letter pair for the {@code ClassicSerif} CV preset.
  *
  * <p>Renders the <strong>identical masthead</strong> as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.ClassicSerif}
+ * {@link com.demcha.compose.document.templates.cv.presets.ClassicSerif}
  * — a centred letter-spaced PT-Serif name, a thin tan rule, and a
  * centred contact line with tan-accent underlined links — then a
  * single-column letter body via the shared {@link LetterBody}. Both

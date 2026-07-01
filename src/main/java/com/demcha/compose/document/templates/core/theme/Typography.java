@@ -93,7 +93,7 @@ public record Typography(
      * 8-9pt for a classic-resume density.
      *
      * <p>{@code sizeBanner} feeds the
-     * {@link com.demcha.compose.document.templates.cv.v2.widgets.SectionHeader#flatSpacedCaps}
+     * {@link com.demcha.compose.document.templates.cv.widgets.SectionHeader#flatSpacedCaps}
      * variant — small bold spaced-caps title in the soft palette
      * tone.</p>
      *

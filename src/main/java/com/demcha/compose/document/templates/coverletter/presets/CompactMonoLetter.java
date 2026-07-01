@@ -10,7 +10,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.coverletter.components.LetterBody;
 import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.core.identity.Headline;
@@ -24,7 +24,7 @@ import java.util.Objects;
  * into the letter: a near-black rounded band holding the UPPERCASE
  * left-aligned name over a left-aligned contact line with cyan links and
  * grey separators — the same header as
- * {@link com.demcha.compose.document.templates.cv.v2.presets.CompactMono}.
+ * {@link com.demcha.compose.document.templates.cv.presets.CompactMono}.
  * Below it, a single-column letter body via the shared
  * {@link LetterBody}. Body palette / typography come from
  * {@link BrandTheme#compactMono()}.</p>

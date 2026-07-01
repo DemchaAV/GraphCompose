@@ -1,6 +1,6 @@
 package com.demcha.compose.document.templates.coverletter.data;
 
-import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvIdentity;
 
 import java.util.ArrayList;
 import java.util.List;

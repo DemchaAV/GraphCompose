@@ -1,6 +1,6 @@
 package com.demcha.examples.support;
 
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.v2.data.CvSkill;

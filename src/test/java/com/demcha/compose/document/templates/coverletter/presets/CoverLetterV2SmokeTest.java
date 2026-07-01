@@ -1,10 +1,10 @@
-package com.demcha.compose.document.templates.coverletter.v2.presets;
+package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

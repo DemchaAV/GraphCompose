@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.coverletter.v2.data;
+package com.demcha.compose.document.templates.coverletter.data;
 
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
 

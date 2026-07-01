@@ -5,7 +5,7 @@
  * spacing from its paired {@code BrandTheme.<brand>()} (the single source
  * of truth shared with the CV), renders the same masthead treatment as
  * the CV, and delegates the letter body to the shared
- * {@code coverletter.v2.components.LetterBody}. The result is a CV and a
+ * {@code coverletter.components.LetterBody}. The result is a CV and a
  * cover letter that read as one matched set.</p>
  */
-package com.demcha.compose.document.templates.coverletter.v2.presets;
+package com.demcha.compose.document.templates.coverletter.presets;

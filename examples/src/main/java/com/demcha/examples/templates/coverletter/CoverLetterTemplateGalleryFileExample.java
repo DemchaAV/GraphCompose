@@ -4,22 +4,22 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.coverletter.v2.presets.BlueBannerLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.BoxedSectionsLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.CenteredHeadlineLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.ClassicSerifLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.CompactMonoLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.EditorialBlueLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.EngineeringResumeLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.ExecutiveLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.MintEditorialLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.ModernProfessionalLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.MonogramSidebarLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.NordicCleanLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.PanelLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.SidebarPortraitLetter;
-import com.demcha.compose.document.templates.coverletter.v2.presets.TimelineMinimalLetter;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.presets.BlueBannerLetter;
+import com.demcha.compose.document.templates.coverletter.presets.BoxedSectionsLetter;
+import com.demcha.compose.document.templates.coverletter.presets.CenteredHeadlineLetter;
+import com.demcha.compose.document.templates.coverletter.presets.ClassicSerifLetter;
+import com.demcha.compose.document.templates.coverletter.presets.CompactMonoLetter;
+import com.demcha.compose.document.templates.coverletter.presets.EditorialBlueLetter;
+import com.demcha.compose.document.templates.coverletter.presets.EngineeringResumeLetter;
+import com.demcha.compose.document.templates.coverletter.presets.ExecutiveLetter;
+import com.demcha.compose.document.templates.coverletter.presets.MintEditorialLetter;
+import com.demcha.compose.document.templates.coverletter.presets.ModernProfessionalLetter;
+import com.demcha.compose.document.templates.coverletter.presets.MonogramSidebarLetter;
+import com.demcha.compose.document.templates.coverletter.presets.NordicCleanLetter;
+import com.demcha.compose.document.templates.coverletter.presets.PanelLetter;
+import com.demcha.compose.document.templates.coverletter.presets.SidebarPortraitLetter;
+import com.demcha.compose.document.templates.coverletter.presets.TimelineMinimalLetter;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -30,7 +30,7 @@ import java.util.function.Supplier;
 
 /**
  * Renders all 15 layered cover-letter presets ({@code
- * coverletter.v2.presets.*} — the polished current standard) against
+ * coverletter.presets.*} — the polished current standard) against
  * the same shared sample {@link CoverLetterDocument}. Each PDF lands in
  * {@code examples/target/generated-pdfs/templates/coverletter/cover-letter-<id>.pdf}
  * where {@code <id>} is the paired CV preset's stable identifier (e.g.

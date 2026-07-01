@@ -358,14 +358,14 @@ not, try Layer 2. If still not, go inline. That's the design.
 |---|---|
 | 1 preset only | Inline. Don't extract. |
 | 2 presets | Add a new factory method to an existing widget, OR add a parameter to `.render(...)`. |
-| 3+ presets | It's its own widget — new class in `cv/v2/widgets/`. |
+| 3+ presets | It's its own widget — new class in `cv/widgets/`. |
 
 Don't predict — extract. Premature widgets are noise; they add API
 surface that nobody calls.
 
 When you do add a new widget:
 
-1. **One file per widget** in `cv/v2/widgets/`.
+1. **One file per widget** in `cv/widgets/`.
 2. **`public final class`** with a private constructor.
 3. **1-3 named factories** + a lower-level `.render(...)` when useful.
 4. **First parameter is always `SectionBuilder host`**.
@@ -383,7 +383,7 @@ When you do add a new widget:
 
 A new preset needs at least:
 
-1. **Smoke test** in `src/test/.../cv/v2/presets/MyPresetSmokeTest.java`:
+1. **Smoke test** in `src/test/.../cv/presets/MyPresetSmokeTest.java`:
    - `exposes_stable_identity` — checks `id()` and `displayName()`
    - `default_factory_renders` — calls `create().compose(...)` with
      a full sample document, asserts `session.roots()` is non-empty
@@ -412,4 +412,4 @@ cover-letter-v2) following the same layered shape?
 
 → The full recipe cookbook (with code for every customisation
 combo):
-[`cv/v2/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md)
+[`cv/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md)

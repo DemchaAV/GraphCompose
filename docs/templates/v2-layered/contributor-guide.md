@@ -16,7 +16,7 @@ the layered pattern looks the way it does.
 1. [The 5-layer convention](#the-5-layer-convention)
 2. [Package map for a new family](#package-map-for-a-new-family)
 3. [Naming rules](#naming-rules)
-4. [Worked walkthrough — `invoice/v2`](#worked-walkthrough)
+4. [Worked walkthrough — `invoice`](#worked-walkthrough)
 5. [Required deliverables](#required-deliverables)
 6. [Test checklist](#test-checklist)
 7. [Doc checklist](#doc-checklist)
@@ -64,7 +64,7 @@ data differs; the *layering* is identical.
 Mirror the CV v2 layout. Concrete example for invoice:
 
 ```
-src/main/java/com/demcha/compose/document/templates/invoice/v2/
+src/main/java/com/demcha/compose/document/templates/invoice/
 ├── package-info.java                   ← ASCII diagram + 4-step walkthrough
 ├── AUTHORS.md                          ← recipe cookbook
 ├── data/
@@ -106,7 +106,7 @@ src/main/java/com/demcha/compose/document/templates/invoice/v2/
     └── (more as added)
 ```
 
-The structure is **identical** to cv/v2 — only the records inside
+The structure is **identical** to cv — only the records inside
 differ.
 
 ---
@@ -135,7 +135,7 @@ differ.
 ---
 
 <a id="worked-walkthrough"></a>
-## Worked walkthrough — `invoice/v2`
+## Worked walkthrough — `invoice`
 
 Order to write things in:
 
@@ -253,7 +253,7 @@ A new template family PR ships with:
 - [ ] **5 packages** under `<family>/v2/` populated per convention
 - [ ] **At least 1 reference preset** that renders a sample document
 - [ ] **`AUTHORS.md`** in the family root (recipe cookbook — copy
-      the cv/v2 one as starting structure)
+      the cv one as starting structure)
 - [ ] **`package-info.java`** at family root + each sub-package
 - [ ] **Sample fixture** in `ExampleDataFactory.sample<Family>DocumentV2()`
 - [ ] **Example runner** in `examples/.../templates/<family>/v2/`
@@ -331,7 +331,7 @@ baseline so a reviewer can see exactly what changed before deciding
 to re-bless or fix.
 
 **Reference**: see
-`src/test/java/com/demcha/compose/document/templates/cv/v2/presets/CvV2VisualParityTest.java`
+`src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java`
 — a 200-line drop-in template you can copy for a new family.
 
 ---
@@ -341,7 +341,7 @@ to re-bless or fix.
 
 - [ ] `<family>/v2/package-info.java` — ASCII diagram of the 5
       layers, plus a 4-step "how to author a document" walkthrough
-      (copy the cv/v2 one's structure).
+      (copy the cv one's structure).
 - [ ] `<family>/v2/AUTHORS.md` — recipe cookbook. At least:
       change a glyph, change colours, add a new section subtype,
       conditional sections.
@@ -363,7 +363,7 @@ to re-bless or fix.
   Mark v1 `@Deprecated` only after the v2 surface is feature-complete
   and shipped — that's a follow-up PR.
 - ❌ **Don't fork widgets across families.** If invoice needs a
-  `Headline`, write `templates/invoice/v2/widgets/Letterhead.java`
+  `Headline`, write `templates/invoice/widgets/Letterhead.java`
   — an invoice letterhead has different needs from a CV name
   headline. Don't try to share the same widget class across
   domains.
@@ -398,7 +398,7 @@ A new template family PR is reviewed against:
 5. **No engine / v1 edits** — additive only.
 
 Expected size: ~1500-2500 lines of new code for a fresh family.
-Compare to cv/v2 baseline (PR #45) which was 2082 lines including
+Compare to cv baseline (PR #45) which was 2082 lines including
 35 files.
 
 ---

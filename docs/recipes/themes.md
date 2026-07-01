@@ -103,7 +103,7 @@ side; V2 is the cinematic theme-driven path.
 ## CV themes
 
 CV templates are themed independently of `BusinessTheme`. The layered
-CV presets (`cv.v2.presets.*`) carry their own theme type, `BrandTheme`
+CV presets (`cv.presets.*`) carry their own theme type, `BrandTheme`
 (in `com.demcha.compose.document.templates.core.theme`), so CV tokens
 stay separate from invoice / proposal vocabulary. Each preset ships a
 default theme; render one against a `CvDocument` with its `create()`

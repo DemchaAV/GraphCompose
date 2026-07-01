@@ -17,7 +17,7 @@ GraphCompose's templates v2 (layered) gives you:
 - **Widgets as visual LEGO bricks** — the neutral header bricks
   (`Headline`, `Subheadline`, `ContactLine`) live in the shared
   `templates.core.identity`; CV-specific ones (`SectionHeader` and
-  friends) in `cv.v2.widgets`. Each is a named visual decision you
+  friends) in `cv.widgets`. Each is a named visual decision you
   drop into a preset.
 - **Presets as compositions** — a preset orchestrates widgets in a
   page flow. Sixteen ship today (`BoxedSections`, `ModernProfessional`,
@@ -145,5 +145,5 @@ touch a renderer. A new widget doesn't touch the data model.
 | Render your own CV with your data | [using-templates.md](using-templates.md) |
 | Make a new visual style | [authoring-presets.md](authoring-presets.md) |
 | Add a new template family to the library (invoice, cover-letter) | [contributor-guide.md](contributor-guide.md) |
-| See hands-on recipes (change a bullet, swap colours, …) | [`cv/v2/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/v2/AUTHORS.md) |
+| See hands-on recipes (change a bullet, swap colours, …) | [`cv/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md) |
 | Run the shipped examples | [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2) |

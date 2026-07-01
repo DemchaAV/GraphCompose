@@ -1,10 +1,9 @@
 /**
  * Invoice template family.
  *
- * <p>The shipping invoice surface is the layered preset stack under
- * {@code invoice.v2}, built on the shared {@code templates.core} layer and a
- * {@code BrandTheme}. {@code invoice.v2.presets.ModernInvoice} is the
- * reference preset.</p>
+ * <p>The invoice surface is a layered preset stack built on the shared
+ * {@code templates.core} layer and a {@code BrandTheme}.
+ * {@code invoice.presets.ModernInvoice} is the reference preset.</p>
  *
  * @since 1.6.0
  */

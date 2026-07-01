@@ -1,4 +1,4 @@
-package com.demcha.examples.templates.invoice.v2;
+package com.demcha.examples.templates.invoice;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -6,7 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 

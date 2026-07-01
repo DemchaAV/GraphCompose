@@ -6,7 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
-import com.demcha.compose.document.templates.invoice.v2.presets.ModernInvoice;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 import com.demcha.compose.testing.layout.LayoutSnapshotJson;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;

@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.proposal.v2.presets;
+package com.demcha.compose.document.templates.proposal.presets;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;

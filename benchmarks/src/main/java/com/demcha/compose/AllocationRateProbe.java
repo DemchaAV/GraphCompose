@@ -6,7 +6,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
 import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
 import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
-import com.demcha.compose.document.templates.proposal.v2.presets.ModernProposal;
+import com.demcha.compose.document.templates.proposal.presets.ModernProposal;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;

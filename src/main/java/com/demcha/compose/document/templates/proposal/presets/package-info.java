@@ -14,4 +14,4 @@
  *
  * @since 2.0.0
  */
-package com.demcha.compose.document.templates.proposal.v2.presets;
+package com.demcha.compose.document.templates.proposal.presets;

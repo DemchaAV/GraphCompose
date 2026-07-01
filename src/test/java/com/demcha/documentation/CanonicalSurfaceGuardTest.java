@@ -32,8 +32,7 @@ class CanonicalSurfaceGuardTest {
             "src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java",
             "src/test/java/com/demcha/documentation/DocumentationCoverageTest.java");
 
-    private static final Set<String> CANONICAL_DOCUMENT_TEST_ALLOWLIST = Set.of(
-            "src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java");
+    private static final Set<String> CANONICAL_DOCUMENT_TEST_ALLOWLIST = Set.of();
 
     private static final Set<String> CANONICAL_BENCHMARK_ALLOWLIST = Set.of();
 

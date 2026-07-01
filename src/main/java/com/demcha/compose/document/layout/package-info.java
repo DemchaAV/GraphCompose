@@ -9,7 +9,7 @@
  * because they are implementation detail of the layout pipeline and may
  * change in any release without notice. Library users should not depend
  * on these types &mdash; build against {@code DocumentSession},
- * {@code DocumentDsl}, {@code BusinessTheme}, the template APIs, or the
+ * {@code DocumentDsl}, the template APIs, or the
  * {@link com.demcha.compose.document.backend} SPIs instead.</p>
  *
  * <p>Architecture-guard tests may inspect this annotation reflectively

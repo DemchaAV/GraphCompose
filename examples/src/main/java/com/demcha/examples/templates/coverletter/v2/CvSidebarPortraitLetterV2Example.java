@@ -1,11 +1,11 @@
-package com.demcha.examples.templates.coverletter.v2;
+package com.demcha.examples.templates.coverletter;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
-import com.demcha.compose.document.templates.coverletter.v2.presets.SidebarPortraitLetter;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.presets.SidebarPortraitLetter;
 import com.demcha.examples.support.ExampleDataFactory;
 import com.demcha.examples.support.ExampleOutputPaths;
 

@@ -1,10 +1,10 @@
-package com.demcha.compose.document.templates.coverletter.v2.presets;
+package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.components.LetterBody;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.ContactLine;
 import com.demcha.compose.document.templates.core.identity.Headline;

@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.coverletter.v2.presets;
+package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.templates.core.identity.Link;
 
@@ -12,8 +12,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.components.LetterBody;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;
@@ -39,7 +39,7 @@ import java.util.Objects;
  * because the CV's header is itself preset-local (V1 splits meta and
  * links across two rows — no shared v2 contact widget has that exact
  * shape today). When a second brand needs the same header shape, this
- * block should be promoted to a shared {@code coverletter/v2/widgets}
+ * block should be promoted to a shared {@code coverletter/widgets}
  * letterhead widget the CV preset can also adopt.</p>
  */
 public final class ExecutiveLetter {

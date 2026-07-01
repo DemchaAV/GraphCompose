@@ -1,4 +1,4 @@
-package com.demcha.compose.document.templates.coverletter.v2.presets;
+package com.demcha.compose.document.templates.coverletter.presets;
 
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.*;
@@ -8,8 +8,8 @@ import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.coverletter.v2.components.LetterBody;
-import com.demcha.compose.document.templates.coverletter.v2.data.CoverLetterDocument;
+import com.demcha.compose.document.templates.coverletter.components.LetterBody;
+import com.demcha.compose.document.templates.coverletter.data.CoverLetterDocument;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.v2.data.CvIdentity;

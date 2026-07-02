@@ -125,7 +125,7 @@ document.pageFlow(page -> page
 
 ## Soft panel from a theme
 
-When you have a `BusinessTheme`, prefer `softPanel(color, radius,
+When you have a theme palette, prefer `softPanel(color, radius,
 padding)` over hand-rolled `fillColor` + `cornerRadius` + `padding`:
 it keeps the visual identity routed through the theme's palette
 slots. Full discussion in the [themes recipe](themes.md).

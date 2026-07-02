@@ -18,7 +18,7 @@ tracks what is `Partial` or `Planned`.
 |---|---|---|---|
 | Open a document session | `GraphCompose.document(...)` → `DocumentSession` | Stable | [Your first document](first-document.md) |
 | Describe content in reading order | `pageFlow(...)`, `module(...)`, `addSection(...)` | Stable | [Getting started](getting-started.md) |
-| Maintained document templates | `InvoiceTemplateV2`, `ProposalTemplateV2`, `cv.v2.*`, `coverletter.v2.*` | Stable | [Templates](templates/which-template-system.md) |
+| Maintained document templates | `ModernInvoice`, `ModernProposal`, the `templates.cv.*` / `templates.coverletter.*` preset galleries | Stable | [Templates](templates/which-template-system.md) |
 | Reusable building blocks (helpers) | helper methods / widgets over the DSL | Stable | [Diagrams](diagrams.md#choose-your-authoring-path) |
 | Custom node / backend | `NodeDefinition`, render-handler SPI, `FixedLayoutBackend` | Extension SPI (`@Beta`) | [Extending](recipes/extending.md) |
 

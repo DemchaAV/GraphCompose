@@ -56,8 +56,8 @@ are with the canonical DSL, then jump to its detailed section below.
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create(BusinessTheme.modern())` (Templates v2) | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java) |
-| [Invoice — cinematic V2](#invoice-cinematic-v2) | `InvoiceTemplateV2 + BusinessTheme.modern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
+| [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create()` on a `CvDocument` | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java) |
+| [Invoice — cinematic V2](#invoice-cinematic-v2) | `ModernInvoice + BrandTheme.invoiceModern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
 | [Cover Letter](#cover-letter) | One-page `BusinessTheme.modern()` cover letter with section presets | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
 | **Engine Showcase** | Single-page cinematic brand promo — semantic-graph → polished-PDFs visual metaphor with rounded clip frame, magazine headline lockup, KPI cards, capability columns; source of the README hero image | [Source](src/main/java/com/demcha/examples/flagships/EngineShowcase.java) |
@@ -90,7 +90,7 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [CV — template gallery](#cv-template-gallery) | The v2 CV presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java) |
 | [Cover letter — template gallery](#cover-letter-template-gallery) | All paired v2 cover-letter presets in one orchestrated run | [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterTemplateGalleryFileExample.java) |
-| [Proposal — cinematic V2](#proposal-cinematic-v2) | `ProposalTemplateV2 + BusinessTheme.modern()` | [PDF](../assets/readme/examples/proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java) |
+| [Proposal — cinematic V2](#proposal-cinematic-v2) | `ModernProposal + BrandTheme.proposalModern()` | [PDF](../assets/readme/examples/proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java) |
 
 ### 🔧 Advanced SPI
 
@@ -194,11 +194,10 @@ document.buildPdf();
 
 ### CV — single template
 
-One CV rendered through the Templates v2 surface:
-`ModernProfessional.create(BusinessTheme.modern())` paired with a
-`CvSpec` data shape. The preset is one final class with one
-`create(BusinessTheme)` factory — copy-and-tweak rather than
-fork-a-monolith.
+One CV rendered through the layered template surface:
+`ModernProfessional.create()` paired with a `CvDocument` data shape.
+The preset is one final class with `create()` / `create(BrandTheme)`
+factories — copy-and-tweak rather than fork-a-monolith.
 
 [📄 View PDF](../assets/readme/examples/cv-modern-professional.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java)
@@ -237,23 +236,24 @@ one-liner factory (`ModernProfessionalLetter.create()`,
 
 ---
 
-## Cinematic templates (v1.5)
+## Cinematic templates
 
 ### Invoice — cinematic V2
 
-`InvoiceTemplateV2(BusinessTheme.modern())` — the cinematic invoice.
-Hero `softPanel` with invoice number / dates / inline rich-text status,
-two-column parties row, themed line-items table with `headerStyle` +
-zebra + totals + `repeatHeader()`, footer row with `accentLeft` strips.
+`ModernInvoice.create(BrandTheme.invoiceModern())` — the cinematic
+invoice. Hero panel with invoice number / dates / status, two-column
+parties row, themed line-items table with header + totals, footer
+notes and payment terms.
 
 ```java
-BusinessTheme theme = BusinessTheme.modern();
-InvoiceTemplateV2 template = new InvoiceTemplateV2(theme);
+BrandTheme theme = BrandTheme.invoiceModern();
+DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
 
+float margin = (float) ModernInvoice.RECOMMENDED_MARGIN;
 try (DocumentSession document = GraphCompose.document(outputFile)
         .pageSize(DocumentPageSize.A4)
-        .pageBackground(theme.pageBackground())
-        .margin(28, 28, 28, 28)
+        .pageBackground(theme.palette().mainFill())
+        .margin(margin, margin, margin, margin)
         .create()) {
     template.compose(document, invoice);
     document.buildPdf();
@@ -265,10 +265,10 @@ try (DocumentSession document = GraphCompose.document(outputFile)
 
 ### Proposal — cinematic V2
 
-`ProposalTemplateV2` — same `BusinessTheme`-driven pattern as the
+`ModernProposal` — same `BrandTheme`-driven pattern as the
 invoice. Hero rounded only on the right (`DocumentCornerRadius.right(...)`),
 themed executive-summary panel, sender / recipient parties row,
-`theme.text().h2()` headings, timeline + pricing tables with
+themed headings, timeline + pricing tables with
 `repeatHeader()`, zebra rows, and a `totalRow(...)`.
 
 [📄 View PDF](../assets/readme/examples/proposal-cinematic.pdf) ·
@@ -893,10 +893,9 @@ public ResponseEntity<StreamingResponseBody> invoice(@PathVariable Long id) {
     StreamingResponseBody body = response -> {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
-                .pageBackground(BusinessTheme.modern().pageBackground())
                 .margin(28, 28, 28, 28)
                 .create()) {
-            new InvoiceTemplateV2(BusinessTheme.modern()).compose(document, spec);
+            ModernInvoice.create().compose(document, spec);
             document.writePdf(response);   // streams directly, no in-memory PDF
         }
     };
@@ -961,7 +960,7 @@ in-test usage.
 
 ```java
 DocumentSession document = GraphCompose.document(outputFile)…create();
-new InvoiceTemplateV2(theme).compose(document, spec);
+ModernInvoice.create().compose(document, spec);
 
 String snapshot = LayoutSnapshotJson.toJson(document.layoutSnapshot());
 String baseline = Files.readString(baselinePath);

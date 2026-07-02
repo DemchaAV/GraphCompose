@@ -11,7 +11,7 @@ authoring API; public application code should not import
 | --- | --- |
 | [Charts](recipes/charts.md) | Native vector bar / line / area / pie-donut charts: data–spec–style layers, axis & grid toggles, point markers, value-label halos, legend placement, translucent area fills |
 | [Keep-together pagination](recipes/keep-together.md) | `keepTogether()` / `keepEntriesTogether()` — blocks that relocate whole instead of orphaning a heading at a page break |
-| [Themes](recipes/themes.md) | `BusinessTheme.classic / modern / executive`, page background, palette slots, text scale, the `BrandTheme` ↔ `BusinessTheme` bridge |
+| [Themes](recipes/themes.md) | `BrandTheme` token bundle (palette / typography / spacing / decoration), theme factories per family, page background, direct DSL styling |
 | [Shapes and visual primitives](recipes/shapes.md) | Filled cards, dividers, spacers, lines, ellipses, image fit modes, soft panels |
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |

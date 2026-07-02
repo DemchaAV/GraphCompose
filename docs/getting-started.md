@@ -16,45 +16,53 @@ tree to choose the right one for the document you're rendering.
 
 | Question | Answer | Pick this layer |
 | --- | --- | --- |
-| Is your document one of the built-in shapes (CV, invoice, proposal, weekly schedule, cover letter)? | Yes | **Built-in template.** Skip ahead to "Built-in templates". |
+| Is your document one of the template families (CV, cover letter, invoice, proposal)? | Yes | **Layered template preset.** Skip ahead to "Templates". |
 | Do you need pixel-level control over a one-off PDF? | Yes | **Raw DSL** (`DocumentSession.pageFlow(...)`). |
-| Do you need a re-usable scene for a *new* business document type? | Yes | **Custom template that wraps the DSL.** Implement the `*Template` interface and re-use `BusinessTheme` for visual coherence. |
+| Do you need a re-usable scene for a *new* business document type? | Yes | **Custom template that wraps the DSL.** Implement `DocumentTemplate<S>` and take a `BrandTheme` for visual coherence. |
 
 The DSL and the templates compose against the SAME `DocumentSession`
 — a template can also live alongside hand-written DSL inside one
 session, so you don't have to commit to one layer per document.
 
-Unsure which template surface to target — layered (`cv.v2`), classic
-(`cv.presets`), or a built-in `*TemplateV2`? See
+Arriving from a pre-2.0 surface (classic presets or the built-in
+`*Template` classes)? See
 [Which template system should I use?](templates/which-template-system.md)
-for the authoritative decision tree and status matrix.
+for the naming history and the migration map.
 
 ## Quick start
 
 The shortest path to a real PDF: open a session, drop a soft-panel
-hero on the page, render. The `BusinessTheme` keeps the look
-consistent with the rest of your branded documents.
+hero on the page, render. A couple of inline colour and text-style
+constants keep the look consistent — swap them for your own brand
+values.
 
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.FontName;
 
 import java.nio.file.Path;
 
-BusinessTheme theme = BusinessTheme.modern();   // cream paper + teal/gold
+DocumentColor cream = DocumentColor.rgb(252, 248, 240);   // paper
+DocumentColor panel = DocumentColor.rgb(244, 238, 228);   // soft panel
+DocumentColor accent = DocumentColor.rgb(196, 153, 76);   // gold accent
+DocumentTextStyle h1 = DocumentTextStyle.builder()
+        .fontName(FontName.HELVETICA_BOLD).size(28)
+        .color(DocumentColor.rgb(20, 60, 75)).build();
 
 try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
-        .pageBackground(theme.pageBackground())
+        .pageBackground(cream)
         .margin(28, 28, 28, 28)
         .create()) {
     document.pageFlow(page -> page
             .addSection("Hero", section -> section
-                    .softPanel(theme.palette().surfaceMuted(), 10, 14)
-                    .accentLeft(theme.palette().accent(), 4)
+                    .softPanel(panel, 10, 14)
+                    .accentLeft(accent, 4)
                     .addParagraph(p -> p
                             .text("GraphCompose")
-                            .textStyle(theme.text().h1()))
+                            .textStyle(h1))
                     .addParagraph("Quick-start hero block."))
             .module("Summary", module -> module.paragraph(
                     "GraphCompose composes a document graph and renders it twice — "
@@ -196,21 +204,21 @@ without the outline frame and logs a one-time capability warning. See
 [`docs/recipes/shape-as-container.md`](recipes/shape-as-container.md)
 for the full recipe.
 
-## Built-In Templates
+## Templates
 
-Built-ins compose into the same `DocumentSession`. Template data
-lives under `com.demcha.compose.document.templates.data.*`, and the
-current built-in templates live under
-`com.demcha.compose.document.templates.builtins` — `InvoiceTemplateV2`,
-`ProposalTemplateV2`, and the weekly schedule. (For CVs and cover
-letters, prefer the layered `cv.v2` / `coverletter.v2` authoring model —
-see [Templates v2 (layered) quickstart](templates/v2-layered/quickstart.md).)
+Templates compose into the same `DocumentSession`. Data specs live
+under `com.demcha.compose.document.templates.data.*`, and each family
+ships presets under `com.demcha.compose.document.templates.<family>.presets`
+— `ModernInvoice`, `ModernProposal`, and the CV / cover-letter preset
+galleries (see the
+[Templates v2 (layered) quickstart](templates/v2-layered/quickstart.md)).
 
 ```java
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 
-InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
+DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create();
 
 try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).create()) {
     template.compose(document, invoice);   // invoice = your InvoiceDocumentSpec

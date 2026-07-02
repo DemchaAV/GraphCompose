@@ -19,7 +19,7 @@ API, with copy-pasteable snippets verified against the current release.
 | [page-backgrounds.md](page-backgrounds.md) | Per-page fills: sidebars, bands, layered tints |
 | [transforms.md](transforms.md) | Rotation, scaling, skewing |
 | [tables.md](tables.md) | Tabular layouts: columns, headers, zebra rows, composed cells |
-| [themes.md](themes.md) | `BusinessTheme` presets and custom palettes |
+| [themes.md](themes.md) | `BrandTheme` factories and custom token bundles |
 | [barcodes.md](barcodes.md) | QR / Code 128 / Code 39 / EAN / UPC / PDF417 / DataMatrix, tinting, quiet zone, card centring |
 | [images.md](images.md) | Sources (bytes/path), sizing precedence, STRETCH/CONTAIN/COVER fit modes, images in rows and cards |
 | [pdf-chrome.md](pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |

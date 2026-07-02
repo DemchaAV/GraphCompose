@@ -284,30 +284,30 @@ Built-in templates now use a canonical compose-first contract on top of
 Use this split:
 
 1. a public template interface in `com.demcha.compose.document.templates.api` exposes `compose(DocumentSession, ...)`
-2. a canonical built-in class under `com.demcha.compose.document.templates.builtins` exposes stable ids, names, and theme defaults
-3. a dedicated scene composer under a domain support package such as `com.demcha.compose.document.templates.support.cv` or `support.business` owns document composition through `TemplateComposeTarget`
-4. focused canonical tests and examples keep `compose(DocumentSession, ...)` stable while the scene composer owns the reusable document structure
+2. a preset class under `com.demcha.compose.document.templates.<family>.presets` exposes a stable `create(...)` factory and theme defaults
+3. the preset delegates the reusable drawing work to its family's `components` / `widgets` layers and the shared `templates.core` widgets, keeping the preset itself a thin orchestrator
+4. focused canonical tests and examples keep `compose(DocumentSession, ...)` stable while the component layer owns the reusable document structure
 
 Practical rules:
 
 - keep current `render(...): PDDocument` and `render(..., Path)` overloads only as deprecated compatibility adapters
 - keep `GraphCompose.document(...)`, page size selection, margins, `document.buildPdf()`, and `document.toPdfBytes()` in canonical examples and integrations
 - let deprecated bridge adapters call into the canonical `DocumentSession` PDF path rather than owning production layout/render logic
-- put the actual document structure, sections, tables, and paragraph assembly in the scene composer
-- keep scene composers backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF composer imports
+- put the actual document structure, sections, tables, and paragraph assembly in the family's component/widget layer
+- keep components backend-neutral: no `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF imports
 - keep public examples and integration docs compose-first: show `compose(DocumentSession, ...)` before any deprecated convenience path
-- pass theme or style collaborators into the scene composer constructor instead of hard-wiring backend assumptions into composition code
-- when a built-in template already has a good scene split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
+- pass the `BrandTheme` (or style collaborators) into renderers instead of hard-wiring backend assumptions into composition code
+- when a family already has a good component split, extend that pattern instead of reintroducing backend-specific logic into the composition layer
 
 Current guard rails:
 
-- `CanonicalTemplateComposerPdfBoundaryTest` keeps scene-composition classes free of `PDDocument`, `PDPage`, `PDRectangle`, and low-level PDF composer imports
-- canonical template API tests keep `compose(DocumentSession, ...)` aligned with the built-ins
+- `PublicApiNoEngineLeakTest` keeps the public authoring surface free of engine imports; template components stay backend-neutral by construction
+- the per-family smoke and visual-parity tests keep `compose(DocumentSession, ...)` aligned with the presets
 
 Rule of thumb:
 
-- canonical `*TemplateV1` built-ins should feel like reusable public templates
-- `*TemplateComposer` plus `TemplateComposeTarget` should feel like the reusable document composition core
+- presets should feel like reusable public templates
+- the family component and widget layers (plus `templates.core`) should feel like the reusable document composition core
 
 ## Where rendering hooks in
 
@@ -448,7 +448,7 @@ Do not add a method there if the new object is only an internal helper for templ
 - container:
   [ModuleBuilder.java](./../src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 - template-level composition helper:
-  [CvTemplateComposer.java](./../src/main/java/com/demcha/compose/document/templates/support/cv/CvTemplateComposer.java)
+  [SectionDispatcher.java](../../src/main/java/com/demcha/compose/document/templates/cv/components/SectionDispatcher.java)
 
 ## Overlay primitive: `LayerStackNode`
 

@@ -1,113 +1,76 @@
 # Themes
 
-`BusinessTheme` bundles a `DocumentPalette`, `SpacingScale`,
-`TextScale`, `TablePreset`, and an optional page background, so
-invoice / proposal / report templates rendered through the same
-theme look like one product instead of three independently styled
-documents.
+GraphCompose has two theming levels:
 
-## Pick a built-in theme
+- **Direct DSL styling** — `DocumentColor`, `DocumentTextStyle`, and the
+  page background, for documents you author yourself on the canonical
+  DSL.
+- **`BrandTheme`** — the template token bundle (a `Palette`, a
+  `Typography`, a `Spacing`, and a `Decoration`) that every layered
+  template family reads, so an invoice, a proposal, and a CV rendered
+  through the same theme look like one product instead of three
+  independently styled documents.
 
-Three built-ins ship with the canonical surface:
+## Theme a template with `BrandTheme`
 
-```java
-import com.demcha.compose.document.theme.BusinessTheme;
-
-BusinessTheme classic   = BusinessTheme.classic();    // crisp blue + white
-BusinessTheme modern    = BusinessTheme.modern();     // cream paper + teal/gold
-BusinessTheme executive = BusinessTheme.executive();  // graphite + warm accent
-```
-
-Each theme exposes a palette, a text scale, a table preset, a
-spacing scale, and an optional page background:
+Each family ships default themes as static factories — the CV presets
+each have a matching factory (`BrandTheme.boxedClassic()`,
+`BrandTheme.nordicClean()`, `BrandTheme.executive()`, …), and the
+invoice / proposal families ship `BrandTheme.invoiceModern()` and
+`BrandTheme.proposalModern()`:
 
 ```java
-document.pageFlow(page -> page
-        .addSection("Hero", section -> section
-                .softPanel(theme.palette().surfaceMuted(), 10, 14)
-                .accentLeft(theme.palette().accent(), 4)
-                .addParagraph(p -> p
-                        .text("GraphCompose")
-                        .textStyle(theme.text().h1()))
-                .addParagraph(p -> p
-                        .text("A theme-driven hero section.")
-                        .textStyle(theme.text().body()))));
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
+
+BrandTheme theme = BrandTheme.invoiceModern();
+DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
 ```
 
-## Apply the page background
-
-`BusinessTheme.modern()` ships with a cream `pageBackground()`. Apply
-it on the document builder so the entire page paints with the
-theme's paper colour rather than pure white:
-
-```java
-try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
-        .pageBackground(theme.pageBackground())
-        .margin(28, 28, 28, 28)
-        .create()) {
-    // ...
-    document.buildPdf();
-}
-```
+The same data spec renders in any theme just by passing a different
+`BrandTheme` to `create(...)` — no need to refactor call sites.
 
 ## Pick the right palette colour by role
 
-Reach for the named slots on `theme.palette()` instead of hard-coding
-hex values — this keeps the document consistent with the rest of the
-theme:
+`theme.palette()` exposes named colour slots. Reach for them instead of
+hard-coding hex values — the slot names stay stable across theme tweaks:
 
 | Slot | Typical use |
 | --- | --- |
-| `palette().accent()` | Brand accent on borders, badges, total rows |
-| `palette().surfaceMuted()` | Soft section backgrounds (`softPanel(...)`) |
-| `palette().textPrimary()` | Body copy |
-| `palette().textMuted()` | Captions, metadata |
+| `palette().ink()` | Body copy, headings |
+| `palette().muted()` | Captions, metadata, secondary text |
+| `palette().rule()` | Dividers, table strokes |
+| `palette().banner()` | Section-header bands, accent fills |
+| `palette().mainFill()` | The page background (`pageBackground(theme.palette().mainFill())`) |
 
-The exact RGB values are an implementation detail of each theme — the
-slot names stay stable across future tweaks.
+## Customize one token bundle, keep the rest
 
-## Reusable text styles via the text scale
-
-`theme.text()` returns a `TextScale` with named slots (`h1`, `h2`,
-`bodyBold`, `body`, `caption`). Use them instead of hand-rolling
-`DocumentTextStyle.builder()...` calls so your headings stay
-consistent.
+`BrandTheme` is a record of four token records — swap any one and keep
+the others:
 
 ```java
-.addParagraph(p -> p.text("Quarterly summary").textStyle(theme.text().h2()))
-.addParagraph(p -> p.text("Generated " + date).textStyle(theme.text().caption()))
+import com.demcha.compose.document.templates.core.theme.*;
+
+BrandTheme base = BrandTheme.boxedClassic();
+BrandTheme custom = new BrandTheme(
+        base.palette(),
+        base.typography(),
+        base.spacing(),
+        new Decoration("▶ ", "  ", "  ·  "));   // ▶ bullets, mid-dot separators
 ```
 
-## Layered themes for invoices and proposals
+- `Palette` — the five colour slots above.
+- `Typography` — headline / body fonts plus the point-size scale
+  (`sizeHeadline`, `sizeBody`, `sizeEntryTitle`, …).
+- `Spacing` — the vertical rhythm between sections and entries.
+- `Decoration` — bullet glyph, stacked indent, contact separator.
 
-`InvoiceTemplateV2` and `ProposalTemplateV2` (Phase E.1 / E.2) take a
-`BusinessTheme` in their constructor:
+## CV and cover-letter themes
 
-```java
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
-import com.demcha.compose.document.theme.BusinessTheme;
-
-InvoiceTemplateV2 invoice = new InvoiceTemplateV2(BusinessTheme.modern());
-ProposalTemplateV2 proposal = new ProposalTemplateV2(BusinessTheme.modern());
-```
-
-The same business data (`InvoiceDocumentSpec`,
-`ProposalDocumentSpec`) renders in any of the three built-in themes
-just by passing the theme to the constructor — no need to refactor
-the call sites.
-
-The earlier `InvoiceTemplateV1` is hard-coded to a default theme via
-the static `BusinessDocumentSceneStyles`. Both V1 and V2 ship side by
-side; V2 is the cinematic theme-driven path.
-
-## CV themes
-
-CV templates are themed independently of `BusinessTheme`. The layered
-CV presets (`cv.presets.*`) carry their own theme type, `BrandTheme`
-(in `com.demcha.compose.document.templates.core.theme`), so CV tokens
-stay separate from invoice / proposal vocabulary. Each preset ships a
-default theme; render one against a `CvDocument` with its `create()`
-factory:
+CV presets pair with their theme factory by name; render one against a
+`CvDocument` with the preset's `create()` factory:
 
 ```java
 import com.demcha.compose.document.templates.api.DocumentTemplate;
@@ -127,12 +90,41 @@ the per-preset customisation knobs and
 [which template system?](../templates/which-template-system.md) for the
 full preset list.
 
+## Direct DSL styling
+
+Authoring on the canonical DSL directly, define your colours and text
+styles inline (or in a small constants class) and apply the page
+background on the document builder so the entire page paints with your
+paper colour rather than pure white:
+
+```java
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.FontName;
+
+DocumentColor cream = DocumentColor.rgb(252, 248, 240);
+DocumentColor panel = DocumentColor.rgb(244, 238, 228);
+DocumentTextStyle h1 = DocumentTextStyle.builder()
+        .fontName(FontName.HELVETICA_BOLD).size(28)
+        .color(DocumentColor.rgb(20, 60, 75)).build();
+
+try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))
+        .pageBackground(cream)
+        .margin(28, 28, 28, 28)
+        .create()) {
+    document.pageFlow(page -> page
+            .addSection("Hero", section -> section
+                    .softPanel(panel, 10, 14)
+                    .addParagraph(p -> p.text("GraphCompose").textStyle(h1))));
+    document.buildPdf();
+}
+```
+
 ## See also
 
 - [Shape-as-container](shape-as-container.md) — themed circles + cards.
 - [Tables](tables.md) — the table style overrides used by
   `headerStyle(...)`, `totalRow(...)`, and `zebra(...)` accept full
   `DocumentTableStyle` values, so they pick up theme palettes.
-- [`docs/architecture/canonical-legacy-parity.md`](../architecture/canonical-legacy-parity.md) —
-  the parity matrix lists every theme-aware style override that
-  v1.5 supports.
+- [Business templates](../templates/business-templates.md) — the
+  invoice / proposal presets that consume `BrandTheme`.

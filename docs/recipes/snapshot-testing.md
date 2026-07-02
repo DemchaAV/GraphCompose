@@ -20,7 +20,7 @@ void invoiceLayoutIsStable() throws Exception {
             .pageSize(DocumentPageSize.A4)
             .margin(DocumentInsets.of(28))
             .create()) {
-        new InvoiceTemplateV2(theme).compose(document, sampleInvoice());
+        ModernInvoice.create().compose(document, sampleInvoice());
 
         LayoutSnapshotAssertions.assertMatches(document, "templates/invoice/invoice_baseline");
     }

@@ -91,10 +91,6 @@ need to reach below it.
   (`DocumentTableColumn`, `DocumentTableCell`, `DocumentTableStyle`).
 - **`document.image`** — public image types
   (`DocumentImageData`, `DocumentImageFitMode`).
-- **`document.theme`** — `BusinessTheme` design tokens
-  (`DocumentPalette`, `SpacingScale`, `TextScale`, `TablePreset`). The
-  layered CV theme `BrandTheme` lives separately under
-  `…templates.core.theme`.
 - **`document.output`** — backend-neutral output options
   (`DocumentMetadata`, `DocumentWatermark`, `DocumentProtection`,
   `DocumentHeaderFooter`).
@@ -117,29 +113,26 @@ need to reach below it.
 
 ## Template layer (`com.demcha.compose.document.templates.*`)
 
-Built-in templates compose against the canonical authoring layer using
-the same `DocumentDsl` an application would use directly.
+Templates compose against the canonical authoring layer using the same
+`DocumentDsl` an application would use directly.
 
-- **`...templates.api`** — template-facing contracts
-  (`InvoiceTemplate`, `ProposalTemplate`, `CvTemplate`,
-  `CoverLetterTemplate`, `WeeklyScheduleTemplate`,
-  `CvTemplateRegistry`). Compose-first: every contract takes a
-  `DocumentSession` plus the template-specific data spec.
-- **`...templates.builtins`** — concrete built-ins
-  (`InvoiceTemplateV1`, `InvoiceTemplateV2`, `ProposalTemplateV1`,
-  `ProposalTemplateV2`, `CvTemplateV1`, plus a CV gallery that takes a
-  `BusinessTheme` or `BrandTheme` in their constructor).
-- **`...templates.support`** — backend-neutral scene composers per
-  domain (`...support.cv`, `...support.business`, `...support.schedule`)
-  plus shared composition primitives in `...support.common`.
-- **`...templates.data`** — DTOs (`InvoiceDocumentSpec`,
-  `ProposalDocumentSpec`, etc.).
+- **`...templates.api`** — the `DocumentTemplate<S>` contract every
+  preset factory returns. Compose-first: `compose(DocumentSession, S)`
+  takes an open session plus the template-specific data spec.
+- **`...templates.core`** — the shared, family-neutral layer:
+  `BrandTheme` tokens (`core.theme`), neutral header bricks
+  (`core.identity`), text helpers (`core.text`), and shared widgets
+  (`core.widgets`).
+- **`...templates.<family>`** — the four preset families (`cv`,
+  `coverletter`, `invoice`, `proposal`), each a layered stack
+  (`presets` always; family `data` / `components` / `widgets` where
+  the family needs them). `ModernInvoice`, `ModernProposal`, and the
+  CV / cover-letter preset galleries live here.
+- **`...templates.data`** — family-neutral DTOs (`InvoiceDocumentSpec`,
+  `ProposalDocumentSpec`, the schedule records).
 
-V2 templates (`InvoiceTemplateV2`, `ProposalTemplateV2`) take a
-`BusinessTheme` so the same data renders through any of `classic` /
-`modern` / `executive` (or a custom theme) without touching the call
-site. V1 templates ship side-by-side for callers who want the legacy
-hard-coded look.
+Every preset takes a `BrandTheme` in its `create(...)` factory, so the
+same data renders through any theme without touching the call site.
 
 ## Shared engine foundation (`com.demcha.compose.engine.*`) — internal
 

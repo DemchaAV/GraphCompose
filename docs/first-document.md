@@ -83,10 +83,11 @@ hand-build it. A maintained template maps a typed data object into the same
 session, then you render as usual:
 
 ```java
-import com.demcha.compose.document.templates.builtins.InvoiceTemplateV2;
-import com.demcha.compose.document.theme.BusinessTheme;
+import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
+import com.demcha.compose.document.templates.invoice.presets.ModernInvoice;
 
-InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
+DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create();
 
 try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).create()) {
     template.compose(document, invoice);   // invoice = your InvoiceDocumentSpec

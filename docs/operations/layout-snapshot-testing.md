@@ -182,7 +182,7 @@ class InvoiceTemplateSnapshotTest {
 
     @Test
     void shouldKeepInvoiceLayoutStable() throws Exception {
-        InvoiceTemplateV2 template = new InvoiceTemplateV2(BusinessTheme.modern());
+        DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create();
         InvoiceDocumentSpec spec = invoiceFixture();
 
         try (DocumentSession document = GraphCompose.document()
@@ -341,11 +341,10 @@ Prioritize documents that are most sensitive to layout regressions:
 ## Examples in this repository
 
 - `RepositoryShowcaseRenderTest`
-- `SmartPaginationTest`
 - `TablePaginationIntegrationTest`
 - `FontShowcaseLayoutSnapshotTest`
-- `CvTemplateV1LayoutSnapshotTest`
-- `BuiltInTemplateLayoutSnapshotTest`
+- `ChartLayoutSnapshotTest`
+- `ShapeContainerLayoutSnapshotTest`
 - `LayoutSnapshotPublicApiDogfoodTest`
 
 ## Interpreting a mismatch

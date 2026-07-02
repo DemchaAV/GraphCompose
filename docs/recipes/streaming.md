@@ -36,7 +36,7 @@ void exportInvoice(HttpServletResponse response, InvoiceDocumentSpec invoice) th
     response.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
 
     try (DocumentSession document = GraphCompose.document().create()) {
-        new InvoiceTemplateV2(BusinessTheme.modern()).compose(document, invoice);
+        ModernInvoice.create().compose(document, invoice);
         document.writePdf(response.getOutputStream());
     }
 }

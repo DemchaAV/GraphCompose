@@ -59,25 +59,15 @@ intended.
 
 | Package | Responsibility | Extension rule |
 | --- | --- | --- |
-| `com.demcha.compose.document.templates.api` | Public template interfaces and registries. | Interfaces compose into `DocumentSession`; do not add legacy composer overloads. |
-| `com.demcha.compose.document.templates.builtins` | Thin built-in template facades. | Facades choose the composer/theme and emit lifecycle logs; composition logic belongs in support packages. |
+| `com.demcha.compose.document.templates.api` | The `DocumentTemplate<S>` compose-first contract. | Templates compose into an open `DocumentSession`; do not add output decisions here. |
 | `com.demcha.compose.document.templates.data.*` | Public template specs and domain data models. | Specs should read like domain data, not layout scripts. |
-| `com.demcha.compose.document.templates.support.common` | Shared template composition primitives, module specs, link helpers, layout policy, and lifecycle logging. | Keep reusable and backend-neutral. |
-| `com.demcha.compose.document.templates.support.cv` | CV-specific scene composers. | CV layout rules belong here, not in generic business helpers. |
-| `com.demcha.compose.document.templates.support.business` | Invoice, proposal, and cover-letter scene composers and policies. | Use shared module/render paths and template layout policy. |
-| `com.demcha.compose.document.templates.support.schedule` | Schedule-specific scene composer. | Keep schedule-specific table/rhythm decisions isolated here. |
-| `com.demcha.compose.document.templates.theme` | Older shared theme *objects* for built-ins (e.g. `WeeklyScheduleTheme`). Distinct from `…templates.themes` (plural) below. | Themes carry styling decisions, not document content. New v2 token work goes in `themes`, not here. |
-| `com.demcha.compose.document.templates.themes` | Templates-v2 theme *token records* — `Spacing`, `Typography` (future `Palette`). Pure value types, no engine / session dependencies. | One source of truth per token group; keep it dependency-free. |
-| `com.demcha.compose.document.templates.components` | Gen-2 composition components — `Header`, `Module` (`MarkdownText` moved to `core.text`). | Stateless after construction; produce `DocumentNode`s. |
-| `com.demcha.compose.document.templates.blocks` | Templates-v2 module-body block kinds — `ParagraphBlock`, `BulletListBlock`, `NumberedListBlock`, `IndentedBlock`, `KeyValueBlock`, `MultiParagraphBlock`, `EducationBlock`, `WorkHistoryBlock`. | A block declares *what* content appears; the renderer expands it per active theme / tokens. |
 | `com.demcha.compose.document.templates.core.theme` | Family-neutral theme tokens — `BrandTheme` + `Palette` / `Typography` / `Spacing` / `Decoration`. | The single token source every family's presets read. |
 | `com.demcha.compose.document.templates.core.text` | Family-neutral text rendering — `MarkdownText`, `MarkdownInline`, `RichParagraphRenderer`, `TextStyles`, `TextOrnaments`. | Markdown → DSL nodes; no family data model. |
 | `com.demcha.compose.document.templates.core.identity` | Family-neutral identity — `PartyIdentity` contract + header widgets (`Headline`, `ContactLine`, `Masthead`, `Subheadline`, `SvgGlyph`) + `Contact` / `Link`. | A masthead is the same shape in every family. |
 | `com.demcha.compose.document.templates.core.widgets` | Family-neutral shared widgets + decoration primitives — `CardWidget`, `TableWidget`, `TimelineAxisWidget`, `Divider`, `AccentStrip`, `Spacer`. | Keep generic (no CV-only assumptions) so any family can reuse them. |
 
-> **Preset families.** Concrete document families live under `…templates.<family>` — `cv`, `coverletter`, `invoice`, `proposal`, `schedule`. CV and cover letter additionally ship a layered v2 surface (`…cv.v2.*` / `…coverletter.v2.*`: `data` / `theme` / `components` / `widgets` / `presets`). These per-family packages are documented by the template guides rather than enumerated here — see [which-template-system.md](../templates/which-template-system.md) for the status matrix and [templates/v2-layered/](../templates/v2-layered/README.md) for the layered architecture.
+> **Preset families.** Concrete document families live under `…templates.<family>` — `cv`, `coverletter`, `invoice`, `proposal` — each a layered stack (family data / components / widgets / presets). These per-family packages are documented by the template guides rather than enumerated here — see [which-template-system.md](../templates/which-template-system.md) for the status matrix and [templates/v2-layered/](../templates/v2-layered/README.md) for the layered architecture.
 
-> **`theme` vs `themes`.** The near-identical names are a known rough edge. `…templates.theme` (singular) is the older shared-theme-object package (built-in `WeeklyScheduleTheme`); `…templates.themes` (plural) is the Templates-v2 token-record package (`Spacing`, `Typography`). Until the two are consolidated, treat `themes` (plural) as the home for new v2 token work. The consolidation itself is a planned **2.0** change (it moves public types, so it is binary-incompatible) — tracked in the [deprecation inventory](../templates/which-template-system.md).
 
 ## Policy
 

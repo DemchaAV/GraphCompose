@@ -139,12 +139,13 @@ class DocumentationCoverageTest {
     void readmeShouldUseCanonicalDslAndAvoidLegacyApis() throws IOException {
         String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
 
-        // Canonical-DSL fingerprints — the slim v1.5 landing README must
-        // surface at least one example using the canonical authoring path.
+        // Canonical-DSL fingerprints — the slim landing README must
+        // surface at least one example using the canonical authoring path,
+        // including styled text (the hero snippet).
         assertThat(readme).contains("GraphCompose.document(");
         assertThat(readme).contains("DocumentSession");
         assertThat(readme).contains("document.pageFlow(");
-        assertThat(readme).contains("BusinessTheme");
+        assertThat(readme).contains("DocumentTextStyle");
 
         // Legacy-API guard — the README may not advertise any retired
         // entry point, builder shape, or pre-canonical field-based CV

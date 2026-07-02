@@ -1,18 +1,15 @@
 # Templates v1-classic &mdash; CV, cover letter, invoice, proposal
 
-> ⚠️ **Naming clarification.** This page describes the **v1.6
-> "Templates v2"** surface — the rebuilt canonical templates that
-> shipped in v1.6 with `*Spec` records + `*Builder` + presets. The
-> codebase still calls this layer "Templates v2" internally (see
-> [ADR 0011](../../adr/0011-templates-v2-architecture.md)).
->
-> The **newer layered architecture** for v2 templates (data /
-> theme / components / widgets / presets, with `CvDocument` rather
-> than `CvSpec`) lives at
-> **[templates/v2-layered/](../v2-layered/README.md)** and is the
-> recommended path for new template families going forward.
->
-> Both surfaces coexist today; neither is deprecated yet.
+> 🗄️ **Archived.** This page documents the classic template surface
+> (`*Spec` records + `*Builder` + presets + `BusinessTheme`, introduced
+> by [ADR 0011](../../adr/0011-templates-v2-architecture.md)) that
+> shipped through the 1.x line and was **removed in GraphCompose 2.0**.
+> It is kept for readers maintaining a pre-2.0 caller. The current
+> template surface is the layered stack at
+> **[templates/v2-layered/](../v2-layered/README.md)**; the migration
+> map is in
+> [which-template-system.md § 3](../which-template-system.md#3-migrating-a-pre-20-caller).
+> Nothing below is updated anymore.
 
 GraphCompose v1.6 ships a rebuilt canonical template surface for the four
 business document shapes: **CV, cover letter, invoice, proposal**. Every

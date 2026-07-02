@@ -1,15 +1,13 @@
 # Template authoring — v1-classic cheatsheet
 
-> ⚠️ **For the v1.6 "Templates v2" surface** (`CvSpec`, `CvBuilder`,
-> `*Presets` with `BusinessTheme`). Still shipped and maintained.
->
-> **Writing a new template family from scratch?** The newer layered
-> architecture is the canonical going-forward path —
-> [templates/v2-layered/authoring-presets.md](../v2-layered/authoring-presets.md)
-> shows the widget-composition pattern (much shorter presets, fewer
-> classes to maintain).
->
-> **Authoring against existing v1-classic templates?** Keep reading.
+> 🗄️ **Archived.** This cheatsheet covers the classic surface
+> (`CvSpec`, `CvBuilder`, `*Presets` with `BusinessTheme`) that was
+> **removed in GraphCompose 2.0**. It is kept for readers maintaining a
+> pre-2.0 caller. The live authoring cheatsheet is
+> [templates/v2-layered/authoring-presets.md](../v2-layered/authoring-presets.md);
+> the migration map is in
+> [which-template-system.md § 3](../which-template-system.md#3-migrating-a-pre-20-caller).
+> Nothing below is updated anymore.
 
 This page is the single reference for writing new templates and DSL
 code without boilerplate. Read it once before starting a template;

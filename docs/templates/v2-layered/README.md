@@ -1,20 +1,20 @@
 # Templates — Layered Architecture
 
 > ⚠️ **Naming clarification.** This is the **layered** template
-> architecture (data / theme / components / widgets / presets), the
-> going-forward canonical pattern. Package:
+> architecture (data / theme / components / widgets / presets) — the
+> template surface. Reference package:
 > `com.demcha.compose.document.templates.cv`.
 >
-> **Not to be confused with** the older v1.6 "Templates v2" surface
-> (`CvSpec`, `CvBuilder`, presets with `BusinessTheme`) — that lives
-> in [templates/v1-classic/](../v1-classic/README.md) and still ships
-> alongside this one.
+> **Naming note:** through 1.x an older surface also called
+> "Templates v2" (`CvSpec`, `CvBuilder`, presets with `BusinessTheme`)
+> shipped alongside this one; it was removed in 2.0 and its docs are
+> archived at [templates/v1-classic/](../v1-classic/README.md).
 
-The **canonical going-forward pattern** for building business documents
-on GraphCompose. CV is the reference implementation today
-(`com.demcha.compose.document.templates.cv`); invoice, cover-letter,
-proposal, and any new template family will follow the same shape as
-they're migrated.
+The **template surface** for building business documents on
+GraphCompose. All four families ship on it — CV (the reference
+implementation, `com.demcha.compose.document.templates.cv`),
+cover-letter, invoice, and proposal — and any new template family
+follows the same shape.
 
 This is the entry point. Pick the doc that matches your goal.
 
@@ -122,7 +122,7 @@ The detailed contract for each layer is in
 - **Examples**:
   [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
   has runnable rendering examples for the shipped presets.
-- **Legacy v1 surface**:
+- **Archived classic surface**:
   [`docs/templates/v1-classic/README.md`](../v1-classic/README.md) describes the older
-  spec / preset / theme split used by the v1 templates. Still valid
-  for the v1 packages; superseded by this guide for v2 work.
+  spec / preset / theme split that was removed in 2.0; kept for
+  pre-2.0 callers.

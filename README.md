@@ -188,7 +188,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 ### When to use GraphCompose
 
 - **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
-- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `InvoiceTemplateV2`, &hellip;) you parameterise instead of re-styling every time.
+- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `ModernInvoice`, &hellip;) you parameterise instead of re-styling every time.
 - **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
 - **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
 - **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
@@ -281,8 +281,8 @@ Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [
 📚 **[Full docs index](./docs/README.md)** &mdash; categorised map of every doc, ADR, and recipe. Start there to navigate the documentation.
 
 ### Templates
-- 🆕 [**Templates — v2 layered architecture**](./docs/templates/v2-layered/README.md) &mdash; the canonical going-forward pattern for new template families (CV v2 is the reference implementation). Personas: [quickstart](./docs/templates/v2-layered/quickstart.md) · [using templates](./docs/templates/v2-layered/using-templates.md) · [authoring presets](./docs/templates/v2-layered/authoring-presets.md) · [contributing a new family](./docs/templates/v2-layered/contributor-guide.md).
-- [Templates v1-classic landing](./docs/templates/v1-classic/README.md) &mdash; the older `BusinessTheme` / `CvSpec` CV / cover-letter / invoice / proposal preset library (**deprecated** — CV + cover letter are superseded by [v2-layered](./docs/templates/v2-layered/README.md); invoice / proposal / schedule are not yet ported). Cheat sheet: [authoring](./docs/templates/v1-classic/authoring.md).
+- [**Templates — layered architecture**](./docs/templates/v2-layered/README.md) &mdash; the template surface: CV, cover-letter, invoice, and proposal preset families on `BrandTheme`. Personas: [quickstart](./docs/templates/v2-layered/quickstart.md) · [using templates](./docs/templates/v2-layered/using-templates.md) · [authoring presets](./docs/templates/v2-layered/authoring-presets.md) · [contributing a new family](./docs/templates/v2-layered/contributor-guide.md).
+- [Which template system?](./docs/templates/which-template-system.md) &mdash; the template naming history and the migration map for callers arriving from a pre-2.0 surface (classic presets, built-in `*Template` classes, the legacy PDF API). The retired classic docs are archived at [v1-classic](./docs/templates/v1-classic/README.md).
 
 ### Architecture & operations
 - [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md) · [Troubleshooting](./docs/troubleshooting.md)

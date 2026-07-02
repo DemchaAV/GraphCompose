@@ -117,6 +117,13 @@ jobs:
       - name: Compile examples module
         run: ./mvnw -B -ntp -f examples/pom.xml clean compile
 
+      - name: Run examples tests
+        # The examples module carries its own tests (flagship layout-snapshot
+        # baselines, the examples-local theme helpers, the README banner
+        # renderer). Run them here so a change that shifts a flagship render
+        # cannot land with a stale committed baseline.
+        run: ./mvnw -B -ntp -f examples/pom.xml test
+
       - name: Run GenerateAllExamples
         run: |
           ./mvnw -B -ntp -f examples/pom.xml exec:java \

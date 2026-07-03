@@ -45,6 +45,7 @@ class PublicApiNoEngineLeakTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/snapshot"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/exceptions"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/emoji"),
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/templates"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/font"));
 
     /**

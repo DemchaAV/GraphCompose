@@ -62,7 +62,12 @@ GraphCompose uses sealed interfaces in several places to keep visitor
 code exhaustive. The public ones — the ones this policy actually covers —
 are:
 
+- [`ChartSize`](../src/main/java/com/demcha/compose/document/chart/ChartSize.java) (Stable)
+- [`ChartSpec`](../src/main/java/com/demcha/compose/document/chart/ChartSpec.java) (Stable)
 - [`CvSection`](../src/main/java/com/demcha/compose/document/templates/cv/data/CvSection.java) (Stable)
+- [`DocumentLinkTarget`](../src/main/java/com/demcha/compose/document/node/DocumentLinkTarget.java) (Stable)
+- [`DocumentPaint`](../src/main/java/com/demcha/compose/document/style/DocumentPaint.java) (Stable)
+- [`DocumentPathSegment`](../src/main/java/com/demcha/compose/document/style/DocumentPathSegment.java) (Stable)
 - [`InlineRun`](../src/main/java/com/demcha/compose/document/node/InlineRun.java) (Stable)
 - [`ShapeOutline`](../src/main/java/com/demcha/compose/document/style/ShapeOutline.java) (Stable)
 

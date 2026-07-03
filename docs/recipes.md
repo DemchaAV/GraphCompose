@@ -34,10 +34,10 @@ authoring API; public application code should not import
 
 For longer-form material:
 
-- [Extension guide](extension-guide.md) — walkthrough of the four
+- [Extension guide](contributing/extension-guide.md) — walkthrough of the four
   extension paths with the v1.5 `ShapeContainerNode` work as a
   worked example.
-- [Migration v1.4 → v1.5](migration-v1-4-to-v1-5.md) — every public
+- [Migration v1.4 → v1.5](roadmaps/migration-v1-4-to-v1-5.md) — every public
   API change in v1.5 plus suggested migration order.
 - [Font coverage and glyph fallback](font-coverage.md) — WinAnsi limits,
   `●` vs `•`, and the inline-shape / bundled-font alternatives.

@@ -15,8 +15,10 @@ import java.util.TreeSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Architectural guard that keeps PDFBox out of the canonical document API and
- * non-PDF fixed-layout contracts.
+ * Architectural guard that keeps PDFBox out of the canonical document API, the
+ * layered template surface, and non-PDF fixed-layout contracts. Templates
+ * compose against the canonical DSL and must stay backend-neutral, so a preset
+ * or component that reached for a PDFBox type would fail here.
  */
 class PdfBackendIsolationGuardTest {
 
@@ -34,6 +36,7 @@ class PdfBackendIsolationGuardTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/image"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/layout"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/snapshot"),
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/templates"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/backend/fixed"));
 
     @Test

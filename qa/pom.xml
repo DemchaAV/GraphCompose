@@ -50,7 +50,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose</artifactId>
+            <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -64,7 +64,7 @@
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose</artifactId>
+            <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
             <classifier>tests</classifier>

@@ -76,7 +76,7 @@ jobs:
         # testing module + the engine test-jar on the classpath and so cannot
         # live in the engine's own test scope). -am pulls the fonts / emoji
         # upstreams; render-docx / bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose,:graph-compose-testing,:graph-compose-qa -am
+        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-testing,:graph-compose-qa -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
@@ -116,8 +116,14 @@ jobs:
         # Central, so install it into the local repo before building examples.
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
-      - name: Install root artifact
+      - name: Install root artifact (graph-compose-core)
         run: ./mvnw -B -ntp -DskipTests install -pl .
+
+      - name: Install graph-compose (the compat wrapper, consumed by the examples module)
+        # examples depends on the graph-compose coordinate — the empty jar wrapper
+        # over graph-compose-core. Install it after the core so the examples build
+        # resolves it (and the engine classes transitively).
+        run: ./mvnw -B -ntp -f wrapper/pom.xml -DskipTests install
 
       - name: Install graph-compose-render-docx (consumed by the examples module)
         # The DOCX export example depends on the render-docx backend module, which

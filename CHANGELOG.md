@@ -30,16 +30,17 @@ for this cycle.
 
 ### Packaging
 
-- 2.0 splits the single `graph-compose` jar into modules: a lean core
-  (`graph-compose`), pluggable render backends (`graph-compose-render-pdf`,
-  `graph-compose-render-docx`), `graph-compose-templates`, and
-  `graph-compose-testing`, with render backends discovered via a `ServiceLoader`
-  SPI. The `graph-compose` artifact keeps its coordinate but no longer contains
-  the PDF backend or the templates — add `graph-compose-render-pdf` for PDF
-  output, or depend on `graph-compose-bundle` for a batteries-included coordinate
-  (core + render-pdf + templates + fonts + emoji). The optional
-  `graph-compose-fonts` and `graph-compose-emoji` artifacts are unchanged. Full
-  install guidance ships with 2.0.0.
+- 2.0 splits the monolithic engine into modules. The engine now builds under a new
+  **`graph-compose-core`** coordinate, and the original **`graph-compose` coordinate
+  becomes a thin drop-in aggregator** that depends on `graph-compose-core` — so an
+  existing `graph-compose` dependency keeps compiling and rendering PDF unchanged.
+  Consumer-testing support (`graph-compose-testing`) and the semantic DOCX/PPTX
+  backend (`graph-compose-render-docx`) are already separate artifacts; the PDF
+  render backend and the built-in templates move into their own modules over the
+  rest of the 2.0 cycle, at which point `graph-compose` aggregates the PDF backend
+  and `graph-compose-core` becomes the lean, bring-your-own-backend coordinate. The
+  optional `graph-compose-fonts` / `graph-compose-emoji` artifacts are unchanged.
+  Full install guidance ships with 2.0.0.
 - `graph-compose-render-docx` is now a separate artifact: the semantic DOCX/PPTX
   backend and Apache POI leave the `graph-compose` jar. `DocxSemanticBackend` moves
   to `com.demcha.compose.document.backend.semantic.docx` and `PptxSemanticBackend`

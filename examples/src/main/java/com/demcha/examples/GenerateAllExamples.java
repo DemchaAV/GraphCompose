@@ -40,6 +40,7 @@ import com.demcha.examples.features.structure.MultiSectionExample;
 import com.demcha.examples.features.text.RichTextShowcaseExample;
 import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.title.BookTemplateExample;
+import com.demcha.examples.features.title.PoetryTitlePageExample;
 import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
 import com.demcha.examples.flagships.EngineDeckExample;
@@ -211,5 +212,6 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + EngineDeckExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
         System.out.println("Generated: " + BookTemplateExample.generate());
+        System.out.println("Generated: " + PoetryTitlePageExample.generate());
     }
 }

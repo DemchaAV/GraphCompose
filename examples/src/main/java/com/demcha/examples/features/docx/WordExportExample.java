@@ -2,7 +2,7 @@ package com.demcha.examples.features.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.backend.semantic.DocxSemanticBackend;
+import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.ChartSpec;
 import com.demcha.compose.document.image.DocumentImageData;

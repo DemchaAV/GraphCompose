@@ -1,4 +1,4 @@
-package com.demcha.compose.document.backend.semantic;
+package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;

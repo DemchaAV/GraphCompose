@@ -62,6 +62,12 @@
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.10</byteBuddy.version>
 
+        <!-- Bundled fonts / emoji, pulled in at test scope only. Pinned to the
+             independent 1.0.0 line (not bumped in engine lockstep); keep in step
+             with bundle/pom.xml's graphcompose.fonts.version. -->
+        <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+        <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
+
         <!-- Build plugins -->
         <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
@@ -212,15 +218,27 @@
 
         <!-- Test dependencies -->
         <!--
-            The bundled Google fonts (graph-compose-fonts) are NOT a dependency
-            of the engine — not even at test scope. The engine's visual /
-            snapshot suite renders with them, but they are placed on the TEST
-            classpath directly from the sibling module's source via the
-            <testResources> entry in <build> below. This keeps the engine fully
-            decoupled from the fonts ARTIFACT (no Maven coordinate to resolve, so
-            an engine-only build never needs the fonts jar published or installed
-            first), while still exercising the real font binaries.
+            The bundled Google fonts and colour-emoji glyphs live in the sibling
+            graph-compose-fonts / graph-compose-emoji modules and are pulled in at
+            TEST scope so the engine's visual / snapshot / emoji suites render with
+            the real binaries. Test scope is not transitive, so the engine's own
+            published jar stays fonts-free — an engine consumer never drags these
+            in. A reactor build satisfies them from the just-built siblings; a
+            standalone `-pl .` build resolves the published 1.0.0 artifacts.
         -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-fonts</artifactId>
+            <version>${graphcompose.fonts.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-emoji</artifactId>
+            <version>${graphcompose.emoji.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -288,33 +306,16 @@
 
     <build>
         <testResources>
-            <!-- Default test resources. -->
+            <!--
+                Default test resources only. The bundled Google fonts and
+                colour-emoji glyphs are no longer copied in from the sibling
+                source dirs — they reach the test classpath via the
+                graph-compose-fonts / graph-compose-emoji test-scope artifacts
+                (see <dependencies> above), which package the same
+                src/main/resources layout, so classpath lookups are unchanged.
+            -->
             <testResource>
                 <directory>src/test/resources</directory>
-            </testResource>
-            <!--
-                Bundled Google fonts live in the sibling graph-compose-fonts
-                module since v1.8.0. The engine's visual / snapshot suite renders
-                with them, so put that module's resources on the TEST classpath
-                directly from source. This decouples the engine build from the
-                fonts ARTIFACT (no Maven dependency to resolve, so no CI/local
-                bootstrap is needed) while still exercising the real binaries.
-                Test-only: it never reaches the main jar (built from
-                src/main/resources) and is excluded from the tests-jar below.
-            -->
-            <testResource>
-                <directory>${project.basedir}/fonts/src/main/resources</directory>
-            </testResource>
-            <!--
-                Colour-emoji glyphs live in the sibling graph-compose-emoji module
-                (same arrangement as fonts above). EmojiLibrary resolves them from
-                the classpath, so the resolver suite reads that module's resources
-                directly from source — decoupling the engine build from the emoji
-                ARTIFACT (no Maven dependency to resolve). Test-only: never reaches
-                the main jar and is excluded from the tests-jar below.
-            -->
-            <testResource>
-                <directory>${project.basedir}/emoji/src/main/resources</directory>
             </testResource>
         </testResources>
 
@@ -452,20 +453,14 @@
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
-                        <configuration>
-                            <!--
-                                The bundled fonts are on the test classpath via
-                                <testResources> for the engine's own suite; keep
-                                them OUT of the tests-jar. The benchmarks module
-                                (the only consumer of this jar) gets fonts from
-                                the graph-compose-fonts artifact instead. The emoji
-                                glyphs follow the same rule.
-                            -->
-                            <excludes>
-                                <exclude>fonts/**</exclude>
-                                <exclude>emoji/**</exclude>
-                            </excludes>
-                        </configuration>
+                        <!--
+                            No <excludes> needed: the bundled fonts / emoji are no
+                            longer copied into test-classes (they come from the
+                            graph-compose-fonts / graph-compose-emoji test-scope
+                            artifacts), so the tests-jar naturally carries only the
+                            engine's own fixtures (e.g. com.demcha.mock) that the
+                            benchmarks module consumes.
+                        -->
                     </execution>
                 </executions>
             </plugin>

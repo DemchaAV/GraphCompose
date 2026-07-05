@@ -256,6 +256,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
      * @param context fixed-layout render configuration with a non-null output stream
      * @throws Exception if PDF creation, rendering, or saving fails
      */
+    @Override
     public void write(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(context, "context");
@@ -319,6 +320,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
      * @throws Exception                 if PDF creation, rendering, or rasterization fails
      * @throws IndexOutOfBoundsException if {@code pageIndex} is out of range
      */
+    @Override
     public List<BufferedImage> renderToImages(LayoutGraph graph,
                                               FixedLayoutRenderContext context,
                                               int dpi,
@@ -429,6 +431,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
      * @since 1.9.0
      */
     @Beta
+    @Override
     public byte[] renderSections(List<SectionUnit> sections) throws Exception {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             writeSections(sections, output);
@@ -446,6 +449,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
      * @since 1.9.0
      */
     @Beta
+    @Override
     public void writeSections(List<SectionUnit> sections, OutputStream output) throws Exception {
         Objects.requireNonNull(output, "output");
         try (PDDocument document = buildSectionsDocument(sections)) {

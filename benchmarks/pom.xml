@@ -60,6 +60,20 @@
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
+        <!-- The built-in templates (benchmarked alongside the raw engine) and their
+             tests-classifier jar for the template data fixtures. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
+            <version>${graphcompose.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
+        </dependency>
 
         <!--
             Bundled Google fonts, split out of the engine jar in v1.8.0. The

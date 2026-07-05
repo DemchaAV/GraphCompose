@@ -76,7 +76,7 @@ jobs:
         # cross-module suites (which need the testing module + the engine test-jar on
         # the classpath and so cannot live in the engine's own test scope). -am pulls
         # the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-testing,:graph-compose-qa -am
+        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
@@ -143,6 +143,11 @@ jobs:
         # not on Central, so install it after the engine (its graph-compose
         # dependency) before the examples build resolves it.
         run: ./mvnw -B -ntp -f testing/pom.xml -DskipTests install
+
+      - name: Install graph-compose-templates (consumed by the examples module)
+        # The flagship + template examples render the built-in CV/invoice/proposal
+        # presets, which now ship in graph-compose-templates.
+        run: ./mvnw -B -ntp -f templates/pom.xml -DskipTests install
 
       - name: Compile examples module
         run: ./mvnw -B -ntp -f examples/pom.xml clean compile
@@ -238,6 +243,9 @@ jobs:
         # build resolves it.
         run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
 
+      - name: Install graph-compose-templates (consumed by the benchmarks module)
+        run: ./mvnw -B -ntp -f templates/pom.xml -DskipTests install
+
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
 
@@ -311,6 +319,9 @@ jobs:
         # it depends on render-pdf; install it after the core, before the benchmarks
         # build resolves it.
         run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
+
+      - name: Install graph-compose-templates (consumed by the benchmarks module)
+        run: ./mvnw -B -ntp -f templates/pom.xml -DskipTests install
 
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile

@@ -25,7 +25,7 @@
  * <p>Types in this package and in {@link com.demcha.compose.document.dsl},
  * {@link com.demcha.compose.document.node},
  * {@link com.demcha.compose.document.style}, and
- * {@link com.demcha.compose.document.templates.api} are public API and follow
+ * {@code com.demcha.compose.document.templates.api} are public API and follow
  * deprecation discipline. Types annotated with
  * {@link com.demcha.compose.document.api.Internal &#64;Internal}
  * (notably the {@code document.layout} package) are implementation detail

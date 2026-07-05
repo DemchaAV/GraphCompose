@@ -29,8 +29,10 @@ void invoiceLayoutIsStable() throws Exception {
 
 The slash-delimited key is a logical path: this example compares against
 `src/test/resources/layout-snapshots/templates/invoice/invoice_baseline.json`.
-`LayoutSnapshotAssertions` ships in the main GraphCompose artifact, so
-consumer projects can use it without any extra test dependency.
+`LayoutSnapshotAssertions` ships in the `graph-compose-testing` artifact
+(`io.github.demchaav:graph-compose-testing`), split out of the engine jar in
+2.0. Add it at test scope alongside `graph-compose`; the import path is
+unchanged.
 
 ## First run and updates
 

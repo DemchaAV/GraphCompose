@@ -23,7 +23,7 @@ The semantic layer is cheap, deterministic, and cross-platform stable. The pixel
 
 ## Public API
 
-The harness is `com.demcha.compose.testing.visual.PdfVisualRegression` (`@since 1.6.9`), a sibling to the semantic `com.demcha.compose.testing.layout.*` helpers. It ships in the main artifact, so library consumers use the exact helpers GraphCompose uses in its own tests.
+The harness is `com.demcha.compose.testing.visual.PdfVisualRegression` (`@since 1.6.9`), a sibling to the semantic `com.demcha.compose.testing.layout.*` helpers. It ships in the `graph-compose-testing` artifact (split out of the engine jar in 2.0) — add it at test scope, and consumers use the exact helpers GraphCompose uses in its own tests.
 
 ### Assert a committed baseline
 

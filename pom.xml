@@ -47,7 +47,6 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <jackson.bom.version>2.21.4</jackson.bom.version>
         <logback.version>1.5.37</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <pdfbox.version>3.0.7</pdfbox.version>
@@ -100,13 +99,6 @@
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson.bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -179,21 +171,6 @@
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-util-data</artifactId>
             <version>${flexmark.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
 
         <dependency>
@@ -461,7 +438,7 @@
                     <failOnError>true</failOnError>
                     <show>public</show>
                     <quiet>true</quiet>
-                    <subpackages>com.demcha.compose.document:com.demcha.compose.testing</subpackages>
+                    <subpackages>com.demcha.compose.document</subpackages>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Non-published cross-module test harness (2.0 module line). Home for the
+        suites that exercise more than one published artifact at once — the
+        snapshot/visual dogfood tests, the render-heavy integration tests, the
+        documentation guards, and the version-consistency guard — plus the shared
+        layout-snapshot and visual-baseline resources they compare against.
+
+        These suites cannot live in the engine's own test scope: they need
+        graph-compose-testing (LayoutSnapshotAssertions / PdfVisualRegression) on
+        the classpath, and the engine cannot test-depend on a module that
+        compile-depends on it (a reactor cycle). This module sits at the reactor
+        tail as an aggregator child — so its version tracks the engine line
+        automatically — depends on everything at test scope, and never
+        publishes (maven.deploy.skip=true, inherited from the aggregator).
+    -->
+    <parent>
+        <groupId>io.github.demchaav</groupId>
+        <artifactId>graph-compose-build</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+        <relativePath>../aggregator/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>graph-compose-qa</artifactId>
+    <name>GraphCompose QA</name>
+    <description>Non-published cross-module test suites and shared fixtures for GraphCompose.</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+
+        <jackson.bom.version>2.21.4</jackson.bom.version>
+        <junit.bom.version>6.1.1</junit.bom.version>
+        <assertj.version>3.27.7</assertj.version>
+        <mockito.version>5.23.0</mockito.version>
+        <logback.version>1.5.37</logback.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <!-- graphcompose.fonts.version / graphcompose.emoji.version and
+             maven.deploy.skip=true are inherited from the aggregator parent. -->
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            The engine's shared test-only scaffolding — com.demcha.mock.*,
+            com.demcha.compose.testsupport.*, com.demcha.testing.* — that the
+            relocated cross-module suites reuse alongside the engine's own
+            tests. Pulled from the tests-classifier jar built by the engine's
+            maven-jar-plugin test-jar execution (a local build aid only; the
+            release profile disables it, so it is never deployed).
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-testing</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-fonts</artifactId>
+            <version>${graphcompose.fonts.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-emoji</artifactId>
+            <version>${graphcompose.emoji.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.bom.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.bom.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

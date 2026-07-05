@@ -46,6 +46,13 @@ for this cycle.
   to `com.demcha.compose.document.backend.semantic.pptx`; add
   `graph-compose-render-docx` (it brings POI transitively) to export DOCX. The
   `no-poi` build profile is retired.
+- `graph-compose-testing` is now a separate artifact: the consumer testing
+  support — `LayoutSnapshotAssertions` (deterministic layout snapshots) and
+  `PdfVisualRegression` (pixel-diff of rendered pages) — leaves the
+  `graph-compose` jar together with its Jackson and PDFBox dependencies. The
+  `com.demcha.compose.testing.layout` / `com.demcha.compose.testing.visual`
+  packages are unchanged, so imports stay the same; add `graph-compose-testing`
+  at test scope to keep using them.
 
 ## v1.9.0 — 2026-06-29
 

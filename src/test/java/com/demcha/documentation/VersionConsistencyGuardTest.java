@@ -61,6 +61,12 @@ class VersionConsistencyGuardTest {
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("bundle/pom.xml")))
                 .describedAs("bundle (graph-compose-bundle) tracks the engine line and must equal the root version (%s)", root)
                 .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("render-docx/pom.xml")))
+                .describedAs("render-docx (graph-compose-render-docx) tracks the engine line and must equal the root version (%s)", root)
+                .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("testing/pom.xml")))
+                .describedAs("testing (graph-compose-testing) tracks the engine line and must equal the root version (%s)", root)
+                .isEqualTo(root);
 
         // NOTE: fonts/pom.xml (graph-compose-fonts) is intentionally NOT checked
         // here. It carries an independent version line (it ships on its own
@@ -91,6 +97,9 @@ class VersionConsistencyGuardTest {
                 .isFalse();
         assertThat(declaresOwnVersion(PROJECT_ROOT.resolve("benchmarks/pom.xml")))
                 .describedAs("benchmarks/pom.xml must inherit <version> from the aggregator parent, not declare its own")
+                .isFalse();
+        assertThat(declaresOwnVersion(PROJECT_ROOT.resolve("qa/pom.xml")))
+                .describedAs("qa/pom.xml must inherit <version> from the aggregator parent, not declare its own")
                 .isFalse();
     }
 

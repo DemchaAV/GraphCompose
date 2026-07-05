@@ -71,7 +71,12 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        run: ./mvnw -B -ntp clean verify
+        # Reactor slice: the engine plus the extracted graph-compose-testing
+        # module and the graph-compose-qa cross-module suites (which need the
+        # testing module + the engine test-jar on the classpath and so cannot
+        # live in the engine's own test scope). -am pulls the fonts / emoji
+        # upstreams; render-docx / bundle / examples / benchmarks are excluded.
+        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose,:graph-compose-testing,:graph-compose-qa -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical

@@ -482,6 +482,11 @@ try {
     # render-docx tracks the engine line (lockstep): its <version> bumps here and
     # its graph-compose dep is ${project.version} (follows automatically).
     Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
+    # graph-compose-testing tracks the engine line (lockstep): its <version>
+    # bumps here and its graph-compose dep is ${project.version} (follows
+    # automatically). graph-compose-qa is an aggregator child (its version is
+    # inherited) and is never published, so it needs no explicit bump.
+    Update-PomVersion (Join-Path $repoRoot 'testing/pom.xml') $Version
     # Bundle tracks the engine line: its project <version> bumps here; its
     # graph-compose dep is ${project.version} (follows automatically) and its
     # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
@@ -551,6 +556,7 @@ try {
         'aggregator/pom.xml',
         'bundle/pom.xml',
         'render-docx/pom.xml',
+        'testing/pom.xml',
         'examples/pom.xml',
         'benchmarks/pom.xml',
         'README.md',

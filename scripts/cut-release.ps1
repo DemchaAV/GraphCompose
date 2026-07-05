@@ -496,9 +496,11 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
-    # render-docx tracks the engine line (lockstep): its <version> bumps here and
-    # its graph-compose dep is ${project.version} (follows automatically).
+    # render-docx / render-pptx track the engine line (lockstep): each <version>
+    # bumps here and its graph-compose-core dep is ${project.version} (follows
+    # automatically).
     Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
+    Update-PomVersion (Join-Path $repoRoot 'render-pptx/pom.xml') $Version
     # graph-compose-testing tracks the engine line (lockstep): its <version>
     # bumps here and its graph-compose dep is ${project.version} (follows
     # automatically). graph-compose-qa is an aggregator child (its version is
@@ -576,6 +578,7 @@ try {
         'aggregator/pom.xml',
         'bundle/pom.xml',
         'render-docx/pom.xml',
+        'render-pptx/pom.xml',
         'testing/pom.xml',
         'wrapper/pom.xml',
         'examples/pom.xml',

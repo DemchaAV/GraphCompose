@@ -34,18 +34,20 @@ for this cycle.
   **`graph-compose-core`** coordinate, and the original **`graph-compose` coordinate
   becomes a thin drop-in aggregator** that depends on `graph-compose-core` — so an
   existing `graph-compose` dependency keeps compiling and rendering PDF unchanged.
-  Consumer-testing support (`graph-compose-testing`) and the semantic DOCX/PPTX
-  backend (`graph-compose-render-docx`) are already separate artifacts; the PDF
+  Consumer-testing support (`graph-compose-testing`) and the semantic DOCX / PPTX
+  backends (`graph-compose-render-docx` / `graph-compose-render-pptx`) are already
+  separate artifacts; the PDF
   render backend and the built-in templates move into their own modules over the
   rest of the 2.0 cycle, at which point `graph-compose` aggregates the PDF backend
   and `graph-compose-core` becomes the lean, bring-your-own-backend coordinate. The
   optional `graph-compose-fonts` / `graph-compose-emoji` artifacts are unchanged.
   Full install guidance ships with 2.0.0.
-- `graph-compose-render-docx` is now a separate artifact: the semantic DOCX/PPTX
-  backend and Apache POI leave the `graph-compose` jar. `DocxSemanticBackend` moves
-  to `com.demcha.compose.document.backend.semantic.docx` and `PptxSemanticBackend`
-  to `com.demcha.compose.document.backend.semantic.pptx`; add
-  `graph-compose-render-docx` (it brings POI transitively) to export DOCX. The
+- The semantic office backends are separate artifacts and Apache POI leaves the
+  engine: `DocxSemanticBackend` ships in `graph-compose-render-docx` (which brings
+  POI transitively — add it to export DOCX), and `PptxSemanticBackend` ships in its
+  own `graph-compose-render-pptx` (a POI-free skeleton for now — add it for the
+  slide-safe semantic manifest). Their packages —
+  `com.demcha.compose.document.backend.semantic.{docx,pptx}` — are unchanged. The
   `no-poi` build profile is retired.
 - `graph-compose-testing` is now a separate artifact: the consumer testing
   support — `LayoutSnapshotAssertions` (deterministic layout snapshots) and

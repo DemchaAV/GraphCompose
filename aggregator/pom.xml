@@ -62,6 +62,7 @@
         <module>../fonts</module>
         <module>../emoji</module>
         <module>../render-docx</module>
+        <module>../render-pptx</module>
         <module>../testing</module>
         <module>../bundle</module>
         <module>../examples</module>

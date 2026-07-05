@@ -5,24 +5,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        Semantic DOCX export backend split out of the engine jar in the 2.0 module
-        line (the PPTX skeleton split further into graph-compose-render-pptx).
-        Apache POI (~10 MB) lives here, not
-        in the lean core: a consumer that only renders PDF never pulls POI, and an
-        app that wants Word output adds this one artifact (it brings the core
-        transitively). SemanticBackend / SemanticExportContext / manifest — the SPI
+        Semantic PPTX export backend, split out of graph-compose-render-docx in the
+        2.0 module line so a consumer that wants slide output does not also pull the
+        DOCX backend's Apache POI. Today PptxSemanticBackend is a skeleton that
+        validates slide-safe semantic nodes and returns an export manifest, so this
+        module needs nothing beyond the core — POI joins only when real .pptx
+        emission lands. SemanticBackend / SemanticExportContext / manifest — the SPI
         — stay in the core `document.backend.semantic` package.
 
-        Standalone pom (no aggregator parent, like fonts/); its version tracks the
-        engine line in lockstep (bumped by cut-release.ps1), and the `release`
-        profile is copy-pasted from the engine pom.
+        Standalone pom (no aggregator parent, like fonts/render-docx); its version
+        tracks the engine line in lockstep (bumped by cut-release.ps1), and the
+        `release` profile is copy-pasted from the engine pom.
     -->
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose-render-docx</artifactId>
+    <artifactId>graph-compose-render-pptx</artifactId>
     <version>2.0.0-SNAPSHOT</version>
 
-    <name>GraphCompose Render — DOCX</name>
-    <description>Semantic DOCX export backend for GraphCompose, backed by Apache POI.</description>
+    <name>GraphCompose Render — PPTX</name>
+    <description>Semantic PPTX export backend for GraphCompose (slide-safe semantic node validation).</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -57,12 +57,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <poi.version>5.5.1</poi.version>
         <junit.bom.version>6.1.1</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <logback.version>1.5.37</logback.version>
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
-        <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
@@ -81,11 +79,6 @@
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>${poi.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -108,20 +101,14 @@
             <scope>test</scope>
         </dependency>
         <!--
-            The docx tests build a DocumentSession, which lays out text through the
-            font metrics seam; the bundled families come from the published fonts /
-            emoji artifacts (same as the engine's own test suite since v2.0).
+            The export test builds a DocumentSession, which lays out text through the
+            font metrics seam; the bundled families come from the published fonts
+            artifact (same as the engine's own test suite since v2.0).
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-fonts</artifactId>
             <version>${graphcompose.fonts.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-emoji</artifactId>
-            <version>${graphcompose.emoji.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -7,7 +7,7 @@
 # validates, not a drifting newer one.
 #
 # install is scoped to the two published coordinates — graph-compose-core (the
-# engine, at the root pom) and graph-compose (the drop-in wrapper in dist/) — so
+# engine, at the root pom) and graph-compose (the drop-in wrapper in wrapper/) — so
 # JitPack serves both, never the examples/benchmarks reactor siblings.
 jdk:
   - openjdk17

@@ -107,6 +107,25 @@ class VersionConsistencyGuardTest {
     }
 
     @Test
+    void graphComposeWrapperStaysAJarOverCore() throws Exception {
+        Element project = parse(PROJECT_ROOT.resolve("wrapper/pom.xml")).getDocumentElement();
+
+        // Packaging MUST stay jar (the default when <packaging> is absent). A pom
+        // would force every existing graph-compose consumer to add <type>pom</type>
+        // and break their build — the entire point of the wrapper is a drop-in jar.
+        Element packaging = directChild(project, "packaging");
+        assertThat(packaging == null ? "jar" : packaging.getTextContent().trim())
+                .describedAs("wrapper/pom.xml (the graph-compose coordinate) must stay a jar, never pom — a pom would force consumers to add <type>pom</type>")
+                .isEqualTo("jar");
+
+        // And it must aggregate the engine: the dependency on graph-compose-core is
+        // what makes a bare `graph-compose` bring the engine transitively.
+        assertThat(declaresDependencyOn(project, "graph-compose-core"))
+                .describedAs("wrapper/pom.xml must depend on graph-compose-core so `graph-compose` still brings the engine")
+                .isTrue();
+    }
+
+    @Test
     void benchmarksDependencyDerivesVersionAndIsNotHardcoded() throws IOException {
         String pom = Files.readString(PROJECT_ROOT.resolve("benchmarks/pom.xml"));
 
@@ -284,6 +303,24 @@ class VersionConsistencyGuardTest {
             }
         }
         throw new IllegalStateException("No <project>/<version> or inherited <parent>/<version> in " + pom);
+    }
+
+    private static boolean declaresDependencyOn(Element project, String artifactId) {
+        Element deps = directChild(project, "dependencies");
+        if (deps == null) {
+            return false;
+        }
+        NodeList children = deps.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("dependency")) {
+                Element aid = directChild((Element) node, "artifactId");
+                if (aid != null && artifactId.equals(aid.getTextContent().trim())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static Element directChild(Element parent, String name) {

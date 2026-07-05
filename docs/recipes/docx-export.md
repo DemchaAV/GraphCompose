@@ -9,7 +9,7 @@ the recipient needs to *edit* the document; use PDF when pixels must match.
 ## Exporting a session
 
 ```java
-import com.demcha.compose.document.backend.semantic.DocxSemanticBackend;
+import com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend;
 
 try (DocumentSession document = GraphCompose.document()
         .pageSize(595, 842)
@@ -32,10 +32,10 @@ try (DocumentSession document = GraphCompose.document()
 default output file when one was given to `GraphCompose.document(path)`;
 the two-argument overload targets an explicit path.
 
-**Dependency note:** the backend requires `org.apache.poi:poi-ooxml` on
-the classpath. GraphCompose declares it **optional** in its POM, so
-consumers who export DOCX must add it explicitly — consumers who only
-render PDF carry no POI footprint.
+**Dependency note:** the DOCX backend ships in the
+`io.github.demchaav:graph-compose-render-docx` artifact, which brings Apache POI
+transitively. Add that one dependency to export DOCX — consumers who only render
+PDF never pull POI.
 
 ## What maps 1:1
 
@@ -77,4 +77,4 @@ designs, precise placement — export PDF for the reader and DOCX only as
 an editable companion.
 
 Round-trip coverage (paragraphs, tables, metadata, chart fallback) lives in
-[`DocxSemanticBackendTest`](../../src/test/java/com/demcha/compose/document/backend/semantic/DocxSemanticBackendTest.java).
+[`DocxSemanticBackendTest`](../../render-docx/src/test/java/com/demcha/compose/document/backend/semantic/docx/DocxSemanticBackendTest.java).

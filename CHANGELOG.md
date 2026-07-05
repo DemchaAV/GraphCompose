@@ -40,6 +40,12 @@ for this cycle.
   (core + render-pdf + templates + fonts + emoji). The optional
   `graph-compose-fonts` and `graph-compose-emoji` artifacts are unchanged. Full
   install guidance ships with 2.0.0.
+- `graph-compose-render-docx` is now a separate artifact: the semantic DOCX/PPTX
+  backend and Apache POI leave the `graph-compose` jar. `DocxSemanticBackend` moves
+  to `com.demcha.compose.document.backend.semantic.docx` and `PptxSemanticBackend`
+  to `com.demcha.compose.document.backend.semantic.pptx`; add
+  `graph-compose-render-docx` (it brings POI transitively) to export DOCX. The
+  `no-poi` build profile is retired.
 
 ## v1.9.0 — 2026-06-29
 

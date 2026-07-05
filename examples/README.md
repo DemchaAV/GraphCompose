@@ -943,8 +943,8 @@ images, spacers, and page breaks map 1:1; session metadata lands in the
 Word core properties. Charts export as their categories-by-series data
 table (one capability warning per export), shape containers flatten to
 inline layers, and pure geometry — dividers, shapes, barcodes — stays
-PDF-only by design. Requires `org.apache.poi:poi-ooxml` on the
-classpath (the dependency is optional in the GraphCompose POM).
+PDF-only by design. Requires the `graph-compose-render-docx` artifact
+on the classpath (it brings Apache POI transitively).
 
 [📄 View PDF](../assets/readme/examples/word-export-companion.pdf) ·
 [📝 Word file](../assets/readme/examples/word-export-companion.docx) ·

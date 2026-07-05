@@ -30,6 +30,7 @@ decides file vs stream vs bytes. The caller does.
 
 ## Invoice
 
+<!-- doc-example: id=business-invoice mode=method -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -91,6 +92,7 @@ Same shape, different spec. Use a proposal when the artifact is sales or
 project scope rather than billing. The timeline takes a three-argument
 `timelineItem(phase, duration, details)`.
 
+<!-- doc-example: id=business-proposal mode=method -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -147,6 +149,7 @@ document is streamed to the caller's stream. The template composes the
 same way before any output method; create one session per request.
 `create()` without arguments uses the family's default theme.
 
+<!-- doc-example: id=business-stream mode=members -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;

@@ -87,20 +87,6 @@
             <version>${graphcompose.fonts.version}</version>
         </dependency>
 
-        <!--
-            graph-compose's test-only fixtures (com.demcha.mock.*) used by
-            CanonicalBenchmarkSupport for CV / invoice / proposal sample
-            data. Pulled in via the tests-classifier jar published by
-            the main module's maven-jar-plugin test-jar execution.
-        -->
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-core</artifactId>
-            <version>${graphcompose.version}</version>
-            <type>test-jar</type>
-            <classifier>tests</classifier>
-        </dependency>
-
         <!-- Logging for benchmark runs. -->
         <dependency>
             <groupId>ch.qos.logback</groupId>

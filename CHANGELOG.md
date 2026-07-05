@@ -40,7 +40,8 @@ for this cycle.
   `graph-compose-render-pdf`**, which the `graph-compose` wrapper aggregates so a
   bare `graph-compose` still renders PDF, while `graph-compose-core` alone is lean
   (it throws `MissingBackendException` if asked to render without a backend). The
-  built-in templates move into their own module over the rest of the 2.0 cycle. The
+  **built-in templates now ship in `graph-compose-templates`** (opt-in; the
+  `graph-compose` wrapper does not bundle them). The
   optional `graph-compose-fonts` / `graph-compose-emoji` artifacts are unchanged.
   Full install guidance ships with 2.0.0.
 - `graph-compose-render-pdf` is a separate artifact: the entire PDFBox backend —
@@ -51,6 +52,12 @@ for this cycle.
   PDF provider ships in render-pdf and is discovered at runtime. Depend on
   `graph-compose` (or `graph-compose-render-pdf` directly) for PDF; a bare
   `graph-compose-core` renders nothing until a backend is on the classpath.
+- `graph-compose-templates` is a separate artifact: the built-in CV, cover-letter,
+  invoice, and proposal templates (`document.templates.**`) leave the engine. They
+  are pure authoring code over the canonical DSL, so the module depends only on
+  `graph-compose-core`. Add `graph-compose-templates` for the ready-made presets; a
+  consumer that used them through `graph-compose` before must now add this artifact
+  (the `com.demcha.compose.document.templates.**` packages are unchanged).
 - The semantic office backends are separate artifacts and Apache POI leaves the
   engine: `DocxSemanticBackend` ships in `graph-compose-render-docx` (which brings
   POI transitively — add it to export DOCX), and `PptxSemanticBackend` ships in its

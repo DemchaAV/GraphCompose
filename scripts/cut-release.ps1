@@ -304,7 +304,7 @@ function Run-ShowcaseSync {
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     # The examples module depends on these bumped SNAPSHOT siblings (not on
     # Central); each must be installed before exec:java can resolve them.
-    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml', 'testing/pom.xml')
+    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml', 'templates/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {
@@ -502,6 +502,9 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'render-pdf/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'render-pptx/pom.xml') $Version
+    # graph-compose-templates tracks the engine line (lockstep): its <version> bumps
+    # here and its graph-compose-core dep is ${project.version} (follows automatically).
+    Update-PomVersion (Join-Path $repoRoot 'templates/pom.xml') $Version
     # graph-compose-testing tracks the engine line (lockstep): its <version>
     # bumps here and its graph-compose dep is ${project.version} (follows
     # automatically). graph-compose-qa is an aggregator child (its version is
@@ -581,6 +584,7 @@ try {
         'render-pdf/pom.xml',
         'render-docx/pom.xml',
         'render-pptx/pom.xml',
+        'templates/pom.xml',
         'testing/pom.xml',
         'wrapper/pom.xml',
         'examples/pom.xml',

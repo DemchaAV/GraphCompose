@@ -76,6 +76,14 @@
             <version>${graphcompose.version}</version>
         </dependency>
 
+        <!-- The built-in CV / cover-letter / invoice / proposal templates that the
+             flagship + template examples render. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+
         <!-- Snapshot-regression demo (LayoutSnapshotRegressionExample) uses
              LayoutSnapshotJson, which ships in graph-compose-testing since 2.0.
              It also brings jackson-databind transitively, which EngineDeckData

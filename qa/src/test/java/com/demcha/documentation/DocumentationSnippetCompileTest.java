@@ -1,4 +1,5 @@
 package com.demcha.documentation;
+import com.demcha.compose.qa.RepoPaths;
 
 import org.junit.jupiter.api.Test;
 
@@ -72,7 +73,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DocumentationSnippetCompileTest {
 
-    private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
+    private static final Path PROJECT_ROOT = RepoPaths.repoRoot();
     private static final Path DOCS_ROOT = PROJECT_ROOT.resolve("docs");
 
     private static final Pattern MARKER =

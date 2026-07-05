@@ -64,6 +64,7 @@
         <module>../emoji</module>
         <module>../render-docx</module>
         <module>../render-pptx</module>
+        <module>../templates</module>
         <module>../testing</module>
         <module>../bundle</module>
         <module>../examples</module>

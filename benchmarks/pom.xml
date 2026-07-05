@@ -60,6 +60,20 @@
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
+        <!-- The built-in templates (benchmarked alongside the raw engine) and their
+             tests-classifier jar for the template data fixtures. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
+            <version>${graphcompose.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
+        </dependency>
 
         <!--
             Bundled Google fonts, split out of the engine jar in v1.8.0. The
@@ -71,20 +85,6 @@
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-fonts</artifactId>
             <version>${graphcompose.fonts.version}</version>
-        </dependency>
-
-        <!--
-            graph-compose's test-only fixtures (com.demcha.mock.*) used by
-            CanonicalBenchmarkSupport for CV / invoice / proposal sample
-            data. Pulled in via the tests-classifier jar published by
-            the main module's maven-jar-plugin test-jar execution.
-        -->
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-core</artifactId>
-            <version>${graphcompose.version}</version>
-            <type>test-jar</type>
-            <classifier>tests</classifier>
         </dependency>
 
         <!-- Logging for benchmark runs. -->

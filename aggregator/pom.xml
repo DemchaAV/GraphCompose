@@ -61,8 +61,10 @@
         <module>../fonts</module>
         <module>../emoji</module>
         <module>../render-docx</module>
+        <module>../testing</module>
         <module>../bundle</module>
         <module>../examples</module>
         <module>../benchmarks</module>
+        <module>../qa</module>
     </modules>
 </project>

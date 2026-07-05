@@ -302,22 +302,28 @@ function Run-ShowcaseSync {
     # lifecycle phase. Wrapping the whole token in quotes preserves it
     # as a single literal argument.
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
+    # The examples module depends on these bumped SNAPSHOT siblings (not on
+    # Central); each must be installed before exec:java can resolve them.
+    $exampleSnapshotSiblings = @('render-docx/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
+        foreach ($modulePom in $exampleSnapshotSiblings) {
+            Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor Yellow
+        }
         Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java $execProp" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
     try {
-        # ShowcaseSync runs from the examples module, which depends on
-        # io.github.demchaav:graphcompose:${project.version}. After Step 1
-        # bumps the four pom.xml files to the new release version, that
-        # artifact is not yet in the local m2 cache — only the previous
-        # release is — so exec:java fails dependency resolution with
-        # "Could not find artifact ...:graphcompose:jar:<new-version>".
-        # Install the root artifact first so the examples module can
-        # resolve it. Bug surfaced during v1.6.5 cut: Step 4 aborted with
-        # exit 1; we had to install by hand and resume manually.
+        # ShowcaseSync runs from the examples module, which depends on the
+        # engine plus the bumped SNAPSHOT siblings render-docx and
+        # graph-compose-testing. After Step 1 bumps the poms to the new release
+        # version, those artifacts are not yet in the local m2 cache — only the
+        # previous release is — so exec:java fails dependency resolution with
+        # "Could not find artifact ...:jar:<new-version>". Install the engine and
+        # each sibling first so the examples module can resolve them. Bug
+        # surfaced during v1.6.5 cut: Step 4 aborted with exit 1; we had to
+        # install by hand and resume manually.
         Write-Host "    > $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor DarkGray
         & $mvnw -B -ntp -DskipTests install -pl . 2>&1 | ForEach-Object {
             if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') {
@@ -326,6 +332,17 @@ function Run-ShowcaseSync {
         }
         if ($LASTEXITCODE -ne 0) {
             throw "Install root artifact failed (exit $LASTEXITCODE)"
+        }
+        foreach ($modulePom in $exampleSnapshotSiblings) {
+            Write-Host "    > $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor DarkGray
+            & $mvnw -B -ntp -DskipTests install -f $modulePom 2>&1 | ForEach-Object {
+                if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') {
+                    Write-Host "    $_" -ForegroundColor DarkGray
+                }
+            }
+            if ($LASTEXITCODE -ne 0) {
+                throw "Install $modulePom failed (exit $LASTEXITCODE)"
+            }
         }
         & $mvnw -f examples/pom.xml exec:java $execProp 2>&1 | ForEach-Object {
             if ($_ -match 'Synced|Wrote manifest|BUILD SUCCESS|BUILD FAILURE|ERROR') {
@@ -482,6 +499,11 @@ try {
     # render-docx tracks the engine line (lockstep): its <version> bumps here and
     # its graph-compose dep is ${project.version} (follows automatically).
     Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
+    # graph-compose-testing tracks the engine line (lockstep): its <version>
+    # bumps here and its graph-compose dep is ${project.version} (follows
+    # automatically). graph-compose-qa is an aggregator child (its version is
+    # inherited) and is never published, so it needs no explicit bump.
+    Update-PomVersion (Join-Path $repoRoot 'testing/pom.xml') $Version
     # Bundle tracks the engine line: its project <version> bumps here; its
     # graph-compose dep is ${project.version} (follows automatically) and its
     # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
@@ -551,6 +573,7 @@ try {
         'aggregator/pom.xml',
         'bundle/pom.xml',
         'render-docx/pom.xml',
+        'testing/pom.xml',
         'examples/pom.xml',
         'benchmarks/pom.xml',
         'README.md',

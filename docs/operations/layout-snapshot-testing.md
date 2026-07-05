@@ -288,7 +288,7 @@ Or update a focused test only:
 ./mvnw "-Dgraphcompose.updateSnapshots=true" "-Dtest=MyFeatureLayoutSnapshotTest" test
 ```
 
-The same property works for downstream projects that use `LayoutSnapshotAssertions` from the published GraphCompose artifact.
+The same property works for downstream projects that use `LayoutSnapshotAssertions` from the published `graph-compose-testing` artifact.
 
 In normal mode:
 

@@ -109,6 +109,16 @@ jobs:
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
+      - name: Publish testing to Maven Central
+        # Consumer testing support (LayoutSnapshotAssertions / PdfVisualRegression),
+        # lockstep-versioned with the engine (ships on the same v* tag). graph-compose
+        # resolves from the local repo installed by the engine deploy above.
+        run: ./mvnw -B -ntp -f testing/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
       - name: Publish bundle to Maven Central
         # The graph-compose-bundle convenience aggregate pins this engine
         # version + a compatible graph-compose-fonts version. It tracks the

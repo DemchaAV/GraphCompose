@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Published consumer-testing support split out of the engine jar in the 2.0
+        module line: LayoutSnapshotAssertions (deterministic layout-snapshot
+        regression) and PdfVisualRegression (pixel-diff of rendered pages). It
+        carries the jackson (snapshot JSON) and PDFBox (page rasterization)
+        dependencies so the lean core does not. Consumers add it at TEST scope to
+        pin their own document layouts.
+
+        Standalone pom (no aggregator parent, like fonts/render-docx); its version
+        tracks the engine line in lockstep. PDFBox is a direct dependency here and
+        becomes a graph-compose-render-pdf dependency once that module is extracted
+        (B3), keeping the visual-regression rasterizer behind the backend seam.
+    -->
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-testing</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+
+    <name>GraphCompose Testing</name>
+    <description>Consumer testing support for GraphCompose: layout-snapshot assertions and PDF visual regression.</description>
+    <url>https://github.com/DemchaAV/GraphCompose</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>DemchaAV</id>
+            <name>Artem Demchyshyn</name>
+            <email>demchishynartem@gmail.com</email>
+            <url>https://github.com/DemchaAV</url>
+            <roles>
+                <role>Lead Developer</role>
+                <role>Architect</role>
+            </roles>
+            <timezone>UTC 0</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/DemchaAV/GraphCompose.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/DemchaAV/GraphCompose.git</developerConnection>
+        <url>https://github.com/DemchaAV/GraphCompose/tree/main</url>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <jackson.bom.version>2.21.4</jackson.bom.version>
+        <junit.bom.version>6.1.1</junit.bom.version>
+        <assertj.version>3.27.7</assertj.version>
+        <logback.version>1.5.37</logback.version>
+
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
+
+        <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
+        <gpg.skip>true</gpg.skip>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.bom.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.bom.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+            </plugin>
+            <!--
+                Public API javadoc gate for the testing surface — relocated here
+                from the engine pom's `subpackages` config when this module was
+                extracted. doclint=all keeps the published assertions/visual API
+                documented.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+                <configuration>
+                    <subpackages>com.demcha.compose.testing</subpackages>
+                    <doclint>all</doclint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>validate-public-api-javadoc</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>javadoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Maven Central release artefacts — mirrors the engine pom's `release`
+             profile. Standalone by design, so the configuration is duplicated. -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.source.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <subpackages>com.demcha.compose.testing</subpackages>
+                                    <doclint>all</doclint>
+                                    <quiet>true</quiet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${gpg.skip}</skip>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                            <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

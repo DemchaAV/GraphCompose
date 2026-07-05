@@ -24,13 +24,31 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RepositoryShowcaseRenderTest {
-    private static final Path COVER_ASSET = Path.of("assets", "GraphComposeCover.png");
+    private static final Path COVER_ASSET = locateRepoAsset(Path.of("assets", "GraphComposeCover.png"));
+
+    /**
+     * Resolves a repository-root asset independently of which module runs the
+     * test. The suite moved from the engine module (working dir = repo root) to
+     * the qa reactor tail (working dir = {@code qa/}); walking up from the
+     * working directory until the relative path resolves keeps the cover image
+     * reachable from either location.
+     */
+    private static Path locateRepoAsset(Path relative) {
+        for (Path dir = Path.of("").toAbsolutePath(); dir != null; dir = dir.getParent()) {
+            Path candidate = dir.resolve(relative);
+            if (Files.exists(candidate)) {
+                return candidate;
+            }
+        }
+        return relative;
+    }
     private static final Color TITLE_COLOR = new Color(18, 40, 74);
     private static final Color ACCENT_COLOR = new Color(37, 128, 197);
     private static final Color MUTED_COLOR = new Color(86, 98, 120);

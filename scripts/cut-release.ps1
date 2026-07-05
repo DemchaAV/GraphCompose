@@ -304,7 +304,7 @@ function Run-ShowcaseSync {
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     # The examples module depends on these bumped SNAPSHOT siblings (not on
     # Central); each must be installed before exec:java can resolve them.
-    $exampleSnapshotSiblings = @('render-docx/pom.xml', 'testing/pom.xml')
+    $exampleSnapshotSiblings = @('wrapper/pom.xml', 'render-docx/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {
@@ -504,6 +504,9 @@ try {
     # automatically). graph-compose-qa is an aggregator child (its version is
     # inherited) and is never published, so it needs no explicit bump.
     Update-PomVersion (Join-Path $repoRoot 'testing/pom.xml') $Version
+    # graph-compose (the graph-compose compat wrapper (wrapper/)) tracks the engine line lockstep;
+    # its graph-compose-core dep is ${project.version} (follows automatically).
+    Update-PomVersion (Join-Path $repoRoot 'wrapper/pom.xml') $Version
     # Bundle tracks the engine line: its project <version> bumps here; its
     # graph-compose dep is ${project.version} (follows automatically) and its
     # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
@@ -574,6 +577,7 @@ try {
         'bundle/pom.xml',
         'render-docx/pom.xml',
         'testing/pom.xml',
+        'wrapper/pom.xml',
         'examples/pom.xml',
         'benchmarks/pom.xml',
         'README.md',

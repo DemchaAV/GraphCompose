@@ -5,24 +5,27 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        Published consumer-testing support split out of the engine jar in the 2.0
-        module line: LayoutSnapshotAssertions (deterministic layout-snapshot
-        regression) and PdfVisualRegression (pixel-diff of rendered pages). It
-        carries the jackson (snapshot JSON) and PDFBox (page rasterization)
-        dependencies so the lean core does not. Consumers add it at TEST scope to
-        pin their own document layouts.
+        The `graph-compose` coordinate as a back-compat aggregator. In the 2.0
+        module split the engine code moved to graph-compose-core; this empty jar
+        keeps the original `graph-compose` coordinate working as a drop-in for
+        existing consumers by depending on graph-compose-core. As render backends
+        are extracted it also depends on graph-compose-render-pdf, so a bare
+        `graph-compose` dependency keeps rendering PDF exactly as in 1.x — classes
+        arrive transitively from core, the PDF backend provider from render-pdf.
 
-        Standalone pom (no aggregator parent, like fonts/render-docx); its version
-        tracks the engine line in lockstep. PDFBox is a direct dependency here and
-        becomes a graph-compose-render-pdf dependency once that module is extracted
-        (B3), keeping the visual-regression rasterizer behind the backend seam.
+        Packaging is `jar` (an empty one), NOT `pom`: a `pom` would force every
+        existing consumer to add `<type>pom</type>` and break their build. A jar
+        that carries only <dependencies> resolves as a normal artifact.
+
+        Standalone pom (no aggregator parent, like fonts/render-docx/testing);
+        its version tracks the engine line in lockstep.
     -->
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose-testing</artifactId>
+    <artifactId>graph-compose</artifactId>
     <version>2.0.0-SNAPSHOT</version>
 
-    <name>GraphCompose Testing</name>
-    <description>Consumer testing support for GraphCompose: layout-snapshot assertions and PDF visual regression.</description>
+    <name>GraphCompose</name>
+    <description>The graph-compose coordinate: a drop-in aggregator over graph-compose-core for a PDF-capable install.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -57,15 +60,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <pdfbox.version>3.0.7</pdfbox.version>
-        <jackson.bom.version>2.21.4</jackson.bom.version>
-        <junit.bom.version>6.1.1</junit.bom.version>
-        <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.37</logback.version>
-
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
-        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
@@ -76,40 +72,12 @@
     </properties>
 
     <dependencies>
+        <!-- The engine. As backends are extracted, graph-compose-render-pdf joins
+             this list so a bare `graph-compose` dependency still renders PDF. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.bom.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.bom.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -125,44 +93,17 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven.jar.plugin.version}</version>
-            </plugin>
-            <!--
-                Public API javadoc gate for the testing surface — relocated here
-                from the engine pom's `subpackages` config when this module was
-                extracted. doclint=all keeps the published assertions/visual API
-                documented.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven.javadoc.plugin.version}</version>
-                <configuration>
-                    <subpackages>com.demcha.compose.testing</subpackages>
-                    <doclint>all</doclint>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>validate-public-api-javadoc</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
 
     <profiles>
         <!-- Maven Central release artefacts — mirrors the engine pom's `release`
-             profile. Standalone by design, so the configuration is duplicated. -->
+             profile. This module carries no sources, so the source/javadoc jars
+             are empty (failOnError=false keeps javadoc from aborting on the empty
+             source set); Central only requires the jars to be present. -->
         <profile>
             <id>release</id>
             <build>
@@ -193,8 +134,7 @@
                                     <goal>jar</goal>
                                 </goals>
                                 <configuration>
-                                    <subpackages>com.demcha.compose.testing</subpackages>
-                                    <doclint>all</doclint>
+                                    <failOnError>false</failOnError>
                                     <quiet>true</quiet>
                                 </configuration>
                             </execution>

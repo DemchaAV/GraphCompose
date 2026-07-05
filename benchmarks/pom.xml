@@ -50,7 +50,7 @@
         <!-- The library under benchmark. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose</artifactId>
+            <artifactId>graph-compose-core</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
 
@@ -74,7 +74,7 @@
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose</artifactId>
+            <artifactId>graph-compose-core</artifactId>
             <version>${graphcompose.version}</version>
             <type>test-jar</type>
             <classifier>tests</classifier>

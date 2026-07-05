@@ -67,6 +67,9 @@ class VersionConsistencyGuardTest {
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("testing/pom.xml")))
                 .describedAs("testing (graph-compose-testing) tracks the engine line and must equal the root version (%s)", root)
                 .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("wrapper/pom.xml")))
+                .describedAs("wrapper (the graph-compose compat wrapper) tracks the engine line and must equal the root version (%s)", root)
+                .isEqualTo(root);
 
         // NOTE: fonts/pom.xml (graph-compose-fonts) is intentionally NOT checked
         // here. It carries an independent version line (it ships on its own

@@ -99,6 +99,16 @@ jobs:
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
+      - name: Publish graph-compose (compat wrapper) to Maven Central
+        # The empty jar that keeps the `graph-compose` coordinate a drop-in: it
+        # depends on graph-compose-core, resolved from the local repo installed by
+        # the engine (core) deploy above. Ships on the same v* tag, lockstep.
+        run: ./mvnw -B -ntp -f wrapper/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
       - name: Publish render-docx to Maven Central
         # The semantic DOCX/PPTX backend, lockstep-versioned with the engine
         # (ships on the same v* tag). graph-compose resolves from the local repo

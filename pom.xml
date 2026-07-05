@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose</artifactId>
+    <artifactId>graph-compose-core</artifactId>
     <version>2.0.0-SNAPSHOT</version>
 
-    <name>GraphCompose</name>
-    <description>A declarative layout engine for programmatic document generation, implemented primarily in Java.</description>
+    <name>GraphCompose Core</name>
+    <description>A declarative layout engine for programmatic document generation, implemented primarily in Java. This is the lean engine coordinate; depend on the `graph-compose` artifact for the drop-in, PDF-capable install.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -400,7 +400,7 @@
                 Build a tests-classifier jar so the sibling `benchmarks/`
                 module can reuse the test-only fixtures (com.demcha.mock.*,
                 etc.) without duplicating them. The artifact is
-                graph-compose-${version}-tests.jar in the local repository
+                graph-compose-core-${version}-tests.jar in the local repository
                 after `mvn install`. It is a LOCAL build aid only: the
                 `release` profile disables this execution (phase=none) so the
                 tests jar is never attached and therefore never deployed to
@@ -463,7 +463,7 @@
                     <!--
                         Keep the tests-classifier jar OUT of the published
                         artifact set. The default build attaches a
-                        graph-compose-${version}-tests.jar (for the local
+                        graph-compose-core-${version}-tests.jar (for the local
                         benchmarks module); on a release `deploy` that jar
                         would otherwise be uploaded to Maven Central, where it
                         is pure dead weight (test classes + heavy golden

@@ -27,8 +27,25 @@ public final class BackendProviders {
             + "provider implementation) to render, rasterize, or measure a document.";
 
     private static volatile FontMetricsProvider fontMetrics;
+    private static volatile FixedLayoutBackendProvider fixedLayout;
 
     private BackendProviders() {
+    }
+
+    /**
+     * Returns the registered fixed-layout backend provider, resolving and caching
+     * it on first use.
+     *
+     * @return the fixed-layout backend provider
+     * @throws MissingBackendException if no provider is registered on the classpath
+     */
+    public static FixedLayoutBackendProvider fixedLayout() {
+        FixedLayoutBackendProvider provider = fixedLayout;
+        if (provider == null) {
+            provider = load(FixedLayoutBackendProvider.class);
+            fixedLayout = provider;
+        }
+        return provider;
     }
 
     /**

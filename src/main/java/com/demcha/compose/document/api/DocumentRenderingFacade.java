@@ -2,7 +2,7 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
-import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.layout.DocumentGraph;
@@ -224,6 +224,6 @@ final class DocumentRenderingFacade {
 
         DocumentOutputOptions outputOptions();
 
-        PdfFixedLayoutBackend conveniencePdfBackend();
+        FixedLayoutRenderer conveniencePdfBackend();
     }
 }

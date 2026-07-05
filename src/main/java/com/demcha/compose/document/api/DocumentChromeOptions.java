@@ -1,7 +1,7 @@
 package com.demcha.compose.document.api;
 
-import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
-import com.demcha.compose.document.backend.fixed.pdf.PdfOutputOptionsTranslator;
+import com.demcha.compose.document.backend.fixed.BackendProviders;
+import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.output.*;
 
@@ -100,34 +100,16 @@ final class DocumentChromeOptions {
     }
 
     /**
-     * Builds a configured {@link PdfFixedLayoutBackend} for the session's
-     * convenience PDF methods. When no debug overlay is enabled and no
-     * chrome is attached, returns the bare default backend so callers do
-     * not pay for empty option arrays.
+     * Resolves and configures the fixed-layout backend for the session's
+     * convenience output methods, translating the attached chrome through the
+     * registered
+     * {@link com.demcha.compose.document.backend.fixed.FixedLayoutBackendProvider}.
      *
-     * @param debug debug overlay options for the convenience PDF backend;
-     *              never {@code null}
-     * @return ready-to-use PDF backend
+     * @param debug debug overlay options; never {@code null}
+     * @return a configured renderer
      */
-    PdfFixedLayoutBackend toConveniencePdfBackend(DocumentDebugOptions debug) {
-        if (!debug.enabled() && isEmpty()) {
-            return new PdfFixedLayoutBackend();
-        }
-        PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder()
-                .debug(debug)
-                .metadata(PdfOutputOptionsTranslator.toPdf(metadata))
-                .watermark(PdfOutputOptionsTranslator.toPdf(watermark))
-                .protect(PdfOutputOptionsTranslator.toPdf(protection))
-                .viewerPreferences(PdfOutputOptionsTranslator.toPdf(viewerPreferences));
-        for (DocumentHeaderFooter entry : headersAndFooters) {
-            PdfHeaderFooterOptions translated = PdfOutputOptionsTranslator.toPdf(entry);
-            if (entry.getZone() == DocumentHeaderFooterZone.FOOTER) {
-                builder.footer(translated);
-            } else {
-                builder.header(translated);
-            }
-        }
-        return builder.build();
+    FixedLayoutRenderer toConveniencePdfBackend(DocumentDebugOptions debug) {
+        return BackendProviders.fixedLayout().create(snapshot(), debug);
     }
 
     // PDF-flavoured compatibility setters -----------------------------------

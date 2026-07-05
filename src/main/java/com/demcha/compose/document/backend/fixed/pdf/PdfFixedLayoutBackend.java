@@ -1,8 +1,9 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.document.api.Beta;
-import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
+import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
+import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.backend.fixed.pdf.handlers.*;
 import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
@@ -48,7 +49,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Artem Demchyshyn
  */
-public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
+public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
 
     private final Map<Class<?>, PdfFragmentRenderHandler<?>> handlers;
@@ -412,7 +413,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     }
 
     /**
-     * Concatenates several {@link Section sections} into one PDF and returns its
+     * Concatenates several {@link SectionUnit sections} into one PDF and returns its
      * bytes. Each section keeps its own page geometry, fonts, and chrome
      * (watermark, header/footer); anchors, links, and bookmarks resolve across
      * section boundaries against the combined document.
@@ -420,7 +421,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * <p>This is the low-level assembly seam;
      * {@link com.demcha.compose.document.api.MultiSectionDocument} (via
      * {@link com.demcha.compose.GraphCompose#documents()}) is the public entry
-     * point that builds the {@link Section}s for you.</p>
+     * point that builds the {@link SectionUnit}s for you.</p>
      *
      * @param sections ordered, non-empty list of sections
      * @return rendered combined-document bytes
@@ -428,7 +429,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * @since 1.9.0
      */
     @Beta
-    public byte[] renderSections(List<Section> sections) throws Exception {
+    public byte[] renderSections(List<SectionUnit> sections) throws Exception {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             writeSections(sections, output);
             return output.toByteArray();
@@ -436,7 +437,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
     }
 
     /**
-     * Concatenates several {@link Section sections} into one PDF written to the
+     * Concatenates several {@link SectionUnit sections} into one PDF written to the
      * caller-owned stream (never closed by the backend).
      *
      * @param sections ordered, non-empty list of sections
@@ -445,14 +446,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
      * @since 1.9.0
      */
     @Beta
-    public void writeSections(List<Section> sections, OutputStream output) throws Exception {
+    public void writeSections(List<SectionUnit> sections, OutputStream output) throws Exception {
         Objects.requireNonNull(output, "output");
         try (PDDocument document = buildSectionsDocument(sections)) {
             document.save(output);
         }
     }
 
-    private PDDocument buildSectionsDocument(List<Section> sections) throws Exception {
+    private PDDocument buildSectionsDocument(List<SectionUnit> sections) throws Exception {
         Objects.requireNonNull(sections, "sections");
         if (sections.isEmpty()) {
             throw new IllegalArgumentException("A multi-section document needs at least one section.");
@@ -464,15 +465,16 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
             List<PdfRenderEnvironment.DeferredInternalLink> links = new ArrayList<>();
             List<PdfRenderEnvironment.BookmarkRecord> bookmarks = new ArrayList<>();
             int pageOffset = 0;
-            for (Section section : sections) {
+            for (SectionUnit section : sections) {
                 LayoutGraph graph = section.graph();
+                PdfFixedLayoutBackend chrome = (PdfFixedLayoutBackend) section.chrome();
                 List<PDPage> pages = createPages(document, graph);
                 try (PdfRenderSession renderSession = new PdfRenderSession(document, pages)) {
                     // Each section renders with its OWN backend's handlers/debug, but
                     // records navigation against the combined document via the page offset.
                     PdfRenderEnvironment environment =
                             new PdfRenderEnvironment(document, fonts, renderSession, pageOffset);
-                    section.chrome().renderGraph(graph, environment);
+                    chrome.renderGraph(graph, environment);
                     bookmarks.addAll(environment.bookmarkRecords());
                     links.addAll(environment.deferredInternalLinks());
                     environment.anchorDestinations().forEach((name, destination) -> {
@@ -482,7 +484,6 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
                         }
                     });
                 }
-                PdfFixedLayoutBackend chrome = section.chrome();
                 PdfDocumentPostProcessor.applySectionChrome(
                         document,
                         section.canvas(),
@@ -504,61 +505,37 @@ public final class PdfFixedLayoutBackend implements FixedLayoutBackend<byte[]> {
         }
     }
 
-    private static void applyDocumentMetadataAndProtection(PDDocument document, List<Section> sections)
+    private static void applyDocumentMetadataAndProtection(PDDocument document, List<SectionUnit> sections)
             throws IOException {
         // Metadata, protection, and viewer preferences are document-global in PDF;
         // the first section that declares each wins for the combined document.
         PdfMetadataOptions metadata = null;
         PdfProtectionOptions protection = null;
         PdfViewerPreferencesOptions viewerPreferences = null;
-        for (Section section : sections) {
+        for (SectionUnit section : sections) {
+            PdfFixedLayoutBackend chrome = (PdfFixedLayoutBackend) section.chrome();
             if (metadata == null) {
-                metadata = section.chrome().metadataOptions;
+                metadata = chrome.metadataOptions;
             }
             if (protection == null) {
-                protection = section.chrome().protectionOptions;
+                protection = chrome.protectionOptions;
             }
             if (viewerPreferences == null) {
-                viewerPreferences = section.chrome().viewerPreferencesOptions;
+                viewerPreferences = chrome.viewerPreferencesOptions;
             }
         }
         PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(document, metadata, protection);
         PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferences);
     }
 
-    private static List<FontFamilyDefinition> unionCustomFonts(List<Section> sections) {
+    private static List<FontFamilyDefinition> unionCustomFonts(List<SectionUnit> sections) {
         Map<FontName, FontFamilyDefinition> byName = new LinkedHashMap<>();
-        for (Section section : sections) {
+        for (SectionUnit section : sections) {
             for (FontFamilyDefinition family : section.customFonts()) {
                 byName.putIfAbsent(family.name(), family);
             }
         }
         return List.copyOf(byName.values());
-    }
-
-    /**
-     * One section of a multi-section document: a fully laid-out graph plus the
-     * geometry, fonts, and chrome of the {@link com.demcha.compose.document.api.DocumentSession}
-     * that produced it. The {@code chrome} backend carries that section's
-     * watermark, header/footer, metadata, and protection options.
-     *
-     * @param graph       the section's resolved layout graph
-     * @param canvas      the section's page canvas (size + margins)
-     * @param customFonts the section's custom font families
-     * @param chrome      the section's configured backend
-     * @since 1.9.0
-     */
-    @Beta
-    public record Section(LayoutGraph graph,
-                          LayoutCanvas canvas,
-                          List<FontFamilyDefinition> customFonts,
-                          PdfFixedLayoutBackend chrome) {
-        public Section {
-            Objects.requireNonNull(graph, "graph");
-            Objects.requireNonNull(canvas, "canvas");
-            Objects.requireNonNull(chrome, "chrome");
-            customFonts = customFonts == null ? List.of() : List.copyOf(customFonts);
-        }
     }
 
     private int renderTableRowGroup(List<PlacedFragment> fragments,

@@ -76,6 +76,17 @@
             <version>${graphcompose.version}</version>
         </dependency>
 
+        <!-- Snapshot-regression demo (LayoutSnapshotRegressionExample) uses
+             LayoutSnapshotJson, which ships in graph-compose-testing since 2.0.
+             It also brings jackson-databind transitively, which EngineDeckData
+             uses to read the comparative-benchmark JSON — jackson left the
+             engine jar in 2.0. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-testing</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>

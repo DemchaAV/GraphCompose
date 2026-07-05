@@ -125,6 +125,13 @@ jobs:
         # dependency) so the examples build resolves it.
         run: ./mvnw -B -ntp -f render-docx/pom.xml -DskipTests install
 
+      - name: Install graph-compose-testing (consumed by the examples module)
+        # LayoutSnapshotRegressionExample uses LayoutSnapshotJson and EngineDeckData
+        # reads benchmark JSON through the jackson it brings; the testing module is
+        # not on Central, so install it after the engine (its graph-compose
+        # dependency) before the examples build resolves it.
+        run: ./mvnw -B -ntp -f testing/pom.xml -DskipTests install
+
       - name: Compile examples module
         run: ./mvnw -B -ntp -f examples/pom.xml clean compile
 

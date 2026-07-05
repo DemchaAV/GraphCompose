@@ -2,7 +2,7 @@ package com.demcha.compose;
 
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
-import com.demcha.compose.document.backend.fixed.pdf.FontShowcase;
+import com.demcha.compose.document.showcase.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
@@ -134,16 +134,26 @@ public final class GraphCompose {
      * Renders a PDF showcase of all bundled font families to disk.
      *
      * <p>This is primarily a discovery helper for developers choosing a family for
-     * {@code TextStyle}, templates, or themes.</p>
+     * {@code TextStyle}, templates, or themes. Because it renders a PDF, a render
+     * backend must be on the classpath (the {@code graph-compose-render-pdf}
+     * artifact, brought transitively by {@code graph-compose}); on a bare
+     * {@code graph-compose-core} classpath it throws {@code MissingBackendException}.</p>
+     *
+     * @param outputFile the file to write the preview PDF to
+     * @throws Exception if rendering fails, or {@code MissingBackendException} if no
+     *                   render backend is on the classpath
      */
     public static void renderAvailableFontsPreview(Path outputFile) throws Exception {
         FontShowcase.renderAvailableFontsPreview(outputFile);
     }
 
     /**
-     * Renders a PDF showcase of all bundled font families in memory.
+     * Renders a PDF showcase of all bundled font families in memory. Requires a
+     * render backend on the classpath (see {@link #renderAvailableFontsPreview(Path)}).
      *
      * @return the generated preview document as PDF bytes
+     * @throws Exception if rendering fails, or {@code MissingBackendException} if no
+     *                   render backend is on the classpath
      */
     public static byte[] renderAvailableFontsPreview() throws Exception {
         return FontShowcase.renderAvailableFontsPreview();

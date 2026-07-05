@@ -304,7 +304,7 @@ function Run-ShowcaseSync {
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     # The examples module depends on these bumped SNAPSHOT siblings (not on
     # Central); each must be installed before exec:java can resolve them.
-    $exampleSnapshotSiblings = @('wrapper/pom.xml', 'render-docx/pom.xml', 'testing/pom.xml')
+    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {
@@ -496,9 +496,10 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
-    # render-docx / render-pptx track the engine line (lockstep): each <version>
-    # bumps here and its graph-compose-core dep is ${project.version} (follows
-    # automatically).
+    # render-pdf / render-docx / render-pptx track the engine line (lockstep): each
+    # <version> bumps here and its graph-compose-core dep is ${project.version}
+    # (follows automatically).
+    Update-PomVersion (Join-Path $repoRoot 'render-pdf/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'render-pptx/pom.xml') $Version
     # graph-compose-testing tracks the engine line (lockstep): its <version>
@@ -577,6 +578,7 @@ try {
         'pom.xml',
         'aggregator/pom.xml',
         'bundle/pom.xml',
+        'render-pdf/pom.xml',
         'render-docx/pom.xml',
         'render-pptx/pom.xml',
         'testing/pom.xml',

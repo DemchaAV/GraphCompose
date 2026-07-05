@@ -1,4 +1,5 @@
 package com.demcha.compose.font;
+import com.demcha.compose.qa.RepoPaths;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
@@ -41,7 +42,7 @@ class FontLibraryIntegrationTest {
         // The bundled fonts moved to the graph-compose-fonts module in v1.8.0.
         // This test exercises file-based registration, so it reads the real TTFs
         // from that module's resources (engine test cwd is the repo root).
-        Path fontsRoot = Path.of("fonts", "src", "main", "resources", "fonts", "google", "lato");
+        Path fontsRoot = RepoPaths.resolve("fonts", "src", "main", "resources", "fonts", "google", "lato");
 
         try (EngineComposerHarness composer = com.demcha.compose.testsupport.EngineComposerHarness.pdf()
                 .registerFontFamily(

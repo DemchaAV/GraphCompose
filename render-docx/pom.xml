@@ -87,6 +87,14 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
         </dependency>
+        <!-- The export test builds a DocumentSession, which lays out through the
+             font-metrics seam now provided by graph-compose-render-pdf. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>

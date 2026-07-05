@@ -58,6 +58,7 @@
     -->
     <modules>
         <module>..</module>
+        <module>../render-pdf</module>
         <module>../wrapper</module>
         <module>../fonts</module>
         <module>../emoji</module>

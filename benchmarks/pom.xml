@@ -53,6 +53,13 @@
             <artifactId>graph-compose-core</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
+        <!-- The PDF backend: benchmarks call buildPdf and reference the backend
+             types (PdfFixedLayoutBackend, PdfMeasurementResources, …) directly. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
 
         <!--
             Bundled Google fonts, split out of the engine jar in v1.8.0. The

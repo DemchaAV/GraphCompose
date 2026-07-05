@@ -43,6 +43,7 @@
         <mockito.version>5.23.0</mockito.version>
         <logback.version>1.5.37</logback.version>
         <pdfbox.version>3.0.7</pdfbox.version>
+        <javafx.version>21.0.2</javafx.version>
         <!-- graphcompose.fonts.version / graphcompose.emoji.version and
              maven.deploy.skip=true are inherited from the aggregator parent. -->
     </properties>
@@ -74,6 +75,23 @@
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-testing</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- The PDF backend (provider on the classpath so the relocated render
+             suites resolve a backend) plus its tests-classifier jar, which carries
+             the shared render harness (EngineComposerHarness + engine.assembly). -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -130,6 +148,19 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- The relocated JavaFX dev-preview tool (com.demcha.compose.devtool.*). -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

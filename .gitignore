@@ -39,6 +39,7 @@ build/
 /logs/
 benchmarks/logs/
 qa/logs/
+render-pdf/logs/
 /CV_Generated.pdf
 *.pdf
 # Allow PDF previews that are committed README assets.

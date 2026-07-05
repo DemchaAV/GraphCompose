@@ -5,24 +5,30 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        Semantic PPTX export backend, split out of graph-compose-render-docx in the
-        2.0 module line so a consumer that wants slide output does not also pull the
-        DOCX backend's Apache POI. Today PptxSemanticBackend is a skeleton that
-        validates slide-safe semantic nodes and returns an export manifest, so this
-        module needs nothing beyond the core — POI joins only when real .pptx
-        emission lands. SemanticBackend / SemanticExportContext / manifest — the SPI
-        — stay in the core `document.backend.semantic` package.
+        The PDF render backend, split out of the engine in the 2.0 module line so
+        the lean core carries no PDFBox. This module holds the fixed-layout PDF
+        backend (document.backend.fixed.pdf.**), the PDF render tree
+        (engine.render.pdf.**, incl. the ecs system + handlers), PdfFont /
+        GlyphFallbackLogger, and the ServiceLoader registrations for the
+        FixedLayoutBackendProvider + FontMetricsProvider seams. Adding this artifact
+        (directly, or transitively via graph-compose) puts a PDF backend on the
+        classpath so DocumentSession.buildPdf() / toImages() resolve; without any
+        backend the core throws MissingBackendException.
+
+        PDFBox, zxing (barcodes), and the commons-logging -> SLF4J bridge that
+        PDFBox's static LogFactory init needs live here, not in the core.
 
         Standalone pom (no aggregator parent, like fonts/render-docx); its version
-        tracks the engine line in lockstep (bumped by cut-release.ps1), and the
-        `release` profile is copy-pasted from the engine pom.
+        tracks the engine line in lockstep (bumped by cut-release.ps1). It also
+        builds a tests-classifier jar so graph-compose-qa can reuse the render test
+        harness (EngineComposerHarness + the engine.assembly builders).
     -->
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose-render-pptx</artifactId>
+    <artifactId>graph-compose-render-pdf</artifactId>
     <version>2.0.0-SNAPSHOT</version>
 
-    <name>GraphCompose Render — PPTX</name>
-    <description>Semantic PPTX export backend for GraphCompose (slide-safe semantic node validation).</description>
+    <name>GraphCompose Render — PDF</name>
+    <description>The PDFBox-backed PDF render backend for GraphCompose.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -57,10 +63,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
+        <lombok.version>1.18.46</lombok.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <zxing.version>3.5.4</zxing.version>
+        <slf4j.version>2.0.18</slf4j.version>
         <junit.bom.version>6.1.1</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
+        <mockito.version>5.23.0</mockito.version>
         <logback.version>1.5.37</logback.version>
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+        <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
@@ -76,20 +88,47 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
-        <!-- Test dependencies -->
-        <!-- The export test builds a DocumentSession, which lays out through the
-             font-metrics seam now provided by graph-compose-render-pdf. -->
+        <!--
+            PDFBox's static initializer (PDDocument.<clinit>) calls
+            org.apache.commons.logging.LogFactory directly. Exclude PDFBox's own
+            commons-logging and route those calls through SLF4J via jcl-over-slf4j,
+            so the whole train uses a single logging facade.
+        -->
         <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-render-pdf</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+
+        <!-- Test dependencies. The render harness + backend tests build and
+             rasterize real PDFs, so the bundled fonts / emoji are on the test
+             classpath (like the engine's own test suite since v2.0). -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -103,20 +142,46 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--
-            The export test builds a DocumentSession, which lays out text through the
-            font metrics seam; the bundled families come from the published fonts
-            artifact (same as the engine's own test suite since v2.0).
-        -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-fonts</artifactId>
             <version>${graphcompose.fonts.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-emoji</artifactId>
+            <version>${graphcompose.emoji.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            The engine's shared pdf-free test fixtures (com.demcha.mock.*) that the
+            backend/harness tests reuse. Pulled from the engine tests-classifier jar
+            (a local build aid only; the release profile disables it).
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -129,6 +194,13 @@
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -136,10 +208,24 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
             </plugin>
+            <!--
+                Build a tests-classifier jar so graph-compose-qa can reuse the render
+                harness (com.demcha.compose.testsupport.*). A local build aid only:
+                the release profile disables this execution (phase=none) so it is
+                never attached or deployed.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven.jar.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-test-jar</id>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -147,11 +233,23 @@
     <profiles>
         <!-- Maven Central release artefacts — mirrors the engine pom's `release`
              profile (sources + javadoc + GPG + central-publishing). Standalone by
-             design, so the configuration is duplicated rather than inherited. -->
+             design, so the configuration is duplicated rather than inherited. The
+             tests-classifier jar is unbound (phase=none) so it is never deployed. -->
         <profile>
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven.jar.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-test-jar</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>

@@ -3,6 +3,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.showcase.FontShowcase;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 import org.junit.jupiter.api.Test;
 

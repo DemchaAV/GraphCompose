@@ -46,9 +46,10 @@ class PdfBackendIsolationGuardTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/templates"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/backend/fixed"),
             // The public font catalog names logical fonts; it never loads them.
-            // PDFBox loading lives in the pdf backend factory, so compose.font
-            // must stay PDFBox-free (FontShowcase, which renders a preview PDF,
-            // lives under backend/fixed/pdf and is exempted like the rest of it).
+            // PDFBox loading lives in the graph-compose-render-pdf backend, so
+            // compose.font must stay PDFBox-free. (FontShowcase, which authors a
+            // preview document, is a document-layer helper under
+            // document.showcase, not part of the font catalog.)
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/font"));
 
     @Test
@@ -65,10 +66,9 @@ class PdfBackendIsolationGuardTest {
         }
 
         assertThat(violations)
-                .describedAs("PDFBox dependencies must stay behind document.backend.fixed.pdf.* "
-                        + "or under engine.render.pdf.* (shared PDFBox primitives plus the legacy "
-                        + "ECS renderer in engine.render.pdf.ecs.*). Canonical API and layout contracts "
-                        + "should use document-level value objects such as DocumentPageSize.")
+                .describedAs("PDFBox now lives entirely in the graph-compose-render-pdf module; the "
+                        + "core must stay PDFBox-free. Canonical API and layout contracts should use "
+                        + "document-level value objects such as DocumentPageSize, not PDFBox types.")
                 .isEmpty();
     }
 

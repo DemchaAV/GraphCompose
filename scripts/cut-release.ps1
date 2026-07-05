@@ -479,6 +479,9 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
+    # render-docx tracks the engine line (lockstep): its <version> bumps here and
+    # its graph-compose dep is ${project.version} (follows automatically).
+    Update-PomVersion (Join-Path $repoRoot 'render-docx/pom.xml') $Version
     # Bundle tracks the engine line: its project <version> bumps here; its
     # graph-compose dep is ${project.version} (follows automatically) and its
     # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
@@ -547,6 +550,7 @@ try {
         'pom.xml',
         'aggregator/pom.xml',
         'bundle/pom.xml',
+        'render-docx/pom.xml',
         'examples/pom.xml',
         'benchmarks/pom.xml',
         'README.md',

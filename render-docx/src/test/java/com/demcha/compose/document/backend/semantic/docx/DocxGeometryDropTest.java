@@ -1,4 +1,4 @@
-package com.demcha.compose.document.backend.semantic;
+package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
@@ -8,7 +8,6 @@ import com.demcha.compose.document.style.DocumentStroke;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -22,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * geometry leaves (paths, polygons) are dropped without throwing — the
  * fixed-layout PDF backend is the path for pixel-perfect geometry.
  */
-@DisabledIfSystemProperty(named = "no.poi", matches = "true",
-        disabledReason = "DocxSemanticBackend requires poi-ooxml")
 class DocxGeometryDropTest {
 
     @Test

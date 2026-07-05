@@ -1,4 +1,4 @@
-package com.demcha.compose.document.backend.semantic;
+package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
@@ -15,7 +15,6 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -23,14 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * DOCX semantic backend output. Skipped under the {@code -P no-poi}
- * profile, where {@code poi-ooxml} is intentionally absent from the
- * test classpath to validate that consumers who don't render DOCX can
- * still build and run the canonical suite without the optional POI
- * footprint (Track I1).
+ * DOCX semantic backend output.
  */
-@DisabledIfSystemProperty(named = "no.poi", matches = "true",
-        disabledReason = "DocxSemanticBackend requires poi-ooxml; the no-poi profile validates the rest of the suite without it")
 class DocxSemanticBackendTest {
 
     @Test

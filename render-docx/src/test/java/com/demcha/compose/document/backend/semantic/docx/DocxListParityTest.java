@@ -1,4 +1,4 @@
-package com.demcha.compose.document.backend.semantic;
+package com.demcha.compose.document.backend.semantic.docx;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
@@ -7,7 +7,6 @@ import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -22,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link ListMarker#normalizeItemText(String, boolean)} for flat items —
  * so both outputs of one session agree.
  */
-@DisabledIfSystemProperty(named = "no.poi", matches = "true",
-        disabledReason = "DocxSemanticBackend requires poi-ooxml; the no-poi profile validates the rest of the suite without it")
 class DocxListParityTest {
 
     @Test

@@ -43,14 +43,14 @@ GraphCompose marks one heavy, rarely-needed dependency **optional** so
 PDF-only consumers don't pay for it. If you use DOCX export, add the
 dependency to **your** project.
 
-**DOCX export** — `document.export(new DocxSemanticBackend())` needs
-Apache POI on your classpath:
+**DOCX export** — `document.export(new DocxSemanticBackend())` ships in the
+`graph-compose-render-docx` artifact, which brings Apache POI transitively:
 
 ```xml
 <dependency>
-  <groupId>org.apache.poi</groupId>
-  <artifactId>poi-ooxml</artifactId>
-  <version>5.5.1</version>
+  <groupId>io.github.demchaav</groupId>
+  <artifactId>graph-compose-render-docx</artifactId>
+  <version>2.0.0</version>
 </dependency>
 ```
 

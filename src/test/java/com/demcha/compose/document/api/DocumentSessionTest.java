@@ -19,10 +19,7 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
-import com.demcha.compose.document.backend.semantic.DocxSemanticBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
-import com.demcha.compose.document.backend.semantic.PptxSemanticBackend;
-import com.demcha.compose.document.backend.semantic.SemanticExportManifest;
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.document.layout.BoxConstraints;
@@ -74,7 +71,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 
@@ -785,48 +781,6 @@ class DocumentSessionTest {
         assertThatThrownBy(() -> session.registry()
                 .register(new BadgeNodeDefinition()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisabledIfSystemProperty(named = "no.poi", matches = "true",
-            disabledReason = "Exercises DocxSemanticBackend; skipped under the no-poi profile that excludes poi-ooxml from the test classpath")
-    void semanticBackendsShouldExportManifestsFromDocumentGraph() throws Exception {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(200, 200)
-                .margin(DocumentInsets.of(10))
-                .create()) {
-
-            session.add(new ContainerNode(
-                    "DocxRoot",
-                    List.of(new ParagraphNode("P", "Hello world", DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0, DocumentInsets.zero(), DocumentInsets.zero())),
-                    8,
-                    DocumentInsets.zero(),
-                    DocumentInsets.zero(),
-                    null,
-                    null));
-
-            byte[] docx = session.export(new DocxSemanticBackend());
-
-            assertThat(docx).isNotEmpty();
-            // DOCX files are ZIP-archived OOXML packages; the first two bytes
-            // of any ZIP container are the local-file-header signature.
-            assertThat(docx[0]).isEqualTo((byte) 'P');
-            assertThat(docx[1]).isEqualTo((byte) 'K');
-
-            session.clear();
-            session.add(new ContainerNode(
-                    "PptxRoot",
-                    List.of(new ShapeNode("Box", 40, 20, Color.BLUE, DocumentStroke.of(DocumentColor.BLACK, 1), DocumentInsets.zero(), DocumentInsets.zero())),
-                    8,
-                    DocumentInsets.zero(),
-                    DocumentInsets.zero(),
-                    null,
-                    null));
-
-            SemanticExportManifest pptx = session.export(new PptxSemanticBackend());
-            assertThat(pptx.backendName()).isEqualTo("pptx-semantic");
-            assertThat(pptx.nodeKinds()).contains("ContainerNode", "ShapeNode");
-        }
     }
 
     @Test

@@ -72,6 +72,12 @@ for this cycle.
   `com.demcha.compose.testing.layout` / `com.demcha.compose.testing.visual`
   packages are unchanged, so imports stay the same; add `graph-compose-testing`
   at test scope to keep using them.
+- `graph-compose-bundle` is the batteries-included aggregate for the split layout:
+  one dependency pulls the default PDF stack (`graph-compose` = core + render-pdf),
+  the built-in templates (`graph-compose-templates`), the bundled Google fonts, and
+  the colour-emoji set at compatible pinned versions. The office backends
+  (`graph-compose-render-docx` / `graph-compose-render-pptx`) stay opt-in and are not
+  bundled.
 
 ## v1.9.0 — 2026-06-29
 

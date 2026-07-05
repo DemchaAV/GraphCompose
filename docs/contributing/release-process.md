@@ -136,9 +136,9 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
 
 The colour-emoji glyphs ship as a **separate, independently-versioned**
 artifact, `io.github.demchaav:graph-compose-emoji` (under `emoji/`), mirroring
-the fonts arrangement above — with one difference: the **bundle does NOT
-include emoji** (it stays opt-in), so a fonts-style consumer re-pin is not
-needed.
+the fonts arrangement above — including the `graph-compose-bundle`, which pins
+`graph-compose-emoji` (via `${graphcompose.emoji.version}`) just as it pins the
+fonts, so cutting an emoji release needs the same consumer re-pin.
 
 - **NOT bumped by the engine release.** It carries its own version line
   (started at `1.0.0`) and is bumped **only when the glyph set or shortcode
@@ -147,9 +147,12 @@ needed.
 - **Cutting an emoji release** (only when the set changes): bump
   `emoji/pom.xml` `<version>`, push an `emoji-vX.Y.Z` tag. That tag triggers
   [`publish-emoji.yml`](../../.github/workflows/publish-emoji.yml), which deploys
-  only `graph-compose-emoji` to Central. The engine has no dependency on the
-  emoji artifact (its tests read the glyphs from the sibling module's source via
-  `<testResources>`), so nothing else needs re-pinning.
+  only `graph-compose-emoji` to Central. Then bump `<graphcompose.emoji.version>`
+  in `aggregator/pom.xml` (inherited by examples) and `bundle/pom.xml` to the new
+  emoji version so those consumers pin it — the `bundledEmojiVersionAgreesAcrossModules`
+  version guard enforces that the two stay in agreement. The engine `pom.xml` does
+  **not** carry this property — the engine has no dependency on the emoji artifact
+  (its tests read the glyphs from the sibling module's source via `<testResources>`).
 - **Regenerating the set.** `emoji/tools/build-emoji-set.py` rebuilds
   `emoji/svg/` + `emoji-index.properties` from fresh Noto Emoji + gemoji sources,
   copying **only** the glyphs a shortcode resolves (see

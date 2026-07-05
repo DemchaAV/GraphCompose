@@ -67,6 +67,9 @@ class VersionConsistencyGuardTest {
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("render-pptx/pom.xml")))
                 .describedAs("render-pptx (graph-compose-render-pptx) tracks the engine line and must equal the root version (%s)", root)
                 .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("render-pdf/pom.xml")))
+                .describedAs("render-pdf (graph-compose-render-pdf) tracks the engine line and must equal the root version (%s)", root)
+                .isEqualTo(root);
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("testing/pom.xml")))
                 .describedAs("testing (graph-compose-testing) tracks the engine line and must equal the root version (%s)", root)
                 .isEqualTo(root);

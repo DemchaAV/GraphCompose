@@ -72,11 +72,17 @@
     </properties>
 
     <dependencies>
-        <!-- The engine. As backends are extracted, graph-compose-render-pdf joins
-             this list so a bare `graph-compose` dependency still renders PDF. -->
+        <!-- The engine plus the default PDF backend: a bare `graph-compose`
+             dependency brings the core transitively and puts the PDF backend
+             provider on the classpath, so buildPdf() / toImages() render as in 1.x. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

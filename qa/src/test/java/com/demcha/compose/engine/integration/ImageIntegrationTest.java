@@ -1,4 +1,5 @@
 package com.demcha.compose.engine.integration;
+import com.demcha.compose.qa.RepoPaths;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImageIntegrationTest {
 
-    private static final Path COVER_ASSET = Path.of("assets", "GraphComposeCover.png");
+    private static final Path COVER_ASSET = RepoPaths.resolve("assets", "GraphComposeCover.png");
 
     @Test
     void shouldRenderSingleImageWithGuides() throws Exception {

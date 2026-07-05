@@ -36,12 +36,21 @@ for this cycle.
   existing `graph-compose` dependency keeps compiling and rendering PDF unchanged.
   Consumer-testing support (`graph-compose-testing`) and the semantic DOCX / PPTX
   backends (`graph-compose-render-docx` / `graph-compose-render-pptx`) are already
-  separate artifacts; the PDF
-  render backend and the built-in templates move into their own modules over the
-  rest of the 2.0 cycle, at which point `graph-compose` aggregates the PDF backend
-  and `graph-compose-core` becomes the lean, bring-your-own-backend coordinate. The
+  separate artifacts; the **PDF render backend now lives in
+  `graph-compose-render-pdf`**, which the `graph-compose` wrapper aggregates so a
+  bare `graph-compose` still renders PDF, while `graph-compose-core` alone is lean
+  (it throws `MissingBackendException` if asked to render without a backend). The
+  built-in templates move into their own module over the rest of the 2.0 cycle. The
   optional `graph-compose-fonts` / `graph-compose-emoji` artifacts are unchanged.
   Full install guidance ships with 2.0.0.
+- `graph-compose-render-pdf` is a separate artifact: the entire PDFBox backend —
+  `document.backend.fixed.pdf.**` and the `engine.render.pdf.**` render tree — plus
+  PDFBox, zxing (barcodes), and the commons-logging→SLF4J bridge leave
+  `graph-compose-core`. The core keeps the `DocumentSession` API and the
+  `ServiceLoader` seam (`FixedLayoutBackendProvider` / `FontMetricsProvider`); the
+  PDF provider ships in render-pdf and is discovered at runtime. Depend on
+  `graph-compose` (or `graph-compose-render-pdf` directly) for PDF; a bare
+  `graph-compose-core` renders nothing until a backend is on the classpath.
 - The semantic office backends are separate artifacts and Apache POI leaves the
   engine: `DocxSemanticBackend` ships in `graph-compose-render-docx` (which brings
   POI transitively — add it to export DOCX), and `PptxSemanticBackend` ships in its

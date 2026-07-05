@@ -1,4 +1,4 @@
-package com.demcha.compose.document.backend.fixed.pdf;
+package com.demcha.compose.document.showcase;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;

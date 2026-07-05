@@ -76,7 +76,7 @@ jobs:
         # cross-module suites (which need the testing module + the engine test-jar on
         # the classpath and so cannot live in the engine's own test scope). -am pulls
         # the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-testing,:graph-compose-qa -am
+        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-testing,:graph-compose-qa -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
@@ -119,10 +119,16 @@ jobs:
       - name: Install root artifact (graph-compose-core)
         run: ./mvnw -B -ntp -DskipTests install -pl .
 
+      - name: Install graph-compose-render-pdf (the PDF backend the wrapper brings)
+        # The graph-compose wrapper depends on render-pdf so a bare graph-compose
+        # renders PDF; install it after the core (its only dependency) and before
+        # the wrapper.
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
+
       - name: Install graph-compose (the compat wrapper, consumed by the examples module)
         # examples depends on the graph-compose coordinate — the empty jar wrapper
-        # over graph-compose-core. Install it after the core so the examples build
-        # resolves it (and the engine classes transitively).
+        # over graph-compose-core + render-pdf. Install it after those so the
+        # examples build resolves it (and the engine + PDF backend transitively).
         run: ./mvnw -B -ntp -f wrapper/pom.xml -DskipTests install
 
       - name: Install graph-compose-render-docx (consumed by the examples module)
@@ -226,6 +232,12 @@ jobs:
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
 
+      - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
+        # benchmarks call buildPdf and reference the PDF backend types directly, so
+        # it depends on render-pdf; install it after the core, before the benchmarks
+        # build resolves it.
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
+
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
 
@@ -293,6 +305,12 @@ jobs:
 
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
+
+      - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
+        # benchmarks call buildPdf and reference the PDF backend types directly, so
+        # it depends on render-pdf; install it after the core, before the benchmarks
+        # build resolves it.
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
 
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile

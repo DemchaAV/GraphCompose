@@ -1,4 +1,5 @@
 package com.demcha.documentation;
+import com.demcha.compose.qa.RepoPaths;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -178,7 +179,7 @@ class DocumentationExamplesTest {
 
     @Test
     void runnableExamplesShouldUseCanonicalDocumentTemplates() throws IOException {
-        Path examplesRoot = Path.of("examples/src/main/java/com/demcha/examples").toAbsolutePath().normalize();
+        Path examplesRoot = RepoPaths.resolve("examples/src/main/java/com/demcha/examples").toAbsolutePath().normalize();
 
         try (var paths = Files.walk(examplesRoot)) {
             List<String> violations = new TreeSet<>(paths

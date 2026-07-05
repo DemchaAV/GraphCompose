@@ -1,7 +1,11 @@
 package com.demcha.compose.document.api;
 
-import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.BackendProviders;
+import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
+import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.exceptions.DocumentRenderingException;
+import com.demcha.compose.document.output.DocumentDebugOptions;
+import com.demcha.compose.document.output.DocumentOutputOptions;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 
 import java.io.OutputStream;
@@ -43,7 +47,8 @@ public final class MultiSectionDocument implements AutoCloseable {
 
     private final Path defaultOutputFile;
     private final List<DocumentSession> sections;
-    private final PdfFixedLayoutBackend backend = new PdfFixedLayoutBackend();
+    private final FixedLayoutRenderer backend =
+            BackendProviders.fixedLayout().create(DocumentOutputOptions.EMPTY, DocumentDebugOptions.none());
     private boolean closed;
 
     MultiSectionDocument(Path defaultOutputFile, List<DocumentSession> sections) {
@@ -143,7 +148,7 @@ public final class MultiSectionDocument implements AutoCloseable {
         }
     }
 
-    private List<PdfFixedLayoutBackend.Section> renderUnits() {
+    private List<SectionUnit> renderUnits() {
         ensureOpen();
         return sections.stream().map(DocumentSession::toSectionRenderUnit).toList();
     }

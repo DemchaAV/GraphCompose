@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.core;
 
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.components.core.Component;
 import com.demcha.compose.engine.components.core.Entity;
@@ -66,7 +65,7 @@ public class EntityManager {
     }
 
     public EntityManager(@NonNull List<SystemECS> systems) {
-        this(systems, DefaultFonts.standardLibrary(), true);
+        this(systems, new FontLibrary(), true);
     }
 
     public EntityManager(@NonNull List<SystemECS> systems, FontLibrary fonts, boolean markdown) {
@@ -81,7 +80,7 @@ public class EntityManager {
     }
 
     public EntityManager(boolean markdown) {
-        this(new ArrayList<>(), DefaultFonts.standardLibrary(), markdown);
+        this(new ArrayList<>(), new FontLibrary(), markdown);
     }
 
     public EntityManager(FontLibrary fonts, boolean markdown) {

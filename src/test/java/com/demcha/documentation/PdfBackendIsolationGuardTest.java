@@ -28,6 +28,10 @@ class PdfBackendIsolationGuardTest {
     private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
     private static final String PDFBOX_IMPORT_PREFIX = "import org.apache.pdfbox.";
     private static final String PDFBOX_REFERENCE = "org.apache.pdfbox.";
+    private static final String DOCUMENT_IMPORT_PREFIX = "import com.demcha.compose.document.";
+
+    private static final Path FONT_ROOT =
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/font");
 
     private static final List<Path> CANONICAL_ROOTS = List.of(
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
@@ -66,6 +70,49 @@ class PdfBackendIsolationGuardTest {
                         + "ECS renderer in engine.render.pdf.ecs.*). Canonical API and layout contracts "
                         + "should use document-level value objects such as DocumentPageSize.")
                 .isEmpty();
+    }
+
+    @Test
+    void fontCatalogStaysDocumentFree() throws IOException {
+        // compose.font is the logical font catalog: it names fonts, it never loads
+        // them. It must import nothing from the document layer (backends, options,
+        // api) — the machine-checkable form of "the engine -> font -> document
+        // cycle is broken". Backends materialize fonts behind the seam
+        // (FontMetricsProvider / PdfFontLibraryFactory); the catalog only stores them.
+        Map<String, Set<String>> violations = new LinkedHashMap<>();
+        try (var stream = Files.walk(FONT_ROOT)) {
+            List<Path> files = stream.filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".java"))
+                    .toList();
+            for (Path file : files) {
+                Set<String> references = documentImportsIn(file);
+                if (!references.isEmpty()) {
+                    violations.put(relative(file), references);
+                }
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("The com.demcha.compose.font catalog must not import "
+                        + "com.demcha.compose.document.* — it names logical fonts and never "
+                        + "loads them. A render backend (e.g. graph-compose-render-pdf) "
+                        + "materializes fonts behind the FontMetricsProvider / "
+                        + "PdfFontLibraryFactory seam.")
+                .isEmpty();
+    }
+
+    private Set<String> documentImportsIn(Path file) throws IOException {
+        Set<String> references = new TreeSet<>();
+        for (String line : Files.readAllLines(file)) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith(DOCUMENT_IMPORT_PREFIX)) {
+                int semicolon = trimmed.indexOf(';');
+                if (semicolon >= 0) {
+                    references.add(trimmed.substring("import ".length(), semicolon).trim());
+                }
+            }
+        }
+        return references;
     }
 
     private List<Path> canonicalJavaFiles() throws IOException {

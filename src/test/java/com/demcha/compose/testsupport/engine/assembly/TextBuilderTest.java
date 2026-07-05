@@ -1,5 +1,6 @@
 package com.demcha.compose.testsupport.engine.assembly;
 
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.core.Entity;
@@ -20,7 +21,7 @@ class TextBuilderTest {
 
     @BeforeEach
     void setUp() {
-        entityManager = new EntityManager();
+        entityManager = new EntityManager(PdfFontLibraryFactory.standardLibrary(), false);
         entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
     }
 

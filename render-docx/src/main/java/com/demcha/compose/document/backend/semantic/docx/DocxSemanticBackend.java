@@ -58,9 +58,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * containers. It deliberately ignores fixed-layout concerns (no per-page
  * pagination, no PDF chrome) since semantic exports target editing tools.</p>
  *
- * <p><b>Dependencies:</b> requires {@code org.apache.poi:poi-ooxml} on the
- * classpath. Library consumers must add it explicitly because the dependency is
- * declared optional in the GraphCompose POM.</p>
+ * <p><b>Dependencies:</b> this backend ships in
+ * {@code io.github.demchaav:graph-compose-render-docx}, which brings
+ * {@code org.apache.poi:poi-ooxml} transitively — adding that one artifact is
+ * all a DOCX consumer needs.</p>
  *
  * @author Artem Demchyshyn
  */

@@ -1,4 +1,4 @@
-package com.demcha.compose.font;
+package com.demcha.compose.document.backend.fixed.pdf;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -9,6 +9,8 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.font.FontName;
 
 import java.awt.Color;
 import java.nio.file.Path;
@@ -28,6 +30,12 @@ public final class FontShowcase {
     private FontShowcase() {
     }
 
+    /**
+     * Renders a preview of every bundled font family to a PDF file on disk.
+     *
+     * @param outputFile destination path for the generated preview PDF
+     * @throws Exception if the document cannot be built or written
+     */
     public static void renderAvailableFontsPreview(Path outputFile) throws Exception {
         try (DocumentSession document = GraphCompose.document(outputFile)
                 .pageSize(DocumentPageSize.A4)
@@ -40,6 +48,12 @@ public final class FontShowcase {
         }
     }
 
+    /**
+     * Renders a preview of every bundled font family and returns the PDF bytes.
+     *
+     * @return the generated preview document as PDF bytes
+     * @throws Exception if the document cannot be built or rendered
+     */
     public static byte[] renderAvailableFontsPreview() throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
@@ -52,6 +66,14 @@ public final class FontShowcase {
         }
     }
 
+    /**
+     * Renders a preview of the given font families and returns the PDF bytes.
+     *
+     * @param fonts logical font names to include; when {@code null} the full
+     *              bundled catalog is used
+     * @return the generated preview document as PDF bytes
+     * @throws Exception if the document cannot be built or rendered
+     */
     public static byte[] renderFontsPreview(Collection<FontName> fonts) throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
@@ -64,6 +86,13 @@ public final class FontShowcase {
         }
     }
 
+    /**
+     * Builds the font-preview content into an existing document session.
+     *
+     * @param document open document session to populate; must not be {@code null}
+     * @param fonts    logical font names to showcase; when {@code null} the full
+     *                 bundled catalog is used
+     */
     public static void buildShowcase(DocumentSession document, Collection<FontName> fonts) {
         Objects.requireNonNull(document, "document").pageFlow(flow -> {
             flow.name("AvailableFontsPreview")

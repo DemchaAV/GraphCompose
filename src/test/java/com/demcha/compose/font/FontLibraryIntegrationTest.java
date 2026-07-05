@@ -1,6 +1,7 @@
 package com.demcha.compose.font;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.testsupport.EngineComposerHarness;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.render.word.WordFont;
@@ -24,7 +25,7 @@ class FontLibraryIntegrationTest {
         }
 
         try (PDDocument document = new PDDocument()) {
-            FontLibrary fonts = DefaultFonts.library(document);
+            FontLibrary fonts = PdfFontLibraryFactory.library(document);
             assertThat(fonts.getFont(FontName.LATO, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(FontName.LATO, WordFont.class)).isPresent();
             assertThat(fonts.getFont(FontName.KANIT, PdfFont.class)).isPresent();
@@ -61,7 +62,7 @@ class FontLibraryIntegrationTest {
                 .build();
 
         try (PDDocument document = new PDDocument()) {
-            FontLibrary fonts = DefaultFonts.library(document, List.of(customDefinition));
+            FontLibrary fonts = PdfFontLibraryFactory.library(document, List.of(customDefinition));
             assertThat(fonts.getFont(customFamily, PdfFont.class)).isPresent();
             assertThat(fonts.getFont(customFamily, WordFont.class)).isPresent();
         }

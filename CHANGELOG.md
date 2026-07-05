@@ -28,6 +28,19 @@ for this cycle.
   `invoice`, and `proposal`. Update imports accordingly — behaviour and rendering are
   unchanged; this is a package rename only.
 
+### Packaging
+
+- 2.0 splits the single `graph-compose` jar into modules: a lean core
+  (`graph-compose`), pluggable render backends (`graph-compose-render-pdf`,
+  `graph-compose-render-docx`), `graph-compose-templates`, and
+  `graph-compose-testing`, with render backends discovered via a `ServiceLoader`
+  SPI. The `graph-compose` artifact keeps its coordinate but no longer contains
+  the PDF backend or the templates — add `graph-compose-render-pdf` for PDF
+  output, or depend on `graph-compose-bundle` for a batteries-included coordinate
+  (core + render-pdf + templates + fonts + emoji). The optional
+  `graph-compose-fonts` and `graph-compose-emoji` artifacts are unchanged. Full
+  install guidance ships with 2.0.0.
+
 ## v1.9.0 — 2026-06-29
 
 In-document navigation. Rendered PDFs can now declare named **anchors** and

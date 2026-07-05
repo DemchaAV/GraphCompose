@@ -17,8 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Architectural guard that keeps Apache POI out of the lean engine module.
  *
- * <p>The semantic DOCX/PPTX backend — the only code that ever touched POI —
- * lives in the separate {@code graph-compose-render-docx} module. The engine
+ * <p>The semantic DOCX backend — the only code that ever touched POI — lives in
+ * the separate {@code graph-compose-render-docx} module (the POI-free PPTX backend
+ * moved to {@code graph-compose-render-pptx}). The engine
  * (root module) must stay free of every {@code org.apache.poi.*} import or
  * fully-qualified reference so it never drags {@code poi-ooxml} back onto its
  * classpath.</p>
@@ -50,7 +51,7 @@ class EnginePoiIsolationGuardTest {
 
         assertThat(violations)
                 .describedAs("Apache POI must stay out of the lean engine module. The semantic "
-                        + "DOCX/PPTX backend lives in graph-compose-render-docx — keep every "
+                        + "DOCX backend (the only POI code) lives in graph-compose-render-docx — keep every "
                         + "org.apache.poi.* import and reference there, not under com.demcha.compose.")
                 .isEmpty();
     }

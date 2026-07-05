@@ -232,6 +232,12 @@ jobs:
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
 
+      - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
+        # benchmarks call buildPdf and reference the PDF backend types directly, so
+        # it depends on render-pdf; install it after the core, before the benchmarks
+        # build resolves it.
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
+
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile
 
@@ -299,6 +305,12 @@ jobs:
 
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl .
+
+      - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
+        # benchmarks call buildPdf and reference the PDF backend types directly, so
+        # it depends on render-pdf; install it after the core, before the benchmarks
+        # build resolves it.
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -DskipTests install
 
       - name: Compile benchmarks module
         run: ./mvnw -B -ntp -f benchmarks/pom.xml clean compile

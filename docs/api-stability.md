@@ -181,6 +181,7 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 | Element | Tier now | Status | Why the 1.x shape is a compromise | 2.0 action | ADR | Issue |
 |---|---|---|---|---|---|---|
 | `DocumentSession.pageMargins(List<PageMarginRule>)` / `PageMarginRule` | Stable | planned | Per-page margins resolve a block's content width by the page it *begins* on (the engine measures each block once, before pagination). A margin that changes the content width therefore does not re-wrap a block mid-flow across a page boundary. | Revisit a page-aware per-line/per-fragment width model so a block can re-wrap when it crosses a margin boundary, if demand warrants. | — | — |
+| `io.github.demchaav:graph-compose` single-jar packaging | Stable | planned | The one published jar bundles the engine, the PDFBox render backend, the POI semantic backend, zxing, and the template families, so an engine-only or bring-your-own-backend consumer still pulls all of them. | Split into a lean `graph-compose` core plus sibling artifacts — `graph-compose-render-pdf`, `graph-compose-render-docx`, `graph-compose-templates`, `graph-compose-testing` — with render backends discovered via a `ServiceLoader` SPI. `graph-compose` keeps its coordinate but no longer contains the PDF backend or templates; add `graph-compose-render-pdf` (or the batteries-included `graph-compose-bundle`) to keep PDF output. | — | — |
 
 ---
 

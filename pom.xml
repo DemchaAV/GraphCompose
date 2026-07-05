@@ -210,12 +210,6 @@
             <version>${zxing.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-            <version>${zxing.version}</version>
-        </dependency>
-
         <!-- Test dependencies -->
         <!--
             The bundled Google fonts (graph-compose-fonts) are NOT a dependency

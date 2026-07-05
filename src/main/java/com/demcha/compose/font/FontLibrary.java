@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * <p>{@code FontLibrary} maps logical {@link FontName} values to concrete
  * backend font objects. Public authoring code deals only with logical names;
  * measurement and rendering phases resolve those names through typed backend
- * lookups such as {@code getFont(name, PdfFont.class)}.</p>
+ * lookups keyed by the backend's own font {@code Class} token.</p>
  *
  * <p>The library supports both eagerly registered fonts and lazily created
  * fonts through factories.</p>

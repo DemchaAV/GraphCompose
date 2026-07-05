@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.core.Entity;
 import com.demcha.compose.engine.components.layout.Anchor;
@@ -48,7 +48,7 @@ class SingleLineTextIntegrationTest {
             Placement placement = textEntity.getComponent(Placement.class).orElseThrow();
             PdfFont.VerticalMetrics metrics;
             try (PDDocument fontDocument = new PDDocument()) {
-                PdfFont pdfFont = (PdfFont) DefaultFonts.library(fontDocument)
+                PdfFont pdfFont = (PdfFont) PdfFontLibraryFactory.library(fontDocument)
                         .getFont(style.fontName(), PdfFont.class)
                         .orElseThrow();
                 metrics = pdfFont.verticalMetrics(style);

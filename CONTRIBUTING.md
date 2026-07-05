@@ -90,7 +90,7 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 - `src/main/java/com/demcha/compose/document/layout`
   Canonical functional layout pipeline: `LayoutCompiler`, `BuiltInNodeDefinitions`, `TableLayoutSupport`, `PreparedNode`, `PlacedFragment`
 - `src/main/java/com/demcha/compose/document/backend/fixed/pdf`
-  PDF backend: `PdfFixedLayoutBackend`, fragment handlers, and the option translators that bridge canonical types to PDFBox
+  PDF backend: `PdfFixedLayoutBackend`, fragment handlers, the option translators that bridge canonical types to PDFBox, and `FontShowcase` (bundled-font preview renderer)
 - `src/main/java/com/demcha/compose/document/backend/semantic`
   Semantic exporters: `DocxSemanticBackend` (Apache POI based), `PptxSemanticBackend` (manifest skeleton)
 - `src/main/java/com/demcha/compose/document/templates/*`
@@ -98,7 +98,7 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 - `src/main/java/com/demcha/compose/engine/*`
   Internal shared engine foundation under the canonical surface (measure, paginate, place, render). Not part of the recommended public API
 - `src/main/java/com/demcha/compose/font`
-  Public font registry, `FontName`, default fonts, `FontShowcase`
+  Public font registry, `FontName`, default fonts
 - `src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
 - `src/test/java/com/demcha/compose/engine/integration/*`

@@ -4,7 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
-import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
@@ -1097,7 +1097,7 @@ class DocumentSessionTest {
             this.registry = registry;
             this.canvas = LayoutCanvas.from(pageSize.getWidth(), pageSize.getHeight(), margin);
             this.measurementDocument = new PDDocument();
-            this.fonts = DefaultFonts.library(measurementDocument);
+            this.fonts = PdfFontLibraryFactory.library(measurementDocument);
             this.textMeasurement = new CountingTextMeasurementSystem(
                     new FontLibraryTextMeasurementSystem(fonts, PdfFont.class));
         }

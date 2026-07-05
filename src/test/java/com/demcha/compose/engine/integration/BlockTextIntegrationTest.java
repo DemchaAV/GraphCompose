@@ -1,7 +1,7 @@
 package com.demcha.compose.engine.integration;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.BlockTextData;
@@ -167,7 +167,7 @@ class BlockTextIntegrationTest {
 
         double baseStep;
         try (PDDocument fontDocument = new PDDocument()) {
-            PdfFont font = (PdfFont) DefaultFonts.library(fontDocument)
+            PdfFont font = (PdfFont) PdfFontLibraryFactory.library(fontDocument)
                     .getFont(style.fontName(), PdfFont.class)
                     .orElseThrow();
             baseStep = font.getLineHeight(style) + 2.0;
@@ -206,7 +206,7 @@ class BlockTextIntegrationTest {
 
         double baselineOffsetFromBottom;
         try (PDDocument fontDocument = new PDDocument()) {
-            PdfFont font = (PdfFont) DefaultFonts.library(fontDocument)
+            PdfFont font = (PdfFont) PdfFontLibraryFactory.library(fontDocument)
                     .getFont(style.fontName(), PdfFont.class)
                     .orElseThrow();
             baselineOffsetFromBottom = font.verticalMetrics(style).baselineOffsetFromBottom();

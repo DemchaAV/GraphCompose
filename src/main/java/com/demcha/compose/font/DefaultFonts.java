@@ -1,10 +1,8 @@
 package com.demcha.compose.font;
 
 import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -74,27 +72,6 @@ public class DefaultFonts {
      */
     public static FontLibrary standardLibrary() {
         return PdfFontLibraryFactory.standardLibrary();
-    }
-
-    /**
-     * Creates a PDF-backed font library containing bundled families.
-     *
-     * @param document PDF document that owns loaded fonts
-     * @return font library
-     */
-    public static FontLibrary library(PDDocument document) {
-        return PdfFontLibraryFactory.library(document);
-    }
-
-    /**
-     * Creates a PDF-backed font library containing bundled and custom families.
-     *
-     * @param document PDF document that owns loaded fonts
-     * @param customFamilies document-local custom font families
-     * @return font library
-     */
-    public static FontLibrary library(PDDocument document, Collection<FontFamilyDefinition> customFamilies) {
-        return PdfFontLibraryFactory.library(document, customFamilies);
     }
 
     /**

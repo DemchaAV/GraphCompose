@@ -1,6 +1,6 @@
 package com.demcha.compose.testsupport;
 
-import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
 import com.demcha.compose.testsupport.engine.assembly.ComponentBuilder;
@@ -72,7 +72,7 @@ public final class EngineComposerHarness implements Closeable {
                                   Margin margin,
                                   Collection<FontFamilyDefinition> customFontFamilies) {
         this.doc = new PDDocument();
-        this.entityManager = new EntityManager(DefaultFonts.library(doc, customFontFamilies), markdown);
+        this.entityManager = new EntityManager(PdfFontLibraryFactory.library(doc, customFontFamilies), markdown);
         this.entityManager.setGuideLines(guideLines);
         this.componentBuilder = createComponentBuilder(entityManager);
         this.canvas = new PdfCanvas(pageSize, 0.0f, 0.0f);

@@ -16,9 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Architectural guard that keeps PDFBox out of the canonical document API, the
- * layered template surface, and non-PDF fixed-layout contracts. Templates
- * compose against the canonical DSL and must stay backend-neutral, so a preset
- * or component that reached for a PDFBox type would fail here.
+ * layered template surface, non-PDF fixed-layout contracts, and the public font
+ * catalog. Templates compose against the canonical DSL and must stay
+ * backend-neutral, so a preset or component that reached for a PDFBox type would
+ * fail here. The {@code compose.font} package is the logical font catalog — it
+ * names fonts, it never loads them (PDFBox loading belongs to the pdf backend
+ * factory), so it is guarded too.
  */
 class PdfBackendIsolationGuardTest {
 
@@ -37,7 +40,12 @@ class PdfBackendIsolationGuardTest {
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/layout"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/snapshot"),
             PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/templates"),
-            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/backend/fixed"));
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/backend/fixed"),
+            // The public font catalog names logical fonts; it never loads them.
+            // PDFBox loading lives in the pdf backend factory, so compose.font
+            // must stay PDFBox-free (FontShowcase, which renders a preview PDF,
+            // lives under backend/fixed/pdf and is exempted like the rest of it).
+            PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/font"));
 
     @Test
     void pdfboxShouldStayOutOfCanonicalAndNonPdfBackendContracts() throws IOException {

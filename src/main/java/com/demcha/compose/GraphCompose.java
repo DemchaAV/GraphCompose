@@ -2,7 +2,7 @@ package com.demcha.compose;
 
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontName;
-import com.demcha.compose.font.FontShowcase;
+import com.demcha.compose.document.backend.fixed.pdf.FontShowcase;
 import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;

@@ -1,9 +1,10 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.BackendProviders;
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
+import com.demcha.compose.document.backend.fixed.MeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
-import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
 import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
@@ -89,7 +90,7 @@ public final class DocumentSession implements AutoCloseable {
     private DocumentDebugOptions debug = DocumentDebugOptions.none();
     private List<PageBackgroundFill> pageBackgrounds = List.of();
     private List<PageMarginRule> pageMargins = List.of();
-    private PdfMeasurementResources measurementResources;
+    private MeasurementResources measurementResources;
     private boolean closed;
 
 
@@ -1239,7 +1240,7 @@ public final class DocumentSession implements AutoCloseable {
             // Best-effort close while reloading measurement resources.
         }
 
-        measurementResources = PdfMeasurementResources.open(customFontFamilies);
+        measurementResources = BackendProviders.fontMetrics().openMeasurement(customFontFamilies);
     }
 
     private void invalidate() {

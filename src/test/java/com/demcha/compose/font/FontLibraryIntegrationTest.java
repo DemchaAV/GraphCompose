@@ -73,7 +73,7 @@ class FontLibraryIntegrationTest {
         // The standard-14 families embed nothing and need no PDF document and no
         // graph-compose-fonts jar — this is the baseline an engine-only consumer
         // (no bundled fonts on the classpath) still gets.
-        FontLibrary standard = DefaultFonts.standardLibrary();
+        FontLibrary standard = PdfFontLibraryFactory.standardLibrary();
 
         assertThat(standard.getFont(FontName.HELVETICA, PdfFont.class)).isPresent();
         assertThat(standard.getFont(FontName.TIMES_ROMAN, PdfFont.class)).isPresent();

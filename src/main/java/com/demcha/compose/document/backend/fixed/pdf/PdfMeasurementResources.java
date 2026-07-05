@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.backend.fixed.MeasurementResources;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.render.pdf.PdfFont;
@@ -15,7 +16,7 @@ import java.util.Collection;
  * PDFBox classes directly. The implementation remains in the PDF backend layer
  * until GraphCompose has a backend-neutral font measurement implementation.</p>
  */
-public final class PdfMeasurementResources implements AutoCloseable {
+public final class PdfMeasurementResources implements MeasurementResources {
     private final FontLibrary fontLibrary;
     private final TextMeasurementSystem textMeasurementSystem;
 
@@ -47,6 +48,7 @@ public final class PdfMeasurementResources implements AutoCloseable {
      *
      * @return document-scoped fonts
      */
+    @Override
     public FontLibrary fontLibrary() {
         return fontLibrary;
     }
@@ -56,6 +58,7 @@ public final class PdfMeasurementResources implements AutoCloseable {
      *
      * @return text measurement service
      */
+    @Override
     public TextMeasurementSystem textMeasurementSystem() {
         return textMeasurementSystem;
     }

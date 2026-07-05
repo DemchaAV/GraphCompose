@@ -4,8 +4,8 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.engine.font.FontBase;
 import com.demcha.compose.engine.font.FontLineMetrics;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class FontLibraryTextMeasurementSystemTest {
     @Test
     void clearCachesShouldDiscardSessionTextWidthCache() {
         FontLibraryTextMeasurementSystem measurement = new FontLibraryTextMeasurementSystem(
-                DefaultFonts.standardLibrary(),
+                PdfFontLibraryFactory.standardLibrary(),
                 PdfFont.class);
 
         assertThat(measurement.sessionTextWidthCacheSize()).isZero();
@@ -56,7 +56,7 @@ class FontLibraryTextMeasurementSystemTest {
         // A backend font that is NOT a PdfFont but supplies first-class metrics by
         // overriding Font#lineMetrics. The shared measurement system must honour
         // them via the contract, with no instanceof PdfFont fast-path.
-        FontLibrary library = DefaultFonts.standardLibrary();
+        FontLibrary library = PdfFontLibraryFactory.standardLibrary();
         library.addFont(FontName.HELVETICA, FirstClassMetricsFont.class, new FirstClassMetricsFont());
         FontLibraryTextMeasurementSystem measurement =
                 new FontLibraryTextMeasurementSystem(library, FirstClassMetricsFont.class);
@@ -76,7 +76,7 @@ class FontLibraryTextMeasurementSystemTest {
     void defaultLineMetricsDeriveFromLineHeightWithZeroDescentAndLeading() {
         // A backend font that does NOT override Font#lineMetrics falls back to the
         // contract default: ascent = line height, descent = leading = 0.
-        FontLibrary library = DefaultFonts.standardLibrary();
+        FontLibrary library = PdfFontLibraryFactory.standardLibrary();
         library.addFont(FontName.HELVETICA, DefaultMetricsFont.class, new DefaultMetricsFont(20.0));
         FontLibraryTextMeasurementSystem measurement =
                 new FontLibraryTextMeasurementSystem(library, DefaultMetricsFont.class);
@@ -94,7 +94,7 @@ class FontLibraryTextMeasurementSystemTest {
     void globalMetricsCacheIsNamespacedByBackendFontType() {
         // Two different backend font types that return the SAME measurementCacheKey
         // must not collide in the process-wide cache — the multi-backend invariant.
-        FontLibrary library = DefaultFonts.standardLibrary();
+        FontLibrary library = PdfFontLibraryFactory.standardLibrary();
         library.addFont(FontName.HELVETICA, BackendAFont.class, new BackendAFont());
         library.addFont(FontName.HELVETICA, BackendBFont.class, new BackendBFont());
         FontLibraryTextMeasurementSystem a = new FontLibraryTextMeasurementSystem(library, BackendAFont.class);

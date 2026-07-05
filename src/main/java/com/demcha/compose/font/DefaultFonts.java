@@ -1,7 +1,5 @@
 package com.demcha.compose.font;
 
-import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,15 +61,6 @@ public class DefaultFonts {
             google(FontName.JETBRAINS_MONO, "jetbrainsmono", "JetBrainsMono"));
 
     private DefaultFonts() {
-    }
-
-    /**
-     * Creates a PDF-backed font library containing the standard 14 families.
-     *
-     * @return font library with standard fonts
-     */
-    public static FontLibrary standardLibrary() {
-        return PdfFontLibraryFactory.standardLibrary();
     }
 
     /**

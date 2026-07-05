@@ -16,6 +16,7 @@ import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.core.EntityManager;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ class BlockTextBuilderTest {
 
         @BeforeEach
         void setUp() {
-                entityManager = new EntityManager();
+                entityManager = new EntityManager(PdfFontLibraryFactory.standardLibrary(), false);
                 entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
                 entityManager.setMarkdown(true);
         }

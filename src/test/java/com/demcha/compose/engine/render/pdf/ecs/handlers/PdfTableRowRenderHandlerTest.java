@@ -1,6 +1,6 @@
 package com.demcha.compose.engine.render.pdf.ecs.handlers;
 
-import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.shape.Side;
 import com.demcha.compose.engine.components.content.shape.Stroke;
@@ -105,7 +105,7 @@ class PdfTableRowRenderHandlerTest {
 
     @Test
     void shouldResolveTopAndMiddleAnchorsForMultilineContent() {
-        PdfFont font = DefaultFonts.standardLibrary()
+        PdfFont font = PdfFontLibraryFactory.standardLibrary()
                 .getFont(TextStyle.DEFAULT_STYLE.fontName(), PdfFont.class)
                 .orElseThrow();
 
@@ -148,7 +148,7 @@ class PdfTableRowRenderHandlerTest {
 
     @Test
     void shouldApplyCellLineSpacingWhenResolvingMultilineContent() {
-        PdfFont font = DefaultFonts.standardLibrary()
+        PdfFont font = PdfFontLibraryFactory.standardLibrary()
                 .getFont(TextStyle.DEFAULT_STYLE.fontName(), PdfFont.class)
                 .orElseThrow();
         double lineSpacing = 2.5;

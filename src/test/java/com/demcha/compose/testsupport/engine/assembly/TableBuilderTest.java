@@ -1,6 +1,7 @@
 package com.demcha.compose.testsupport.engine.assembly;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
 import com.demcha.compose.engine.components.content.table.TableLayoutData;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
@@ -284,7 +285,7 @@ class TableBuilderTest {
 
     @Test
     void shouldBuildWithoutLayoutSystemWhenTextMeasurementSystemIsRegistered() {
-        EntityManager entityManager = new EntityManager();
+        EntityManager entityManager = new EntityManager(PdfFontLibraryFactory.standardLibrary(), false);
         entityManager.getSystems().registerTextMeasurement(new FontLibraryTextMeasurementSystem(entityManager.getFonts(), PdfFont.class));
 
         Entity table = new TableBuilder(entityManager)

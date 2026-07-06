@@ -24,6 +24,7 @@ import com.demcha.examples.features.snapshots.LayoutSnapshotRegressionExample;
 import com.demcha.examples.features.streaming.HttpStreamingExample;
 import com.demcha.examples.features.svg.SvgIconGalleryExample;
 import com.demcha.examples.features.tables.ComposedTableCellExample;
+import com.demcha.examples.features.tables.InlineCodeColumnWrapExample;
 import com.demcha.examples.features.tables.TableAdvancedExample;
 import com.demcha.examples.features.text.EmojiGalleryExample;
 import com.demcha.examples.features.text.EmojiShortcodeExample;
@@ -151,6 +152,7 @@ public final class GenerateAllExamples {
         // v1.6 layout primitives
         System.out.println("Generated: " + NestedListExample.generate());
         System.out.println("Generated: " + ComposedTableCellExample.generate());
+        System.out.println("Generated: " + InlineCodeColumnWrapExample.generate());
         System.out.println("Generated: " + CanvasLayerExample.generate());
 
         // v1.5 visual primitives

@@ -58,7 +58,8 @@ back here.
 - **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
 
 ### Roadmaps & migrations
-- **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — current development roadmap.
+- **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — forward-looking engineering roadmap: internal refactors, scale, and tooling deferred past the 2.0 line.
+- **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — the v1.6 "expressive" roadmap (shipped).
 - **[roadmaps/migration-v1-8-to-v1-9.md](roadmaps/migration-v1-8-to-v1-9.md)** — upgrade guide for v1.8 → v1.9.
 - **[roadmaps/migration-v1-7-to-v1-8.md](roadmaps/migration-v1-7-to-v1-8.md)** — upgrade guide for v1.7 → v1.8.
 - **[roadmaps/migration-v1-6-to-v1-7.md](roadmaps/migration-v1-6-to-v1-7.md)** — upgrade guide for v1.6 → v1.7.

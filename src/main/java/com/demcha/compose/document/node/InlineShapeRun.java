@@ -76,17 +76,6 @@ public record InlineShapeRun(
                 linkOptions == null ? null : new ExternalLinkTarget(linkOptions));
     }
 
-    /**
-     * Returns the external link options of this run, or {@code null} when the run
-     * has no link or targets an internal anchor.
-     *
-     * @return external link metadata, or {@code null}
-     * @deprecated use {@link #linkTarget()}; this bridge only exposes external links
-     */
-    @Deprecated(since = "1.9.0")
-    public DocumentLinkOptions linkOptions() {
-        return linkTarget instanceof ExternalLinkTarget external ? external.options() : null;
-    }
 
     /**
      * Single-layer convenience constructor.

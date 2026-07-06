@@ -128,7 +128,6 @@ class FontLibraryTextMeasurementSystemTest {
         @Override public double getTextHeight(TextStyle style) { return lineHeight; }
         @Override public double getCapHeight(TextStyle style) { return 0.0; }
         @Override public double scale(double size) { return size; }
-        @Override public TextStyle adjustFontSizeToFit(String text, TextStyle style, double availableWidth) { return style; }
         @Override public ContentSize getTightBounds(String text, TextStyle style) { return new ContentSize(0.0, 0.0); }
     }
 

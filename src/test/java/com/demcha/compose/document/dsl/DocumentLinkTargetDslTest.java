@@ -32,15 +32,13 @@ class DocumentLinkTargetDslTest {
         InlineTextRun run = (InlineTextRun) RichText.text("see ").linkTo("intro", "intro").runs().get(1);
         assertThat(run.linkTarget()).isInstanceOf(InternalLinkTarget.class);
         assertThat(((InternalLinkTarget) run.linkTarget()).anchor()).isEqualTo("intro");
-        // Deprecated external-only bridge returns null for an internal link.
-        assertThat(run.linkOptions()).isNull();
     }
 
     @Test
     void richTextLinkProducesExternalTarget() {
         InlineTextRun run = (InlineTextRun) RichText.text("see ").link("site", "https://example.com").runs().get(1);
         assertThat(run.linkTarget()).isInstanceOf(ExternalLinkTarget.class);
-        assertThat(run.linkOptions().uri()).isEqualTo("https://example.com");
+        assertThat(((ExternalLinkTarget) run.linkTarget()).options().uri()).isEqualTo("https://example.com");
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.document.backend.fixed.BackendProviders;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
-import com.demcha.compose.document.backend.fixed.pdf.options.*;
 import com.demcha.compose.document.output.*;
 
 import java.util.ArrayList;
@@ -16,14 +15,12 @@ import java.util.Objects;
  *
  * <p>The class is package-private and serves as a focused collaborator that
  * keeps the session's public facade free of chrome-specific assembly logic.
- * It owns three responsibilities:</p>
+ * It owns two responsibilities:</p>
  *
  * <ol>
  *     <li>persisting the canonical, backend-neutral chrome values</li>
  *     <li>snapshotting them into an immutable {@link DocumentOutputOptions}
- *         passed to semantic export backends</li>
- *     <li>translating them into the PDF backend's option types when the
- *         convenience PDF entrypoints assemble a {@link PdfFixedLayoutBackend}</li>
+ *         passed to the output backends</li>
  * </ol>
  *
  * <p>Instances are not thread-safe; the owning {@link DocumentSession}
@@ -110,36 +107,5 @@ final class DocumentChromeOptions {
      */
     FixedLayoutRenderer toConveniencePdfBackend(DocumentDebugOptions debug) {
         return BackendProviders.fixedLayout().create(snapshot(), debug);
-    }
-
-    // PDF-flavoured compatibility setters -----------------------------------
-
-    void setMetadata(PdfMetadataOptions options) {
-        setMetadata(options == null ? null : DocumentMetadata.builder()
-                .title(options.getTitle())
-                .author(options.getAuthor())
-                .subject(options.getSubject())
-                .keywords(options.getKeywords())
-                .creator(options.getCreator())
-                .producer(options.getProducer())
-                .build());
-    }
-
-    void setWatermark(PdfWatermarkOptions options) {
-        setWatermark(options == null ? null : PdfOutputOptionsToCanonical.toCanonical(options));
-    }
-
-    void setProtection(PdfProtectionOptions options) {
-        setProtection(options == null ? null : PdfOutputOptionsToCanonical.toCanonical(options));
-    }
-
-    void addHeader(PdfHeaderFooterOptions options) {
-        Objects.requireNonNull(options, "options");
-        addHeader(PdfOutputOptionsToCanonical.toCanonical(options.withZone(PdfHeaderFooterZone.HEADER)));
-    }
-
-    void addFooter(PdfHeaderFooterOptions options) {
-        Objects.requireNonNull(options, "options");
-        addFooter(PdfOutputOptionsToCanonical.toCanonical(options.withZone(PdfHeaderFooterZone.FOOTER)));
     }
 }

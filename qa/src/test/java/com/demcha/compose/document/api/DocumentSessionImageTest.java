@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.testing.visual.ImageDiff;
 import com.demcha.compose.testing.visual.PdfVisualRegression;
@@ -136,7 +136,7 @@ class DocumentSessionImageTest {
         // rasterizer reads, so it must show up in the image (parity with the PDF).
         try (DocumentSession plain = singlePage();
              DocumentSession watermarked = singlePage()) {
-            watermarked.watermark(PdfWatermarkOptions.builder().text("DRAFT").build());
+            watermarked.watermark(DocumentWatermark.builder().text("DRAFT").build());
 
             BufferedImage plainImage = plain.toImage(0, 96);
             BufferedImage watermarkedImage = watermarked.toImage(0, 96);

@@ -132,20 +132,19 @@ mapping.
 
 ## Header / footer chrome
 
-`PdfHeaderFooterOptions` (configured on the document builder) adds
+`DocumentHeaderFooter` (configured on the session) adds
 a header zone and / or a footer zone that renders on every page
 without affecting layout snapshots. The chrome ignores the layout
 graph entirely — it's painted by the PDF backend after the body
 fragments.
 
 ```java
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
 
 try (DocumentSession document = GraphCompose.document(Path.of("report.pdf"))
-        .header(PdfHeaderFooterOptions.builder()
-                .zone(PdfHeaderFooterZone.LEFT, "Quarterly Report")
-                .zone(PdfHeaderFooterZone.RIGHT, "Page {page} / {totalPages}")
+        .header(DocumentHeaderFooter.builder()
+                .leftText("Quarterly Report")
+                .rightText("Page {page} / {pages}")
                 .build())
         .create()) {
     // ... pageFlow content ...

@@ -224,8 +224,8 @@ code should not need any of them.
   into the active renderer
 - render marker components identify *what* needs to be rendered;
   *how* it is drawn lives in renderer-owned handler packages such as
-  `...render.pdf.ecs.handlers` (with helper objects under
-  `...render.pdf.ecs.helpers`)
+  the `PdfFragmentRenderHandler` implementations under
+  `document.backend.fixed.pdf.handlers`
 - `RenderStream` acts as a session factory, not as a per-entity
   content-stream opener
 - `RenderPassSession` is the shared seam for page lifetime and

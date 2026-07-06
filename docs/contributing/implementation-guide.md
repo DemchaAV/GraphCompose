@@ -259,7 +259,6 @@ Relevant files:
 
 - [TableBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
-- [TableCellBox.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
 - [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
@@ -321,29 +320,29 @@ Preferred extension pattern for new backends:
 4. keep backend-only helper drawing in renderer-owned helper packages when the code is not an entity render marker
 5. keep renderer ordering policy in the rendering layer rather than in pagination utilities
 
-> **Deprecated reference implementation.** The PDF renderer named below
-> (`PdfRenderingSystemECS` and the `engine.render.pdf.ecs` handlers/helpers) is the
-> legacy `Entity`-based ECS renderer, kept only for regression tests; canonical PDF
-> output is produced by `com.demcha.compose.document.backend.fixed.pdf`. The
-> backend-neutral `engine.render` *contracts* (`Render`, `RenderPassSession`,
-> `RenderStream`, `EntityRenderOrder`) are **not** deprecated — only the ECS PDF
-> implementation is. Do not extend the `ecs` renderer.
+> **Canonical PDF renderer.** Canonical PDF output is produced by
+> `com.demcha.compose.document.backend.fixed.pdf`: `PdfFixedLayoutBackend`
+> dispatches each layout fragment to a `PdfFragmentRenderHandler` implementation
+> under `document.backend.fixed.pdf.handlers`. The backend-neutral `engine.render`
+> *contracts* (`Render`, `RenderPassSession`, `RenderStream`, `EntityRenderOrder`)
+> remain the shared render seam — extend PDF drawing by adding or updating a
+> fragment handler, not by touching those contracts.
 
 Important files:
 
 - [Render.java](../../src/main/java/com/demcha/compose/engine/render/Render.java)
 - [RenderPassSession.java](../../src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
 - [RenderStream.java](../../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
-- [PdfRenderingSystemECS.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECS.java)
-- [PdfRenderSession.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderSession.java)
+- [PdfFixedLayoutBackend.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
+- [PdfFragmentRenderHandler.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
 - [EntityRenderOrder.java](../../src/main/java/com/demcha/compose/engine/render/EntityRenderOrder.java)
 
 Migration rule for new engine components:
 
 - implement backend-neutral `Render`, not backend-specific render interfaces
-- move PDF drawing into `...render.pdf.ecs.handlers`
+- move PDF drawing into a `PdfFragmentRenderHandler` under `...document.backend.fixed.pdf.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
-- place PDF-only helper objects in `...render.pdf.ecs.helpers`
+- place PDF-only helper objects alongside the backend in `...document.backend.fixed.pdf`
 - keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
 - keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
@@ -353,7 +352,7 @@ Migration rule for new engine components:
 The current render seam is deliberately narrower than a full backend abstraction. Use these rules when extending it:
 
 - `RenderStream<T>` should create one render-pass session, not one stream per entity
-- renderer orchestrators such as `PdfRenderingSystemECS.process(...)` should open one session for the whole pass
+- renderer orchestrators such as `PdfFixedLayoutBackend` should open one session for the whole pass
 - single-page handlers should use the session-managed page surface directly
 - multi-page handlers should request page surfaces explicitly per fragment or page
 - page creation or annotation-only work should use the session's page-availability helper instead of opening a dummy drawing surface

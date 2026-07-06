@@ -29,7 +29,7 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
-- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
+- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper when you change performance-sensitive code or benchmark tooling: `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` (Windows). To compare two branches fairly, use `scripts/ab-bench.ps1` (Windows) or the cross-platform `scripts/ab-bench.sh` (Linux/macOS/Git Bash). See [docs/operations/benchmarks.md](./docs/operations/benchmarks.md).
 
@@ -183,11 +183,11 @@ not need any of them.
 - Engine render markers implement backend-neutral `Render`. Do not
   add backend-specific render interfaces back into
   `engine/components`.
-- PDF rendering logic for the legacy ECS renderer (deprecated; canonical PDF
-  output goes through `com.demcha.compose.document.backend.fixed.pdf`) lives in
-  `render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/handlers/`.
-  Backend-only helper objects live in
-  `com.demcha.compose.engine.render.pdf.ecs.helpers`, not in
+- PDF rendering logic lives in the canonical fixed-layout backend under
+  `render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/handlers/`,
+  where each `PdfFragmentRenderHandler` draws one fragment kind. Backend-only
+  helper objects live alongside the backend in
+  `com.demcha.compose.document.backend.fixed.pdf`, not in
   `components/renderable`.
 - Builders and layout code get text width and line metrics from
   `TextMeasurementSystem`, not from
@@ -195,8 +195,8 @@ not need any of them.
 - Keep `src/main/java/com/demcha/compose/engine/components/*` free of
   `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf`
   imports.
-- When you add a new render marker, register its handler in
-  `PdfRenderingSystemECS` and add or update dispatch coverage.
+- When you add a new fragment kind, register its handler with
+  `PdfFixedLayoutBackend` and add or update dispatch coverage.
 
 Keep the entity core thin:
 
@@ -222,8 +222,7 @@ The rules above are enforced by tests:
   [DocumentationCoverageTest.java](./src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
 - engine internals guards:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
-  [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java),
-  [PdfRenderingSystemECSDispatchTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 
 ## Adding a new feature
 
@@ -339,8 +338,8 @@ Choose the smallest tests that match the change:
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For low-level test harness changes:
   [ComponentBuilderTest.java](qa/src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
-- For render-marker dispatch changes:
-  [PdfRenderingSystemECSDispatchTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
+- For PDF fragment-handler dispatch changes:
+  [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:

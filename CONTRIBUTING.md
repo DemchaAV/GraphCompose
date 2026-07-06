@@ -190,8 +190,8 @@ not need any of them.
   `com.demcha.compose.document.backend.fixed.pdf`, not in
   `components/renderable`.
 - Builders and layout code get text width and line metrics from
-  `TextMeasurementSystem`, not from
-  `LayoutSystem -> RenderingSystem`, `PdfFont`, or PDFBox objects.
+  `TextMeasurementSystem`, not from the active renderer, `PdfFont`,
+  or PDFBox objects.
 - Keep `src/main/java/com/demcha/compose/engine/components/*` free of
   `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf`
   imports.
@@ -207,8 +207,8 @@ Keep the entity core thin:
   page-shift propagation live in `ParentContainerUpdater`.
 - `Entity.bounding*` and `Entity.updateParentContainer*` are
   deprecated compatibility wrappers; do not copy them into new code.
-- Render-order optimizations live in rendering helpers such as
-  `EntityRenderOrder`, not in `Entity`.
+- Render-order optimizations live in the render layer (the PDF
+  fragment handlers), not in `Entity`.
 
 ### Guard rails
 
@@ -311,11 +311,11 @@ marker, a new layout system, a new render-pass session):
   layout component plus a backend-neutral renderable marker plus a
   backend-owned render handler.
 - Marker rule of thumb:
-  - add `Expendable` only to parent-like boxes that should grow
-    because of child content
+  - add the container-growth marker only to parent-like boxes that
+    should grow because of child content
   - add `Breakable` only to entities whose own content may continue
     across pages
-  - do not treat `Expendable` as a pagination flag
+  - do not treat the container-growth marker as a pagination flag
 
 For text-heavy primitives, also read:
 

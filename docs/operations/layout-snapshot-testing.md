@@ -34,7 +34,7 @@ Use them when you want to know that:
 
 That means the coordinates in the snapshot are:
 
-- after `LayoutSystem`
+- after layout resolution
 - after page-breaking decisions have been applied
 - before any PDFBox drawing happens
 

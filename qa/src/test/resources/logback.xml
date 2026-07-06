@@ -61,13 +61,6 @@
         </encoder>
     </appender>
 
-    <!-- Console for LayoutSystem (DEBUG) -->
-    <appender name="CONSOLE_LAYOUT_SYSTEM" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <!-- Console for global WARN+ERROR -->
     <appender name="CONSOLE_WARN_ERROR" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">

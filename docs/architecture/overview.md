@@ -220,8 +220,8 @@ These rules apply to engine and backend contributors. Application
 code should not need any of them.
 
 - engine builders and layout helpers consume an engine-level
-  `TextMeasurementSystem` instead of reaching through `LayoutSystem`
-  into the active renderer
+  `TextMeasurementSystem` instead of reaching through the active
+  renderer
 - render marker components identify *what* needs to be rendered;
   *how* it is drawn lives in renderer-owned handler packages such as
   the `PdfFragmentRenderHandler` implementations under
@@ -233,12 +233,8 @@ code should not need any of them.
   package imports
 - the PDF entity path dispatches through registered render handlers;
   there is no backend-specific render fallback path
-- `EntityRenderOrder` is the shared render-order helper for resolved
-  entities. It precomputes lightweight sort entries per layer before
-  sorting so render ordering stays deterministic without repeated
-  component lookups inside the comparator hot path
 
-Fixed leaf primitives (`Rectangle`, `Circle`, `Image`, `Line`)
+Fixed leaf primitives (such as `TextComponent` and `BlockText`)
 follow the same engine contract: they materialize as regular
 entities with render/content/layout components, rely on normal
 `ContentSize` / `Padding` / `Margin` / `Placement`, and do not

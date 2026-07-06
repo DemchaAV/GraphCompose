@@ -29,7 +29,7 @@ Use these ownership rules when adding or refactoring engine code:
 
 - put geometry reads in `EntityBounds`
 - put parent container size propagation and page-shift updates in `ParentContainerUpdater`
-- keep render-order policy in rendering helpers such as `EntityRenderOrder`
+- keep render-order policy in the render layer (the `engine.render` contracts and the PDF fragment handlers)
 - treat `Entity.bounding*` and `Entity.updateParentContainer*` as deprecated compatibility wrappers
 
 Rule of thumb:
@@ -46,8 +46,7 @@ If the object should render something visible, the entity needs a renderable mar
 Examples:
 
 - [TextComponent.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TextComponent.java)
-- [Rectangle.java](../../src/main/java/com/demcha/compose/engine/components/renderable/Rectangle.java)
-- [ImageComponent.java](../../src/main/java/com/demcha/compose/engine/components/renderable/ImageComponent.java)
+- [BlockText.java](../../src/main/java/com/demcha/compose/engine/components/renderable/BlockText.java)
 
 Those renderable components are render markers. Prefer keeping them backend-neutral and let renderer-owned handlers perform format-specific drawing.
 
@@ -56,32 +55,30 @@ Those renderable components are render markers. Prefer keeping them backend-neut
 There are three different ideas in the engine that are easy to mix up:
 
 - render marker: tells the active renderer how to draw the entity
-- `Expendable`: tells the container expansion phase that the parent box may grow to fit children
+- container-growth marker: tells the container expansion phase that the parent box may grow to fit children
 - `Breakable`: tells the page breaker that the entity's own content may continue across pages
 
 Use them for different reasons:
 
 - add a render marker when the object is visible
-- add `Expendable` only when the entity is a true parent-like box that should resize because of child content
+- add the container-growth marker only when the entity is a true parent-like box that should resize because of child content
 - add `Breakable` only when the entity itself can be split or continued during pagination
 
 Examples:
 
-- `Container` is both `Expendable` and `Breakable` because it owns children and may span pages
+- a container marker is both parent-growable and `Breakable` because it owns children and may span pages
 - `BlockText` is `Breakable` because its content can flow across pages
-- `ImageComponent` is neither `Expendable` nor `Breakable`; it is a fixed leaf renderable
-- `Circle` is a fixed leaf renderable like `ImageComponent`; it renders, but it should not be marked `Expendable`
-- `Line` is also a fixed leaf renderable; it draws inside its resolved box and should stay non-breakable unless the engine gets a true multi-page line contract later
+- `TextComponent` is a fixed leaf renderable; it renders a single resolved box and stays non-breakable
 
 Important:
 
-- `Expendable` is not a pagination flag
+- the container-growth marker is not a pagination flag
 - `Breakable` is not a child-sizing flag
 - if a long leaf object is not `Breakable`, the engine treats it as a single block and moves it to the next page when needed
 
 Leaf parity rule:
 
-- if two objects are conceptually fixed leaf renderables, such as `ImageComponent`, `Circle`, and `Line`, they should use the same layout contract
+- if two objects are conceptually fixed leaf renderables, they should use the same layout contract
 - that usually means the same kind of `ContentSize`, the same padding-aware inner draw area, and the same non-breakable pagination behavior
 - if one of them behaves differently in containers or multi-page flow, first check the render/layout contract before changing pagination rules
 
@@ -92,7 +89,7 @@ Attach the components that describe what the object is and how it should look.
 Examples:
 
 - `Text`, `TextStyle`
-- `FillColor`, `Stroke`, `CornerRadius`
+- `Stroke`
 - `ImageData`
 
 The renderer reads those components later during the render pass.
@@ -116,7 +113,6 @@ The layout engine expects the usual layout metadata to be present when needed:
 - `Anchor`
 - `Margin`
 - `Padding`
-- `Align` for containers
 - `ParentComponent` for child entities
 
 You normally do not add `Placement` yourself. The layout system calculates placement later.
@@ -138,7 +134,7 @@ Steps:
 
 Leaf rule of thumb:
 
-- most leaf renderables should not implement `Expendable`
+- most leaf renderables should not grow to fit children
 - only implement `Breakable` if the leaf's content can really continue across pages
 
 ### Case 2: add a new container-like object
@@ -155,7 +151,7 @@ Steps:
 
 Container rule of thumb:
 
-- containers that must resize around children usually need `Expendable`
+- containers that must resize around children usually need the container-growth marker
 - containers whose content may continue on another page usually need `Breakable`
 - some containers need both markers
 - if the container models semantic section behavior, decide whether width should be inherited from the parent before letting child layout run
@@ -184,7 +180,6 @@ Why the table uses this contract:
 
 Relevant files:
 
-- [TableRow.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
 - [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
@@ -250,7 +245,7 @@ Preferred extension pattern for new backends:
 > `com.demcha.compose.document.backend.fixed.pdf`: `PdfFixedLayoutBackend`
 > dispatches each layout fragment to a `PdfFragmentRenderHandler` implementation
 > under `document.backend.fixed.pdf.handlers`. The backend-neutral `engine.render`
-> *contracts* (`Render`, `RenderPassSession`, `RenderStream`, `EntityRenderOrder`)
+> *contracts* (`Render`, `RenderPassSession`, `RenderStream`)
 > remain the shared render seam — extend PDF drawing by adding or updating a
 > fragment handler, not by touching those contracts.
 
@@ -261,16 +256,15 @@ Important files:
 - [RenderStream.java](../../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
 - [PdfFixedLayoutBackend.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
 - [PdfFragmentRenderHandler.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
-- [EntityRenderOrder.java](../../src/main/java/com/demcha/compose/engine/render/EntityRenderOrder.java)
 
 Migration rule for new engine components:
 
 - implement backend-neutral `Render`, not backend-specific render interfaces
 - move PDF drawing into a `PdfFragmentRenderHandler` under `...document.backend.fixed.pdf.handlers`
-- use `TextMeasurementSystem` for text width and line metrics instead of reaching through `LayoutSystem`
+- use `TextMeasurementSystem` for text width and line metrics instead of reaching through the active renderer
 - place PDF-only helper objects alongside the backend in `...document.backend.fixed.pdf`
 - keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
-- keep resolved draw ordering in renderer-owned or renderer-neutral rendering helpers such as `EntityRenderOrder`
+- keep resolved draw ordering in the render layer (the PDF fragment handlers), not in pagination utilities
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
 
 ### Render-pass session rules
@@ -315,9 +309,7 @@ The layout side uses entity components, not builder classes directly.
 Important files:
 
 - [LayoutTraversalContext.java](../../src/main/java/com/demcha/compose/engine/core/LayoutTraversalContext.java)
-- [LayoutSystem.java](../../src/main/java/com/demcha/compose/engine/layout/LayoutSystem.java)
 - [ComputedPosition.java](../../src/main/java/com/demcha/compose/engine/components/layout/coordinator/ComputedPosition.java)
-- [PageBreaker.java](../../src/main/java/com/demcha/compose/engine/pagination/PageBreaker.java)
 - [EntityBounds.java](../../src/main/java/com/demcha/compose/engine/components/geometry/EntityBounds.java)
 - [ParentContainerUpdater.java](../../src/main/java/com/demcha/compose/engine/pagination/ParentContainerUpdater.java)
 
@@ -335,7 +327,7 @@ Use the helpers directly when that intent is what you need:
 - read bounds and edges through `EntityBounds` instead of adding more bound helpers to `Entity`
 - update parent container size or shifted positions through `ParentContainerUpdater` instead of growing the `Entity` API further
 
-See [pagination-ordering.md](../architecture/pagination-ordering.md) for a focused explanation of this rule, including why a `Circle` case can fail while an `Image` case appears to work.
+See [pagination-ordering.md](../architecture/pagination-ordering.md) for a focused explanation of this rule, including why one leaf type can fail while another appears to work.
 
 If those components are missing or inconsistent, the renderer cannot save you later.
 
@@ -343,7 +335,7 @@ If those components are missing or inconsistent, the renderer cannot save you la
 
 - choose the correct builder base class
 - add the render marker in `initialize()` if the object is drawable
-- add `Expendable` only for parent-like boxes that should grow because of children
+- add the container-growth marker only for parent-like boxes that should grow because of children
 - add `Breakable` only for entities whose own content can span pages
 - attach content/style components through fluent methods
 - provide `ContentSize` directly or calculate it in `build()`

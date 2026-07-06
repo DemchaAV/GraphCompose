@@ -37,75 +37,6 @@ Rule of thumb:
 - if the logic needs `Placement`, `ContentSize`, `Margin`, or parent traversal semantics, it probably belongs in a helper or system utility
 - if the logic only needs identity, component access, or canonical child order, it may belong on `Entity`
 
-## Low-level test harness builders
-
-The old fluent entity builders are no longer production authoring API. They now
-live under `src/test/java/com/demcha/compose/testsupport/engine/assembly` and
-exist to keep low-level engine tests readable. Production features should start
-from `DocumentDsl`, canonical nodes, node definitions, or internal engine model
-types.
-
-### Use `EmptyBox<T>` in tests when
-
-Use [EmptyBox.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/EmptyBox.java) when the new object is a leaf entity or a small custom object that does not manage children itself.
-
-Examples in the codebase:
-
-- [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
-- [ImageBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ImageBuilder.java)
-- [CircleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
-- [LineBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
-- [LinkBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LinkBuilder.java)
-- [ElementBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ElementBuilder.java)
-
-This is the right choice for the exact case you asked about: an object that does not expand into a child-owning container and just needs base entity functionality plus layout/render participation.
-
-What `EmptyBox<T>` gives you:
-
-- entity creation
-- auto-generated `EntityName`
-- fluent `addComponent(...)`
-- parent/child helpers
-- access to `EntityManager`
-- default `build()` behavior through the builder hierarchy
-
-This `EntityManager` access is for low-level engine tests and compatibility
-harnesses only. Canonical application behavior should be described through
-`GraphCompose.document(...)`, `DocumentSession`, and `DocumentDsl`; session
-features such as `guideLines(true)` are not routed through `EntityManager`.
-
-### Use `ShapeBuilderBase<T>` in tests when
-
-Use [ShapeBuilderBase.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:
-
-- fill color
-- stroke
-- corner radius
-
-Examples:
-
-- [RectangleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
-- [CircleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
-
-### Use `ContainerBuilder<T>` in tests when
-
-Use [ContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ContainerBuilder.java) when the new object owns child entities and participates in parent/child layout.
-
-Examples:
-
-- [HContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/HContainerBuilder.java)
-- [VContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/VContainerBuilder.java)
-- [ModuleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
-
-Use this path when the object should call `addChild(...)` and arrange nested entities.
-
-Special note for the low-level module test harness:
-
-- `ModuleBuilder` is a low-level test harness for full-width section behavior
-- it resolves to the full available width of its parent minus its own horizontal margin
-- it should usually live under a normal root `vContainer(...)` or a canonical semantic page flow such as `DocumentSession.dsl().pageFlow()`
-- nested horizontal/vertical composition should happen inside the module through regular containers
-
 ## Minimum components a new object usually needs
 
 ### Render marker
@@ -178,10 +109,6 @@ For simple fixed-size objects, set `ContentSize` directly in the builder.
 
 For measured objects, compute size in `build()` before the entity is registered.
 
-Example:
-
-- [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java) calls `TextComponent.autoMeasureText(...)` when auto-size is enabled.
-
 ### Layout components
 
 The layout engine expects the usual layout metadata to be present when needed:
@@ -237,7 +164,7 @@ Container rule of thumb:
 
 Some engine objects look like containers from the outside, but still need their own leaf rendering contract inside.
 
-The test-support table harness is the current low-level example:
+The engine's table layout uses exactly this contract:
 
 - the table root is a breakable vertical container
 - each row is a non-breakable leaf entity with explicit `ContentSize`
@@ -257,7 +184,6 @@ Why the table uses this contract:
 
 Relevant files:
 
-- [TableBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
 - [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
@@ -413,16 +339,6 @@ See [pagination-ordering.md](../architecture/pagination-ordering.md) for a focus
 
 If those components are missing or inconsistent, the renderer cannot save you later.
 
-## When to add a method to the test-support `ComponentBuilder`
-
-Add a method to [ComponentBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ComponentBuilder.java) when:
-
-- a low-level engine test needs direct entity assembly
-- the object is not ready or not appropriate for public canonical authoring
-- you want it tracked alongside other pending test harness builders before render/layout execution
-
-Do not add a method there if the new object is only an internal helper for templates.
-
 ## Practical checklist for a new object
 
 - choose the correct builder base class
@@ -438,14 +354,6 @@ Do not add a method there if the new object is only an internal helper for templ
 
 ## Good examples to copy
 
-- leaf text with measured size:
-  [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
-- shape-like object:
-  [RectangleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
-- fixed leaf line object:
-  [LineBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
-- container:
-  [ModuleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 - template-level composition helper:
   [SectionDispatcher.java](../../templates/src/main/java/com/demcha/compose/document/templates/cv/components/SectionDispatcher.java)
 

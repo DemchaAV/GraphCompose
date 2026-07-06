@@ -89,7 +89,7 @@ On first run the assertion writes
 `src/test/resources/layout-snapshots/my-feature/scenario_a.json`. To
 accept a baseline change after a deliberate refactor, re-run with
 `-Dgraphcompose.updateSnapshots=true`. See
-[`LayoutSnapshotRegressionExample`](../../examples/src/main/java/com/demcha/examples/LayoutSnapshotRegressionExample.java)
+[`LayoutSnapshotRegressionExample`](../../examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java)
 for a runnable end-to-end demonstration.
 
 ## See also

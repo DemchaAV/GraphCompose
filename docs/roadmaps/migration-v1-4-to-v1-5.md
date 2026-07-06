@@ -69,9 +69,9 @@ to `IllegalArgumentException`.
 
 The recipe catalogue split into focused pages:
 
-- [`docs/recipes/shape-as-container.md`](recipes/shape-as-container.md)
-- [`docs/recipes/transforms.md`](recipes/transforms.md)
-- [`docs/recipes/tables.md`](recipes/tables.md) — covers row span,
+- [`docs/recipes/shape-as-container.md`](../recipes/shape-as-container.md)
+- [`docs/recipes/transforms.md`](../recipes/transforms.md)
+- [`docs/recipes/tables.md`](../recipes/tables.md) — covers row span,
   zebra, totals, repeated header
 
 ## Worth checking

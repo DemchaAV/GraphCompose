@@ -87,4 +87,4 @@ section.addShape(120, 24, brand);                     // full strength
 ```
 
 Verified end-to-end (including the opaque byte-identity guarantee) by
-[`PdfShapeAlphaTest`](../../src/test/java/com/demcha/compose/document/backend/fixed/pdf/PdfShapeAlphaTest.java).
+[`PdfShapeAlphaTest`](../../render-pdf/src/test/java/com/demcha/compose/document/backend/fixed/pdf/PdfShapeAlphaTest.java).

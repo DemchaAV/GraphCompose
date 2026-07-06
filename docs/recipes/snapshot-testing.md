@@ -93,4 +93,4 @@ the machine check.
 Runnable walkthrough of the full workflow:
 [`LayoutSnapshotRegressionExample`](../../examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java).
 A real in-tree test using the production pattern:
-[`ShapeContainerLayoutSnapshotTest`](../../src/test/java/com/demcha/compose/document/dsl/ShapeContainerLayoutSnapshotTest.java).
+[`ShapeContainerLayoutSnapshotTest`](../../qa/src/test/java/com/demcha/compose/document/dsl/ShapeContainerLayoutSnapshotTest.java).

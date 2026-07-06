@@ -120,7 +120,7 @@ The detailed contract for each layer is in
   is the recipe cookbook — 7 hands-on recipes from "change a bullet
   glyph" to "add a new section subtype".
 - **Examples**:
-  [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
+  [`examples/cv/v2/`](../../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
   has runnable rendering examples for the shipped presets.
 - **Archived classic surface**:
   [`docs/templates/v1-classic/README.md`](../v1-classic/README.md) describes the older

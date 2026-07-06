@@ -51,7 +51,7 @@ document.pageFlow()
         .build();
 ```
 
-See the [Inline shapes example](examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java)
+See the [Inline shapes example](../examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java)
 for the full set (`dot`, `arrow`, `chevron`, `diamond`, `star`, `checkmark`,
 `checkbox`).
 

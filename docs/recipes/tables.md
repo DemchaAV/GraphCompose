@@ -152,7 +152,7 @@ they explicitly call the method.
 ## Put it all together
 
 The runnable example
-[`examples/.../TableAdvancedExample.java`](../../examples/src/main/java/com/demcha/examples/TableAdvancedExample.java)
+[`examples/.../TableAdvancedExample.java`](../../examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java)
 combines every Phase D feature on one PDF: a 3-column invoice with a
 row-spanning side note, zebra body rows, a totals row, and a
 repeating "Item / Qty / Amount" header on every continuation page.
@@ -185,4 +185,4 @@ The Phase D feature set pins five test invariants:
 - [`TableBuilder`](../../src/main/java/com/demcha/compose/document/dsl/TableBuilder.java) — full builder API.
 - [`DocumentTableCell`](../../src/main/java/com/demcha/compose/document/table/DocumentTableCell.java) — cell payload with `colSpan` / `rowSpan` mutators.
 - [`DocumentTableStyle`](../../src/main/java/com/demcha/compose/document/table/DocumentTableStyle.java) — style overrides for fill, stroke, text style, padding.
-- Runnable example: `examples/src/main/java/com/demcha/examples/TableAdvancedExample.java`.
+- Runnable example: `examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java`.

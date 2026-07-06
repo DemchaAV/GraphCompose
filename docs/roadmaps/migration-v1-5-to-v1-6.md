@@ -16,7 +16,7 @@ preset classes under `templates/cv/presets/` and 14 paired letter
 presets under `templates/coverletter/presets/`. v1.x SemVer "API
 stability" covers the engine, not the templates layer — the
 templates carve-out is documented in
-[ADR 0011](adr/0011-templates-v2-architecture.md). The breaking
+[ADR 0011](../adr/0011-templates-v2-architecture.md). The breaking
 migration is in
 [Templates v2 — CV / cover-letter API rebuilt](#templates-v2--cv--cover-letter-api-rebuilt)
 below.
@@ -74,7 +74,7 @@ The `com.demcha.compose.document.layout` package — including
 `LayoutGraph`, `PlacedFragment`, `PlacedNode`, `BoxConstraints`,
 `MeasureResult`, `NodeDefinition`, `PreparedNode`, and ~15 other
 records — is now annotated
-[`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java)
+[`@Internal`](../../src/main/java/com/demcha/compose/document/api/Internal.java)
 at the package level.
 
 The annotation is a documentation signal, not a visibility change. Code
@@ -88,7 +88,7 @@ Why: the v1.6 plan reorganises the layout package internally (split
 `BuiltInNodeDefinitions`, extract a `PlacementContext` interface, move
 payload records to a dedicated subpackage) and we want those refactors
 to ship without semver implications. See ADR
-[0003](adr/0003-api-stability-and-internal-marker.md).
+[0003](../adr/0003-api-stability-and-internal-marker.md).
 
 If you depend on a layout type today, please open an issue describing
 the use case so we can design a stable replacement.
@@ -157,7 +157,7 @@ custom handlers for the same payload type on one builder rejects the
 second with `IllegalArgumentException`.
 
 `PlacedFragment` and `PdfRenderEnvironment` remain `@Internal` — see
-ADR [0004](adr/0004-pdf-handler-spi-extension.md) for the trade-off.
+ADR [0004](../adr/0004-pdf-handler-spi-extension.md) for the trade-off.
 
 ## Templates v2 — CV / cover-letter API rebuilt
 
@@ -166,7 +166,7 @@ scratch in v1.6 under a four-layer architecture: **Theme tokens →
 Layout slots → Components + Blocks → Spec data**. v1.x SemVer "API
 stability" covers the engine, not the templates layer; the
 carve-out is documented in
-[ADR 0011](adr/0011-templates-v2-architecture.md).
+[ADR 0011](../adr/0011-templates-v2-architecture.md).
 
 The change deletes:
 
@@ -383,7 +383,7 @@ The refactor that turns each hand-coded preset back into a thin
 builder recipe is scheduled for v1.7 as Phase E.4. **Public API
 shape stays the same** — only the preset internals change, so
 callers do not need to migrate again. See
-[ADR 0011](adr/0011-templates-v2-architecture.md) for the full
+[ADR 0011](../adr/0011-templates-v2-architecture.md) for the full
 reasoning.
 
 ## Deprecations

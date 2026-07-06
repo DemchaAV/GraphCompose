@@ -83,6 +83,19 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 
 See [docs/contributing/release-process.md](./docs/contributing/release-process.md) for the full checklist (audit gates, hotfix protocol, lessons learned).
 
+### Version lines and the 1.x maintenance branch
+
+GraphCompose is mid-transition to the 2.0 module line. Until 2.0 ships:
+
+- **`2.0-dev`** is the working branch for 2.0 &mdash; feature branches for 2.0 work target `2.0-dev`, not `develop`.
+- **`develop`** and **`main`** carry the shipping **1.9.x** line; `main` is its stable, tagged surface (latest `v1.9.x`).
+
+At the **2.0 GA** merge the branches take their long-term roles:
+
+- **`main`** fast-forwards to 2.0 and becomes the stable 2.0 line.
+- **`develop`** becomes the ongoing 2.x working branch (what `2.0-dev` was); `2.0-dev` retires.
+- A **`1.x`** maintenance branch is cut from the final 1.9.x commit on `main` at that moment. It receives **critical fixes and security / CVE backports only &mdash; no features** &mdash; released as `1.9.x` patches from `1.x` via the same `cut-release.ps1` + tag flow. New feature work always targets the 2.x line.
+
 ## Repository map
 
 - `src/main/java/com/demcha/compose/document/api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.image`, `document.output`, `document.exceptions`, `document.snapshot`

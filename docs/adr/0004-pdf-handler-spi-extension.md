@@ -67,7 +67,7 @@ Concretely:
   states the stateless invariant explicitly.
 - [`PdfFixedLayoutBackend.Builder#addHandler`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
   is the new entry point.
-- [`PdfBackendExtensibilityTest`](../../src/test/java/com/demcha/compose/document/backend/fixed/pdf/PdfBackendExtensibilityTest.java)
+- [`PdfBackendExtensibilityTest`](../../render-pdf/src/test/java/com/demcha/compose/document/backend/fixed/pdf/PdfBackendExtensibilityTest.java)
   pins three behaviours:
   - A custom handler whose `payloadType()` matches a built-in default
     replaces the default for that backend (verified via call counter

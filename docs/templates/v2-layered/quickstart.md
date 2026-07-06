@@ -151,4 +151,4 @@ touch a renderer. A new widget doesn't touch the data model.
 | Make a new visual style | [authoring-presets.md](authoring-presets.md) |
 | Add a new template family to the library (invoice, cover-letter) | [contributor-guide.md](contributor-guide.md) |
 | See hands-on recipes (change a bullet, swap colours, …) | [`cv/AUTHORS.md`](../../../templates/src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md) |
-| Run the shipped examples | [`examples/cv/v2/`](../../examples/src/main/java/com/demcha/examples/templates/cv/v2) |
+| Run the shipped examples | [`examples/cv/v2/`](../../../examples/src/main/java/com/demcha/examples/templates/cv/v2) |

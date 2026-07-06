@@ -198,6 +198,6 @@ etc.).
   that lands the same recursion-friendly shape on lists):
   [`0012-nested-list-evolution.md`](0012-nested-list-evolution.md).
 - Tests:
-  [`src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java`](../../src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java).
+  [`qa/src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java`](../../qa/src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java).
 - Snapshot baseline:
   `src/test/resources/layout-snapshots/document/table_cell_with_paragraph.json`.

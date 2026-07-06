@@ -336,14 +336,12 @@ Choose the smallest tests that match the change:
 - For engine/backend boundary changes:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
-- For low-level test harness changes:
-  [ComponentBuilderTest.java](qa/src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
 - For PDF fragment-handler dispatch changes:
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
-  [PageBreakerIntegrationTest.java](qa/src/test/java/com/demcha/compose/engine/integration/PageBreakerIntegrationTest.java)
+  [PaginationEdgeCaseTest.java](qa/src/test/java/com/demcha/compose/document/api/PaginationEdgeCaseTest.java)
 - For Templates v2 CV / cover-letter presets:
   [CvV2VisualParityTest.java (CV)](qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
   [CoverLetterV2VisualParityTest.java (cover letter)](qa/src/test/java/com/demcha/compose/document/templates/coverletter/presets/CoverLetterV2VisualParityTest.java)

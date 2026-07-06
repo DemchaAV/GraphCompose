@@ -174,6 +174,6 @@ across mixed flat / nested entries.
   [`0003-api-stability-and-internal-marker.md`](0003-api-stability-and-internal-marker.md)
   (gate that allows new components on existing records).
 - Tests:
-  [`src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java`](../../src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java).
+  [`qa/src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java`](../../qa/src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java).
 - Snapshot baseline:
   `src/test/resources/layout-snapshots/document/nested_list_three_levels.json`.

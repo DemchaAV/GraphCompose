@@ -161,7 +161,7 @@ when you need a `DocumentNode` outside a flow (e.g. composing a
 `BusinessTheme.withPageBackground(color)` and `withName(name)` give
 you cheap forks. To brand for your project, hand-build a
 `BusinessTheme(...)` once — see
-[`CustomBusinessThemeExample`](../../../examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java).
+[`BusinessTheme`](../../../examples/src/main/java/com/demcha/examples/support/theme/BusinessTheme.java).
 
 ---
 
@@ -417,7 +417,7 @@ visual review, not as the regression contract (use snapshots for
 that).
 
 For the runnable end-to-end pattern see
-[`InvoiceTemplateV2DemoTest`](../../../src/test/java/com/demcha/testing/visual/InvoiceTemplateV2DemoTest.java)
+[`InvoiceV2VisualParityTest`](../../../qa/src/test/java/com/demcha/compose/document/templates/invoice/presets/InvoiceV2VisualParityTest.java)
 and
 [`LayoutSnapshotRegressionExample`](../../../examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java).
 
@@ -437,4 +437,4 @@ and
 | Migrating from v1.4 to v1.5 | [`migration-v1-4-to-v1-5.md`](../../roadmaps/migration-v1-4-to-v1-5.md) |
 | Architecture decision records | [`adr/`](../../adr/) |
 | Reference templates | [`ModernInvoice`](../../../templates/src/main/java/com/demcha/compose/document/templates/invoice/presets/ModernInvoice.java), [`ModernProposal`](../../../templates/src/main/java/com/demcha/compose/document/templates/proposal/presets/ModernProposal.java) |
-| Hand-built theme example | [`CustomBusinessThemeExample`](../../../examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |
+| Hand-built theme example | [`BusinessTheme`](../../../examples/src/main/java/com/demcha/examples/support/theme/BusinessTheme.java) |

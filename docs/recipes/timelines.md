@@ -120,5 +120,5 @@ the section-level controls in the
 [keep-together recipe](keep-together.md).
 
 Runnable demo:
-[TimelineDemoTest](../../src/test/java/com/demcha/testing/visual/TimelineDemoTest.java)
+[TimelineDemoTest](../../qa/src/test/java/com/demcha/testing/visual/TimelineDemoTest.java)
 renders a marker/rail sheet to `target/visual-tests/timeline/timeline.pdf`.

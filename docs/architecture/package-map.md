@@ -13,6 +13,26 @@ on the type itself (`NodeDefinition` is the current example). The
 "Extension rule" column below names the extension seam where one is
 intended.
 
+## Module Layout
+
+The 2.0 module split (see [ADR 0016](../adr/0016-multi-module-packaging.md)) maps these
+packages onto Maven coordinates. The package names are unchanged — only which artifact
+ships them differs.
+
+| Module | Owns |
+| --- | --- |
+| `graph-compose-core` | The lean engine: `com.demcha.compose`, the canonical `document.*` authoring surface (`api` / `dsl` / `node` / `style` / `table` / `snapshot`), `document.showcase` (`FontShowcase`), the `document.backend.fixed` SPI seam, the public `document.backend.fixed.pdf.options` records, `document.layout`, `font.*`, and the internal `engine.*` foundation. |
+| `graph-compose-render-pdf` | The PDFBox backend: `document.backend.fixed.pdf.**` (the `PdfFixedLayoutBackend` impl + handlers) and the `engine.render.pdf.**` render tree. Registers the PDF `FixedLayoutBackendProvider` / `FontMetricsProvider`. |
+| `graph-compose-render-docx` / `graph-compose-render-pptx` | The POI semantic exporters — `document.backend.semantic.docx` / `.pptx`. |
+| `graph-compose-templates` | The built-in preset families — `document.templates.**`. |
+| `graph-compose-testing` | Consumer test support — `com.demcha.compose.testing.**`. |
+| `graph-compose` | Back-compat wrapper: an empty jar over `graph-compose-core` + `graph-compose-render-pdf`. |
+| `graph-compose-bundle` | Batteries-included aggregate: the wrapper + templates + `graph-compose-fonts` + `graph-compose-emoji`. |
+
+The per-package tables below describe responsibility and extension rules; the `Module`
+column in [api-stability.md § 4](../api-stability.md#4-tier-mapping-per-package) gives the
+per-package artifact.
+
 ## Public Authoring Surface
 
 | Package | Responsibility | Extension rule |

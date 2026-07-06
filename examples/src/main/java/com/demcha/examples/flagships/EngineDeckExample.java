@@ -411,9 +411,13 @@ public final class EngineDeckExample {
 
     /** Version pill ("v1.8.0") with the codename centred beside it as a tag. */
     private static DocumentNode versionBlock() {
+        // Show the base version only: a dev/pre-release qualifier ("2.0.0-SNAPSHOT",
+        // "2.0.0-beta.1") is wider than the 96pt pill, and the engine wraps long
+        // tokens at their "." / "-" seams — the pill would break onto two lines.
+        String pillVersion = VERSION.replaceFirst("-.*$", "");
         DocumentNode pill = new ShapeContainerBuilder().name("VerPill")
                 .roundedRect(96, 30, 8).fillColor(VIOLET_DEEP)
-                .center(new ParagraphBuilder().text("v" + VERSION)
+                .center(new ParagraphBuilder().text("v" + pillVersion)
                         .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
                                 .size(14).color(DocumentColor.WHITE).build())
                         .align(TextAlign.CENTER).margin(DocumentInsets.zero()).build())

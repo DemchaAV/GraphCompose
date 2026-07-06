@@ -250,13 +250,17 @@ Canonical-first ordering — public roots come first, internal foundation
 last:
 
 - `com.demcha.compose.document.*` — **public canonical surface**.
-  Authoring API, layout graph, backends, exceptions, snapshots, and
-  built-in templates.
+  Authoring API, layout graph, exceptions, snapshots. The render backends
+  (`document.backend.fixed.pdf` in **graph-compose-render-pdf**,
+  `document.backend.semantic.*` in the docx / pptx modules) and the built-in
+  templates (`document.templates.*` in **graph-compose-templates**) share this
+  namespace but ship as separate, opt-in artifacts over `graph-compose-core`.
 - `com.demcha.compose.font.*` — public font names, backend-neutral
   family descriptors, registration, lookup, and showcase helpers.
 - `com.demcha.compose.engine.*` — **internal engine foundation**.
-  Measurement, layout resolution, pagination, render-pass session, and
-  PDF rendering systems.
+  Measurement, layout resolution, pagination, and render-pass session in
+  `graph-compose-core`; the PDF rendering systems (`engine.render.pdf.*`) ship
+  in **graph-compose-render-pdf**.
 - `com.demcha.compose.engine.text.*` — internal text utilities used by
   layout and render hot paths.
 - `com.demcha.compose.engine.text.markdown.*` — internal

@@ -64,7 +64,7 @@ data differs; the *layering* is identical.
 Mirror the CV v2 layout. Concrete example for invoice:
 
 ```
-src/main/java/com/demcha/compose/document/templates/invoice/
+templates/src/main/java/com/demcha/compose/document/templates/invoice/
 ├── package-info.java                   ← ASCII diagram + 4-step walkthrough
 ├── AUTHORS.md                          ← recipe cookbook
 ├── data/

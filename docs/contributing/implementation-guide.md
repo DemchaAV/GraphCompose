@@ -259,7 +259,7 @@ Relevant files:
 
 - [TableBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
-- [TableCellBox.java](../../src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
+- [TableCellBox.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
 - [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
@@ -334,8 +334,8 @@ Important files:
 - [Render.java](../../src/main/java/com/demcha/compose/engine/render/Render.java)
 - [RenderPassSession.java](../../src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
 - [RenderStream.java](../../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
-- [PdfRenderingSystemECS.java](../../src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECS.java)
-- [PdfRenderSession.java](../../src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderSession.java)
+- [PdfRenderingSystemECS.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECS.java)
+- [PdfRenderSession.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderSession.java)
 - [EntityRenderOrder.java](../../src/main/java/com/demcha/compose/engine/render/EntityRenderOrder.java)
 
 Migration rule for new engine components:
@@ -448,7 +448,7 @@ Do not add a method there if the new object is only an internal helper for templ
 - container:
   [ModuleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 - template-level composition helper:
-  [SectionDispatcher.java](../../src/main/java/com/demcha/compose/document/templates/cv/components/SectionDispatcher.java)
+  [SectionDispatcher.java](../../templates/src/main/java/com/demcha/compose/document/templates/cv/components/SectionDispatcher.java)
 
 ## Overlay primitive: `LayerStackNode`
 

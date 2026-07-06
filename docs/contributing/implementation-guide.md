@@ -47,16 +47,16 @@ types.
 
 ### Use `EmptyBox<T>` in tests when
 
-Use [EmptyBox.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/container/EmptyBox.java) when the new object is a leaf entity or a small custom object that does not manage children itself.
+Use [EmptyBox.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/EmptyBox.java) when the new object is a leaf entity or a small custom object that does not manage children itself.
 
 Examples in the codebase:
 
-- [TextBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
-- [ImageBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ImageBuilder.java)
-- [CircleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
-- [LineBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
-- [LinkBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/LinkBuilder.java)
-- [ElementBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ElementBuilder.java)
+- [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
+- [ImageBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ImageBuilder.java)
+- [CircleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
+- [LineBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
+- [LinkBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LinkBuilder.java)
+- [ElementBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ElementBuilder.java)
 
 This is the right choice for the exact case you asked about: an object that does not expand into a child-owning container and just needs base entity functionality plus layout/render participation.
 
@@ -76,7 +76,7 @@ features such as `guideLines(true)` are not routed through `EntityManager`.
 
 ### Use `ShapeBuilderBase<T>` in tests when
 
-Use [ShapeBuilderBase.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:
+Use [ShapeBuilderBase.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ShapeBuilderBase.java) when the object is still a leaf, but you want common shape helpers such as:
 
 - fill color
 - stroke
@@ -84,18 +84,18 @@ Use [ShapeBuilderBase.java](../../src/test/java/com/demcha/compose/testsupport/e
 
 Examples:
 
-- [RectangleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
-- [CircleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
+- [RectangleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
+- [CircleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/CircleBuilder.java)
 
 ### Use `ContainerBuilder<T>` in tests when
 
-Use [ContainerBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ContainerBuilder.java) when the new object owns child entities and participates in parent/child layout.
+Use [ContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/container/ContainerBuilder.java) when the new object owns child entities and participates in parent/child layout.
 
 Examples:
 
-- [HContainerBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/HContainerBuilder.java)
-- [VContainerBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/VContainerBuilder.java)
-- [ModuleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
+- [HContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/HContainerBuilder.java)
+- [VContainerBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/VContainerBuilder.java)
+- [ModuleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 
 Use this path when the object should call `addChild(...)` and arrange nested entities.
 
@@ -180,7 +180,7 @@ For measured objects, compute size in `build()` before the entity is registered.
 
 Example:
 
-- [TextBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java) calls `TextComponent.autoMeasureText(...)` when auto-size is enabled.
+- [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java) calls `TextComponent.autoMeasureText(...)` when auto-size is enabled.
 
 ### Layout components
 
@@ -257,7 +257,7 @@ Why the table uses this contract:
 
 Relevant files:
 
-- [TableBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
+- [TableBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TableBuilder.java)
 - [TableRow.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TableRow.java)
 - [TableCellBox.java](../../render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/helpers/TableCellBox.java)
 - [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
@@ -416,7 +416,7 @@ If those components are missing or inconsistent, the renderer cannot save you la
 
 ## When to add a method to the test-support `ComponentBuilder`
 
-Add a method to [ComponentBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ComponentBuilder.java) when:
+Add a method to [ComponentBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ComponentBuilder.java) when:
 
 - a low-level engine test needs direct entity assembly
 - the object is not ready or not appropriate for public canonical authoring
@@ -440,13 +440,13 @@ Do not add a method there if the new object is only an internal helper for templ
 ## Good examples to copy
 
 - leaf text with measured size:
-  [TextBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
+  [TextBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/TextBuilder.java)
 - shape-like object:
-  [RectangleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
+  [RectangleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/RectangleBuilder.java)
 - fixed leaf line object:
-  [LineBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
+  [LineBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/LineBuilder.java)
 - container:
-  [ModuleBuilder.java](../../src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
+  [ModuleBuilder.java](../../render-pdf/src/test/java/com/demcha/compose/testsupport/engine/assembly/ModuleBuilder.java)
 - template-level composition helper:
   [SectionDispatcher.java](../../templates/src/main/java/com/demcha/compose/document/templates/cv/components/SectionDispatcher.java)
 

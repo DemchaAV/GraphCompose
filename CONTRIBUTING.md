@@ -89,12 +89,14 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
   Public canonical authoring surface — `DocumentSession`, the DSL builders, semantic node records, public style values, table types, image types, backend-neutral output options (metadata / watermark / protection / header-footer), and snapshot DTOs
 - `src/main/java/com/demcha/compose/document/layout`
   Canonical functional layout pipeline: `LayoutCompiler`, `BuiltInNodeDefinitions`, `TableLayoutSupport`, `PreparedNode`, `PlacedFragment`
-- `src/main/java/com/demcha/compose/document/backend/fixed/pdf`
-  PDF backend: `PdfFixedLayoutBackend`, fragment handlers, the option translators that bridge canonical types to PDFBox, and `FontShowcase` (bundled-font preview renderer)
-- `src/main/java/com/demcha/compose/document/backend/semantic`
-  Semantic exporters: `DocxSemanticBackend` (Apache POI based), `PptxSemanticBackend` (manifest skeleton)
-- `src/main/java/com/demcha/compose/document/templates/*`
+- `render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf` — module **graph-compose-render-pdf**
+  PDF backend: `PdfFixedLayoutBackend`, fragment handlers, and the option translators that bridge canonical types to PDFBox
+- `render-docx/` and `render-pptx/` — modules **graph-compose-render-docx** / **graph-compose-render-pptx**
+  Semantic exporters `DocxSemanticBackend` (Apache POI based) and `PptxSemanticBackend` (manifest skeleton), under `com.demcha.compose.document.backend.semantic.{docx,pptx}`
+- `templates/src/main/java/com/demcha/compose/document/templates/*` — module **graph-compose-templates**
   Built-in templates (CV, cover letter, invoice, proposal, weekly schedule), DTOs, themes, registries, and scene composition helpers
+- `src/main/java/com/demcha/compose/document/showcase`
+  `FontShowcase` (bundled-font preview renderer) — stays in the core engine
 - `src/main/java/com/demcha/compose/engine/*`
   Internal shared engine foundation under the canonical surface (measure, paginate, place, render). Not part of the recommended public API
 - `src/main/java/com/demcha/compose/font`
@@ -170,7 +172,7 @@ not need any of them.
   `engine/components`.
 - PDF rendering logic for the legacy ECS renderer (deprecated; canonical PDF
   output goes through `com.demcha.compose.document.backend.fixed.pdf`) lives in
-  `src/main/java/com/demcha/compose/engine/render/pdf/ecs/handlers/`.
+  `render-pdf/src/main/java/com/demcha/compose/engine/render/pdf/ecs/handlers/`.
   Backend-only helper objects live in
   `com.demcha.compose.engine.render.pdf.ecs.helpers`, not in
   `components/renderable`.

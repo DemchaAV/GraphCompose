@@ -45,7 +45,7 @@ Concretely:
    Javadoc is rewritten to declare it a public extension point with
    stateless invariant. The "package-private" wording is gone.
 2. A new method
-   [`PdfFixedLayoutBackend.Builder#addHandler(PdfFragmentRenderHandler<?>)`](../../src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
+   [`PdfFixedLayoutBackend.Builder#addHandler(PdfFragmentRenderHandler<?>)`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
    accepts a custom handler. It is additive: omitting it reproduces the
    existing default-handler set. Calling it with a payload type already
    covered by a default replaces the default for the resulting backend
@@ -62,10 +62,10 @@ Concretely:
 
 ## Coverage
 
-- [`PdfFragmentRenderHandler`](../../src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
+- [`PdfFragmentRenderHandler`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
   Javadoc names `Builder.addHandler(...)` as the registration path and
   states the stateless invariant explicitly.
-- [`PdfFixedLayoutBackend.Builder#addHandler`](../../src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
+- [`PdfFixedLayoutBackend.Builder#addHandler`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
   is the new entry point.
 - [`PdfBackendExtensibilityTest`](../../src/test/java/com/demcha/compose/document/backend/fixed/pdf/PdfBackendExtensibilityTest.java)
   pins three behaviours:

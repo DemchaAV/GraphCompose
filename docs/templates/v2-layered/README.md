@@ -113,10 +113,10 @@ The detailed contract for each layer is in
 ## See also
 
 - **Per-package JavaDocs**:
-  [`cv/package-info.java`](../../../src/main/java/com/demcha/compose/document/templates/cv/package-info.java)
+  [`cv/package-info.java`](../../../templates/src/main/java/com/demcha/compose/document/templates/cv/package-info.java)
   has the ASCII diagram and 4-step author walkthrough.
 - **AUTHORS.md**:
-  [`cv/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md)
+  [`cv/AUTHORS.md`](../../../templates/src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md)
   is the recipe cookbook — 7 hands-on recipes from "change a bullet
   glyph" to "add a new section subtype".
 - **Examples**:

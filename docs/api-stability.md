@@ -64,7 +64,7 @@ are:
 
 - [`ChartSize`](../src/main/java/com/demcha/compose/document/chart/ChartSize.java) (Stable)
 - [`ChartSpec`](../src/main/java/com/demcha/compose/document/chart/ChartSpec.java) (Stable)
-- [`CvSection`](../src/main/java/com/demcha/compose/document/templates/cv/data/CvSection.java) (Stable)
+- [`CvSection`](../templates/src/main/java/com/demcha/compose/document/templates/cv/data/CvSection.java) (Stable)
 - [`DocumentLinkTarget`](../src/main/java/com/demcha/compose/document/node/DocumentLinkTarget.java) (Stable)
 - [`DocumentPaint`](../src/main/java/com/demcha/compose/document/style/DocumentPaint.java) (Stable)
 - [`DocumentPathSegment`](../src/main/java/com/demcha/compose/document/style/DocumentPathSegment.java) (Stable)

@@ -291,7 +291,7 @@ BrandTheme theme = new BrandTheme(
 ```
 
 For more recipes (compact spacing, alternative typography scales,
-etc.) see [`cv/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md).
+etc.) see [`cv/AUTHORS.md`](../../../templates/src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md).
 
 ---
 
@@ -391,4 +391,4 @@ No GitHub, no Projects, no Tech Skills — and the API doesn't notice.
 [**authoring-presets.md**](authoring-presets.md)
 
 → Reference for every recipe (change bullet, swap colours, …)
-[`cv/AUTHORS.md`](../../../src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md)
+[`cv/AUTHORS.md`](../../../templates/src/main/java/com/demcha/compose/document/templates/cv/AUTHORS.md)

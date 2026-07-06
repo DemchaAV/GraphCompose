@@ -436,5 +436,5 @@ and
 | Snapshot-based regression workflow | [`recipes/extending.md` § 4](../../recipes/extending.md#4-validate-a-custom-nodes-layout-via-snapshots) |
 | Migrating from v1.4 to v1.5 | [`migration-v1-4-to-v1-5.md`](../../roadmaps/migration-v1-4-to-v1-5.md) |
 | Architecture decision records | [`adr/`](../../adr/) |
-| Reference V2 templates | [`InvoiceTemplateV2`](../../../src/main/java/com/demcha/compose/document/templates/builtins/InvoiceTemplateV2.java), [`ProposalTemplateV2`](../../../src/main/java/com/demcha/compose/document/templates/builtins/ProposalTemplateV2.java) |
+| Reference templates | [`ModernInvoice`](../../../templates/src/main/java/com/demcha/compose/document/templates/invoice/presets/ModernInvoice.java), [`ModernProposal`](../../../templates/src/main/java/com/demcha/compose/document/templates/proposal/presets/ModernProposal.java) |
 | Hand-built theme example | [`CustomBusinessThemeExample`](../../../examples/src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java) |

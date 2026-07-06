@@ -29,7 +29,7 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
-- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
+- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,PdfRenderInterfaceGuardTest,PdfRenderingSystemECSDispatchTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper when you change performance-sensitive code or benchmark tooling: `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` (Windows). To compare two branches fairly, use `scripts/ab-bench.ps1` (Windows) or the cross-platform `scripts/ab-bench.sh` (Linux/macOS/Git Bash). See [docs/operations/benchmarks.md](./docs/operations/benchmarks.md).
 
@@ -120,7 +120,7 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 2. Keep structural cleanup separate from behavior changes whenever possible.
 3. If you touch public examples or screenshots, update the related docs in the same change.
 4. Run the smallest relevant tests while iterating, then run `./mvnw -B -ntp clean verify` before opening a pull request.
-5. For quick visual iteration on a template, run [GraphComposeDevTool.java](./src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) in test scope &mdash; it hot-reloads the rendered PDF as you edit your template source.
+5. For quick visual iteration on a template, run [GraphComposeDevTool.java](qa/src/test/java/com/demcha/compose/devtool/GraphComposeDevTool.java) in test scope &mdash; it hot-reloads the rendered PDF as you edit your template source.
 
 ## Contributor architecture rules
 
@@ -205,13 +205,12 @@ The rules above are enforced by tests:
   [CanonicalSurfaceGuardTest.java](./src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java),
   [PublicApiNoEngineLeakTest.java](./src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java),
   [SemanticLayerNoPdfBoxDependencyTest.java](./src/test/java/com/demcha/documentation/SemanticLayerNoPdfBoxDependencyTest.java),
-  [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java),
+  [DocumentationExamplesTest.java](qa/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java),
   [DocumentationCoverageTest.java](./src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
 - engine internals guards:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
-  [CanonicalTemplateComposerPdfBoundaryTest.java](./src/test/java/com/demcha/compose/document/templates/architecture/CanonicalTemplateComposerPdfBoundaryTest.java),
-  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java),
-  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java),
+  [PdfRenderingSystemECSDispatchTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
 
 ## Adding a new feature
 
@@ -321,22 +320,22 @@ low-level test harness.
 Choose the smallest tests that match the change:
 
 - For README or docs examples:
-  [DocumentationExamplesTest.java](./src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
+  [DocumentationExamplesTest.java](qa/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 - For engine/backend boundary changes:
   [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
-  [PdfRenderInterfaceGuardTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
+  [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For low-level test harness changes:
-  [ComponentBuilderTest.java](./src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
+  [ComponentBuilderTest.java](qa/src/test/java/com/demcha/compose/engine/components/ComponentBuilderTest.java)
 - For render-marker dispatch changes:
-  [PdfRenderingSystemECSDispatchTest.java](./src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
+  [PdfRenderingSystemECSDispatchTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/ecs/PdfRenderingSystemECSDispatchTest.java)
 - For layout/positioning behavior:
   [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
-  [PageBreakerIntegrationTest.java](./src/test/java/com/demcha/compose/engine/integration/PageBreakerIntegrationTest.java)
+  [PageBreakerIntegrationTest.java](qa/src/test/java/com/demcha/compose/engine/integration/PageBreakerIntegrationTest.java)
 - For Templates v2 CV / cover-letter presets:
-  [PresetVisualParityTest.java (CV)](./src/test/java/com/demcha/compose/document/templates/cv/presets/PresetVisualParityTest.java)
-  [PresetVisualParityTest.java (cover letter)](./src/test/java/com/demcha/compose/document/templates/coverletter/presets/PresetVisualParityTest.java)
-  [PresetLayoutSnapshotTest.java](./src/test/java/com/demcha/compose/document/templates/cv/presets/PresetLayoutSnapshotTest.java)
+  [CvV2VisualParityTest.java (CV)](qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
+  [CoverLetterV2VisualParityTest.java (cover letter)](qa/src/test/java/com/demcha/compose/document/templates/coverletter/presets/CoverLetterV2VisualParityTest.java)
+  and the [per-preset smoke tests](qa/src/test/java/com/demcha/compose/document/templates/cv/presets)
 
 If a change affects public docs, examples, or screenshots, update those assets in the same PR so the repository stays internally consistent.
 

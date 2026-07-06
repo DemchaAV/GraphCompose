@@ -6,7 +6,7 @@ each with the v1.5 `ShapeContainerNode` work as a worked example so
 the moving pieces are easy to find in the source tree.
 
 If you only need to compose existing primitives, the
-[recipes](recipes.md) and the [getting-started](getting-started.md)
+[recipes](../recipes.md) and the [getting-started](../getting-started.md)
 quick-start are enough. Reach for this guide when:
 
 - You want a brand-new semantic shape that the DSL can produce.
@@ -60,11 +60,11 @@ The Phase B `ShapeContainerNode` is a clean example of all five steps:
 
 | Step | Source file |
 | --- | --- |
-| Record | [`ShapeContainerNode.java`](../src/main/java/com/demcha/compose/document/node/ShapeContainerNode.java) |
-| NodeDefinition | `ShapeContainerDefinition` (inner class of [`BuiltInNodeDefinitions.java`](../src/main/java/com/demcha/compose/document/layout/BuiltInNodeDefinitions.java)) |
+| Record | [`ShapeContainerNode.java`](../../src/main/java/com/demcha/compose/document/node/ShapeContainerNode.java) |
+| NodeDefinition | `ShapeContainerDefinition` (inner class of [`BuiltInNodeDefinitions.java`](../../src/main/java/com/demcha/compose/document/layout/BuiltInNodeDefinitions.java)) |
 | Payloads | `ShapeClipBeginPayload`, `ShapeClipEndPayload` (also inner classes of `BuiltInNodeDefinitions`) |
 | Registration | `BuiltInNodeDefinitions.registerDefaults(...)` line that calls `.register(new ShapeContainerDefinition())` |
-| Render handlers | [`PdfShapeClipBeginRenderHandler.java`](../src/main/java/com/demcha/compose/document/backend/fixed/pdf/handlers/PdfShapeClipBeginRenderHandler.java) and `PdfShapeClipEndRenderHandler.java` |
+| Render handlers | [`PdfShapeClipBeginRenderHandler.java`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/handlers/PdfShapeClipBeginRenderHandler.java) and `PdfShapeClipEndRenderHandler.java` |
 
 The `NodeDefinition` interface has four required methods plus three
 defaults:
@@ -96,10 +96,10 @@ AFTER children).
 The repo has two architecture-guard tests that pin two invariants for
 new nodes:
 
-- [`PublicApiNoEngineLeakTest`](../src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java)
+- [`PublicApiNoEngineLeakTest`](../../src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java)
   — `com.demcha.compose.document.*` must not import
   `com.demcha.compose.engine.*` types.
-- [`CanonicalSurfaceGuardTest`](../src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java)
+- [`CanonicalSurfaceGuardTest`](../../src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java)
   — public markdown docs and runnable examples must not reference the
   retired legacy surface (the v1.0–v1.3 PDF composer entry point and
   the old templates package). The forbidden token list lives at the
@@ -140,7 +140,7 @@ backend:
 1. Implement `PdfFragmentRenderHandler<YourPayloadType>`. Two
    methods: `payloadType()` and `render(fragment, payload, env)`.
 2. Register the handler in
-   [`PdfFixedLayoutBackend.defaultHandlers()`](../src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
+   [`PdfFixedLayoutBackend.defaultHandlers()`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
    (or pass a custom handler list to the package-private constructor).
 3. Wrap any graphics-state changes in `saveGraphicsState()` /
    `restoreGraphicsState()` so the next handler sees a clean slate.
@@ -211,7 +211,7 @@ Set-up per node:
    subsequent runs compare against it.
 
 The
-[`LayoutSnapshotAssertions`](../src/main/java/com/demcha/compose/testing/layout/LayoutSnapshotAssertions.java)
+[`LayoutSnapshotAssertions`](../../testing/src/main/java/com/demcha/compose/testing/layout/LayoutSnapshotAssertions.java)
 helper class wraps the diff machinery; existing snapshot tests under
 `src/test/java/com/demcha/compose/document/templates/builtins/`
 (e.g. `BuiltInTemplateLayoutSnapshotTest`) show the call site shape.
@@ -230,18 +230,18 @@ locate the responsible file:
 | Engine ECS internals | `com.demcha.compose.engine.*` (don't reach in from canonical code) |
 
 Detailed ownership lives in
-[`docs/architecture/package-map.md`](package-map.md).
+[`docs/architecture/package-map.md`](../architecture/package-map.md).
 
 ## See also
 
-- [`docs/architecture/overview.md`](architecture.md) — high-level architecture
+- [`docs/architecture/overview.md`](../architecture/overview.md) — high-level architecture
   and the canonical-vs-engine boundary.
 - [`docs/contributing/implementation-guide.md`](implementation-guide.md) —
   engine-side ECS extension patterns (component records, system
   registration, low-level harness builders).
-- [`docs/architecture/lifecycle.md`](lifecycle.md) — the session, layout, and
+- [`docs/architecture/lifecycle.md`](../architecture/lifecycle.md) — the session, layout, and
   render flow end-to-end.
-- [ADR 0001 — Shape-as-container](adr/0001-shape-as-container.md) —
+- [ADR 0001 — Shape-as-container](../adr/0001-shape-as-container.md) —
   the design rationale that shaped the v1.5 `ShapeContainerNode`,
   with the alternative considered ("flag on `LayerStackNode`") and
   why it was rejected.

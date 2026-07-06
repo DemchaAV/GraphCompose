@@ -17,8 +17,10 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
  *
  * <p>Extracted from {@link TextFlowSupport} (which enters only through
  * {@link #breakLongToken}) so the pure breaking logic is unit-testable in
- * isolation and does not grow the wrap-loop file. Package-private engine
- * internal.</p>
+ * isolation and does not grow the wrap-loop file. Package-private intentionally
+ * — engine surface, not public API.</p>
+ *
+ * @author Artem Demchyshyn
  */
 final class TokenBreaking {
 
@@ -89,6 +91,9 @@ final class TokenBreaking {
      * A token with no such characters yields a single segment (itself).
      */
     static List<String> softBreakSegments(String token) {
+        if (token == null || token.isEmpty()) {
+            return List.of();
+        }
         List<String> segments = new ArrayList<>();
         int start = 0;
         for (int index = 0; index < token.length(); index++) {

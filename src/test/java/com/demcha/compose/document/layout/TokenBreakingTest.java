@@ -41,6 +41,12 @@ class TokenBreakingTest {
         assertThat(String.join("", TokenBreaking.softBreakSegments("a.b:c/d-e"))).isEqualTo("a.b:c/d-e");
     }
 
+    @Test
+    void softBreakSegmentsOnNullOrEmptyIsEmpty() {
+        assertThat(TokenBreaking.softBreakSegments(null)).isEmpty();
+        assertThat(TokenBreaking.softBreakSegments("")).isEmpty();
+    }
+
     // ── fitCharacters ───────────────────────────────────────────────────────
 
     @Test
@@ -68,6 +74,12 @@ class TokenBreakingTest {
         List<String> viaBreak = TokenBreaking.breakLongToken("abcdefgh", STYLE, 3.0, UNIT);
         List<String> viaSplit = TokenBreaking.splitLongToken("abcdefgh", STYLE, 3.0, UNIT);
         assertThat(viaBreak).isEqualTo(viaSplit).containsExactly("abc", "def", "gh");
+    }
+
+    @Test
+    void breakLongTokenReturnsTheWholeTokenWhenItAlreadyFits() {
+        // A no-seam token that fits the budget is returned as a single piece.
+        assertThat(TokenBreaking.breakLongToken("abc", STYLE, 10.0, UNIT)).containsExactly("abc");
     }
 
     @Test

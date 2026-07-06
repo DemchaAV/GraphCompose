@@ -95,10 +95,23 @@ class VersionConsistencyGuardTest {
         // it: the aggregator (inherited by examples + benchmarks) and the bundle.
         // This guards the version-literal drift class: those must always agree, even
         // though they differ from the engine version line.
-        String aggregator = fontsVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"));
+        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "graphcompose.fonts.version");
 
-        assertThat(fontsVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml")))
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.fonts.version"))
                 .describedAs("bundle graphcompose.fonts.version must match the aggregator's (%s)", aggregator)
+                .isEqualTo(aggregator);
+    }
+
+    @Test
+    void bundledEmojiVersionAgreesAcrossModules() throws Exception {
+        // graph-compose-emoji, like graph-compose-fonts, carries an independent
+        // version line (emoji-v* tag) and the ${graphcompose.emoji.version} property
+        // that pins it lives in the aggregator (inherited by examples) and the bundle
+        // (which now ships the colour-emoji set). Guard the same version-literal drift.
+        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "graphcompose.emoji.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.emoji.version"))
+                .describedAs("bundle graphcompose.emoji.version must match the aggregator's (%s)", aggregator)
                 .isEqualTo(aggregator);
     }
 
@@ -288,11 +301,11 @@ class VersionConsistencyGuardTest {
         return directChild(parse(pom).getDocumentElement(), "version") != null;
     }
 
-    private static String fontsVersionProperty(Path pom) throws IOException {
-        Matcher matcher = Pattern.compile("<graphcompose\\.fonts\\.version>([^<]+)</graphcompose\\.fonts\\.version>")
+    private static String pinnedVersionProperty(Path pom, String property) throws IOException {
+        Matcher matcher = Pattern.compile("<" + Pattern.quote(property) + ">([^<]+)</" + Pattern.quote(property) + ">")
                 .matcher(Files.readString(pom));
         assertThat(matcher.find())
-                .describedAs("expected a <graphcompose.fonts.version> property in %s", pom)
+                .describedAs("expected a <%s> property in %s", property, pom)
                 .isTrue();
         return matcher.group(1).trim();
     }

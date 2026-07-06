@@ -6,30 +6,33 @@
 
     <!--
         "Batteries-included" convenience aggregate. Depending on this single
-        artifact pulls the lean engine plus the bundled Google fonts at a
-        compatible, pinned pair of versions — the one-line install for newcomers
-        who want the pre-split behaviour back. Power users instead depend on
-        graph-compose directly and pick their own graph-compose-fonts version.
+        artifact pulls the default PDF stack (graph-compose = graph-compose-core +
+        graph-compose-render-pdf), the built-in document templates, the bundled
+        Google fonts, and the colour-emoji set — the one-line install for newcomers
+        who want everything wired up. The office backends (render-docx / render-pptx)
+        stay opt-in and are NOT bundled. Power users instead depend on the individual
+        coordinates and pick their own font/emoji versions.
 
         Versioning: this module tracks the ENGINE line (its version == the engine
-        version, bumped in lockstep), and pins a specific graph-compose-fonts
-        version. It is standalone (no Maven parent) and pom-packaged, so Maven
-        Central needs no sources/javadoc jars for it.
+        version, bumped in lockstep), and pins specific graph-compose-fonts and
+        graph-compose-emoji versions (those two release on their own tag lines). It
+        is standalone (no Maven parent) and pom-packaged, so Maven Central needs no
+        sources/javadoc jars for it.
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-bundle</artifactId>
     <!--
-        Tracks the engine line. Currently 1.7.1 to match the engine version in
-        the repo; the release-cut `versions:set` bumps engine + bundle to the
-        release version in lockstep, while graph-compose-fonts stays on its own
-        line. The graph-compose dependency below uses ${project.version}, so it
-        follows automatically.
+        Tracks the engine line (== the engine version in the repo); the release-cut
+        `versions:set` bumps engine + bundle to the release version in lockstep, while
+        graph-compose-fonts / graph-compose-emoji stay on their own lines. The
+        graph-compose and graph-compose-templates dependencies below use
+        ${project.version}, so they follow automatically.
     -->
     <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>GraphCompose Bundle</name>
-    <description>Batteries-included aggregate: the GraphCompose engine plus the bundled Google fonts at compatible versions.</description>
+    <description>Batteries-included aggregate: the default PDF stack (engine + PDF backend), the built-in document templates, the bundled Google fonts, and the colour-emoji set at compatible versions.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -63,8 +66,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Pinned bundled-fonts version this bundle ships with. -->
+        <!-- Pinned bundled-fonts / colour-emoji versions this bundle ships with.
+             Both release on their own tag lines (fonts-v* / emoji-v*), so they are
+             pinned here rather than tracking ${project.version}. -->
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+        <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
@@ -73,10 +79,17 @@
     </properties>
 
     <dependencies>
-        <!-- The engine, at this bundle's (== engine) version. -->
+        <!-- The default PDF stack: the graph-compose wrapper pulls graph-compose-core
+             + graph-compose-render-pdf, so a bundle consumer renders PDF out of the box. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- The built-in CV / cover-letter / invoice / proposal templates. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- The bundled fonts, at the pinned independent fonts version. -->
@@ -84,6 +97,12 @@
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-fonts</artifactId>
             <version>${graphcompose.fonts.version}</version>
+        </dependency>
+        <!-- The colour-emoji set, at the pinned independent emoji version. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-emoji</artifactId>
+            <version>${graphcompose.emoji.version}</version>
         </dependency>
     </dependencies>
 

@@ -97,8 +97,9 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 >
 > Prefer a single "batteries-included" coordinate? Depend on
 > `io.github.demchaav:graph-compose-bundle` (same version as `graph-compose`
-> above) to pull the engine + fonts together. Full details and upgrade steps:
-> the [v1.8.0 fonts migration note](./docs/migration/v1.8.0-fonts.md).
+> above) to pull the default PDF engine, the built-in templates, the fonts, and
+> the colour emoji together. Full details and upgrade steps: the
+> [v1.8.0 fonts migration note](./docs/migration/v1.8.0-fonts.md).
 
 > **Colour emoji (from v1.9.0).** `RichText.emoji(":star:", size)` resolves
 > GitHub-style shortcodes to inline vector glyphs from an independently-versioned
@@ -114,8 +115,9 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 > ```
 >
 > An unknown shortcode falls back to its literal text, so a document that uses no
-> emoji &mdash; or runs without the artifact &mdash; renders unchanged. The
-> `graph-compose-bundle` stays fonts-only; emoji is opt-in.
+> emoji &mdash; or runs without the artifact &mdash; renders unchanged. Depending
+> on `graph-compose` directly keeps emoji opt-in; the batteries-included
+> `graph-compose-bundle` includes it.
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
 > (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to

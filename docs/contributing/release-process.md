@@ -161,6 +161,32 @@ fonts, so cutting an emoji release needs the same consumer re-pin.
 - **First publish:** `emoji/pom.xml` is already `1.0.0`; tag `emoji-v1.0.0` (on a
   commit that includes `publish-emoji.yml`) to ship it.
 
+### 2.F The 2.0 module train (lockstep versioning)
+
+From 2.0 the library ships as several modules that move together as one **version
+train**: `graph-compose-core`, the `graph-compose` compat wrapper,
+`graph-compose-render-pdf` / `-render-docx` / `-render-pptx`,
+`graph-compose-templates`, `graph-compose-testing`, and the `graph-compose-bundle`
+aggregate. They all carry the **same** version.
+
+- **User rule (one sentence):** the same version across these modules is a
+  tested-compatible set — pin one version, use it for every `graph-compose*` module
+  you depend on, and upgrade them together.
+- **What bumps when:** a fix in *any* train module bumps the **whole train** by a
+  patch; a feature bumps it by a minor. There is no per-module version drift within
+  the train. `cut-release.ps1` Step 1 bumps every train pom (`pom.xml`, `render-pdf`,
+  `render-docx`, `render-pptx`, `templates`, `testing`, `wrapper`, `bundle`) plus
+  `aggregator` / `examples` / `benchmarks` to the same `<X.Y.Z>` in one pass; each
+  module's `graph-compose-core` dependency is `${project.version}`, so it follows
+  automatically, and `VersionConsistencyGuardTest` enforces the agreement.
+- **Not in the train:** `graph-compose-fonts` and `graph-compose-emoji` keep their
+  own version lines and are pinned explicitly (§2.D / §2.E). They are the only
+  published artifacts that do *not* move with the engine version.
+- **Beta / pre-release tags:** a hyphenated train tag (e.g. `v2.0.0-beta.1`) publishes
+  the whole train to the **GitHub Release pre-release surface only** — `publish.yml`
+  skips Central for hyphenated tags (§2.B step 9). A beta is therefore installable from
+  the GitHub pre-release (and from JitPack, which builds any tag), not from Central.
+
 ---
 
 ## 2.C One-time Maven Central setup (maintainer)

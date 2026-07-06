@@ -150,18 +150,33 @@ class InlineHighlightRenderTest {
     }
 
     @Test
-    void overWideAtomicChipRendersWithoutThrowing() throws Exception {
-        // A chip wider than the column is emitted on its own line (atomic);
-        // it must still render the text on one page without throwing.
+    void overWideChipBreaksWithinColumnWithoutThrowing() throws Exception {
+        // A single-word chip wider than the column breaks within it (at soft seams,
+        // char-split as a last resort): every visual fragment stays inside the inner
+        // width, keeps its rounded fill, and the coordinate survives end-to-end.
+        double innerWidth = 90 - 20;
+        List<ParagraphLine> lines;
         byte[] pdf;
         try (DocumentSession session = GraphCompose.document().pageSize(90, 140).margin(10, 10, 10, 10).create()) {
             session.dsl().pageFlow().name("Flow")
                     .addParagraph(p -> p.inlineCode("io.github.demchaav.a.very.long.package.name")).build();
+            lines = paragraphLines(session.layoutGraph());
             pdf = session.toPdfBytes();
+        }
+        List<ParagraphLine> chipLines = lines.stream()
+                .filter(l -> l.spans().stream().anyMatch(s -> s instanceof ParagraphTextSpan ts && ts.background() != null))
+                .toList();
+        assertThat(chipLines).as("the over-wide chip breaks to >= 2 fragments").hasSizeGreaterThanOrEqualTo(2);
+        for (ParagraphLine line : chipLines) {
+            ParagraphTextSpan fragment = chipSpan(line);
+            assertThat(fragment.width()).as("each fragment stays inside the inner width")
+                    .isLessThanOrEqualTo(innerWidth + 0.5);
+            assertThat(fragment.background()).as("each fragment keeps its fill").isNotNull();
         }
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertThat(document.getNumberOfPages()).isEqualTo(1);
-            assertThat(new PDFTextStripper().getText(document)).doesNotContain("?");
+            String text = new PDFTextStripper().getText(document).replaceAll("\\s+", "");
+            assertThat(text).contains("io.github.demchaav.a.very.long.package.name").doesNotContain("?");
         }
     }
 
@@ -333,6 +348,111 @@ class InlineHighlightRenderTest {
             assertThat(links).as("a wrapped linked chip is clickable on each visual line fragment")
                     .isGreaterThanOrEqualTo(2);
             assertThat(new PDFTextStripper().getText(document)).contains("alpha").contains("epsilon").doesNotContain("?");
+        }
+    }
+
+    @Test
+    void overWideCodeChipBreaksAtSoftSeams() throws Exception {
+        // A coordinate breaks at its . : / - joiners, not mid-identifier: at least
+        // one non-final fragment ends with a soft-break character.
+        List<ParagraphLine> lines;
+        try (DocumentSession session = GraphCompose.document().pageSize(120, 200).margin(10, 10, 10, 10).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineCode("org.junit.jupiter:junit-jupiter:5.10.2")).build();
+            lines = paragraphLines(session.layoutGraph());
+        }
+        List<ParagraphLine> chipLines = lines.stream()
+                .filter(l -> l.spans().stream().anyMatch(s -> s instanceof ParagraphTextSpan ts && ts.background() != null))
+                .toList();
+        assertThat(chipLines).hasSizeGreaterThanOrEqualTo(2);
+        boolean seamBreak = chipLines.subList(0, chipLines.size() - 1).stream()
+                .map(l -> chipSpan(l).text())
+                .anyMatch(t -> !t.isEmpty() && ".:/-".indexOf(t.charAt(t.length() - 1)) >= 0);
+        assertThat(seamBreak).as("the coordinate breaks at a . : / - seam, not mid-identifier").isTrue();
+    }
+
+    @Test
+    void overWidePlainTokenBreaksWithinColumn() throws Exception {
+        // The plain wrap path (no inline runs, no markdown): a lone over-wide first
+        // token char-splits within the column instead of overflowing it.
+        double innerWidth = 90 - 20;
+        String token = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+        List<ParagraphLine> lines;
+        try (DocumentSession session = GraphCompose.document().pageSize(90, 160).margin(10, 10, 10, 10).create()) {
+            session.dsl().pageFlow().name("Flow").addParagraph(p -> p.text(token)).build();
+            lines = paragraphLines(session.layoutGraph());
+        }
+        assertThat(lines).as("the over-wide plain token breaks to >= 2 lines").hasSizeGreaterThanOrEqualTo(2);
+        for (ParagraphLine line : lines) {
+            assertThat(line.width()).as("each line stays inside the inner width").isLessThanOrEqualTo(innerWidth + 0.5);
+        }
+        String joined = lines.stream().flatMap(l -> l.spans().stream())
+                .filter(ParagraphTextSpan.class::isInstance).map(s -> ((ParagraphTextSpan) s).text())
+                .reduce("", String::concat).replaceAll("\\s+", "");
+        assertThat(joined).isEqualTo(token);
+    }
+
+    @Test
+    void overWideTokenInMarkdownBreaksWithinColumn() throws Exception {
+        // The markdown wrap path (markdown enabled + markdown syntax present): a lone
+        // over-wide token still breaks within the column.
+        double innerWidth = 90 - 20;
+        String token = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
+        List<ParagraphLine> lines;
+        try (DocumentSession session = GraphCompose.document().pageSize(90, 160).margin(10, 10, 10, 10).create()) {
+            session.markdown(true);
+            session.dsl().pageFlow().name("Flow").addParagraph(p -> p.text("**b** " + token)).build();
+            lines = paragraphLines(session.layoutGraph());
+        }
+        assertThat(lines).hasSizeGreaterThanOrEqualTo(2);
+        for (ParagraphLine line : lines) {
+            assertThat(line.width()).as("each line stays inside the inner width").isLessThanOrEqualTo(innerWidth + 0.5);
+        }
+        String joined = lines.stream().flatMap(l -> l.spans().stream())
+                .filter(ParagraphTextSpan.class::isInstance).map(s -> ((ParagraphTextSpan) s).text())
+                .reduce("", String::concat).replaceAll("\\s+", "");
+        assertThat(joined).as("the long token survives the break").contains(token);
+    }
+
+    @Test
+    void nonFirstOverWideChipBreaksWithinColumn() throws Exception {
+        // The over-wide chip is NOT the first token: leading prose is flushed, then
+        // the chip breaks on the following lines (it still fits none of them whole).
+        double innerWidth = 120 - 20;
+        List<ParagraphLine> lines;
+        try (DocumentSession session = GraphCompose.document().pageSize(120, 200).margin(10, 10, 10, 10).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineText("Use ").inlineCode("io.github.demchaav.a.very.long.package.name"))
+                    .build();
+            lines = paragraphLines(session.layoutGraph());
+        }
+        List<ParagraphLine> chipLines = lines.stream()
+                .filter(l -> l.spans().stream().anyMatch(s -> s instanceof ParagraphTextSpan ts && ts.background() != null))
+                .toList();
+        assertThat(chipLines).as("the trailing chip breaks to >= 2 fragments").hasSizeGreaterThanOrEqualTo(2);
+        for (ParagraphLine line : chipLines) {
+            assertThat(chipSpan(line).width()).isLessThanOrEqualTo(innerWidth + 0.5);
+        }
+    }
+
+    @Test
+    void overWideLinkedChipEmitsAClickableRectPerFragment() throws Exception {
+        // Char-split (single-word) linked chip: each visual fragment is independently
+        // clickable, mirroring the multi-word wrapped-chip guarantee.
+        byte[] pdf;
+        try (DocumentSession session = GraphCompose.document().pageSize(120, 200).margin(10, 10, 10, 10).create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addParagraph(p -> p.inlineHighlight(
+                            "io.github.demchaav.a.very.long.package.name", MONO, FILL, 3.0, PAD,
+                            new DocumentLinkOptions("https://example.com")))
+                    .build();
+            pdf = session.toPdfBytes();
+        }
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            long links = document.getPage(0).getAnnotations().stream()
+                    .filter(PDAnnotationLink.class::isInstance).count();
+            assertThat(links).as("a char-split linked chip is clickable on each fragment")
+                    .isGreaterThanOrEqualTo(2);
         }
     }
 

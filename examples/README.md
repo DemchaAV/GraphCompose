@@ -75,6 +75,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
 | [Nested lists](#nested-lists-v16) | `ListBuilder.addItem(label, Consumer)` — depth cascade, per-depth markers, mixed flat / nested authoring | [PDF](../assets/readme/examples/nested-list-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/lists/NestedListExample.java) |
 | [Composed table cells](#composed-table-cells-v16) | `DocumentTableCell.node(DocumentNode)` — paragraphs, lists, sub-tables inside cells with two-pass measurement | [PDF](../assets/readme/examples/composed-table-cell-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java) |
+| [Inline-code column wrap](#inline-code-column-wrap) | A long `inlineCode(...)` coordinate breaks at its `. : / -` seams inside a narrow **fixed** column and an **auto** column grows to fit it on one line | [PDF](../assets/readme/examples/inline-code-column-wrap.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java) |
 | [Canvas layer (free placement)](#canvas-layer-v16) | `CanvasLayerNode` — pixel-precise `(x, y)` placement of children inside a fixed bounding box, with `ClipPolicy` clipping | [PDF](../assets/readme/examples/canvas-layer-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) |
 | [Transforms](#transforms) | `rotate`, `scale`, and per-layer `zIndex` swap | [PDF](../assets/readme/examples/transforms.pdf) · [Source](src/main/java/com/demcha/examples/features/transforms/TransformsExample.java) |
 | [Block alignment](#block-alignment) | `addAligned(align, node)` / `addSvgIcon(icon, w, align)` — seat any fixed-size node left / centre / right across the content width | [PDF](../assets/readme/examples/block-align.pdf) · [Source](src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java) |
@@ -534,6 +535,44 @@ table.columns(...)
 
 [📄 View PDF](../assets/readme/examples/table-advanced.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java)
+
+### Inline-code column wrap
+
+A composed cell holding one long `inlineCode(...)` token — a Maven coordinate,
+fully-qualified class name or URL — stays inside its column. In a narrow
+**fixed** column the chip breaks at its `. : / -` seams (char-splitting only
+when a segment is still too wide), with the rounded fill intact on every
+fragment; in an **auto** column the column grows to fit the coordinate on one
+line instead of collapsing.
+
+```java
+DocumentTableCell.node(document.dsl().paragraph()
+        .inlineCode("org.junit.jupiter:junit-jupiter:5.10.2").build())
+// fixed(104) column -> wraps at seams;  auto() column -> grows to one line
+```
+
+[📄 View PDF](../assets/readme/examples/inline-code-column-wrap.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java)
+
+### Custom Business Theme
+
+Build a `BusinessTheme` from raw `DocumentPalette` / `SpacingScale` /
+`TextScale` / `TablePreset` records — no factory shortcut. Plug it
+straight into `InvoiceTemplateV2` to retheme the whole template
+without touching any code that uses it.
+
+```java
+BusinessTheme studioEmerald = new BusinessTheme(
+        new DocumentPalette(/* page, surface, surfaceMuted, ink, accent, … */),
+        SpacingScale.cinematic(),
+        new TextScale(/* h1, h2, body, caption fonts … */),
+        TablePreset.cinematic());
+
+new InvoiceTemplateV2(studioEmerald).compose(document, invoice);
+```
+
+[📄 View PDF](../assets/readme/examples/invoice-custom-theme.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java)
 
 ---
 

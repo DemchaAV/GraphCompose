@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v1.9.1 — Planned
+## v1.9.1 — 2026-07-06
 
 Table columns now contain long inline-code content instead of letting it spill
 over the next column.

@@ -1246,6 +1246,8 @@ code[class*="language-"] .token.class-name {
   font-size: 0.82rem;
   font-weight: 660;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s ease;
 }
 
@@ -1435,6 +1437,7 @@ code[class*="language-"] .token.class-name {
 
 .lightbox-title {
   margin: 0;
+  min-width: 0; /* let the title absorb the squeeze (wrap) instead of the buttons */
   color: #f8fafc; /* lightbox overlay is always dark in both themes */
   font-size: 1.05rem;
   font-weight: 720;
@@ -1445,6 +1448,7 @@ code[class*="language-"] .token.class-name {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-shrink: 0; /* actions keep their full size regardless of title length */
 }
 
 .lightbox-close {

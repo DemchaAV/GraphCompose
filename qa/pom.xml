@@ -77,21 +77,12 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- The PDF backend (provider on the classpath so the relocated render
-             suites resolve a backend) plus its tests-classifier jar, which carries
-             the shared render harness (EngineComposerHarness + engine.assembly). -->
+        <!-- The PDF backend — the provider on the classpath so the relocated
+             render suites resolve a backend and can build/rasterize PDFs. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-render-pdf</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <!-- The built-in templates (the relocated visual-parity + smoke suites

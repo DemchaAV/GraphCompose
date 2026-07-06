@@ -172,9 +172,9 @@
             <scope>test</scope>
         </dependency>
         <!--
-            The engine's shared pdf-free test fixtures (com.demcha.mock.*) that the
-            backend/harness tests reuse. Pulled from the engine tests-classifier jar
-            (a local build aid only; the release profile disables it).
+            The engine's shared visual-test helper (com.demcha.testing.VisualTestOutputs)
+            that a few backend render tests write their PDFs through. Pulled from the
+            engine tests-classifier jar (a local build aid; the release profile disables it).
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
@@ -208,25 +208,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
             </plugin>
-            <!--
-                Build a tests-classifier jar so graph-compose-qa can reuse the render
-                harness (com.demcha.compose.testsupport.*). A local build aid only:
-                the release profile disables this execution (phase=none) so it is
-                never attached or deployed.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven.jar.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-test-jar</id>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -239,17 +220,6 @@
             <id>release</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven.jar.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-test-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>

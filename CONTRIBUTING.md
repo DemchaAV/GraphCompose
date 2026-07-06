@@ -55,10 +55,14 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
    This runs the architecture-and-documentation guards plus the full test suite. The same gate runs in CI on every PR.
 5. **Push** your feature branch to your fork and open a pull request against `develop` on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
 6. **CI runs automatically.** Active jobs:
-   - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate
+   - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
    - `Examples Generation Smoke Test` &mdash; regenerates all 54 runnable examples and uploads the PDFs as a CI artifact
+   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` surface
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
+   - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
+
+   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build &mdash; a **docs-only PR runs the guards only**; `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `2.0-dev` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
 
    The PR cannot merge into a protected branch until all required checks are green.
 7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.

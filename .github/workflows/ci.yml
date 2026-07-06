@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - 2.0-dev
   pull_request:
     # Run CI for any incoming PR regardless of the base branch so
     # feature branches targeting `develop` (e.g. v1.7 prep) also
@@ -41,10 +42,53 @@ jobs:
             "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest,VersionConsistencyGuardTest" \
             test
 
+  changes:
+    # Path-based change detection for selective CI on pull requests. Emits the
+    # reverse-dependency flags the heavy jobs gate on: `code` (any build input),
+    # `core` (the root graph-compose-core module — drives japicmp), and `perf`
+    # (modules the smoke benchmark exercises). Pushes/dispatch bypass these gates.
+    name: Detect changed paths
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      core: ${{ steps.filter.outputs.core }}
+      perf: ${{ steps.filter.outputs.perf }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Detect changed module paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**/*.java'
+              - '**/pom.xml'
+              - '**/src/main/resources/**'
+              - '**/src/test/resources/**'
+              - '.mvn/**'
+              - 'mvnw'
+              - 'mvnw.cmd'
+              - '.github/workflows/ci.yml'
+            core:
+              - 'src/**'
+              - 'pom.xml'
+            perf:
+              - 'src/**'
+              - 'render-pdf/**'
+              - 'templates/**'
+              - 'benchmarks/**'
+              - 'pom.xml'
+
   build-and-test:
     name: Build and run tests (JDK ${{ matrix.java }})
-    if: github.event_name != 'schedule'
-    needs: architecture-and-documentation-guards
+    # Selective CI: on a pull request, skip the heavy reactor build + JDK matrix
+    # when only docs / non-build files changed (`code` is false). Pushes to the
+    # integration branches and manual dispatch always run the full gate.
+    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true')
+    needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     strategy:
       # Don't cancel sibling matrix jobs on the first failure — a
@@ -87,8 +131,9 @@ jobs:
 
   examples-generation:
     name: Examples Generation Smoke Test
-    if: github.event_name != 'schedule'
-    needs: build-and-test
+    # Follows build-and-test: skipped for a docs-only PR, runs otherwise.
+    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true')
+    needs: [build-and-test, changes]
     runs-on: ubuntu-latest
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -174,8 +219,10 @@ jobs:
 
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
-    if: github.event_name == 'pull_request'
-    needs: architecture-and-documentation-guards
+    # japicmp diffs the graph-compose-core public surface, so it only matters
+    # when the core module (root `src/**` or `pom.xml`) changed.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.core == 'true'
+    needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -211,8 +258,10 @@ jobs:
 
   perf-smoke:
     name: Performance Smoke Check
-    if: github.event_name == 'pull_request'
-    needs: architecture-and-documentation-guards
+    # The smoke benchmark only exercises core + render-pdf + templates (built via
+    # the benchmarks module), so skip it when none of those changed.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.perf == 'true'
+    needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -277,6 +326,24 @@ jobs:
           name: benchmark-gate-reports-${{ github.run_id }}
           path: benchmarks/target/surefire-reports/**
           if-no-files-found: ignore
+
+  ci-gate:
+    name: CI Gate
+    # Single stable status check aggregating the selective jobs above. Green when
+    # every job that ran succeeded; a job legitimately skipped by the path filter
+    # counts as success. Point branch protection at "CI Gate" (plus the always-run
+    # "Architecture and Documentation Guards") instead of the individual, sometimes
+    # -skipped matrix legs so a docs-only PR is never left waiting on a check that
+    # never reports.
+    if: always() && github.event_name != 'schedule'
+    needs: [architecture-and-documentation-guards, build-and-test, examples-generation, binary-compat, perf-smoke]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "A required CI job failed or was cancelled: ${{ join(needs.*.result, ', ') }}"
+          exit 1
 
   benchmark-diff:
     name: Weekly Benchmark Diff

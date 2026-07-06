@@ -96,6 +96,29 @@ for this cycle.
   (`graph-compose-render-docx` / `graph-compose-render-pptx`) stay opt-in and are not
   bundled.
 
+## v1.9.1 — 2026-07-06
+
+Table columns now contain long inline-code content instead of letting it spill
+over the next column.
+
+### Bug fixes
+
+- **Long inline-code chips no longer overflow their column.** A long
+  `inlineCode(...)` / `inlineHighlight(...)` token with no spaces — a package
+  coordinate, fully-qualified class name or URL — now breaks *within* its
+  paragraph or table cell instead of drawing over the neighbouring content. It
+  breaks at `.` `:` `/` `-` seams and char-splits only when a segment is still
+  too wide, keeping the rounded chip fill intact on every wrapped fragment.
+  Applies to all three paragraph wrap paths (plain, inline, markdown); text that
+  already fits is laid out exactly as before.
+
+- **`auto()` table columns grow to fit composed cell content.** A composed cell
+  (`DocumentTableCell.node(...)`) in an `auto()` column now contributes its
+  intrinsic content width, so the column sizes to the content (e.g. an
+  inline-code chip) instead of collapsing toward zero. `fixed(...)` columns are
+  unchanged. As with plain-text auto columns, a table too narrow for the summed
+  intrinsic width of its auto columns reports `exceeds available width`.
+
 ## v1.9.0 — 2026-06-29
 
 In-document navigation. Rendered PDFs can now declare named **anchors** and

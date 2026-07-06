@@ -827,32 +827,38 @@ public final class TextFlowSupport {
                 }
 
                 double nextTokenWidth = measurement.textWidth(style, nextToken);
-                if (!hasContent || currentWidth + nextTokenWidth <= maxWidth + EPS) {
+                if (currentWidth + nextTokenWidth <= maxWidth + EPS) {
                     currentLine.append(nextToken);
                     currentWidth += nextTokenWidth;
                     hasContent = true;
                     continue;
                 }
 
-                result.add(trimTrailingSpaces(currentLine.toString()));
-                currentPrefix = continuationPrefix;
-                currentLine.setLength(0);
-                currentLine.append(continuationPrefix);
-                currentWidth = measurement.textWidth(style, continuationPrefix);
-                hasContent = false;
-
-                double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
+                // Does not fit. If the line already has content, flush it and retry
+                // the token on a fresh line before resorting to a break.
                 String strippedToken = nextToken.stripLeading();
                 double strippedTokenWidth = measurement.textWidth(style, strippedToken);
-                if (currentWidth + strippedTokenWidth <= maxWidth + EPS) {
+                if (hasContent) {
+                    result.add(trimTrailingSpaces(currentLine.toString()));
+                    currentPrefix = continuationPrefix;
                     currentLine.setLength(0);
-                    currentLine.append(currentPrefix).append(strippedToken);
-                    currentWidth += strippedTokenWidth;
-                    hasContent = true;
-                    continue;
+                    currentLine.append(continuationPrefix);
+                    currentWidth = measurement.textWidth(style, continuationPrefix);
+                    hasContent = false;
+
+                    if (currentWidth + strippedTokenWidth <= maxWidth + EPS) {
+                        currentLine.setLength(0);
+                        currentLine.append(currentPrefix).append(strippedToken);
+                        currentWidth += strippedTokenWidth;
+                        hasContent = true;
+                        continue;
+                    }
                 }
 
-                List<String> chunks = splitLongToken(strippedToken, style, availableWidth, measurement);
+                // Over-wide on a fresh (or already empty) line: break it at soft seams,
+                // char-splitting as a last resort.
+                double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
+                List<String> chunks = TokenBreaking.breakLongToken(strippedToken, style, availableWidth, measurement);
                 if (chunks.isEmpty()) {
                     continue;
                 }
@@ -938,62 +944,81 @@ public final class TextFlowSupport {
                 }
 
                 double tokenWidth = sanitizedToken.wrapWidth();
-                if (currentLine.isEmpty() || currentWidth + tokenWidth <= maxWidth + EPS) {
-                    currentLine.add(sanitizedToken);
-                    currentWidth += tokenWidth;
-                    continue;
-                }
-
-                if (!currentLine.isEmpty()) {
-                    result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
-                }
-                currentLine = new ArrayList<>();
-                if (!continuationPrefix.isEmpty()) {
-                    currentLine.add(InlineTextToken.of(continuationPrefix, defaultStyle, null, measurement));
-                }
-                currentWidth = inlineLineWidth(currentLine);
-
-                sanitizedToken = trimLeadingIfInlineLineStart(token, currentLine, measurement);
-                if (sanitizedToken == null) {
-                    continue;
-                }
-                tokenWidth = sanitizedToken.wrapWidth();
                 if (currentWidth + tokenWidth <= maxWidth + EPS) {
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
                     continue;
                 }
 
-                if (!(sanitizedToken instanceof InlineTextToken textToken)
-                        || textToken.highlightGroup() != null) {
-                    // Atomic runs that exceed the available width are emitted on their
-                    // own line; further breaking is not possible (image / shape / SVG,
-                    // and a single highlight-chip word — a chip wraps between its words
-                    // but a lone over-wide chip word is not char-split).
+                // Does not fit. If the line already has content, flush it and retry
+                // the token on a fresh line before resorting to a break.
+                if (!currentLine.isEmpty()) {
+                    result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
+                    currentLine = new ArrayList<>();
+                    if (!continuationPrefix.isEmpty()) {
+                        currentLine.add(InlineTextToken.of(continuationPrefix, defaultStyle, null, measurement));
+                    }
+                    currentWidth = inlineLineWidth(currentLine);
+
+                    sanitizedToken = trimLeadingIfInlineLineStart(token, currentLine, measurement);
+                    if (sanitizedToken == null) {
+                        continue;
+                    }
+                    tokenWidth = sanitizedToken.wrapWidth();
+                    if (currentWidth + tokenWidth <= maxWidth + EPS) {
+                        currentLine.add(sanitizedToken);
+                        currentWidth += tokenWidth;
+                        continue;
+                    }
+                }
+
+                // Still over-wide on a fresh (or already empty) line. Text tokens —
+                // plain OR highlight chip — are broken within the column; a graphic
+                // (image / shape / SVG) has no break point and is emitted as-is.
+                if (!(sanitizedToken instanceof InlineTextToken textToken)) {
                     currentLine.add(sanitizedToken);
-                    currentWidth += tokenWidth;
+                    currentWidth += sanitizedToken.wrapWidth();
                     continue;
                 }
 
-                List<String> chunks = splitLongToken(
+                boolean chip = textToken.highlightGroup() != null;
+                // A chip fragment paints leadPad + glyphs + trailPad, but the break
+                // budgets glyphs only, so reserve the run's padding here to keep the
+                // coalesced fill inside the column. Interior fragments under-fill by
+                // at most that padding — cosmetic, and only on an over-wide chip.
+                double reserve = chip ? textToken.leadPad() + textToken.trailPad() : 0.0;
+                List<String> pieces = TokenBreaking.breakLongToken(
                         textToken.text(),
                         textToken.textStyle(),
-                        Math.max(1.0, maxWidth - currentWidth),
+                        Math.max(1.0, maxWidth - currentWidth - reserve),
                         measurement);
-                for (int chunkIndex = 0; chunkIndex < chunks.size(); chunkIndex++) {
-                    String chunk = chunks.get(chunkIndex);
-                    if (chunk.isEmpty()) {
+                for (int pieceIndex = 0; pieceIndex < pieces.size(); pieceIndex++) {
+                    String piece = pieces.get(pieceIndex);
+                    if (piece.isEmpty()) {
                         continue;
                     }
-                    InlineTextToken chunkToken = InlineTextToken.of(
-                            chunk,
-                            textToken.textStyle(),
-                            textToken.linkTarget(),
-                            measurement);
+                    // Chip pieces keep the run's group + background so the coalescer
+                    // paints one fill per fragment; the run's outer pad sits on the
+                    // first/last piece only, leaving the break seams open.
+                    InlineTextToken chunkToken = chip
+                            ? InlineTextToken.ofHighlight(
+                                    piece,
+                                    textToken.textStyle(),
+                                    textToken.linkTarget(),
+                                    textToken.background(),
+                                    textToken.highlightGroup(),
+                                    pieceIndex == 0 ? textToken.leadPad() : 0.0,
+                                    pieceIndex == pieces.size() - 1 ? textToken.trailPad() : 0.0,
+                                    measurement)
+                            : InlineTextToken.of(
+                                    piece,
+                                    textToken.textStyle(),
+                                    textToken.linkTarget(),
+                                    measurement);
                     currentLine.add(chunkToken);
-                    currentWidth += chunkToken.width();
+                    currentWidth += chunkToken.wrapWidth();
 
-                    if (chunkIndex < chunks.size() - 1) {
+                    if (pieceIndex < pieces.size() - 1) {
                         result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
                         currentLine = new ArrayList<>();
                         if (!continuationPrefix.isEmpty()) {
@@ -1064,33 +1089,35 @@ public final class TextFlowSupport {
                 }
 
                 double tokenWidth = measurement.textWidth(sanitizedToken.textStyle(), sanitizedToken.text());
-                if (currentLine.isEmpty() || currentWidth + tokenWidth <= maxWidth + EPS) {
-                    currentLine.add(sanitizedToken);
-                    currentWidth += tokenWidth;
-                    continue;
-                }
-
-                if (!currentLine.isEmpty()) {
-                    result.add(toParagraphLine(currentLine, metrics, measurement));
-                }
-                currentLine = new ArrayList<>();
-                if (!continuationPrefix.isEmpty()) {
-                    currentLine.add(new TextDataBody(continuationPrefix, style));
-                }
-                currentWidth = lineWidth(currentLine, measurement);
-
-                sanitizedToken = trimLeadingIfLineStart(token, currentLine);
-                if (sanitizedToken == null || sanitizedToken.text().isEmpty()) {
-                    continue;
-                }
-                tokenWidth = measurement.textWidth(sanitizedToken.textStyle(), sanitizedToken.text());
                 if (currentWidth + tokenWidth <= maxWidth + EPS) {
                     currentLine.add(sanitizedToken);
                     currentWidth += tokenWidth;
                     continue;
                 }
 
-                List<String> chunks = splitLongToken(
+                // Does not fit. If the line already has content, flush it and retry
+                // the token on a fresh line before resorting to a break.
+                if (!currentLine.isEmpty()) {
+                    result.add(toParagraphLine(currentLine, metrics, measurement));
+                    currentLine = new ArrayList<>();
+                    if (!continuationPrefix.isEmpty()) {
+                        currentLine.add(new TextDataBody(continuationPrefix, style));
+                    }
+                    currentWidth = lineWidth(currentLine, measurement);
+
+                    sanitizedToken = trimLeadingIfLineStart(token, currentLine);
+                    if (sanitizedToken == null || sanitizedToken.text().isEmpty()) {
+                        continue;
+                    }
+                    tokenWidth = measurement.textWidth(sanitizedToken.textStyle(), sanitizedToken.text());
+                    if (currentWidth + tokenWidth <= maxWidth + EPS) {
+                        currentLine.add(sanitizedToken);
+                        currentWidth += tokenWidth;
+                        continue;
+                    }
+                }
+
+                List<String> chunks = TokenBreaking.breakLongToken(
                         sanitizedToken.text(),
                         sanitizedToken.textStyle(),
                         Math.max(1.0, maxWidth - currentWidth),
@@ -1602,54 +1629,6 @@ public final class TextFlowSupport {
                     body.text());
         }
         return width;
-    }
-
-    private static List<String> splitLongToken(String token,
-                                               TextStyle style,
-                                               double maxWidth,
-                                               TextMeasurementSystem measurement) {
-        if (token == null || token.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> pieces = new ArrayList<>();
-        String remaining = token;
-        while (!remaining.isEmpty()) {
-            int splitIndex = fitCharacters(remaining, style, maxWidth, measurement);
-            if (splitIndex <= 0 || splitIndex >= remaining.length()) {
-                pieces.add(remaining);
-                break;
-            }
-            pieces.add(remaining.substring(0, splitIndex));
-            remaining = remaining.substring(splitIndex).stripLeading();
-        }
-        return List.copyOf(pieces);
-    }
-
-    private static int fitCharacters(String text,
-                                     TextStyle style,
-                                     double maxWidth,
-                                     TextMeasurementSystem measurement) {
-        // Largest prefix length whose width fits. The fit predicate
-        // width(substring(0,n)) <= maxWidth is monotonic in n (each added char
-        // contributes a non-negative glyph advance), so the fitting lengths form
-        // a prefix [1..lastFitting] and a binary search finds the SAME boundary
-        // as the old linear scan — but in O(log n) width calls instead of
-        // measuring every growing prefix (which was O(n) calls and O(n^2)
-        // measured characters for a long unbreakable token).
-        int lastFitting = 0;
-        int low = 1;
-        int high = text.length();
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            if (measurement.textWidth(style, text.substring(0, mid)) <= maxWidth + EPS) {
-                lastFitting = mid;
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-        return lastFitting == 0 ? Math.min(1, text.length()) : lastFitting;
     }
 
     private static String trimTrailingSpaces(String value) {

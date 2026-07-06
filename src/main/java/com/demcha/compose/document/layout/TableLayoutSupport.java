@@ -47,12 +47,13 @@ final class TableLayoutSupport {
         List<List<LogicalCell>> logicalRows = buildLogicalRows(node, columnCount);
         List<TableColumnLayout> normalizedSpecs = normalizeSpecs(node, columnCount);
         TableCellLayoutStyle[][] stylesGrid = buildStylesGrid(node, logicalRows, columnCount);
-        double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, logicalRows, stylesGrid, columnCount, measurement);
+        double innerAvailableWidth = Math.max(0.0, availableWidth - node.padding().horizontal());
+        double[] naturalWidths = resolveNaturalColumnWidths(node, normalizedSpecs, logicalRows, stylesGrid,
+                columnCount, measurement, prepareContext, innerAvailableWidth);
         double naturalWidth = sum(naturalWidths);
         double[] finalWidths = resolveFinalColumnWidths(node, normalizedSpecs, naturalWidths, naturalWidth);
         double finalWidth = sum(finalWidths);
 
-        double innerAvailableWidth = Math.max(0.0, availableWidth - node.padding().horizontal());
         if (finalWidth > innerAvailableWidth + EPS) {
             throw new IllegalStateException("Table '" + displayName(node) + "' width " + finalWidth
                                             + " exceeds available width " + innerAvailableWidth + ".");
@@ -488,7 +489,9 @@ final class TableLayoutSupport {
                                                        List<List<LogicalCell>> logicalRows,
                                                        TableCellLayoutStyle[][] stylesGrid,
                                                        int columnCount,
-                                                       TextMeasurementSystem measurement) {
+                                                       TextMeasurementSystem measurement,
+                                                       PrepareContext prepareContext,
+                                                       double innerAvailableWidth) {
         double[] widths = new double[columnCount];
         double[] singleCellRequired = new double[columnCount];
 
@@ -498,8 +501,12 @@ final class TableLayoutSupport {
                     continue;
                 }
                 int col = logical.startColumn();
-                singleCellRequired[col] = Math.max(singleCellRequired[col],
-                        cellNaturalWidth(logical.sanitizedLines(), stylesGrid[rowIndex][col], measurement));
+                double required = composedAutoCellNaturalWidth(logical, normalizedSpecs.get(col),
+                        stylesGrid[rowIndex][col], prepareContext, innerAvailableWidth);
+                if (required < 0.0) {
+                    required = cellNaturalWidth(logical.sanitizedLines(), stylesGrid[rowIndex][col], measurement);
+                }
+                singleCellRequired[col] = Math.max(singleCellRequired[col], required);
             }
         }
 
@@ -594,6 +601,35 @@ final class TableLayoutSupport {
             finalWidths[autoColumn] += share;
         }
         return finalWidths;
+    }
+
+    /**
+     * Natural width contribution of a composed cell that sits in an AUTO column:
+     * the child's intrinsic content width plus the cell padding, so the AUTO
+     * column grows to fit composed content (e.g. an inline-code chip) instead of
+     * being sized to zero by its plain-text siblings. The child is measured
+     * against the table's inner width, so the result is already clamped to what
+     * the table can give — it never forces the table past its available width.
+     *
+     * <p>Returns a negative sentinel when this is not a composed cell in an AUTO
+     * column, so the caller falls back to the plain-text {@link #cellNaturalWidth}
+     * formula. Composed cells in FIXED columns keep contributing nothing: the
+     * column width is fixed and an over-wide child wraps/breaks inside it.</p>
+     */
+    private static double composedAutoCellNaturalWidth(LogicalCell logical,
+                                                       TableColumnLayout spec,
+                                                       TableCellLayoutStyle style,
+                                                       PrepareContext prepareContext,
+                                                       double innerAvailableWidth) {
+        DocumentTableCell src = logical.source();
+        if (src == null || !src.hasComposedContent() || !spec.isAuto() || prepareContext == null) {
+            return -1.0;
+        }
+        Padding padding = style.padding() == null ? Padding.zero() : style.padding();
+        double childInner = Math.max(0.0, innerAvailableWidth - padding.horizontal());
+        double natural = prepareContext.prepare(src.content(), BoxConstraints.natural(childInner))
+                .measureResult().width();
+        return natural + padding.horizontal();
     }
 
     private static double cellNaturalWidth(List<String> sanitizedLines,

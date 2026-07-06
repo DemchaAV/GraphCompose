@@ -6,6 +6,10 @@ invoice, proposal}`, every preset a final class with a
 `create(BrandTheme)` factory returning a `DocumentTemplate<…>`. GraphCompose
 2.0 ships no other template system.
 
+> **Dependency.** These presets ship in the opt-in `graph-compose-templates` artifact — not
+> bundled in `graph-compose`. Add it, or depend on `graph-compose-bundle`. See the
+> [README install matrix](../../README.md#installation).
+
 Through the 1.x line this page was a decision guide between two parallel
 surfaces. On the 2.0 line the decision is gone; what remains here is the
 naming history (so old commit messages and ADRs still make sense) and the

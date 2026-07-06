@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.ExternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineShapeRun;
@@ -39,7 +40,7 @@ class RichTextTest {
         InlineTextRun run = (InlineTextRun) runs.get(0);
         assertThat(run.text()).isEqualTo("Hello");
         assertThat(run.textStyle()).isNull();
-        assertThat(run.linkOptions()).isNull();
+        assertThat(run.linkTarget()).isNull();
     }
 
     @Test
@@ -104,8 +105,8 @@ class RichTextTest {
     @Test
     void linkRunCarriesLinkOptionsWithoutStyle() {
         InlineTextRun run = (InlineTextRun) RichText.empty().link("Click", "https://example.com").runs().get(0);
-        assertThat(run.linkOptions()).isNotNull();
-        assertThat(run.linkOptions().uri()).isEqualTo("https://example.com");
+        assertThat(run.linkTarget()).isInstanceOf(ExternalLinkTarget.class);
+        assertThat(((ExternalLinkTarget) run.linkTarget()).options().uri()).isEqualTo("https://example.com");
         assertThat(run.textStyle()).isNull();
     }
 
@@ -189,7 +190,7 @@ class RichTextTest {
     void linkRunWithExplicitOptionsPreservesAllFields() {
         DocumentLinkOptions options = new DocumentLinkOptions("https://demcha.io");
         InlineTextRun run = (InlineTextRun) RichText.empty().link("Author", options).runs().get(0);
-        assertThat(run.linkOptions()).isSameAs(options);
+        assertThat(((ExternalLinkTarget) run.linkTarget()).options()).isSameAs(options);
         assertThat(run.text()).isEqualTo("Author");
     }
 

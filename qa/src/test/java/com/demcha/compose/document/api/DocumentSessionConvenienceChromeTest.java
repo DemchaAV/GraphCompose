@@ -1,10 +1,10 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
+import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentProtection;
+import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -20,19 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Verifies that the canonical convenience PDF entrypoints
  * ({@code buildPdf}, {@code writePdf}, {@code toPdfBytes}) honour the
- * document-level options configured directly on {@link DocumentSession}.
+ * backend-neutral document-level chrome configured directly on
+ * {@link DocumentSession} — metadata, watermark, protection, and
+ * header/footer.
  *
  * <p>This guarantees that callers do not need to instantiate
  * {@link com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend}
- * just to attach metadata, watermark, protection, or header/footer chrome.</p>
- *
- * <p>This test deliberately exercises the deprecated
- * {@code DocumentSession#metadata(PdfMetadataOptions)} family of overloads
- * (and their watermark/protect/header/footer siblings) to keep the
- * compatibility path covered until removal in v2.0.</p>
+ * just to attach chrome; the session-level options reach the rendered PDF.</p>
  */
-@SuppressWarnings("deprecation")
-class DocumentSessionConveniencePdfOptionsTest {
+class DocumentSessionConvenienceChromeTest {
 
     @Test
     void buildPdfAppliesSessionLevelMetadataWatermarkProtectionAndChrome() throws Exception {
@@ -42,28 +38,28 @@ class DocumentSessionConveniencePdfOptionsTest {
                     .margin(36, 36, 48, 36)
                     .create()) {
 
-                document.metadata(PdfMetadataOptions.builder()
+                document.metadata(DocumentMetadata.builder()
                                 .title("Convenience Title")
                                 .author("Session Author")
                                 .subject("Session Subject")
                                 .keywords("session, convenience")
                                 .build())
-                        .watermark(PdfWatermarkOptions.builder()
+                        .watermark(DocumentWatermark.builder()
                                 .text("DRAFT")
-                                .fontSize(36)
+                                .fontSize(36f)
                                 .opacity(0.1f)
                                 .build())
-                        .protect(PdfProtectionOptions.builder()
+                        .protect(DocumentProtection.builder()
                                 .ownerPassword("owner-pass")
                                 .userPassword("")
                                 .canCopyContent(false)
                                 .canPrint(true)
                                 .build())
-                        .header(PdfHeaderFooterOptions.builder()
+                        .header(DocumentHeaderFooter.builder()
                                 .centerText("Convenience Header")
                                 .showSeparator(true)
                                 .build())
-                        .footer(PdfHeaderFooterOptions.builder()
+                        .footer(DocumentHeaderFooter.builder()
                                 .centerText("Page {page} of {pages}")
                                 .build());
 
@@ -110,7 +106,7 @@ class DocumentSessionConveniencePdfOptionsTest {
                 .margin(24, 24, 24, 24)
                 .create()) {
 
-            document.metadata(PdfMetadataOptions.builder()
+            document.metadata(DocumentMetadata.builder()
                     .title("In-Memory Title")
                     .author("Bytes Author")
                     .build());
@@ -141,10 +137,10 @@ class DocumentSessionConveniencePdfOptionsTest {
                 .margin(24, 24, 24, 24)
                 .create()) {
 
-            document.header(PdfHeaderFooterOptions.builder()
+            document.header(DocumentHeaderFooter.builder()
                             .centerText("Should Not Appear")
                             .build())
-                    .footer(PdfHeaderFooterOptions.builder()
+                    .footer(DocumentHeaderFooter.builder()
                             .centerText("Should Also Not Appear")
                             .build())
                     .clearHeadersAndFooters();

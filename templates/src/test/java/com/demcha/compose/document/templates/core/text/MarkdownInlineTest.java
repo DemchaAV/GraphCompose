@@ -1,7 +1,7 @@
 package com.demcha.compose.document.templates.core.text;
 
 import com.demcha.compose.document.dsl.RichText;
-import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.ExternalLinkTarget;
 import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.style.DocumentColor;
@@ -29,6 +29,14 @@ class MarkdownInlineTest {
             .decoration(DocumentTextDecoration.DEFAULT)
             .color(DocumentColor.BLACK)
             .build();
+
+    private static boolean hasExternalLink(InlineTextRun run) {
+        return run.linkTarget() instanceof ExternalLinkTarget;
+    }
+
+    private static String linkUri(InlineTextRun run) {
+        return ((ExternalLinkTarget) run.linkTarget()).options().uri();
+    }
 
     // --- plainText -----------------------------------------------------------
 
@@ -74,10 +82,8 @@ class MarkdownInlineTest {
         assertThat(runs).hasSize(1);
         InlineTextRun only = (InlineTextRun) runs.get(0);
         assertThat(only.text()).isEqualTo("GraphCompose");
-        assertThat(only.linkOptions())
-                .isNotNull()
-                .extracting(DocumentLinkOptions::uri)
-                .isEqualTo("https://github.com/x/y");
+        assertThat(hasExternalLink(only)).isTrue();
+        assertThat(linkUri(only)).isEqualTo("https://github.com/x/y");
     }
 
     @Test
@@ -96,16 +102,16 @@ class MarkdownInlineTest {
         // What matters: exactly ONE run carries link metadata, and its text
         // is the visible label.
         long linkCount = runs.stream()
-                .filter(r -> r.linkOptions() != null)
+                .filter(MarkdownInlineTest::hasExternalLink)
                 .count();
         assertThat(linkCount).isEqualTo(1);
 
         InlineTextRun link = runs.stream()
-                .filter(r -> r.linkOptions() != null)
+                .filter(MarkdownInlineTest::hasExternalLink)
                 .findFirst()
                 .orElseThrow();
         assertThat(link.text()).isEqualTo("GraphCompose");
-        assertThat(link.linkOptions().uri()).isEqualTo("https://gc");
+        assertThat(linkUri(link)).isEqualTo("https://gc");
 
         // Surrounding plain text must still be present somewhere in the
         // run sequence — the emphasis parser is free to fragment it as it
@@ -128,13 +134,13 @@ class MarkdownInlineTest {
 
         List<InlineTextRun> linkRuns = rich.runs().stream()
                 .map(r -> (InlineTextRun) r)
-                .filter(r -> r.linkOptions() != null)
+                .filter(MarkdownInlineTest::hasExternalLink)
                 .toList();
         assertThat(linkRuns).hasSize(2);
         assertThat(linkRuns.get(0).text()).isEqualTo("A");
-        assertThat(linkRuns.get(0).linkOptions().uri()).isEqualTo("https://a");
+        assertThat(linkUri(linkRuns.get(0))).isEqualTo("https://a");
         assertThat(linkRuns.get(1).text()).isEqualTo("B");
-        assertThat(linkRuns.get(1).linkOptions().uri()).isEqualTo("https://b");
+        assertThat(linkUri(linkRuns.get(1))).isEqualTo("https://b");
     }
 
     @Test
@@ -147,7 +153,7 @@ class MarkdownInlineTest {
         // pipeline as literal text.
         assertThat(runs).isNotEmpty();
         assertThat(runs).allSatisfy(run ->
-                assertThat(((InlineTextRun) run).linkOptions()).isNull());
+                assertThat(((InlineTextRun) run).linkTarget()).isNull());
         String concatenated = runs.stream()
                 .map(r -> ((InlineTextRun) r).text())
                 .reduce("", String::concat);
@@ -163,7 +169,7 @@ class MarkdownInlineTest {
         assertThat(runs).isNotEmpty();
         // No link runs in this input.
         assertThat(runs).allSatisfy(run ->
-                assertThat(((InlineTextRun) run).linkOptions()).isNull());
+                assertThat(((InlineTextRun) run).linkTarget()).isNull());
     }
 
     @Test
@@ -187,6 +193,6 @@ class MarkdownInlineTest {
         InlineTextRun a = (InlineTextRun) richA.runs().get(0);
         InlineTextRun b = (InlineTextRun) richB.runs().get(0);
         assertThat(a.text()).isEqualTo(b.text()).isEqualTo("hi");
-        assertThat(a.linkOptions().uri()).isEqualTo(b.linkOptions().uri()).isEqualTo("https://h");
+        assertThat(linkUri(a)).isEqualTo(linkUri(b)).isEqualTo("https://h");
     }
 }

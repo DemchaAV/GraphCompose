@@ -19,6 +19,23 @@ for this cycle.
   library. It lives on only as a styling helper inside the examples module; author
   documents with explicit `DocumentColor` / `DocumentTextStyle` values or a template
   `BrandTheme`.
+- The DSL name-aliases `DocumentSession.builder()` and `DocumentDsl.text()` have been
+  removed. Use `DocumentSession.dsl()` and `DocumentDsl.paragraph()`.
+- The PDF-typed document-chrome overloads on `DocumentSession` —
+  `metadata(PdfMetadataOptions)`, `watermark(PdfWatermarkOptions)`,
+  `protect(PdfProtectionOptions)`, `header(PdfHeaderFooterOptions)` and
+  `footer(PdfHeaderFooterOptions)` — have been removed in favour of the canonical,
+  backend-neutral overloads (`metadata(DocumentMetadata)`, `watermark(DocumentWatermark)`,
+  `protect(DocumentProtection)`, `header(DocumentHeaderFooter)`,
+  `footer(DocumentHeaderFooter)`). The PDF option types remain available on
+  `PdfFixedLayoutBackend.builder()` for advanced backend-level configuration.
+- The `linkOptions()` accessor on the document nodes and inline runs (paragraph, table,
+  image, shape, ellipse, line, barcode, and the inline image / shape / text runs) has
+  been removed. Use `linkTarget()` and read the external URI from
+  `ExternalLinkTarget.options()`.
+- The unused engine-internal `Font.adjustFontSizeToFit(...)` (and its `PdfFont` /
+  `WordFont` implementations) has been removed; text auto-sizing is resolved by the
+  layout compiler.
 
 ### Public API
 

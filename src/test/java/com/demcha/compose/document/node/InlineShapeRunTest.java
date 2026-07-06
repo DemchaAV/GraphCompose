@@ -29,7 +29,7 @@ class InlineShapeRunTest {
         assertThat(layer.stroke()).isNull();
         assertThat(run.alignment()).isEqualTo(InlineImageAlignment.CENTER);
         assertThat(run.baselineOffset()).isEqualTo(0.0, within(EPS));
-        assertThat(run.linkOptions()).isNull();
+        assertThat(run.linkTarget()).isNull();
     }
 
     @Test

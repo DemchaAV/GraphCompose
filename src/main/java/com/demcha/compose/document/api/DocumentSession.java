@@ -6,10 +6,6 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.MeasurementResources;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
-import com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions;
 import com.demcha.compose.document.backend.semantic.SemanticBackend;
 import com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor;
 import com.demcha.compose.document.debug.snapshot.PageIndexExtractor;
@@ -174,20 +170,6 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentDsl dsl() {
         ensureOpen();
         return new DocumentDsl(this);
-    }
-
-    /**
-     * Alias for {@link #dsl()} for callers that prefer a builder-oriented name.
-     *
-     * @return a new DSL facade for authoring roots and semantic nodes
-     * @throws IllegalStateException if this session has already been closed
-     * @deprecated since 1.6.0; prefer {@link #dsl()}. Carrying two names for
-     * the same operation on the session facade adds maintenance
-     * cost without clarity. Scheduled for removal in v2.0.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentDsl builder() {
-        return dsl();
     }
 
     /**
@@ -544,19 +526,6 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * @param options legacy PDF metadata options, or {@code null} to clear
-     * @return this session
-     * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     * {@link #metadata(DocumentMetadata)}.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentSession metadata(PdfMetadataOptions options) {
-        ensureOpen();
-        chromeOptions.setMetadata(options);
-        return this;
-    }
-
-    /**
      * Configures a backend-neutral document-wide watermark. Pass {@code null}
      * to clear.
      *
@@ -567,19 +536,6 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession watermark(DocumentWatermark watermark) {
         ensureOpen();
         chromeOptions.setWatermark(watermark);
-        return this;
-    }
-
-    /**
-     * @param options legacy PDF watermark options, or {@code null} to clear
-     * @return this session
-     * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     * {@link #watermark(DocumentWatermark)}.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentSession watermark(PdfWatermarkOptions options) {
-        ensureOpen();
-        chromeOptions.setWatermark(options);
         return this;
     }
 
@@ -598,19 +554,6 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * @param options legacy PDF protection options, or {@code null} to clear
-     * @return this session
-     * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     * {@link #protect(DocumentProtection)}.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentSession protect(PdfProtectionOptions options) {
-        ensureOpen();
-        chromeOptions.setProtection(options);
-        return this;
-    }
-
-    /**
      * Registers a backend-neutral repeating page header.
      *
      * @param header header options
@@ -624,19 +567,6 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * @param options legacy PDF header/footer options
-     * @return this session
-     * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     * {@link #header(DocumentHeaderFooter)}.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentSession header(PdfHeaderFooterOptions options) {
-        ensureOpen();
-        chromeOptions.addHeader(options);
-        return this;
-    }
-
-    /**
      * Registers a backend-neutral repeating page footer.
      *
      * @param footer footer options
@@ -646,19 +576,6 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession footer(DocumentHeaderFooter footer) {
         ensureOpen();
         chromeOptions.addFooter(footer);
-        return this;
-    }
-
-    /**
-     * @param options legacy PDF header/footer options
-     * @return this session
-     * @deprecated since 1.6.0, removal in v2.0; prefer the canonical
-     * {@link #footer(DocumentHeaderFooter)}.
-     */
-    @Deprecated(since = "1.6.0", forRemoval = true)
-    public DocumentSession footer(PdfHeaderFooterOptions options) {
-        ensureOpen();
-        chromeOptions.addFooter(options);
         return this;
     }
 

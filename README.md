@@ -19,7 +19,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.9.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.0) &mdash; codenamed **"navigable"**: in-document navigation (anchors, internal links, a clickable TOC, page references &amp; bookmarks), multi-section documents, and inline chips / SVG icons / colour emoji. **[What's new in v1.9 &darr;](#whats-new-in-v19)**
+> 🟢 **Latest stable**: [v1.9.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.1) &mdash; patch on the **"navigable"** line ([v1.9.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.0)): long inline-code chips (Maven coordinates, FQCNs, URLs) now wrap inside their table column instead of spilling over the neighbour. **[What's new in v1.9 &darr;](#whats-new-in-v19)**
 
 > &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -284,6 +284,7 @@ Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [
 
 ## Companion projects
 
+- [**graph-compose-markdown**](https://central.sonatype.com/artifact/io.github.demchaav/graph-compose-markdown) &mdash; a Markdown &rarr; PDF path built on the GraphCompose engine. Hand it a Markdown document and it renders through the same layout, theme, and PDFBox pipeline as the Java DSL &mdash; a companion **input surface** for teams who would rather author in Markdown than call the DSL directly. Published on Maven Central as `io.github.demchaav:graph-compose-markdown`; independent lifecycle, consumes the engine as a dependency.
 - [**graphcompose-ai-flow**](https://github.com/DemchaAV/graphcompose-ai-flow) &mdash; experimental sister project exploring an AI-assisted authoring flow on top of GraphCompose. Independent codebase, separate lifecycle &mdash; nothing in this repo depends on it. Track it if you are interested in agentic document composition driven by the same semantic node model.
 
 ## License

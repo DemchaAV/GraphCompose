@@ -190,22 +190,23 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 A quick lookup so callers can classify an import without reading
 Javadoc per element.
 
-| Package | Tier | Notes |
-|---|---|---|
-| `com.demcha.compose` (the `GraphCompose` factory class) | **Stable** | The single entry point. |
-| `com.demcha.compose.document.api` | **Stable** | `DocumentSession`, `DocumentBuilder`, `PageBackgroundFill`, and the `@Internal` marker itself live here. |
-| `com.demcha.compose.document.dsl` | **Stable** | All builder types (`RowBuilder`, `SectionBuilder`, `ParagraphBuilder`, etc.). |
-| `com.demcha.compose.document.node` | **Stable** | Node records (`RowNode`, `SectionNode`, `ParagraphNode`, ...). Sealed where relevant — see § 2. |
-| `com.demcha.compose.document.style` | **Stable** | `DocumentColor`, `DocumentInsets`, `DocumentTextStyle`, `DocumentTransform`, ... |
-| `com.demcha.compose.document.templates.api` | **Stable** | The `DocumentTemplate<S>` seam every preset factory returns. |
-| `com.demcha.compose.document.templates.core.*` | **Stable** | The shared, family-neutral template layer — `BrandTheme` tokens (`core.theme`), neutral header bricks (`core.identity`), text helpers (`core.text`), shared widgets (`core.widgets`). |
-| `com.demcha.compose.document.templates.cv.*` | **Stable** | Layered CV family — `CvDocument` data, components, widgets, presets. |
-| `com.demcha.compose.document.templates.coverletter.*` | **Stable** | Layered cover-letter family. |
-| `com.demcha.compose.document.templates.invoice.*` | **Stable** | Layered invoice family — `ModernInvoice` on `InvoiceDocumentSpec`. |
-| `com.demcha.compose.document.templates.proposal.*` | **Stable** | Layered proposal family — `ModernProposal` on `ProposalDocumentSpec`. |
-| `com.demcha.compose.document.templates.data.*` | **Stable** | Family-neutral document data records (invoice / proposal / schedule specs). |
-| `com.demcha.compose.document.layout.*` | **Internal** | Marked `@Internal` at the package level. Engine surface. |
-| `com.demcha.compose.engine.*` | **Internal** | Engine surface; not part of the public contract regardless of `public` keyword. |
+| Package | Tier | Module | Notes |
+|---|---|---|---|
+| `com.demcha.compose` (the `GraphCompose` factory class) | **Stable** | `graph-compose-core` | The single entry point. |
+| `com.demcha.compose.document.api` | **Stable** | `graph-compose-core` | `DocumentSession`, `DocumentBuilder`, `PageBackgroundFill`, and the `@Internal` marker itself live here. |
+| `com.demcha.compose.document.dsl` | **Stable** | `graph-compose-core` | All builder types (`RowBuilder`, `SectionBuilder`, `ParagraphBuilder`, etc.). |
+| `com.demcha.compose.document.node` | **Stable** | `graph-compose-core` | Node records (`RowNode`, `SectionNode`, `ParagraphNode`, ...). Sealed where relevant — see § 2. |
+| `com.demcha.compose.document.style` | **Stable** | `graph-compose-core` | `DocumentColor`, `DocumentInsets`, `DocumentTextStyle`, `DocumentTransform`, ... |
+| `com.demcha.compose.document.showcase` | **Stable** | `graph-compose-core` | `FontShowcase` — bundled-font preview renderer. |
+| `com.demcha.compose.document.templates.api` | **Stable** | `graph-compose-templates` | The `DocumentTemplate<S>` seam every preset factory returns. |
+| `com.demcha.compose.document.templates.core.*` | **Stable** | `graph-compose-templates` | The shared, family-neutral template layer — `BrandTheme` tokens (`core.theme`), neutral header bricks (`core.identity`), text helpers (`core.text`), shared widgets (`core.widgets`). |
+| `com.demcha.compose.document.templates.cv.*` | **Stable** | `graph-compose-templates` | Layered CV family — `CvDocument` data, components, widgets, presets. |
+| `com.demcha.compose.document.templates.coverletter.*` | **Stable** | `graph-compose-templates` | Layered cover-letter family. |
+| `com.demcha.compose.document.templates.invoice.*` | **Stable** | `graph-compose-templates` | Layered invoice family — `ModernInvoice` on `InvoiceDocumentSpec`. |
+| `com.demcha.compose.document.templates.proposal.*` | **Stable** | `graph-compose-templates` | Layered proposal family — `ModernProposal` on `ProposalDocumentSpec`. |
+| `com.demcha.compose.document.templates.data.*` | **Stable** | `graph-compose-templates` | Family-neutral document data records (invoice / proposal / schedule specs). |
+| `com.demcha.compose.document.layout.*` | **Internal** | `graph-compose-core` | Marked `@Internal` at the package level. Engine surface. |
+| `com.demcha.compose.engine.*` | **Internal** | `graph-compose-core` | Engine surface; not part of the public contract regardless of `public` keyword. `engine.render.pdf.*` ships in `graph-compose-render-pdf`. |
 
 ---
 

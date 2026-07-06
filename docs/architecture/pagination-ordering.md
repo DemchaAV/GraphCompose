@@ -20,26 +20,26 @@ If the parent container is processed before the child shift happens, the parent 
 will still be based on the old value. In practice, this looks like a container guide or span box
 that does not extend to cover the final child position.
 
-## The Circle vs Image confusion
+## The leaf-type ordering confusion
 
 This issue can be easy to misdiagnose because it does not belong to the leaf renderable itself.
 
-`Circle` and `ImageComponent` are both fixed leaf renderables:
+Fixed leaf renderables such as `TextComponent` are all the same shape here:
 
 - they render a single box
 - they are not `Breakable`
 - when they do not fit, they are moved as a whole
 
-So if a circle container fails to expand while an image container appears correct, the first thing
+So if one leaf container fails to expand while another appears correct, the first thing
 to check is not the render implementation. The first thing to check is pagination order.
 
-In one scenario, the image child may happen to be processed before its parent container, so the
+In one scenario, one child may happen to be processed before its parent container, so the
 container placement is computed with the final child-driven size and the result looks correct.
-In another scenario, a circle child may be processed after its parent container, which exposes the
+In another scenario, a child may be processed after its parent container, which exposes the
 bug immediately.
 
-The difference is therefore often accidental ordering, not a semantic difference between image and
-circle rendering.
+The difference is therefore often accidental ordering, not a semantic difference between the
+leaf types.
 
 ## Correct rule
 
@@ -77,7 +77,7 @@ If you see one of these behaviors, check pagination ordering first:
 
 When debugging a pagination tree:
 
-1. log the `PageBreaker` processing order
+1. log the page-breaker processing order
 2. compare parent and child `ComputedPosition.y`
 3. check whether a child shift updates parent `ContentSize`
 4. verify that the parent `Placement` is created after that update, not before it

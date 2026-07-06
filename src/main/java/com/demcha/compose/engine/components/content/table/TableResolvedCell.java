@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Fully materialized cell description rendered by {@link com.demcha.compose.engine.components.renderable.TableRow}.
+ * Fully materialized cell description consumed by the table row renderer.
  *
  * <p>{@code yOffset} shifts the cell's bottom edge relative to the row
  * fragment's bottom (in PDF coordinates where y grows up). Single-row

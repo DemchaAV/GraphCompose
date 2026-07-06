@@ -64,11 +64,9 @@ per-package artifact.
 | --- | --- | --- |
 | `com.demcha.compose.engine.components.*` | Low-level ECS components, content payloads, style values, geometry, layout, and render markers. | Use only for engine primitives; public document authoring should go through `DocumentDsl` and semantic nodes. |
 | `com.demcha.compose.engine.core` | Entity manager, canvas, traversal context, and base ECS system contracts. | Keep core thin; put stage-specific logic in layout, pagination, measurement, or render packages. |
-| `com.demcha.compose.engine.layout` | Low-level entity layout systems. | Preserve deterministic traversal and container sizing semantics. |
-| `com.demcha.compose.engine.layout.container` | Container alignment, expansion, and module width helpers. | Helpers should operate on existing ECS state and avoid renderer dependencies. |
-| `com.demcha.compose.engine.pagination` | Page-breaking helpers and pagination fallback systems. | Maintain child-first ordering and page-shift propagation rules. |
+| `com.demcha.compose.engine.pagination` | Pagination markers and helpers (`Breakable`, `ParentContainerUpdater`, `Offset`). | Maintain child-first ordering and page-shift propagation rules. |
 | `com.demcha.compose.engine.measurement` | Text measurement contracts and font-backed implementations. | Builders/layout helpers depend on this seam instead of reaching into renderers. |
-| `com.demcha.compose.engine.render` | Backend-neutral render contracts, handler registry, render ordering, and render-pass session lifetime. | Add backend-neutral contracts here, backend-specific drawing elsewhere. |
+| `com.demcha.compose.engine.render` | Backend-neutral render contracts, handler registry, and render-pass session lifetime. | Add backend-neutral contracts here, backend-specific drawing elsewhere. |
 | `com.demcha.compose.engine.render.pdf` | Shared PDFBox primitives for the canonical fixed-layout backend: `PdfFont`, `GlyphFallbackLogger`, and the header/footer + watermark renderers under `helpers`. | Add canonical-shared PDF support here; per-fragment PDF drawing lives in the `PdfFragmentRenderHandler` implementations under `document.backend.fixed.pdf.handlers`. |
 | `com.demcha.compose.engine.render.word` | Experimental Word backend internals. | Treat as research until a supported public surface is designed. |
 | `com.demcha.compose.engine.text` | Internal text hot-path utilities shared by layout and render stages. | Keep helpers backend-neutral and avoid public authoring concepts here. |

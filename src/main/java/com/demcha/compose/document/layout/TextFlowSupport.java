@@ -858,7 +858,7 @@ public final class TextFlowSupport {
                 // Over-wide on a fresh (or already empty) line: break it at soft seams,
                 // char-splitting as a last resort.
                 double availableWidth = availableWidthForPrefix(maxWidth, currentPrefix, style, measurement);
-                List<String> chunks = breakLongToken(strippedToken, style, availableWidth, measurement);
+                List<String> chunks = TokenBreaking.breakLongToken(strippedToken, style, availableWidth, measurement);
                 if (chunks.isEmpty()) {
                     continue;
                 }
@@ -987,7 +987,7 @@ public final class TextFlowSupport {
                 // coalesced fill inside the column. Interior fragments under-fill by
                 // at most that padding — cosmetic, and only on an over-wide chip.
                 double reserve = chip ? textToken.leadPad() + textToken.trailPad() : 0.0;
-                List<String> pieces = breakLongToken(
+                List<String> pieces = TokenBreaking.breakLongToken(
                         textToken.text(),
                         textToken.textStyle(),
                         Math.max(1.0, maxWidth - currentWidth - reserve),
@@ -1117,7 +1117,7 @@ public final class TextFlowSupport {
                     }
                 }
 
-                List<String> chunks = breakLongToken(
+                List<String> chunks = TokenBreaking.breakLongToken(
                         sanitizedToken.text(),
                         sanitizedToken.textStyle(),
                         Math.max(1.0, maxWidth - currentWidth),
@@ -1629,132 +1629,6 @@ public final class TextFlowSupport {
                     body.text());
         }
         return width;
-    }
-
-    /**
-     * Characters after which a long, otherwise-unbreakable token may wrap. These
-     * are the joiners inside package coordinates, fully-qualified class names and
-     * URLs ({@code org.junit.jupiter:junit-jupiter:5.10.2}, {@code a/b/c}), so an
-     * over-wide code token breaks at a readable seam instead of mid-identifier.
-     */
-    private static final String SOFT_BREAK_AFTER_CHARS = ".:/-";
-
-    /**
-     * Breaks a single over-wide token into line-pieces that each fit
-     * {@code maxWidth}. Prefers breaking at {@link #SOFT_BREAK_AFTER_CHARS soft
-     * seams} (after {@code . : / -}) so coordinates and URLs split naturally, and
-     * falls back to character-level {@link #splitLongToken splitting} for any lone
-     * segment still too wide (e.g. a long dot-less identifier). The returned pieces
-     * have the same shape the wrap loops already consume from {@code splitLongToken}
-     * — for a token with no soft seams the two are identical.
-     */
-    private static List<String> breakLongToken(String token,
-                                               TextStyle style,
-                                               double maxWidth,
-                                               TextMeasurementSystem measurement) {
-        if (token == null || token.isEmpty()) {
-            return List.of();
-        }
-        List<String> segments = softBreakSegments(token);
-        List<String> pieces = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        double currentWidth = 0.0;
-        for (String segment : segments) {
-            double segmentWidth = measurement.textWidth(style, segment);
-            if (current.length() > 0 && currentWidth + segmentWidth > maxWidth + EPS) {
-                pieces.add(current.toString());
-                current.setLength(0);
-                currentWidth = 0.0;
-            }
-            if (current.length() == 0 && segmentWidth > maxWidth + EPS) {
-                // A single seam-delimited segment is itself too wide: char-split it.
-                // Every char-chunk but the last is a finished piece; the tail seeds
-                // the current piece so a following short segment can still join it.
-                List<String> chars = splitLongToken(segment, style, maxWidth, measurement);
-                for (int index = 0; index < chars.size() - 1; index++) {
-                    pieces.add(chars.get(index));
-                }
-                String tail = chars.get(chars.size() - 1);
-                current.append(tail);
-                currentWidth = measurement.textWidth(style, tail);
-            } else {
-                current.append(segment);
-                currentWidth += segmentWidth;
-            }
-        }
-        if (current.length() > 0) {
-            pieces.add(current.toString());
-        }
-        return List.copyOf(pieces);
-    }
-
-    /**
-     * Splits a token after each {@link #SOFT_BREAK_AFTER_CHARS soft-break
-     * character}, keeping the delimiter with the preceding segment
-     * ({@code org.junit.jupiter:} then {@code junit-jupiter:} then {@code 5.10.2}).
-     * A token with no such characters yields a single segment (itself).
-     */
-    private static List<String> softBreakSegments(String token) {
-        List<String> segments = new ArrayList<>();
-        int start = 0;
-        for (int index = 0; index < token.length(); index++) {
-            if (SOFT_BREAK_AFTER_CHARS.indexOf(token.charAt(index)) >= 0) {
-                segments.add(token.substring(start, index + 1));
-                start = index + 1;
-            }
-        }
-        if (start < token.length()) {
-            segments.add(token.substring(start));
-        }
-        return segments;
-    }
-
-    private static List<String> splitLongToken(String token,
-                                               TextStyle style,
-                                               double maxWidth,
-                                               TextMeasurementSystem measurement) {
-        if (token == null || token.isEmpty()) {
-            return List.of();
-        }
-
-        List<String> pieces = new ArrayList<>();
-        String remaining = token;
-        while (!remaining.isEmpty()) {
-            int splitIndex = fitCharacters(remaining, style, maxWidth, measurement);
-            if (splitIndex <= 0 || splitIndex >= remaining.length()) {
-                pieces.add(remaining);
-                break;
-            }
-            pieces.add(remaining.substring(0, splitIndex));
-            remaining = remaining.substring(splitIndex).stripLeading();
-        }
-        return List.copyOf(pieces);
-    }
-
-    private static int fitCharacters(String text,
-                                     TextStyle style,
-                                     double maxWidth,
-                                     TextMeasurementSystem measurement) {
-        // Largest prefix length whose width fits. The fit predicate
-        // width(substring(0,n)) <= maxWidth is monotonic in n (each added char
-        // contributes a non-negative glyph advance), so the fitting lengths form
-        // a prefix [1..lastFitting] and a binary search finds the SAME boundary
-        // as the old linear scan — but in O(log n) width calls instead of
-        // measuring every growing prefix (which was O(n) calls and O(n^2)
-        // measured characters for a long unbreakable token).
-        int lastFitting = 0;
-        int low = 1;
-        int high = text.length();
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            if (measurement.textWidth(style, text.substring(0, mid)) <= maxWidth + EPS) {
-                lastFitting = mid;
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-        return lastFitting == 0 ? Math.min(1, text.length()) : lastFitting;
     }
 
     private static String trimTrailingSpaces(String value) {

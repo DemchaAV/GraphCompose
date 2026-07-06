@@ -1,0 +1,47 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 220.0,
+    "pageHeight" : 200.0,
+    "innerWidth" : 200.0,
+    "innerHeight" : 180.0,
+    "margin" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 10.0,
+      "left" : 10.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CodeTable[0]",
+    "entityName" : "CodeTable",
+    "entityKind" : "TableNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 10.0,
+    "computedY" : 71.96,
+    "placementX" : 10.0,
+    "placementY" : 71.96,
+    "placementWidth" : 140.0,
+    "placementHeight" : 118.04,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.0,
+    "contentHeight" : 118.04,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

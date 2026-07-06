@@ -81,6 +81,24 @@ Core document APIs stay source- and binary-compatible with v1.8 &mdash; v1.9 is 
 dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 ```
 
+> **Which artifact? (2.0 module split).** `graph-compose` above is the drop-in default —
+> it renders PDF out of the box because it aggregates the lean `graph-compose-core` engine
+> plus the `graph-compose-render-pdf` backend, so existing 1.x callers upgrade with **no
+> code change**. Reach for a different coordinate only to take less or more:
+>
+> | Goal | Depend on |
+> |---|---|
+> | **PDF — the 1.x default** | `graph-compose` |
+> | **Batteries-included** (PDF + templates + fonts + emoji) | `graph-compose-bundle` |
+> | **Lean core, bring your own backend** | `graph-compose-core` |
+> | **Built-in CV / cover-letter / invoice / proposal templates** | add `graph-compose-templates` |
+> | **DOCX / PPTX export** | add `graph-compose-render-docx` / `graph-compose-render-pptx` |
+>
+> Every 2.0 coordinate shares the `graph-compose` version (the fonts and emoji companions
+> keep their own lines). A bare `graph-compose-core` renders nothing until a backend is on
+> the classpath — asking it to build a PDF throws `MissingBackendException`, which names the
+> artifact to add (`graph-compose-render-pdf`, already included in `graph-compose`).
+
 > **Bundled fonts (from v1.8.0).** The curated Google fonts no longer ship
 > inside the engine jar &mdash; they live in an independently-versioned
 > companion artifact so an engine upgrade never re-downloads ~18&nbsp;MB of

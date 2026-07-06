@@ -37,10 +37,32 @@ fall back to inline content with a one-time capability warning.
 Use DOCX only for paragraph / list / table / image / section content.
 Per-feature mapping: [canonical ↔ legacy parity matrix](architecture/canonical-legacy-parity.md).
 
+## `MissingBackendException` when rendering
+
+**Cause.** You depend on `graph-compose-core` (the lean 2.0 engine) but no render
+backend is on the classpath. The core carries the `DocumentSession` authoring API and a
+`ServiceLoader` seam, but the actual renderer ships separately — so `document.buildPdf()`
+/ `toPdfBytes()` / `toImages()` throws `MissingBackendException` until a backend is
+discoverable.
+
+**Fix.** Add the PDF backend, or depend on `graph-compose` (which already bundles it):
+
+```xml
+<dependency>
+  <groupId>io.github.demchaav</groupId>
+  <artifactId>graph-compose-render-pdf</artifactId>
+  <version>2.0.0</version>
+</dependency>
+```
+
+The exception message names the exact artifact to add. Plain `graph-compose` and
+`graph-compose-bundle` both include the PDF backend out of the box — only a deliberately
+lean `graph-compose-core` needs this.
+
 ## `NoClassDefFoundError` at runtime
 
-GraphCompose marks one heavy, rarely-needed dependency **optional** so
-PDF-only consumers don't pay for it. If you use DOCX export, add the
+GraphCompose keeps the heavier office backends in **separate** artifacts so
+PDF-only consumers don't pay for them. If you use DOCX export, add the
 dependency to **your** project.
 
 **DOCX export** — `document.export(new DocxSemanticBackend())` ships in the

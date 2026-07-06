@@ -8,6 +8,10 @@ theme variants.
 If you haven't read [quickstart.md](quickstart.md), do that first —
 it sets up the conceptual model in 5 minutes.
 
+> **Dependency.** These presets ship in the opt-in `graph-compose-templates` artifact (not
+> bundled in `graph-compose`); add it, or use `graph-compose-bundle`. See the
+> [README install matrix](../../../README.md#installation).
+
 ---
 
 ## Table of contents

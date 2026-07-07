@@ -28,6 +28,24 @@ focused, individually-tested collaborators (the package-private `RowSlots`
 extraction is the pattern to follow), with layout output unchanged and covered
 by the existing snapshot suite. **Status: Planned.**
 
+### Extract the session's layout-resolution loop
+
+`DocumentSession` is a delegating facade — caching, rendering, and document
+chrome already live in dedicated package-private collaborators
+(`DocumentLayoutCache`, `DocumentRenderingFacade`, `DocumentChromeOptions`).
+The one substantive algorithm still inside the class is the coupled fixed
+point in `computeLayout()`: page-reference numbers and per-page margins feed
+layout results back into content and converge over up to five compile passes.
+Extracting that loop into a package-private collaborator (following the
+`DocumentRenderingFacade.Context` pattern) would make the convergence loop
+unit-testable without opening measurement resources; the public surface stays
+unchanged — the session remains the single mutable entry point owning
+lifecycle, authoring state, and the revision-based layout cache. A stricter
+phase-pipeline restructuring (builder → immutable document → renderer) is
+explicitly rejected: cross-references and tables of contents require layout
+results to feed back into content, which a one-way pipeline cannot express.
+**Status: Planned.**
+
 ### Retire the internal `Entity` model
 
 The engine still resolves layout on a legacy `Entity` / `EntityManager` object

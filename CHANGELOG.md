@@ -96,6 +96,14 @@ for this cycle.
   (`graph-compose-render-docx` / `graph-compose-render-pptx`) stay opt-in and are not
   bundled.
 
+### Internal
+
+- The process-wide image caches (decoded source bytes and image metadata) are now
+  bounded with LRU eviction instead of growing without limit. A long-lived JVM that
+  renders many distinct images — a rendering service, a batch job — no longer
+  accumulates image data indefinitely. Single documents are unaffected: the caps sit
+  far above any realistic distinct-image count, so a render never evicts or re-decodes.
+
 ## v1.9.1 — 2026-07-06
 
 Table columns now contain long inline-code content instead of letting it spill

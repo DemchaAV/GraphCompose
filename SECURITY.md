@@ -8,8 +8,8 @@ Security fixes are issued for the latest minor release. Older minors do not rece
 
 | Version | Supported |
 |---------|-----------|
-| 1.6.x   | Yes — actively patched |
-| < 1.6   | No — upgrade required (see [migration guide](docs/roadmaps/migration-v1-5-to-v1-6.md)) |
+| 1.9.x   | Yes — actively patched |
+| < 1.9   | No — upgrade required (see [CHANGELOG.md](CHANGELOG.md) for per-version migration notes) |
 
 ## Reporting a vulnerability
 

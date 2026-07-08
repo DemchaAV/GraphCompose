@@ -19,9 +19,9 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v1.9.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.0) &mdash; codenamed **"navigable"**: in-document navigation (anchors, internal links, a clickable TOC, page references &amp; bookmarks), multi-section documents, and inline chips / SVG icons / colour emoji. **[What's new in v1.9 &darr;](#whats-new-in-v19)**
+> 🟢 **Latest stable**: [v1.9.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.1) &mdash; patch on the **"navigable"** line ([v1.9.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.9.0)): long inline-code chips (Maven coordinates, FQCNs, URLs) now wrap inside their table column instead of spilling over the neighbour. **[What's new in v1.9 &darr;](#whats-new-in-v19)**
 
-> &nbsp;·&nbsp; 🟡 **In develop**: next cycle — open (see [CHANGELOG](./CHANGELOG.md))
+> &nbsp;·&nbsp; 🟡 **In progress (2.0)**: modular split into per-concern artifacts, with `graph-compose` kept as a drop-in wrapper (see [CHANGELOG](./CHANGELOG.md) and the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md))
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <p align="center">

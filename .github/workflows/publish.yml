@@ -41,6 +41,15 @@ on:
 permissions:
   contents: read
 
+# Serialize Maven Central publishes. A publish is a global, non-atomic sequence
+# of eight module uploads, so two runs must never overlap — a constant group
+# name funnels every tag / dispatch through one lane. cancel-in-progress is
+# false so a re-tag or dispatch never aborts a publish already mid-upload; the
+# second run queues behind it instead.
+concurrency:
+  group: publish-maven-central
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: Publish ${{ github.ref_name }} to Maven Central

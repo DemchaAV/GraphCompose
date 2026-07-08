@@ -18,6 +18,14 @@ on:
 permissions:
   contents: write
 
+# One GitHub Release per tag. A re-pushed tag queues behind the in-flight run
+# for that same tag rather than racing it; cancel-in-progress is false so a
+# release is never aborted mid-creation. Distinct tags carry distinct refs and
+# still proceed in parallel.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Verify and publish GitHub Release

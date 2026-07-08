@@ -17,6 +17,15 @@ on:
 permissions:
   contents: read
 
+# Collapse superseded runs. On a pull request, a new push cancels the still-
+# running CI for the previous commit on the same PR — the common case where
+# rapid iteration would otherwise queue several full matrix builds. Pushes to
+# the integration branches (main / develop / 2.0-dev) are never cancelled, so
+# every merged commit keeps a complete, recorded CI run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   architecture-and-documentation-guards:
     name: Architecture and Documentation Guards

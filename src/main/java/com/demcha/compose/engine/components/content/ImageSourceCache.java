@@ -14,14 +14,23 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 final class ImageSourceCache {
-    private static final Map<String, CachedImageSource> SOURCE_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, ImageMetadata> METADATA_CACHE = new ConcurrentHashMap<>();
+    /**
+     * Entry caps for the process-wide image caches. The source cache holds raw
+     * image bytes, so it is bounded tighter than the metadata cache, which holds
+     * tiny width/height/format records. Both caps sit well above any single
+     * realistic document's distinct-image count — real renders never evict; the
+     * bound only protects a long-lived JVM (e.g. a rendering service) from
+     * accumulating unrelated images without limit.
+     */
+    private static final int MAX_SOURCE_ENTRIES = 128;
+    private static final int MAX_METADATA_ENTRIES = 512;
+
+    private static final BoundedLruCache<String, CachedImageSource> SOURCE_CACHE = new BoundedLruCache<>(MAX_SOURCE_ENTRIES);
+    private static final BoundedLruCache<String, ImageMetadata> METADATA_CACHE = new BoundedLruCache<>(MAX_METADATA_ENTRIES);
     private static final AtomicInteger METADATA_DECODE_COUNT = new AtomicInteger();
 
     private ImageSourceCache() {
@@ -30,7 +39,7 @@ final class ImageSourceCache {
     static ImageData fromPath(Path path) {
         Path absolutePath = path.toAbsolutePath().normalize();
         String sourceKey = absolutePath.toString();
-        CachedImageSource source = SOURCE_CACHE.computeIfAbsent(sourceKey, key -> loadFromPath(absolutePath));
+        CachedImageSource source = SOURCE_CACHE.getOrCompute(sourceKey, key -> loadFromPath(absolutePath));
         return new ImageData(source.bytes(), sourceKey, source.fingerprint(), source.metadata());
     }
 
@@ -40,7 +49,7 @@ final class ImageSourceCache {
         }
         byte[] safeCopy = Arrays.copyOf(bytes, bytes.length);
         String fingerprint = fingerprint(safeCopy);
-        ImageMetadata metadata = METADATA_CACHE.computeIfAbsent(fingerprint, key -> decodeMetadata(safeCopy));
+        ImageMetadata metadata = METADATA_CACHE.getOrCompute(fingerprint, key -> decodeMetadata(safeCopy));
         return new ImageData(safeCopy, "memory:" + fingerprint, fingerprint, metadata);
     }
 
@@ -66,7 +75,7 @@ final class ImageSourceCache {
         try {
             byte[] bytes = Files.readAllBytes(absolutePath);
             String fingerprint = fingerprint(bytes);
-            ImageMetadata metadata = METADATA_CACHE.computeIfAbsent(fingerprint, key -> decodeMetadata(bytes));
+            ImageMetadata metadata = METADATA_CACHE.getOrCompute(fingerprint, key -> decodeMetadata(bytes));
             return new CachedImageSource(bytes, fingerprint, metadata);
         } catch (IOException e) {
             log.error("Failed to read image bytes from {}", absolutePath, e);

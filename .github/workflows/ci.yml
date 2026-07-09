@@ -54,8 +54,9 @@ jobs:
   changes:
     # Path-based change detection for selective CI on pull requests. Emits the
     # reverse-dependency flags the heavy jobs gate on: `code` (any build input),
-    # `core` (the root graph-compose-core module — drives japicmp), and `perf`
-    # (modules the smoke benchmark exercises). Pushes/dispatch bypass these gates.
+    # `core` (the root graph-compose-core module — drives japicmp), `perf`
+    # (modules the smoke benchmark exercises), and `jvm` (published library modules
+    # + toolchain — drives the JDK matrix width). Pushes/dispatch bypass these gates.
     name: Detect changed paths
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
@@ -63,6 +64,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       core: ${{ steps.filter.outputs.core }}
       perf: ${{ steps.filter.outputs.perf }}
+      jvm: ${{ steps.filter.outputs.jvm }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -90,6 +92,26 @@ jobs:
               - 'templates/**'
               - 'benchmarks/**'
               - 'pom.xml'
+            # Published library modules + build toolchain. A change here runs the
+            # full JDK matrix (it ships to users across JVMs); a PR touching only
+            # the non-published test/build infra (qa, coverage, examples,
+            # benchmarks, docs) runs the baseline JDK alone.
+            jvm:
+              - 'src/**'
+              - 'render-pdf/**'
+              - 'render-docx/**'
+              - 'render-pptx/**'
+              - 'templates/**'
+              - 'wrapper/**'
+              - 'testing/**'
+              - 'fonts/**'
+              - 'emoji/**'
+              - 'bundle/**'
+              - 'pom.xml'
+              - '.mvn/**'
+              - 'mvnw'
+              - 'mvnw.cmd'
+              - '.github/workflows/ci.yml'
 
   build-and-test:
     name: Build and run tests (JDK ${{ matrix.java }})
@@ -105,10 +127,12 @@ jobs:
       # still running.
       fail-fast: false
       matrix:
-        # 17 = baseline, 21 = previous baseline still supported,
-        # 25 = current LTS, validates the byte-buddy / Mockito 5.23
-        # bumps that #10 motivated.
-        java: ['17', '21', '25']
+        # 17 = baseline, 21 = previous baseline still supported, 25 = current LTS
+        # (validates the byte-buddy / Mockito 5.23 bumps that #10 motivated).
+        # Full three-JDK matrix on a push/dispatch or when a published library
+        # module / the toolchain changed (`jvm`); a PR that touches only the
+        # non-published test/build infra runs the baseline JDK alone.
+        java: ${{ fromJSON((github.event_name != 'pull_request' || needs.changes.outputs.jvm == 'true') && '["17","21","25"]' || '["17"]') }}
     env:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 

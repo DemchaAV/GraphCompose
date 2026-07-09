@@ -58,77 +58,6 @@ public final class LayoutCompiler {
         this.registry = Objects.requireNonNull(registry, "registry");
     }
 
-    /**
-     * Returns an iteration order over {@code zIndices} that is stable on
-     * ties. Layers with equal {@code zIndex} keep their source order, so
-     * the default of all-zero zIndices yields the identity permutation
-     * {@code [0, 1, ..., n-1]} and existing snapshots stay deterministic.
-     *
-     * @param zIndices per-layer render-order keys (in source order)
-     * @return source indices sorted by ascending {@code zIndex}, stable
-     * on ties
-     */
-    private static int[] stableZIndexOrder(java.util.List<Integer> zIndices) {
-        int n = zIndices.size();
-        if (n <= 1) {
-            return identityOrder(n);
-        }
-        // Common case: every layer uses the same zIndex (typically 0). A
-        // stable sort would preserve source order anyway, so skip the boxed
-        // array allocation and the full sort.
-        int firstZ = zIndices.get(0);
-        boolean allEqual = true;
-        for (int i = 1; i < n; i++) {
-            if (zIndices.get(i) != firstZ) {
-                allEqual = false;
-                break;
-            }
-        }
-        if (allEqual) {
-            return identityOrder(n);
-        }
-        Integer[] boxed = new Integer[n];
-        for (int i = 0; i < n; i++) {
-            boxed[i] = i;
-        }
-        // Comparator.comparingInt + java.util.Arrays.sort on boxed array is
-        // documented stable; primitive int[] sort is not.
-        java.util.Arrays.sort(boxed, java.util.Comparator.comparingInt(zIndices::get));
-        int[] order = new int[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = boxed[i];
-        }
-        return order;
-    }
-
-    private static int[] identityOrder(int n) {
-        int[] order = new int[n];
-        for (int i = 0; i < n; i++) {
-            order[i] = i;
-        }
-        return order;
-    }
-
-    private static double horizontalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
-                                                double innerWidth,
-                                                double childOuterWidth) {
-        return switch (align) {
-            case TOP_LEFT, CENTER_LEFT, BOTTOM_LEFT -> 0.0;
-            case TOP_CENTER, CENTER, BOTTOM_CENTER -> Math.max(0.0, (innerWidth - childOuterWidth) / 2.0);
-            case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> Math.max(0.0, innerWidth - childOuterWidth);
-        };
-    }
-
-    private static double verticalLayerOffset(com.demcha.compose.document.node.LayerAlign align,
-                                              double innerHeight,
-                                              double childOuterHeight) {
-        return switch (align) {
-            case TOP_LEFT, TOP_CENTER, TOP_RIGHT -> 0.0;
-            case CENTER_LEFT, CENTER, CENTER_RIGHT -> Math.max(0.0, (innerHeight - childOuterHeight) / 2.0);
-            case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> Math.max(0.0, innerHeight - childOuterHeight);
-        };
-    }
-
     private static double[] distributeRowSlotWidths(List<DocumentNode> children,
                                                     List<Double> weights,
                                                     double gap,
@@ -769,7 +698,7 @@ public final class LayoutCompiler {
         // earlier in the list → drawn first / behind. childIndex below
         // is the SOURCE index so semantic paths stay stable for tests
         // and snapshots; only the iteration order shifts.
-        int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
+        int[] iterationOrder = LayerStackGeometry.zOrder(stackLayout.zIndices());
         PlacementContext layerHostCtx = new FixedSlotPlacementContext(
                 state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
         for (int slot = 0; slot < iterationOrder.length; slot++) {
@@ -998,10 +927,10 @@ public final class LayoutCompiler {
         // offsetX > 0 nudges the layer right; offsetY > 0 nudges it down
         // (PDF y grows upward, so "down" subtracts from the top-Y).
         double alignedSlotX = innerStartX
-                              + horizontalLayerOffset(align, innerWidth, childOuterWidth)
+                              + LayerStackGeometry.horizontalOffset(align, innerWidth, childOuterWidth)
                               + layerOffsetX;
         double alignedSlotTopY = innerTopY
-                                 - verticalLayerOffset(align, innerHeight, childOuterHeight)
+                                 - LayerStackGeometry.verticalOffset(align, innerHeight, childOuterHeight)
                                  - layerOffsetY;
 
         // Layers always paint into a fixed page band — even when the
@@ -1285,7 +1214,7 @@ public final class LayoutCompiler {
                 // Same z-index iteration order as compileStackedLayer
                 // (root-level case). Source-order semantic paths are
                 // preserved — only render order shifts.
-                int[] iterationOrder = stableZIndexOrder(stackLayout.zIndices());
+                int[] iterationOrder = LayerStackGeometry.zOrder(stackLayout.zIndices());
                 for (int slot = 0; slot < iterationOrder.length; slot++) {
                     int i = iterationOrder[slot];
                     placeStackLayer(

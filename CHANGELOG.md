@@ -107,11 +107,12 @@ for this cycle.
 ### Build
 
 - Added report-only cross-module code coverage. A new non-published
-  `graph-compose-coverage` module runs JaCoCo `report-aggregate` over the engine plus
-  the `graph-compose-qa` cross-module suites, so the canonical core's coverage counts
-  the tests that actually exercise it (a single-module report undercounts, because most
-  of the engine is driven from qa at test scope). CI publishes the HTML/XML report as an
-  artifact; no coverage threshold is enforced yet.
+  `graph-compose-coverage` module runs JaCoCo `report-aggregate` over the engine, the
+  PDF backend, and the built-in templates plus the `graph-compose-qa` cross-module
+  suites, so each module's coverage counts the tests that actually exercise it (a
+  single-module report undercounts, because much of the production code is driven from
+  qa at test scope). CI publishes the HTML/XML report as an artifact; no coverage
+  threshold is enforced yet.
 
 ### Documentation
 

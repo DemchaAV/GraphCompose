@@ -26,6 +26,14 @@ on:
 permissions:
   contents: read
 
+# Serialize this artifact's Central publishes so an overlapping tag push and a
+# workflow_dispatch re-publish of the same coordinates cannot double-deploy, and
+# never cancel a publish mid-deploy. Mirrors publish.yml; kept on its own group
+# so the independent engine / fonts / emoji tag lines don't block one another.
+concurrency:
+  group: publish-fonts-maven-central
+  cancel-in-progress: false
+
 jobs:
   publish-fonts:
     name: Publish ${{ github.ref_name }} to Maven Central

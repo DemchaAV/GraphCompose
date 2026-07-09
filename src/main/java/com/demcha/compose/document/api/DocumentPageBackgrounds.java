@@ -57,7 +57,7 @@ final class DocumentPageBackgrounds {
                 // fills are unaffected.
                 double fragmentY =
                         (1.0 - fill.yRatio() - fill.heightRatio()) * pageHeight;
-                combined.add(new PlacedFragment(
+                combined.add(PlacedFragment.withZeroInsets(
                         "@page-background[" + page + "][" + i + "]",
                         0,
                         page,
@@ -65,8 +65,6 @@ final class DocumentPageBackgrounds {
                         fragmentY,
                         fill.widthRatio() * pageWidth,
                         fill.heightRatio() * pageHeight,
-                        com.demcha.compose.engine.components.style.Margin.zero(),
-                        com.demcha.compose.engine.components.style.Padding.zero(),
                         new ShapeFragmentPayload(fill.color().color(),
                                 null, 0.0, null, null, null)));
             }

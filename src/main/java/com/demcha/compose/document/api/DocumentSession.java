@@ -110,7 +110,7 @@ public final class DocumentSession implements AutoCloseable {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
-        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
+        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), this.margin);
         this.markdown = markdown;
         this.debug = DocumentDebugOptions.none().withGuides(guideLines);
         this.registry = BuiltInNodeDefinitions.registerDefaults(new InvalidatingNodeRegistry());
@@ -271,7 +271,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession pageSize(DocumentPageSize pageSize) {
         ensureOpen();
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.canvas = LayoutCanvas.from(this.pageSize.width(), this.pageSize.height(), toEngineMargin(margin));
+        this.canvas = LayoutCanvas.from(this.pageSize.width(), this.pageSize.height(), margin);
         invalidate();
         return this;
     }
@@ -300,7 +300,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession margin(DocumentInsets margin) {
         ensureOpen();
         this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
-        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), toEngineMargin(this.margin));
+        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), this.margin);
         invalidate();
         return this;
     }
@@ -802,7 +802,7 @@ public final class DocumentSession implements AutoCloseable {
             int toIndexExclusive = rule.toPageExclusive() == Integer.MAX_VALUE
                     ? Integer.MAX_VALUE
                     : rule.toPageExclusive() - 1;
-            overrides.add(new PageMarginOverride(fromIndex, toIndexExclusive, toEngineMargin(rule.insets())));
+            overrides.add(PageMarginOverride.fromInsets(fromIndex, toIndexExclusive, rule.insets()));
         }
         return PageGeometry.of(canvas, overrides);
     }
@@ -1136,17 +1136,6 @@ public final class DocumentSession implements AutoCloseable {
             throw new IllegalStateException(
                     "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf/toImages/toImage.");
         }
-    }
-
-    private com.demcha.compose.engine.components.style.Margin toEngineMargin(DocumentInsets insets) {
-        if (insets == null) {
-            return com.demcha.compose.engine.components.style.Margin.zero();
-        }
-        return new com.demcha.compose.engine.components.style.Margin(
-                insets.top(),
-                insets.right(),
-                insets.bottom(),
-                insets.left());
     }
 
     private void refreshMeasurementServices() {

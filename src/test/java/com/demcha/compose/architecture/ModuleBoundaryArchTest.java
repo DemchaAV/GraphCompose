@@ -58,18 +58,6 @@ class ModuleBoundaryArchTest {
             "com.demcha.compose.font.."
     };
 
-    /**
-     * The two session-orchestration classes that still convert canonical insets
-     * to engine value objects by fully-qualified reference
-     * ({@code DocumentSession.toEngineMargin} → {@code engine.components.style.Margin};
-     * {@code DocumentPageBackgrounds} → {@code Margin.zero()} / {@code Padding.zero()}).
-     * They are excluded by name — not by whole-package — so the other public
-     * {@code document.api} types stay guarded. Routing these conversions behind a
-     * public adapter (so the exclusion can be dropped) is tracked as a follow-up.
-     */
-    private static final String KNOWN_ENGINE_BRIDGE_CLASSES =
-            "com\\.demcha\\.compose\\.document\\.api\\.(DocumentSession|DocumentPageBackgrounds)(\\$.+)?";
-
     @Test
     void importedTheCoreProductionClasses() {
         assertThat(CORE_CLASSES.contain("com.demcha.compose.document.api.DocumentSession"))
@@ -85,7 +73,6 @@ class ModuleBoundaryArchTest {
     void canonicalSurfaceDoesNotDependOnTheEngine() {
         ArchRule rule = noClasses()
                 .that().resideInAnyPackage(CANONICAL_SURFACE_PACKAGES)
-                .and().haveNameNotMatching(KNOWN_ENGINE_BRIDGE_CLASSES)
                 .should().dependOnClassesThat().resideInAPackage("com.demcha.compose.engine..")
                 .because("the canonical public surface must reach the engine only through the "
                         + "document.layout bridge and the backend ServiceLoader seam, never by "

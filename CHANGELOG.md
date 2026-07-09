@@ -104,6 +104,15 @@ for this cycle.
   accumulates image data indefinitely. Single documents are unaffected: the caps sit
   far above any realistic distinct-image count, so a render never evicts or re-decodes.
 
+### Build
+
+- Added report-only cross-module code coverage. A new non-published
+  `graph-compose-coverage` module runs JaCoCo `report-aggregate` over the engine plus
+  the `graph-compose-qa` cross-module suites, so the canonical core's coverage counts
+  the tests that actually exercise it (a single-module report undercounts, because most
+  of the engine is driven from qa at test scope). CI publishes the HTML/XML report as an
+  artifact; no coverage threshold is enforced yet.
+
 ## v1.9.1 — 2026-07-06
 
 Table columns now contain long inline-code content instead of letting it spill

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Non-published cross-module coverage aggregator (2.0 module line). JaCoCo's
+        report-aggregate builds one report from the jacoco.exec of every module it
+        depends on, so the canonical engine's coverage counts BOTH its own tests
+        and the graph-compose-qa cross-module suites that exercise it at test scope
+        — which a single-module report undercounts (report-aggregate does not
+        traverse test-scope dependencies, hence this dedicated module that
+        compile-depends on the measured modules).
+
+        Report-only: no coverage threshold is enforced yet. The aggregate HTML/XML
+        lands in target/site/jacoco-aggregate/. Sits at the reactor tail (listed
+        last in the aggregator) so every measured module's exec exists first, and
+        never publishes (maven.deploy.skip=true, inherited from the parent).
+
+        Scope: the canonical engine (graph-compose-core). The render-pdf / templates
+        backends measure their own coverage once they gain prepare-agent — a
+        follow-up — so they are intentionally not aggregated here yet.
+    -->
+    <parent>
+        <groupId>io.github.demchaav</groupId>
+        <artifactId>graph-compose-build</artifactId>
+        <version>2.0.0-SNAPSHOT</version>
+        <relativePath>../aggregator/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>graph-compose-coverage</artifactId>
+    <packaging>pom</packaging>
+    <name>GraphCompose Coverage</name>
+    <description>Non-published cross-module JaCoCo coverage aggregation for GraphCompose.</description>
+
+    <dependencies>
+        <!-- Classes to report on (the canonical engine). -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!--
+            The cross-module suites whose jacoco.exec carries most of the engine's
+            real coverage. It has no main classes of its own; it is here so
+            report-aggregate reads its exec.
+        -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-qa</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

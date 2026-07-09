@@ -73,6 +73,16 @@
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
+
+        <!--
+            Empty default for the surefire argLine. JaCoCo's prepare-agent
+            prepends its javaagent to this property; declaring it empty here means
+            surefire's `@{argLine}` resolves to empty (not the literal `@{argLine}`,
+            which the JVM would treat as an argfile) when coverage is skipped
+            (-Djacoco.skip=true) or prepare-agent otherwise does not run.
+        -->
+        <argLine></argLine>
 
         <!-- Minimum toolchain (enforced by maven-enforcer-plugin) -->
         <enforcer.requireMavenVersion>3.8.0</enforcer.requireMavenVersion>
@@ -358,8 +368,44 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.plugin.version}</version>
                 <configuration>
-                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+                    <!--
+                        @{argLine} is the late-evaluated `argLine` property JaCoCo's
+                        prepare-agent prepends its javaagent to; keeping it here (rather
+                        than a bare literal) lets the coverage agent attach alongside the
+                        Mockito inline-mock agent instead of one clobbering the other. It
+                        resolves to the empty <argLine> default in <properties> when
+                        coverage is skipped, so the Mockito-only run still works.
+                    -->
+                    <argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                 </configuration>
+            </plugin>
+
+            <!--
+                Coverage agent. prepare-agent sets the `argLine` property (picked
+                up by surefire above) so each test run writes target/jacoco.exec;
+                the per-module HTML report is a convenience. The cross-module
+                aggregate that counts the qa suites' coverage of the engine lives
+                in the dedicated `graph-compose-coverage` module (report-aggregate).
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!--

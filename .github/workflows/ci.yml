@@ -125,11 +125,12 @@ jobs:
 
       - name: Build and run tests
         # Reactor slice: the engine, the render-docx / render-pptx semantic backends,
-        # the extracted graph-compose-testing module, and the graph-compose-qa
+        # the extracted graph-compose-testing module, the graph-compose-qa
         # cross-module suites (which need the testing module + the engine test-jar on
-        # the classpath and so cannot live in the engine's own test scope). -am pulls
-        # the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa -am
+        # the classpath and so cannot live in the engine's own test scope), and the
+        # graph-compose-coverage aggregator (report-only JaCoCo over core + qa exec).
+        # -am pulls the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
+        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa,:graph-compose-coverage -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
@@ -137,6 +138,19 @@ jobs:
         # references.
         if: matrix.java == '17'
         run: ./mvnw -B -ntp javadoc:javadoc
+
+      - name: Upload aggregate coverage report
+        # Report-only: the cross-module JaCoCo report (core coverage counting the
+        # qa suites) is published as an artifact for inspection; no threshold gate.
+        # One JDK is enough — coverage is identical across JVMs.
+        if: matrix.java == '17'
+        uses: actions/upload-artifact@v7
+        with:
+          # Core-scope aggregate (engine coverage counting the qa suites);
+          # render-pdf / templates are a follow-up, so the name is explicit.
+          name: coverage-core-aggregate-${{ github.run_id }}
+          path: coverage/target/site/jacoco-aggregate/**
+          if-no-files-found: error
 
   examples-generation:
     name: Examples Generation Smoke Test

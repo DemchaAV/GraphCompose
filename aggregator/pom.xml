@@ -45,6 +45,12 @@
             fonts; bump only when the emoji set changes.
         -->
         <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
+        <!--
+            Coverage plugin version for the aggregator children that measure
+            coverage (qa) and aggregate it (coverage). Keep in lockstep with the
+            standalone engine pom's jacoco.plugin.version.
+        -->
+        <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
     </properties>
 
     <!--
@@ -70,5 +76,10 @@
         <module>../examples</module>
         <module>../benchmarks</module>
         <module>../qa</module>
+        <!--
+            Coverage aggregation. Listed last so every measured module's
+            jacoco.exec exists before report-aggregate runs. Non-published.
+        -->
+        <module>../coverage</module>
     </modules>
 </project>

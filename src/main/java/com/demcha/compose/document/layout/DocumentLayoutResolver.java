@@ -25,6 +25,8 @@ import java.util.Objects;
  * derive from canonical/debug types (page geometry, page-reference resolution),
  * which the session pre-computes so this layout-package class depends only on
  * layout types.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public final class DocumentLayoutResolver {
 

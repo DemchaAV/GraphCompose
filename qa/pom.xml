@@ -44,6 +44,10 @@
         <logback.version>1.5.37</logback.version>
         <pdfbox.version>3.0.7</pdfbox.version>
         <javafx.version>21.0.2</javafx.version>
+        <!-- ArchUnit for the cross-module boundary guards below. Roughly in step
+             with the engine pom's archunit.version; a drift is harmless (test-only,
+             each module runs its own test JVM), so it is not version-guarded. -->
+        <archunit.version>1.4.2</archunit.version>
         <!-- graphcompose.fonts.version / graphcompose.emoji.version and
              maven.deploy.skip=true are inherited from the aggregator parent. -->
     </properties>
@@ -169,6 +173,17 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-swing</artifactId>
             <version>${javafx.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--
+            Cross-module architecture guards. Only qa has the engine, render-pdf, and
+            templates artifacts on one classpath, so the boundaries between them can
+            only be asserted structurally from here.
+        -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

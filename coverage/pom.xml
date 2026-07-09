@@ -7,7 +7,7 @@
     <!--
         Non-published cross-module coverage aggregator (2.0 module line). JaCoCo's
         report-aggregate builds one report from the jacoco.exec of every module it
-        depends on, so the canonical engine's coverage counts BOTH its own tests
+        depends on, so each measured module's coverage counts BOTH its own tests
         and the graph-compose-qa cross-module suites that exercise it at test scope
         — which a single-module report undercounts (report-aggregate does not
         traverse test-scope dependencies, hence this dedicated module that
@@ -18,9 +18,10 @@
         last in the aggregator) so every measured module's exec exists first, and
         never publishes (maven.deploy.skip=true, inherited from the parent).
 
-        Scope: the canonical engine (graph-compose-core). The render-pdf / templates
-        backends measure their own coverage once they gain prepare-agent — a
-        follow-up — so they are intentionally not aggregated here yet.
+        Scope: the engine (graph-compose-core), the PDF backend
+        (graph-compose-render-pdf), and the built-in templates
+        (graph-compose-templates) — each reported from its own tests plus the qa
+        suites' exec.
     -->
     <parent>
         <groupId>io.github.demchaav</groupId>
@@ -35,10 +36,20 @@
     <description>Non-published cross-module JaCoCo coverage aggregation for GraphCompose.</description>
 
     <dependencies>
-        <!-- Classes to report on (the canonical engine). -->
+        <!-- Classes to report on (the production modules). -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-templates</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!--

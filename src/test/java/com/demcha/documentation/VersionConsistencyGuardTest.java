@@ -126,6 +126,30 @@ class VersionConsistencyGuardTest {
         assertThat(declaresOwnVersion(PROJECT_ROOT.resolve("qa/pom.xml")))
                 .describedAs("qa/pom.xml must inherit <version> from the aggregator parent, not declare its own")
                 .isFalse();
+        assertThat(declaresOwnVersion(PROJECT_ROOT.resolve("coverage/pom.xml")))
+                .describedAs("coverage/pom.xml must inherit <version> from the aggregator parent, not declare its own")
+                .isFalse();
+    }
+
+    @Test
+    void jacocoPluginVersionAgreesAcrossModules() throws Exception {
+        // The coverage agent (which writes each module's exec) and report-aggregate
+        // (which reads them) must run the same JaCoCo version — a mismatch can break
+        // the exec-format read. The version is pinned as a literal in each standalone
+        // module that measures coverage (engine, render-pdf, templates) plus the
+        // aggregator that the qa + coverage children inherit, so guard the four
+        // against drift.
+        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "jacoco.plugin.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "jacoco.plugin.version"))
+                .describedAs("aggregator jacoco.plugin.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("render-pdf/pom.xml"), "jacoco.plugin.version"))
+                .describedAs("render-pdf jacoco.plugin.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "jacoco.plugin.version"))
+                .describedAs("templates jacoco.plugin.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
     }
 
     @Test

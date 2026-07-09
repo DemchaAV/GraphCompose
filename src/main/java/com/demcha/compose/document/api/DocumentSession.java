@@ -64,13 +64,6 @@ import java.util.function.Consumer;
 public final class DocumentSession implements AutoCloseable {
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
 
-    /**
-     * Cap on page-reference recompiles after the first resolve. A table of
-     * contents converges in one recompile; the cap bounds a pathological document
-     * whose numbers keep shifting pages, falling back to the last layout.
-     */
-    private static final int MAX_PAGE_REFERENCE_PASSES = 5;
-
     private final String sessionId = Integer.toHexString(System.identityHashCode(this));
     private final Path defaultOutputFile;
     private final NodeRegistry registry;
@@ -80,6 +73,7 @@ public final class DocumentSession implements AutoCloseable {
     private final DocumentChromeOptions chromeOptions = new DocumentChromeOptions();
     private final DocumentLayoutCache layoutCache = new DocumentLayoutCache();
     private final DocumentRenderingFacade renderingFacade = new DocumentRenderingFacade(new RenderingContextImpl());
+    private final DocumentLayoutResolver layoutResolver = new DocumentLayoutResolver(new LayoutResolverContext());
     private DocumentPageSize pageSize;
     private DocumentInsets margin;
     private LayoutCanvas canvas;
@@ -742,54 +736,14 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Compiles the semantic graph for one layout revision. A document that
-     * contains a {@link PageReferenceNode} is compiled in two passes — the first
-     * resolves every anchor's page, the next renders the references with the
-     * resolved numbers — then re-resolved to a fixed point: if rendering the
-     * numbers shifted any anchor's page (a reference whose own width re-wrapped a
-     * neighbour and pushed content across a boundary), it recompiles with the new
-     * numbers until the pages stop moving, capped at {@link #MAX_PAGE_REFERENCE_PASSES}
-     * recompiles. All passes run inside the cache compute, so the result is cached
-     * once per revision. Documents without a page reference compile once and are
-     * byte-identical to before.
+     * Compiles the semantic graph for this layout revision and splices in any
+     * session-wide page-background fills. The convergence fixed point lives in
+     * {@link DocumentLayoutResolver}; a document without a page reference or
+     * per-page margins compiles once and is byte-identical to before. All passes
+     * run inside the cache compute, so the result is cached once per revision.
      */
     private LayoutGraph computeLayout() {
-        PageGeometry geometry = buildPageGeometry();
-        boolean hasMargins = geometry != null;
-        boolean hasPageReference = containsPageReference(roots);
-
-        LayoutGraph graph = compilePass(Map.of(), geometry, Map.of());
-        if (!hasMargins && !hasPageReference) {
-            return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
-        }
-        // Two coupled fixed points share one loop: page references resolve their
-        // numbers, and per-page margins resolve which page each top-level block
-        // begins on (its content width). A pass feeds back both; the layout is
-        // settled once neither changes. Capped so a document that never converges
-        // still returns its last (best) layout.
-        Map<String, Integer> resolved = hasPageReference ? resolvedPageNumbers(graph) : Map.of();
-        Map<String, Integer> startPages = hasMargins ? nodeStartPages(graph) : Map.of();
-        for (int pass = 0; pass < MAX_PAGE_REFERENCE_PASSES; pass++) {
-            graph = compilePass(resolved, geometry, startPages);
-            Map<String, Integer> renderedPages = hasPageReference ? resolvedPageNumbers(graph) : Map.of();
-            Map<String, Integer> renderedStarts = hasMargins ? nodeStartPages(graph) : Map.of();
-            if (renderedPages.equals(resolved) && renderedStarts.equals(startPages)) {
-                return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
-            }
-            resolved = renderedPages;
-            startPages = renderedStarts;
-        }
-        LIFECYCLE_LOG.debug("document.layout.unconverged sessionId={} passes={}", sessionId, MAX_PAGE_REFERENCE_PASSES);
-        return DocumentPageBackgrounds.apply(graph, pageBackgrounds);
-    }
-
-    private LayoutGraph compilePass(Map<String, Integer> resolvedPages,
-                                    PageGeometry geometry,
-                                    Map<String, Integer> nodeStartPages) {
-        DocumentLayoutPassContext context = new DocumentLayoutPassContext(registry, canvas,
-                measurementResources.fontLibrary(), measurementResources.textMeasurementSystem(), markdown,
-                resolvedPages, geometry, nodeStartPages);
-        return compiler.compile(documentGraph(), context, context);
+        return DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
     }
 
     private PageGeometry buildPageGeometry() {
@@ -805,14 +759,6 @@ public final class DocumentSession implements AutoCloseable {
             overrides.add(PageMarginOverride.fromInsets(fromIndex, toIndexExclusive, rule.insets()));
         }
         return PageGeometry.of(canvas, overrides);
-    }
-
-    private static Map<String, Integer> nodeStartPages(LayoutGraph graph) {
-        Map<String, Integer> starts = new HashMap<>();
-        for (PlacedNode node : graph.nodes()) {
-            starts.put(node.path(), node.startPage());
-        }
-        return starts;
     }
 
     private static boolean containsPageReference(List<DocumentNode> nodes) {
@@ -1269,6 +1215,58 @@ public final class DocumentSession implements AutoCloseable {
         @Override
         public FixedLayoutRenderer conveniencePdfBackend() {
             return chromeOptions.toConveniencePdfBackend(debug);
+        }
+    }
+
+    private final class LayoutResolverContext implements DocumentLayoutResolver.Context {
+        @Override
+        public NodeRegistry registry() {
+            return registry;
+        }
+
+        @Override
+        public LayoutCompiler compiler() {
+            return compiler;
+        }
+
+        @Override
+        public LayoutCanvas canvas() {
+            return canvas;
+        }
+
+        @Override
+        public MeasurementResources measurementResources() {
+            return measurementResources;
+        }
+
+        @Override
+        public boolean markdown() {
+            return markdown;
+        }
+
+        @Override
+        public DocumentGraph documentGraph() {
+            return DocumentSession.this.documentGraph();
+        }
+
+        @Override
+        public PageGeometry pageGeometry() {
+            return buildPageGeometry();
+        }
+
+        @Override
+        public boolean hasPageReference() {
+            return containsPageReference(roots);
+        }
+
+        @Override
+        public Map<String, Integer> resolvePageNumbers(LayoutGraph graph) {
+            return resolvedPageNumbers(graph);
+        }
+
+        @Override
+        public String sessionId() {
+            return sessionId;
         }
     }
 }

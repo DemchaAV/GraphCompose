@@ -205,6 +205,11 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 | DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
 | PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
 
+### Text &amp; internationalization
+
+- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering.
+- A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
+
 ### When to use GraphCompose
 
 - **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.

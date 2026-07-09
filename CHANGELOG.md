@@ -113,6 +113,15 @@ for this cycle.
   of the engine is driven from qa at test scope). CI publishes the HTML/XML report as an
   artifact; no coverage threshold is enforced yet.
 
+### Documentation
+
+- Documented that text is laid out left-to-right only: bidirectional (RTL) reordering
+  and complex-script shaping (Arabic joining, Indic reordering) are not performed. Added
+  to the README support matrix.
+- The 2.0 module migration guide now lists the API changes it previously delegated to the
+  changelog — the `.v2` package rename, the `BusinessTheme` removal, the retired classic
+  presets, and `Font.adjustFontSizeToFit` — each with its migration action.
+
 ## v1.9.1 — 2026-07-06
 
 Table columns now contain long inline-code content instead of letting it spill

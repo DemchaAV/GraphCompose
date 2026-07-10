@@ -12,7 +12,7 @@ import java.util.List;
  * Shared row slot-width helpers for the compile and measure phases.
  *
  * <p>Centralises the {@link IllegalArgumentException} contract used by both
- * {@link LayoutCompiler#distributeRowSlotWidths(List, List, double, double) compile-phase}
+ * {@link #distributeRowSlotWidths(List, List, double, double) compile-phase}
  * and {@link NodeDefinitionSupport#measureRow measure-phase} row distribution,
  * and owns the explicit-column ({@code fixed / intrinsic / weight}) distribution
  * so both phases compute the same slot widths from a single source.</p>
@@ -260,5 +260,118 @@ final class RowSlots {
             }
         }
         return new double[]{leading, extraGap};
+    }
+
+    /**
+     * Distributes the row width across weighted slots. With no weights every
+     * child receives an equal share of the width left after the inter-child
+     * gaps; with weights each child receives a share proportional to its weight
+     * (a non-positive weight total falls back to the even split).
+     *
+     * @param children   the row children (only the count is read)
+     * @param weights    per-child weights, or {@code null} / empty for an even split
+     * @param gap        gap between children
+     * @param innerWidth the row's content width
+     * @return resolved slot width per child
+     * @throws IllegalArgumentException if a non-empty weight list size does not
+     *                                  match the child count
+     */
+    static double[] distributeRowSlotWidths(List<DocumentNode> children,
+                                            List<Double> weights,
+                                            double gap,
+                                            double innerWidth) {
+        int n = children.size();
+        double available = Math.max(0.0, innerWidth - gap * Math.max(0, n - 1));
+        double[] slots = new double[n];
+        if (weights == null || weights.isEmpty()) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        validateWeightsMatchChildren(weights, n);
+        double total = 0.0;
+        for (double w : weights) {
+            total += w;
+        }
+        if (total <= 0.0) {
+            double share = n > 0 ? available / n : 0.0;
+            for (int i = 0; i < n; i++) {
+                slots[i] = share;
+            }
+            return slots;
+        }
+        for (int i = 0; i < n; i++) {
+            slots[i] = available * (weights.get(i) / total);
+        }
+        return slots;
+    }
+
+    /**
+     * Resolves a horizontal row's slot layout from its arrangement mode: flex
+     * (with optional non-START justification), explicit columns, or plain
+     * weights. Reads no compiler state and reuses the same primitives the
+     * measure phase uses, so the compile phase seats children on identical
+     * widths.
+     *
+     * @param node             the row node (read for its columns / arrangement)
+     * @param children         the row children
+     * @param layoutSpec       the resolved composite layout spec (spacing / weights)
+     * @param childRegionWidth the row's inner content width
+     * @param prepareContext   preparation context for intrinsic child measurement
+     * @param semanticName     row name for the over-constrained column error
+     * @return the slot widths plus the flex leading offset and extra inter-child gap
+     */
+    static SlotLayout resolveLayout(DocumentNode node,
+                                    List<DocumentNode> children,
+                                    CompositeLayoutSpec layoutSpec,
+                                    double childRegionWidth,
+                                    PrepareContext prepareContext,
+                                    String semanticName) {
+        List<DocumentRowColumn> columns = node instanceof RowNode row ? row.columns() : List.of();
+        double[] slotWidths;
+        // flexLeading / flexExtraGap stay 0.0 for every non-flex row, so the
+        // caller's cursor math is byte-identical to the pre-flex placement.
+        double flexLeading = 0.0;
+        double flexExtraGap = 0.0;
+        if (hasFlexLayout(node)) {
+            slotWidths = distributeFlex(children, layoutSpec.spacing(), childRegionWidth, prepareContext);
+            RowArrangement arrangement = node instanceof RowNode flexRow
+                    ? flexRow.arrangement() : RowArrangement.START;
+            if (arrangement != RowArrangement.START) {
+                double available = rowAvailableWidth(
+                        childRegionWidth, layoutSpec.spacing(), children.size());
+                double used = 0.0;
+                for (double slot : slotWidths) {
+                    used += slot;
+                }
+                double[] justify = flexJustify(
+                        arrangement, Math.max(0.0, available - used), children.size());
+                flexLeading = justify[0];
+                flexExtraGap = justify[1];
+            }
+        } else if (!columns.isEmpty()) {
+            double available = rowAvailableWidth(childRegionWidth, layoutSpec.spacing(), children.size());
+            double[] intrinsic = intrinsicColumnWidths(children, columns, available, prepareContext);
+            slotWidths = distributeColumns(columns, intrinsic, layoutSpec.spacing(), childRegionWidth, semanticName);
+        } else {
+            slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
+                    layoutSpec.spacing(), childRegionWidth);
+        }
+        return new SlotLayout(slotWidths, flexLeading, flexExtraGap);
+    }
+
+    /**
+     * Resolved slot geometry for one horizontal row: the per-child slot widths
+     * plus the flex justification offsets applied to the placement cursor. A
+     * transient return holder — the {@code widths} array is freshly allocated
+     * per call and not shared.
+     *
+     * @param widths   resolved slot width per child
+     * @param leading  x offset before the first child (non-START flex only)
+     * @param extraGap extra gap inserted between adjacent children (non-START flex only)
+     */
+    record SlotLayout(double[] widths, double leading, double extraGap) {
     }
 }

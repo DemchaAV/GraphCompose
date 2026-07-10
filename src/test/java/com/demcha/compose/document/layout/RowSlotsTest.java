@@ -1,7 +1,11 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.SpacerNode;
+import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,5 +61,36 @@ class RowSlotsTest {
                     String s = (String) msg;
                     assertThat(s).containsAnyOf("Pass", "Provide", "Use");
                 });
+    }
+
+    @Test
+    void distributesEvenlyWhenNoWeights() {
+        assertThat(RowSlots.distributeRowSlotWidths(children(3), List.of(), 0.0, 30.0))
+                .containsExactly(10.0, 10.0, 10.0);
+    }
+
+    @Test
+    void distributesProportionallyToWeights() {
+        assertThat(RowSlots.distributeRowSlotWidths(children(2), List.of(1.0, 3.0), 0.0, 40.0))
+                .containsExactly(10.0, 30.0);
+    }
+
+    @Test
+    void subtractsInterChildGapsBeforeDistributing() {
+        // 30 wide, two 5-wide gaps -> 20 available, split three ways.
+        assertThat(RowSlots.distributeRowSlotWidths(children(3), List.of(), 5.0, 30.0))
+                .containsExactly(20.0 / 3, 20.0 / 3, 20.0 / 3);
+    }
+
+    @Test
+    void fallsBackToEvenSplitWhenWeightsSumToZero() {
+        assertThat(RowSlots.distributeRowSlotWidths(children(2), List.of(0.0, 0.0), 0.0, 20.0))
+                .containsExactly(10.0, 10.0);
+    }
+
+    /** A list of {@code n} placeholder children — only the count is read. */
+    private static List<DocumentNode> children(int n) {
+        DocumentNode spacer = new SpacerNode("s", 0.0, 0.0, DocumentInsets.zero(), DocumentInsets.zero());
+        return Collections.nCopies(n, spacer);
     }
 }

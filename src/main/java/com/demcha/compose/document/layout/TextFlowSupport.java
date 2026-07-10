@@ -8,7 +8,7 @@ import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.renderable.BlockText;
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
@@ -736,7 +736,7 @@ public final class TextFlowSupport {
         String[] logicalLines = safeText.split("\n", -1);
         List<String> sanitized = new ArrayList<>(logicalLines.length);
         for (String logicalLine : logicalLines) {
-            sanitized.add(BlockText.sanitizeText(logicalLine));
+            sanitized.add(TextControlSanitizer.remove(logicalLine));
         }
         return List.copyOf(sanitized);
     }

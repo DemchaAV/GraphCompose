@@ -1,20 +1,9 @@
 package com.demcha.compose.engine.components.style;
 
 
-import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.core.Component;
-import com.demcha.compose.engine.components.core.Entity;
-import com.demcha.compose.engine.components.layout.RenderCoordinate;
-import com.demcha.compose.engine.components.layout.coordinator.Placement;
-import com.demcha.compose.engine.components.layout.coordinator.RenderCoordinateContext;
-import com.demcha.compose.engine.render.RenderingSystemECS;
-import lombok.extern.slf4j.Slf4j;
 
-import java.awt.*;
-import java.util.Optional;
-
-@Slf4j
-public record Margin(double top, double right, double bottom, double left) implements Component, RenderCoordinate {
+public record Margin(double top, double right, double bottom, double left) implements Component {
 
     public static Margin of(double value) {
         return new Margin(value, value, value, value);
@@ -38,33 +27,6 @@ public record Margin(double top, double right, double bottom, double left) imple
 
     public static Margin left(double value) {
         return new Margin(0, 0, 0, value);
-    }
-
-    public <S extends AutoCloseable>Optional<RenderCoordinateContext> renderCoordinate(Entity entity, RenderingSystemECS<S> renderingSystem) {
-        if (this.equals(Margin.zero())) {
-            log.info("Margin is zero, return empty");
-            return Optional.empty();
-        }
-        double x;
-        double y;
-        double width;
-        double height;
-        int startPage;
-        int endPage;
-
-        var placement = entity.getComponent(Placement.class).orElseThrow();
-        startPage = placement.startPage();
-        endPage = placement.endPage();
-        width = placement.width() + horizontal();
-        height = placement.height() + vertical();
-        x = placement.x() - left();
-        y = placement.y() - bottom();
-        Color color = renderingSystem.guidLineSettings().MARGIN_COLOR();
-        Stroke stroke = renderingSystem.guidLineSettings().MARGIN_STROKE();
-
-
-        return Optional.of(new RenderCoordinateContext(x, y, width, height, startPage, endPage, stroke, color));
-
     }
 
     public double horizontal() {

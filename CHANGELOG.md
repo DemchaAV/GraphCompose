@@ -36,6 +36,13 @@ for this cycle.
 - The unused engine-internal `Font.adjustFontSizeToFit(...)` (and its `PdfFont` /
   `WordFont` implementations) has been removed; text auto-sizing is resolved by the
   layout compiler.
+- The dormant Entity-Component-System engine internals have been removed: the
+  `EntityManager` / `SystemECS` runtime, the `Entity` component model with its
+  geometry / coordinator / renderable companions, the ECS render pipeline
+  (`engine.render.*` and the guide renderers under `engine.render.guides`), and
+  `LayoutSnapshotExtractor`. None were reachable from the live render path —
+  `DocumentSession` → layout compiler → fixed-layout backend — so document layout,
+  PDF output, and the public `guideLines(...)` overlay are unchanged.
 
 ### Public API
 

@@ -57,6 +57,7 @@
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.11</byteBuddy.version>
         <archunit.version>1.4.2</archunit.version>
+        <jqwik.version>1.9.3</jqwik.version>
 
         <!-- Bundled fonts / emoji, pulled in at test scope only. Pinned to the
              independent 1.0.0 line (not bumped in engine lockstep); keep in step
@@ -230,6 +231,18 @@
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit</artifactId>
             <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            jqwik drives the property-based layout-invariant tests: pure
+            engine functions (tokenization reconstruction, z-order permutation,
+            row-weight guards) checked against generated inputs. Test scope only.
+        -->
+        <dependency>
+            <groupId>net.jqwik</groupId>
+            <artifactId>jqwik</artifactId>
+            <version>${jqwik.version}</version>
             <scope>test</scope>
         </dependency>
 

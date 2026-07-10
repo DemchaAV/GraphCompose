@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content;
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -12,7 +11,7 @@ import java.nio.file.Path;
 @Getter
 @ToString(exclude = "bytes")
 @EqualsAndHashCode(of = "fingerprint")
-public final class ImageData implements Component {
+public final class ImageData {
     private final byte[] bytes;
     private final String sourceKey;
     private final String fingerprint;

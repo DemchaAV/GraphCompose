@@ -1,11 +1,10 @@
 package com.demcha.compose.engine.components.style;
 
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public record Padding(double top, double right, double bottom, double left) implements Component {
+public record Padding(double top, double right, double bottom, double left) {
     public static Padding zero() {
         log.debug("Getting zero padding");
         return new Padding(0.0, 0.0, 0.0, 0.0);

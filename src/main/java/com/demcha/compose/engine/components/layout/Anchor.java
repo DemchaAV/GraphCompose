@@ -1,13 +1,12 @@
 package com.demcha.compose.engine.components.layout;
 
-import com.demcha.compose.engine.components.core.Component;
 
 /**
  * Horizontal + vertical placement anchor — a plain value pairing an
  * {@link HAnchor} and a {@link VAnchor}. Consumers read {@code h()} / {@code v()}
  * and the static factories to describe how content aligns within its area.
  */
-public record Anchor(HAnchor h, VAnchor v) implements Component {
+public record Anchor(HAnchor h, VAnchor v) {
     public static Anchor topLeft() {
         return new Anchor(HAnchor.LEFT, VAnchor.TOP);
     }

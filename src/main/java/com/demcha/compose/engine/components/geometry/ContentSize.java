@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.geometry;
 
-import com.demcha.compose.engine.components.core.Component;
 
 /**
  * Declared content box size for an entity.
@@ -10,5 +9,5 @@ import com.demcha.compose.engine.components.core.Component;
  * margin and padding to derive outer-box size and final placement.
  * </p>
  */
-public record ContentSize(double width, double height) implements Component {
+public record ContentSize(double width, double height) {
 }

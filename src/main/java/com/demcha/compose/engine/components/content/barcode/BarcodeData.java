@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content.barcode;
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -19,7 +18,7 @@ import java.util.Objects;
 @Getter
 @ToString
 @EqualsAndHashCode
-public final class BarcodeData implements Component {
+public final class BarcodeData {
 
     private final String content;
     private final BarcodeType type;

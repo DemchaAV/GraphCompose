@@ -1,7 +1,6 @@
 package com.demcha.compose.engine.components.content.text;
 
 import com.demcha.compose.engine.components.content.text.LineTextData;
-import com.demcha.compose.engine.components.core.Component;
 
 import java.util.List;
 
@@ -9,7 +8,7 @@ import java.util.List;
  * Immutable block-text payload consisting of positioned/measured lines plus
  * the block's inter-line spacing contract.
  */
-public record BlockTextData(List<LineTextData> lines, float lineSpacing) implements Component {
+public record BlockTextData(List<LineTextData> lines, float lineSpacing) {
     public static final BlockTextData EMPTY = new BlockTextData(List.of(), 0);
 
     public static BlockTextData empty() {

@@ -1,10 +1,9 @@
 package com.demcha.compose.engine.components.content.shape;
 
-import com.demcha.compose.engine.components.core.Component;
 
 import java.awt.*;
 
-public record Stroke(StrokeColor strokeColor, double width) implements Component {
+public record Stroke(StrokeColor strokeColor, double width) {
     public static final double DEFAULT_WIDTH = 2.0;
 
     public Stroke(Color color) {

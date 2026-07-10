@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content.watermark;
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,7 +21,7 @@ import java.nio.file.Path;
  */
 @Getter
 @Builder
-public final class WatermarkConfig implements Component {
+public final class WatermarkConfig {
 
     // ---- Text watermark fields ----
     /** The text to render as a watermark (null if image-based). */

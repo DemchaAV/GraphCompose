@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content.protection;
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,7 +14,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-public final class PdfProtectionConfig implements Component {
+public final class PdfProtectionConfig {
 
     /** Password required to open the document (null = no user password). */
     private final String userPassword;

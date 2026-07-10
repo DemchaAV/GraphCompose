@@ -1,10 +1,9 @@
 package com.demcha.compose.engine.components.style;
 
-import com.demcha.compose.engine.components.core.Component;
 
 import java.awt.*;
 
-public record ComponentColor(Color color) implements Component {
+public record ComponentColor(Color color) {
     // --- Grayscale ---
     public static final Color BLACK = new Color(0, 0, 0);
     public static final Color DARK_GRAY = new Color(64, 64, 64);

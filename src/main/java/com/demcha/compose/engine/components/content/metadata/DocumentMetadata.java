@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content.metadata;
 
-import com.demcha.compose.engine.components.core.Component;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +13,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-public final class DocumentMetadata implements Component {
+public final class DocumentMetadata {
 
     /** Document title shown in the PDF viewer title bar and search results. */
     private final String title;

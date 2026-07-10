@@ -105,6 +105,22 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSp
 powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile full
 ```
 
+### Benchmark logging
+
+Benchmark runs are quiet by default so GraphCompose, PDFBox, and FontBox
+DEBUG lifecycle logs do not dominate the step logs or console mirror.
+When debugging benchmark internals, opt into those logs explicitly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1 -CurrentSpeedProfile smoke -EnableBenchmarkLogs
+```
+
+Direct Java entry points accept the same switch as a JVM property:
+
+```powershell
+java -Dgraphcompose.benchmark.logging=debug -cp "benchmarks\target\test-classes;benchmarks\target\classes;$cp" com.demcha.compose.CurrentSpeedBenchmark
+```
+
 ## Diff selection rules
 
 ### Current-speed diffs

@@ -1,6 +1,5 @@
 package com.demcha.compose.engine.components.content.header_footer;
 
-import com.demcha.compose.engine.components.core.Component;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,7 +24,7 @@ import java.awt.Color;
  */
 @Getter
 @Builder
-public final class HeaderFooterConfig implements Component {
+public final class HeaderFooterConfig {
 
     /** Whether this is a HEADER or FOOTER zone. */
     private final HeaderFooterZone zone;

@@ -37,6 +37,16 @@ public final class DocumentLayoutResolver {
      */
     static final int MAX_PASSES = 5;
 
+    /**
+     * Opt-in build / test diagnostic. When the system property
+     * {@code graphcompose.failOnUnconvergedLayout} is set, a document whose layout
+     * does not settle within {@link #MAX_PASSES} passes throws instead of silently
+     * returning its last iteration — surfacing the rare non-converging document in a
+     * test run rather than shipping a subtly-wrong render. Off by default, so the
+     * production path and its output are unchanged.
+     */
+    static final String FAIL_ON_UNCONVERGED_PROPERTY = "graphcompose.failOnUnconvergedLayout";
+
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
 
     private final Context context;
@@ -48,9 +58,13 @@ public final class DocumentLayoutResolver {
     /**
      * Compiles the semantic graph for one layout revision to its fixed point.
      * Returns the resolved layout graph <em>before</em> any page-background fills
-     * are spliced in — the session applies those around this result.
+     * are spliced in — the session applies those around this result. A document
+     * that does not settle within {@link #MAX_PASSES} passes returns its last
+     * iteration, unless {@link #FAIL_ON_UNCONVERGED_PROPERTY} is set.
      *
      * @return the settled (or last, if uncapped) layout graph
+     * @throws IllegalStateException if the layout never converges and
+     *                               {@link #FAIL_ON_UNCONVERGED_PROPERTY} is set
      */
     public LayoutGraph resolve() {
         PageGeometry geometry = context.pageGeometry();
@@ -76,6 +90,12 @@ public final class DocumentLayoutResolver {
             }
             resolved = renderedPages;
             startPages = renderedStarts;
+        }
+        if (Boolean.getBoolean(FAIL_ON_UNCONVERGED_PROPERTY)) {
+            throw new IllegalStateException(
+                    "Document layout did not converge within " + MAX_PASSES + " passes (sessionId="
+                            + context.sessionId() + "); the coupled page-reference / per-page-margin"
+                            + " fixed point did not settle.");
         }
         LIFECYCLE_LOG.debug("document.layout.unconverged sessionId={} passes={}", context.sessionId(), MAX_PASSES);
         return graph;

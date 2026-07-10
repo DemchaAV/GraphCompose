@@ -7,7 +7,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.engine.components.renderable.BlockText;
+import com.demcha.compose.engine.text.TextControlSanitizer;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
@@ -560,7 +560,7 @@ final class ParagraphWrapping {
                     continue;
                 }
                 TextStyle style = textRun.textStyle() == null ? defaultStyle : toTextStyle(textRun.textStyle());
-                String normalized = BlockText.sanitizeText(textRun.text().replace("\r\n", "\n").replace('\r', '\n'));
+                String normalized = TextControlSanitizer.remove(textRun.text().replace("\r\n", "\n").replace('\r', '\n'));
                 String[] parts = normalized.split("\n", -1);
                 for (int partIndex = 0; partIndex < parts.length; partIndex++) {
                     if (partIndex > 0) {
@@ -592,7 +592,7 @@ final class ParagraphWrapping {
                 // run's outer edges — lead pad on the first word, trail pad on the
                 // last — and toInlineParagraphLine coalesces the same-group tokens on
                 // each visual line back into one rounded fill.
-                String normalized = BlockText.sanitizeText(
+                String normalized = TextControlSanitizer.remove(
                         highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' '));
                 if (normalized.isEmpty()) {
                     continue;

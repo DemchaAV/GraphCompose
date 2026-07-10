@@ -21,12 +21,16 @@ Step 11 (`11-verdict-current-speed`) compares the current-speed result against
 the committed baseline (`baselines/current-speed-<profile>.json`) and fails the
 run when a canonical scenario regresses beyond the noise band. Use `-SkipVerdict`
 to skip that gate while exploring. See `docs/operations/perf-change-workflow.md`.
+
+Benchmark logging is quiet by default. Use `-EnableBenchmarkLogs` when debugging
+GraphCompose/PDFBox lifecycle logs during a benchmark run.
 #>
 param(
     [switch]$IncludeEndurance,
     [switch]$OpenResults,
     [switch]$SkipDiff,
     [switch]$SkipVerdict,
+    [switch]$EnableBenchmarkLogs,
     [ValidateSet("full", "smoke")]
     [string]$CurrentSpeedProfile = "full",
     [ValidateRange(1, 10)]
@@ -254,6 +258,7 @@ function Invoke-MedianAggregation {
         [string]$SuiteName,
         [string]$AggregateSuiteName,
         [string]$Classpath,
+        [string[]]$SystemProperties = @(),
         [string[]]$InputPaths
     )
 
@@ -263,7 +268,7 @@ function Invoke-MedianAggregation {
 
     $beforeRuns = @(Get-RunFiles -SuiteName $AggregateSuiteName)
     $arguments = @($SuiteName) + $InputPaths
-    Invoke-JavaMain -Name $Name -Classpath $Classpath -MainClass "com.demcha.compose.BenchmarkMedianTool" -Arguments $arguments | Out-Null
+    Invoke-JavaMain -Name $Name -Classpath $Classpath -MainClass "com.demcha.compose.BenchmarkMedianTool" -SystemProperties $SystemProperties -Arguments $arguments | Out-Null
 
     $afterRuns = @(Get-RunFiles -SuiteName $AggregateSuiteName)
     $newRuns = @($afterRuns | Where-Object { $_ -notin $beforeRuns })
@@ -287,6 +292,9 @@ function Get-IfExists {
     return $null
 }
 
+$benchmarkLoggingMode = if ($EnableBenchmarkLogs) { "debug" } else { "quiet" }
+$benchmarkLoggingProperties = @("-Dgraphcompose.benchmark.logging=$benchmarkLoggingMode")
+
 Add-Content -Path $summaryPath -Value @(
     "# Benchmark Run",
     "",
@@ -295,6 +303,7 @@ Add-Content -Path $summaryPath -Value @(
     ("- Include endurance: ``{0}``" -f $IncludeEndurance),
     ("- Skip diff: ``{0}``" -f $SkipDiff),
     ("- Current speed profile: ``{0}``" -f $CurrentSpeedProfile),
+    ("- Benchmark logging: ``{0}``" -f $benchmarkLoggingMode),
     ("- Repeat current-speed/comparative: ``{0}``" -f $Repeat),
     ("- Logs folder: ``{0}``" -f $logRoot),
     ""
@@ -322,7 +331,7 @@ try {
     $dependencyClasspath = (Get-Content $resolvedClasspathFile -Raw).Trim()
     $javaClasspath = "benchmarks\target\test-classes;benchmarks\target\classes;$dependencyClasspath"
 
-        $currentSpeedProperties = @()
+        $currentSpeedProperties = @() + $benchmarkLoggingProperties
         $currentSpeedProperties += "-Dgraphcompose.benchmark.profile=$CurrentSpeedProfile"
         if ($Warmup -gt 0) {
             $currentSpeedProperties += "-Dgraphcompose.benchmark.warmup=$Warmup"
@@ -351,6 +360,7 @@ try {
                 -SuiteName "current-speed" `
                 -AggregateSuiteName $currentSpeedAggregateSuite `
                 -Classpath $javaClasspath `
+                -SystemProperties $benchmarkLoggingProperties `
                 -InputPaths $currentSpeedRuns | Out-Null
         }
 
@@ -359,6 +369,7 @@ try {
             -SuiteName "comparative" `
             -Classpath $javaClasspath `
             -MainClass "com.demcha.compose.ComparativeBenchmark" `
+            -SystemProperties $benchmarkLoggingProperties `
             -RepeatCount $Repeat
         $comparativeAggregateSuite = "aggregates/comparative"
         if ($Repeat -gt 1) {
@@ -367,13 +378,14 @@ try {
                 -SuiteName "comparative" `
                 -AggregateSuiteName $comparativeAggregateSuite `
                 -Classpath $javaClasspath `
+                -SystemProperties $benchmarkLoggingProperties `
                 -InputPaths $comparativeRuns | Out-Null
         }
 
-        Invoke-JavaMain -Name "07-stress" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeStressTest"
+        Invoke-JavaMain -Name "07-stress" -Classpath $javaClasspath -MainClass "com.demcha.compose.GraphComposeStressTest" -SystemProperties $benchmarkLoggingProperties
 
         if ($IncludeEndurance) {
-            Invoke-JavaMain -Name "08-endurance" -Classpath $javaClasspath -MainClass "com.demcha.compose.EnduranceTest" -JavaOptions @("-Xmx$EnduranceHeap")
+            Invoke-JavaMain -Name "08-endurance" -Classpath $javaClasspath -MainClass "com.demcha.compose.EnduranceTest" -SystemProperties $benchmarkLoggingProperties -JavaOptions @("-Xmx$EnduranceHeap")
         } else {
             Add-SummaryLine("- ``08-endurance``: skipped")
             Add-SummaryLine("  - Reason: use ``-IncludeEndurance`` to enable the 100,000 document soak run")
@@ -390,7 +402,7 @@ try {
 
             if ($null -ne $currentSpeedDiffPair) {
                 $currentSpeedDiffName = if ($Repeat -gt 1) { "09-diff-current-speed-median" } else { "09-diff-current-speed" }
-                Invoke-JavaMain -Name $currentSpeedDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments $currentSpeedDiffPair
+                Invoke-JavaMain -Name $currentSpeedDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -SystemProperties $benchmarkLoggingProperties -Arguments $currentSpeedDiffPair
             } else {
                 Add-SummaryLine("- ``09-diff-current-speed``: skipped")
                 if ($Repeat -gt 1) {
@@ -408,7 +420,7 @@ try {
 
             if ($null -ne $comparativeDiffPair) {
                 $comparativeDiffName = if ($Repeat -gt 1) { "10-diff-comparative-median" } else { "10-diff-comparative" }
-                Invoke-JavaMain -Name $comparativeDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -Arguments $comparativeDiffPair
+                Invoke-JavaMain -Name $comparativeDiffName -Classpath $javaClasspath -MainClass "com.demcha.compose.BenchmarkDiffTool" -SystemProperties $benchmarkLoggingProperties -Arguments $comparativeDiffPair
             } else {
                 Add-SummaryLine("- ``10-diff-comparative``: skipped")
                 if ($Repeat -gt 1) {
@@ -475,7 +487,7 @@ try {
             # average latency; peakHeapMb is advisory inside the tool. When the
             # gate is on, BenchmarkVerdictTool exits non-zero on a regression,
             # which makes Invoke-LoggedCommand throw and fail the whole run.
-            $verdictProperties = @()
+            $verdictProperties = @() + $benchmarkLoggingProperties
             if ($Repeat -le 1) {
                 $verdictProperties += "-Dgraphcompose.benchmark.verdict.gate=false"
                 Add-SummaryLine("- ``11-verdict-current-speed``: advisory (single run; use -Repeat 5 for the hard gate)")

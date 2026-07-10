@@ -13,38 +13,45 @@ the public authoring API (`GraphCompose.document(...)` → `DocumentSession` →
 | Status | Meaning |
 | --- | --- |
 | Planned | Shape agreed; not started. |
+| In progress | Underway; the clean part landed, a remainder is scoped. |
 | Investigating | Being scoped; the approach is not yet fixed. |
 | Deferred | Intentionally postponed; captured here so it is not lost. |
+| Done | Shipped. |
 
 ## Engine internals
 
 ### Decompose the layout hot files
 
-`LayoutCompiler` (~1690 LOC) and `TextFlowSupport` (~1900 LOC) are the two
-largest files in `com.demcha.compose.document.layout`, and each carries several
-distinct responsibilities. The plan is to split them along their natural seams —
-pagination, row distribution, stack / overlay placement, and decoration — into
-focused, individually-tested collaborators (the package-private `RowSlots`
-extraction is the pattern to follow), with layout output unchanged and covered
-by the existing snapshot suite. **Status: Planned.**
+`LayoutCompiler` and `TextFlowSupport` were the two largest files in
+`com.demcha.compose.document.layout`, each carrying several distinct
+responsibilities. They are being split along their natural seams into focused,
+individually-tested collaborators (the package-private `RowSlots` extraction is
+the pattern), with layout output unchanged and covered by the snapshot suite.
+Extracted so far: `CompositeDecoration` (per-page fill / overlay bands) and
+`LayerStackGeometry` (z-order + align offsets) out of `LayoutCompiler`;
+`InlineLayoutToken` (the inline token model) and `ParagraphWrapping` (the three
+wrap loops plus tokenize / trim / indent) out of `TextFlowSupport`, which dropped
+from ~1877 to ~765 LOC. The clean, side-effect-free seams are out; the remaining
+`LayoutCompiler` methods are entangled with the mutable `CompilerState` and need a
+stateful refactor rather than a verbatim move. **Status: In progress.**
 
 ### Extract the session's layout-resolution loop
 
 `DocumentSession` is a delegating facade — caching, rendering, and document
 chrome already live in dedicated package-private collaborators
 (`DocumentLayoutCache`, `DocumentRenderingFacade`, `DocumentChromeOptions`).
-The one substantive algorithm still inside the class is the coupled fixed
+The one substantive algorithm still inside the class was the coupled fixed
 point in `computeLayout()`: page-reference numbers and per-page margins feed
 layout results back into content and converge over up to five compile passes.
-Extracting that loop into a package-private collaborator (following the
-`DocumentRenderingFacade.Context` pattern) would make the convergence loop
-unit-testable without opening measurement resources; the public surface stays
+That loop was extracted into the package-private `DocumentLayoutResolver`
+(following the `DocumentRenderingFacade.Context` pattern), making the convergence
+loop unit-testable without opening measurement resources; the public surface is
 unchanged — the session remains the single mutable entry point owning
 lifecycle, authoring state, and the revision-based layout cache. A stricter
-phase-pipeline restructuring (builder → immutable document → renderer) is
+phase-pipeline restructuring (builder → immutable document → renderer) was
 explicitly rejected: cross-references and tables of contents require layout
 results to feed back into content, which a one-way pipeline cannot express.
-**Status: Planned.**
+**Status: Done.**
 
 ### Retire the internal `Entity` model
 
@@ -80,12 +87,13 @@ rather than at the end of the pass. **Status: Investigating.**
 
 ### ArchUnit module-boundary guards
 
-The canonical / engine / render layering and the module split are guarded today
+The canonical / engine / render layering and the module split were guarded only
 by targeted tests plus path-based greps that can pass vacuously after a move.
-ArchUnit rules would enforce the boundaries structurally at test time (for
-example: no `com.demcha.compose.engine.*` import inside the canonical
-`document.*` public API, and no cross-module back-edges), replacing the brittle
-checks with ones that cannot silently rot. **Status: Planned.**
+ArchUnit rules now enforce the boundaries structurally at test time — the
+`ModuleBoundaryArchTest` (canonical surface, including `document.api`, must not
+depend on `com.demcha.compose.engine.*`; the font catalog must not depend on
+`document.*`) and the qa `CrossModuleBoundaryArchTest` (templates / render-pdf
+back-edges) — bytecode-level checks that cannot silently rot. **Status: Done.**
 
 ### Cross-module coverage aggregation
 
@@ -93,9 +101,11 @@ The canonical core packages (`document.layout` / `document.dsl` /
 `document.backend.fixed`) are exercised mostly by the cross-module `qa` suites,
 which depend on the engine at **test** scope — so a single-module coverage
 report undercounts, and JaCoCo's `report-aggregate` does not traverse test-scope
-dependencies. An accurate report needs a small, dedicated, non-published
-aggregation module that compile-depends on the tested modules. The first step is
-report-only; thresholds follow after a baseline read. **Status: Planned.**
+dependencies. A small, dedicated, non-published `graph-compose-coverage` module
+now compile-depends on the tested modules and runs `report-aggregate` over core +
+render-pdf + templates + qa, so the core's coverage counts the qa suites that
+exercise it. Report-only; thresholds can follow after a baseline read.
+**Status: Done.**
 
 ### Per-module binary-compatibility baselines
 

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -147,5 +148,31 @@ class DocumentLayoutResolverTest {
 
         assertThat(result).isSameAs(graphs[graphs.length - 1]);
         verify(compiler, times(1 + DocumentLayoutResolver.MAX_PASSES)).compile(any(), any(), any());
+    }
+
+    @Test
+    void nonConvergingDocumentThrowsWhenFailOnUnconvergedPropertyIsSet() {
+        when(context.pageGeometry()).thenReturn(null);
+        when(context.hasPageReference()).thenReturn(true);
+        when(compiler.compile(any(), any(), any())).thenReturn(graph());
+        // Numbers never repeat → the loop runs to the cap without settling.
+        AtomicInteger tick = new AtomicInteger();
+        when(context.resolvePageNumbers(any())).thenAnswer(inv -> Map.of("intro", tick.incrementAndGet()));
+
+        String property = DocumentLayoutResolver.FAIL_ON_UNCONVERGED_PROPERTY;
+        String previous = System.getProperty(property);
+        System.setProperty(property, "true");
+        try {
+            assertThatThrownBy(() -> new DocumentLayoutResolver(context).resolve())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("did not converge")
+                    .hasMessageContaining("test-session");
+        } finally {
+            if (previous == null) {
+                System.clearProperty(property);
+            } else {
+                System.setProperty(property, previous);
+            }
+        }
     }
 }

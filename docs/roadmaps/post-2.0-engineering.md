@@ -59,11 +59,12 @@ engine refactor, sequenced after the module line stabilises. **Status: Deferred.
 
 ### Fail loudly on non-converged layout
 
-Some layout passes iterate toward a fixed point. Today a pass that does not
-converge silently uses its last iteration. A `FAIL_ON_UNCONVERGED` policy flag
-would let a build opt into failing loudly instead, surfacing the rare
-non-converging document in tests rather than shipping a subtly-wrong render.
-**Status: Planned.**
+Some layout passes iterate toward a fixed point. By default a pass that does not
+converge silently uses its last iteration. Setting the
+`graphcompose.failOnUnconvergedLayout` system property makes the resolver throw
+instead, surfacing the rare non-converging document in a test or build run rather
+than shipping a subtly-wrong render. Off by default, so production output is
+unchanged. **Status: Done.**
 
 ## Scale & memory
 

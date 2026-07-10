@@ -2,6 +2,8 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.engine.components.style.Margin;
 
+import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
+
 /**
  * Mutable bookkeeping for the page-flow path of {@link LayoutCompiler}: the
  * canvas the document is being placed on, the active page index, the height
@@ -79,5 +81,41 @@ final class CompilerState {
 
     void touchPage() {
         maxTouchedPage = Math.max(maxTouchedPage, pageIndex);
+    }
+
+    /**
+     * Advances the flow by {@code amount}, spilling to a fresh page first when the
+     * amount does not fit in the remaining height (and the page has already been
+     * used). A non-positive amount is dropped; the used height never exceeds the
+     * active page's content height.
+     */
+    void advanceSpace(double amount) {
+        if (amount <= EPS) {
+            return;
+        }
+        if (amount > remainingHeight() + EPS && usedHeight > EPS) {
+            newPage();
+        }
+        touchPage();
+        usedHeight = Math.min(activeInnerHeight(), usedHeight + amount);
+    }
+
+    /**
+     * Closes out a composite's bottom edge. A positive bottom inset advances the
+     * flow as usual; a NEGATIVE one (a negative bottom margin) pulls the following
+     * sibling up — symmetric with a negative top margin, which already offsets via
+     * {@code placementTopY}. The plain {@link #advanceSpace} drops a non-positive
+     * amount, so the closing edge needs this dedicated path. The top-of-node
+     * reservation deliberately stays on {@link #advanceSpace} so a negative top
+     * margin keeps its existing flow behaviour; only the closing edge gains the
+     * pull-up. The cursor never drops below the page top.
+     */
+    void closeBottomSpace(double amount) {
+        if (amount >= EPS) {
+            advanceSpace(amount);
+        } else if (amount <= -EPS) {
+            touchPage();
+            usedHeight = Math.max(0.0, usedHeight + amount);
+        }
     }
 }

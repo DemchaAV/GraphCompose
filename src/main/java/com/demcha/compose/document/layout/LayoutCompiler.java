@@ -311,7 +311,7 @@ public final class LayoutCompiler {
         int nodeIndex = nodes.size();
         nodes.add(null);
 
-        advanceSpace(startReservation, state);
+        state.advanceSpace(startReservation);
         List<DocumentNode> children = definition.children(node);
         double childRegionX = placementX + padding.left();
         double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
@@ -346,11 +346,11 @@ public final class LayoutCompiler {
                     nodes,
                     fragments);
             if (index < children.size() - 1) {
-                advanceSpace(layoutSpec.spacing(), state);
+                state.advanceSpace(layoutSpec.spacing());
             }
         }
 
-        closeBottomSpace(padding.bottom() + margin.bottom(), state);
+        state.closeBottomSpace(padding.bottom() + margin.bottom());
         int endPage = state.pageIndex;
         double endPageBottomY = state.pageTop() - state.usedHeight + margin.bottom();
 
@@ -1395,35 +1395,6 @@ public final class LayoutCompiler {
         fragments.addAll(CompositeDecoration.toPlacedFragments(emitted, placement));
     }
 
-    private void advanceSpace(double amount, CompilerState state) {
-        if (amount <= EPS) {
-            return;
-        }
-        if (amount > state.remainingHeight() + EPS && state.usedHeight > EPS) {
-            state.newPage();
-        }
-        state.touchPage();
-        state.usedHeight = Math.min(state.activeInnerHeight(), state.usedHeight + amount);
-    }
-
-    /**
-     * Closes out a composite's bottom edge. A positive bottom inset advances the
-     * flow as usual; a NEGATIVE one (a negative bottom margin) pulls the following
-     * sibling up — symmetric with a negative top margin, which already offsets via
-     * {@code placementTopY}. The plain {@link #advanceSpace} drops a non-positive
-     * amount, so the closing edge needs this dedicated path. The top-of-node
-     * reservation deliberately stays on {@link #advanceSpace} so a negative top
-     * margin keeps its existing flow behaviour; only the closing edge gains the
-     * pull-up. The cursor never drops below the page top.
-     */
-    private void closeBottomSpace(double amount, CompilerState state) {
-        if (amount >= EPS) {
-            advanceSpace(amount, state);
-        } else if (amount <= -EPS) {
-            state.touchPage();
-            state.usedHeight = Math.max(0.0, state.usedHeight + amount);
-        }
-    }
 
     private String pathFor(DocumentNode node, String parentPath, int childIndex) {
         String base = semanticName(node);

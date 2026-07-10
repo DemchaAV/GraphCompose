@@ -82,3 +82,6 @@ docs/private/
 # test fails, useful for review locally, not part of repo state.
 **/visual-baselines/**/*.actual.png
 **/visual-baselines/**/*.diff.png
+
+# jqwik property-based test replay database — regenerated on every run.
+.jqwik-database

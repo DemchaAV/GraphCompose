@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -61,14 +62,29 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     private final List<PdfHeaderFooterOptions> headerFooterOptions;
 
     /**
+     * Default timestamp for {@link Builder#deterministic(boolean) deterministic(true)}
+     * when no explicit instant is supplied. Any fixed constant works; a pinned epoch
+     * is what keeps the output byte-identical across runs.
+     */
+    private static final Instant DEFAULT_DETERMINISTIC_INSTANT = Instant.parse("2000-01-01T00:00:00Z");
+
+    /**
+     * When non-null, deterministic output is on: the document CreationDate / ModDate
+     * are pinned to this instant and the PDF {@code /ID} is derived from the document
+     * metadata rather than PDFBox's time-seeded default, so the same document renders
+     * to byte-identical output across runs ({@code null} = off).
+     */
+    private final Instant deterministicTimestamp;
+
+    /**
      * Creates a backend with the built-in paragraph, shape, image, and table handlers.
      */
     public PdfFixedLayoutBackend() {
-        this(defaultHandlers(), DocumentDebugOptions.none(), null, null, null, null, List.of());
+        this(defaultHandlers(), DocumentDebugOptions.none(), null, null, null, null, List.of(), null);
     }
 
     PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers) {
-        this(handlers, DocumentDebugOptions.none(), null, null, null, null, List.of());
+        this(handlers, DocumentDebugOptions.none(), null, null, null, null, List.of(), null);
     }
 
     private PdfFixedLayoutBackend(Collection<? extends PdfFragmentRenderHandler<?>> handlers,
@@ -77,7 +93,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                                   PdfWatermarkOptions watermarkOptions,
                                   PdfProtectionOptions protectionOptions,
                                   PdfViewerPreferencesOptions viewerPreferencesOptions,
-                                  Collection<PdfHeaderFooterOptions> headerFooterOptions) {
+                                  Collection<PdfHeaderFooterOptions> headerFooterOptions,
+                                  Instant deterministicTimestamp) {
         Map<Class<?>, PdfFragmentRenderHandler<?>> registry = new LinkedHashMap<>();
         for (PdfFragmentRenderHandler<?> handler : handlers) {
             PdfFragmentRenderHandler<?> previous = registry.put(handler.payloadType(), Objects.requireNonNull(handler, "handler"));
@@ -92,6 +109,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         this.protectionOptions = protectionOptions;
         this.viewerPreferencesOptions = viewerPreferencesOptions;
         this.headerFooterOptions = List.copyOf(headerFooterOptions);
+        this.deterministicTimestamp = deterministicTimestamp;
     }
 
     /**
@@ -380,6 +398,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     protectionOptions,
                     headerFooterOptions);
             PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferencesOptions);
+            if (deterministicTimestamp != null) {
+                PdfDeterminismWriter.apply(document, deterministicTimestamp);
+            }
 
             return document;
         } catch (Exception ex) {
@@ -502,6 +523,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             PdfBookmarkOutlineWriter.apply(document, List.copyOf(bookmarks));
             PdfInternalLinkWriter.apply(document, Map.copyOf(anchors), List.copyOf(links));
             applyDocumentMetadataAndProtection(document, sections);
+            if (deterministicTimestamp != null) {
+                PdfDeterminismWriter.apply(document, deterministicTimestamp);
+            }
             return document;
         } catch (Exception ex) {
             document.close();
@@ -736,6 +760,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         private PdfWatermarkOptions watermarkOptions;
         private PdfProtectionOptions protectionOptions;
         private PdfViewerPreferencesOptions viewerPreferencesOptions;
+        private Instant deterministicTimestamp;
 
         private Builder() {
         }
@@ -874,6 +899,46 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         }
 
         /**
+         * Enables (or disables) deterministic output. When enabled, the document
+         * CreationDate / ModDate are pinned to a fixed default timestamp and the
+         * PDF {@code /ID} is derived from the document metadata instead of PDFBox's
+         * time-seeded default, so the same document renders to byte-identical output
+         * across runs — for reproducible builds and byte-level output tests. Disabled
+         * by default.
+         *
+         * <p>Two documents whose metadata is identical share an {@code /ID} (it is
+         * derived from the info dictionary, not the page content). PDF encryption via
+         * {@link #protect(PdfProtectionOptions)} can reintroduce randomness — AES-256
+         * uses random salts — so an encrypted document is not byte-reproducible even
+         * with this enabled.</p>
+         *
+         * @param enabled {@code true} to pin output at the default timestamp,
+         *                {@code false} to keep PDFBox's live timestamp and {@code /ID}
+         * @return this builder
+         * @since 2.0.0
+         */
+        @Beta
+        public Builder deterministic(boolean enabled) {
+            this.deterministicTimestamp = enabled ? DEFAULT_DETERMINISTIC_INSTANT : null;
+            return this;
+        }
+
+        /**
+         * Enables deterministic output with an explicit timestamp for the document
+         * CreationDate / ModDate. See {@link #deterministic(boolean)}.
+         *
+         * @param timestamp the instant to pin CreationDate / ModDate to
+         * @return this builder
+         * @throws NullPointerException if {@code timestamp} is null
+         * @since 2.0.0
+         */
+        @Beta
+        public Builder deterministic(Instant timestamp) {
+            this.deterministicTimestamp = Objects.requireNonNull(timestamp, "timestamp");
+            return this;
+        }
+
+        /**
          * Creates an immutable PDF backend instance with the configured options.
          *
          * <p>If any handlers were registered via
@@ -892,7 +957,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     watermarkOptions,
                     protectionOptions,
                     viewerPreferencesOptions,
-                    headerFooterOptions);
+                    headerFooterOptions,
+                    deterministicTimestamp);
         }
     }
 }

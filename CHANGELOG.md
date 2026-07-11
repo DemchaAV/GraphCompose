@@ -46,6 +46,14 @@ for this cycle.
 
 ### Public API
 
+- **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
+  (or `.deterministic(Instant)` for an explicit timestamp) pins the document
+  CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead
+  of PDFBox's time-seeded default, so the same document renders to byte-identical PDF
+  bytes across runs — for reproducible builds and byte-level output tests. Off by
+  default (output keeps the live timestamp and `/ID`). PDF encryption via `protect(...)`
+  can reintroduce randomness (AES-256 uses random salts), so an encrypted document is
+  not byte-reproducible even with this enabled.
 - The layered template packages dropped their `.v2` suffix:
   `com.demcha.compose.document.templates.<family>.v2.*` →
   `com.demcha.compose.document.templates.<family>.*` for `cv`, `coverletter`,

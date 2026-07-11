@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -927,6 +928,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
          * Enables deterministic output with an explicit timestamp for the document
          * CreationDate / ModDate. See {@link #deterministic(boolean)}.
          *
+         * <p>The instant is truncated to whole seconds: PDF dates carry second
+         * precision, so truncating up front keeps the serialized dates and the
+         * derived {@code /ID} in agreement for sub-second inputs.</p>
+         *
          * @param timestamp the instant to pin CreationDate / ModDate to
          * @return this builder
          * @throws NullPointerException if {@code timestamp} is null
@@ -934,7 +939,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
          */
         @Beta
         public Builder deterministic(Instant timestamp) {
-            this.deterministicTimestamp = Objects.requireNonNull(timestamp, "timestamp");
+            this.deterministicTimestamp =
+                    Objects.requireNonNull(timestamp, "timestamp").truncatedTo(ChronoUnit.SECONDS);
             return this;
         }
 

@@ -53,7 +53,10 @@ for this cycle.
   bytes across runs — for reproducible builds and byte-level output tests. Off by
   default (output keeps the live timestamp and `/ID`). PDF encryption via `protect(...)`
   can reintroduce randomness (AES-256 uses random salts), so an encrypted document is
-  not byte-reproducible even with this enabled.
+  not byte-reproducible even with this enabled. Multi-section documents opt in through
+  the new `MultiSectionDocument.toPdfBytes(FixedLayoutRenderer)` /
+  `writePdf(FixedLayoutRenderer, OutputStream)` overloads — the multi-section
+  counterpart of `DocumentSession.render(backend)`.
 - The layered template packages dropped their `.v2` suffix:
   `com.demcha.compose.document.templates.<family>.v2.*` →
   `com.demcha.compose.document.templates.<family>.*` for `cv`, `coverletter`,

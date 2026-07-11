@@ -57,22 +57,57 @@ public final class MultiSectionDocument implements AutoCloseable {
     }
 
     /**
-     * Renders the combined multi-section document to PDF bytes.
+     * Renders the combined multi-section document to PDF bytes with the default
+     * backend.
      *
      * @return rendered PDF bytes
      * @throws DocumentRenderingException if rendering fails
      */
     public byte[] toPdfBytes() throws DocumentRenderingException {
+        return toPdfBytes(backend);
+    }
+
+    /**
+     * Renders the combined multi-section document to PDF bytes with the supplied
+     * backend — the multi-section counterpart of
+     * {@link DocumentSession#render(com.demcha.compose.document.backend.fixed.FixedLayoutBackend)}.
+     * Use this to apply backend-level options to the combined document, e.g.
+     * {@code PdfFixedLayoutBackend.builder().deterministic(true).build()} for
+     * reproducible output.
+     *
+     * @param backend the configured section-capable backend to render with
+     * @return rendered PDF bytes
+     * @throws DocumentRenderingException if rendering fails
+     * @since 2.0.0
+     */
+    public byte[] toPdfBytes(FixedLayoutRenderer backend) throws DocumentRenderingException {
+        Objects.requireNonNull(backend, "backend");
         return render("render PDF bytes", () -> backend.renderSections(renderUnits()));
     }
 
     /**
-     * Streams the combined document to the caller-owned stream (not closed here).
+     * Streams the combined document to the caller-owned stream (not closed here)
+     * with the default backend.
      *
      * @param output destination stream that receives the rendered PDF bytes
      * @throws DocumentRenderingException if rendering fails
      */
     public void writePdf(OutputStream output) throws DocumentRenderingException {
+        writePdf(backend, output);
+    }
+
+    /**
+     * Streams the combined document to the caller-owned stream (not closed here)
+     * with the supplied backend. See {@link #toPdfBytes(FixedLayoutRenderer)} for
+     * when to pass a configured backend.
+     *
+     * @param backend the configured section-capable backend to render with
+     * @param output  destination stream that receives the rendered PDF bytes
+     * @throws DocumentRenderingException if rendering fails
+     * @since 2.0.0
+     */
+    public void writePdf(FixedLayoutRenderer backend, OutputStream output) throws DocumentRenderingException {
+        Objects.requireNonNull(backend, "backend");
         Objects.requireNonNull(output, "output");
         render("write PDF to stream", () -> {
             backend.writeSections(renderUnits(), output);

@@ -44,4 +44,32 @@ class PdfDeterminismWriterTest {
     void idIsA16ByteHashEvenWithNoMetadata() {
         assertThat(PdfDeterminismWriter.documentId(new PDDocumentInformation(), T)).hasSize(16);
     }
+
+    @Test
+    void idDoesNotCollideWhenFieldBoundariesShift() {
+        // "A B" + "" vs "A" + "B" concatenate identically without length-prefixed
+        // frames; the canonical form must keep them apart.
+        PDDocumentInformation first = new PDDocumentInformation();
+        first.setTitle("A B");
+        first.setAuthor("");
+        PDDocumentInformation second = new PDDocumentInformation();
+        second.setTitle("A");
+        second.setAuthor("B");
+
+        assertThat(PdfDeterminismWriter.documentId(first, T))
+                .isNotEqualTo(PdfDeterminismWriter.documentId(second, T));
+    }
+
+    @Test
+    void keywordsAndCustomFieldsParticipateInTheId() {
+        byte[] base = PdfDeterminismWriter.documentId(info("Report"), T);
+
+        PDDocumentInformation withKeywords = info("Report");
+        withKeywords.setKeywords("alpha beta");
+        PDDocumentInformation withCustom = info("Report");
+        withCustom.setCustomMetadataValue("Team", "Docs");
+
+        assertThat(PdfDeterminismWriter.documentId(withKeywords, T)).isNotEqualTo(base);
+        assertThat(PdfDeterminismWriter.documentId(withCustom, T)).isNotEqualTo(base);
+    }
 }

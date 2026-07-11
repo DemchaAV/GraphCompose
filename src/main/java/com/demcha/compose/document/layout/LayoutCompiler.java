@@ -8,7 +8,6 @@ import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentBleed;
-import com.demcha.compose.document.style.DocumentEdge;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import org.slf4j.Logger;
@@ -320,32 +319,12 @@ public final class LayoutCompiler {
         int endPage = state.pageIndex;
         double endPageBottomY = state.pageTop() - state.usedHeight + margin.bottom();
 
-        // Content bleed: the decoration box (fill/border) extends to the trimmed
-        // page edge on the declared edges, while children stay in the content
-        // region (so text never runs off the page). Byte-identical when the node
-        // does not bleed — every value below collapses to the in-margin geometry.
+        // Content bleed extends the decoration box to the trimmed page edge on the
+        // declared edges while children stay in the content region; without bleed the
+        // box is the in-margin geometry (see CompositeDecoration#resolveBleedBox).
         DocumentBleed bleed = node.bleed();
-        double decorX = placementX;
-        double decorWidth = naturalMeasure.width();
-        double decorTopY = placementTopY;
-        double decorBottomY = endPageBottomY;
-        if (bleed.any()) {
-            double pageWidth = state.canvas.width();
-            double pageHeight = state.canvas.height();
-            if (bleed.bleeds(DocumentEdge.LEFT)) {
-                decorWidth += decorX;
-                decorX = 0.0;
-            }
-            if (bleed.bleeds(DocumentEdge.RIGHT)) {
-                decorWidth = Math.max(0.0, pageWidth - decorX);
-            }
-            if (bleed.bleeds(DocumentEdge.TOP)) {
-                decorTopY = pageHeight;
-            }
-            if (bleed.bleeds(DocumentEdge.BOTTOM)) {
-                decorBottomY = 0.0;
-            }
-        }
+        CompositeDecoration.BleedBox decor = CompositeDecoration.resolveBleedBox(
+                bleed, placementX, naturalMeasure.width(), placementTopY, endPageBottomY, state.canvas);
         List<PlacedFragment> decorationFragments = CompositeDecoration.fill(
                 prepared,
                 definition,
@@ -353,10 +332,10 @@ public final class LayoutCompiler {
                 parentPath,
                 childIndex,
                 depth,
-                decorX,
-                decorTopY,
-                decorBottomY,
-                decorWidth,
+                decor.x(),
+                decor.topY(),
+                decor.bottomY(),
+                decor.width(),
                 startPage,
                 endPage,
                 margin,

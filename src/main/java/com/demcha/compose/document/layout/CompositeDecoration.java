@@ -30,6 +30,62 @@ final class CompositeDecoration {
     private CompositeDecoration() {
     }
 
+    /**
+     * Resolves the decoration (fill / border) box for a composite. Without bleed
+     * the box is the in-margin content geometry; each declared bleed edge instead
+     * snaps that side of the box to the trimmed page edge (left/right adjust the x
+     * span, top/bottom the y span) while the children stay in the content region.
+     *
+     * @param bleed   the node's bleed edges
+     * @param x       content-box left (in-margin)
+     * @param width   content-box width (in-margin)
+     * @param topY    content-box top y (in-margin)
+     * @param bottomY content-box bottom y (in-margin)
+     * @param canvas  the page canvas, for the trimmed page-edge coordinates
+     * @return the resolved decoration box
+     */
+    static BleedBox resolveBleedBox(DocumentBleed bleed,
+                                    double x,
+                                    double width,
+                                    double topY,
+                                    double bottomY,
+                                    LayoutCanvas canvas) {
+        double decorX = x;
+        double decorWidth = width;
+        double decorTopY = topY;
+        double decorBottomY = bottomY;
+        if (bleed.any()) {
+            double pageWidth = canvas.width();
+            double pageHeight = canvas.height();
+            if (bleed.bleeds(DocumentEdge.LEFT)) {
+                decorWidth += decorX;
+                decorX = 0.0;
+            }
+            if (bleed.bleeds(DocumentEdge.RIGHT)) {
+                decorWidth = Math.max(0.0, pageWidth - decorX);
+            }
+            if (bleed.bleeds(DocumentEdge.TOP)) {
+                decorTopY = pageHeight;
+            }
+            if (bleed.bleeds(DocumentEdge.BOTTOM)) {
+                decorBottomY = 0.0;
+            }
+        }
+        return new BleedBox(decorX, decorWidth, decorTopY, decorBottomY);
+    }
+
+    /**
+     * A resolved composite decoration box — the fill / border extent after content
+     * bleed, in page space.
+     *
+     * @param x       decoration box left
+     * @param width   decoration box width
+     * @param topY    decoration box top y
+     * @param bottomY decoration box bottom y
+     */
+    record BleedBox(double x, double width, double topY, double bottomY) {
+    }
+
     static List<PlacedFragment> fill(PreparedNode<DocumentNode> prepared,
                                      NodeDefinition<DocumentNode> definition,
                                      String path,

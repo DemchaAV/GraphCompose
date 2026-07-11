@@ -389,14 +389,7 @@ public final class LayoutCompiler {
                                       MeasureResult naturalMeasure) {
         DocumentNode node = prepared.node();
         double rowOuterHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.activeInnerHeight();
-        if (rowOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
-            throw atomicTooLarge(path, rowOuterHeight, fullPageHeight);
-        }
-        if (rowOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
-            state.newPage();
-        }
-        state.touchPage();
+        admitAtomicBlock(rowOuterHeight, path, state);
 
         int startPage = state.pageIndex;
         double placementX = regionX + margin.left();
@@ -588,14 +581,7 @@ public final class LayoutCompiler {
                                      MeasureResult naturalMeasure) {
         DocumentNode node = prepared.node();
         double stackOuterHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.activeInnerHeight();
-        if (stackOuterHeight > fullPageHeight + CAPACITY_TOLERANCE) {
-            throw atomicTooLarge(path, stackOuterHeight, fullPageHeight);
-        }
-        if (stackOuterHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
-            state.newPage();
-        }
-        state.touchPage();
+        admitAtomicBlock(stackOuterHeight, path, state);
 
         int startPage = state.pageIndex;
         double placementX = regionX + margin.left();
@@ -729,15 +715,7 @@ public final class LayoutCompiler {
         Padding padding = toPadding(node.padding());
         MeasureResult naturalMeasure = prepared.measureResult();
         double outerHeight = naturalMeasure.height() + margin.vertical();
-        double fullPageHeight = state.activeInnerHeight();
-
-        if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
-            throw atomicTooLarge(path, outerHeight, fullPageHeight);
-        }
-        if (outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
-            state.newPage();
-        }
-        state.touchPage();
+        admitAtomicBlock(outerHeight, path, state);
 
         double placementX = regionX + margin.left();
         double placementY = state.pageTop() - state.usedHeight - margin.top() - naturalMeasure.height();
@@ -1332,6 +1310,28 @@ public final class LayoutCompiler {
             return null;
         }
         return node.name().trim();
+    }
+
+    /**
+     * Admits a non-splitting block — a horizontal row band, a layer stack, or an
+     * atomic leaf — onto the page: rejects a block taller than a full page, moves
+     * to a fresh page when it does not fit in the remaining height, and marks the
+     * landing page touched.
+     *
+     * @param outerHeight the block's outer (margin-box) height
+     * @param path        the block's layout path, for the too-large error message
+     * @param state       the compiler cursor (mutated: may advance to a new page)
+     * @throws AtomicNodeTooLargeException if the block cannot fit on a full page
+     */
+    private void admitAtomicBlock(double outerHeight, String path, CompilerState state) {
+        double fullPageHeight = state.activeInnerHeight();
+        if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
+            throw atomicTooLarge(path, outerHeight, fullPageHeight);
+        }
+        if (outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
+            state.newPage();
+        }
+        state.touchPage();
     }
 
     private AtomicNodeTooLargeException atomicTooLarge(String path, double outerHeight, double pageHeight) {

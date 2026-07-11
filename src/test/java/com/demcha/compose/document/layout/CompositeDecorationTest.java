@@ -174,4 +174,56 @@ class CompositeDecorationTest {
             assertThat(f.pageIndex()).isEqualTo(3);
         });
     }
+
+    // resolveBleedBox: content box x=20 w=100, top=80 bottom=30, on the 200×100 canvas.
+
+    @Test
+    void resolveBleedBoxWithoutBleedReturnsTheInMarginBox() {
+        CompositeDecoration.BleedBox box = CompositeDecoration.resolveBleedBox(
+                DocumentBleed.none(), 20, 100, 80, 30, canvas);
+        assertThat(box.x()).isCloseTo(20, within(EPS));
+        assertThat(box.width()).isCloseTo(100, within(EPS));
+        assertThat(box.topY()).isCloseTo(80, within(EPS));
+        assertThat(box.bottomY()).isCloseTo(30, within(EPS));
+    }
+
+    @Test
+    void resolveBleedBoxLeftSnapsOriginToZeroAndAbsorbsTheLeftGap() {
+        CompositeDecoration.BleedBox box = CompositeDecoration.resolveBleedBox(
+                DocumentBleed.of(DocumentEdge.LEFT), 20, 100, 80, 30, canvas);
+        assertThat(box.x()).isCloseTo(0, within(EPS));
+        assertThat(box.width()).isCloseTo(120, within(EPS)); // 100 + 20
+        assertThat(box.topY()).isCloseTo(80, within(EPS));
+        assertThat(box.bottomY()).isCloseTo(30, within(EPS));
+    }
+
+    @Test
+    void resolveBleedBoxRightStretchesWidthToThePageEdge() {
+        CompositeDecoration.BleedBox box = CompositeDecoration.resolveBleedBox(
+                DocumentBleed.of(DocumentEdge.RIGHT), 20, 100, 80, 30, canvas);
+        assertThat(box.x()).isCloseTo(20, within(EPS));
+        assertThat(box.width()).isCloseTo(180, within(EPS)); // pageWidth 200 - x 20
+        assertThat(box.topY()).isCloseTo(80, within(EPS));
+        assertThat(box.bottomY()).isCloseTo(30, within(EPS));
+    }
+
+    @Test
+    void resolveBleedBoxTopAndBottomSnapToThePageEdges() {
+        CompositeDecoration.BleedBox box = CompositeDecoration.resolveBleedBox(
+                DocumentBleed.of(DocumentEdge.TOP, DocumentEdge.BOTTOM), 20, 100, 80, 30, canvas);
+        assertThat(box.x()).isCloseTo(20, within(EPS));
+        assertThat(box.width()).isCloseTo(100, within(EPS));
+        assertThat(box.topY()).isCloseTo(100, within(EPS)); // pageHeight
+        assertThat(box.bottomY()).isCloseTo(0, within(EPS));
+    }
+
+    @Test
+    void resolveBleedBoxAllSnapsToTheFullPage() {
+        CompositeDecoration.BleedBox box = CompositeDecoration.resolveBleedBox(
+                DocumentBleed.all(), 20, 100, 80, 30, canvas);
+        assertThat(box.x()).isCloseTo(0, within(EPS));
+        assertThat(box.width()).isCloseTo(200, within(EPS)); // full page width
+        assertThat(box.topY()).isCloseTo(100, within(EPS));
+        assertThat(box.bottomY()).isCloseTo(0, within(EPS));
+    }
 }

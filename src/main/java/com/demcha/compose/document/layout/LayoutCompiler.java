@@ -246,9 +246,9 @@ public final class LayoutCompiler {
         }
 
         if (layoutSpec.axis() == CompositeLayoutSpec.Axis.STACK) {
-            compileStackedLayer(prepared, definition, path, semanticName, parentPath, childIndex, depth,
-                    regionX, state, prepareContext, fragmentContext, nodes, fragments,
-                    margin, padding, availableWidth, naturalMeasure);
+            StackedLayerCompiler.compile(this, prepared, definition, path, semanticName, parentPath, childIndex,
+                    depth, regionX, margin, padding, naturalMeasure,
+                    new CompileContext(state, prepareContext, fragmentContext, nodes, fragments));
             return;
         }
 
@@ -562,140 +562,6 @@ public final class LayoutCompiler {
         state.usedHeight += rowOuterHeight;
     }
 
-    private void compileStackedLayer(PreparedNode<DocumentNode> prepared,
-                                     NodeDefinition<DocumentNode> definition,
-                                     String path,
-                                     String semanticName,
-                                     String parentPath,
-                                     int childIndex,
-                                     int depth,
-                                     double regionX,
-                                     CompilerState state,
-                                     PrepareContext prepareContext,
-                                     FragmentContext fragmentContext,
-                                     List<PlacedNode> nodes,
-                                     List<PlacedFragment> fragments,
-                                     Margin margin,
-                                     Padding padding,
-                                     double availableWidth,
-                                     MeasureResult naturalMeasure) {
-        DocumentNode node = prepared.node();
-        double stackOuterHeight = naturalMeasure.height() + margin.vertical();
-        admitAtomicBlock(stackOuterHeight, path, state);
-
-        int startPage = state.pageIndex;
-        double placementX = regionX + margin.left();
-        double placementTopY = state.pageTop() - state.usedHeight - margin.top();
-        double placementY = placementTopY - naturalMeasure.height();
-        int decorationInsertIndex = fragments.size();
-        int stackNodeIndex = nodes.size();
-        nodes.add(null);
-
-        PreparedStackLayout stackLayout =
-                prepared.requirePreparedLayout(PreparedStackLayout.class);
-        List<DocumentNode> children = definition.children(node);
-        double innerWidth = Math.max(0.0, naturalMeasure.width() - padding.horizontal());
-        double innerHeight = Math.max(0.0, naturalMeasure.height() - padding.vertical());
-        double innerStartX = placementX + padding.left();
-        double innerTopY = placementTopY - padding.top();
-
-        // Sort layers by ascending zIndex (stable — equal zIndex keeps
-        // source order). Iteration order then determines render order:
-        // earlier in the list → drawn first / behind. childIndex below
-        // is the SOURCE index so semantic paths stay stable for tests
-        // and snapshots; only the iteration order shifts.
-        int[] iterationOrder = LayerStackGeometry.zOrder(stackLayout.zIndices());
-        PlacementContext layerHostCtx = new FixedSlotPlacementContext(
-                state.pageIndex, state.canvas, prepareContext, fragmentContext, nodes, fragments);
-        for (int slot = 0; slot < iterationOrder.length; slot++) {
-            int index = iterationOrder[slot];
-            placeStackLayer(
-                    children.get(index),
-                    index,
-                    path,
-                    depth,
-                    innerStartX,
-                    innerTopY,
-                    innerWidth,
-                    innerHeight,
-                    stackLayout.alignments().get(index),
-                    stackLayout.offsetsX().get(index),
-                    stackLayout.offsetsY().get(index),
-                    layerHostCtx);
-        }
-
-        int endPage = state.pageIndex;
-        double endPageBottomY = placementTopY - naturalMeasure.height() + margin.bottom();
-        List<PlacedFragment> decorationFragments = CompositeDecoration.fill(
-                prepared,
-                definition,
-                path,
-                parentPath,
-                childIndex,
-                depth,
-                placementX,
-                placementTopY,
-                endPageBottomY,
-                naturalMeasure.width(),
-                startPage,
-                endPage,
-                margin,
-                padding,
-                state.canvas,
-                DocumentBleed.none(),
-                fragmentContext);
-        if (!decorationFragments.isEmpty()) {
-            fragments.addAll(decorationInsertIndex, decorationFragments);
-        }
-
-        // Overlay fragments arrive AFTER children — they are the
-        // "after the body" half of paired begin/end markers (e.g. the
-        // graphics-state restore of a ShapeContainerNode clip path).
-        List<PlacedFragment> overlayFragments = CompositeDecoration.overlay(
-                prepared,
-                definition,
-                path,
-                parentPath,
-                childIndex,
-                depth,
-                placementX,
-                placementTopY,
-                endPageBottomY,
-                naturalMeasure.width(),
-                startPage,
-                endPage,
-                margin,
-                padding,
-                state.canvas,
-                fragmentContext);
-        if (!overlayFragments.isEmpty()) {
-            fragments.addAll(overlayFragments);
-        }
-
-        nodes.set(stackNodeIndex, new PlacedNode(
-                path,
-                semanticName,
-                node.nodeKind(),
-                parentPath,
-                childIndex,
-                depth,
-                depth,
-                placementX,
-                placementY,
-                placementX,
-                placementY,
-                naturalMeasure.width(),
-                naturalMeasure.height(),
-                startPage,
-                endPage,
-                naturalMeasure.width(),
-                naturalMeasure.height(),
-                margin,
-                padding));
-
-        state.usedHeight += stackOuterHeight;
-    }
-
     private void compileAtomicLeaf(PreparedNode<DocumentNode> prepared,
                                    NodeDefinition<DocumentNode> definition,
                                    String path,
@@ -791,7 +657,7 @@ public final class LayoutCompiler {
 
     /**
      * Places a single layer inside a stack composite at the given inner-box
-     * coordinates. Shared between {@link #compileStackedLayer} (mutating
+     * coordinates. Shared between {@link StackedLayerCompiler} (mutating
      * placement path) and the STACK branch of {@link #compileNodeInFixedSlot}
      * (non-mutating placement path). Both feed per-layer offsets from
      * {@link PreparedStackLayout}, so a {@code position(node, dx, dy, align)}
@@ -802,18 +668,18 @@ public final class LayoutCompiler {
      * because each layer occupies a single fixed page slot whose origin
      * has already been resolved by the alignment + offset math here.</p>
      */
-    private void placeStackLayer(DocumentNode child,
-                                 int sourceIndex,
-                                 String parentPath,
-                                 int parentDepth,
-                                 double innerStartX,
-                                 double innerTopY,
-                                 double innerWidth,
-                                 double innerHeight,
-                                 com.demcha.compose.document.node.LayerAlign align,
-                                 double layerOffsetX,
-                                 double layerOffsetY,
-                                 PlacementContext ctx) {
+    void placeStackLayer(DocumentNode child,
+                         int sourceIndex,
+                         String parentPath,
+                         int parentDepth,
+                         double innerStartX,
+                         double innerTopY,
+                         double innerWidth,
+                         double innerHeight,
+                         com.demcha.compose.document.node.LayerAlign align,
+                         double layerOffsetX,
+                         double layerOffsetY,
+                         PlacementContext ctx) {
         PreparedNode<DocumentNode> childPrepared =
                 prepareForRegionWidth(ctx.prepareContext(), child, innerWidth);
         MeasureResult childMeasure = childPrepared.measureResult();
@@ -944,7 +810,7 @@ public final class LayoutCompiler {
                 double stackInnerStartX = placementX + padding.left();
                 double stackInnerTopY = placementTopY - padding.top();
 
-                // Same z-index iteration order as compileStackedLayer
+                // Same z-index iteration order as StackedLayerCompiler
                 // (root-level case). Source-order semantic paths are
                 // preserved — only render order shifts.
                 int[] iterationOrder = LayerStackGeometry.zOrder(stackLayout.zIndices());
@@ -1158,7 +1024,7 @@ public final class LayoutCompiler {
      * @param state       the compiler cursor (mutated: may advance to a new page)
      * @throws AtomicNodeTooLargeException if the block cannot fit on a full page
      */
-    private void admitAtomicBlock(double outerHeight, String path, CompilerState state) {
+    void admitAtomicBlock(double outerHeight, String path, CompilerState state) {
         double fullPageHeight = state.activeInnerHeight();
         if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
             throw AtomicNodeTooLargeException.forNode(path, outerHeight, fullPageHeight);

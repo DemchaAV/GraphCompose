@@ -5,12 +5,10 @@ import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PageBreakNode;
-import com.demcha.compose.document.node.RowArrangement;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentBleed;
 import com.demcha.compose.document.style.DocumentEdge;
-import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
 import org.slf4j.Logger;
@@ -56,38 +54,6 @@ public final class LayoutCompiler {
      */
     public LayoutCompiler(NodeRegistry registry) {
         this.registry = Objects.requireNonNull(registry, "registry");
-    }
-
-    private static double[] distributeRowSlotWidths(List<DocumentNode> children,
-                                                    List<Double> weights,
-                                                    double gap,
-                                                    double innerWidth) {
-        int n = children.size();
-        double available = Math.max(0.0, innerWidth - gap * Math.max(0, n - 1));
-        double[] slots = new double[n];
-        if (weights == null || weights.isEmpty()) {
-            double share = n > 0 ? available / n : 0.0;
-            for (int i = 0; i < n; i++) {
-                slots[i] = share;
-            }
-            return slots;
-        }
-        RowSlots.validateWeightsMatchChildren(weights, n);
-        double total = 0.0;
-        for (double w : weights) {
-            total += w;
-        }
-        if (total <= 0.0) {
-            double share = n > 0 ? available / n : 0.0;
-            for (int i = 0; i < n; i++) {
-                slots[i] = share;
-            }
-            return slots;
-        }
-        for (int i = 0; i < n; i++) {
-            slots[i] = available * (weights.get(i) / total);
-        }
-        return slots;
     }
 
     /**
@@ -466,36 +432,11 @@ public final class LayoutCompiler {
         double rowInnerY = placementTopY - padding.top();
 
         if (!children.isEmpty()) {
-            List<DocumentRowColumn> columns = node instanceof RowNode row ? row.columns() : List.of();
-            double[] slotWidths;
-            // flexLeading / flexExtraGap stay 0.0 for every non-flex row, so the
-            // cursor math below is byte-identical to the pre-flex placement.
-            double flexLeading = 0.0;
-            double flexExtraGap = 0.0;
-            if (RowSlots.hasFlexLayout(node)) {
-                slotWidths = RowSlots.distributeFlex(children, layoutSpec.spacing(), childRegionWidth, prepareContext);
-                RowArrangement arrangement = node instanceof RowNode flexRow
-                        ? flexRow.arrangement() : RowArrangement.START;
-                if (arrangement != RowArrangement.START) {
-                    double available = RowSlots.rowAvailableWidth(
-                            childRegionWidth, layoutSpec.spacing(), children.size());
-                    double used = 0.0;
-                    for (double slot : slotWidths) {
-                        used += slot;
-                    }
-                    double[] justify = RowSlots.flexJustify(
-                            arrangement, Math.max(0.0, available - used), children.size());
-                    flexLeading = justify[0];
-                    flexExtraGap = justify[1];
-                }
-            } else if (!columns.isEmpty()) {
-                double available = RowSlots.rowAvailableWidth(childRegionWidth, layoutSpec.spacing(), children.size());
-                double[] intrinsic = RowSlots.intrinsicColumnWidths(children, columns, available, prepareContext);
-                slotWidths = RowSlots.distributeColumns(columns, intrinsic, layoutSpec.spacing(), childRegionWidth, semanticName);
-            } else {
-                slotWidths = distributeRowSlotWidths(children, layoutSpec.weights(),
-                        layoutSpec.spacing(), childRegionWidth);
-            }
+            RowSlots.SlotLayout slotLayout = RowSlots.resolveLayout(
+                    node, children, layoutSpec, childRegionWidth, prepareContext, semanticName);
+            double[] slotWidths = slotLayout.widths();
+            double flexLeading = slotLayout.leading();
+            double flexExtraGap = slotLayout.extraGap();
             RowVerticalAlign verticalAlign = node instanceof RowNode rowNode
                     ? rowNode.verticalAlign() : RowVerticalAlign.TOP;
             double bandContentHeight = naturalMeasure.height() - padding.vertical();

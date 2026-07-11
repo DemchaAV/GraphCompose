@@ -171,7 +171,7 @@ public final class LayoutCompiler {
 
         if (definition.paginationPolicy(node) == PaginationPolicy.SPLITTABLE) {
             SplittableLeafCompiler.compile(prepared, definition, path, semanticName, parentPath, childIndex, depth, regionX,
-                    availableWidth, state, prepareContext, fragmentContext, nodes, fragments);
+                    availableWidth, new CompileContext(state, prepareContext, fragmentContext, nodes, fragments));
             return;
         }
 

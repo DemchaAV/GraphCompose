@@ -44,7 +44,7 @@ class SplittableLeafCompilerTest {
 
     private void compile(PreparedNode<DocumentNode> prepared) {
         SplittableLeafCompiler.compile(prepared, definition, "leaf", "leaf", null, 0, 1,
-                10, 180, state, prepareContext, fragmentContext, nodes, fragments);
+                10, 180, new CompileContext(state, prepareContext, fragmentContext, nodes, fragments));
     }
 
     @Test

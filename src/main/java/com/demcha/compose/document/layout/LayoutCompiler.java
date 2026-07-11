@@ -943,7 +943,7 @@ public final class LayoutCompiler {
                     state.newPage();
                     continue;
                 }
-                throw atomicTooLarge(path, pieceOuterHeight, fullPageOuterHeight);
+                throw AtomicNodeTooLargeException.forNode(path, pieceOuterHeight, fullPageOuterHeight);
             }
             if (tail != null && tail.equals(current)) {
                 throw new IllegalStateException("Split did not make progress for node '" + path
@@ -962,7 +962,7 @@ public final class LayoutCompiler {
                     state.newPage();
                     continue;
                 }
-                throw atomicTooLarge(path, headOuterHeight, fullPageOuterHeight);
+                throw AtomicNodeTooLargeException.forNode(path, headOuterHeight, fullPageOuterHeight);
             }
 
             state.touchPage();
@@ -1326,21 +1326,12 @@ public final class LayoutCompiler {
     private void admitAtomicBlock(double outerHeight, String path, CompilerState state) {
         double fullPageHeight = state.activeInnerHeight();
         if (outerHeight > fullPageHeight + CAPACITY_TOLERANCE) {
-            throw atomicTooLarge(path, outerHeight, fullPageHeight);
+            throw AtomicNodeTooLargeException.forNode(path, outerHeight, fullPageHeight);
         }
         if (outerHeight > state.remainingHeight() + EPS && state.usedHeight > EPS) {
             state.newPage();
         }
         state.touchPage();
-    }
-
-    private AtomicNodeTooLargeException atomicTooLarge(String path, double outerHeight, double pageHeight) {
-        return new AtomicNodeTooLargeException(
-                "Node '" + path + "' requires outer height " + outerHeight
-                + " but page capacity is " + pageHeight + ". "
-                + "Reduce the node height, split content into multiple atomic blocks, "
-                + "or increase the page size. Differences under 0.5 pt are tolerated as "
-                + "rounding noise (v1.6.2+).");
     }
 
     /**

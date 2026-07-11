@@ -44,11 +44,7 @@ final class SplittableLeafCompiler {
      * @param depth           the leaf's tree depth
      * @param regionX         the content region's left edge
      * @param availableWidth  the content width available to the leaf
-     * @param state           the compiler cursor (mutated as pages advance)
-     * @param prepareContext  the node preparation context (drives re-measurement of tails)
-     * @param fragmentContext the fragment emission context
-     * @param nodes           accumulator for placed nodes (appended to)
-     * @param fragments       accumulator for placed fragments (appended to)
+     * @param ctx             the cursor + emission context (mutated as pages advance)
      * @throws AtomicNodeTooLargeException if a piece cannot fit on an empty page
      */
     static void compile(PreparedNode<DocumentNode> prepared,
@@ -60,11 +56,13 @@ final class SplittableLeafCompiler {
                         int depth,
                         double regionX,
                         double availableWidth,
-                        CompilerState state,
-                        PrepareContext prepareContext,
-                        FragmentContext fragmentContext,
-                        List<PlacedNode> nodes,
-                        List<PlacedFragment> fragments) {
+                        CompileContext ctx) {
+        CompilerState state = ctx.state();
+        PrepareContext prepareContext = ctx.prepareContext();
+        FragmentContext fragmentContext = ctx.fragmentContext();
+        List<PlacedNode> nodes = ctx.nodes();
+        List<PlacedFragment> fragments = ctx.fragments();
+
         Margin originalMargin = toMargin(prepared.node().margin());
         Padding originalPadding = toPadding(prepared.node().padding());
 

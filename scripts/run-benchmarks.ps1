@@ -319,8 +319,13 @@ try {
     # JasperReports comparison libraries. We install the main module so
     # its tests-classifier jar is available, then build the benchmarks
     # classpath from the sibling pom.
+    # Engine reactor coordinate differs by layout: the 2.0 line keeps the engine
+    # in core/ under a root aggregator (-pl :graph-compose-core), older branches
+    # build it at the repository root (-pl .). ab-bench.ps1 checks out other
+    # branches and re-invokes this script, so detect by core/pom.xml.
+    $enginePl = if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) { ':graph-compose-core' } else { '.' }
     Invoke-LoggedCommand -Name "01-install-main" -Command {
-        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" ":graph-compose-core"
+        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" $enginePl
     }
 
     Invoke-LoggedCommand -Name "01-build-classpath" -Command {

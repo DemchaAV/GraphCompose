@@ -149,8 +149,14 @@ trap restore EXIT
 CP=""
 build_engine_and_classpath() {
   # Install the engine for the current branch so the benchmark runs against IT,
-  # then (re)build the benchmark classpath.
-  "$MVNW" -B -ntp -DskipTests install -pl :graph-compose-core >/dev/null
+  # then (re)build the benchmark classpath. This script checks out other
+  # branches, whose layout may differ from the one it lives on: the 2.0 line
+  # keeps the engine in core/ under a root aggregator (-pl :graph-compose-core),
+  # while older branches build it at the repository root (-pl .). Detect by the
+  # presence of core/pom.xml so a single A/B run can cross the layout boundary.
+  local engine_pl="."
+  [ -f core/pom.xml ] && engine_pl=":graph-compose-core"
+  "$MVNW" -B -ntp -DskipTests install -pl "$engine_pl" >/dev/null
   "$MVNW" -B -ntp -f benchmarks/pom.xml test-compile dependency:build-classpath \
           -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath >/dev/null
   CP="benchmarks/target/test-classes${SEP}benchmarks/target/classes${SEP}$(cat benchmarks/target/benchmark.classpath)"

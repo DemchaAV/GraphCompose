@@ -149,12 +149,15 @@ jobs:
 
       - name: Build and run tests
         # Reactor slice: the engine, the render-docx / render-pptx semantic backends,
-        # the extracted graph-compose-testing module, the graph-compose-qa
-        # cross-module suites (which need the testing module + the engine test-jar on
-        # the classpath and so cannot live in the engine's own test scope), and the
-        # graph-compose-coverage aggregator (report-only JaCoCo over core + qa exec).
-        # -am pulls the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa,:graph-compose-coverage -am
+        # the graph-compose wrapper + graph-compose-bundle (the published empty-jar
+        # aggregates — covered here so a packaging break is caught on every push, not
+        # only via the examples job), the extracted graph-compose-testing module, the
+        # graph-compose-qa cross-module suites (which need the testing module + the
+        # engine test-jar on the classpath and so cannot live in the engine's own test
+        # scope), and the graph-compose-coverage aggregator (report-only JaCoCo over
+        # core + qa exec). -am pulls the fonts / emoji upstreams; only examples /
+        # benchmarks are excluded (their own CI jobs cover them).
+        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose,:graph-compose-bundle,:graph-compose-qa,:graph-compose-coverage -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical

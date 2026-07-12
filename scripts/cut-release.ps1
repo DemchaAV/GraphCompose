@@ -565,11 +565,19 @@ try {
     }
 
     if (-not $SkipVerify) {
-        Step 5 "Run mvnw verify (sanity check)"
-        if ($DryRun) {
-            Write-Host "    [DRY RUN] $mvnw verify -pl :graph-compose-core" -ForegroundColor Yellow
+        Step 5 "Run mvnw clean verify (sanity check)"
+        # The whole train ships on the tag, so verify the whole reactor. The 2.0
+        # core/ layout builds every module from the root; the older 1.x layout
+        # scopes to the engine at the root (-pl .). Detect by core/pom.xml.
+        $verifyArgs = if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
+            @('-B','-ntp','clean','verify')
         } else {
-            & $mvnw verify -pl :graph-compose-core 2>&1 | ForEach-Object {
+            @('-B','-ntp','clean','verify','-pl','.')
+        }
+        if ($DryRun) {
+            Write-Host "    [DRY RUN] $mvnw $($verifyArgs -join ' ')" -ForegroundColor Yellow
+        } else {
+            & $mvnw @verifyArgs 2>&1 | ForEach-Object {
                 if ($_ -match 'Tests run:|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                     Write-Host "    $_" -ForegroundColor DarkGray
                 }
@@ -577,7 +585,7 @@ try {
             if ($LASTEXITCODE -ne 0) {
                 throw "mvnw verify failed."
             }
-            Note "mvnw verify: green"
+            Note "mvnw clean verify: green"
         }
     } else {
         Step 5 "Skipped mvnw verify (-SkipVerify)"

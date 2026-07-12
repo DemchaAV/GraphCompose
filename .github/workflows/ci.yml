@@ -268,7 +268,7 @@ jobs:
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
     # japicmp diffs the graph-compose-core public surface, so it only matters
-    # when the core module (root `src/**` or `pom.xml`) changed.
+    # when the core module (`core/src/**` or `core/pom.xml`) changed.
     if: github.event_name == 'pull_request' && needs.changes.outputs.core == 'true'
     needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
@@ -288,7 +288,7 @@ jobs:
 
       - name: Compare public API against baseline
         # The `japicmp` profile resolves the baseline release pinned
-        # by the `japicmp.baseline` property in pom.xml (via the
+        # by the `japicmp.baseline` property in core/pom.xml (via the
         # profile-local JitPack repository) and diffs it against the
         # freshly-built artifact. Fails the job on any binary-
         # incompatible modification to the public surface. Source-

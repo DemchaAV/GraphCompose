@@ -126,7 +126,7 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("docs/recipes.md"),
                         PROJECT_ROOT.resolve("docs/operations/layout-snapshot-testing.md"),
                         PROJECT_ROOT.resolve("examples/src/main/java/com/demcha/examples"),
-                        PROJECT_ROOT.resolve("core/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
+                        PROJECT_ROOT.resolve("qa/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
     }
 
     @Test

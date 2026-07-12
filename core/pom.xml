@@ -163,7 +163,7 @@
             the real binaries. Test scope is not transitive, so the engine's own
             published jar stays fonts-free — an engine consumer never drags these
             in. A reactor build satisfies them from the just-built siblings; a
-            standalone `-pl .` build resolves the published 1.0.0 artifacts.
+            standalone `-f core/pom.xml` build resolves the published 1.0.0 artifacts.
         -->
         <dependency>
             <groupId>io.github.demchaav</groupId>

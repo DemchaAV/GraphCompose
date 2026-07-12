@@ -73,12 +73,12 @@ Core document APIs stay source- and binary-compatible with v1.8 &mdash; v1.9 is 
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-rc.1</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.0.0-rc.1") }
 ```
 
 > **Which artifact? (2.0 module split).** `graph-compose` above is the drop-in default —

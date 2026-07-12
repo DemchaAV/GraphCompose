@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CanonicalSurfaceGuardTest {
-    private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
+    private static final Path PROJECT_ROOT = RepoRoot.get();
     private static final List<String> FORBIDDEN_TOKENS = List.of(
             "com.demcha.templates",
             "com.demcha.compose.v2",
@@ -29,8 +29,8 @@ class CanonicalSurfaceGuardTest {
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
     private static final Set<String> DOCUMENTATION_ALLOWLIST = Set.of(
-            "src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java",
-            "src/test/java/com/demcha/documentation/DocumentationCoverageTest.java");
+            "core/src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java",
+            "core/src/test/java/com/demcha/documentation/DocumentationCoverageTest.java");
 
     private static final Set<String> CANONICAL_DOCUMENT_TEST_ALLOWLIST = Set.of();
 
@@ -68,7 +68,7 @@ class CanonicalSurfaceGuardTest {
     @Test
     void canonicalMainSourcesShouldAvoidLegacySurfaceOutsideTransitionMappers() throws IOException {
         assertNoForbiddenReferences(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document"),
                 MAIN_CANONICAL_SOURCE_ALLOWLIST);
     }
 
@@ -82,21 +82,21 @@ class CanonicalSurfaceGuardTest {
     @Test
     void documentationTestsShouldAvoidLegacySurfaceOutsideGuardFiles() throws IOException {
         assertNoForbiddenReferences(
-                PROJECT_ROOT.resolve("src/test/java/com/demcha/documentation"),
+                PROJECT_ROOT.resolve("core/src/test/java/com/demcha/documentation"),
                 DOCUMENTATION_ALLOWLIST);
     }
 
     @Test
     void canonicalDocumentTestsShouldAvoidLegacySurfaceOutsideCompatibilityParity() throws IOException {
         assertNoForbiddenReferences(
-                PROJECT_ROOT.resolve("src/test/java/com/demcha/compose/document"),
+                PROJECT_ROOT.resolve("core/src/test/java/com/demcha/compose/document"),
                 CANONICAL_DOCUMENT_TEST_ALLOWLIST);
     }
 
     @Test
     void canonicalBenchmarkEntryPointsShouldAvoidLegacySurface() throws IOException {
         assertNoForbiddenReferences(
-                PROJECT_ROOT.resolve("src/test/java/com/demcha/compose"),
+                PROJECT_ROOT.resolve("core/src/test/java/com/demcha/compose"),
                 path -> {
                     String fileName = path.getFileName().toString();
                     return fileName.endsWith("Benchmark.java")
@@ -126,18 +126,18 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("docs/recipes.md"),
                         PROJECT_ROOT.resolve("docs/operations/layout-snapshot-testing.md"),
                         PROJECT_ROOT.resolve("examples/src/main/java/com/demcha/examples"),
-                        PROJECT_ROOT.resolve("src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
+                        PROJECT_ROOT.resolve("core/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java")));
     }
 
     @Test
     void semanticAuthoringValuePackagesShouldNotImportEngineInternals() throws IOException {
         assertNoForbiddenAuthoringImports(
                 List.of(
-                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/node"),
-                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl"),
-                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/style"),
-                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/table"),
-                        PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/image")));
+                        PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/node"),
+                        PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl"),
+                        PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/style"),
+                        PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/table"),
+                        PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/image")));
     }
 
     private void assertNoForbiddenReferences(Path root, Set<String> allowlist) throws IOException {

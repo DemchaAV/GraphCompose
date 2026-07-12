@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DocumentationCoverageTest {
-    private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
-    private static final Path DOCUMENT_SOURCE_ROOT = PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document");
+    private static final Path PROJECT_ROOT = RepoRoot.get();
+    private static final Path DOCUMENT_SOURCE_ROOT = PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document");
     private static final Pattern PUBLIC_TOP_LEVEL_TYPE = Pattern.compile(
             "\\bpublic\\s+(?:final\\s+)?(?:class|interface|record|enum)\\b");
     private static final Pattern PUBLIC_TYPE_WITH_JAVADOC = Pattern.compile(
@@ -74,64 +74,64 @@ class DocumentationCoverageTest {
     @Test
     void highLevelApiAnchorsShouldRetainMethodJavadocs() throws IOException {
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/GraphCompose.java"),
                 "public static DocumentBuilder document()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/GraphCompose.java"),
                 "public static DocumentBuilder document(Path outputFile)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/GraphCompose.java"),
                 "public DocumentSession create()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/GraphCompose.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/GraphCompose.java"),
                 "public DocumentBuilder guideLines(boolean enabled)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public DocumentDsl dsl()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public DocumentSession compose(Consumer<DocumentDsl> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public PageFlowBuilder pageFlow()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public DocumentSession guideLines(boolean enabled)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public LayoutGraph layoutGraph()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
                 "public ContainerNode pageFlow(Consumer<PageFlowBuilder> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/AbstractFlowBuilder.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/AbstractFlowBuilder.java"),
                 "public T addSection(String name, Consumer<SectionBuilder> spec)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder header(String... values)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder rows(String[]... rows)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/TableBuilder.java"),
                 "public TableBuilder headerStyle(DocumentTableStyle style)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public byte[] toPdfBytes()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public void writePdf(OutputStream output)");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/api/DocumentSession.java"),
                 "public void buildPdf()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/DocumentDsl.java"),
                 "public PageFlowBuilder pageFlow()");
         assertHasJavadocBefore(
-                PROJECT_ROOT.resolve("src/main/java/com/demcha/compose/document/dsl/PageFlowBuilder.java"),
+                PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/dsl/PageFlowBuilder.java"),
                 "public ContainerNode build()");
     }
 

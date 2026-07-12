@@ -318,7 +318,7 @@ function Run-ShowcaseSync {
         foreach ($modulePom in $exampleSnapshotSiblings) {
             Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor Yellow
         }
-        Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml exec:java $execProp" -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
@@ -352,7 +352,12 @@ function Run-ShowcaseSync {
                 throw "Install $modulePom failed (exit $LASTEXITCODE)"
             }
         }
-        & $mvnw -f examples/pom.xml exec:java $execProp 2>&1 | ForEach-Object {
+        # `compile` before exec:java is REQUIRED: Step 3 rewrote ShowcaseMetadata.GH_BASE
+        # to /blob/<tag>, and exec:java runs the COMPILED class. Without recompiling it here,
+        # ShowcaseSync would emit examples.json with the previous release's "View Code" links
+        # (the drift that shipped a 2.0 site still linking /blob/v1.9.0). Mirrors
+        # Render-ReadmeBanner, which recompiles for the same filtered-source reason.
+        & $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp 2>&1 | ForEach-Object {
             if ($_ -match 'Synced|Wrote manifest|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                 Write-Host "    $_" -ForegroundColor DarkGray
             }

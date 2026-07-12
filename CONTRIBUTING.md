@@ -28,22 +28,31 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 
 ## Build and test
 
-- The blocking validation gate for repository work is `./mvnw -B -ntp clean verify`.
+- The blocking validation gate for repository work is `./mvnw -B -ntp clean verify` at the repository root — the root pom is the reactor aggregator, so this builds and verifies **every module**. For a fast inner loop while iterating on the engine, scope it to the core module: `./mvnw -B -ntp verify -pl :graph-compose-core`.
 - Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
 - Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
 - Run the local benchmark wrapper when you change performance-sensitive code or benchmark tooling: `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` (Windows). To compare two branches fairly, use `scripts/ab-bench.ps1` (Windows) or the cross-platform `scripts/ab-bench.sh` (Linux/macOS/Git Bash). See [docs/operations/benchmarks.md](./docs/operations/benchmarks.md).
 
 ## How to propose changes
 
-GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. External contributions land on `develop` (the working branch); `main` is the public stable line and only accepts release merges from `develop`.
+GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. **Target the branch that matches your change** &mdash; GraphCompose is mid-transition to the 2.0 module line, so pick the base branch from this table before you fork:
+
+| Change type | Base branch |
+|---|---|
+| **2.0 feature / fix** (almost all current work) | `2.0-dev` |
+| **Critical 1.9.x fix** (bug / security backport) | `develop` |
+| Stable releases (tags) | `main` |
+| After 2.0 GA | `develop` |
+
+Almost all current work is 2.0 and targets **`2.0-dev`**. `develop` and `main` carry the shipping **1.9.x** line and take only critical fixes; `main` is the public stable surface and accepts release merges only. See [Version lines](#version-lines-and-the-1x-maintenance-branch) below for the full transition.
 
 ### Contribution flow
 
 1. **Fork** the repository on GitHub and clone your fork locally.
-2. **Create a feature branch** from `develop`:
+2. **Create a feature branch** from your target base (`2.0-dev` for 2.0 work &mdash; substitute `develop` for a critical 1.9.x fix):
    ```bash
-   git checkout develop
-   git pull --ff-only origin develop
+   git checkout 2.0-dev
+   git pull --ff-only origin 2.0-dev
    git checkout -b feature/short-description
    ```
    Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes. Issue-prefixed names (`42/fix/short-description`) are also welcome &mdash; convenient when the branch closes a specific issue.
@@ -53,7 +62,7 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
    ./mvnw -B -ntp clean verify
    ```
    This runs the architecture-and-documentation guards plus the full test suite. The same gate runs in CI on every PR.
-5. **Push** your feature branch to your fork and open a pull request against `develop` on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
+5. **Push** your feature branch to your fork and open a pull request against the base branch you started from (`2.0-dev` for 2.0 work) on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
 6. **CI runs automatically.** Active jobs:
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
@@ -76,11 +85,11 @@ GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. Exte
 - linear history is enforced (squash or rebase, no merge commits)
 - force pushes and branch deletion are disabled
 
-`develop` accepts feature-branch PRs from contributors. The maintainer may push directly to `develop` for solo-driven release prep work; external contributions still flow through PRs.
+`2.0-dev` (and, for 1.9.x fixes, `develop`) accepts feature-branch PRs from contributors. The maintainer may push directly for solo-driven release-prep work; external contributions still flow through PRs.
 
 ### Release flow
 
-1. **Release prep** lands on `develop` &mdash; version bumps propagate via `aggregator/pom.xml` to all modules in one pass; fresh CHANGELOG entry; migration guide for minor releases. **README install snippet stays pinned to the previously published version** until Maven Central confirms the new artifact, otherwise consumers copying the snippet during the publish window hit a 404.
+1. **Release prep** lands on `develop` &mdash; version bumps propagate via the root reactor `pom.xml` to all modules in one pass; fresh CHANGELOG entry; migration guide for minor releases. **README install snippet stays pinned to the previously published version** until Maven Central confirms the new artifact, otherwise consumers copying the snippet during the publish window hit a 404.
 2. **`scripts/cut-release.ps1 -Version <X.Y.Z>`** automates the bump + CHANGELOG date + commit + tag + push from `develop`. The maintainer fast-forwards `main` from `develop` after the tag lands (`git push origin develop:main`).
 3. **Maven Central** picks up the new tag automatically via [`.github/workflows/publish.yml`](./.github/workflows/publish.yml) &mdash; the workflow re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`) are skipped on Central; they ship only to the GitHub Release pre-release surface. Javadocs auto-publish to [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose) shortly after each Central release.
 4. **GitHub Release** is created with notes from the matching `CHANGELOG.md` section.

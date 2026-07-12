@@ -128,8 +128,8 @@ The transform and z-index features pin three test invariants:
 
 ## See also
 
-- [`DocumentTransform`](../../src/main/java/com/demcha/compose/document/style/DocumentTransform.java) — value type with `none()` / `rotate()` / `scale()` factories.
-- [`Transformable<T>`](../../src/main/java/com/demcha/compose/document/dsl/Transformable.java) — mixin interface, default rotate/scale shortcuts.
-- [`LayerStackNode.Layer`](../../src/main/java/com/demcha/compose/document/node/LayerStackNode.java) — `zIndex` field plus back-compat constructors.
+- [`DocumentTransform`](../../core/src/main/java/com/demcha/compose/document/style/DocumentTransform.java) — value type with `none()` / `rotate()` / `scale()` factories.
+- [`Transformable<T>`](../../core/src/main/java/com/demcha/compose/document/dsl/Transformable.java) — mixin interface, default rotate/scale shortcuts.
+- [`LayerStackNode.Layer`](../../core/src/main/java/com/demcha/compose/document/node/LayerStackNode.java) — `zIndex` field plus back-compat constructors.
 - [Shape-as-container recipe](shape-as-container.md) — base shape composition before adding transforms.
 - Runnable example: `examples/src/main/java/com/demcha/examples/TransformsExample.java`.

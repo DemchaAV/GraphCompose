@@ -195,7 +195,7 @@ references. The reopen made an explicit trade-off:
   `PDFRenderer`, and asserts the per-pixel diff against a
   checked-in baseline PNG stays within budget 2500 mismatched
   pixels at per-channel tolerance 8. Baselines live under
-  `src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/`.
+  `core/src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/`.
   Re-bless after a deliberate visual change with
   `-Dgraphcompose.visual.approve=true`. The harness
   (`PdfVisualRegression`) was already built but never wired into

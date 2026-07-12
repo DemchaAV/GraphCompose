@@ -75,6 +75,6 @@ instead of `●`, `-` or `–` instead of an arrow.
 
 ## See also
 
-- [`FontName`](../src/main/java/com/demcha/compose/font/FontName.java) — the built-in catalogue.
+- [`FontName`](../core/src/main/java/com/demcha/compose/font/FontName.java) — the built-in catalogue.
 - Inline shapes: [`InlineShapesExample`](../examples/src/main/java/com/demcha/examples/features/text/InlineShapesExample.java).
 - [Shapes recipe](recipes/shapes.md) · [Themes recipe](recipes/themes.md).

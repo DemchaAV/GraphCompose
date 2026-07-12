@@ -128,8 +128,8 @@ copy-and-tweak entry point for callers extending their own branding.
 
 ## Visual parity & regression coverage
 
-- **28 layout-snapshot baselines** under `src/test/resources/layout-snapshots/canonical-templates/{cv-v2,coverletter-v2}/` lock the rendered tree of every preset.
-- **29 pixel-diff baselines** under `src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/` enforce per-channel rendering parity against the v1 reference renders. The gate runs on every CI build with a calibrated `mismatchedPixelBudget` for cross-platform PDFBox font drift.
+- **28 layout-snapshot baselines** under `core/src/test/resources/layout-snapshots/canonical-templates/{cv-v2,coverletter-v2}/` lock the rendered tree of every preset.
+- **29 pixel-diff baselines** under `core/src/test/resources/visual-baselines/{cv-v2,coverletter-v2}/` enforce per-channel rendering parity against the v1 reference renders. The gate runs on every CI build with a calibrated `mismatchedPixelBudget` for cross-platform PDFBox font drift.
 - Re-bless after a deliberate visual change with `-Dgraphcompose.visual.approve=true`.
 
 ---

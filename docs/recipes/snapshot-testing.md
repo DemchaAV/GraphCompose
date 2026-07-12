@@ -28,7 +28,7 @@ void invoiceLayoutIsStable() throws Exception {
 ```
 
 The slash-delimited key is a logical path: this example compares against
-`src/test/resources/layout-snapshots/templates/invoice/invoice_baseline.json`.
+`core/src/test/resources/layout-snapshots/templates/invoice/invoice_baseline.json`.
 `LayoutSnapshotAssertions` ships in the `graph-compose-testing` artifact
 (`io.github.demchaav:graph-compose-testing`), split out of the engine jar in
 2.0. Add it at test scope alongside `graph-compose`; the import path is
@@ -71,7 +71,7 @@ compose the template with fixed sample data, assert the snapshot, and a
 GraphCompose upgrade (or your own refactor) that shifts the layout fails
 loudly instead of silently re-flowing a customer document.
 
-Baselines default to `src/test/resources/layout-snapshots`; overloads
+Baselines default to `core/src/test/resources/layout-snapshots`; overloads
 take explicit roots when your project keeps them elsewhere:
 
 ```java

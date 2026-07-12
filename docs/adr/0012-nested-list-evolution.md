@@ -176,4 +176,4 @@ across mixed flat / nested entries.
 - Tests:
   [`qa/src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java`](../../qa/src/test/java/com/demcha/compose/document/dsl/ListBuilderNestedTest.java).
 - Snapshot baseline:
-  `src/test/resources/layout-snapshots/document/nested_list_three_levels.json`.
+  `core/src/test/resources/layout-snapshots/document/nested_list_three_levels.json`.

@@ -152,7 +152,7 @@ First run for a brand-new snapshot:
 
 That creates the committed baseline under:
 
-- `src/test/resources/layout-snapshots/features/my_feature_layout.json`
+- `core/src/test/resources/layout-snapshots/features/my_feature_layout.json`
 
 Normal verification run after that:
 
@@ -162,7 +162,7 @@ Normal verification run after that:
 
 If the test fails, compare:
 
-- expected baseline in `src/test/resources/layout-snapshots/...`
+- expected baseline in `core/src/test/resources/layout-snapshots/...`
 - generated actual file in `target/visual-tests/layout-snapshots/.../*.actual.json`
 
 Use snapshot tests when the thing you care about is layout stability. If you need visual confirmation too, keep `document.buildPdf()` in the same test or pair the snapshot test with a render test.
@@ -251,7 +251,7 @@ The extractor also normalizes numeric values before serialization. The current d
 
 Committed baselines:
 
-- `src/test/resources/layout-snapshots/...`
+- `core/src/test/resources/layout-snapshots/...`
 
 Mismatch artifacts generated during normal test runs:
 
@@ -292,7 +292,7 @@ The same property works for downstream projects that use `LayoutSnapshotAssertio
 
 In normal mode:
 
-- expected JSON stays committed in `src/test/resources/layout-snapshots`
+- expected JSON stays committed in `core/src/test/resources/layout-snapshots`
 - mismatches write an `.actual.json` artifact under `target/visual-tests/layout-snapshots`
 - the assertion failure points to both expected and actual paths
 

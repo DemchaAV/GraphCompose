@@ -61,7 +61,7 @@ class InvoiceVisualParityTest {
 
 | Setter | Default | Meaning |
 |---|---|---|
-| `baselineRoot(Path)` | `src/test/resources/visual-baselines` | where baselines and diff sidecars live |
+| `baselineRoot(Path)` | `core/src/test/resources/visual-baselines` | where baselines and diff sidecars live |
 | `renderScale(float)` | `1.0` | render scale multiplier (`2.0` = retina); must be `> 0` |
 | `perPixelTolerance(int)` | `6` | allowed per-channel delta (`0..255`) before a pixel counts as mismatched |
 | `mismatchedPixelBudget(long)` | `0` | mismatched pixels tolerated per page before the assertion fails |

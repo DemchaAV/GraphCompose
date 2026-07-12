@@ -60,8 +60,8 @@ The Phase B `ShapeContainerNode` is a clean example of all five steps:
 
 | Step | Source file |
 | --- | --- |
-| Record | [`ShapeContainerNode.java`](../../src/main/java/com/demcha/compose/document/node/ShapeContainerNode.java) |
-| NodeDefinition | `ShapeContainerDefinition` (inner class of [`BuiltInNodeDefinitions.java`](../../src/main/java/com/demcha/compose/document/layout/BuiltInNodeDefinitions.java)) |
+| Record | [`ShapeContainerNode.java`](../../core/src/main/java/com/demcha/compose/document/node/ShapeContainerNode.java) |
+| NodeDefinition | `ShapeContainerDefinition` (inner class of [`BuiltInNodeDefinitions.java`](../../core/src/main/java/com/demcha/compose/document/layout/BuiltInNodeDefinitions.java)) |
 | Payloads | `ShapeClipBeginPayload`, `ShapeClipEndPayload` (also inner classes of `BuiltInNodeDefinitions`) |
 | Registration | `BuiltInNodeDefinitions.registerDefaults(...)` line that calls `.register(new ShapeContainerDefinition())` |
 | Render handlers | [`PdfShapeClipBeginRenderHandler.java`](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/handlers/PdfShapeClipBeginRenderHandler.java) and `PdfShapeClipEndRenderHandler.java` |
@@ -96,10 +96,10 @@ AFTER children).
 The repo has two architecture-guard tests that pin two invariants for
 new nodes:
 
-- [`PublicApiNoEngineLeakTest`](../../src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java)
+- [`PublicApiNoEngineLeakTest`](../../core/src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java)
   — `com.demcha.compose.document.*` must not import
   `com.demcha.compose.engine.*` types.
-- [`CanonicalSurfaceGuardTest`](../../src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java)
+- [`CanonicalSurfaceGuardTest`](../../core/src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java)
   — public markdown docs and runnable examples must not reference the
   retired legacy surface (the v1.0–v1.3 PDF composer entry point and
   the old templates package). The forbidden token list lives at the
@@ -127,7 +127,7 @@ Test pattern:
 
 - Unit test the builder asserts the resulting node has the expected
   fields (see `ShapeContainerBuilderTest`).
-- Add a `*DemoTest` under `src/test/java/com/demcha/testing/visual/`
+- Add a `*DemoTest` under `core/src/test/java/com/demcha/testing/visual/`
   that writes a PDF artefact under `target/visual-tests/...` so the
   reviewer can check the rendered output by eye.
 
@@ -202,7 +202,7 @@ of a hidden behaviour drift.
 Set-up per node:
 
 1. Build a small fixture document under
-   `src/test/resources/layout-snapshots/foo/` (or generate it from a
+   `core/src/test/resources/layout-snapshots/foo/` (or generate it from a
    helper class).
 2. Write a test that opens a `DocumentSession`, composes the
    fixture, captures the layout graph, and runs
@@ -213,7 +213,7 @@ Set-up per node:
 The
 [`LayoutSnapshotAssertions`](../../testing/src/main/java/com/demcha/compose/testing/layout/LayoutSnapshotAssertions.java)
 helper class wraps the diff machinery; existing snapshot tests under
-`src/test/java/com/demcha/compose/document/templates/builtins/`
+`core/src/test/java/com/demcha/compose/document/templates/builtins/`
 (e.g. `BuiltInTemplateLayoutSnapshotTest`) show the call site shape.
 
 ## Reading the source by responsibility

@@ -102,7 +102,7 @@ Once. Run the test in **update mode** so it writes the baseline JSON:
             -Dtest=MyReportLayoutSnapshotTest -pl :graph-compose-core
 ```
 
-The baseline JSON appears under `src/test/resources/layout-snapshots/`.
+The baseline JSON appears under `core/src/test/resources/layout-snapshots/`.
 Commit it alongside your test class — the baseline is part of the
 test, not generated output.
 
@@ -172,7 +172,7 @@ checks separately with regular unit tests — snapshot is for geometry.
 1. The failure message points at the actual file:
    `target/visual-tests/layout-snapshots/<name>.actual.json`
 2. Compare the actual against the committed baseline under
-   `src/test/resources/layout-snapshots/<name>.json`. Most diff tools
+   `core/src/test/resources/layout-snapshots/<name>.json`. Most diff tools
    highlight a single field-level change.
 3. Decide what you're looking at:
    - **`computedY` / `placementY` shifted by a few units** → a margin

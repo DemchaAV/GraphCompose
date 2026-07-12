@@ -408,7 +408,7 @@ class StatusReportTemplateV1Test {
 ```
 
 Pin one snapshot per supported theme. The first run writes the JSON
-under `src/test/resources/layout-snapshots/...`; re-run with
+under `core/src/test/resources/layout-snapshots/...`; re-run with
 `-Dgraphcompose.updateSnapshots=true` to accept a deliberate change.
 
 PDFs land under `target/visual-tests/<test-folder>/<stem>.pdf`. They

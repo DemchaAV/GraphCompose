@@ -160,5 +160,5 @@ can rely on it across releases.
 ## See also
 
 - [ADR 0001 — Shape-as-container](../adr/0001-shape-as-container.md) — design rationale.
-- [`ShapeContainerBuilder`](../../src/main/java/com/demcha/compose/document/dsl/ShapeContainerBuilder.java) — full builder surface.
-- [`ShapeOutline`](../../src/main/java/com/demcha/compose/document/style/ShapeOutline.java) — sealed value type for the supported outline kinds.
+- [`ShapeContainerBuilder`](../../core/src/main/java/com/demcha/compose/document/dsl/ShapeContainerBuilder.java) — full builder surface.
+- [`ShapeOutline`](../../core/src/main/java/com/demcha/compose/document/style/ShapeOutline.java) — sealed value type for the supported outline kinds.

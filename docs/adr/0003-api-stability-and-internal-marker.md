@@ -36,7 +36,7 @@ public surface grows.
 ## Decision
 
 Introduce
-[`com.demcha.compose.document.api.Internal`](../../src/main/java/com/demcha/compose/document/api/Internal.java) —
+[`com.demcha.compose.document.api.Internal`](../../core/src/main/java/com/demcha/compose/document/api/Internal.java) —
 a `@Documented`, `@Retention(RUNTIME)` annotation with targets
 `{TYPE, METHOD, FIELD, CONSTRUCTOR, PACKAGE}`.
 
@@ -59,7 +59,7 @@ right next to `DocumentSession`, so it is discoverable.
 
 ## Coverage
 
-- [`document.layout.package-info.java`](../../src/main/java/com/demcha/compose/document/layout/package-info.java)
+- [`document.layout.package-info.java`](../../core/src/main/java/com/demcha/compose/document/layout/package-info.java)
   carries `@Internal` at the package level. Every type in the package
   inherits the marker through `Class.getPackage()`.
 - 10 `public` payload records inside `BuiltInNodeDefinitions` (the
@@ -67,12 +67,12 @@ right next to `DocumentSession`, so it is discoverable.
   carry an explicit `@Internal` annotation in addition to the package
   marker, so the contract survives if those records later move to
   `document.layout.payloads.*` (planned in Phase E.2).
-- [`InternalAnnotationCoverageTest`](../../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
+- [`InternalAnnotationCoverageTest`](../../core/src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
   asserts the package marker is in place and propagates to a
   representative cross-section of layout types
   (`BoxConstraints`, `MeasureResult`, `NodeDefinition`,
   `PlacedFragment`, `LayoutGraph`).
-- [`InternalAnnotationDocumentationTest`](../../src/test/java/com/demcha/compose/document/api/InternalAnnotationDocumentationTest.java)
+- [`InternalAnnotationDocumentationTest`](../../core/src/test/java/com/demcha/compose/document/api/InternalAnnotationDocumentationTest.java)
   pins the annotation's retention, target set, `@Documented`-ness,
   and the source-level Javadoc contract (the phrase
   *"may change in any release without notice"* and the link to the

@@ -30,19 +30,19 @@ matrix.
 |---|---|---|---|
 | **Stable** | _(default — no annotation)_ | The canonical authoring surface that user code is meant to call: `GraphCompose.document(...)`, `DocumentSession`, `DocumentDsl`, `RowBuilder` / `SectionBuilder` / `ParagraphBuilder` and friends, `DocumentInsets` / `DocumentColor` / `DocumentTextStyle`, the `BrandTheme` factories, and the layered template presets (`templates.cv.*`, `templates.coverletter.*`, `templates.invoice.*`, `templates.proposal.*`). | **Major releases only.** |
 | **Supported** | _(no annotation; called out in the page's Javadoc)_ | A canonical surface that ships through a major line but won't be in the next one — its replacement is already the Stable path. Bug fixes + behaviour-preserving refactors only. *(No package holds this tier on the 2.0 line; the classic `cv.presets.*` CV surface held it through 1.x and was removed in 2.0 per [`which-template-system.md`](templates/which-template-system.md).)* | **Minor releases for behaviour-preserving refactors; removed wholesale in the next major.** |
-| **Extension SPI** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java), custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
-| **Experimental** | [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java) _(same annotation as Extension SPI; the distinction lives in the docstring on the annotated element)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
-| **Internal** | [`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java) (per-element or per-package) | Engine surface: everything in `com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render-pipeline payload records, `LayoutCompiler`, `NodeDefinitionSupport`, the placement / measure / split contracts. Technically `public` for cross-package collaboration; not part of the contract. Canonical list lives in [ADR-0003](adr/0003-api-stability-and-internal-marker.md) § *Coverage*. | **Any release.** No deprecation window, no CHANGELOG entry required. |
+| **Extension SPI** | [`@Beta`](../core/src/main/java/com/demcha/compose/document/api/Beta.java) | Public extension points that authors are expected to **implement**, not only call: render-handler interfaces, [`NodeDefinition`](../core/src/main/java/com/demcha/compose/document/layout/NodeDefinition.java), custom `Theme` subtype contracts, fragment payload interfaces designed for extension. | Minor releases, with a one-minor deprecation window where possible. |
+| **Experimental** | [`@Beta`](../core/src/main/java/com/demcha/compose/document/api/Beta.java) _(same annotation as Extension SPI; the distinction lives in the docstring on the annotated element)_ | A brand-new public type shipping in its first minor release before its contract has stabilised. The contract is in active flux. | Any minor release, including removal. No deprecation window. |
+| **Internal** | [`@Internal`](../core/src/main/java/com/demcha/compose/document/api/Internal.java) (per-element or per-package) | Engine surface: everything in `com.demcha.compose.document.layout.*`, `com.demcha.compose.engine.*`, render-pipeline payload records, `LayoutCompiler`, `NodeDefinitionSupport`, the placement / measure / split contracts. Technically `public` for cross-package collaboration; not part of the contract. Canonical list lives in [ADR-0003](adr/0003-api-stability-and-internal-marker.md) § *Coverage*. | **Any release.** No deprecation window, no CHANGELOG entry required. |
 | **Legacy** | _(no annotation; flagged in [`which-template-system.md`](templates/which-template-system.md) and in CHANGELOG `### Deprecations`)_ | Pre-rebuild surface kept only so callers from before a major rebuild keep compiling. Frozen — bug fixes only. *(No package holds this tier on the 2.0 line; `com.demcha.templates.*` and `com.demcha.compose.v2.*` held it through 1.x and were removed in 2.0 — the migration target is the canonical DSL.)* | **Removed in the next major**; no patch / minor changes other than security fixes. |
 
 > Both marker annotations
-> ([`@Internal`](../src/main/java/com/demcha/compose/document/api/Internal.java)
-> and [`@Beta`](../src/main/java/com/demcha/compose/document/api/Beta.java))
+> ([`@Internal`](../core/src/main/java/com/demcha/compose/document/api/Internal.java)
+> and [`@Beta`](../core/src/main/java/com/demcha/compose/document/api/Beta.java))
 > live in the public `document.api` package and are pinned by
-> [`InternalAnnotationCoverageTest`](../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java),
+> [`InternalAnnotationCoverageTest`](../core/src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java),
 > `InternalAnnotationDocumentationTest`, and `BetaAnnotationDocumentationTest`.
 > The Extension SPI seam currently carrying `@Beta` is
-> [`NodeDefinition`](../src/main/java/com/demcha/compose/document/layout/NodeDefinition.java);
+> [`NodeDefinition`](../core/src/main/java/com/demcha/compose/document/layout/NodeDefinition.java);
 > additional Extension SPI surfaces (render-handler interfaces,
 > fragment-payload interfaces designed for extension) will gain the
 > marker incrementally as their contract solidifies.
@@ -62,14 +62,14 @@ GraphCompose uses sealed interfaces in several places to keep visitor
 code exhaustive. The public ones — the ones this policy actually covers —
 are:
 
-- [`ChartSize`](../src/main/java/com/demcha/compose/document/chart/ChartSize.java) (Stable)
-- [`ChartSpec`](../src/main/java/com/demcha/compose/document/chart/ChartSpec.java) (Stable)
+- [`ChartSize`](../core/src/main/java/com/demcha/compose/document/chart/ChartSize.java) (Stable)
+- [`ChartSpec`](../core/src/main/java/com/demcha/compose/document/chart/ChartSpec.java) (Stable)
 - [`CvSection`](../templates/src/main/java/com/demcha/compose/document/templates/cv/data/CvSection.java) (Stable)
-- [`DocumentLinkTarget`](../src/main/java/com/demcha/compose/document/node/DocumentLinkTarget.java) (Stable)
-- [`DocumentPaint`](../src/main/java/com/demcha/compose/document/style/DocumentPaint.java) (Stable)
-- [`DocumentPathSegment`](../src/main/java/com/demcha/compose/document/style/DocumentPathSegment.java) (Stable)
-- [`InlineRun`](../src/main/java/com/demcha/compose/document/node/InlineRun.java) (Stable)
-- [`ShapeOutline`](../src/main/java/com/demcha/compose/document/style/ShapeOutline.java) (Stable)
+- [`DocumentLinkTarget`](../core/src/main/java/com/demcha/compose/document/node/DocumentLinkTarget.java) (Stable)
+- [`DocumentPaint`](../core/src/main/java/com/demcha/compose/document/style/DocumentPaint.java) (Stable)
+- [`DocumentPathSegment`](../core/src/main/java/com/demcha/compose/document/style/DocumentPathSegment.java) (Stable)
+- [`InlineRun`](../core/src/main/java/com/demcha/compose/document/node/InlineRun.java) (Stable)
+- [`ShapeOutline`](../core/src/main/java/com/demcha/compose/document/style/ShapeOutline.java) (Stable)
 
 Sealed types under `@Internal` packages — `ParagraphSpan` and
 `PlacementContext` — are outside this policy by definition; their permit
@@ -246,8 +246,8 @@ Javadoc per element.
   — the template naming history and the migration map for pre-2.0
   callers; this stability policy lives one level up and covers all
   packages, not just templates.
-- [`InternalAnnotationCoverageTest`](../src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
-  and [`InternalAnnotationDocumentationTest`](../src/test/java/com/demcha/compose/document/api/InternalAnnotationDocumentationTest.java)
+- [`InternalAnnotationCoverageTest`](../core/src/test/java/com/demcha/documentation/InternalAnnotationCoverageTest.java)
+  and [`InternalAnnotationDocumentationTest`](../core/src/test/java/com/demcha/compose/document/api/InternalAnnotationDocumentationTest.java)
   — the architecture guards that fail the build if the package-level
   `@Internal` marker disappears from `document.layout` or the
   annotation's contract drifts from this policy.

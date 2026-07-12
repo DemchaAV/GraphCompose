@@ -5,10 +5,10 @@ This document is the source of truth for production package ownership in the can
 **Stability markers.** Public packages default to the **Stable** tier of the
 [API stability policy](../api-stability.md). Engine packages (`com.demcha.compose.engine.*`,
 `com.demcha.compose.document.layout`, render-pipeline internals) carry the
-[`@Internal`](../../src/main/java/com/demcha/compose/document/api/Internal.java)
+[`@Internal`](../../core/src/main/java/com/demcha/compose/document/api/Internal.java)
 marker at the package level; individual types deliberately exposed as
 Extension SPI inside an `@Internal` package carry
-[`@Beta`](../../src/main/java/com/demcha/compose/document/api/Beta.java)
+[`@Beta`](../../core/src/main/java/com/demcha/compose/document/api/Beta.java)
 on the type itself (`NodeDefinition` is the current example). The
 "Extension rule" column below names the extension seam where one is
 intended.

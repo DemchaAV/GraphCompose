@@ -308,7 +308,7 @@ GraphCompose uses a practical three-layer regression strategy:
 1. layout math unit tests for isolated calculations
 2. layout snapshot tests for deterministic full-document geometry
    checks (`LayoutSnapshotAssertions` plus baselines under
-   `src/test/resources/layout-snapshots/`)
+   `core/src/test/resources/layout-snapshots/`)
 3. PDF render tests for visual smoke coverage and artifact
    inspection (`PdfVisualRegression`, `target/visual-tests/`)
 

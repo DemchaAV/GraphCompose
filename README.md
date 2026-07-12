@@ -207,7 +207,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 
 ### Text &amp; internationalization
 
-- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering.
+- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering. Full RTL / bidi support is tracked in [#140](https://github.com/DemchaAV/GraphCompose/issues/140).
 - A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
 
 ### When to use GraphCompose

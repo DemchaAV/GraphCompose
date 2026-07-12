@@ -3,16 +3,16 @@
     Cuts a GraphCompose release: bumps pom versions, updates the
     showcase site links, regenerates the examples manifest, runs
     verify, commits, tags, pushes — then flips the showcase links
-    back to develop so ongoing dev work stays linkable.
+    back to the release branch so ongoing dev work stays linkable.
 
 .DESCRIPTION
     Modes:
 
-      Default          — full release cut. Requires clean develop in
-                         sync with origin. Performs all 10 steps end
-                         to end with prompts before each remote
-                         action (push develop, push tag, merge to
-                         main).
+      Default          — full release cut. Requires the release branch
+                         (-Branch, default develop) clean and in sync
+                         with origin. Performs all 10 steps end to end
+                         with prompts before each remote action (push
+                         the branch, push tag, merge to main).
 
       -DryRun          — print every step without executing it. Use
                          to preview what the release will do.
@@ -22,10 +22,10 @@
                          release locally before publishing.
 
       -PostReleaseOnly — skip the release work entirely. Just flips
-                         ShowcaseMetadata.GH_BASE back to /blob/develop,
+                         ShowcaseMetadata.GH_BASE back to /blob/<branch>,
                          re-runs ShowcaseSync, and commits +
                          pushes that change. Use after a release
-                         was cut and you want ongoing develop work
+                         was cut and you want ongoing branch work
                          to have linkable View Code buttons.
 
       -SkipVerify      — skip the mvnw verify gate. Only use when
@@ -48,29 +48,37 @@
     # preview what would happen
 
 .EXAMPLE
-    pwsh ./scripts/cut-release.ps1 -PostReleaseOnly
-    # post-release: flip showcase links back to develop
+    pwsh ./scripts/cut-release.ps1 -Version 2.0.0-rc.1 -Branch 2.0-dev -DryRun
+    # preview the 2.0 release-candidate cut from 2.0-dev
+
+.EXAMPLE
+    pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch 2.0-dev
+    # post-release: flip showcase links back to /blob/2.0-dev
 
 .NOTES
     Author: Artem Demchyshyn
     Pre-conditions:
-      - on develop branch
+      - on the release branch (-Branch, default develop)
       - working tree clean
-      - develop in sync with origin/develop
+      - the release branch in sync with its origin
       - tag v$Version doesn't already exist
 
-    Post-release reminder: after pushing the tag, merge develop into
-    main so GitHub Pages picks up the new docs, then run this script
-    with -PostReleaseOnly to flip the showcase links back to develop
-    for ongoing v1.x.y dev work.
+    Post-release reminder: after pushing the tag, merge the release
+    branch into main so GitHub Pages picks up the new docs, then run
+    this script with -PostReleaseOnly -Branch <branch> to flip the
+    showcase links back for ongoing dev work.
 #>
 
 [CmdletBinding(DefaultParameterSetName='Release')]
 param(
+    # The release branch to cut from / push to. Defaults to `develop` (the 1.9.x
+    # line); pass `-Branch 2.0-dev` to cut the 2.0 line. Common to both modes.
+    [string]$Branch = 'develop',
+
     [Parameter(Mandatory=$true, ParameterSetName='Release')]
     [string]$Version,
 
-    [Parameter(ParameterSetName='Release')]
+    # Common to both modes so -PostReleaseOnly can also be previewed.
     [switch]$DryRun,
 
     [Parameter(ParameterSetName='Release')]
@@ -396,15 +404,15 @@ function Render-ReadmeBanner {
 if ($PostReleaseOnly) {
     Push-Location $repoRoot
     try {
-        Step 1 "Switch ShowcaseMetadata GH_BASE back to /blob/develop"
-        $changed = Update-ShowcaseGhBase 'develop'
+        Step 1 "Switch ShowcaseMetadata GH_BASE back to /blob/$Branch"
+        $changed = Update-ShowcaseGhBase $Branch
 
         if ($changed -or $DryRun) {
-            Step 2 "Regenerate web/examples.json with develop links"
+            Step 2 "Regenerate web/examples.json with $Branch links"
             Run-ShowcaseSync
 
             Step 3 "Commit"
-            $msg = "post-release: flip showcase links back to /blob/develop"
+            $msg = "post-release: flip showcase links back to /blob/$Branch"
             if ($DryRun) {
                 Write-Host "    [DRY RUN] git commit -m `"$msg`"" -ForegroundColor Yellow
             } else {
@@ -412,20 +420,20 @@ if ($PostReleaseOnly) {
                 git commit -m $msg
             }
 
-            Step 4 "Push develop"
+            Step 4 "Push $Branch"
             if ($DryRun) {
-                Write-Host "    [DRY RUN] git push origin develop" -ForegroundColor Yellow
+                Write-Host "    [DRY RUN] git push origin $Branch" -ForegroundColor Yellow
             } else {
-                git push origin develop
+                git push origin $Branch
             }
         } else {
-            Note "GH_BASE already points to develop. Nothing to do."
+            Note "GH_BASE already points to $Branch. Nothing to do."
         }
     } finally {
         Pop-Location
     }
     Write-Host ""
-    Write-Host "Done. Ongoing develop work has linkable View Code buttons again." -ForegroundColor Green
+    Write-Host "Done. Ongoing $Branch work has linkable View Code buttons again." -ForegroundColor Green
     return
 }
 
@@ -441,17 +449,17 @@ try {
     # In -DryRun mode the script never mutates anything, so the branch /
     # working-tree / origin-sync gates are relaxed: a maintainer can preview
     # what a release cut would do from a feature branch (e.g. while iterating
-    # on the script itself) without having to switch to develop and back.
+    # on the script itself) without having to switch to the release branch and back.
     # Live cuts still fail these gates loudly.
-    $branch = (git rev-parse --abbrev-ref HEAD).Trim()
+    $currentBranch = (git rev-parse --abbrev-ref HEAD).Trim()
     if ($DryRun) {
-        Note "branch: $branch (gate relaxed for -DryRun)"
+        Note "branch: $currentBranch (gate relaxed for -DryRun)"
     } else {
-        # 1. On develop branch?
-        if ($branch -ne 'develop') {
-            throw "Not on develop branch (currently on $branch). Switch to develop first."
+        # 1. On the release branch (-Branch)?
+        if ($currentBranch -ne $Branch) {
+            throw "Not on $Branch branch (currently on $currentBranch). Switch to $Branch first."
         }
-        Note "branch: develop OK"
+        Note "branch: $Branch OK"
 
         # 2. Working tree clean?
         $status = git status --porcelain
@@ -461,13 +469,13 @@ try {
         Note "working tree: clean OK"
 
         # 3. In sync with origin?
-        git fetch origin develop --quiet
-        $local = (git rev-parse develop).Trim()
-        $remote = (git rev-parse origin/develop).Trim()
+        git fetch origin $Branch --quiet
+        $local = (git rev-parse $Branch).Trim()
+        $remote = (git rev-parse origin/$Branch).Trim()
         if ($local -ne $remote) {
-            throw "Local develop ($local) is not in sync with origin/develop ($remote). Pull/push first."
+            throw "Local $Branch ($local) is not in sync with origin/$Branch ($remote). Pull/push first."
         }
-        Note "in sync with origin/develop OK"
+        Note "in sync with origin/$Branch OK"
     }
 
     # 4. Tag doesn't already exist?
@@ -621,17 +629,17 @@ try {
 
     if ($SkipPush) {
         Step 8 "Skipped push (-SkipPush). Run manually:"
-        Write-Host "      git push origin develop" -ForegroundColor Cyan
+        Write-Host "      git push origin $Branch" -ForegroundColor Cyan
         Write-Host "      git push origin $tag" -ForegroundColor Cyan
     } else {
-        Step 8 "Push develop and tag"
+        Step 8 "Push $Branch and tag"
         if ($DryRun) {
-            Write-Host "    [DRY RUN] git push origin develop" -ForegroundColor Yellow
+            Write-Host "    [DRY RUN] git push origin $Branch" -ForegroundColor Yellow
             Write-Host "    [DRY RUN] git push origin $tag" -ForegroundColor Yellow
         } else {
-            git push origin develop
+            git push origin $Branch
             git push origin $tag
-            Note "pushed: develop + $tag"
+            Note "pushed: $Branch + $tag"
         }
     }
 
@@ -639,12 +647,12 @@ try {
     Write-Host "Release $tag committed locally." -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps (manual):" -ForegroundColor Cyan
-    Write-Host "  1. Merge develop into main on GitHub (PR or fast-forward)." -ForegroundColor Cyan
+    Write-Host "  1. Merge $Branch into main on GitHub (PR or fast-forward)." -ForegroundColor Cyan
     Write-Host "     This makes the deployed GitHub Pages site pick up $tag." -ForegroundColor Cyan
     Write-Host "  2. Create a GitHub Release for $tag with the CHANGELOG section as body." -ForegroundColor Cyan
-    Write-Host "  3. Verify JitPack: https://jitpack.io/com/github/DemchaAV/GraphCompose/$tag/build.log" -ForegroundColor Cyan
-    Write-Host "  4. Flip showcase links back to develop:" -ForegroundColor Cyan
-    Write-Host "       pwsh ./scripts/cut-release.ps1 -PostReleaseOnly" -ForegroundColor Cyan
+    Write-Host "  3. Verify the Maven Central publish (publish.yml) resolved: mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=$Version" -ForegroundColor Cyan
+    Write-Host "  4. Flip showcase links back to ${Branch}:" -ForegroundColor Cyan
+    Write-Host "       pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch $Branch" -ForegroundColor Cyan
 } finally {
     Pop-Location
 }

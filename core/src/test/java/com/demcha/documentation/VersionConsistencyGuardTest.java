@@ -80,6 +80,16 @@ class VersionConsistencyGuardTest {
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("wrapper/pom.xml")))
                 .describedAs("wrapper (the graph-compose compat wrapper) tracks the engine line and must equal the root version (%s)", root)
                 .isEqualTo(root);
+        // qa + coverage inherit their version from the aggregator, but the inherited
+        // <parent><version> is a literal that must track the root — otherwise a clean
+        // reactor build (no local m2 cache) cannot resolve graph-compose-build after a
+        // release bump. effectiveVersion reads that inherited parent value here.
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("qa/pom.xml")))
+                .describedAs("qa (graph-compose-qa) inherits the root version; its <parent> version must equal the root (%s)", root)
+                .isEqualTo(root);
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("coverage/pom.xml")))
+                .describedAs("coverage (graph-compose-coverage) inherits the root version; its <parent> version must equal the root (%s)", root)
+                .isEqualTo(root);
 
         // NOTE: fonts/pom.xml (graph-compose-fonts) is intentionally NOT checked
         // here. It carries an independent version line (it ships on its own

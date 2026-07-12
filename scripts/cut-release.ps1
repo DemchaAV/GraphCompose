@@ -505,6 +505,13 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
+    # graph-compose-qa / graph-compose-coverage are aggregator children too. They
+    # inherit their version, but the inherited <parent><version> is a literal that
+    # must track the root: skipping them leaves graph-compose-build unresolvable in a
+    # clean reactor build (no local m2 cache), which breaks the release.yml /
+    # publish.yml verify on the tag even though a warm local build passes.
+    Update-PomVersion (Join-Path $repoRoot 'qa/pom.xml') $Version
+    Update-PomVersion (Join-Path $repoRoot 'coverage/pom.xml') $Version
     # render-pdf / render-docx / render-pptx track the engine line (lockstep): each
     # <version> bumps here and its graph-compose-core dep is ${project.version}
     # (follows automatically).
@@ -516,8 +523,7 @@ try {
     Update-PomVersion (Join-Path $repoRoot 'templates/pom.xml') $Version
     # graph-compose-testing tracks the engine line (lockstep): its <version>
     # bumps here and its graph-compose dep is ${project.version} (follows
-    # automatically). graph-compose-qa is an aggregator child (its version is
-    # inherited) and is never published, so it needs no explicit bump.
+    # automatically).
     Update-PomVersion (Join-Path $repoRoot 'testing/pom.xml') $Version
     # graph-compose (the graph-compose compat wrapper (wrapper/)) tracks the engine line lockstep;
     # its graph-compose-core dep is ${project.version} (follows automatically).
@@ -610,6 +616,15 @@ try {
         'CHANGELOG.md',
         'web/index.html'
     )
+    # qa + coverage exist only in the 2.0 aggregator layout; add them to the commit
+    # only when present so the script stays layout-agnostic (the 1.x single-artifact
+    # tree has neither) — mirroring Update-PomVersion's skip-if-absent guard. On a 2.0
+    # checkout both are present; Step 5's version guard fails first if either is missing.
+    foreach ($modulePom in @('qa/pom.xml', 'coverage/pom.xml')) {
+        if (Test-Path (Join-Path $repoRoot $modulePom)) {
+            $commitFiles += $modulePom
+        }
+    }
     if (-not $SkipShowcase) {
         $commitFiles += @(
             'examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java',

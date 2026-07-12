@@ -93,7 +93,7 @@ jobs:
         # depth against a tag pushed from a broken branch by mistake.
         # The publish step below would also fail at signing/upload,
         # but failing here surfaces a clearer error.
-        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core
+        run: ./mvnw -B -ntp clean verify
 
       - name: Publish engine to Maven Central
         # Activates the release profile (sources + javadoc + gpg sign +
@@ -170,10 +170,12 @@ jobs:
 
       - name: Publish bundle to Maven Central
         # The graph-compose-bundle convenience aggregate pins this engine
-        # version + a compatible graph-compose-fonts version. It tracks the
-        # engine line, so it ships on the same v* tag. pom-packaged → only a
-        # signed .pom is uploaded; engine + fonts resolve from the local repo
-        # (installed by the engine deploy above and the fonts step earlier).
+        # version + compatible graph-compose-fonts and graph-compose-emoji
+        # versions. It tracks the engine line, so it ships on the same v* tag.
+        # Packaged as an empty jar carrying only <dependencies> (like the
+        # graph-compose wrapper), so the signed jar + pom are uploaded. The
+        # train artifacts resolve from the preceding deploy steps; the
+        # independently versioned fonts and emoji artifacts resolve from Maven Central.
         run: ./mvnw -B -ntp -f bundle/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}

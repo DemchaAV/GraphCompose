@@ -16,8 +16,12 @@
         Versioning: this module tracks the ENGINE line (its version == the engine
         version, bumped in lockstep), and pins specific graph-compose-fonts and
         graph-compose-emoji versions (those two release on their own tag lines). It
-        is standalone (no Maven parent) and pom-packaged, so Maven Central needs no
-        sources/javadoc jars for it.
+        is standalone (no Maven parent) and packaged as an empty `jar` carrying only
+        <dependencies> — like the graph-compose wrapper — NOT `pom`: a `pom` would
+        force every consumer to add `<type>pom</type>` and break a plain-dependency
+        copy-paste. Carrying no sources, it publishes the main jar + signed pom (the
+        source/javadoc plugins skip an empty source set) — the same artifact set as
+        the graph-compose wrapper, which Central accepts.
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-bundle</artifactId>
@@ -29,7 +33,7 @@
         ${project.version}, so they follow automatically.
     -->
     <version>2.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <name>GraphCompose Bundle</name>
     <description>Batteries-included aggregate: the default PDF stack (engine + PDF backend), the built-in document templates, the bundled Google fonts, and the colour-emoji set at compatible versions.</description>
@@ -65,6 +69,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
 
         <!-- Pinned bundled-fonts / colour-emoji versions this bundle ships with.
              Both release on their own tag lines (fonts-v* / emoji-v*), so they are
@@ -72,6 +77,10 @@
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
         <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
 
@@ -106,18 +115,69 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <!--
-            Maven Central release. A pom-packaged artifact needs no
-            sources/javadoc jars; it only requires a signed .pom uploaded via
-            central-publishing. Activated with `-P release`; the publish workflow
-            flips -Dgpg.skip=false on the engine `v*` tag (the bundle ships
-            together with the engine it pins).
+            Maven Central release. This module carries no sources, so the
+            source/javadoc plugins skip an empty source set (failOnError=false keeps
+            javadoc from aborting) and only the main jar + signed pom are uploaded —
+            the same artifact set as the graph-compose wrapper. Activated with
+            `-P release`; the publish workflow flips -Dgpg.skip=false on the engine
+            `v*` tag (the bundle ships together with the engine it pins).
         -->
         <profile>
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven.source.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <failOnError>false</failOnError>
+                                    <quiet>true</quiet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

@@ -11,15 +11,16 @@
 
     <name>GraphCompose Build Aggregator</name>
     <description>
-        Non-published reactor aggregator. Builds the library plus the examples
-        and benchmarks modules in one pass and gives a single entry point for
-        `versions:set`, so a version bump propagates to every module at once.
-        This is NOT a Maven parent and is NOT published to JitPack: the library
-        root pom.xml stays standalone so consumer coordinates never change.
+        Non-published reactor aggregator at the repository root. Builds the
+        library plus the examples and benchmarks modules in one pass and gives a
+        single entry point for `versions:set`, so a version bump propagates to
+        every module at once. This is NOT a Maven parent and is NOT published to
+        JitPack: the engine lives in the standalone core/pom.xml
+        (graph-compose-core) so consumer coordinates never change.
 
         Usage:
-          mvn -f aggregator/pom.xml -DskipTests install        # build everything
-          mvn -f aggregator/pom.xml versions:set -DnewVersion=X # bump all modules
+          mvn -DskipTests install                    # build everything
+          mvn versions:set -DnewVersion=X            # bump all modules
     </description>
 
     <!--
@@ -54,7 +55,7 @@
     </properties>
 
     <!--
-        Reactor build order only. `../fonts` and `../bundle` are listed so a
+        Reactor build order only. `fonts` and `bundle` are listed so a
         full-reactor `install` builds them in dependency order (fonts before the
         engine, which depends on fonts at test scope). They are NOT children of
         this aggregator (no <parent> back-reference) and carry independent
@@ -63,23 +64,23 @@
         the engine on purpose.
     -->
     <modules>
-        <module>..</module>
-        <module>../render-pdf</module>
-        <module>../wrapper</module>
-        <module>../fonts</module>
-        <module>../emoji</module>
-        <module>../render-docx</module>
-        <module>../render-pptx</module>
-        <module>../templates</module>
-        <module>../testing</module>
-        <module>../bundle</module>
-        <module>../examples</module>
-        <module>../benchmarks</module>
-        <module>../qa</module>
+        <module>core</module>
+        <module>render-pdf</module>
+        <module>wrapper</module>
+        <module>fonts</module>
+        <module>emoji</module>
+        <module>render-docx</module>
+        <module>render-pptx</module>
+        <module>templates</module>
+        <module>testing</module>
+        <module>bundle</module>
+        <module>examples</module>
+        <module>benchmarks</module>
+        <module>qa</module>
         <!--
             Coverage aggregation. Listed last so every measured module's
             jacoco.exec exists before report-aggregate runs. Non-published.
         -->
-        <module>../coverage</module>
+        <module>coverage</module>
     </modules>
 </project>

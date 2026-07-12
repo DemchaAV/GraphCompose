@@ -230,7 +230,7 @@ The wrappers above benchmark whatever is currently checked out. To answer "is
 branch B faster or slower than branch A?" fairly on a noisy laptop, use the
 dedicated A/B scripts. They **interleave** the two branches (A,B,A,B,…) so
 thermal drift averages out, **repeat** each branch and compare **medians**, and
-**cool down** between runs. Each branch is rebuilt (`install -pl .`) before its
+**cool down** between runs. Each branch is rebuilt (`install -pl :graph-compose-core`) before its
 runs so the benchmark measures that branch's engine, and untracked benchmark
 probes are moved aside around the branch switch so they cannot break the other
 branch's compile.

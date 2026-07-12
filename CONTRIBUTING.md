@@ -102,9 +102,9 @@ At the **2.0 GA** merge the branches take their long-term roles:
 
 ## Repository map
 
-- `src/main/java/com/demcha/compose/document/api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.image`, `document.output`, `document.exceptions`, `document.snapshot`
+- `core/src/main/java/com/demcha/compose/document/api`, `document.dsl`, `document.node`, `document.style`, `document.table`, `document.image`, `document.output`, `document.exceptions`, `document.snapshot`
   Public canonical authoring surface — `DocumentSession`, the DSL builders, semantic node records, public style values, table types, image types, backend-neutral output options (metadata / watermark / protection / header-footer), and snapshot DTOs
-- `src/main/java/com/demcha/compose/document/layout`
+- `core/src/main/java/com/demcha/compose/document/layout`
   Canonical functional layout pipeline: `LayoutCompiler`, `BuiltInNodeDefinitions`, `TableLayoutSupport`, `PreparedNode`, `PlacedFragment`
 - `render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf` — module **graph-compose-render-pdf**
   PDF backend: `PdfFixedLayoutBackend`, fragment handlers, and the option translators that bridge canonical types to PDFBox
@@ -112,22 +112,22 @@ At the **2.0 GA** merge the branches take their long-term roles:
   Semantic exporters `DocxSemanticBackend` (Apache POI based) and `PptxSemanticBackend` (manifest skeleton), under `com.demcha.compose.document.backend.semantic.{docx,pptx}`
 - `templates/src/main/java/com/demcha/compose/document/templates/*` — module **graph-compose-templates**
   Built-in templates (CV, cover letter, invoice, proposal, weekly schedule), DTOs, themes, registries, and scene composition helpers
-- `src/main/java/com/demcha/compose/document/showcase`
+- `core/src/main/java/com/demcha/compose/document/showcase`
   `FontShowcase` (bundled-font preview renderer) — stays in the core engine
-- `src/main/java/com/demcha/compose/engine/*`
+- `core/src/main/java/com/demcha/compose/engine/*`
   Internal shared engine foundation under the canonical surface (measure, paginate, place, render). Not part of the recommended public API
-- `src/main/java/com/demcha/compose/font`
+- `core/src/main/java/com/demcha/compose/font`
   Public font registry, `FontName`, default fonts
-- `src/test/java/com/demcha/documentation/*`
+- `core/src/test/java/com/demcha/documentation/*`
   Examples used to keep README/documentation snippets honest
-- `src/test/java/com/demcha/compose/engine/integration/*`
+- `core/src/test/java/com/demcha/compose/engine/integration/*`
   End-to-end behaviour checks for the engine foundation's layout, pagination, and rendering paths
-- `src/test/java/com/demcha/compose/document/*`
+- `core/src/test/java/com/demcha/compose/document/*`
   Canonical API, DSL, layout, backend, and template tests
 - `assets/readme/*`
   Screenshots used by the README
-- `aggregator/pom.xml`
-  Maven reactor (aggregator POM); release tooling propagates the version bump across all modules through it in one pass
+- `pom.xml`
+  The repository-root Maven reactor (aggregator POM); release tooling propagates the version bump across all modules through it in one pass. The engine itself lives in `core/pom.xml` (`graph-compose-core`)
 - `baselines/`
   Committed performance-benchmark baselines: `current-speed-full.json` is the median reference the `11-verdict-current-speed` gate judges runs against; `BASELINE_SUMMARY.md` / `COMPARISON.md` are historical pre-optimization snapshots
 
@@ -196,7 +196,7 @@ not need any of them.
 - Builders and layout code get text width and line metrics from
   `TextMeasurementSystem`, not from the active renderer, `PdfFont`,
   or PDFBox objects.
-- Keep `src/main/java/com/demcha/compose/engine/components/*` free of
+- Keep `core/src/main/java/com/demcha/compose/engine/components/*` free of
   `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf`
   imports.
 - When you add a new fragment kind, register its handler with
@@ -219,13 +219,13 @@ Keep the entity core thin:
 The rules above are enforced by tests:
 
 - canonical surface guards:
-  [CanonicalSurfaceGuardTest.java](./src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java),
-  [PublicApiNoEngineLeakTest.java](./src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java),
-  [SemanticLayerNoPdfBoxDependencyTest.java](./src/test/java/com/demcha/documentation/SemanticLayerNoPdfBoxDependencyTest.java),
+  [CanonicalSurfaceGuardTest.java](./core/src/test/java/com/demcha/documentation/CanonicalSurfaceGuardTest.java),
+  [PublicApiNoEngineLeakTest.java](./core/src/test/java/com/demcha/documentation/PublicApiNoEngineLeakTest.java),
+  [SemanticLayerNoPdfBoxDependencyTest.java](./core/src/test/java/com/demcha/documentation/SemanticLayerNoPdfBoxDependencyTest.java),
   [DocumentationExamplesTest.java](qa/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java),
-  [DocumentationCoverageTest.java](./src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
+  [DocumentationCoverageTest.java](./core/src/test/java/com/demcha/documentation/DocumentationCoverageTest.java)
 - engine internals guards:
-  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
+  [EnginePdfBoundaryTest.java](./core/src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java),
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 
 ## Adding a new feature
@@ -323,7 +323,7 @@ marker, a new layout system, a new render-pass session):
 
 For text-heavy primitives, also read:
 
-- [TextMeasurementSystem.java](./src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
+- [TextMeasurementSystem.java](./core/src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
 - [docs/architecture/overview.md](./docs/architecture/overview.md)
 - [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
 
@@ -338,12 +338,12 @@ Choose the smallest tests that match the change:
 - For README or docs examples:
   [DocumentationExamplesTest.java](qa/src/test/java/com/demcha/documentation/DocumentationExamplesTest.java)
 - For engine/backend boundary changes:
-  [EnginePdfBoundaryTest.java](./src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
+  [EnginePdfBoundaryTest.java](./core/src/test/java/com/demcha/compose/engine/architecture/EnginePdfBoundaryTest.java)
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For PDF fragment-handler dispatch changes:
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For layout/positioning behavior:
-  [ComputedPositionTest.java](./src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
+  [ComputedPositionTest.java](./core/src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
 - For pagination and multi-page behavior:
   [PaginationEdgeCaseTest.java](qa/src/test/java/com/demcha/compose/document/api/PaginationEdgeCaseTest.java)
 - For Templates v2 CV / cover-letter presets:

@@ -99,7 +99,7 @@ Once. Run the test in **update mode** so it writes the baseline JSON:
 
 ```bash
 ./mvnw test -Dgraphcompose.updateSnapshots=true \
-            -Dtest=MyReportLayoutSnapshotTest -pl .
+            -Dtest=MyReportLayoutSnapshotTest -pl :graph-compose-core
 ```
 
 The baseline JSON appears under `src/test/resources/layout-snapshots/`.
@@ -109,7 +109,7 @@ test, not generated output.
 ### 4. Day-to-day: just run the suite
 
 ```bash
-./mvnw test -pl .
+./mvnw test -pl :graph-compose-core
 ```
 
 The test now passes deterministically. Any change that drifts the
@@ -123,7 +123,7 @@ that you can diff against the committed baseline.
 
 ```bash
 ./mvnw test -Dgraphcompose.updateSnapshots=true \
-            -Dtest=MyReportLayoutSnapshotTest -pl .
+            -Dtest=MyReportLayoutSnapshotTest -pl :graph-compose-core
 ```
 
 The baseline is overwritten with the new layout. **Commit the updated

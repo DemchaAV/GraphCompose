@@ -301,6 +301,21 @@ flowchart LR
 
 Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [package map](./docs/architecture/package-map.md) &middot; [lifecycle](./docs/architecture/lifecycle.md).
 
+### Modules
+
+The repository is a Maven multi-module reactor: the root `pom.xml` is the build aggregator, so `./mvnw clean verify` at the root builds and tests **every** module (scope to one with `-pl :<artifactId>`; the lean engine lives in `core/`).
+
+- **Published to Maven Central**
+  - `graph-compose-core` (`core/`) &mdash; the lean document engine
+  - `graph-compose-render-pdf` · `-render-docx` · `-render-pptx` &mdash; render backends
+  - `graph-compose-templates` &mdash; built-in CV / cover-letter / invoice / proposal presets
+  - `graph-compose-testing` &mdash; snapshot &amp; visual-regression test helpers
+  - `graph-compose` &mdash; the drop-in wrapper (core + PDF); `graph-compose-bundle` &mdash; batteries-included (adds templates + fonts + emoji)
+- **Companion artifacts** (independent version lines) &mdash; `graph-compose-fonts`, `graph-compose-emoji`
+- **Development only** (never published) &mdash; `qa` (architecture guards + visual regression), `coverage` (aggregate JaCoCo), `examples`, `benchmarks`
+
+See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full build / verify flow.
+
 ## Documentation
 
 📚 **[Full docs index](./docs/README.md)** &mdash; categorised map of every doc, ADR, and recipe. Start there to navigate the documentation.

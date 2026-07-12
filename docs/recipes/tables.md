@@ -182,7 +182,7 @@ The Phase D feature set pins five test invariants:
 
 ## See also
 
-- [`TableBuilder`](../../src/main/java/com/demcha/compose/document/dsl/TableBuilder.java) — full builder API.
-- [`DocumentTableCell`](../../src/main/java/com/demcha/compose/document/table/DocumentTableCell.java) — cell payload with `colSpan` / `rowSpan` mutators.
-- [`DocumentTableStyle`](../../src/main/java/com/demcha/compose/document/table/DocumentTableStyle.java) — style overrides for fill, stroke, text style, padding.
+- [`TableBuilder`](../../core/src/main/java/com/demcha/compose/document/dsl/TableBuilder.java) — full builder API.
+- [`DocumentTableCell`](../../core/src/main/java/com/demcha/compose/document/table/DocumentTableCell.java) — cell payload with `colSpan` / `rowSpan` mutators.
+- [`DocumentTableStyle`](../../core/src/main/java/com/demcha/compose/document/table/DocumentTableStyle.java) — style overrides for fill, stroke, text style, padding.
 - Runnable example: `examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java`.

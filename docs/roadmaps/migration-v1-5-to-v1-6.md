@@ -74,7 +74,7 @@ The `com.demcha.compose.document.layout` package — including
 `LayoutGraph`, `PlacedFragment`, `PlacedNode`, `BoxConstraints`,
 `MeasureResult`, `NodeDefinition`, `PreparedNode`, and ~15 other
 records — is now annotated
-[`@Internal`](../../src/main/java/com/demcha/compose/document/api/Internal.java)
+[`@Internal`](../../core/src/main/java/com/demcha/compose/document/api/Internal.java)
 at the package level.
 
 The annotation is a documentation signal, not a visibility change. Code

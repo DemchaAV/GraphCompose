@@ -51,10 +51,10 @@ jobs:
           queries: security-and-quality
 
       - name: Build (library module only)
-        # `-pl .` scopes the analysis to the published artifact and matches
+        # `-pl :graph-compose-core` scopes the analysis to the published artifact and matches
         # the canonical verify gate. Examples/benchmarks are intentionally
         # excluded — they ship no production code.
-        run: ./mvnw -B -ntp -DskipTests -pl . package
+        run: ./mvnw -B -ntp -DskipTests -pl :graph-compose-core package
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

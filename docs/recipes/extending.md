@@ -86,7 +86,7 @@ void myNodeLaysOutAsExpected() throws Exception {
 ```
 
 On first run the assertion writes
-`src/test/resources/layout-snapshots/my-feature/scenario_a.json`. To
+`core/src/test/resources/layout-snapshots/my-feature/scenario_a.json`. To
 accept a baseline change after a deliberate refactor, re-run with
 `-Dgraphcompose.updateSnapshots=true`. See
 [`LayoutSnapshotRegressionExample`](../../examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java)

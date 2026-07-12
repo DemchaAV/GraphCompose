@@ -5,738 +5,82 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.demchaav</groupId>
-    <artifactId>graph-compose-core</artifactId>
+    <artifactId>graph-compose-build</artifactId>
     <version>2.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <name>GraphCompose Core</name>
-    <description>A declarative layout engine for programmatic document generation, implemented primarily in Java. This is the lean engine coordinate; depend on the `graph-compose` artifact for the drop-in, PDF-capable install.</description>
-    <url>https://github.com/DemchaAV/GraphCompose</url>
+    <name>GraphCompose Build Aggregator</name>
+    <description>
+        Non-published reactor aggregator at the repository root. Builds the
+        library plus the examples and benchmarks modules in one pass and gives a
+        single entry point for `versions:set`, so a version bump propagates to
+        every module at once. This is NOT a Maven parent and is NOT published to
+        JitPack: the engine lives in the standalone core/pom.xml
+        (graph-compose-core) so consumer coordinates never change.
 
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>https://opensource.org/licenses/MIT</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+        Usage:
+          mvn -DskipTests install                    # build everything
+          mvn versions:set -DnewVersion=X            # bump all modules
+    </description>
 
-    <developers>
-        <developer>
-            <id>DemchaAV</id>
-            <name>Artem Demchyshyn</name>
-            <email>demchishynartem@gmail.com</email>
-            <url>https://github.com/DemchaAV</url>
-            <roles>
-                <role>Lead Developer</role>
-                <role>Architect</role>
-            </roles>
-            <timezone>UTC 0</timezone>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:https://github.com/DemchaAV/GraphCompose.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/DemchaAV/GraphCompose.git</developerConnection>
-        <url>https://github.com/DemchaAV/GraphCompose/tree/main</url>
-    </scm>
-
+    <!--
+        Belt-and-braces: nothing aggregated here is meant to be deployed via the
+        reactor. The published artifacts (engine, fonts, bundle) are deployed by
+        their own targeted `-f <module>/pom.xml ... deploy` invocations in the
+        publish workflows. This skip stops an accidental aggregator `deploy` from
+        pushing the examples / benchmarks (which have no distributionManagement)
+        to anywhere. The standalone engine / fonts / bundle poms do not inherit
+        this and manage their own publication.
+    -->
     <properties>
-        <!-- Toolchain -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>17</maven.compiler.release>
-
-        <!-- Runtime / library dependencies -->
-        <flexmark.version>0.64.8</flexmark.version>
-        <logback.version>1.5.37</logback.version>
-        <lombok.version>1.18.46</lombok.version>
-        <slf4j.version>2.0.18</slf4j.version>
-
-        <!-- Test dependencies -->
-        <assertj.version>3.27.7</assertj.version>
-        <junit.bom.version>6.1.1</junit.bom.version>
-        <mockito.version>5.23.0</mockito.version>
-        <byteBuddy.version>1.18.11</byteBuddy.version>
-        <archunit.version>1.4.2</archunit.version>
-        <jqwik.version>1.9.3</jqwik.version>
-
-        <!-- Bundled fonts / emoji, pulled in at test scope only. Pinned to the
-             independent 1.0.0 line (not bumped in engine lockstep); keep in step
-             with bundle/pom.xml's graphcompose.fonts.version. -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <!--
+            Bundled-fonts version inherited by the examples and benchmarks
+            modules (which render with the bundled Google families). Independent
+            of the engine line; bump only when the font set changes.
+        -->
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
+        <!--
+            Emoji-glyph version inherited by the examples module (which renders
+            the colour-emoji showcase). Independent of the engine line, like
+            fonts; bump only when the emoji set changes.
+        -->
         <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
-
-        <!-- Build plugins -->
-        <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
-        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
-        <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
-        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
-        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
-        <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
-        <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
-        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <!--
+            Coverage plugin version for the aggregator children that measure
+            coverage (qa) and aggregate it (coverage). Keep in lockstep with the
+            standalone engine pom's jacoco.plugin.version.
+        -->
         <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
-
-        <!--
-            Empty default for the surefire argLine. JaCoCo's prepare-agent
-            prepends its javaagent to this property; declaring it empty here means
-            surefire's `@{argLine}` resolves to empty (not the literal `@{argLine}`,
-            which the JVM would treat as an argfile) when coverage is skipped
-            (-Djacoco.skip=true) or prepare-agent otherwise does not run.
-        -->
-        <argLine></argLine>
-
-        <!-- Minimum toolchain (enforced by maven-enforcer-plugin) -->
-        <enforcer.requireMavenVersion>3.8.0</enforcer.requireMavenVersion>
-        <enforcer.requireJavaVersion>17</enforcer.requireJavaVersion>
-
-        <!-- Binary compatibility baseline (japicmp profile) -->
-        <japicmp.version>0.26.1</japicmp.version>
-        <japicmp.baseline>v1.7.0</japicmp.baseline>
-
-        <!--
-            GPG signing — opted in via -Dgpg.skip=false (the publish
-            workflow does this on tag pushes). Default true so a
-            maintainer running `mvn -P release package` locally does
-            not need a configured GPG key.
-        -->
-        <gpg.skip>true</gpg.skip>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit.bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <dependencies>
-        <!-- Main dependencies -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
+    <!--
+        Reactor build order only. `fonts` and `bundle` are listed so a
+        full-reactor `install` builds them in dependency order (fonts before the
+        engine, which depends on fonts at test scope). They are NOT children of
+        this aggregator (no <parent> back-reference) and carry independent
+        versions, so the lockstep `versions:set` does not rewrite them: fonts is
+        at its own 1.0.0 line, and the bundle (== engine version) is bumped with
+        the engine on purpose.
+    -->
+    <modules>
+        <module>core</module>
+        <module>render-pdf</module>
+        <module>wrapper</module>
+        <module>fonts</module>
+        <module>emoji</module>
+        <module>render-docx</module>
+        <module>render-pptx</module>
+        <module>templates</module>
+        <module>testing</module>
+        <module>bundle</module>
+        <module>examples</module>
+        <module>benchmarks</module>
+        <module>qa</module>
         <!--
-            Flexmark markdown parser. F3 (v1.6.7) narrowed `flexmark-all`
-            down to the modules actually referenced by
-            `com.demcha.compose.engine.text.markdown.MarkDownParser`:
-            - `flexmark`           — Parser + `com.vladsch.flexmark.ast.*`
-                                     (Heading, ListItem, Emphasis, etc.)
-            - `flexmark-util-ast`  — Node, NodeVisitor, VisitHandler
-            - `flexmark-util-data` — MutableDataSet
-            No extension modules (tables, footnotes, gfm) are used.
+            Coverage aggregation. Listed last so every measured module's
+            jacoco.exec exists before report-aggregate runs. Non-published.
         -->
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark</artifactId>
-            <version>${flexmark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-util-ast</artifactId>
-            <version>${flexmark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-util-data</artifactId>
-            <version>${flexmark.version}</version>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <!--
-            The bundled Google fonts and colour-emoji glyphs live in the sibling
-            graph-compose-fonts / graph-compose-emoji modules and are pulled in at
-            TEST scope so the engine's visual / snapshot / emoji suites render with
-            the real binaries. Test scope is not transitive, so the engine's own
-            published jar stays fonts-free — an engine consumer never drags these
-            in. A reactor build satisfies them from the just-built siblings; a
-            standalone `-pl .` build resolves the published 1.0.0 artifacts.
-        -->
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-fonts</artifactId>
-            <version>${graphcompose.fonts.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.demchaav</groupId>
-            <artifactId>graph-compose-emoji</artifactId>
-            <version>${graphcompose.emoji.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.bytebuddy</groupId>
-                    <artifactId>byte-buddy</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <version>${byteBuddy.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-            ArchUnit drives the structural architecture guards (bytecode-level,
-            location-independent) that complement the text-scanning guards in
-            com.demcha.documentation. Test scope only; never on the published
-            engine's compile/runtime classpath.
-        -->
-        <dependency>
-            <groupId>com.tngtech.archunit</groupId>
-            <artifactId>archunit</artifactId>
-            <version>${archunit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-            jqwik drives the property-based layout-invariant tests: pure
-            engine functions (tokenization reconstruction, z-order permutation,
-            row-weight guards) checked against generated inputs. Test scope only.
-        -->
-        <dependency>
-            <groupId>net.jqwik</groupId>
-            <artifactId>jqwik</artifactId>
-            <version>${jqwik.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-            Benchmark-only comparison dependencies (iText, openHTMLToPDF,
-            JasperReports) live in the sibling `benchmarks/` Maven module
-            so the main project's test classpath stays free of foreign
-            comparison libraries that are not part of GraphCompose. Run
-            benchmarks via `mvnw -f benchmarks/pom.xml ...` or the
-            scripts/run-benchmarks.ps1 wrapper.
-        -->
-    </dependencies>
-
-    <build>
-        <testResources>
-            <!--
-                Default test resources only. The bundled Google fonts and
-                colour-emoji glyphs are no longer copied in from the sibling
-                source dirs — they reach the test classpath via the
-                graph-compose-fonts / graph-compose-emoji test-scope artifacts
-                (see <dependencies> above), which package the same
-                src/main/resources layout, so classpath lookups are unchanged.
-            -->
-            <testResource>
-                <directory>src/test/resources</directory>
-            </testResource>
-        </testResources>
-
-        <!--
-            Pin the default-lifecycle plugins (clean / install / site /
-            resources / deploy) so requirePluginVersions in the enforcer
-            block below has nothing to flag. Versions match what Maven
-            3.9.x currently resolves out-of-the-box; the explicit pin
-            stops a future Maven upgrade from silently shifting the
-            plugin set we build against.
-        -->
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.4</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.22.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.4</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
-        <plugins>
-            <!--
-                Build-time precondition enforcement. Three rules:
-                * requireJavaVersion: blocks builds on JDK < 17 (the
-                  declared baseline). Catches "works on my Java 21,
-                  silently breaks on the JDK 17 CI matrix" drift.
-                * requireMavenVersion: blocks Maven < 3.8.0 — the
-                  oldest version that fully supports the resolver
-                  features the central-publishing plugin (Track D3)
-                  needs to ship Maven Central artefacts.
-                * requirePluginVersions: every plugin must declare an
-                  explicit <version>. Stops the inherited "latest" or
-                  reactor-default drift that broke the v1.6.0 release
-                  (cf. PR-7.1 exec-plugin lesson). Tracked as 1.6.6 E2.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>${maven.enforcer.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>enforce-toolchain-and-plugin-versions</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireMavenVersion>
-                                    <version>[${enforcer.requireMavenVersion},)</version>
-                                    <message>GraphCompose requires Maven ${enforcer.requireMavenVersion} or newer.</message>
-                                </requireMavenVersion>
-                                <requireJavaVersion>
-                                    <version>[${enforcer.requireJavaVersion},)</version>
-                                    <message>GraphCompose requires JDK ${enforcer.requireJavaVersion} or newer.</message>
-                                </requireJavaVersion>
-                                <requirePluginVersions>
-                                    <banLatest>true</banLatest>
-                                    <banRelease>true</banRelease>
-                                    <banSnapshots>true</banSnapshots>
-                                    <message>Every plugin must declare an explicit non-LATEST/RELEASE version. See PR-7.1 (exec-plugin drift) for the lesson.</message>
-                                </requirePluginVersions>
-                            </rules>
-                            <fail>true</fail>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Java compilation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven.compiler.plugin.version}</version>
-                <configuration>
-                    <release>${maven.compiler.release}</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-
-            <!-- Test execution -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <!--
-                        @{argLine} is the late-evaluated `argLine` property JaCoCo's
-                        prepare-agent prepends its javaagent to; keeping it here (rather
-                        than a bare literal) lets the coverage agent attach alongside the
-                        Mockito inline-mock agent instead of one clobbering the other. It
-                        resolves to the empty <argLine> default in <properties> when
-                        coverage is skipped, so the Mockito-only run still works.
-                    -->
-                    <argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
-                </configuration>
-            </plugin>
-
-            <!--
-                Coverage agent. prepare-agent sets the `argLine` property (picked
-                up by surefire above) so each test run writes target/jacoco.exec;
-                the per-module HTML report is a convenience. The cross-module
-                aggregate that counts the qa suites' coverage of the engine lives
-                in the dedicated `graph-compose-coverage` module (report-aggregate).
-            -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>jacoco-prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>jacoco-report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!--
-                Build a tests-classifier jar so the sibling `benchmarks/`
-                module can reuse the test-only fixtures (com.demcha.mock.*,
-                etc.) without duplicating them. The artifact is
-                graph-compose-core-${version}-tests.jar in the local repository
-                after `mvn install`. It is a LOCAL build aid only: the
-                `release` profile disables this execution (phase=none) so the
-                tests jar is never attached and therefore never deployed to
-                Maven Central. See the release profile below.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven.jar.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-test-jar</id>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                        <!--
-                            No <excludes> needed: the bundled fonts / emoji are no
-                            longer copied into test-classes (they come from the
-                            graph-compose-fonts / graph-compose-emoji test-scope
-                            artifacts), so the tests-jar naturally carries only the
-                            engine's own fixtures (e.g. com.demcha.mock) that the
-                            benchmarks module consumes.
-                        -->
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Public API Javadoc validation: canonical document API + public testing-support helpers (testing.layout / testing.visual) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven.javadoc.plugin.version}</version>
-                <configuration>
-                    <doclint>all</doclint>
-                    <failOnError>true</failOnError>
-                    <show>public</show>
-                    <quiet>true</quiet>
-                    <subpackages>com.demcha.compose.document</subpackages>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <profiles>
-        <!--
-            Maven Central / release-publishing artefacts. Activated
-            with `-P release`. Produces the `*-sources.jar` and
-            `*-javadoc.jar` Maven Central requires alongside the main
-            `.jar`. Activated by `cut-release.ps1` (when the
-            central-publishing plugin lands in Track D3) and by the
-            publish workflow (Track D4); never activated by the default
-            local build so a maintainer's everyday `mvnw verify` does
-            not pay the extra ~30 s of source / javadoc packaging.
-            Tracked in v1.6.6 stabilization (Track D1).
-        -->
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <!--
-                        Keep the tests-classifier jar OUT of the published
-                        artifact set. The default build attaches a
-                        graph-compose-core-${version}-tests.jar (for the local
-                        benchmarks module); on a release `deploy` that jar
-                        would otherwise be uploaded to Maven Central, where it
-                        is pure dead weight (test classes + heavy golden
-                        snapshot / visual-baseline resources). Re-declaring the
-                        same execution id bound to phase=none unbinds it, so
-                        the release build never produces or attaches it.
-                    -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven.jar.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-test-jar</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>${maven.source.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>${maven.javadoc.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                                <configuration>
-                                    <!--
-                                        Lombok-generated members and the
-                                        `@Internal` engine surface are not
-                                        part of the public Javadoc; skip
-                                        anything that would fail to resolve
-                                        rather than blocking the publish.
-                                    -->
-                                    <doclint>none</doclint>
-                                    <failOnError>false</failOnError>
-                                    <quiet>true</quiet>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!--
-                        GPG signing of the four published artefacts
-                        (main jar + sources + javadoc + pom). Maven
-                        Central rejects unsigned uploads.
-
-                        Local default: `<gpg.skip>true</gpg.skip>` (set
-                        in <properties>) so `mvn -P release package`
-                        works without a configured GPG key. The publish
-                        workflow (Track D4) flips it with
-                        -Dgpg.skip=false.
-
-                        The `gpgArguments` pinentry-mode=loopback is
-                        required for non-interactive runs (CI), where
-                        the passphrase arrives via
-                        MAVEN_GPG_PASSPHRASE / -Dgpg.passphrase and
-                        there is no TTY for gpg-agent to prompt on.
-                    -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>${maven.gpg.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>${gpg.skip}</skip>
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!--
-                        Sonatype central-publishing-maven-plugin: the
-                        modern replacement for the old `nexus-staging-maven-plugin`
-                        + manual staging-repository flow. Uploads the
-                        signed artefacts (main + sources + javadoc + pom)
-                        to the namespace verified at central.sonatype.com.
-
-                        Configuration:
-                          publishingServerId=central — matches the
-                            <server id="central"> entry the publish
-                            workflow (Track D4) writes into
-                            ~/.m2/settings.xml from the CENTRAL_USERNAME
-                            / CENTRAL_TOKEN repo secrets.
-                          autoPublish=false — uploads to the validation
-                            queue but does NOT auto-release. The
-                            maintainer flips the switch on
-                            central.sonatype.com after a sanity check
-                            on the first publish; subsequent releases
-                            can flip this to true in the workflow when
-                            we are confident.
-                          waitUntil=validated — block the Maven build
-                            until Sonatype's validator confirms the
-                            upload meets the Central requirements
-                            (signed artefacts, sources/javadoc jars,
-                            valid POM metadata, etc.). Surfaces errors
-                            inside the workflow run rather than
-                            silently leaving a stuck upload.
-                          <extensions>true</extensions> — required so
-                            the plugin participates in the build
-                            lifecycle as a packaging extension.
-
-                        Requires (configured by Track D4 workflow):
-                          - CENTRAL_USERNAME / CENTRAL_TOKEN secrets
-                          - namespace `io.github.demchaav` verified on
-                            central.sonatype.com (one-time, via GitHub
-                            auth or DNS TXT record).
-                    -->
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>${central.publishing.plugin.version}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>central</publishingServerId>
-                            <autoPublish>false</autoPublish>
-                            <waitUntil>validated</waitUntil>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!--
-            Binary-compatibility baseline against the last published
-            release. Activated with `-P japicmp`. Resolves the baseline
-            artifact from JitPack (kept profile-local so consumers do
-            NOT inherit a JitPack repository). Fails the build on any
-            binary-incompatible modification to the public surface;
-            source-incompatible changes are reported but do not fail
-            (yet) so the team can phase the policy in. Tracked in the
-            v1.6.6 stabilization (Track E1).
-        -->
-        <profile>
-            <id>japicmp</id>
-            <repositories>
-                <repository>
-                    <id>jitpack.io</id>
-                    <url>https://jitpack.io</url>
-                </repository>
-            </repositories>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.siom79.japicmp</groupId>
-                        <artifactId>japicmp-maven-plugin</artifactId>
-                        <version>${japicmp.version}</version>
-                        <executions>
-                            <execution>
-                                <id>japicmp-against-baseline</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>cmp</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <oldVersion>
-                                <dependency>
-                                    <groupId>com.github.DemchaAV</groupId>
-                                    <artifactId>GraphCompose</artifactId>
-                                    <version>${japicmp.baseline}</version>
-                                </dependency>
-                            </oldVersion>
-                            <newVersion>
-                                <file>
-                                    <path>${project.build.directory}/${project.build.finalName}.jar</path>
-                                </file>
-                            </newVersion>
-                            <parameter>
-                                <onlyModified>true</onlyModified>
-                                <!--
-                                    2.0 development line: the major intentionally breaks binary
-                                    compatibility (core extraction, v2-suffix drop, Gen-2 removal).
-                                    The gate runs report-only here so the japicmp report still
-                                    documents every break for the migration guide / api-stability §3
-                                    ledger, without failing the build. Re-enable (true) once the 2.0
-                                    baseline is published and japicmp.baseline points at it.
-                                -->
-                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
-                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
-                                <includeSynthetic>false</includeSynthetic>
-                                <reportOnlyFilename>true</reportOnlyFilename>
-                                <skipPomModules>true</skipPomModules>
-                                <!--
-                                    Internal layout->render handoff DTOs. These records carry
-                                    engine-internal types (TextStyle, Padding, ...) and evolve
-                                    with rendering features (e.g. ParagraphFragmentPayload gained
-                                    verticalAlign in 1.7.0). They are not part of the canonical
-                                    public API (document.api/dsl/node/style) and carry no
-                                    binary-compatibility promise, so they are excluded from the gate.
-                                -->
-                                <excludes>
-                                    <exclude>com.demcha.compose.document.layout.payloads</exclude>
-                                    <!--
-                                        engine.measurement.TextMeasurementSystem dropped its vestigial
-                                        SystemECS super-interface (and the no-op process(EntityManager)
-                                        default) — see CHANGELOG v1.7.1. japicmp reports this as
-                                        INTERFACE_REMOVED, but it is safe: nothing consumes a
-                                        TextMeasurementSystem as a SystemECS. The legacy ECS engine now
-                                        obtains the measurement service via
-                                        SystemRegistry.registerTextMeasurement(...) / textMeasurement()
-                                        instead of enrolling it as a process()-driven system, and the
-                                        canonical pipeline injects it directly. Drop this exclude once the
-                                        japicmp baseline advances to the release that lands the change.
-                                    -->
-                                    <exclude>com.demcha.compose.engine.measurement.TextMeasurementSystem</exclude>
-                                    <!--
-                                        com.demcha.compose.ConfigLoader removed in v1.8.0 — an
-                                        application-bootstrap YAML/JSON config helper with no
-                                        connection to document rendering; nothing in the library,
-                                        tests, or examples referenced it (see CHANGELOG v1.8.0).
-                                        japicmp reports the deliberate deletion as CLASS_REMOVED.
-                                        Drop this exclude once the japicmp baseline advances to the
-                                        release that lands the removal.
-                                    -->
-                                    <exclude>com.demcha.compose.ConfigLoader</exclude>
-                                </excludes>
-                            </parameter>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+        <module>coverage</module>
+    </modules>
 </project>

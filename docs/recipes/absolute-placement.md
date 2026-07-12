@@ -55,5 +55,5 @@ within one page.
 ## See also
 
 - Runnable example: [`CanvasLayerExample`](../../examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java) — a full certificate.
-- [`CanvasLayerNode`](../../src/main/java/com/demcha/compose/document/node/CanvasLayerNode.java) — the node behind `addCanvas`.
+- [`CanvasLayerNode`](../../core/src/main/java/com/demcha/compose/document/node/CanvasLayerNode.java) — the node behind `addCanvas`.
 - [Layered page design](layered-page-design.md) — canvas vs. layer stack vs. row vs. page background.

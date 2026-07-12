@@ -12,4 +12,4 @@
 jdk:
   - openjdk17
 install:
-  - ./mvnw -DskipTests -f aggregator/pom.xml install -pl :graph-compose-core,:graph-compose
+  - ./mvnw -DskipTests install -pl :graph-compose-core,:graph-compose

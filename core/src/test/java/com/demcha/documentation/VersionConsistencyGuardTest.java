@@ -23,10 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * and to the README + showcase install snippets.
  *
  * <p>This is the safety net behind the aggregator-reactor version model
- * (see {@code aggregator/pom.xml}): the library {@code pom.xml} is the single
- * version source, the aggregator bumps every module in lockstep via
- * {@code versions:set}, and the child modules inherit their version rather than
- * pinning a literal. This test fails the build the moment a bump leaves any
+ * (the root {@code pom.xml} is the reactor aggregator): the engine
+ * {@code core/pom.xml} is the single version source, the aggregator bumps every
+ * module in lockstep via {@code versions:set}, and the child modules inherit
+ * their version rather than pinning a literal. This test fails the build the
+ * moment a bump leaves any
  * module — or a copy-paste install snippet — pointing at a different version,
  * which is the drift class that previously let the benchmarks module run
  * against the previous release.
@@ -43,14 +44,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class VersionConsistencyGuardTest {
 
-    private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
+    private static final Path PROJECT_ROOT = RepoRoot.get();
 
     @Test
     void everyModuleResolvesToTheRootProjectVersion() throws Exception {
-        String root = effectiveVersion(PROJECT_ROOT.resolve("pom.xml"));
+        String root = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
 
-        assertThat(effectiveVersion(PROJECT_ROOT.resolve("aggregator/pom.xml")))
-                .describedAs("aggregator/pom.xml version must equal root pom.xml version (%s)", root)
+        assertThat(effectiveVersion(PROJECT_ROOT.resolve("pom.xml")))
+                .describedAs("the root aggregator pom.xml must equal the engine (core/pom.xml) version (%s)", root)
                 .isEqualTo(root);
         assertThat(effectiveVersion(PROJECT_ROOT.resolve("examples/pom.xml")))
                 .describedAs("examples must inherit the root version (%s)", root)
@@ -95,7 +96,7 @@ class VersionConsistencyGuardTest {
         // it: the aggregator (inherited by examples + benchmarks) and the bundle.
         // This guards the version-literal drift class: those must always agree, even
         // though they differ from the engine version line.
-        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "graphcompose.fonts.version");
+        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "graphcompose.fonts.version");
 
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.fonts.version"))
                 .describedAs("bundle graphcompose.fonts.version must match the aggregator's (%s)", aggregator)
@@ -108,7 +109,7 @@ class VersionConsistencyGuardTest {
         // version line (emoji-v* tag) and the ${graphcompose.emoji.version} property
         // that pins it lives in the aggregator (inherited by examples) and the bundle
         // (which now ships the colour-emoji set). Guard the same version-literal drift.
-        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "graphcompose.emoji.version");
+        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "graphcompose.emoji.version");
 
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.emoji.version"))
                 .describedAs("bundle graphcompose.emoji.version must match the aggregator's (%s)", aggregator)
@@ -139,9 +140,9 @@ class VersionConsistencyGuardTest {
         // module that measures coverage (engine, render-pdf, templates) plus the
         // aggregator that the qa + coverage children inherit, so guard the four
         // against drift.
-        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "jacoco.plugin.version");
+        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "jacoco.plugin.version");
 
-        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("aggregator/pom.xml"), "jacoco.plugin.version"))
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "jacoco.plugin.version"))
                 .describedAs("aggregator jacoco.plugin.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("render-pdf/pom.xml"), "jacoco.plugin.version"))
@@ -285,7 +286,7 @@ class VersionConsistencyGuardTest {
      */
     private Set<String> acceptableTargets() throws Exception {
         Set<String> targets = new LinkedHashSet<>();
-        targets.add(effectiveVersion(PROJECT_ROOT.resolve("pom.xml")));
+        targets.add(effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml")));
         String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
         Matcher planned = Pattern.compile("^## v([0-9][^ \\n]*)\\s*[\\u2014\\-]\\s*Planned\\b", Pattern.MULTILINE)
                 .matcher(changelog);

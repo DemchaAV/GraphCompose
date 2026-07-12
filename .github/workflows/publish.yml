@@ -93,7 +93,7 @@ jobs:
         # depth against a tag pushed from a broken branch by mistake.
         # The publish step below would also fail at signing/upload,
         # but failing here surfaces a clearer error.
-        run: ./mvnw -B -ntp clean verify -pl .
+        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core
 
       - name: Publish engine to Maven Central
         # Activates the release profile (sources + javadoc + gpg sign +
@@ -102,7 +102,7 @@ jobs:
         # which blocks until Sonatype's validator confirms validation.
         # The release profile also disables the tests-jar execution, so
         # only the main + sources + javadoc + pom artefacts are uploaded.
-        run: ./mvnw -B -ntp -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f core/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

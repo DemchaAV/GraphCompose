@@ -200,4 +200,4 @@ etc.).
 - Tests:
   [`qa/src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java`](../../qa/src/test/java/com/demcha/compose/document/table/TableCellComposedContentTest.java).
 - Snapshot baseline:
-  `src/test/resources/layout-snapshots/document/table_cell_with_paragraph.json`.
+  `core/src/test/resources/layout-snapshots/document/table_cell_with_paragraph.json`.

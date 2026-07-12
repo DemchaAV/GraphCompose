@@ -99,17 +99,17 @@ Once. Run the test in **update mode** so it writes the baseline JSON:
 
 ```bash
 ./mvnw test -Dgraphcompose.updateSnapshots=true \
-            -Dtest=MyReportLayoutSnapshotTest -pl .
+            -Dtest=MyReportLayoutSnapshotTest -pl :graph-compose-core
 ```
 
-The baseline JSON appears under `src/test/resources/layout-snapshots/`.
+The baseline JSON appears under `core/src/test/resources/layout-snapshots/`.
 Commit it alongside your test class — the baseline is part of the
 test, not generated output.
 
 ### 4. Day-to-day: just run the suite
 
 ```bash
-./mvnw test -pl .
+./mvnw test -pl :graph-compose-core
 ```
 
 The test now passes deterministically. Any change that drifts the
@@ -123,7 +123,7 @@ that you can diff against the committed baseline.
 
 ```bash
 ./mvnw test -Dgraphcompose.updateSnapshots=true \
-            -Dtest=MyReportLayoutSnapshotTest -pl .
+            -Dtest=MyReportLayoutSnapshotTest -pl :graph-compose-core
 ```
 
 The baseline is overwritten with the new layout. **Commit the updated
@@ -172,7 +172,7 @@ checks separately with regular unit tests — snapshot is for geometry.
 1. The failure message points at the actual file:
    `target/visual-tests/layout-snapshots/<name>.actual.json`
 2. Compare the actual against the committed baseline under
-   `src/test/resources/layout-snapshots/<name>.json`. Most diff tools
+   `core/src/test/resources/layout-snapshots/<name>.json`. Most diff tools
    highlight a single field-level change.
 3. Decide what you're looking at:
    - **`computedY` / `placementY` shifted by a few units** → a margin

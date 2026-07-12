@@ -15,7 +15,7 @@ extraction tests, the documentation snippet-compile guard, and the dev-tool laun
 Run it as part of the reactor:
 
 ```bash
-./mvnw -f aggregator/pom.xml test        # or: ./mvnw verify -pl :graph-compose-qa -am
+./mvnw test        # or: ./mvnw verify -pl :graph-compose-qa -am
 ```
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the build/test workflow.

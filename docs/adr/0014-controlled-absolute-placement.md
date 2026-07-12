@@ -217,6 +217,6 @@ diagram authors who want overflow can opt into
 - Tests:
   [`qa/src/test/java/com/demcha/compose/document/dsl/CanvasLayerBuilderTest.java`](../../qa/src/test/java/com/demcha/compose/document/dsl/CanvasLayerBuilderTest.java).
 - Snapshot baseline:
-  `src/test/resources/layout-snapshots/document/canvas_layer_basic.json`.
+  `core/src/test/resources/layout-snapshots/document/canvas_layer_basic.json`.
 - Showcase:
   [`examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java`](../../examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java).

@@ -49,7 +49,7 @@ jobs:
         run: |
           ./mvnw -B -ntp clean \
             "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest,VersionConsistencyGuardTest" \
-            test
+            test -pl :graph-compose-core
 
   changes:
     # Path-based change detection for selective CI on pull requests. Emits the
@@ -84,20 +84,20 @@ jobs:
               - 'mvnw.cmd'
               - '.github/workflows/ci.yml'
             core:
-              - 'src/**'
-              - 'pom.xml'
+              - 'core/src/**'
+              - 'core/pom.xml'
             perf:
-              - 'src/**'
+              - 'core/src/**'
               - 'render-pdf/**'
               - 'templates/**'
               - 'benchmarks/**'
-              - 'pom.xml'
+              - 'core/pom.xml'
             # Published library modules + build toolchain. A change here runs the
             # full JDK matrix (it ships to users across JVMs); a PR touching only
             # the non-published test/build infra (qa, coverage, examples,
             # benchmarks, docs) runs the baseline JDK alone.
             jvm:
-              - 'src/**'
+              - 'core/src/**'
               - 'render-pdf/**'
               - 'render-docx/**'
               - 'render-pptx/**'
@@ -107,7 +107,7 @@ jobs:
               - 'fonts/**'
               - 'emoji/**'
               - 'bundle/**'
-              - 'pom.xml'
+              - 'core/pom.xml'
               - '.mvn/**'
               - 'mvnw'
               - 'mvnw.cmd'
@@ -154,14 +154,15 @@ jobs:
         # the classpath and so cannot live in the engine's own test scope), and the
         # graph-compose-coverage aggregator (report-only JaCoCo over core + qa exec).
         # -am pulls the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp -f aggregator/pom.xml clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa,:graph-compose-coverage -am
+        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa,:graph-compose-coverage -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
         # across JVMs and one pass is enough to catch broken @link
-        # references.
+        # references. Scoped to the engine (its public API is the doclint
+        # gate); a bare reactor pass would also lint the dev-only benchmarks.
         if: matrix.java == '17'
-        run: ./mvnw -B -ntp javadoc:javadoc
+        run: ./mvnw -B -ntp javadoc:javadoc -pl :graph-compose-core
 
       - name: Upload aggregate coverage report
         # Report-only: the cross-module JaCoCo report (core coverage counting the
@@ -209,7 +210,7 @@ jobs:
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
       - name: Install root artifact (graph-compose-core)
-        run: ./mvnw -B -ntp -DskipTests install -pl .
+        run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-core
 
       - name: Install graph-compose-render-pdf (the PDF backend the wrapper brings)
         # The graph-compose wrapper depends on render-pdf so a bare graph-compose
@@ -267,7 +268,7 @@ jobs:
   binary-compat:
     name: Binary Compatibility (japicmp vs pom baseline)
     # japicmp diffs the graph-compose-core public surface, so it only matters
-    # when the core module (root `src/**` or `pom.xml`) changed.
+    # when the core module (`core/src/**` or `core/pom.xml`) changed.
     if: github.event_name == 'pull_request' && needs.changes.outputs.core == 'true'
     needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
@@ -287,20 +288,20 @@ jobs:
 
       - name: Compare public API against baseline
         # The `japicmp` profile resolves the baseline release pinned
-        # by the `japicmp.baseline` property in pom.xml (via the
+        # by the `japicmp.baseline` property in core/pom.xml (via the
         # profile-local JitPack repository) and diffs it against the
         # freshly-built artifact. Fails the job on any binary-
         # incompatible modification to the public surface. Source-
         # incompatible changes are reported only (phased policy).
         # See CHANGELOG v1.6.6 "Build" notes for the policy rationale.
-        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl .
+        run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core
 
       - name: Upload japicmp report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: japicmp-report-${{ github.run_id }}
-          path: target/japicmp/**
+          path: core/target/japicmp/**
           if-no-files-found: ignore
 
   perf-smoke:
@@ -331,7 +332,7 @@ jobs:
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
 
       - name: Install root artifact
-        run: ./mvnw -B -ntp -DskipTests install -pl .
+        run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-core
 
       - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
         # benchmarks call buildPdf and reference the PDF backend types directly, so
@@ -426,7 +427,7 @@ jobs:
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
 
       - name: Install root artifact
-        run: ./mvnw -B -ntp -DskipTests install -pl .
+        run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-core
 
       - name: Install graph-compose-render-pdf (consumed by the benchmarks module)
         # benchmarks call buildPdf and reference the PDF backend types directly, so

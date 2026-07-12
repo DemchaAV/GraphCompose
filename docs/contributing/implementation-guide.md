@@ -45,8 +45,8 @@ If the object should render something visible, the entity needs a renderable mar
 
 Examples:
 
-- [TextComponent.java](../../src/main/java/com/demcha/compose/engine/components/renderable/TextComponent.java)
-- [BlockText.java](../../src/main/java/com/demcha/compose/engine/components/renderable/BlockText.java)
+- [TextComponent.java](../../core/src/main/java/com/demcha/compose/engine/components/renderable/TextComponent.java)
+- [BlockText.java](../../core/src/main/java/com/demcha/compose/engine/components/renderable/BlockText.java)
 
 Those renderable components are render markers. Prefer keeping them backend-neutral and let renderer-owned handlers perform format-specific drawing.
 
@@ -100,7 +100,7 @@ If the engine needs to place the object, it usually needs a size signal.
 
 The most common component is:
 
-- [ContentSize.java](../../src/main/java/com/demcha/compose/engine/components/geometry/ContentSize.java)
+- [ContentSize.java](../../core/src/main/java/com/demcha/compose/engine/components/geometry/ContentSize.java)
 
 For simple fixed-size objects, set `ContentSize` directly in the builder.
 
@@ -180,7 +180,7 @@ Why the table uses this contract:
 
 Relevant files:
 
-- [TableResolvedCell.java](../../src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
+- [TableResolvedCell.java](../../core/src/main/java/com/demcha/compose/engine/components/content/table/TableResolvedCell.java)
 
 Rule of thumb:
 
@@ -251,9 +251,9 @@ Preferred extension pattern for new backends:
 
 Important files:
 
-- [Render.java](../../src/main/java/com/demcha/compose/engine/render/Render.java)
-- [RenderPassSession.java](../../src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
-- [RenderStream.java](../../src/main/java/com/demcha/compose/engine/render/RenderStream.java)
+- [Render.java](../../core/src/main/java/com/demcha/compose/engine/render/Render.java)
+- [RenderPassSession.java](../../core/src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
+- [RenderStream.java](../../core/src/main/java/com/demcha/compose/engine/render/RenderStream.java)
 - [PdfFixedLayoutBackend.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
 - [PdfFragmentRenderHandler.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
 
@@ -308,10 +308,10 @@ The layout side uses entity components, not builder classes directly.
 
 Important files:
 
-- [LayoutTraversalContext.java](../../src/main/java/com/demcha/compose/engine/core/LayoutTraversalContext.java)
-- [ComputedPosition.java](../../src/main/java/com/demcha/compose/engine/components/layout/coordinator/ComputedPosition.java)
-- [EntityBounds.java](../../src/main/java/com/demcha/compose/engine/components/geometry/EntityBounds.java)
-- [ParentContainerUpdater.java](../../src/main/java/com/demcha/compose/engine/pagination/ParentContainerUpdater.java)
+- [LayoutTraversalContext.java](../../core/src/main/java/com/demcha/compose/engine/core/LayoutTraversalContext.java)
+- [ComputedPosition.java](../../core/src/main/java/com/demcha/compose/engine/components/layout/coordinator/ComputedPosition.java)
+- [EntityBounds.java](../../core/src/main/java/com/demcha/compose/engine/components/geometry/EntityBounds.java)
+- [ParentContainerUpdater.java](../../core/src/main/java/com/demcha/compose/engine/pagination/ParentContainerUpdater.java)
 
 In practice:
 

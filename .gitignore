@@ -37,6 +37,7 @@ build/
 ### Mac OS ###
 .DS_Store
 /logs/
+core/logs/
 benchmarks/logs/
 qa/logs/
 render-pdf/logs/

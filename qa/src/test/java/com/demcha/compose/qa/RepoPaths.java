@@ -18,13 +18,14 @@ public final class RepoPaths {
 
     /**
      * The repository root, located by walking up from the working directory until a
-     * directory that contains {@code aggregator/pom.xml} is found.
+     * directory that contains the Maven wrapper ({@code mvnw}) is found — a marker
+     * unique to the repository root and stable across the module layout.
      *
      * @return the absolute repository-root path
      */
     public static Path repoRoot() {
         for (Path dir = Path.of("").toAbsolutePath(); dir != null; dir = dir.getParent()) {
-            if (Files.exists(dir.resolve("aggregator/pom.xml"))) {
+            if (Files.exists(dir.resolve("mvnw"))) {
                 return dir;
             }
         }

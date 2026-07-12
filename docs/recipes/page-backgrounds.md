@@ -87,6 +87,6 @@ text.
 
 ## See also
 
-- [`PageBackgroundFill`](../../src/main/java/com/demcha/compose/document/api/PageBackgroundFill.java) — every factory, with ratio semantics.
+- [`PageBackgroundFill`](../../core/src/main/java/com/demcha/compose/document/api/PageBackgroundFill.java) — every factory, with ratio semantics.
 - `DocumentSession.pageBackground(...)` / `pageBackgrounds(...)`.
 - [Layered page design](layered-page-design.md) — choosing between page backgrounds, rows, layer stacks, and canvases.

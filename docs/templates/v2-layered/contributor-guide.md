@@ -301,7 +301,7 @@ git commit -m "test: refresh visual baselines after <reason>"
 ```
 
 **Where baselines live:**
-`src/test/resources/visual-baselines/<family>-v2-layered/<slug>-page-N.png`
+`core/src/test/resources/visual-baselines/<family>-v2-layered/<slug>-page-N.png`
 
 One PNG per page per preset. Pages overflow naturally — a 2-page
 preset gets `<slug>-page-0.png` and `<slug>-page-1.png`.
@@ -331,7 +331,7 @@ baseline so a reviewer can see exactly what changed before deciding
 to re-bless or fix.
 
 **Reference**: see
-`src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java`
+`core/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java`
 — a 200-line drop-in template you can copy for a new family.
 
 ---

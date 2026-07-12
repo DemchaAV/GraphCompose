@@ -45,7 +45,7 @@ jobs:
           cache: maven
 
       - name: Verify (gate the release on a green build)
-        run: ./mvnw -B -ntp clean verify -pl .
+        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core
 
       - name: Extract CHANGELOG section for the tag
         id: notes

@@ -17,6 +17,8 @@ Run this every time, in order. Stop on the first red gate and fix it before cont
 
 The shell setup and exact PowerShell commands live in the `graphcompose-release-engineer` skill (loaded via `Skill` tool). On Git Bash use `./mvnw` instead of `.\mvnw.cmd`; the gates are identical.
 
+> **Cutting the 2.0 line?** This checklist is written for the 1.9.x line on `develop` (the old single-jar layout, where `-pl .` is the engine). For a 2.0 cut from `2.0-dev`, substitute throughout: branch `develop` → `2.0-dev`; the full gate `clean verify -pl .` → the whole reactor **`./mvnw -B -ntp clean verify`** (the root pom is the aggregator now); engine-only commands `-pl .` → `-pl :graph-compose-core`; `aggregator/pom.xml` → the root `pom.xml`, with the engine version in `core/pom.xml`. The cut itself uses `cut-release.ps1 -Branch 2.0-dev` — see [§2.G](#2g-cutting-the-20-line-branch-flow).
+
 ### A. Branch + working tree
 
 - [ ] On `develop` branch (or in a `develop` worktree). Never tag from `main`.
@@ -186,6 +188,29 @@ aggregate. They all carry the **same** version.
   the whole train to the **GitHub Release pre-release surface only** — `publish.yml`
   skips Central for hyphenated tags (§2.B step 9). A beta is therefore installable from
   the GitHub pre-release (and from JitPack, which builds any tag), not from Central.
+
+### 2.G Cutting the 2.0 line (branch flow)
+
+The 2.0 train is cut from **`2.0-dev`**, not `develop`; `cut-release.ps1` takes the
+branch as a parameter. On the 2.0 layout the engine lives in `core/pom.xml` and the
+repository root `pom.xml` is the reactor aggregator — the script bumps both (plus the
+rest of the train) and its `Test-Path` guard skips `core/pom.xml` on the old 1.x layout,
+so the same script serves both lines.
+
+- **Release candidate:** `pwsh ./scripts/cut-release.ps1 -Version 2.0.0-rc.1 -Branch 2.0-dev`.
+  The hyphenated `-rc` tag ships to the GitHub pre-release surface only (Central skipped, §2.F).
+- **GA:** `pwsh ./scripts/cut-release.ps1 -Version 2.0.0 -Branch 2.0-dev`. The plain
+  `v2.0.0` tag fires `publish.yml`, which deploys the eight-module train to Maven Central in
+  dependency order — that sequence is version-agnostic and needs no per-release change.
+
+At **2.0 GA** the branches take their long-term roles, in this order:
+
+1. **Cut `1.x` from the current `main` tip first** (the final 1.9.x commit), *before* moving
+   main: `git branch 1.x main && git push origin 1.x`. It receives 1.9.x critical fixes only.
+2. **Fast-forward `main` to 2.0:** `git push origin 2.0-dev:main`. This is a clean
+   fast-forward because the pre-GA sync keeps `main`'s history an ancestor of `2.0-dev`.
+3. **Repoint ongoing work:** `develop` becomes the 2.x working branch; `2.0-dev` retires.
+   From then on `cut-release.ps1` runs with its default `-Branch develop` again.
 
 ---
 

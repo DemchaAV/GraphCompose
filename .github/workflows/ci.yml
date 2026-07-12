@@ -159,9 +159,10 @@ jobs:
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
         # across JVMs and one pass is enough to catch broken @link
-        # references.
+        # references. Scoped to the engine (its public API is the doclint
+        # gate); a bare reactor pass would also lint the dev-only benchmarks.
         if: matrix.java == '17'
-        run: ./mvnw -B -ntp javadoc:javadoc
+        run: ./mvnw -B -ntp javadoc:javadoc -pl :graph-compose-core
 
       - name: Upload aggregate coverage report
         # Report-only: the cross-module JaCoCo report (core coverage counting the

@@ -6,7 +6,7 @@ Runs the GraphCompose benchmarks-module JUnit tests (the diff / median tooling t
 .DESCRIPTION
 The benchmarks live in a sibling Maven module (benchmarks/pom.xml) that depends
 on the published graph-compose jar plus its tests-classifier jar, so they are
-not part of the main reactor and are not run by `./mvnw test -pl .`. This
+not part of the main reactor and are not run by `./mvnw test -pl :graph-compose-core`. This
 wrapper runs the module's JUnit tests through the Maven wrapper.
 
 Use -Test to run a single test class or method using Surefire's -Dtest syntax.
@@ -45,7 +45,7 @@ Push-Location $repoRoot
 try {
     if ($Install) {
         Write-Host "Installing main graph-compose artifact into the local Maven repo..." -ForegroundColor Cyan
-        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" "."
+        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" ":graph-compose-core"
         if ($LASTEXITCODE -ne 0) {
             throw "Install of the main module failed with exit code $LASTEXITCODE"
         }

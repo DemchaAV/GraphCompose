@@ -150,7 +150,7 @@ CP=""
 build_engine_and_classpath() {
   # Install the engine for the current branch so the benchmark runs against IT,
   # then (re)build the benchmark classpath.
-  "$MVNW" -B -ntp -DskipTests install -pl . >/dev/null
+  "$MVNW" -B -ntp -DskipTests install -pl :graph-compose-core >/dev/null
   "$MVNW" -B -ntp -f benchmarks/pom.xml test-compile dependency:build-classpath \
           -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath >/dev/null
   CP="benchmarks/target/test-classes${SEP}benchmarks/target/classes${SEP}$(cat benchmarks/target/benchmark.classpath)"

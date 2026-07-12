@@ -306,7 +306,7 @@ function Run-ShowcaseSync {
     # Central); each must be installed before exec:java can resolve them.
     $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml', 'templates/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
-        Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor Yellow
+        Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl :graph-compose-core" -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {
             Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor Yellow
         }
@@ -324,8 +324,8 @@ function Run-ShowcaseSync {
         # each sibling first so the examples module can resolve them. Bug
         # surfaced during v1.6.5 cut: Step 4 aborted with exit 1; we had to
         # install by hand and resume manually.
-        Write-Host "    > $mvnw -B -ntp -DskipTests install -pl ." -ForegroundColor DarkGray
-        & $mvnw -B -ntp -DskipTests install -pl . 2>&1 | ForEach-Object {
+        Write-Host "    > $mvnw -B -ntp -DskipTests install -pl :graph-compose-core" -ForegroundColor DarkGray
+        & $mvnw -B -ntp -DskipTests install -pl :graph-compose-core 2>&1 | ForEach-Object {
             if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') {
                 Write-Host "    $_" -ForegroundColor DarkGray
             }
@@ -485,15 +485,16 @@ try {
     Step 1 "Bump versions to $Version (poms + README install snippets)"
     # All ENGINE-LINE version sites must move together or
     # VersionConsistencyGuardTest fails the verify gate below: the standalone
-    # library pom.xml (the published artifact), the reactor aggregator, the
-    # examples/benchmarks children whose inherited <parent> version tracks the
-    # aggregator, and the standalone bundle aggregate (graph-compose-bundle).
+    # the engine core/pom.xml (the published artifact), the root reactor
+    # aggregator (pom.xml), the examples/benchmarks children whose inherited
+    # <parent> version tracks the aggregator, and the standalone bundle
+    # aggregate (graph-compose-bundle).
     # NOTE: graph-compose-fonts is deliberately absent — it carries an
     # INDEPENDENT version line (currently 1.0.0) and ships on its own fonts-v*
     # tag, so an engine release must never rewrite it. Its first <version> is
     # 1.0.0, not the engine version, so even a stray reactor bump would skip it.
+    Update-PomVersion (Join-Path $repoRoot 'core/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'pom.xml') $Version
-    Update-PomVersion (Join-Path $repoRoot 'aggregator/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
     Update-PomVersion (Join-Path $repoRoot 'benchmarks/pom.xml') $Version
     # render-pdf / render-docx / render-pptx track the engine line (lockstep): each
@@ -558,9 +559,9 @@ try {
     if (-not $SkipVerify) {
         Step 5 "Run mvnw verify (sanity check)"
         if ($DryRun) {
-            Write-Host "    [DRY RUN] $mvnw verify -pl ." -ForegroundColor Yellow
+            Write-Host "    [DRY RUN] $mvnw verify -pl :graph-compose-core" -ForegroundColor Yellow
         } else {
-            & $mvnw verify -pl . 2>&1 | ForEach-Object {
+            & $mvnw verify -pl :graph-compose-core 2>&1 | ForEach-Object {
                 if ($_ -match 'Tests run:|BUILD SUCCESS|BUILD FAILURE|ERROR') {
                     Write-Host "    $_" -ForegroundColor DarkGray
                 }
@@ -578,8 +579,8 @@ try {
     $commitMsg = "Release v$Version"
     # Version/doc files always ship; the showcase files only when it was regenerated.
     $commitFiles = @(
+        'core/pom.xml',
         'pom.xml',
-        'aggregator/pom.xml',
         'bundle/pom.xml',
         'render-pdf/pom.xml',
         'render-docx/pom.xml',

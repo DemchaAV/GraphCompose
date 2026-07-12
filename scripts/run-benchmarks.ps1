@@ -320,7 +320,7 @@ try {
     # its tests-classifier jar is available, then build the benchmarks
     # classpath from the sibling pom.
     Invoke-LoggedCommand -Name "01-install-main" -Command {
-        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" "."
+        & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" ":graph-compose-core"
     }
 
     Invoke-LoggedCommand -Name "01-build-classpath" -Command {

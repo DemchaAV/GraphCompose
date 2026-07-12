@@ -6,9 +6,15 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 In flight on `2.0-dev`, preparing the 2.0.0 GA. The 2.0 line is about **packaging and internal hygiene**, not new authoring API — binary-breaking by design, with `japicmp` report-only for the cycle.
 
+**Scope frozen (2026-07).** 2.0.0 ships exactly the set below; no further internal engineering is pulled in before GA — that work is the post-2.0 line (next section).
+
 - **Modular split** &mdash; the single jar is split into `graph-compose-core` plus `graph-compose-render-pdf` / `graph-compose-render-docx` / `graph-compose-render-pptx` / `graph-compose-templates` / `graph-compose-testing`, with render backends discovered through a `ServiceLoader` SPI. `graph-compose` stays a drop-in wrapper (core + render-pdf) so existing PDF callers upgrade unchanged. See the [2.0 modules migration guide](docs/migration/v2.0.0-modules.md) and [ADR 0016](docs/adr/0016-multi-module-packaging.md).
 - **Legacy removal** &mdash; the dead Entity-Component-System execution layer and the deprecated (`forRemoval`) public API are gone; the classic template presets are replaced by the layered `templates.*` stack on `BrandTheme`.
+- **Release &amp; publishing pipeline** &mdash; multi-module Maven Central publishing, the `core/`-layout reactor (`./mvnw clean verify` at the root builds everything), and the cut / tag / GA runbook.
+- **Compatibility tests** &mdash; the guard, snapshot, and visual-regression suites that prove the split left rendered output unchanged.
 - **Maintenance** &mdash; the **v1.9.x** line (current stable) receives critical fixes only.
+
+Further internal engineering — more layout-class decomposition, abstraction cleanup, streaming, optional performance work — is **deferred to post-2.0** and does not gate GA.
 
 Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.0.0 — Planned`.
 

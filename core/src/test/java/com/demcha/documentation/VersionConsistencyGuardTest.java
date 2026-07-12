@@ -237,7 +237,10 @@ class VersionConsistencyGuardTest {
         assertThat(firstGroup(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\""))
                 .describedAs("web/index.html JSON-LD softwareVersion must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
-        assertThat(firstGroup(site, "v([0-9][0-9.]*)\\s*&middot;\\s*MIT"))
+        // Match up to the delimiter (space before `&middot;`) rather than
+        // digits-and-dots only, so a pre-release version like 2.0.0-rc.1 is
+        // captured too — consistent with the JSON-LD and snippet patterns.
+        assertThat(firstGroup(site, "v([0-9][^\\s&]*)\\s*&middot;\\s*MIT"))
                 .describedAs("web/index.html hero version badge must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN))

@@ -3,6 +3,17 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.0.1 — Planned
+
+### Build
+
+- The binary-compatibility gate (japicmp) now **enforces** backward compatibility
+  against the published `2.0.0` baseline: an accidental binary-incompatible change to
+  the public API fails the build instead of only being reported. Development proceeds
+  on the `2.0.1-SNAPSHOT` line, so the gate compares the working tree against that
+  baseline and catches a regression before it can ship in a 2.x update. Source-level
+  incompatibilities remain report-only for now.
+
 ## v2.0.0 — 2026-07-13
 
 The 2.0 development line. Binary-breaking by design — japicmp runs report-only

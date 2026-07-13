@@ -21,12 +21,16 @@
                          but do NOT push. Useful for staging a
                          release locally before publishing.
 
-      -PostReleaseOnly — skip the release work entirely. Just flips
-                         ShowcaseMetadata.GH_BASE back to /blob/<branch>,
-                         re-runs ShowcaseSync, and commits +
-                         pushes that change. Use after a release
-                         was cut and you want ongoing branch work
-                         to have linkable View Code buttons.
+      -PostReleaseOnly — skip the release work entirely; open the next
+                         development line. Bumps every train pom to the next
+                         patch -SNAPSHOT (leaving the README/showcase install
+                         snippets on the just-published release), runs
+                         `mvnw validate` + VersionConsistencyGuardTest to
+                         validate the bump, flips ShowcaseMetadata.GH_BASE back
+                         to /blob/<branch>, re-runs ShowcaseSync, then commits +
+                         pushes. Runs the same branch / clean-tree / origin-sync
+                         preflight as a real cut. Idempotent: skips the bump when
+                         the poms are already a -SNAPSHOT.
 
       -SkipVerify      — skip the mvnw verify gate. Only use when
                          you've just run verify yourself and don't
@@ -65,8 +69,8 @@
 
     Post-release reminder: after pushing the tag, merge the release
     branch into main so GitHub Pages picks up the new docs, then run
-    this script with -PostReleaseOnly -Branch <branch> to flip the
-    showcase links back for ongoing dev work.
+    this script with -PostReleaseOnly -Branch <branch> to open the next
+    -SNAPSHOT development line and flip the showcase links back.
 #>
 
 [CmdletBinding(DefaultParameterSetName='Release')]
@@ -118,6 +122,40 @@ function Run($command) {
             throw "Command failed (exit $LASTEXITCODE): $command"
         }
     }
+}
+
+function Assert-BranchPreflight($branch) {
+    # Shared safety gate for BOTH a full release cut and -PostReleaseOnly: the current
+    # branch is the target branch, the working tree is clean, and the local branch is
+    # in sync with origin. In -DryRun the gate is relaxed so the flow can be previewed
+    # from any branch (e.g. while iterating on this script); live runs fail loudly.
+    $currentBranch = (git rev-parse --abbrev-ref HEAD).Trim()
+    if ($DryRun) {
+        Note "branch: $currentBranch (gate relaxed for -DryRun)"
+        return
+    }
+
+    # 1. On the target branch?
+    if ($currentBranch -ne $branch) {
+        throw "Not on $branch branch (currently on $currentBranch). Switch to $branch first."
+    }
+    Note "branch: $branch OK"
+
+    # 2. Working tree clean? `git status --porcelain` reports STAGED (column 1),
+    #    unstaged (column 2), and untracked entries — any output means not clean.
+    if (git status --porcelain) {
+        throw "Working tree has uncommitted or staged changes. Commit or stash first."
+    }
+    Note "working tree: clean (incl. staged) OK"
+
+    # 3. Local branch in sync with origin?
+    git fetch origin $branch --quiet
+    $local = (git rev-parse $branch).Trim()
+    $remote = (git rev-parse "origin/$branch").Trim()
+    if ($local -ne $remote) {
+        throw "Local $branch ($local) is not in sync with origin/$branch ($remote). Pull/push first."
+    }
+    Note "in sync with origin/$branch OK"
 }
 
 function Update-PomVersion($pomPath, $newVersion) {
@@ -206,7 +244,9 @@ function Assert-ReleaseMetadata($version) {
     #     the full per-module + Gradle + showcase check is VersionConsistencyGuardTest
     #     in the verify gate — this is the fast representative check).
     $snippet = [regex]::Match($readme, '<artifactId>graph-compose</artifactId>\s*<version>v?([\w\.\-]+)</version>')
-    if ($snippet.Success -and $snippet.Groups[1].Value -ne $version) {
+    if (-not $snippet.Success) {
+        $problems += "README.md has no graph-compose Maven install snippet (<artifactId>graph-compose</artifactId> ... <version>...</version>)."
+    } elseif ($snippet.Groups[1].Value -ne $version) {
         $problems += "README.md install snippet is $($snippet.Groups[1].Value), expected $version."
     }
 
@@ -509,6 +549,12 @@ function Render-ReadmeBanner {
 if ($PostReleaseOnly) {
     Push-Location $repoRoot
     try {
+        Step 0 "Pre-flight checks"
+        # Same branch / clean-tree / origin-sync gate as a real cut: -PostReleaseOnly
+        # also commits and pushes to $Branch, so it must not run from the wrong branch,
+        # over a dirty tree, or out of sync with origin.
+        Assert-BranchPreflight $Branch
+
         # The released version is whatever the train poms currently carry (a cut leaves
         # them at the release version). Open the next patch development line from it. The
         # 2.0 module layout keeps the engine version in core/pom.xml; the legacy 1.x tree
@@ -552,6 +598,35 @@ if ($PostReleaseOnly) {
             }
         } else {
             Step 3 "Skipped SNAPSHOT bump (no core/pom.xml, or the current version is not a final X.Y.Z release)"
+        }
+
+        # Validate the bump BEFORE committing or pushing: a reactor `validate` resolves
+        # every module at the new SNAPSHOT (catches an inconsistent bump / unresolvable
+        # parent), and VersionConsistencyGuardTest confirms the poms stay in lockstep and
+        # the install snippets still advertise the published release (the -SNAPSHOT-cycle
+        # rule). Only runs when poms were actually bumped.
+        if ($bumpedPoms.Count -gt 0) {
+            Step "3b" "Validate the bump (mvnw validate + VersionConsistencyGuardTest)"
+            # Pass args as SPLATTED arrays, never inline: the call operator `&` re-tokenizes
+            # an inline unquoted arg with a dot (e.g. -Djacoco.skip=true splits into
+            # `-Djacoco` and `.skip=true`), which Maven then reads as a bogus phase. Array
+            # elements are passed literally (same pattern the japicmp gate uses).
+            $validateArgs = @('-B', '-ntp', 'validate')
+            $guardArgs = @('-B', '-ntp', 'test', '-Dtest=VersionConsistencyGuardTest', '-pl', ':graph-compose-core', '-Djacoco.skip=true')
+            if ($DryRun) {
+                Write-Host "    [DRY RUN] $mvnw $($validateArgs -join ' ')" -ForegroundColor Yellow
+                Write-Host "    [DRY RUN] $mvnw $($guardArgs -join ' ')" -ForegroundColor Yellow
+            } else {
+                & $mvnw @validateArgs 2>&1 | ForEach-Object {
+                    if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') { Write-Host "    $_" -ForegroundColor DarkGray }
+                }
+                if ($LASTEXITCODE -ne 0) { throw "mvnw validate failed after the SNAPSHOT bump." }
+                & $mvnw @guardArgs 2>&1 | ForEach-Object {
+                    if ($_ -match 'Tests run:|BUILD SUCCESS|BUILD FAILURE|ERROR') { Write-Host "    $_" -ForegroundColor DarkGray }
+                }
+                if ($LASTEXITCODE -ne 0) { throw "VersionConsistencyGuardTest failed after the SNAPSHOT bump." }
+                Note "bump validated: reactor resolves + version guard green OK"
+            }
         }
 
         # Commit whatever changed: the bumped poms and/or the restored showcase files.
@@ -598,39 +673,10 @@ try {
 
     Step 0 "Pre-flight checks"
 
-    # In -DryRun mode the script never mutates anything, so the branch /
-    # working-tree / origin-sync gates are relaxed: a maintainer can preview
-    # what a release cut would do from a feature branch (e.g. while iterating
-    # on the script itself) without having to switch to the release branch and back.
-    # Live cuts still fail these gates loudly.
-    $currentBranch = (git rev-parse --abbrev-ref HEAD).Trim()
-    if ($DryRun) {
-        Note "branch: $currentBranch (gate relaxed for -DryRun)"
-    } else {
-        # 1. On the release branch (-Branch)?
-        if ($currentBranch -ne $Branch) {
-            throw "Not on $Branch branch (currently on $currentBranch). Switch to $Branch first."
-        }
-        Note "branch: $Branch OK"
+    # Branch / clean-tree / origin-sync gate (shared with -PostReleaseOnly).
+    Assert-BranchPreflight $Branch
 
-        # 2. Working tree clean?
-        $status = git status --porcelain
-        if ($status) {
-            throw "Working tree has uncommitted changes. Commit or stash first."
-        }
-        Note "working tree: clean OK"
-
-        # 3. In sync with origin?
-        git fetch origin $Branch --quiet
-        $local = (git rev-parse $Branch).Trim()
-        $remote = (git rev-parse origin/$Branch).Trim()
-        if ($local -ne $remote) {
-            throw "Local $Branch ($local) is not in sync with origin/$Branch ($remote). Pull/push first."
-        }
-        Note "in sync with origin/$Branch OK"
-    }
-
-    # 4. Tag doesn't already exist?
+    # Tag doesn't already exist?
     $existingTag = git tag -l $tag
     if ($existingTag) {
         throw "Tag $tag already exists. Bump version or delete the tag."

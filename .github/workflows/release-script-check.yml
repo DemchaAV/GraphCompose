@@ -1,0 +1,65 @@
+name: Release Script Check
+
+# Guards scripts/cut-release.ps1. The main CI path filters skip build/release-script
+# changes, so without this a break in the release tooling (a parse error, a bad
+# parameter set, a throw in the pre-flight / version bump / metadata gate) would ship
+# unnoticed and only surface mid-release. This runs the script's dry-runs — which
+# exercise every code path except the actual git/Maven mutations — plus a focused unit
+# check of the pure version helper. It creates no tag and touches no remote.
+
+on:
+  push:
+    paths:
+      - 'scripts/cut-release.ps1'
+      - '.github/workflows/release-script-check.yml'
+  pull_request:
+    paths:
+      - 'scripts/cut-release.ps1'
+      - '.github/workflows/release-script-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: cut-release.ps1 dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Dry-run a full release cut
+        shell: pwsh
+        run: |
+          # -DryRun mutates nothing; -SkipShowcase skips the mvnw install the showcase
+          # regen would run. A parse error, a bad parameter set, or any throw fails the
+          # step. The version is a throwaway — nothing is written or pushed.
+          ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase
+          if ($LASTEXITCODE -ne 0) { throw "full-cut dry-run exited $LASTEXITCODE" }
+
+      - name: Dry-run PostReleaseOnly
+        shell: pwsh
+        run: |
+          ./scripts/cut-release.ps1 -PostReleaseOnly -Branch develop -DryRun
+          if ($LASTEXITCODE -ne 0) { throw "PostReleaseOnly dry-run exited $LASTEXITCODE" }
+
+      - name: Unit-check Get-NextSnapshotVersion
+        shell: pwsh
+        run: |
+          # Extract the pure helper (from its declaration to the first column-0 '}')
+          # and load it in isolation, then assert the version arithmetic.
+          $lines = Get-Content scripts/cut-release.ps1
+          $match = $lines | Select-String -Pattern '^function Get-NextSnapshotVersion' | Select-Object -First 1
+          if (-not $match) { throw "Get-NextSnapshotVersion not found" }
+          $start = $match.LineNumber - 1
+          $end = -1
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '}') { $end = $i; break } }
+          if ($end -lt 0) { throw "could not find the function's closing brace" }
+          Invoke-Expression (($lines[$start..$end]) -join "`n")
+
+          $cases = @{ '2.0.0' = '2.0.1-SNAPSHOT'; '2.3.9' = '2.3.10-SNAPSHOT'; '1.9.1' = '1.9.2-SNAPSHOT';
+                      '2.0.0-rc.1' = $null; '2.0.1-SNAPSHOT' = $null }
+          foreach ($k in $cases.Keys) {
+            $got = Get-NextSnapshotVersion $k
+            if ($got -ne $cases[$k]) { throw "Get-NextSnapshotVersion '$k' -> '$got', expected '$($cases[$k])'" }
+          }
+          Write-Host "Get-NextSnapshotVersion: all cases passed."

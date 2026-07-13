@@ -18,10 +18,10 @@
 
     <properties>
         <graphcompose.version>${project.version}</graphcompose.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
     </properties>
 

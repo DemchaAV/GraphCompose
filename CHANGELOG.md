@@ -3,7 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.0.0 — Planned
+## v2.0.0 — 2026-07-13
 
 The 2.0 development line. Binary-breaking by design — japicmp runs report-only
 for this cycle.

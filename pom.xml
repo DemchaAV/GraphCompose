@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-build</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>GraphCompose Build Aggregator</name>
@@ -51,7 +51,7 @@
             coverage (qa) and aggregate it (coverage). Keep in lockstep with the
             standalone engine pom's jacoco.plugin.version.
         -->
-        <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
+        <jacoco.plugin.version>0.8.15</jacoco.plugin.version>
     </properties>
 
     <!--

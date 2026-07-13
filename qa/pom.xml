@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.github.demchaav</groupId>
         <artifactId>graph-compose-build</artifactId>
-        <version>2.0.0</version>
+        <version>2.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -37,12 +37,12 @@
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
 
-        <jackson.bom.version>2.21.4</jackson.bom.version>
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <jackson.bom.version>2.22.1</jackson.bom.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <mockito.version>5.23.0</mockito.version>
-        <logback.version>1.5.37</logback.version>
-        <pdfbox.version>3.0.7</pdfbox.version>
+        <logback.version>1.5.38</logback.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
         <javafx.version>21.0.2</javafx.version>
         <!-- ArchUnit for the cross-module boundary guards below. Roughly in step
              with the engine pom's archunit.version; a drift is harmless (test-only,

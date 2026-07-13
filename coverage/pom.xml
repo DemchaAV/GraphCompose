@@ -13,10 +13,13 @@
         traverse test-scope dependencies, hence this dedicated module that
         compile-depends on the measured modules).
 
-        Report-only: no coverage threshold is enforced yet. The aggregate HTML/XML
-        lands in target/site/jacoco-aggregate/. Sits at the reactor tail (listed
-        last in the aggregator) so every measured module's exec exists first, and
-        never publishes (maven.deploy.skip=true, inherited from the parent).
+        Enforced: a non-regression ratchet on the aggregate (the jacoco check-aggregate
+        execution below fails the build if INSTRUCTION or BRANCH coverage drops below
+        the floor). The aggregate HTML/XML also lands in target/site/jacoco-aggregate/.
+        Sits at the reactor tail (listed last in the aggregator) so every measured
+        module's exec exists first, and never publishes (maven.deploy.skip=true,
+        inherited from the parent). The check runs in CI's build-and-test job (which
+        runs `verify` on this module), which feeds the required CI Gate.
 
         Scope: the engine (graph-compose-core), the PDF backend
         (graph-compose-render-pdf), and the built-in templates
@@ -26,7 +29,7 @@
     <parent>
         <groupId>io.github.demchaav</groupId>
         <artifactId>graph-compose-build</artifactId>
-        <version>2.0.0</version>
+        <version>2.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -64,8 +67,54 @@
         </dependency>
     </dependencies>
 
+    <properties>
+        <!--
+            Non-regression ratchet on the AGGREGATE report (core + render-pdf +
+            templates, counting the qa cross-module exec). Measured stable baseline on
+            the v2.0.0 line: INSTRUCTION 87.86 % (0.87857), BRANCH 68.31 % (0.68310) —
+            verified identical on Windows and CI Linux (branch byte-identical; instruction
+            differs by 5 of ~102k). The floors sit ~0.36 pp (instruction) and ~0.31 pp
+            (branch) below the baseline — rounding/variance headroom only, not vanity.
+            Ratchet UP as coverage improves; never lower to make a red build pass —
+            fix the tests.
+        -->
+        <coverage.min.instruction>0.875</coverage.min.instruction>
+        <coverage.min.branch>0.68</coverage.min.branch>
+        <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
+    </properties>
+
     <build>
         <plugins>
+            <!--
+                JaCoCo has no native aggregate-check goal, so reproduce the aggregate
+                inputs for a BUNDLE check: (1) unpack the measured modules' main classes
+                into this module's output dir, (2) merge their four jacoco.exec into one
+                aggregate.exec, (3) run jacoco:check against that class set + merged exec.
+                Same classes + same execs as report-aggregate above, so the enforced
+                numbers match the published aggregate report.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven.dependency.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>unpack-measured-classes</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <!-- qa has no main classes (test-only); it contributes exec, not classes. -->
+                            <includeArtifactIds>graph-compose-core,graph-compose-render-pdf,graph-compose-templates</includeArtifactIds>
+                            <includes>**/*.class</includes>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -77,6 +126,55 @@
                         <goals>
                             <goal>report-aggregate</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>merge-exec</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.basedir}/..</directory>
+                                    <includes>
+                                        <include>core/target/jacoco.exec</include>
+                                        <include>render-pdf/target/jacoco.exec</include>
+                                        <include>templates/target/jacoco.exec</include>
+                                        <include>qa/target/jacoco.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                            <destFile>${project.build.directory}/aggregate.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>check-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/aggregate.exec</dataFile>
+                            <haltOnFailure>true</haltOnFailure>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${coverage.min.instruction}</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${coverage.min.branch}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -1,0 +1,112 @@
+name: Release Script Check
+
+# Guards scripts/cut-release.ps1. The main CI path filters skip build/release-script
+# changes, so without this a break in the release tooling (a parse error, a bad
+# parameter set, a throw in the pre-flight / version bump / metadata gate) would ship
+# unnoticed and only surface mid-release. This runs the script's dry-runs — which
+# exercise every code path except the actual git/Maven mutations — plus a focused unit
+# check of the pure version helper. It creates no tag and touches no remote.
+
+on:
+  push:
+    paths:
+      - 'scripts/cut-release.ps1'
+      - '.github/workflows/release-script-check.yml'
+  pull_request:
+    paths:
+      - 'scripts/cut-release.ps1'
+      - '.github/workflows/release-script-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: cut-release.ps1 dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Dry-run a full release cut
+        shell: pwsh
+        run: |
+          # -DryRun mutates nothing; -SkipShowcase skips the mvnw install the showcase
+          # regen would run. A parse error, a bad parameter set, or any throw fails the
+          # step. The version is a throwaway — nothing is written or pushed.
+          ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase
+          if ($LASTEXITCODE -ne 0) { throw "full-cut dry-run exited $LASTEXITCODE" }
+
+      - name: Dry-run PostReleaseOnly
+        shell: pwsh
+        run: |
+          ./scripts/cut-release.ps1 -PostReleaseOnly -Branch develop -DryRun
+          if ($LASTEXITCODE -ne 0) { throw "PostReleaseOnly dry-run exited $LASTEXITCODE" }
+
+      - name: Dry-run a pre-release (RC) cut
+        shell: pwsh
+        run: |
+          # A pre-release (X.Y.Z-rc.N) ships only to the GitHub Release pre-release surface,
+          # never to Maven Central, so the cut must NOT require 'Latest stable' or rewrite the
+          # Central install snippets. Capture ALL streams (*>&1) — the notices are Write-Host.
+          $out = ./scripts/cut-release.ps1 -Version 2.1.0-rc.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "pre-release dry-run exited $LASTEXITCODE" }
+          if ($out -notmatch 'pre-release \(2\.1\.0-rc\.1\)') { throw "expected the pre-release notice" }
+          if ($out -notmatch 'skipped .* install-snippet bumps') { throw "expected the snippet-skip notice" }
+          if ($out -match 'bumped README Maven Central snippet') { throw "pre-release must NOT bump the README install snippet" }
+          if ($out -match "Latest stable.*does not name v2\.1\.0-rc\.1") { throw "pre-release must NOT check 'Latest stable'" }
+          Write-Host "pre-release path: Latest-stable + Central snippets correctly left on last stable."
+
+          # An unsupported version (arbitrary suffix) must be REJECTED, not silently
+          # treated as a pre-release. The script rejects via `throw` — a TERMINATING
+          # error — which `*>&1 | Out-String` does NOT trap when the script runs
+          # in-process (dot-invocation, as here); it must be caught with try/catch, and
+          # $LASTEXITCODE is not set by a throw so it is not a usable signal.
+          $bad = try { ./scripts/cut-release.ps1 -Version 2.1.0-preview.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String }
+                 catch { $_ | Out-String }
+          if ($bad -notmatch 'Unsupported version') { throw "expected the unsupported-version error, got: $bad" }
+          Write-Host "unsupported version 2.1.0-preview.1: correctly rejected."
+
+      - name: Unit-check Get-NextSnapshotVersion
+        shell: pwsh
+        run: |
+          # Extract the pure helper (from its declaration to the first column-0 '}')
+          # and load it in isolation, then assert the version arithmetic.
+          $lines = Get-Content scripts/cut-release.ps1
+          $match = $lines | Select-String -Pattern '^function Get-NextSnapshotVersion' | Select-Object -First 1
+          if (-not $match) { throw "Get-NextSnapshotVersion not found" }
+          $start = $match.LineNumber - 1
+          $end = -1
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '}') { $end = $i; break } }
+          if ($end -lt 0) { throw "could not find the function's closing brace" }
+          Invoke-Expression (($lines[$start..$end]) -join "`n")
+
+          $cases = @{ '2.0.0' = '2.0.1-SNAPSHOT'; '2.3.9' = '2.3.10-SNAPSHOT'; '1.9.1' = '1.9.2-SNAPSHOT';
+                      '2.0.0-rc.1' = $null; '2.0.1-SNAPSHOT' = $null }
+          foreach ($k in $cases.Keys) {
+            $got = Get-NextSnapshotVersion $k
+            if ($got -ne $cases[$k]) { throw "Get-NextSnapshotVersion '$k' -> '$got', expected '$($cases[$k])'" }
+          }
+          Write-Host "Get-NextSnapshotVersion: all cases passed."
+
+      - name: Unit-check Test-ReadmeLatestStable (real README)
+        shell: pwsh
+        run: |
+          # Load the real stale-tag-README guard and run it against the ACTUAL README —
+          # exercises its regex on live content, not just the dry-run's print. Robust
+          # across releases: assert it matches the version the README currently names,
+          # and rejects a bogus one.
+          $repoRoot = (Get-Location).Path
+          $lines = Get-Content scripts/cut-release.ps1
+          $match = $lines | Select-String -Pattern '^function Test-ReadmeLatestStable' | Select-Object -First 1
+          if (-not $match) { throw "Test-ReadmeLatestStable not found" }
+          $start = $match.LineNumber - 1
+          $end = -1
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '}') { $end = $i; break } }
+          if ($end -lt 0) { throw "could not find the function's closing brace" }
+          Invoke-Expression (($lines[$start..$end]) -join "`n")
+
+          $cur = [regex]::Match((Get-Content README.md -Raw), '\*\*Latest stable\*\*:\s*\[v([\w\.\-]+)\]').Groups[1].Value
+          if (-not $cur) { throw "could not read the README 'Latest stable' version" }
+          if (-not (Test-ReadmeLatestStable $cur)) { throw "Test-ReadmeLatestStable failed for the README's own version $cur" }
+          if (Test-ReadmeLatestStable '0.0.0-nonexistent') { throw "Test-ReadmeLatestStable matched a bogus version" }
+          Write-Host "Test-ReadmeLatestStable: README names v$cur (bogus rejected)."

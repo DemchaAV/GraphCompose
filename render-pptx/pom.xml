@@ -19,7 +19,7 @@
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-pptx</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1-SNAPSHOT</version>
 
     <name>GraphCompose Render — PPTX</name>
     <description>Semantic PPTX export backend for GraphCompose (slide-safe semantic node validation).</description>
@@ -57,9 +57,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>

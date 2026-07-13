@@ -243,29 +243,34 @@ function Test-ReadmeLatestStable($version) {
     return $readme -match "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]"
 }
 
-function Assert-ReleaseMetadata($version) {
-    # Fast, build-free validation of the metadata cut-release itself rewrote in Steps 1-2
-    # (train pom versions, the install snippet, the CHANGELOG date). Runs at Step 2b —
-    # after those mutations, before commit/tag; VersionConsistencyGuardTest re-checks the
-    # same in the verify gate. The maintainer-authored README 'Latest stable' block is
-    # validated earlier, in Step 0 (Test-ReadmeLatestStable), before any file is mutated.
+function Assert-ReleaseMetadata($version, $isFinalRelease) {
+    # Fast, build-free validation of the metadata cut-release itself rewrote in Steps 1-2.
+    # Runs at Step 2b — after those mutations, before commit/tag; VersionConsistencyGuardTest
+    # re-checks it in the verify gate. The maintainer-authored README 'Latest stable' block
+    # is validated earlier, in Step 0 (Test-ReadmeLatestStable). The CHANGELOG-date and
+    # install-snippet checks are FINAL-release only: a pre-release carries no dated CHANGELOG
+    # entry (it is cut against the upcoming final's notes) and deliberately keeps the Central
+    # snippets on the last stable version. The pom-version check applies to both — the poms
+    # move to the (pre-)release version either way.
     $problems = @()
 
-    # 1. CHANGELOG carries a DATED entry for this version (Step 2 flips Planned -> dated).
-    $changelog = Get-Content (Join-Path $repoRoot 'CHANGELOG.md') -Raw
-    if ($changelog -notmatch "(?m)^## v$([regex]::Escape($version))\s+[—-]\s+\d{4}-\d{2}-\d{2}\b") {
-        $problems += "CHANGELOG.md has no dated '## v$version - YYYY-MM-DD' entry (still 'Planned', or missing)."
-    }
+    if ($isFinalRelease) {
+        # 1. CHANGELOG carries a DATED entry for this version (Step 2 flips Planned -> dated).
+        $changelog = Get-Content (Join-Path $repoRoot 'CHANGELOG.md') -Raw
+        if ($changelog -notmatch "(?m)^## v$([regex]::Escape($version))\s+[—-]\s+\d{4}-\d{2}-\d{2}\b") {
+            $problems += "CHANGELOG.md has no dated '## v$version - YYYY-MM-DD' entry (still 'Planned', or missing)."
+        }
 
-    # 2. README Maven install snippet advertises this version (Step 1 rewrites it; the
-    #    full per-module + Gradle + showcase check is VersionConsistencyGuardTest in the
-    #    verify gate — this is the fast representative check).
-    $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
-    $snippet = [regex]::Match($readme, '<artifactId>graph-compose</artifactId>\s*<version>v?([\w\.\-]+)</version>')
-    if (-not $snippet.Success) {
-        $problems += "README.md has no graph-compose Maven install snippet (<artifactId>graph-compose</artifactId> ... <version>...</version>)."
-    } elseif ($snippet.Groups[1].Value -ne $version) {
-        $problems += "README.md install snippet is $($snippet.Groups[1].Value), expected $version."
+        # 2. README Maven install snippet advertises this version (Step 1 rewrites it; the
+        #    full per-module + Gradle + showcase check is VersionConsistencyGuardTest in the
+        #    verify gate — this is the fast representative check).
+        $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
+        $snippet = [regex]::Match($readme, '<artifactId>graph-compose</artifactId>\s*<version>v?([\w\.\-]+)</version>')
+        if (-not $snippet.Success) {
+            $problems += "README.md has no graph-compose Maven install snippet (<artifactId>graph-compose</artifactId> ... <version>...</version>)."
+        } elseif ($snippet.Groups[1].Value -ne $version) {
+            $problems += "README.md install snippet is $($snippet.Groups[1].Value), expected $version."
+        }
     }
 
     # 3. Every train pom's own <version> is this version (belt-and-suspenders ahead
@@ -284,7 +289,11 @@ function Assert-ReleaseMetadata($version) {
     if ($problems.Count -gt 0) {
         throw ("Release metadata validation failed:`n  - " + ($problems -join "`n  - "))
     }
-    Note "release metadata: CHANGELOG dated, install snippet + train poms consistent OK"
+    if ($isFinalRelease) {
+        Note "release metadata: CHANGELOG dated, install snippet + train poms consistent OK"
+    } else {
+        Note "release metadata (pre-release): train poms consistent OK (snippets/Latest-stable left on last stable)"
+    }
 }
 
 function Update-ReadmeInstallVersion($readmePath, $newVersion) {
@@ -688,36 +697,61 @@ if ($PostReleaseOnly) {
 Push-Location $repoRoot
 try {
     $tag = "v$Version"
+    # A FINAL release is X.Y.Z with no suffix. Pre-releases (X.Y.Z-rc.N / -alpha / -beta)
+    # ship only to the GitHub Release pre-release surface — publish.yml skips them for
+    # Maven Central — so a pre-release cut must NOT touch the README 'Latest stable' block
+    # or the Central install snippets: they keep advertising the last stable, on-Central
+    # version. The poms still move to the pre-release version (the tag builds at it).
+    $isFinalRelease = $Version -match '^\d+\.\d+\.\d+$'
+    if (-not $isFinalRelease) {
+        Note "pre-release ($Version): README 'Latest stable' + Central install snippets stay on the last stable version"
+    }
 
     Step 0 "Pre-flight checks"
 
     # Branch / clean-tree / origin-sync gate (shared with -PostReleaseOnly).
     Assert-BranchPreflight $Branch
 
-    # Tag doesn't already exist?
+    # Tag doesn't already exist — locally or on origin?
     $existingTag = git tag -l $tag
     if ($existingTag) {
-        throw "Tag $tag already exists. Bump version or delete the tag."
+        throw "Tag $tag already exists locally. Bump version or delete the tag."
     }
-    git fetch origin "refs/tags/$tag`:refs/tags/$tag" 2>&1 | Out-Null
-    $existingTag = git tag -l $tag
-    if ($existingTag) {
+    # Query origin with ls-remote, NOT `git fetch refs/tags/...`: fetch exits 128 for a
+    # legitimately-absent tag (the normal pre-cut case), so its exit code cannot tell
+    # "tag free" from "network broke". ls-remote returns empty for an absent tag and
+    # fails only on a real network/auth error, so a broken connection can no longer be
+    # mistaken for "tag is free".
+    $remoteTag = git ls-remote --tags origin "refs/tags/$tag"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to query origin for tag $tag (git ls-remote). Cannot verify the tag is free."
+    }
+    if ($remoteTag) {
         throw "Tag $tag exists on origin. Bump version or delete the remote tag."
     }
     Note ("tag {0}: available OK" -f $tag)
 
-    # README 'Latest stable' prose block must already name the target — checked HERE,
-    # before Step 1 mutates any file, so a stale line aborts with a still-clean tree.
-    # (cut-release does not rewrite this block; it is a maintainer pre-cut edit.)
-    if (Test-ReadmeLatestStable $Version) {
-        Note "README 'Latest stable' = v$Version OK"
-    } elseif ($DryRun) {
-        Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on $Branch before the real cut." -ForegroundColor Yellow
-    } else {
-        throw "README 'Latest stable' block does not name v$Version. Update it on $Branch before cutting (cut-release.ps1 does not rewrite this block)."
+    # README 'Latest stable' prose block must already name the target — FINAL releases
+    # only. Checked HERE, before Step 1 mutates any file, so a stale line aborts with a
+    # still-clean tree. (cut-release does not rewrite this block; it is a maintainer
+    # pre-cut edit.) A pre-release never becomes 'Latest stable', so there is nothing to
+    # check for it.
+    if ($isFinalRelease) {
+        if (Test-ReadmeLatestStable $Version) {
+            Note "README 'Latest stable' = v$Version OK"
+        } elseif ($DryRun) {
+            Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on $Branch before the real cut." -ForegroundColor Yellow
+        } else {
+            throw "README 'Latest stable' block does not name v$Version. Update it on $Branch before cutting (cut-release.ps1 does not rewrite this block)."
+        }
     }
 
-    Step 1 "Bump versions to $Version (poms + README install snippets)"
+    if ($isFinalRelease) {
+        $step1Title = "Bump versions to $Version (poms + README install snippets)"
+    } else {
+        $step1Title = "Bump versions to $Version (poms only; snippets stay on last stable)"
+    }
+    Step 1 $step1Title
     # All ENGINE-LINE version sites must move together or
     # VersionConsistencyGuardTest fails the verify gate below: the standalone
     # the engine core/pom.xml (the published artifact), the root reactor
@@ -760,16 +794,24 @@ try {
     # graph-compose-fonts dep is ${graphcompose.fonts.version} (stays pinned —
     # the bump regex does not touch the $-prefixed property reference).
     Update-PomVersion (Join-Path $repoRoot 'bundle/pom.xml') $Version
-    Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
-    # Per-module README install snippets (train modules only — fonts/emoji pin
-    # their own independent versions). VersionConsistencyGuardTest fails the
-    # Step-5 verify if any of these lag the pom version.
-    foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
-            'render-pptx/README.md', 'templates/README.md', 'testing/README.md',
-            'wrapper/README.md', 'bundle/README.md')) {
-        Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $moduleReadme) $Version
+    # Maven Central install snippets — FINAL releases only. A pre-release never lands on
+    # Central (publish.yml skips hyphenated tags), so rewriting these to the pre-release
+    # version would advertise a coordinate that 404s for any user who copies it; leave
+    # them on the last stable, published version. VersionConsistencyGuardTest accepts the
+    # latest published release for a non-final (SNAPSHOT or pre-release) working version.
+    if ($isFinalRelease) {
+        Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
+        # Per-module README install snippets (train modules only — fonts/emoji pin
+        # their own independent versions).
+        foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
+                'render-pptx/README.md', 'templates/README.md', 'testing/README.md',
+                'wrapper/README.md', 'bundle/README.md')) {
+            Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $moduleReadme) $Version
+        }
+        Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
+    } else {
+        Note "pre-release: skipped README / module-README / web install-snippet bumps (stay on last stable)"
     }
-    Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
     # The Next.js site/ and the docs->site/public mirror were retired when the static
     # showcase moved to web/ (deployed directly via .github/workflows/deploy-web.yml).
     # Only web/ is version-bumped now.
@@ -802,9 +844,9 @@ try {
     # the assertion is deferred to the real cut. (The README 'Latest stable' block was
     # already validated in Step 0, before any mutation.)
     if ($DryRun) {
-        Note "[DRY RUN] CHANGELOG date + install snippet + train pom versions are validated on the real cut"
+        Note "[DRY RUN] train pom versions (+ CHANGELOG date & install snippet for a final release) are validated on the real cut"
     } else {
-        Assert-ReleaseMetadata $Version
+        Assert-ReleaseMetadata $Version $isFinalRelease
     }
 
     if (-not $SkipShowcase) {

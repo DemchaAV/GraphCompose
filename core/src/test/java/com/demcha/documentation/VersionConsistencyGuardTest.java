@@ -343,21 +343,22 @@ class VersionConsistencyGuardTest {
     /**
      * Returns the set of versions an install snippet may legitimately advertise.
      *
-     * <p>During a normal {@code -SNAPSHOT} development cycle this is <strong>only
-     * the latest published release</strong> — the version actually resolvable on
-     * Maven Central — so a user who copies a snippet always gets a coordinate that
-     * resolves today, never the in-development {@code -SNAPSHOT} nor a
-     * forward-looking {@code Planned} version. In the release commit itself
-     * {@code cut-release.ps1} bumps the pom off {@code -SNAPSHOT} to the new
-     * release version and rewrites the snippets to match, so once the pom is a
-     * concrete release version the snippets must equal it.</p>
+     * <p>Only a <strong>final</strong> release ({@code X.Y.Z}, no suffix) lands on Maven
+     * Central, so only then must the snippets equal the pom version. For any non-final
+     * working version — a normal {@code -SNAPSHOT} development cycle, or a pre-release
+     * ({@code X.Y.Z-rc.N} / {@code -alpha} / {@code -beta}), which the publish workflow
+     * never ships to Central — the snippets must stay on the <strong>latest published
+     * release</strong>, the version a user can actually resolve today, never the
+     * in-development or unpublished pre-release version. In the release commit itself
+     * {@code cut-release.ps1} bumps the pom to the final release version and rewrites the
+     * snippets to match, so once the pom is a concrete final version the two must agree.</p>
      */
     private Set<String> acceptableTargets() throws Exception {
         String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
-        if (pomVersion.endsWith("-SNAPSHOT")) {
-            return Set.of(latestPublishedRelease());
+        if (pomVersion.matches("\\d+\\.\\d+\\.\\d+")) {
+            return Set.of(pomVersion);
         }
-        return Set.of(pomVersion);
+        return Set.of(latestPublishedRelease());
     }
 
     /**

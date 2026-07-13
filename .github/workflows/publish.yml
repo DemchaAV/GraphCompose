@@ -102,7 +102,13 @@ jobs:
         # which blocks until Sonatype's validator confirms validation.
         # The release profile also disables the tests-jar execution, so
         # only the main + sources + javadoc + pom artefacts are uploaded.
-        run: ./mvnw -B -ntp -f core/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        # -Dmaven.test.skip=true (not -DskipTests): each module deploys in
+        # isolation, so test-compilation would try to resolve test-scope deps
+        # that were never published — e.g. render-pdf depends on the core
+        # tests-jar, which the release profile deliberately does not deploy.
+        # Skipping test-compile avoids that (tests already ran in the verify
+        # step above).
+        run: ./mvnw -B -ntp -f core/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -112,7 +118,7 @@ jobs:
         # The PDF render backend, lockstep-versioned with the engine (ships on the
         # same v* tag). graph-compose-core resolves from the local repo installed by
         # the engine deploy above; the wrapper below depends on this.
-        run: ./mvnw -B -ntp -f render-pdf/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f render-pdf/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -122,7 +128,7 @@ jobs:
         # The empty jar that keeps the `graph-compose` coordinate a drop-in: it
         # depends on graph-compose-core + graph-compose-render-pdf, resolved from the
         # local repo installed by the deploys above. Ships on the same v* tag.
-        run: ./mvnw -B -ntp -f wrapper/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f wrapper/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -132,7 +138,7 @@ jobs:
         # The semantic DOCX backend, lockstep-versioned with the engine (ships on
         # the same v* tag). graph-compose-core resolves from the local repo installed
         # by the engine deploy above.
-        run: ./mvnw -B -ntp -f render-docx/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f render-docx/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -142,7 +148,7 @@ jobs:
         # The semantic PPTX backend, lockstep-versioned with the engine (ships on
         # the same v* tag). graph-compose-core resolves from the local repo installed
         # by the engine deploy above.
-        run: ./mvnw -B -ntp -f render-pptx/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f render-pptx/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -152,7 +158,7 @@ jobs:
         # The built-in document templates, lockstep-versioned with the engine (ships
         # on the same v* tag). graph-compose-core resolves from the local repo
         # installed by the engine deploy above.
-        run: ./mvnw -B -ntp -f templates/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f templates/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -162,7 +168,7 @@ jobs:
         # Consumer testing support (LayoutSnapshotAssertions / PdfVisualRegression),
         # lockstep-versioned with the engine (ships on the same v* tag). graph-compose
         # resolves from the local repo installed by the engine deploy above.
-        run: ./mvnw -B -ntp -f testing/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f testing/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
@@ -176,7 +182,7 @@ jobs:
         # graph-compose wrapper), so the signed jar + pom are uploaded. The
         # train artifacts resolve from the preceding deploy steps; the
         # independently versioned fonts and emoji artifacts resolve from Maven Central.
-        run: ./mvnw -B -ntp -f bundle/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
+        run: ./mvnw -B -ntp -f bundle/pom.xml -P release -Dmaven.test.skip=true -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
           CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

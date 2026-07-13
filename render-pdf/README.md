@@ -32,6 +32,19 @@ handlers, options).
 
 ## Install
 
-Same version as the rest of the GraphCompose train (lockstep). Copy-paste snippet and the
-full "which artifact?" table: [root README → Installation](../README.md#installation).
+Same version as the rest of the GraphCompose train (lockstep):
+
+```xml
+<dependency>
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-render-pdf</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+
+```kotlin
+dependencies { implementation("io.github.demchaav:graph-compose-render-pdf:2.0.0") }
+```
+
+The full "which artifact?" table: [root README → Installation](../README.md#installation).
 Upgrading from 1.x: [modules migration guide](../docs/migration/v2.0.0-modules.md).

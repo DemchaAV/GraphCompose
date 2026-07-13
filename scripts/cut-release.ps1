@@ -237,6 +237,48 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     }
 }
 
+function Update-ModuleReadmeInstallVersion($readmePath, $newVersion) {
+    # Per-module READMEs carry copy-paste install snippets for THEIR OWN train
+    # artifact (Maven + Gradle). Bump every occurrence — unlike the root README
+    # there is no legacy-format fallback, and each file only ever references its
+    # own coordinate, so a blanket replace within the file is safe. Called for
+    # the train modules only; fonts/emoji READMEs pin their own independent
+    # versions and must never be touched by an engine cut.
+    if (-not (Test-Path $readmePath)) {
+        Note "skip (no file): $readmePath"
+        return
+    }
+    $content = Get-Content $readmePath -Raw
+    $changed = $false
+
+    $mavenRegex = [regex]'(?<=<artifactId>graph-compose[\w\-]*</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $afterMaven = $mavenRegex.Replace($content, $newVersion)
+    if ($content -ne $afterMaven) {
+        $content = $afterMaven
+        $changed = $true
+        Note "bumped module README Maven snippet: $readmePath -> $newVersion"
+    }
+
+    $gradleRegex = [regex]'(?<=io\.github\.demchaav:graph-compose[\w\-]*:)v?[\w\.\-]+(?=")'
+    $afterGradle = $gradleRegex.Replace($content, $newVersion)
+    if ($content -ne $afterGradle) {
+        $content = $afterGradle
+        $changed = $true
+        Note "bumped module README Gradle snippet: $readmePath -> $newVersion"
+    }
+
+    if (-not $changed) {
+        Note "no change: $readmePath (version already $newVersion?)"
+        return
+    }
+
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] Bump $readmePath install snippets -> $newVersion" -ForegroundColor Yellow
+    } else {
+        [System.IO.File]::WriteAllText($readmePath, $content)
+    }
+}
+
 function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     if (-not (Test-Path $indexHtmlPath)) {
         Note "skip (no file): $indexHtmlPath"
@@ -539,6 +581,14 @@ try {
     # the bump regex does not touch the $-prefixed property reference).
     Update-PomVersion (Join-Path $repoRoot 'bundle/pom.xml') $Version
     Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
+    # Per-module README install snippets (train modules only — fonts/emoji pin
+    # their own independent versions). VersionConsistencyGuardTest fails the
+    # Step-5 verify if any of these lag the pom version.
+    foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
+            'render-pptx/README.md', 'templates/README.md', 'testing/README.md',
+            'wrapper/README.md', 'bundle/README.md')) {
+        Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $moduleReadme) $Version
+    }
     Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
     # The Next.js site/ and the docs->site/public mirror were retired when the static
     # showcase moved to web/ (deployed directly via .github/workflows/deploy-web.yml).
@@ -628,6 +678,14 @@ try {
     foreach ($modulePom in @('qa/pom.xml', 'coverage/pom.xml')) {
         if (Test-Path (Join-Path $repoRoot $modulePom)) {
             $commitFiles += $modulePom
+        }
+    }
+    # Per-module READMEs carry version-bumped install snippets (2.0 layout only).
+    foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
+            'render-pptx/README.md', 'templates/README.md', 'testing/README.md',
+            'wrapper/README.md', 'bundle/README.md')) {
+        if (Test-Path (Join-Path $repoRoot $moduleReadme)) {
+            $commitFiles += $moduleReadme
         }
     }
     if (-not $SkipShowcase) {

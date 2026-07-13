@@ -148,11 +148,25 @@ function Assert-BranchPreflight($branch) {
     }
     Note "working tree: clean (incl. staged) OK"
 
-    # 3. Local branch in sync with origin?
+    # 3. Local branch in sync with origin? A silently-failed fetch (network / auth)
+    #    would compare against a STALE origin ref and wrongly report "in sync", so
+    #    check every git exit code before trusting the comparison.
     git fetch origin $branch --quiet
-    $local = (git rev-parse $branch).Trim()
-    $remote = (git rev-parse "origin/$branch").Trim()
-    if ($local -ne $remote) {
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to fetch origin/$branch. Cannot verify branch synchronization."
+    }
+    # Capture, THEN check the exit code, THEN .Trim(): calling .Trim() on a failed
+    # rev-parse's $null output would throw a confusing null-method error and skip the
+    # message below.
+    $local = git rev-parse $branch
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to resolve local $branch (git rev-parse)."
+    }
+    $remote = git rev-parse "origin/$branch"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to resolve origin/$branch (git rev-parse)."
+    }
+    if ($local.Trim() -ne $remote.Trim()) {
         throw "Local $branch ($local) is not in sync with origin/$branch ($remote). Pull/push first."
     }
     Note "in sync with origin/$branch OK"
@@ -219,12 +233,22 @@ function Get-NextSnapshotVersion($version) {
     return $null
 }
 
+function Test-ReadmeLatestStable($version) {
+    # The README 'Latest stable' prose block (> ... **Latest stable**: [vX.Y.Z](...)) is a
+    # maintainer pre-cut edit that cut-release does NOT rewrite and no test guards. Returns
+    # $true when it names $version. Checked in Step 0 BEFORE any file mutation, so a stale
+    # line aborts the cut with a still-clean tree — a post-mutation check would leave a
+    # dirty tree that the next preflight run then refuses to work over.
+    $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
+    return $readme -match "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]"
+}
+
 function Assert-ReleaseMetadata($version) {
-    # Fast, build-free pre-tag validation of the release metadata. Most of this is
-    # also enforced by VersionConsistencyGuardTest in the verify gate, but this runs
-    # in milliseconds BEFORE anything is committed or tagged — and the README "Latest
-    # stable" prose block has no test guarding it at all (cut-release does not rewrite
-    # it), so this is the only automated gate against the stale-tag-README bug.
+    # Fast, build-free validation of the metadata cut-release itself rewrote in Steps 1-2
+    # (train pom versions, the install snippet, the CHANGELOG date). Runs at Step 2b —
+    # after those mutations, before commit/tag; VersionConsistencyGuardTest re-checks the
+    # same in the verify gate. The maintainer-authored README 'Latest stable' block is
+    # validated earlier, in Step 0 (Test-ReadmeLatestStable), before any file is mutated.
     $problems = @()
 
     # 1. CHANGELOG carries a DATED entry for this version (Step 2 flips Planned -> dated).
@@ -233,16 +257,10 @@ function Assert-ReleaseMetadata($version) {
         $problems += "CHANGELOG.md has no dated '## v$version - YYYY-MM-DD' entry (still 'Planned', or missing)."
     }
 
-    # 2. README 'Latest stable' prose block names this version. cut-release does NOT
-    #    rewrite this block, so a stale line here is the classic stale-tag-README bug.
+    # 2. README Maven install snippet advertises this version (Step 1 rewrites it; the
+    #    full per-module + Gradle + showcase check is VersionConsistencyGuardTest in the
+    #    verify gate — this is the fast representative check).
     $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
-    if ($readme -notmatch "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]") {
-        $problems += "README.md 'Latest stable' block does not name v$version - update it on develop before the cut."
-    }
-
-    # 2b. README Maven install snippet advertises this version (Step 1 rewrites it;
-    #     the full per-module + Gradle + showcase check is VersionConsistencyGuardTest
-    #     in the verify gate — this is the fast representative check).
     $snippet = [regex]::Match($readme, '<artifactId>graph-compose</artifactId>\s*<version>v?([\w\.\-]+)</version>')
     if (-not $snippet.Success) {
         $problems += "README.md has no graph-compose Maven install snippet (<artifactId>graph-compose</artifactId> ... <version>...</version>)."
@@ -266,7 +284,7 @@ function Assert-ReleaseMetadata($version) {
     if ($problems.Count -gt 0) {
         throw ("Release metadata validation failed:`n  - " + ($problems -join "`n  - "))
     }
-    Note "release metadata: CHANGELOG dated, README 'Latest stable' = v$version, train poms consistent OK"
+    Note "release metadata: CHANGELOG dated, install snippet + train poms consistent OK"
 }
 
 function Update-ReadmeInstallVersion($readmePath, $newVersion) {
@@ -688,6 +706,17 @@ try {
     }
     Note ("tag {0}: available OK" -f $tag)
 
+    # README 'Latest stable' prose block must already name the target — checked HERE,
+    # before Step 1 mutates any file, so a stale line aborts with a still-clean tree.
+    # (cut-release does not rewrite this block; it is a maintainer pre-cut edit.)
+    if (Test-ReadmeLatestStable $Version) {
+        Note "README 'Latest stable' = v$Version OK"
+    } elseif ($DryRun) {
+        Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on $Branch before the real cut." -ForegroundColor Yellow
+    } else {
+        throw "README 'Latest stable' block does not name v$Version. Update it on $Branch before cutting (cut-release.ps1 does not rewrite this block)."
+    }
+
     Step 1 "Bump versions to $Version (poms + README install snippets)"
     # All ENGINE-LINE version sites must move together or
     # VersionConsistencyGuardTest fails the verify gate below: the standalone
@@ -767,18 +796,13 @@ try {
 
     Step "2b" "Validate release metadata (fast pre-tag gate)"
     # Runs in milliseconds, before the showcase regen / verify / commit / tag, so a
-    # misconfigured release fails immediately. In -DryRun the Step 1/2 mutations were
-    # only previewed (poms / snippets / CHANGELOG still at the pre-cut state), so those
-    # checks are deferred to the real cut — but the README 'Latest stable' prose block
-    # is a maintainer pre-cut edit the script never rewrites and has no other guard, so
-    # preview it here (warn, don't abort) to surface a stale line before the real cut.
+    # misconfigured release fails immediately. Validates the metadata cut-release just
+    # mutated in Steps 1-2 (CHANGELOG date, install snippet, train pom versions). In
+    # -DryRun those mutations were only previewed (files still at the pre-cut state), so
+    # the assertion is deferred to the real cut. (The README 'Latest stable' block was
+    # already validated in Step 0, before any mutation.)
     if ($DryRun) {
-        $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
-        if ($readme -notmatch "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($Version))\]") {
-            Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on develop before the real cut." -ForegroundColor Yellow
-        } else {
-            Note "[DRY RUN] README 'Latest stable' = v$Version OK; CHANGELOG date + poms + snippets are validated on the real cut"
-        }
+        Note "[DRY RUN] CHANGELOG date + install snippet + train pom versions are validated on the real cut"
     } else {
         Assert-ReleaseMetadata $Version
     }

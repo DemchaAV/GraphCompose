@@ -141,6 +141,15 @@ jobs:
           START_AT: ${{ github.event.inputs.start_at }}
         run: |
           order="core render-pdf wrapper render-docx render-pptx templates testing bundle"
+          # Fail loudly on an unknown start_at: an unrecognised value would leave every
+          # run_* false and silently publish NOTHING while the job stayed green. Empty
+          # (a tag-triggered run) is allowed and means "all".
+          if [ -n "$START_AT" ]; then
+            case " $order all " in
+              *" $START_AT "*) ;;
+              *) echo "::error::Invalid start_at: '$START_AT'"; exit 1 ;;
+            esac
+          fi
           started="false"
           if [ -z "$START_AT" ] || [ "$START_AT" = "all" ]; then started="true"; fi
           for m in $order; do

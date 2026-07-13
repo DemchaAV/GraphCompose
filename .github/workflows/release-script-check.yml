@@ -63,3 +63,26 @@ jobs:
             if ($got -ne $cases[$k]) { throw "Get-NextSnapshotVersion '$k' -> '$got', expected '$($cases[$k])'" }
           }
           Write-Host "Get-NextSnapshotVersion: all cases passed."
+
+      - name: Unit-check Test-ReadmeLatestStable (real README)
+        shell: pwsh
+        run: |
+          # Load the real stale-tag-README guard and run it against the ACTUAL README —
+          # exercises its regex on live content, not just the dry-run's print. Robust
+          # across releases: assert it matches the version the README currently names,
+          # and rejects a bogus one.
+          $repoRoot = (Get-Location).Path
+          $lines = Get-Content scripts/cut-release.ps1
+          $match = $lines | Select-String -Pattern '^function Test-ReadmeLatestStable' | Select-Object -First 1
+          if (-not $match) { throw "Test-ReadmeLatestStable not found" }
+          $start = $match.LineNumber - 1
+          $end = -1
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '}') { $end = $i; break } }
+          if ($end -lt 0) { throw "could not find the function's closing brace" }
+          Invoke-Expression (($lines[$start..$end]) -join "`n")
+
+          $cur = [regex]::Match((Get-Content README.md -Raw), '\*\*Latest stable\*\*:\s*\[v([\w\.\-]+)\]').Groups[1].Value
+          if (-not $cur) { throw "could not read the README 'Latest stable' version" }
+          if (-not (Test-ReadmeLatestStable $cur)) { throw "Test-ReadmeLatestStable failed for the README's own version $cur" }
+          if (Test-ReadmeLatestStable '0.0.0-nonexistent') { throw "Test-ReadmeLatestStable matched a bogus version" }
+          Write-Host "Test-ReadmeLatestStable: README names v$cur (bogus rejected)."

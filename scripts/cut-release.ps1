@@ -371,8 +371,8 @@ function Run-ShowcaseSync {
 }
 
 function Render-ReadmeBanner {
-    # Re-renders assets/readme/repository_showcase_render.png straight from the
-    # engine (DocumentSession.toImage, @since 1.9.0) so the hero's version pill
+    # Re-renders assets/readme/repository_showcase_render.png — the 2.0 module-first
+    # hero (EngineDeckV2Example.renderBannerImage) — so the hero's version pill
     # carries the just-bumped ${project.version} (read from the filtered
     # banner.properties). The `compile` is REQUIRED: banner.properties is filtered
     # at examples-compile time, so the examples module must be recompiled AFTER the
@@ -381,7 +381,7 @@ function Render-ReadmeBanner {
     # artifact into the local m2 cache so the examples module resolves it.
     Write-Host "  > Re-render the version-stamped README hero banner" -ForegroundColor Cyan
     $banner = Join-Path $repoRoot 'assets/readme/repository_showcase_render.png'
-    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ReadmeBannerRenderer"'
+    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ReadmeBannerV2Renderer"'
     $execArgs = "`"-Dexec.args=$banner`""
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml -DskipTests compile exec:java $execProp $execArgs" -ForegroundColor Yellow

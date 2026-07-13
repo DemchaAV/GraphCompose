@@ -58,9 +58,9 @@
         <maven.compiler.release>17</maven.compiler.release>
 
         <poi.version>5.5.1</poi.version>
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
         <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 

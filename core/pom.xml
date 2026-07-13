@@ -705,17 +705,25 @@
                                 <reportOnlyFilename>true</reportOnlyFilename>
                                 <skipPomModules>true</skipPomModules>
                                 <!--
-                                    Internal layout->render handoff DTOs. These records carry
-                                    engine-internal types (TextStyle, Padding, ...) and evolve with
-                                    rendering features. They are not part of the canonical public API
-                                    (document.api/dsl/node/style) and carry no binary-compatibility
-                                    promise, so they are excluded from the gate. (The former 1.x
-                                    transitional excludes — TextMeasurementSystem, ConfigLoader — are
-                                    gone: those removals predate the 2.0.0 baseline, so the baseline no
-                                    longer contains them and there is nothing to exclude.)
+                                    Exclude the complete Internal surface, exactly as
+                                    docs/api-stability.md defines it: the two package trees marked
+                                    @Internal at the package level — com.demcha.compose.engine.** (the
+                                    engine, incl. text/markdown/measurement helpers and the render
+                                    handoff payloads) and com.demcha.compose.document.layout.** (the
+                                    compiler, NodeDefinitionSupport, placement/measure/split contracts,
+                                    and the layout.payloads DTOs) — plus any element carrying the
+                                    per-element @Internal marker anywhere else. These carry no
+                                    binary-compatibility promise (§ 1), so the gate must not fail on
+                                    them; only the Stable public surface (document.api/dsl/node/style,
+                                    chart/svg/font, GraphCompose) is enforced. The `.**` suffix matches
+                                    the package and all sub-packages. (The former 1.x transitional
+                                    excludes — TextMeasurementSystem, ConfigLoader — are gone: those
+                                    removals predate the 2.0.0 baseline, so it no longer contains them.)
                                 -->
                                 <excludes>
-                                    <exclude>com.demcha.compose.document.layout.payloads</exclude>
+                                    <exclude>com.demcha.compose.engine.**</exclude>
+                                    <exclude>com.demcha.compose.document.layout.**</exclude>
+                                    <exclude>@com.demcha.compose.document.api.Internal</exclude>
                                 </excludes>
                             </parameter>
                         </configuration>

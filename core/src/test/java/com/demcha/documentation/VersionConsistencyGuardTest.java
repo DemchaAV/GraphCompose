@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -34,17 +33,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * which is the drift class that previously let the benchmarks module run
  * against the previous release.
  *
- * <p>The snippet checks accept the version as matching <strong>any</strong> of:
- * the current {@code pom.xml} version, the version named in the top
- * {@code CHANGELOG.md} {@code Planned} entry, or the latest <em>published</em>
- * release (the topmost dated {@code CHANGELOG.md} entry). The Planned target
- * covers the pre-cut window where {@code pom.xml} still carries the previous
- * release while the README + showcase already advertise the about-to-ship
- * version; the published-release target covers the mirror-image post-release
- * window where {@code pom.xml} has moved to the next {@code -SNAPSHOT} while the
- * snippets keep advertising the version actually on Maven Central.
- * {@code cut-release.ps1} bumps both pom and snippet to the same target in the
- * release commit, after which the paths converge and the test continues to pass.
+ * <p>The install-snippet checks require the snippets to advertise a version that
+ * a user can actually resolve. During a normal {@code -SNAPSHOT} development cycle
+ * that is the latest <em>published</em> release (the topmost dated
+ * {@code CHANGELOG.md} entry) — not the in-development {@code -SNAPSHOT} and not a
+ * forward-looking {@code Planned} version. In the release commit itself
+ * {@code cut-release.ps1} bumps the pom off {@code -SNAPSHOT} and rewrites the
+ * snippets to the new release version, so once the pom carries a concrete release
+ * version the snippets must equal it. See {@link #acceptableTargets()}.
  */
 class VersionConsistencyGuardTest {
 
@@ -229,10 +225,10 @@ class VersionConsistencyGuardTest {
         String gradleSnippetVersion = firstMatchingGroup(readme, INSTALL_SNIPPET_PATTERNS_README_GRADLE);
 
         assertThat(mavenSnippetVersion)
-                .describedAs("README Maven install snippet must reference the current pom or CHANGELOG Planned version (one of %s)", targets)
+                .describedAs("README Maven install snippet must reference the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
         assertThat(gradleSnippetVersion)
-                .describedAs("README Gradle install snippet must reference the current pom or CHANGELOG Planned version (one of %s)", targets)
+                .describedAs("README Gradle install snippet must reference the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
     }
 
@@ -249,19 +245,19 @@ class VersionConsistencyGuardTest {
         String site = Files.readString(PROJECT_ROOT.resolve("web/index.html"));
 
         assertThat(firstGroup(site, "\"softwareVersion\":\\s*\"v?([0-9][^\"]*)\""))
-                .describedAs("web/index.html JSON-LD softwareVersion must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html JSON-LD softwareVersion must equal the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
         // Match up to the delimiter (space before `&middot;`) rather than
         // digits-and-dots only, so a pre-release version like 2.0.0-rc.1 is
         // captured too — consistent with the JSON-LD and snippet patterns.
         assertThat(firstGroup(site, "v([0-9][^\\s&]*)\\s*&middot;\\s*MIT"))
-                .describedAs("web/index.html hero version badge must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html hero version badge must equal the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_MAVEN))
-                .describedAs("web/index.html Maven install snippet must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html Maven install snippet must equal the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE))
-                .describedAs("web/index.html Gradle install snippet must equal the current pom or planned version (one of %s)", targets)
+                .describedAs("web/index.html Gradle install snippet must equal the latest published release, or the release version in a release commit (one of %s)", targets)
                 .isIn(targets);
     }
 
@@ -289,10 +285,10 @@ class VersionConsistencyGuardTest {
             String readme = Files.readString(PROJECT_ROOT.resolve(module.getKey()));
             String artifact = Pattern.quote(module.getValue());
             assertThat(firstGroup(readme, "<artifactId>" + artifact + "</artifactId>\\s*<version>v?([0-9][^<]*)</version>"))
-                    .describedAs("%s Maven install snippet must equal the current pom or planned version (one of %s)", module.getKey(), targets)
+                    .describedAs("%s Maven install snippet must equal the latest published release, or the release version in a release commit (one of %s)", module.getKey(), targets)
                     .isIn(targets);
             assertThat(firstGroup(readme, "io\\.github\\.demchaav:" + artifact + ":v?([0-9][\\w.\\-]*)"))
-                    .describedAs("%s Gradle install snippet must equal the current pom or planned version (one of %s)", module.getKey(), targets)
+                    .describedAs("%s Gradle install snippet must equal the latest published release, or the release version in a release commit (one of %s)", module.getKey(), targets)
                     .isIn(targets);
         }
     }
@@ -345,38 +341,38 @@ class VersionConsistencyGuardTest {
     };
 
     /**
-     * Returns the set of versions that any install snippet may legitimately
-     * advertise: the current {@code pom.xml} version always, plus (if present)
-     * the version named in the top {@code CHANGELOG.md} {@code Planned} entry
-     * and the latest published release (the topmost dated CHANGELOG entry). The
-     * Planned entry covers the pre-cut window where {@code pom.xml} still carries
-     * the previous release while the snippets advertise the about-to-ship version;
-     * the published-release entry covers the post-release {@code -SNAPSHOT} window
-     * where {@code pom.xml} has moved on while the snippets keep advertising the
-     * version actually on Maven Central.
+     * Returns the set of versions an install snippet may legitimately advertise.
+     *
+     * <p>During a normal {@code -SNAPSHOT} development cycle this is <strong>only
+     * the latest published release</strong> — the version actually resolvable on
+     * Maven Central — so a user who copies a snippet always gets a coordinate that
+     * resolves today, never the in-development {@code -SNAPSHOT} nor a
+     * forward-looking {@code Planned} version. In the release commit itself
+     * {@code cut-release.ps1} bumps the pom off {@code -SNAPSHOT} to the new
+     * release version and rewrites the snippets to match, so once the pom is a
+     * concrete release version the snippets must equal it.</p>
      */
     private Set<String> acceptableTargets() throws Exception {
-        Set<String> targets = new LinkedHashSet<>();
-        targets.add(effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml")));
-        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
-        Matcher planned = Pattern.compile("^## v([0-9][^ \\n]*)\\s*[\\u2014\\-]\\s*Planned\\b", Pattern.MULTILINE)
-                .matcher(changelog);
-        if (planned.find()) {
-            targets.add(planned.group(1));
+        String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
+        if (pomVersion.endsWith("-SNAPSHOT")) {
+            return Set.of(latestPublishedRelease());
         }
-        // The latest PUBLISHED release: the topmost dated CHANGELOG entry
-        // (## vX.Y.Z — YYYY-MM-DD). During the post-release -SNAPSHOT dev window the
-        // pom carries the next dev version (e.g. 2.0.1-SNAPSHOT) while the install
-        // snippets correctly keep advertising the version that is actually on Maven
-        // Central (2.0.0) — so a user copies a coordinate that resolves today, not one
-        // that only lands with the next tag. find() returns the first (newest) dated
-        // entry; a "— Planned" entry is skipped because it has no date.
+        return Set.of(pomVersion);
+    }
+
+    /**
+     * The latest published release: the topmost dated {@code CHANGELOG.md} entry
+     * ({@code ## vX.Y.Z — YYYY-MM-DD}). {@code find()} returns the newest such
+     * entry; a {@code — Planned} entry is skipped because it carries no date.
+     */
+    private String latestPublishedRelease() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
         Matcher released = Pattern.compile("^## v([0-9][^ \\n]*)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
                 .matcher(changelog);
-        if (released.find()) {
-            targets.add(released.group(1));
-        }
-        return targets;
+        assertThat(released.find())
+                .describedAs("CHANGELOG.md must contain a dated release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
+                .isTrue();
+        return released.group(1);
     }
 
     /**

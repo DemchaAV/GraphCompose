@@ -171,6 +171,64 @@ function Update-PomVersion($pomPath, $newVersion) {
     }
 }
 
+function Get-NextSnapshotVersion($version) {
+    # A final release X.Y.Z opens the next patch development line X.Y.(Z+1)-SNAPSHOT.
+    # Pre-release versions (rc / beta / alpha) stay on their own cycle, so return
+    # $null and let the caller skip the post-release SNAPSHOT bump for them.
+    if ($version -match '^(\d+)\.(\d+)\.(\d+)$') {
+        return "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)-SNAPSHOT"
+    }
+    return $null
+}
+
+function Assert-ReleaseMetadata($version) {
+    # Fast, build-free pre-tag validation of the release metadata. Most of this is
+    # also enforced by VersionConsistencyGuardTest in the verify gate, but this runs
+    # in milliseconds BEFORE anything is committed or tagged — and the README "Latest
+    # stable" prose block has no test guarding it at all (cut-release does not rewrite
+    # it), so this is the only automated gate against the stale-tag-README bug.
+    $problems = @()
+
+    # 1. CHANGELOG carries a DATED entry for this version (Step 2 flips Planned -> dated).
+    $changelog = Get-Content (Join-Path $repoRoot 'CHANGELOG.md') -Raw
+    if ($changelog -notmatch "(?m)^## v$([regex]::Escape($version))\s+[—-]\s+\d{4}-\d{2}-\d{2}\b") {
+        $problems += "CHANGELOG.md has no dated '## v$version - YYYY-MM-DD' entry (still 'Planned', or missing)."
+    }
+
+    # 2. README 'Latest stable' prose block names this version. cut-release does NOT
+    #    rewrite this block, so a stale line here is the classic stale-tag-README bug.
+    $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
+    if ($readme -notmatch "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]") {
+        $problems += "README.md 'Latest stable' block does not name v$version - update it on develop before the cut."
+    }
+
+    # 2b. README Maven install snippet advertises this version (Step 1 rewrites it;
+    #     the full per-module + Gradle + showcase check is VersionConsistencyGuardTest
+    #     in the verify gate — this is the fast representative check).
+    $snippet = [regex]::Match($readme, '<artifactId>graph-compose</artifactId>\s*<version>v?([\w\.\-]+)</version>')
+    if ($snippet.Success -and $snippet.Groups[1].Value -ne $version) {
+        $problems += "README.md install snippet is $($snippet.Groups[1].Value), expected $version."
+    }
+
+    # 3. Every train pom's own <version> is this version (belt-and-suspenders ahead
+    #    of the verify-gate guard; fonts/emoji version independently and are skipped).
+    foreach ($pom in @('core/pom.xml', 'pom.xml', 'render-pdf/pom.xml', 'render-docx/pom.xml',
+            'render-pptx/pom.xml', 'templates/pom.xml', 'testing/pom.xml', 'wrapper/pom.xml', 'bundle/pom.xml')) {
+        $p = Join-Path $repoRoot $pom
+        if (Test-Path $p) {
+            $m = [regex]::Match((Get-Content $p -Raw), '<version>([\w\.\-]+)</version>')
+            if ($m.Success -and $m.Groups[1].Value -ne $version) {
+                $problems += "$pom <version> is $($m.Groups[1].Value), expected $version."
+            }
+        }
+    }
+
+    if ($problems.Count -gt 0) {
+        throw ("Release metadata validation failed:`n  - " + ($problems -join "`n  - "))
+    }
+    Note "release metadata: CHANGELOG dated, README 'Latest stable' = v$version, train poms consistent OK"
+}
+
 function Update-ReadmeInstallVersion($readmePath, $newVersion) {
     if (-not (Test-Path $readmePath)) {
         Note "skip (no file): $readmePath"
@@ -451,36 +509,83 @@ function Render-ReadmeBanner {
 if ($PostReleaseOnly) {
     Push-Location $repoRoot
     try {
-        Step 1 "Switch ShowcaseMetadata GH_BASE back to /blob/$Branch"
-        $changed = Update-ShowcaseGhBase $Branch
+        # The released version is whatever the train poms currently carry (a cut leaves
+        # them at the release version). Open the next patch development line from it. The
+        # 2.0 module layout keeps the engine version in core/pom.xml; the legacy 1.x tree
+        # has no core/ and retired post-release bumping, so read defensively and skip the
+        # bump when it is absent (the showcase flip below still runs).
+        $nextSnapshot = $null
+        $corePom = Join-Path $repoRoot 'core/pom.xml'
+        if (Test-Path $corePom) {
+            $currentVersion = [regex]::Match((Get-Content $corePom -Raw), '<version>([\w\.\-]+)</version>').Groups[1].Value
+            $nextSnapshot = Get-NextSnapshotVersion $currentVersion
+        }
 
-        if ($changed -or $DryRun) {
+        Step 1 "Switch ShowcaseMetadata GH_BASE back to /blob/$Branch"
+        $showcaseChanged = Update-ShowcaseGhBase $Branch
+        if ($showcaseChanged -or $DryRun) {
             Step 2 "Regenerate web/examples.json with $Branch links"
             Run-ShowcaseSync
+        } else {
+            Note "GH_BASE already points to $Branch."
+        }
 
-            Step 3 "Commit"
-            $msg = "post-release: flip showcase links back to /blob/$Branch"
+        # Post-release version bump: move the train off the release version onto the
+        # next patch -SNAPSHOT so develop builds are distinguishable from the release
+        # AND the japicmp gate (baseline = the release) actually compares (it short-
+        # circuits when the working version equals the baseline). The README / showcase
+        # INSTALL SNIPPETS are deliberately NOT touched here: they keep advertising the
+        # version actually on Maven Central, which VersionConsistencyGuardTest requires
+        # during a -SNAPSHOT cycle. cut-release rewrites the snippets to the new version
+        # at the NEXT release commit. Idempotent: if the poms are already on a -SNAPSHOT,
+        # Get-NextSnapshotVersion returns $null and the bump is skipped.
+        $bumpedPoms = @()
+        if ($nextSnapshot) {
+            Step 3 "Open the next development line: bump train poms to $nextSnapshot"
+            foreach ($pom in @('core/pom.xml', 'pom.xml', 'examples/pom.xml', 'benchmarks/pom.xml',
+                    'qa/pom.xml', 'coverage/pom.xml', 'render-pdf/pom.xml', 'render-docx/pom.xml',
+                    'render-pptx/pom.xml', 'templates/pom.xml', 'testing/pom.xml', 'wrapper/pom.xml', 'bundle/pom.xml')) {
+                if (Test-Path (Join-Path $repoRoot $pom)) {
+                    Update-PomVersion (Join-Path $repoRoot $pom) $nextSnapshot
+                    $bumpedPoms += $pom
+                }
+            }
+        } else {
+            Step 3 "Skipped SNAPSHOT bump (no core/pom.xml, or the current version is not a final X.Y.Z release)"
+        }
+
+        # Commit whatever changed: the bumped poms and/or the restored showcase files.
+        $filesToCommit = @()
+        if ($showcaseChanged -or $DryRun) { $filesToCommit += @($showcaseMetadata, 'web/examples.json') }
+        $filesToCommit += $bumpedPoms
+        if ($filesToCommit.Count -gt 0) {
+            $parts = @()
+            if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot" }
+            if ($showcaseChanged -or $DryRun) { $parts += "restore /blob/$Branch showcase links" }
+            $msg = "chore(release): " + ($parts -join ' + ')
+            Step 4 "Commit"
             if ($DryRun) {
+                Write-Host "    [DRY RUN] git add $($filesToCommit -join ' ')" -ForegroundColor Yellow
                 Write-Host "    [DRY RUN] git commit -m `"$msg`"" -ForegroundColor Yellow
             } else {
-                git add $showcaseMetadata 'web/examples.json'
+                git add @filesToCommit
                 git commit -m $msg
+                Note "commit: $msg"
             }
-
-            Step 4 "Push $Branch"
+            Step 5 "Push $Branch"
             if ($DryRun) {
                 Write-Host "    [DRY RUN] git push origin $Branch" -ForegroundColor Yellow
             } else {
                 git push origin $Branch
             }
         } else {
-            Note "GH_BASE already points to $Branch. Nothing to do."
+            Note "Nothing to do (showcase already on /blob/$Branch and version already a SNAPSHOT)."
         }
     } finally {
         Pop-Location
     }
     Write-Host ""
-    Write-Host "Done. Ongoing $Branch work has linkable View Code buttons again." -ForegroundColor Green
+    Write-Host "Done. $Branch is on the next development line with linkable View Code buttons." -ForegroundColor Green
     return
 }
 
@@ -614,6 +719,24 @@ try {
         }
     }
 
+    Step "2b" "Validate release metadata (fast pre-tag gate)"
+    # Runs in milliseconds, before the showcase regen / verify / commit / tag, so a
+    # misconfigured release fails immediately. In -DryRun the Step 1/2 mutations were
+    # only previewed (poms / snippets / CHANGELOG still at the pre-cut state), so those
+    # checks are deferred to the real cut — but the README 'Latest stable' prose block
+    # is a maintainer pre-cut edit the script never rewrites and has no other guard, so
+    # preview it here (warn, don't abort) to surface a stale line before the real cut.
+    if ($DryRun) {
+        $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
+        if ($readme -notmatch "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($Version))\]") {
+            Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on develop before the real cut." -ForegroundColor Yellow
+        } else {
+            Note "[DRY RUN] README 'Latest stable' = v$Version OK; CHANGELOG date + poms + snippets are validated on the real cut"
+        }
+    } else {
+        Assert-ReleaseMetadata $Version
+    }
+
     if (-not $SkipShowcase) {
         Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
         Update-ShowcaseGhBase $tag | Out-Null
@@ -650,6 +773,37 @@ try {
         }
     } else {
         Step 5 "Skipped mvnw verify (-SkipVerify)"
+    }
+
+    if (-not $SkipVerify) {
+        Step "5b" "Binary-compatibility gate (japicmp vs the published baseline)"
+        # Confirm the graph-compose-core public API stays binary-compatible with the
+        # japicmp baseline BEFORE the tag is cut — independent of the PR-time CI japicmp
+        # job, which a direct-to-branch push could bypass. 2.0 module layout only (core/
+        # present); the legacy 1.x single-artifact tree has no such gate. Precondition:
+        # the baseline (japicmp.baseline in core/pom.xml) must already be on Central — so
+        # this gate is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
+        # first-of-a-major cut that publishes the baseline itself.
+        if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
+            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core')
+            if ($DryRun) {
+                Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
+            } else {
+                & $mvnw @japicmpArgs 2>&1 | ForEach-Object {
+                    if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR|incompatib') {
+                        Write-Host "    $_" -ForegroundColor DarkGray
+                    }
+                }
+                if ($LASTEXITCODE -ne 0) {
+                    throw "japicmp gate failed: the tagged code breaks binary compatibility with the published baseline."
+                }
+                Note "japicmp: binary-compatible with the baseline OK"
+            }
+        } else {
+            Note "japicmp gate skipped (1.x single-artifact layout)"
+        }
+    } else {
+        Step "5b" "Skipped japicmp gate (-SkipVerify)"
     }
 
     Step 6 "Commit release"
@@ -737,7 +891,10 @@ try {
     Write-Host "     This makes the deployed GitHub Pages site pick up $tag." -ForegroundColor Cyan
     Write-Host "  2. Create a GitHub Release for $tag with the CHANGELOG section as body." -ForegroundColor Cyan
     Write-Host "  3. Verify the Maven Central publish (publish.yml) resolved: mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=$Version" -ForegroundColor Cyan
-    Write-Host "  4. Flip showcase links back to ${Branch}:" -ForegroundColor Cyan
+    Write-Host "  4. Smoke-test the PUBLISHED train once Central has indexed it: dispatch the" -ForegroundColor Cyan
+    Write-Host "     Release Smoke workflow with version=$Version, or run" -ForegroundColor Cyan
+    Write-Host "       bash scripts/release-smoke/run.sh --version $Version" -ForegroundColor Cyan
+    Write-Host "  5. Open the next development line + restore showcase links on ${Branch}:" -ForegroundColor Cyan
     Write-Host "       pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch $Branch" -ForegroundColor Cyan
 } finally {
     Pop-Location

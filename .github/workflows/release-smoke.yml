@@ -1,0 +1,41 @@
+name: Release Smoke (consumer verification)
+
+# Manually verifies that a PUBLISHED GraphCompose release resolves and works for
+# real external consumers straight from Maven Central (scripts/release-smoke/).
+# Not tied to a tag or push — dispatch it after a publish (allowing for Central
+# indexing delay), or any time, to re-check a shipped version. It never touches a
+# -SNAPSHOT: release smoke tests published artifacts only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Published GraphCompose version to smoke-test from Maven Central'
+        required: true
+        type: string
+        default: '2.0.0'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke ${{ inputs.version }} from Maven Central
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run release smoke against Maven Central
+        # The harness forces Central-only resolution (its settings.xml) and evicts
+        # the GraphCompose artifacts before each scenario, so this genuinely tests
+        # the published ${{ inputs.version }} coordinates end to end.
+        run: bash scripts/release-smoke/run.sh --version "${{ inputs.version }}"

@@ -39,7 +39,7 @@
 </p>
 
 <p align="center">
-  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck.pdf"><b>view the full capability deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"><code>EngineDeckExample</code></a>: native vector charts and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
+  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the 2.0 module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
 </p>
 
 ## Why GraphCompose
@@ -47,23 +47,22 @@
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.
 - **Deterministic by design.** Two-pass layout. Snapshots are stable across machines, so layout regressions are catchable in tests before any byte ships.
 - **Cinematic by default.** Soft panels, accent strips, transforms, native vector charts, and gradients are first-class primitives, not workarounds.
-- **PDFBox isolated, DOCX optional.** Single backend interface. Apache POI&ndash;backed DOCX export is available for compatible semantic content &mdash; see [support matrix](#output-support) for limitations.
+- **Lean core, pluggable backends.** The `graph-compose-core` engine carries no PDFBox or POI; render backends are separate modules discovered via `ServiceLoader` &mdash; PDF is one dependency away (or already included in `graph-compose`), DOCX/PPTX are opt-in &mdash; see [support matrix](#output-support).
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
-## What's new in v1.9
+## What's new in 2.0
 
-The **"navigable"** release &mdash; a rendered PDF becomes a document you can move through.
+The **module-first** release &mdash; the single jar becomes a family of per-concern artifacts, so you install exactly what you render.
 
-- **In-document navigation** &mdash; named `anchor(...)` targets and internal `link(...)` jumps emitted as native PDF `GoTo` actions: clickable cross-references, `[text](#heading)`-style links, and bidirectional footnotes (`DocumentLinkTarget` unifies internal and external links).
-- **Native table of contents &amp; page references** &mdash; `addTableOfContents(toc -> toc.entry(label, anchor))` builds a clickable TOC with dot leaders and auto-resolved page numbers; `addPageReference(anchor)` prints a native "see page N" cross-reference; `DocumentSession.pageIndex()` resolves any anchor to its page.
-- **Bookmarks &amp; viewer preferences** &mdash; `section.bookmark(...)` makes any section or container a PDF outline (bookmark-panel) target, and `chrome().viewerPreferences(...)` opens the reader on the outline panel, a chosen page layout, or the doc title in the window.
-- **Multi-section documents** &mdash; `GraphCompose.documents()` concatenates independently authored sections &mdash; each with its own page size, margins, and footer numbering &mdash; into one PDF, with anchors, links, and the outline resolving across section boundaries.
-- **Richer row &amp; page layout** &mdash; `row.columns(auto(), weight(1), fixed(80))`, main-axis `flexSpacer()` / `arrangement(...)`, cross-axis `verticalAlign(...)`, per-page `pageMargins(...)`, and full-bleed `bleed(...)`.
-- **Inline chips, SVG icons &amp; colour emoji** &mdash; text on a rounded highlight chip, a parsed `SvgIcon` on the text baseline, and `RichText.emoji(":star:", size)` colour emoji via the new independently-versioned `graph-compose-emoji` module.
-- **Render straight to images** &mdash; `DocumentSession` renders directly to `BufferedImage`s with no PDF round-trip; plus page-number offset / restart / style and round / dotted line caps.
+- **Lean engine** &mdash; `graph-compose-core` is the document model, DSL, themes, and deterministic layout with **no PDFBox, POI, or template code** on its dependency tree. Backends plug in through a `ServiceLoader` seam; a core-only classpath asked to render throws `MissingBackendException` naming the artifact to add.
+- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-docx` and `graph-compose-render-pptx` (Apache POI, semantic export).
+- **`graph-compose` stays a drop-in** &mdash; the 1.x coordinate is now a thin wrapper over core + the PDF backend, so existing callers upgrade with **no code and no dependency change**.
+- **Templates are their own artifact** &mdash; the CV / cover-letter / invoice / proposal preset families moved to `graph-compose-templates` (imports unchanged). This is the [one dependency-level break](./docs/migration/v2.0.0-modules.md#the-one-break-templates) of the split.
+- **`graph-compose-bundle`** &mdash; one batteries-included coordinate: PDF stack + templates + fonts + colour emoji.
+- **Retired surface** &mdash; the APIs deprecated across 1.6&ndash;1.9 are removed, the layered template packages dropped their `.v2` suffix, and `BusinessTheme` plus the classic pre-layered presets are gone &mdash; each removal has a named replacement in the [migration guide](./docs/migration/v2.0.0-modules.md).
 
-Core document APIs stay source- and binary-compatible with v1.8 &mdash; v1.9 is purely additive (two cover-letter / CV shim types are newly `@Deprecated` for 2.0). Full notes in [`CHANGELOG.md`](./CHANGELOG.md).
+Everything the 1.9 line added &mdash; in-document navigation, native TOC and page references, bookmarks, multi-section documents, inline chips / SVG icons / colour emoji, render-to-image &mdash; ships unchanged in 2.0. Full history in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Installation
 
@@ -99,43 +98,15 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 > the classpath — asking it to build a PDF throws `MissingBackendException`, which names the
 > artifact to add (`graph-compose-render-pdf`, already included in `graph-compose`).
 
-> **Bundled fonts (from v1.8.0).** The curated Google fonts no longer ship
-> inside the engine jar &mdash; they live in an independently-versioned
-> companion artifact so an engine upgrade never re-downloads ~18&nbsp;MB of
-> fonts. Pure-text and standard-14 documents need nothing extra; to use the
-> bundled families, add:
->
-> ```xml
-> <dependency>
->     <groupId>io.github.demchaav</groupId>
->     <artifactId>graph-compose-fonts</artifactId>
->     <version>1.0.0</version>
-> </dependency>
-> ```
->
-> Prefer a single "batteries-included" coordinate? Depend on
-> `io.github.demchaav:graph-compose-bundle` (same version as `graph-compose`
-> above) to pull the default PDF engine, the built-in templates, the fonts, and
-> the colour emoji together. Full details and upgrade steps: the
-> [v1.8.0 fonts migration note](./docs/migration/v1.8.0-fonts.md).
-
-> **Colour emoji (from v1.9.0).** `RichText.emoji(":star:", size)` resolves
-> GitHub-style shortcodes to inline vector glyphs from an independently-versioned
-> companion artifact (the same split model as the fonts above). Text without
-> emoji needs nothing extra; to render colour emoji, add:
->
-> ```xml
-> <dependency>
->     <groupId>io.github.demchaav</groupId>
->     <artifactId>graph-compose-emoji</artifactId>
->     <version>1.0.0</version>
-> </dependency>
-> ```
->
-> An unknown shortcode falls back to its literal text, so a document that uses no
-> emoji &mdash; or runs without the artifact &mdash; renders unchanged. Depending
-> on `graph-compose` directly keeps emoji opt-in; the batteries-included
-> `graph-compose-bundle` includes it.
+> **Companion artifacts: fonts &amp; colour emoji.** Two opt-in companions carry
+> their own version lines (they change on their own cadence, so an engine upgrade
+> never re-downloads them): `graph-compose-fonts:1.0.0` &mdash; the curated Google
+> font families (~18&nbsp;MB; pure-text and standard-14 documents need nothing
+> extra; details in the [fonts migration note](./docs/migration/v1.8.0-fonts.md)) &mdash;
+> and `graph-compose-emoji:1.0.0` &mdash; inline colour emoji for
+> `RichText.emoji(":star:", size)` (an unknown shortcode falls back to its literal
+> text, so documents without emoji render unchanged). Both are already included in
+> `graph-compose-bundle`.
 
 > **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
 > (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
@@ -144,7 +115,7 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 > (`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
 > pinned to v1.6.5 and earlier but is no longer the documented install option.
 
-> **Upgrading from v1.5?** Core document authoring stays source-compatible &mdash; engine, DSL, themes, and backend-neutral records carry v1.5 callers unchanged. **Templates v2** replaces the legacy CV / cover-letter template classes; legacy classes were **deleted**, not deprecated. Read the [migration guide](./docs/roadmaps/migration-v1-5-to-v1-6.md) before upgrading template-heavy code.
+> **Upgrading from 1.x?** Rendering PDF through `graph-compose` needs no change at all. If you reached the built-in templates through the single 1.x jar, add `graph-compose-templates` (imports are unchanged) &mdash; the [2.0 migration guide](./docs/migration/v2.0.0-modules.md) walks every case, including the removed deprecated APIs and their replacements.
 
 ## Hello world
 
@@ -248,11 +219,11 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
 | See the live gallery | Static showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`web/`](./web), deployed to GitHub Pages via the [Pages workflow](./.github/workflows/deploy-web.yml) |
 
-> **Choosing a template surface** &mdash; layered (`cv.v2`), classic (`cv.presets`), or the built-in `*TemplateV2` family? See **[Which template system should I use?](./docs/templates/which-template-system.md)** for the status matrix, decision tree, and `classic → layered` migration map.
+> **Templates in 2.0** &mdash; there is one template surface: the layered preset families in `graph-compose-templates`, themed through `BrandTheme`. Arriving from a pre-2.0 surface (classic presets, the built-in `*Template` classes)? **[Which template system should I use?](./docs/templates/which-template-system.md)** maps every retired name to its layered replacement.
 
-## v1.8 primitives in 30 lines
+## Vector primitives in 30 lines
 
-Three snippets from the new vector surfaces. Full runnable versions live in the [examples gallery](./examples/README.md).
+Three snippets from the vector surfaces. Full runnable versions live in the [examples gallery](./examples/README.md).
 
 **Native chart** &mdash; categories + series in, native vector bars out (no rasterization).
 
@@ -286,16 +257,16 @@ flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
 
 ## Architecture
 
-GraphCompose splits into a **public canonical surface** you author against (`com.demcha.compose.document.*`) and an **internal shared engine foundation** (`com.demcha.compose.engine.*`, marked `@Internal`) that resolves geometry, pagination, and rendering behind it. You author intent; the engine resolves the rest.
+GraphCompose splits into a **public canonical surface** you author against (`com.demcha.compose.document.*`) and an **internal shared engine foundation** (`com.demcha.compose.engine.*`, marked `@Internal`) that resolves geometry, pagination, and rendering behind it. Since 2.0 that boundary is also a **packaging** boundary: the surface and engine ship in `graph-compose-core`, and each render backend is a separate module that registers through a `ServiceLoader` seam. You author intent; the engine resolves the rest.
 
 ```mermaid
 flowchart LR
     A["GraphCompose.document(...)<br/>DocumentSession · DocumentDsl"] --> B["DocumentNode tree<br/>document.node"]
     B --> C["LayoutCompiler<br/>document.layout"]
     C --> D["Engine foundation @Internal<br/>measure → paginate → place"]
-    D --> E{Backend}
-    E -->|PDF| F["PdfFixedLayoutBackend"]
-    E -->|DOCX| G["DocxSemanticBackend · POI"]
+    D --> E{ServiceLoader}
+    E -->|render-pdf| F["PdfFixedLayoutBackend<br/>PDFBox"]
+    E -->|render-docx| G["DocxSemanticBackend<br/>POI"]
     D -.->|layoutSnapshot| H["Deterministic snapshot<br/>(regression tests)"]
 ```
 
@@ -333,7 +304,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 
 ### Contributing & releases
 - [Contributing](./CONTRIBUTING.md) · [Code of conduct](./CODE_OF_CONDUCT.md) · [Security policy](./SECURITY.md) · [Release process](./docs/contributing/release-process.md)
-- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [Migration v1.6 → v1.7](./docs/roadmaps/migration-v1-6-to-v1-7.md) · [Migration v1.5 → v1.6](./docs/roadmaps/migration-v1-5-to-v1-6.md)
+- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [**Migration to 2.0 (modules)**](./docs/migration/v2.0.0-modules.md) · [older migration notes](./docs/README.md)
 
 ## Companion projects
 

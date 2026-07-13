@@ -11,7 +11,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -259,6 +261,57 @@ class VersionConsistencyGuardTest {
         assertThat(firstMatchingGroup(site, INSTALL_SNIPPET_PATTERNS_SHOWCASE_GRADLE))
                 .describedAs("web/index.html Gradle install snippet must equal the current pom or planned version (one of %s)", targets)
                 .isIn(targets);
+    }
+
+    /**
+     * Every train module's README carries a copy-paste install snippet (Maven +
+     * Gradle) for its own artifact. {@code cut-release.ps1} bumps them in the
+     * release commit; this fails the verify gate if any snippet lags the pom —
+     * the drift class where a browsed module README advertises the previous
+     * release's coordinate.
+     */
+    @Test
+    void moduleReadmeInstallSnippetsMatchTheProjectVersion() throws Exception {
+        Set<String> targets = acceptableTargets();
+        Map<String, String> trainReadmes = new LinkedHashMap<>();
+        trainReadmes.put("core/README.md", "graph-compose-core");
+        trainReadmes.put("render-pdf/README.md", "graph-compose-render-pdf");
+        trainReadmes.put("render-docx/README.md", "graph-compose-render-docx");
+        trainReadmes.put("render-pptx/README.md", "graph-compose-render-pptx");
+        trainReadmes.put("templates/README.md", "graph-compose-templates");
+        trainReadmes.put("testing/README.md", "graph-compose-testing");
+        trainReadmes.put("wrapper/README.md", "graph-compose");
+        trainReadmes.put("bundle/README.md", "graph-compose-bundle");
+
+        for (Map.Entry<String, String> module : trainReadmes.entrySet()) {
+            String readme = Files.readString(PROJECT_ROOT.resolve(module.getKey()));
+            String artifact = Pattern.quote(module.getValue());
+            assertThat(firstGroup(readme, "<artifactId>" + artifact + "</artifactId>\\s*<version>v?([0-9][^<]*)</version>"))
+                    .describedAs("%s Maven install snippet must equal the current pom or planned version (one of %s)", module.getKey(), targets)
+                    .isIn(targets);
+            assertThat(firstGroup(readme, "io\\.github\\.demchaav:" + artifact + ":v?([0-9][\\w.\\-]*)"))
+                    .describedAs("%s Gradle install snippet must equal the current pom or planned version (one of %s)", module.getKey(), targets)
+                    .isIn(targets);
+        }
+    }
+
+    /**
+     * fonts/emoji carry independent version lines, so their README snippets are
+     * checked against their own pom versions — never the engine train's.
+     */
+    @Test
+    void companionReadmeInstallSnippetsMatchTheirPomVersions() throws Exception {
+        for (String module : new String[] {"fonts", "emoji"}) {
+            String own = effectiveVersion(PROJECT_ROOT.resolve(module + "/pom.xml"));
+            String readme = Files.readString(PROJECT_ROOT.resolve(module + "/README.md"));
+            String artifact = Pattern.quote("graph-compose-" + module);
+            assertThat(firstGroup(readme, "<artifactId>" + artifact + "</artifactId>\\s*<version>v?([0-9][^<]*)</version>"))
+                    .describedAs("%s/README.md Maven install snippet must equal the module's own pom version (%s)", module, own)
+                    .isEqualTo(own);
+            assertThat(firstGroup(readme, "io\\.github\\.demchaav:" + artifact + ":v?([0-9][\\w.\\-]*)"))
+                    .describedAs("%s/README.md Gradle install snippet must equal the module's own pom version (%s)", module, own)
+                    .isEqualTo(own);
+        }
     }
 
     // ── Install-snippet patterns ────────────────────────────────────

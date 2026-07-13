@@ -56,6 +56,16 @@ jobs:
           if ($out -match "Latest stable.*does not name v2\.1\.0-rc\.1") { throw "pre-release must NOT check 'Latest stable'" }
           Write-Host "pre-release path: Latest-stable + Central snippets correctly left on last stable."
 
+          # An unsupported version (arbitrary suffix) must be REJECTED, not silently
+          # treated as a pre-release. The script rejects via `throw` — a TERMINATING
+          # error — which `*>&1 | Out-String` does NOT trap when the script runs
+          # in-process (dot-invocation, as here); it must be caught with try/catch, and
+          # $LASTEXITCODE is not set by a throw so it is not a usable signal.
+          $bad = try { ./scripts/cut-release.ps1 -Version 2.1.0-preview.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String }
+                 catch { $_ | Out-String }
+          if ($bad -notmatch 'Unsupported version') { throw "expected the unsupported-version error, got: $bad" }
+          Write-Host "unsupported version 2.1.0-preview.1: correctly rejected."
+
       - name: Unit-check Get-NextSnapshotVersion
         shell: pwsh
         run: |

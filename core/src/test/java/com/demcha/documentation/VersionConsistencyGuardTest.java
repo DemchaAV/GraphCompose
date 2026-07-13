@@ -368,10 +368,14 @@ class VersionConsistencyGuardTest {
      */
     private String latestPublishedRelease() throws Exception {
         String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
-        Matcher released = Pattern.compile("^## v([0-9][^ \\n]*)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
+        // Only a FINAL semver header (## vX.Y.Z — YYYY-MM-DD) counts as published on
+        // Maven Central. A dated pre-release header (## vX.Y.Z-rc.N — …) must NOT be
+        // treated as the published version — pre-releases never ship to Central — so the
+        // version group is anchored to \d+\.\d+\.\d+ with no suffix.
+        Matcher released = Pattern.compile("^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
                 .matcher(changelog);
         assertThat(released.find())
-                .describedAs("CHANGELOG.md must contain a dated release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
+                .describedAs("CHANGELOG.md must contain a dated final release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
                 .isTrue();
         return released.group(1);
     }

@@ -697,6 +697,12 @@ if ($PostReleaseOnly) {
 Push-Location $repoRoot
 try {
     $tag = "v$Version"
+    # Only X.Y.Z (final) and X.Y.Z-{rc|alpha|beta}.N (pre-release) are supported. Reject
+    # anything else up front, so an unrecognised suffix (e.g. 2.1.0-preview.1) cannot
+    # silently fall into the pre-release path.
+    if ($Version -notmatch '^\d+\.\d+\.\d+(-(rc|alpha|beta)\.\d+)?$') {
+        throw "Unsupported version '$Version'. Use X.Y.Z (final) or X.Y.Z-{rc|alpha|beta}.N (pre-release)."
+    }
     # A FINAL release is X.Y.Z with no suffix. Pre-releases (X.Y.Z-rc.N / -alpha / -beta)
     # ship only to the GitHub Release pre-release surface — publish.yml skips them for
     # Maven Central — so a pre-release cut must NOT touch the README 'Latest stable' block
@@ -999,15 +1005,17 @@ try {
     Write-Host "Release $tag committed locally." -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps (manual):" -ForegroundColor Cyan
-    Write-Host "  1. Merge $Branch into main on GitHub (PR or fast-forward)." -ForegroundColor Cyan
-    Write-Host "     This makes the deployed GitHub Pages site pick up $tag." -ForegroundColor Cyan
-    Write-Host "  2. Create a GitHub Release for $tag with the CHANGELOG section as body." -ForegroundColor Cyan
-    Write-Host "  3. Verify the Maven Central publish (publish.yml) resolved: mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=$Version" -ForegroundColor Cyan
-    Write-Host "  4. Smoke-test the PUBLISHED train once Central has indexed it: dispatch the" -ForegroundColor Cyan
-    Write-Host "     Release Smoke workflow with version=$Version, or run" -ForegroundColor Cyan
-    Write-Host "       bash scripts/release-smoke/run.sh --version $Version" -ForegroundColor Cyan
-    Write-Host "  5. Open the next development line + restore showcase links on ${Branch}:" -ForegroundColor Cyan
-    Write-Host "       pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch $Branch" -ForegroundColor Cyan
+    Write-Host "  - Merge $Branch into main on GitHub (fast-forward) so GitHub Pages picks up $tag." -ForegroundColor Cyan
+    Write-Host "  - Create a GitHub Release for $tag with the CHANGELOG section as body." -ForegroundColor Cyan
+    if ($isFinalRelease) {
+        Write-Host "  - Verify the Maven Central publish resolved: mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=$Version" -ForegroundColor Cyan
+        Write-Host "  - Smoke-test the PUBLISHED train once Central has indexed it: dispatch the Release Smoke" -ForegroundColor Cyan
+        Write-Host "    workflow with version=$Version, or run: bash scripts/release-smoke/run.sh --version $Version" -ForegroundColor Cyan
+    } else {
+        Write-Host "  - Pre-release: NOT published to Maven Central (publish.yml skips hyphenated tags), so there" -ForegroundColor Cyan
+        Write-Host "    is no Central verify or release-smoke; the GitHub Release ships as a pre-release only." -ForegroundColor Cyan
+    }
+    Write-Host "  - Open the next development line + restore showcase links: pwsh ./scripts/cut-release.ps1 -PostReleaseOnly -Branch $Branch" -ForegroundColor Cyan
 } finally {
     Pop-Location
 }

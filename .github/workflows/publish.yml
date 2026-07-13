@@ -78,6 +78,22 @@ jobs:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
     steps:
+      - name: Reject non-final tags (Central publishes vX.Y.Z only)
+        # This job runs on tag pushes AND workflow_dispatch. The job `if:` skips a PUSHED
+        # pre-release tag, but a manual dispatch bypasses that clause (the first `if`
+        # operand is unconditionally true for workflow_dispatch), so guard here as the
+        # very first stage: Maven Central never receives a pre-release / snapshot tag,
+        # matching cut-release.ps1's final-vs-pre-release split. The tag is passed via env
+        # (not inlined into the script) to avoid shell injection from a crafted ref name.
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Maven Central accepts only final vX.Y.Z tags: '$TAG' is a pre-release/snapshot and must not be published."
+            exit 1
+          fi
+          echo "Publishing final release $TAG to Maven Central."
+
       - name: Check out repository at tag
         uses: actions/checkout@v7
         with:

@@ -30,29 +30,42 @@ render because the backend and companions were pulled transitively.
 # Evict the GraphCompose artifacts before each scenario (Central-only, isolated):
 ./scripts/release-smoke/run.sh
 
+# Smoke-test a different published version:
+./scripts/release-smoke/run.sh --version 2.0.1
+
 # Fast dev iteration — keep everything cached:
 ./scripts/release-smoke/run.sh --warm
 ```
 
 ```powershell
-pwsh ./scripts/release-smoke/run.ps1          # isolated
-pwsh ./scripts/release-smoke/run.ps1 -Warm    # warm
+pwsh ./scripts/release-smoke/run.ps1                 # isolated
+pwsh ./scripts/release-smoke/run.ps1 -Version 2.0.1  # a different published version
+pwsh ./scripts/release-smoke/run.ps1 -Warm           # warm
 ```
 
-The harness uses one dedicated local repository under `target/` that never
-receives an `mvn install` of GraphCompose. In the default (isolated) mode it
-**evicts the GraphCompose artifacts** (`io/github/demchaav/**`) before each
-scenario, so every scenario must re-resolve `graph-compose-*` from Maven Central
-— proving the release resolves with no local reactor build behind it. Maven's
-own plugins and third-party libraries (PDFBox, JUnit, …) stay cached, because
-re-downloading Maven's core plugins onto an empty repository is heavy, flaky,
-and tests Maven rather than this release. Classpath isolation between scenarios
-(e.g. the lean core never seeing the PDF backend) comes from each project's
-declared dependencies and the `s2` enforcer rule, not from the repository state.
+Or dispatch the **Release Smoke (consumer verification)** GitHub Actions workflow
+(`.github/workflows/release-smoke.yml`) with a `version` input — handy after a
+publish, once Central has indexed the release.
+
+The harness passes an isolated `settings.xml` (`-s`) whose `mirrorOf=*` mirror
+forces **every** artifact and plugin request through Maven Central, and uses one
+dedicated local repository under `target/` that never receives an `mvn install`
+of GraphCompose. In the default (isolated) mode it **evicts the GraphCompose
+artifacts** (`io/github/demchaav/**`) before each scenario — hard-failing if the
+eviction does not take — so every scenario must re-resolve `graph-compose-*` from
+Central, proving the release resolves with no local reactor build behind it.
+Maven's own plugins and third-party libraries (PDFBox, JUnit, …) stay cached,
+because re-downloading Maven's core plugins onto an empty repository is heavy,
+flaky, and tests Maven rather than this release. Classpath isolation between
+scenarios (e.g. the lean core never seeing the PDF backend) comes from each
+project's declared dependencies and the `s2` enforcer rule, not from the
+repository state.
 
 The harness prints one `RESULT <scenario> PASS|FAIL` line per project and ends
-with a machine-readable `SUMMARY {"passed":N,"failed":M,"total":T}` line. Exit
-code is non-zero if any scenario fails.
+with a machine-readable `SUMMARY {"version":"…","passed":N,"failed":M,"total":T}`
+line. Exit code is non-zero if any scenario fails.
 
-The version under test is the `gc.version` property in each pom (currently
-`2.0.0`). Bump it to smoke-test a later release.
+The version under test defaults to the current published release (`2.0.0`) and is
+overridable with `--version` / `-Version` (or the workflow's `version` input); it
+is passed to Maven as `-Dgc.version`, overriding the `gc.version` property in each
+pom. Release smoke always tests **published** artifacts — never a `-SNAPSHOT`.

@@ -99,6 +99,18 @@ jobs:
         # unpublished tests-jar no longer fails the deploy.
         run: ./mvnw -B -ntp clean install
 
+      - name: Verify binary compatibility against the published baseline
+        # Defence in depth: run the japicmp gate on the tagged commit before any
+        # deploy, so an accidental binary-incompatible change to the public
+        # surface aborts the publish even when the tag reached here by bypassing
+        # branch protection (the CI japicmp job only gates pull requests). Compares
+        # the freshly built graph-compose-core against the japicmp.baseline release
+        # on Maven Central and fails the job on any Stable-surface break; the
+        # Internal packages (engine.**, document.layout.**) are excluded per
+        # docs/api-stability.md. Test build is skipped — the install step above
+        # already ran the full suite on this commit.
+        run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
+
       - name: Publish engine to Maven Central
         # Activates the release profile (sources + javadoc + gpg sign +
         # central-publishing) and flips gpg.skip=false. The deploy

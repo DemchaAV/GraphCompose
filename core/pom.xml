@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-core</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1-SNAPSHOT</version>
 
     <name>GraphCompose Core</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java. This is the lean engine coordinate; depend on the `graph-compose` artifact for the drop-in, PDF-capable install.</description>
@@ -91,7 +91,14 @@
 
         <!-- Binary compatibility baseline (japicmp profile) -->
         <japicmp.version>0.26.1</japicmp.version>
-        <japicmp.baseline>v1.7.0</japicmp.baseline>
+        <!-- 2.x binary-compatibility baseline: the published graph-compose-core on
+             Maven Central. The 2.0 major transition is complete, so the gate now
+             enforces binary compatibility against 2.0.0 (see the japicmp profile).
+             The gate is a no-op while the working version equals the baseline
+             (2.0.0) and becomes active the moment the version bumps to the next
+             -SNAPSHOT — proven: 2.0.1-SNAPSHOT + a reduced-access public method
+             fails with METHOD_LESS_ACCESSIBLE. -->
+        <japicmp.baseline>2.0.0</japicmp.baseline>
 
         <!--
             GPG signing — opted in via -Dgpg.skip=false (the publish
@@ -638,23 +645,18 @@
         </profile>
 
         <!--
-            Binary-compatibility baseline against the last published
-            release. Activated with `-P japicmp`. Resolves the baseline
-            artifact from JitPack (kept profile-local so consumers do
-            NOT inherit a JitPack repository). Fails the build on any
-            binary-incompatible modification to the public surface;
-            source-incompatible changes are reported but do not fail
-            (yet) so the team can phase the policy in. Tracked in the
-            v1.6.6 stabilization (Track E1).
+            Binary-compatibility gate. Activated with `-P japicmp`. Resolves the
+            baseline artifact (the published graph-compose-core pinned by the
+            japicmp.baseline property) from Maven Central — no extra repository, so
+            consumers inherit nothing. The baseline is the current major's floor
+            (2.0.0 for the whole 2.x line), advancing only at the next major, so the
+            gate holds every 2.x build binary-compatible with the 2.0.0 public
+            surface. Fails the build on any binary-incompatible modification to the
+            public surface; source-incompatible changes are reported but do not fail
+            (yet) so the policy can be phased in.
         -->
         <profile>
             <id>japicmp</id>
-            <repositories>
-                <repository>
-                    <id>jitpack.io</id>
-                    <url>https://jitpack.io</url>
-                </repository>
-            </repositories>
             <build>
                 <plugins>
                     <plugin>
@@ -673,8 +675,8 @@
                         <configuration>
                             <oldVersion>
                                 <dependency>
-                                    <groupId>com.github.DemchaAV</groupId>
-                                    <artifactId>GraphCompose</artifactId>
+                                    <groupId>io.github.demchaav</groupId>
+                                    <artifactId>graph-compose-core</artifactId>
                                     <version>${japicmp.baseline}</version>
                                 </dependency>
                             </oldVersion>
@@ -686,51 +688,34 @@
                             <parameter>
                                 <onlyModified>true</onlyModified>
                                 <!--
-                                    2.0 development line: the major intentionally breaks binary
-                                    compatibility (core extraction, v2-suffix drop, Gen-2 removal).
-                                    The gate runs report-only here so the japicmp report still
-                                    documents every break for the migration guide / api-stability §3
-                                    ledger, without failing the build. Re-enable (true) once the 2.0
-                                    baseline is published and japicmp.baseline points at it.
+                                    2.x binary-compatibility gate. The 2.0 major transition is
+                                    complete and 2.0.0 is the published baseline, so binary breaks
+                                    now FAIL the build — an accidental incompatible change to the
+                                    public surface can no longer ship in a 2.x minor/patch. (Proven:
+                                    on a 2.0.1-SNAPSHOT working version, reducing a public method's
+                                    access fails with METHOD_LESS_ACCESSIBLE.) Source incompatibilities
+                                    stay report-only for now — a source break that is binary-compatible
+                                    (e.g. adding a default interface method) is documented in the report
+                                    without failing CI; tighten to true when the 2.x source-compat
+                                    policy is finalized.
                                 -->
-                                <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
                                 <includeSynthetic>false</includeSynthetic>
                                 <reportOnlyFilename>true</reportOnlyFilename>
                                 <skipPomModules>true</skipPomModules>
                                 <!--
                                     Internal layout->render handoff DTOs. These records carry
-                                    engine-internal types (TextStyle, Padding, ...) and evolve
-                                    with rendering features (e.g. ParagraphFragmentPayload gained
-                                    verticalAlign in 1.7.0). They are not part of the canonical
-                                    public API (document.api/dsl/node/style) and carry no
-                                    binary-compatibility promise, so they are excluded from the gate.
+                                    engine-internal types (TextStyle, Padding, ...) and evolve with
+                                    rendering features. They are not part of the canonical public API
+                                    (document.api/dsl/node/style) and carry no binary-compatibility
+                                    promise, so they are excluded from the gate. (The former 1.x
+                                    transitional excludes — TextMeasurementSystem, ConfigLoader — are
+                                    gone: those removals predate the 2.0.0 baseline, so the baseline no
+                                    longer contains them and there is nothing to exclude.)
                                 -->
                                 <excludes>
                                     <exclude>com.demcha.compose.document.layout.payloads</exclude>
-                                    <!--
-                                        engine.measurement.TextMeasurementSystem dropped its vestigial
-                                        SystemECS super-interface (and the no-op process(EntityManager)
-                                        default) — see CHANGELOG v1.7.1. japicmp reports this as
-                                        INTERFACE_REMOVED, but it is safe: nothing consumes a
-                                        TextMeasurementSystem as a SystemECS. The legacy ECS engine now
-                                        obtains the measurement service via
-                                        SystemRegistry.registerTextMeasurement(...) / textMeasurement()
-                                        instead of enrolling it as a process()-driven system, and the
-                                        canonical pipeline injects it directly. Drop this exclude once the
-                                        japicmp baseline advances to the release that lands the change.
-                                    -->
-                                    <exclude>com.demcha.compose.engine.measurement.TextMeasurementSystem</exclude>
-                                    <!--
-                                        com.demcha.compose.ConfigLoader removed in v1.8.0 — an
-                                        application-bootstrap YAML/JSON config helper with no
-                                        connection to document rendering; nothing in the library,
-                                        tests, or examples referenced it (see CHANGELOG v1.8.0).
-                                        japicmp reports the deliberate deletion as CLASS_REMOVED.
-                                        Drop this exclude once the japicmp baseline advances to the
-                                        release that lands the removal.
-                                    -->
-                                    <exclude>com.demcha.compose.ConfigLoader</exclude>
                                 </excludes>
                             </parameter>
                         </configuration>

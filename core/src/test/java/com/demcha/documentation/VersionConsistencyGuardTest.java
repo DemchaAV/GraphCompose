@@ -34,15 +34,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * which is the drift class that previously let the benchmarks module run
  * against the previous release.
  *
- * <p>The snippet checks accept the version as matching <strong>either</strong>
- * the current {@code pom.xml} version <strong>or</strong> the version named in
- * the top {@code CHANGELOG.md} {@code Planned} entry. This makes the
- * forward-looking Maven Central snippet (which has to advertise the
- * about-to-ship version so users copy a coord that will resolve once the tag
- * lands) compatible with the pre-cut window where {@code pom.xml} still carries
- * the previous release version. {@code cut-release.ps1} bumps both pom and
- * snippet to the same target in the release commit, after which the two paths
- * converge and the test continues to pass.
+ * <p>The snippet checks accept the version as matching <strong>any</strong> of:
+ * the current {@code pom.xml} version, the version named in the top
+ * {@code CHANGELOG.md} {@code Planned} entry, or the latest <em>published</em>
+ * release (the topmost dated {@code CHANGELOG.md} entry). The Planned target
+ * covers the pre-cut window where {@code pom.xml} still carries the previous
+ * release while the README + showcase already advertise the about-to-ship
+ * version; the published-release target covers the mirror-image post-release
+ * window where {@code pom.xml} has moved to the next {@code -SNAPSHOT} while the
+ * snippets keep advertising the version actually on Maven Central.
+ * {@code cut-release.ps1} bumps both pom and snippet to the same target in the
+ * release commit, after which the paths converge and the test continues to pass.
  */
 class VersionConsistencyGuardTest {
 
@@ -344,11 +346,14 @@ class VersionConsistencyGuardTest {
 
     /**
      * Returns the set of versions that any install snippet may legitimately
-     * advertise: the current {@code pom.xml} version always, plus the version
-     * named in the top {@code CHANGELOG.md} {@code Planned} entry if one
-     * exists. The Planned entry covers the pre-cut window where {@code pom.xml}
-     * still carries the previous release version while the README + showcase
-     * already advertise the about-to-ship version.
+     * advertise: the current {@code pom.xml} version always, plus (if present)
+     * the version named in the top {@code CHANGELOG.md} {@code Planned} entry
+     * and the latest published release (the topmost dated CHANGELOG entry). The
+     * Planned entry covers the pre-cut window where {@code pom.xml} still carries
+     * the previous release while the snippets advertise the about-to-ship version;
+     * the published-release entry covers the post-release {@code -SNAPSHOT} window
+     * where {@code pom.xml} has moved on while the snippets keep advertising the
+     * version actually on Maven Central.
      */
     private Set<String> acceptableTargets() throws Exception {
         Set<String> targets = new LinkedHashSet<>();
@@ -358,6 +363,18 @@ class VersionConsistencyGuardTest {
                 .matcher(changelog);
         if (planned.find()) {
             targets.add(planned.group(1));
+        }
+        // The latest PUBLISHED release: the topmost dated CHANGELOG entry
+        // (## vX.Y.Z — YYYY-MM-DD). During the post-release -SNAPSHOT dev window the
+        // pom carries the next dev version (e.g. 2.0.1-SNAPSHOT) while the install
+        // snippets correctly keep advertising the version that is actually on Maven
+        // Central (2.0.0) — so a user copies a coordinate that resolves today, not one
+        // that only lands with the next tag. find() returns the first (newest) dated
+        // entry; a "— Planned" entry is skipped because it has no date.
+        Matcher released = Pattern.compile("^## v([0-9][^ \\n]*)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
+                .matcher(changelog);
+        if (released.find()) {
+            targets.add(released.group(1));
         }
         return targets;
     }

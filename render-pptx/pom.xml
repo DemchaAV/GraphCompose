@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        Semantic PPTX export backend, split out of graph-compose-render-docx in the
-        2.0 module line so a consumer that wants slide output does not also pull the
-        DOCX backend's Apache POI. Today PptxSemanticBackend is a skeleton that
-        validates slide-safe semantic nodes and returns an export manifest, so this
-        module needs nothing beyond the core — POI joins only when real .pptx
-        emission lands. SemanticBackend / SemanticExportContext / manifest — the SPI
-        — stay in the core `document.backend.semantic` package.
+        PPTX render backend. Two surfaces share this artifact: the fixed-layout
+        backend (document.backend.fixed.pptx, POI XSLF) consuming the resolved
+        LayoutGraph for geometry-identical slide output next to the PDF render,
+        and the semantic PptxSemanticBackend skeleton that validates slide-safe
+        semantic nodes and returns an export manifest. SemanticBackend /
+        SemanticExportContext / manifest — the SPI — stay in the core
+        `document.backend.semantic` package.
 
         Standalone pom (no aggregator parent, like fonts/render-docx); its version
         tracks the engine line in lockstep (bumped by cut-release.ps1), and the
@@ -57,6 +57,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
+        <poi.version>5.5.1</poi.version>
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
         <logback.version>1.5.38</logback.version>
@@ -79,6 +80,12 @@
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!-- The fixed-layout PPTX backend emits .pptx through POI XSLF. -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
 
         <!-- Test dependencies -->

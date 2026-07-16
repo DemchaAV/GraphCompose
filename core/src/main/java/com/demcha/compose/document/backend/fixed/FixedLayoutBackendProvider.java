@@ -10,7 +10,9 @@ import com.demcha.compose.document.output.DocumentOutputOptions;
  * <p>Implementations are discovered through {@link java.util.ServiceLoader};
  * each render backend artifact registers one (for example the PDF backend in
  * {@code io.github.demchaav:graph-compose-render-pdf}). The core resolves a
- * provider lazily via {@link BackendProviders#fixedLayout()} and fails with a
+ * provider lazily via {@link BackendProviders#fixedLayout()} (deterministic
+ * default) or {@link BackendProviders#fixedLayout(String)} (selection by
+ * {@link #format()}) and fails with a
  * {@link com.demcha.compose.document.exceptions.MissingBackendException} naming
  * the artifact to add when none is registered.</p>
  *
@@ -19,8 +21,9 @@ import com.demcha.compose.document.output.DocumentOutputOptions;
 public interface FixedLayoutBackendProvider {
 
     /**
-     * Returns the output format this provider renders, used for diagnostics and
-     * manifests.
+     * Returns the output format this provider renders. This is the selection
+     * key consulted by {@link BackendProviders#fixedLayout(String)} (matched
+     * case-insensitively) and is also used for diagnostics and manifests.
      *
      * @return a stable format identifier such as {@code "pdf"}
      */

@@ -18,6 +18,16 @@ follow semantic versioning; release dates are ISO 8601.
   `MissingBackendException` naming the artifact to add.
 - `DocumentPageSize.SLIDE_16_9` (960 × 540 pt) and `DocumentPageSize.SLIDE_4_3`
   (720 × 540 pt) presets matching the PowerPoint slide defaults.
+- `graph-compose-render-pptx` gains a coordinate-exact fixed-layout backend:
+  `PptxFixedLayoutBackend` (with `PptxFixedLayoutBackendProvider`,
+  `format() == "pptx"`) consumes the same resolved `LayoutGraph` as the PDF
+  backend — one page becomes one identically-sized slide and fragments render
+  at identical coordinates. First capability slice: rectangle shapes (solid
+  fill, stroke, corner radii, per-side borders), ellipses, and lines, plus a
+  custom-handler seam (`PptxFragmentRenderHandler`,
+  `PptxFixedLayoutBackend.Builder#addHandler`). Unsupported payloads fail
+  with `UnsupportedNodeCapabilityException`; the live per-capability status
+  lives in `docs/architecture/backend-capability-matrix.md`.
 
 ### Documentation
 

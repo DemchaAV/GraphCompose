@@ -45,9 +45,9 @@ Payload records live in `core` under
 | Inline images (`ParagraphImageSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ❌ |
 | Inline vector shapes (`ParagraphShapeSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ❌ |
 | Inline SVG (`ParagraphSvgSpan`) | ✅ `PdfParagraphFragmentRenderHandler` + `PdfPathPainter` | 🚧 | ❌ |
-| Rectangle shape — fill, stroke, per-corner radii, side borders (`ShapeFragmentPayload`) | ✅ `PdfShapeFragmentRenderHandler` | 🚧 | ❌ |
-| Ellipse (`EllipseFragmentPayload`) | ✅ `PdfEllipseFragmentRenderHandler` | 🚧 | ❌ |
-| Line — dash pattern, line cap (`LineFragmentPayload`) | ✅ `PdfLineFragmentRenderHandler` | 🚧 | ❌ |
+| Rectangle shape — fill, stroke, per-corner radii, side borders (`ShapeFragmentPayload`) | ✅ `PdfShapeFragmentRenderHandler` | ⚠️ `PptxShapeFragmentRenderHandler` (distinct per-corner radii render with the top-left radius on all corners — single-adjust `roundRect` preset — until custom geometry lands; uniform radii and side borders exact) | ❌ |
+| Ellipse (`EllipseFragmentPayload`) | ✅ `PdfEllipseFragmentRenderHandler` | ✅ `PptxEllipseFragmentRenderHandler` | ❌ |
+| Line — dash pattern, line cap (`LineFragmentPayload`) | ✅ `PdfLineFragmentRenderHandler` | ⚠️ `PptxLineFragmentRenderHandler` (numeric dash arrays map to the generic dashed preset; solid lines and caps exact) | ❌ |
 | Polygon (`PolygonFragmentPayload`) | ✅ `PdfPolygonFragmentRenderHandler` | 🚧 | ❌ |
 | Free path — segments, dash, cap, join (`PathFragmentPayload`) | ✅ `PdfPathFragmentRenderHandler` + `PdfPathPainter` | 🚧 | ❌ |
 | Linear gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | 🚧 | ❌ |
@@ -88,11 +88,11 @@ honour an option ignores it (documented contract).
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | 🚧 `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
+| Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | ✅ `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
 | Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` (in-memory, no round-trip) | 🚧 (decision pending: POI `XSLFSlide.draw` quality) | ❌ |
 | Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | 🚧 | ❌ |
 | Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | 🚧 (pinned OPC timestamps + zip normalization) | ❌ |
-| ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | 🚧 (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
+| ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
 | `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | 🚧 (`buildPptx` / `writePptx` / `toPptxBytes` planned) | via `session.export(new DocxSemanticBackend(...))` |
 
 ## Fidelity notes (PPTX)

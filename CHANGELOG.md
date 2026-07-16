@@ -3,6 +3,35 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.1.0 — in progress
+
+### Public API
+
+- `BackendProviders.fixedLayout(String format)` selects a fixed-layout render
+  backend by its `FixedLayoutBackendProvider.format()` key (case-insensitive),
+  so several fixed-layout backends can coexist on one classpath. The no-arg
+  `BackendProviders.fixedLayout()` default is now deterministic regardless of
+  classpath order: the `"pdf"` provider wins when present, otherwise the
+  provider with the lexicographically smallest format. The PDF convenience
+  paths (`toPdfBytes`, `buildPdf`, multi-section rendering) resolve the PDF
+  backend explicitly by format. A missing format fails with a
+  `MissingBackendException` naming the artifact to add.
+- `DocumentPageSize.SLIDE_16_9` (960 × 540 pt) and `DocumentPageSize.SLIDE_4_3`
+  (720 × 540 pt) presets matching the PowerPoint slide defaults.
+
+### Documentation
+
+- `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
+  of what each render backend supports and which class implements it,
+  maintained as part of every capability-changing PR.
+
+### Tests
+
+- `BackendProvidersTest` (qa) pins format-keyed resolution and the
+  deterministic PDF default; `MissingBackendContractTest` (core, backend-free
+  classpath) pins the missing-format diagnostics; `DocumentPageSizeTest` pins
+  the slide presets.
+
 ## v2.0.0 — 2026-07-13
 
 The 2.0 development line. Binary-breaking by design — japicmp runs report-only

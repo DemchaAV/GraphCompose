@@ -106,6 +106,6 @@ final class DocumentChromeOptions {
      * @return a configured renderer
      */
     FixedLayoutRenderer toConveniencePdfBackend(DocumentDebugOptions debug) {
-        return BackendProviders.fixedLayout().create(snapshot(), debug);
+        return BackendProviders.fixedLayout("pdf").create(snapshot(), debug);
     }
 }

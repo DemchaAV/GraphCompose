@@ -85,6 +85,12 @@ class PptxParagraphFragmentRenderHandlerTest {
                 // the glyphs. Seat compensation lives in the frame top instead.
                 assertThat(runs).noneMatch(XSLFTextRun::isSuperscript);
                 assertThat(runs).noneMatch(XSLFTextRun::isSubscript);
+                // Kerning must stay off: the engine measured unkerned advances,
+                // and PowerPoint would otherwise auto-kern text above ~12pt.
+                assertThat(runs).allMatch(run ->
+                        run.getXmlObject() instanceof org.openxmlformats.schemas.drawingml.x2006.main.CTRegularTextRun ctRun
+                                && ctRun.isSetRPr() && ctRun.getRPr().isSetKern()
+                                && ctRun.getRPr().getKern() == 0);
 
                 XSLFAutoShape linkHotspot = show.getSlides().get(0).getShapes().stream()
                         .filter(XSLFAutoShape.class::isInstance)

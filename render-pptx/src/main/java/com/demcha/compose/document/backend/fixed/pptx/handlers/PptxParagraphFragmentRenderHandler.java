@@ -16,6 +16,8 @@ import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.sl.usermodel.TextShape.TextAutofit;
 import org.apache.poi.sl.usermodel.VerticalAlignment;
 import org.apache.poi.xslf.usermodel.*;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTRegularTextRun;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import java.awt.Color;
@@ -219,6 +221,21 @@ public final class PptxParagraphFragmentRenderHandler
         run.setItalic(PptxFontMapping.isItalic(style));
         run.setUnderlined(PptxFontMapping.isUnderline(style));
         run.setStrikethrough(PptxFontMapping.isStrikethrough(style));
+        disableKerning(run);
+    }
+
+    /**
+     * PowerPoint auto-kerns text above ~12pt, but the engine measures and the
+     * PDF backend draws plain unkerned advances — kerned glyphs would drift off
+     * the measured grid and change the visual rhythm of large text. An explicit
+     * {@code kern="0"} keeps the viewer on the measured advances.
+     */
+    private static void disableKerning(XSLFTextRun run) {
+        if (run.getXmlObject() instanceof CTRegularTextRun ctRun) {
+            CTTextCharacterProperties properties =
+                    ctRun.isSetRPr() ? ctRun.getRPr() : ctRun.addNewRPr();
+            properties.setKern(0);
+        }
     }
 
     private static void renderTextSpan(XSLFSlide slide,

@@ -8,6 +8,8 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
+import com.demcha.compose.font.FontFamilyDefinition;
+import com.demcha.compose.font.FontName;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PptxTableParityDemoTest {
 
     private static final double SCALE = 2.0;
+    private static final FontName DEMO_FONT = FontName.of("TableParityLato");
+    private static final FontFamilyDefinition DEMO_FONT_FAMILY = FontFamilyDefinition.classpath(
+                    DEMO_FONT, "fonts/google/lato/Lato-Regular.ttf")
+            .boldResource("fonts/google/lato/Lato-Bold.ttf")
+            .wordFamily("Lato")
+            .build();
 
     @Test
     void writesTheTableParityDemoPair() throws Exception {
@@ -60,13 +68,14 @@ class PptxTableParityDemoTest {
 
     private static DocumentSession composeDemo() {
         DocumentSession session = GraphCompose.document()
+                .registerFontFamily(DEMO_FONT_FAMILY)
                 .pageSize(460, 280)
                 .margin(DocumentInsets.of(24))
                 .create();
         DocumentTableStyle body = DocumentTableStyle.builder()
                 .stroke(DocumentStroke.of(DocumentColor.rgb(203, 213, 225), 1))
                 .padding(4)
-                .textStyle(DocumentTextStyle.builder().size(10).build())
+                .textStyle(DocumentTextStyle.builder().fontName(DEMO_FONT).size(10).build())
                 .build();
         session.pageFlow(page -> page.module("engines", module -> module.table(table -> {
             table.autoColumns(3)
@@ -75,6 +84,7 @@ class PptxTableParityDemoTest {
                     .headerStyle(DocumentTableStyle.builder()
                             .fillColor(DocumentColor.rgb(30, 64, 175))
                             .textStyle(DocumentTextStyle.builder()
+                                    .fontName(DEMO_FONT)
                                     .color(DocumentColor.WHITE).size(10).build())
                             .stroke(DocumentStroke.of(DocumentColor.rgb(30, 64, 175), 1))
                             .padding(4)

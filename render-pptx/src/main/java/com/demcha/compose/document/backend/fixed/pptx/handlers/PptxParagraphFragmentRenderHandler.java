@@ -9,16 +9,10 @@ import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
-import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
-import org.apache.poi.sl.usermodel.TextShape.TextAutofit;
-import org.apache.poi.sl.usermodel.VerticalAlignment;
 import org.apache.poi.xslf.usermodel.*;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTRegularTextRun;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
-import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -31,8 +25,6 @@ import java.awt.geom.Rectangle2D;
  */
 public final class PptxParagraphFragmentRenderHandler
         implements PptxFragmentRenderHandler<ParagraphFragmentPayload> {
-
-    private static final double FRAME_EPSILON = 0.1;
 
     /** Creates the paragraph renderer. */
     public PptxParagraphFragmentRenderHandler() {
@@ -90,14 +82,12 @@ public final class PptxParagraphFragmentRenderHandler
         if (!usesAbsoluteSpans) {
             double top = environment.canvasHeight() - baselineY
                     - sharedBoxViewerAscent(line, environment);
-            XSLFTextBox lineBox = newTextBox(slide,
+            XSLFTextBox lineBox = PptxTextFrames.newTextBox(slide,
                     new Rectangle2D.Double(lineX, top,
-                            Math.max(FRAME_EPSILON, line.width() + FRAME_EPSILON),
-                            Math.max(FRAME_EPSILON, line.textLineHeight())));
-            setShapeName(lineBox, "GraphCompose Text Line");
-            paragraph = lineBox.getTextParagraphs().get(0);
-            removePlaceholderRuns(paragraph);
-            paragraph.setTextAlign(org.apache.poi.sl.usermodel.TextParagraph.TextAlign.LEFT);
+                            Math.max(PptxTextFrames.FRAME_EPSILON, line.width() + PptxTextFrames.FRAME_EPSILON),
+                            Math.max(PptxTextFrames.FRAME_EPSILON, line.textLineHeight())));
+            PptxTextFrames.setShapeName(lineBox, "GraphCompose Text Line");
+            paragraph = PptxTextFrames.preparedParagraph(lineBox);
             paragraph.setLineSpacing(100.0);
             paragraph.setSpaceBefore(0.0);
             paragraph.setSpaceAfter(0.0);
@@ -112,7 +102,7 @@ public final class PptxParagraphFragmentRenderHandler
                         renderTextSpan(slide, textSpan, text, cursorX, baselineY, fonts,
                                 environment.canvasHeight(), environment);
                     } else {
-                        addRun(paragraph, text, textSpan.textStyle(), environment);
+                        PptxTextFrames.addRun(paragraph, text, textSpan.textStyle(), environment);
                     }
                 } else {
                     renderChip(slide, textSpan, text, cursorX, baselineY, line, fonts, environment);
@@ -186,58 +176,6 @@ public final class PptxParagraphFragmentRenderHandler
         return null;
     }
 
-    private static XSLFTextBox newTextBox(XSLFSlide slide, Rectangle2D anchor) {
-        XSLFTextBox box = slide.createTextBox();
-        box.setAnchor(anchor);
-        box.setWordWrap(false);
-        box.setTextAutofit(TextAutofit.NONE);
-        box.setVerticalAlignment(VerticalAlignment.TOP);
-        box.setTopInset(0);
-        box.setRightInset(0);
-        box.setBottomInset(0);
-        box.setLeftInset(0);
-        return box;
-    }
-
-    private static void addRun(XSLFTextParagraph paragraph,
-                               String text,
-                               TextStyle style,
-                               PptxRenderEnvironment environment) {
-        if (text.isEmpty()) {
-            return;
-        }
-        XSLFTextRun run = paragraph.addNewTextRun();
-        run.setText(text);
-        applyStyle(run, style, environment);
-    }
-
-    private static void applyStyle(XSLFTextRun run,
-                                   TextStyle style,
-                                   PptxRenderEnvironment environment) {
-        run.setFontFamily(environment.fontFamily(style.fontName()));
-        run.setFontSize(style.size());
-        run.setFontColor(style.color() == null ? Color.BLACK : style.color());
-        run.setBold(PptxFontMapping.isBold(style));
-        run.setItalic(PptxFontMapping.isItalic(style));
-        run.setUnderlined(PptxFontMapping.isUnderline(style));
-        run.setStrikethrough(PptxFontMapping.isStrikethrough(style));
-        disableKerning(run);
-    }
-
-    /**
-     * PowerPoint auto-kerns text above ~12pt, but the engine measures and the
-     * PDF backend draws plain unkerned advances — kerned glyphs would drift off
-     * the measured grid and change the visual rhythm of large text. An explicit
-     * {@code kern="0"} keeps the viewer on the measured advances.
-     */
-    private static void disableKerning(XSLFTextRun run) {
-        if (run.getXmlObject() instanceof CTRegularTextRun ctRun) {
-            CTTextCharacterProperties properties =
-                    ctRun.isSetRPr() ? ctRun.getRPr() : ctRun.addNewRPr();
-            properties.setKern(0);
-        }
-    }
-
     private static void renderTextSpan(XSLFSlide slide,
                                        ParagraphTextSpan span,
                                        String text,
@@ -249,14 +187,11 @@ public final class PptxParagraphFragmentRenderHandler
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
         double top = canvasHeight - baselineY
                 - environment.viewerAscent(span.textStyle(), metrics.ascent());
-        XSLFTextBox textBox = newTextBox(slide, new Rectangle2D.Double(
-                cursorX, top, Math.max(FRAME_EPSILON, span.width() + FRAME_EPSILON),
-                Math.max(FRAME_EPSILON, metrics.lineHeight())));
-        setShapeName(textBox, "GraphCompose Inline Text Span");
-        XSLFTextParagraph paragraph = textBox.getTextParagraphs().get(0);
-        removePlaceholderRuns(paragraph);
-        paragraph.setTextAlign(org.apache.poi.sl.usermodel.TextParagraph.TextAlign.LEFT);
-        addRun(paragraph, text, span.textStyle(), environment);
+        XSLFTextBox textBox = PptxTextFrames.newTextBox(slide, new Rectangle2D.Double(
+                cursorX, top, Math.max(PptxTextFrames.FRAME_EPSILON, span.width() + PptxTextFrames.FRAME_EPSILON),
+                Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
+        PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Text Span");
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
     }
 
     private static void renderChip(XSLFSlide slide,
@@ -289,15 +224,12 @@ public final class PptxParagraphFragmentRenderHandler
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
         double textTop = canvasHeight - baselineY
                 - environment.viewerAscent(span.textStyle(), metrics.ascent());
-        double textWidth = Math.max(FRAME_EPSILON, span.width() - padding.horizontal());
-        XSLFTextBox textBox = newTextBox(slide, new Rectangle2D.Double(
+        double textWidth = Math.max(PptxTextFrames.FRAME_EPSILON, span.width() - padding.horizontal());
+        XSLFTextBox textBox = PptxTextFrames.newTextBox(slide, new Rectangle2D.Double(
                 cursorX + padding.left(), textTop, textWidth,
-                Math.max(FRAME_EPSILON, metrics.lineHeight())));
-        setShapeName(textBox, "GraphCompose Inline Chip Text");
-        XSLFTextParagraph paragraph = textBox.getTextParagraphs().get(0);
-        removePlaceholderRuns(paragraph);
-        paragraph.setTextAlign(org.apache.poi.sl.usermodel.TextParagraph.TextAlign.LEFT);
-        addRun(paragraph, text, span.textStyle(), environment);
+                Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
+        PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
     }
 
     private static void renderExternalLinkOverlay(XSLFSlide slide,
@@ -318,20 +250,8 @@ public final class PptxParagraphFragmentRenderHandler
         // in slide-show mode. noFill shapes only hit-test their outline.
         hotspot.setFillColor(new Color(0, 0, 0, 0));
         hotspot.setLineColor(null);
-        setShapeName(hotspot, "GraphCompose Text Link Hotspot");
+        PptxTextFrames.setShapeName(hotspot, "GraphCompose Text Link Hotspot");
         hotspot.createHyperlink().linkToUrl(external.options().uri());
-    }
-
-    private static void removePlaceholderRuns(XSLFTextParagraph paragraph) {
-        for (XSLFTextRun run : java.util.List.copyOf(paragraph.getTextRuns())) {
-            if (run.getRawText() == null || run.getRawText().isEmpty()) {
-                paragraph.removeTextRun(run);
-            }
-        }
-    }
-
-    private static void setShapeName(XSLFSimpleShape shape, String name) {
-        ((CTShape) shape.getXmlObject()).getNvSpPr().getCNvPr().setName(name);
     }
 
     private static void renderImage(XSLFSlide slide,

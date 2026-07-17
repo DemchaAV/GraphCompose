@@ -7,12 +7,14 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragme
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTableRowFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFPictureData;
@@ -48,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * built-in defaults per payload type via {@link Builder#addHandler}.</p>
  *
  * <p>The backend currently renders paragraphs (including rich runs, chips and
- * inline graphics) plus vector shape, line, and ellipse fragments;
+ * inline graphics), table rows, and vector shape, line, and ellipse fragments;
  * the remaining payload types arrive incrementally — see
  * {@code docs/architecture/backend-capability-matrix.md} for the live
  * per-capability status. Multi-section rendering and render-to-images are not
@@ -104,7 +106,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 new PptxShapeFragmentRenderHandler(),
                 new PptxLineFragmentRenderHandler(),
                 new PptxEllipseFragmentRenderHandler(),
-                new PptxParagraphFragmentRenderHandler());
+                new PptxParagraphFragmentRenderHandler(),
+                new PptxTableRowFragmentRenderHandler());
     }
 
     @Override
@@ -208,9 +211,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxRenderEnvironment environment =
                     new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
                             measurement.fontLibrary(), context.customFontFamilies());
-            for (PlacedFragment fragment : graph.fragments()) {
-                renderFragment(fragment, environment);
-            }
+            renderGraph(graph, environment);
             show.write(output);
         }
     }
@@ -244,6 +245,58 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             ImageIO.write(image, "png", buffer);
             return buffer.toByteArray();
         }
+    }
+
+    /**
+     * Paints every fragment in graph order, grouping contiguous table-row
+     * fragments so every cell fill of a table lands beneath its borders and
+     * text — the PDF backend's two-pass discipline.
+     */
+    private void renderGraph(LayoutGraph graph, PptxRenderEnvironment environment) throws Exception {
+        PptxFragmentRenderHandler<?> tableRowHandler =
+                handlers.get(TableRowFragmentPayload.class);
+        List<PlacedFragment> fragments = graph.fragments();
+        for (int index = 0; index < fragments.size(); index++) {
+            PlacedFragment fragment = fragments.get(index);
+            if (fragment.payload() instanceof TableRowFragmentPayload
+                    && tableRowHandler instanceof PptxTableRowFragmentRenderHandler tableHandler) {
+                index = renderTableRowGroup(fragments, index, tableHandler, environment);
+                continue;
+            }
+            renderFragment(fragment, environment);
+        }
+    }
+
+    /**
+     * Renders one contiguous run of same-table row fragments: all fills
+     * first, then all borders and text. Returns the last consumed index.
+     */
+    private int renderTableRowGroup(List<PlacedFragment> fragments,
+                                    int startIndex,
+                                    PptxTableRowFragmentRenderHandler handler,
+                                    PptxRenderEnvironment environment) {
+        String tablePath = fragments.get(startIndex).path();
+        int endExclusive = startIndex;
+        while (endExclusive < fragments.size()
+                && Objects.equals(fragments.get(endExclusive).path(), tablePath)
+                && fragments.get(endExclusive).payload()
+                        instanceof TableRowFragmentPayload) {
+            endExclusive++;
+        }
+        for (int index = startIndex; index < endExclusive; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            handler.renderFills(fragment,
+                    (TableRowFragmentPayload) fragment.payload(),
+                    environment);
+        }
+        for (int index = startIndex; index < endExclusive; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            TableRowFragmentPayload payload =
+                    (TableRowFragmentPayload) fragment.payload();
+            handler.renderBordersAndText(fragment, payload, environment);
+            finishRenderedFragment(fragment, payload, environment);
+        }
+        return endExclusive - 1;
     }
 
     private void renderFragment(PlacedFragment fragment, PptxRenderEnvironment environment) throws Exception {

@@ -86,6 +86,12 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     private final int rasterSlidesDpi;
 
     /**
+     * When {@code true} (the default), a clipped composite renders through the
+     * PDF backend into a transparent picture, giving pixel-exact clipping.
+     */
+    private final boolean clipRasterFallback;
+
+    /**
      * Creates a backend with the default handler set.
      */
     public PptxFixedLayoutBackend() {
@@ -102,6 +108,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         }
         this.handlers = Map.copyOf(merged);
         this.rasterSlidesDpi = builder.rasterSlidesDpi;
+        this.clipRasterFallback = builder.clipRasterFallback;
     }
 
     /**
@@ -233,7 +240,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxRenderEnvironment environment =
                     new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
                             measurement.fontLibrary(), context.customFontFamilies());
-            renderGraph(graph, environment);
+            renderGraph(graph, environment, context);
             show.write(output);
         }
     }
@@ -274,7 +281,9 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * fragments so every cell fill of a table lands beneath its borders and
      * text — the PDF backend's two-pass discipline.
      */
-    private void renderGraph(LayoutGraph graph, PptxRenderEnvironment environment) throws Exception {
+    private void renderGraph(LayoutGraph graph,
+                             PptxRenderEnvironment environment,
+                             FixedLayoutRenderContext context) throws Exception {
         PptxFragmentRenderHandler<?> tableRowHandler =
                 handlers.get(TableRowFragmentPayload.class);
         List<PlacedFragment> fragments = graph.fragments();
@@ -285,8 +294,103 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 index = renderTableRowGroup(fragments, index, tableHandler, environment);
                 continue;
             }
+            if (clipRasterFallback
+                    && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload) {
+                index = renderClippedComposite(graph, fragments, index, environment, context);
+                continue;
+            }
             renderFragment(fragment, environment);
         }
+    }
+
+    /**
+     * Renders one clip region — the fragments between a clip-begin marker and
+     * its matching end — through the PDF backend into a transparent picture
+     * placed at the clip bounds, so the clip is pixel-exact even though
+     * DrawingML cannot express it. Fragment-level links, bookmarks, and
+     * anchors inside the region are still recorded; run-level link hotspots
+     * inside a rasterized composite are not emitted. Returns the last
+     * consumed index.
+     */
+    private int renderClippedComposite(LayoutGraph graph,
+                                       List<PlacedFragment> fragments,
+                                       int beginIndex,
+                                       PptxRenderEnvironment environment,
+                                       FixedLayoutRenderContext context) throws Exception {
+        PlacedFragment beginFragment = fragments.get(beginIndex);
+        String ownerPath = ((com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload)
+                beginFragment.payload()).ownerPath();
+        int endIndex = beginIndex + 1;
+        while (endIndex < fragments.size()
+                && !(fragments.get(endIndex).payload()
+                        instanceof com.demcha.compose.document.layout.payloads.ShapeClipEndPayload end
+                        && Objects.equals(end.ownerPath(), ownerPath))) {
+            endIndex++;
+        }
+        if (endIndex >= fragments.size()) {
+            // Defensive: an unmatched begin falls back to the unclipped path.
+            renderFragment(beginFragment, environment);
+            return beginIndex;
+        }
+
+        // Re-page the region onto page 0 and let the PDF backend apply the
+        // real clip; the raster is cropped to the clip bounds afterwards.
+        List<PlacedFragment> region = new ArrayList<>(endIndex - beginIndex + 1);
+        for (int index = beginIndex; index <= endIndex; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            region.add(new PlacedFragment(fragment.path(), fragment.fragmentIndex(), 0,
+                    fragment.x(), fragment.y(), fragment.width(), fragment.height(),
+                    fragment.margin(), fragment.padding(), fragment.payload()));
+        }
+        LayoutGraph regionGraph = new LayoutGraph(graph.canvas(), 1, List.of(), region);
+        double canvasHeight = graph.canvas().height();
+        double scale = Math.min(4.0, 2048.0
+                / Math.max(1.0, Math.max(beginFragment.width(), beginFragment.height())));
+        BufferedImage page = new PdfFixedLayoutBackend()
+                .renderToImages(regionGraph, context, (int) Math.round(72.0 * scale), true, 0)
+                .get(0);
+        double pixelsPerPoint = page.getWidth() / graph.canvas().width();
+        int left = clamp((int) Math.floor(beginFragment.x() * pixelsPerPoint), 0, page.getWidth() - 1);
+        int top = clamp((int) Math.floor(
+                (canvasHeight - beginFragment.y() - beginFragment.height()) * pixelsPerPoint),
+                0, page.getHeight() - 1);
+        int right = clamp((int) Math.ceil(
+                (beginFragment.x() + beginFragment.width()) * pixelsPerPoint), left + 1, page.getWidth());
+        int bottom = clamp((int) Math.ceil(
+                (canvasHeight - beginFragment.y()) * pixelsPerPoint), top + 1, page.getHeight());
+        BufferedImage cropped = page.getSubimage(left, top, right - left, bottom - top);
+        byte[] png;
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            ImageIO.write(cropped, "png", buffer);
+            png = buffer.toByteArray();
+        }
+        XSLFPictureShape picture =
+                environment.surface(beginFragment.pageIndex()).createPicture(
+                        environment.slideShow().addPicture(png, PictureData.PictureType.PNG));
+        // Anchor on the crop pixel bounds converted back to points, so the
+        // floor/ceil snap never shifts the content visually.
+        picture.setAnchor(new Rectangle2D.Double(
+                left / pixelsPerPoint,
+                top / pixelsPerPoint,
+                (right - left) / pixelsPerPoint,
+                (bottom - top) / pixelsPerPoint));
+        ((org.openxmlformats.schemas.presentationml.x2006.main.CTPicture) picture.getXmlObject())
+                .getNvPicPr().getCNvPr().setName("GraphCompose Clipped Composite");
+
+        for (int index = beginIndex; index <= endIndex; index++) {
+            PlacedFragment fragment = fragments.get(index);
+            if (fragment.payload()
+                    instanceof com.demcha.compose.document.layout.payloads.AnchorMarkerPayload anchor) {
+                environment.registerAnchor(fragment, anchor.anchor());
+            } else {
+                finishRenderedFragment(fragment, fragment.payload(), environment);
+            }
+        }
+        return endIndex;
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     /**
@@ -379,6 +483,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
         private final List<PptxFragmentRenderHandler<?>> customHandlers = new ArrayList<>();
         private int rasterSlidesDpi;
+        private boolean clipRasterFallback = true;
 
         private Builder() {
         }
@@ -419,6 +524,22 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
          */
         public Builder addHandler(PptxFragmentRenderHandler<?> handler) {
             customHandlers.add(Objects.requireNonNull(handler, "handler"));
+            return this;
+        }
+
+        /**
+         * Controls the clip fallback. DrawingML has no graphics-state
+         * clipping, so by default a clipped composite renders through the PDF
+         * backend into one transparent picture placed at the clip bounds:
+         * pixel-exact clipping (including any enclosing rotation), at the
+         * price of that fragment not being editable as shapes. Disabling the
+         * fallback renders the children unclipped with a one-time warning.
+         *
+         * @param enabled {@code true} keeps the raster fallback
+         * @return this builder
+         */
+        public Builder clipRasterFallback(boolean enabled) {
+            this.clipRasterFallback = enabled;
             return this;
         }
 

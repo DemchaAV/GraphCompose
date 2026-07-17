@@ -65,6 +65,7 @@ public final class PptxRenderEnvironment {
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
+    private final Set<String> substitutionWarned = new LinkedHashSet<>();
 
     PptxRenderEnvironment(XMLSlideShow show,
                           PptxRenderSession session,
@@ -81,9 +82,22 @@ public final class PptxRenderEnvironment {
         Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
+            if (family.fontSourceSet().isEmpty()) {
+                LOG.warn("render.pptx.font.substitution family={} — registered without binary "
+                                + "sources, the deck references \"{}\" by name only; viewers "
+                                + "without that font installed will substitute their own",
+                        family.name().name(), family.wordFamily());
+            }
             family.fontSourceSet().ifPresent(sources -> {
                 if (embedFontFamily(show, family, sources)) {
                     metrics.put(family.name(), PptxViewerMetrics.load(family, sources));
+                } else {
+                    // Same key as every other substitution so one log filter
+                    // catches them all; the embed-skip warning carries the cause.
+                    LOG.warn("render.pptx.font.substitution family={} — could not be embedded, "
+                                    + "the deck references \"{}\" by name only; viewers without "
+                                    + "that font installed will substitute their own",
+                            family.name().name(), family.wordFamily());
                 }
             });
         }
@@ -156,7 +170,30 @@ public final class PptxRenderEnvironment {
                 return customFamily;
             }
         }
-        return PptxFontMapping.familyFor(fontName);
+        // Dedupe on the resolved viewer family so facet-suffixed names
+        // (Roboto-Regular, Roboto-Bold) warn once, not once per facet; the
+        // message still names the source font the document asked for.
+        String viewerFamily = PptxFontMapping.familyFor(fontName);
+        String sourceName = (fontName == null ? FontName.HELVETICA : fontName).name();
+        String replacement = PptxFontMapping.standardReplacementFor(fontName);
+        if (replacement != null) {
+            if (substitutionWarned.add(viewerFamily)) {
+                LOG.warn("render.pptx.font.substitution family={} — a PDF built-in with no "
+                                + "PPTX counterpart, rendered as metric-compatible \"{}\" "
+                                + "(identical widths, slightly different letterforms); register "
+                                + "a binary font family for identical glyphs in both formats",
+                        sourceName, replacement);
+            }
+        } else if (substitutionWarned.add(viewerFamily)) {
+            // Not registered for this render: the deck can only reference the
+            // family by name, so a viewer without it installed substitutes.
+            LOG.warn("render.pptx.font.substitution family={} — not registered with binary "
+                            + "sources for this render, the deck references \"{}\" by name "
+                            + "only; register the family (registerFontFamily) to embed it and "
+                            + "guarantee identical glyphs on every machine",
+                    sourceName, viewerFamily);
+        }
+        return viewerFamily;
     }
 
     /**

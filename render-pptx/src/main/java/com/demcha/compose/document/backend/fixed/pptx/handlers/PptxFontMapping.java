@@ -40,8 +40,24 @@ public final class PptxFontMapping {
      * @return PPTX family name
      */
     public static String familyFor(FontName fontName) {
-        String name = (fontName == null ? FontName.HELVETICA : fontName).name();
-        String lower = name.toLowerCase(Locale.ROOT);
+        String replacement = standardReplacementFor(fontName);
+        if (replacement != null) {
+            return replacement;
+        }
+        return stripStyleSuffix((fontName == null ? FontName.HELVETICA : fontName).name());
+    }
+
+    /**
+     * Returns the metric-compatible viewer family that replaces a standard-14
+     * PostScript font in PPTX output, or {@code null} when the name is not a
+     * standard-14 family (binary families keep their own name).
+     *
+     * @param fontName logical document font
+     * @return replacement family name, or {@code null}
+     */
+    public static String standardReplacementFor(FontName fontName) {
+        String lower = (fontName == null ? FontName.HELVETICA : fontName)
+                .name().toLowerCase(Locale.ROOT);
         if (lower.startsWith("helvetica")) {
             return "Arial";
         }
@@ -51,7 +67,7 @@ public final class PptxFontMapping {
         if (lower.startsWith("courier")) {
             return "Courier New";
         }
-        return stripStyleSuffix(name);
+        return null;
     }
 
     /**

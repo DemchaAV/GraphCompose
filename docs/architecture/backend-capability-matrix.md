@@ -89,7 +89,8 @@ honour an option ignores it (documented contract).
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
 | Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | ✅ `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
-| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` (in-memory, no round-trip) | 🚧 (decision pending: POI `XSLFSlide.draw` quality) | ❌ |
+| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | 🚧 (decision pending: POI `XSLFSlide.draw` quality) | ❌ |
+| Raster-slide mode — every page as one full-slide picture, pixel-exact to the PDF/PNG output (`Builder.rasterSlides(dpi)`) | n/a (the PDF raster is the source) | ✅ `PptxFixedLayoutBackend` | ❌ |
 | Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | 🚧 | ❌ |
 | Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | 🚧 (pinned OPC timestamps + zip normalization) | ❌ |
 | ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |

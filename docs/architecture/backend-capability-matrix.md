@@ -40,11 +40,11 @@ Payload records live in `core` under
 
 | Capability (payload) | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| Paragraph — pre-wrapped lines, runs, alignment (`ParagraphFragmentPayload`) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ✅ semantic paragraphs (`DocxSemanticBackend`) |
-| Inline code/badge chips (`InlineBackground` on text spans) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ❌ |
-| Inline images (`ParagraphImageSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ❌ |
-| Inline vector shapes (`ParagraphShapeSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | 🚧 | ❌ |
-| Inline SVG (`ParagraphSvgSpan`) | ✅ `PdfParagraphFragmentRenderHandler` + `PdfPathPainter` | 🚧 | ❌ |
+| Paragraph — pre-wrapped lines, runs, alignment (`ParagraphFragmentPayload`) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` (one absolute, wrap-disabled frame per measured line) | ✅ semantic paragraphs (`DocxSemanticBackend`) |
+| Inline code/badge chips (`InlineBackground` on text spans) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` | ❌ |
+| Inline images (`ParagraphImageSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` | ❌ |
+| Inline vector shapes (`ParagraphShapeSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | ⚠️ `PptxParagraphFragmentRenderHandler` + `PptxInlineGeometry` (distinct per-corner radii render with the top-left radius — single-adjust preset) | ❌ |
+| Inline SVG (`ParagraphSvgSpan`) | ✅ `PdfParagraphFragmentRenderHandler` + `PdfPathPainter` | ⚠️ `PptxParagraphFragmentRenderHandler` + `PptxInlineGeometry` + `PptxInlineSvgRasterizer` (simple layers stay native; arbitrary clips, exact dash/cap/join styles, and off-viewBox art use a transparent PNG fallback; gradient paints use their primary colour) | ❌ |
 | Rectangle shape — fill, stroke, per-corner radii, side borders (`ShapeFragmentPayload`) | ✅ `PdfShapeFragmentRenderHandler` | ⚠️ `PptxShapeFragmentRenderHandler` (distinct per-corner radii render with the top-left radius on all corners — single-adjust `roundRect` preset — until custom geometry lands; uniform radii and side borders exact) | ❌ |
 | Ellipse (`EllipseFragmentPayload`) | ✅ `PdfEllipseFragmentRenderHandler` | ✅ `PptxEllipseFragmentRenderHandler` | ❌ |
 | Line — dash pattern, line cap (`LineFragmentPayload`) | ✅ `PdfLineFragmentRenderHandler` | ⚠️ `PptxLineFragmentRenderHandler` (numeric dash arrays map to the generic dashed preset; solid lines and caps exact) | ❌ |
@@ -66,7 +66,7 @@ Payload records live in `core` under
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| External hyperlinks (fragment- and run-level) | ✅ `PdfLinkAnnotationWriter` + link rects in `PdfFixedLayoutBackend` | 🚧 (`XSLFHyperlink`) | ❌ |
+| External hyperlinks (fragment- and run-level) | ✅ `PdfLinkAnnotationWriter` + link rects in `PdfFixedLayoutBackend` | ⚠️ `PptxParagraphFragmentRenderHandler` (transparent measured-span shape hotspots preserve resolved text styling; fragment rectangles arrive with navigation support) | ❌ |
 | Internal links (anchor jump, forward references) | ✅ `PdfInternalLinkWriter` (two-pass) | 🚧 (slide-jump hyperlinks) | ❌ |
 | Document outline / bookmarks tree | ✅ `PdfBookmarkOutlineWriter` | 🚧 (no PPTX outline concept — slide names where 1:1, otherwise dropped with a note) | ❌ |
 
@@ -104,5 +104,5 @@ per already-wrapped line, so PowerPoint can never reflow content. What
 PPTX cannot guarantee is glyph-level rasterization: PowerPoint draws text
 with the fonts installed on the viewing machine. Standard-14 font names are mapped to
 metric-compatible system fonts (Helvetica → Arial, Times → Times New
-Roman, Courier → Courier New); binary font families keep their real
-family names and should be installed on the viewer for exact glyphs.
+Roman, Courier → Courier New); document-local fonts use their registered
+viewer-facing `wordFamily` and should be installed on the viewer for exact glyphs.

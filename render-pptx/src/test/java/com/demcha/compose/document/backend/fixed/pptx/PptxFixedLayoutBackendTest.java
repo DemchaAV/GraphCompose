@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.DocumentDsl;
 import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.LineBuilder;
+import com.demcha.compose.document.dsl.BarcodeBuilder;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
@@ -150,10 +151,10 @@ class PptxFixedLayoutBackendTest {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(300, 200)
                 .create()) {
-            session.pageFlow(page -> page.module("m", module -> module.paragraph("text")));
+            session.add(new BarcodeBuilder().data("still unsupported").qrCode().size(40, 40).build());
             assertThatThrownBy(() -> session.render(new PptxFixedLayoutBackend()))
                     .isInstanceOf(UnsupportedNodeCapabilityException.class)
-                    .hasMessageContaining("ParagraphFragmentPayload");
+                    .hasMessageContaining("BarcodeFragmentPayload");
         }
     }
 }

@@ -38,6 +38,12 @@ final class PptxCapabilityNotes {
                 + "support lands");
     }
 
+    static void inlineSvgRasterized() {
+        warnOnce("inline-svg-raster",
+                "inline SVG layers that require exact clipping or stroke styles render through "
+                + "a transparent PNG fallback; simple layers remain native DrawingML paths");
+    }
+
     private static void warnOnce(String key, String message) {
         if (WARNED.add(key)) {
             LOG.warn("render.pptx.capability {}", message);

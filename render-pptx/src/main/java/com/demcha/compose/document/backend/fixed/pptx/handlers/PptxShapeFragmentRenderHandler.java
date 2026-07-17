@@ -11,10 +11,6 @@ import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFConnectorShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTGeomGuide;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTGeomGuideList;
-import org.openxmlformats.schemas.drawingml.x2006.main.CTPresetGeometry2D;
-import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import java.awt.geom.Rectangle2D;
 
@@ -71,7 +67,7 @@ public final class PptxShapeFragmentRenderHandler
             double radius = uniformRadius(payload.cornerRadius(), anchor.width, anchor.height);
             if (radius > 0) {
                 shape.setShapeType(ShapeType.ROUND_RECT);
-                applyRoundRectAdjust(shape, radius, Math.min(anchor.width, anchor.height));
+                PptxShapeStyle.applyRoundRectAdjust(shape, radius, anchor.width, anchor.height);
             } else {
                 shape.setShapeType(ShapeType.RECT);
             }
@@ -118,21 +114,6 @@ public final class PptxShapeFragmentRenderHandler
             return 0.0;
         }
         return Math.min(raw, maxAllowed);
-    }
-
-    /**
-     * Stamps the roundRect {@code adj} guide: the radius as a fraction of the
-     * smaller side, in DrawingML's 1/100000 units, capped at the preset's
-     * half-side maximum of 50000.
-     */
-    private static void applyRoundRectAdjust(XSLFAutoShape shape, double radius, double smallerSide) {
-        long adj = Math.round(radius / smallerSide * 100000.0);
-        adj = Math.max(0, Math.min(adj, 50000));
-        CTPresetGeometry2D geometry = ((CTShape) shape.getXmlObject()).getSpPr().getPrstGeom();
-        CTGeomGuideList adjustValues = geometry.isSetAvLst() ? geometry.getAvLst() : geometry.addNewAvLst();
-        CTGeomGuide guide = adjustValues.addNewGd();
-        guide.setName("adj");
-        guide.setFmla("val " + adj);
     }
 
     private static void drawSideBorder(XSLFSlide slide,

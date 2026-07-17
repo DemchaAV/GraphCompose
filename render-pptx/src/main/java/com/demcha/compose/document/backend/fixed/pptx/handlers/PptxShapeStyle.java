@@ -5,7 +5,12 @@ import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.poi.sl.usermodel.StrokeStyle.LineCap;
 import org.apache.poi.sl.usermodel.StrokeStyle.LineDash;
+import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTGeomGuide;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTGeomGuideList;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTPresetGeometry2D;
+import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import java.awt.Color;
 
@@ -45,6 +50,29 @@ final class PptxShapeStyle {
                 && stroke.strokeColor() != null
                 && stroke.strokeColor().color() != null
                 && stroke.width() > 0;
+    }
+
+    /**
+     * Writes the {@code roundRect} adjustment that represents the requested
+     * radius as a fraction of the smaller side. DrawingML clamps that preset at
+     * half the smaller side, matching the PDF geometry contract.
+     */
+    static void applyRoundRectAdjust(XSLFAutoShape shape,
+                                     double radius,
+                                     double width,
+                                     double height) {
+        double smallerSide = Math.min(width, height);
+        if (smallerSide <= 0) {
+            return;
+        }
+        long adjust = Math.round(Math.min(Math.max(radius, 0), smallerSide / 2.0)
+                / smallerSide * 100000.0);
+        CTPresetGeometry2D geometry = ((CTShape) shape.getXmlObject()).getSpPr().getPrstGeom();
+        CTGeomGuideList adjustValues = geometry.isSetAvLst()
+                ? geometry.getAvLst() : geometry.addNewAvLst();
+        CTGeomGuide guide = adjustValues.addNewGd();
+        guide.setName("adj");
+        guide.setFmla("val " + Math.max(0, Math.min(adjust, 50000)));
     }
 
     static void applyLineCap(XSLFSimpleShape shape, DocumentLineCap cap) {

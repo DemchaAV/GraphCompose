@@ -5,7 +5,9 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
@@ -37,10 +39,11 @@ import java.util.concurrent.TimeUnit;
  * throws {@link UnsupportedNodeCapabilityException}). Custom handlers replace
  * built-in defaults per payload type via {@link Builder#addHandler}.</p>
  *
- * <p>The backend currently renders vector shape, line, and ellipse fragments;
+ * <p>The backend currently renders paragraphs (including rich runs, chips and
+ * inline graphics) plus vector shape, line, and ellipse fragments;
  * the remaining payload types arrive incrementally — see
  * {@code docs/architecture/backend-capability-matrix.md} for the live
- * per-capability status. Multi-section rendering and rasterization are not
+ * per-capability status. Multi-section rendering and render-to-images are not
  * implemented yet and throw {@link UnsupportedOperationException}.</p>
  *
  * <p><b>Thread-safety:</b> immutable and reusable across renders; each render
@@ -85,7 +88,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         return List.of(
                 new PptxShapeFragmentRenderHandler(),
                 new PptxLineFragmentRenderHandler(),
-                new PptxEllipseFragmentRenderHandler());
+                new PptxEllipseFragmentRenderHandler(),
+                new PptxParagraphFragmentRenderHandler());
     }
 
     @Override
@@ -100,7 +104,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
         long startNanos = System.nanoTime();
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            renderToOutput(graph, output);
+            renderToOutput(graph, context, output);
             byte[] bytes = output.toByteArray();
             if (context.outputFile() != null) {
                 Files.write(context.outputFile(), bytes);
@@ -130,11 +134,11 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         OutputStream output = Objects.requireNonNull(context.outputStream(), "context.outputStream");
 
         if (context.outputFile() == null) {
-            renderToOutput(graph, output);
+            renderToOutput(graph, context, output);
             return;
         }
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            renderToOutput(graph, buffer);
+            renderToOutput(graph, context, buffer);
             byte[] bytes = buffer.toByteArray();
             Files.write(context.outputFile(), bytes);
             output.write(bytes);
@@ -142,8 +146,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
-     * Rasterization is not implemented for the PPTX backend yet; render the
-     * same session through the PDF backend when images are needed.
+     * Render-to-images is not implemented for the PPTX backend yet; render
+     * the same session through the PDF backend when page images are needed.
      */
     @Override
     public List<BufferedImage> renderToImages(LayoutGraph graph,
@@ -152,7 +156,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                                               boolean transparent,
                                               int pageIndex) {
         throw new UnsupportedOperationException(
-                "The PPTX backend does not rasterize yet — render through the PDF backend for images.");
+                "The PPTX backend does not render pages to images yet — "
+                        + "render through the PDF backend for page images.");
     }
 
     /**
@@ -173,12 +178,17 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 "The PPTX backend does not render multi-section documents yet.");
     }
 
-    private void renderToOutput(LayoutGraph graph, OutputStream output) throws Exception {
-        try (XMLSlideShow show = new XMLSlideShow()) {
+    private void renderToOutput(LayoutGraph graph,
+                                FixedLayoutRenderContext context,
+                                OutputStream output) throws Exception {
+        try (XMLSlideShow show = new XMLSlideShow();
+             PdfMeasurementResources measurement =
+                     PdfMeasurementResources.open(context.customFontFamilies())) {
             PptxRenderSession session = new PptxRenderSession(
                     show, graph.canvas().width(), graph.canvas().height(), graph.totalPages());
             PptxRenderEnvironment environment =
-                    new PptxRenderEnvironment(show, session, 0, graph.canvas().height());
+                    new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
+                            measurement.fontLibrary(), context.customFontFamilies());
             for (PlacedFragment fragment : graph.fragments()) {
                 renderFragment(fragment, environment);
             }

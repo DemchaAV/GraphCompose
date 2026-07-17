@@ -42,6 +42,24 @@ final class PptxViewerMetrics {
         }
     }
 
+    /**
+     * Resolves the viewer ascent for one style, in points — the single seat
+     * formula shared by the render environment and the geometry test mirror,
+     * so the two cannot drift line-by-line.
+     */
+    static double ascentPoints(com.demcha.compose.engine.components.content.text.TextStyle style,
+                               com.demcha.compose.engine.render.pdf.PdfFont font,
+                               ViewerFontMetrics custom) {
+        double pdfRatio = font.verticalMetrics(style).ascent() / style.size();
+        double ratio = custom == null
+                ? com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping
+                        .viewerAscentRatio(style.fontName(), pdfRatio)
+                : custom.ascent(
+                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isBold(style),
+                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isItalic(style));
+        return ratio * style.size();
+    }
+
     static ViewerFontMetrics load(FontFamilyDefinition family,
                                   FontFamilyDefinition.FontSourceSet sources) {
         return new ViewerFontMetrics(

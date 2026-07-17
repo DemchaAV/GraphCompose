@@ -11,6 +11,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PptxFontMappingTest {
 
+    /**
+     * Anti-tautology pin: production and the geometry-test mirror share one
+     * ascent resolver, so this hand-computed constant is what actually proves
+     * the seat. Arial's hhea ascent is 1854/2048 em — at 22pt the viewer
+     * ascent must be 22 × 1854 / 2048 = 19.916015625 pt exactly.
+     */
+    @Test
+    void helveticaViewerAscentRatioIsArialsHheaAscent() {
+        assertThat(PptxFontMapping.viewerAscentRatio(FontName.HELVETICA, 0.5) * 22.0)
+                .isEqualTo(19.916015625);
+        assertThat(PptxFontMapping.viewerAscentRatio(FontName.of("SomeCustom"), 0.5))
+                .as("unknown families fall back to the supplied ratio")
+                .isEqualTo(0.5);
+    }
+
     @Test
     void mapsStandardFamiliesToMetricCompatibleViewerFonts() {
         assertThat(PptxFontMapping.familyFor(FontName.HELVETICA_BOLD)).isEqualTo("Arial");

@@ -421,15 +421,12 @@ final class PptxGeometryAssertions {
         if (font == null || style.size() <= 0) {
             return fallbackAscent;
         }
-        double pdfRatio = font.verticalMetrics(style).ascent() / style.size();
-        PptxViewerMetrics.ViewerFontMetrics custom = embedded.get(style.fontName());
-        double ratio = custom == null
-                ? com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping
-                        .viewerAscentRatio(style.fontName(), pdfRatio)
-                : custom.ascent(
-                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isBold(style),
-                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isItalic(style));
-        return ratio * style.size();
+        // Same resolver as production (PptxViewerMetrics.ascentPoints); the
+        // anti-tautology check is the hand-computed constant pinned in
+        // PptxFontMappingTest. Note the mirror loads metrics for every family
+        // with sources while production gates on a successful embed — test
+        // fonts must be embeddable.
+        return PptxViewerMetrics.ascentPoints(style, font, embedded.get(style.fontName()));
     }
 
     /** Mirrors the handler's shared-frame gate: mixed plain-run sizes force per-span frames. */

@@ -65,6 +65,11 @@ follow semantic versioning; release dates are ISO 8601.
   deterministic PDF default; `MissingBackendContractTest` (core, backend-free
   classpath) pins the missing-format diagnostics; `DocumentPageSizeTest` pins
   the slide presets.
+- `PptxFixedLayoutBackend.Builder.rasterSlides(int dpi)` — raster-slide mode:
+  every page renders through the PDF backend and lands as one full-slide
+  picture, a pixel-exact copy of the PDF/PNG output for decks that must look
+  identical everywhere. Slides are not editable as text; the default stays
+  the editable vector mode.
 - PPTX text tests re-read line, absolute-span and inline-graphic anchors through
   POI; cover real wrapping, mixed font sizes, vertical seating, custom fonts,
   rich styles, links, chips, SVG fallback and exact inline radii; and lock the

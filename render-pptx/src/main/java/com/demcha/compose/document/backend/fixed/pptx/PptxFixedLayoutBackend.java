@@ -7,17 +7,25 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragme
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFPictureData;
+import org.apache.poi.xslf.usermodel.XSLFPictureShape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -58,6 +66,12 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     private final Map<Class<?>, PptxFragmentRenderHandler<?>> handlers;
 
     /**
+     * Raster-slide resolution in DPI; {@code 0} keeps the default editable
+     * vector mode.
+     */
+    private final int rasterSlidesDpi;
+
+    /**
      * Creates a backend with the default handler set.
      */
     public PptxFixedLayoutBackend() {
@@ -73,6 +87,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             merged.put(handler.payloadType(), handler);
         }
         this.handlers = Map.copyOf(merged);
+        this.rasterSlidesDpi = builder.rasterSlidesDpi;
     }
 
     /**
@@ -181,6 +196,10 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     private void renderToOutput(LayoutGraph graph,
                                 FixedLayoutRenderContext context,
                                 OutputStream output) throws Exception {
+        if (rasterSlidesDpi > 0) {
+            renderRasterSlides(graph, context, output);
+            return;
+        }
         try (XMLSlideShow show = new XMLSlideShow();
              PdfMeasurementResources measurement =
                      PdfMeasurementResources.open(context.customFontFamilies())) {
@@ -193,6 +212,37 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 renderFragment(fragment, environment);
             }
             show.write(output);
+        }
+    }
+
+    /**
+     * Raster-slide mode: every page is rendered through the PDF backend at the
+     * configured DPI and placed as one full-slide picture — a pixel-exact copy
+     * of the PDF/PNG output in .pptx form. Slides are not editable as text.
+     */
+    private void renderRasterSlides(LayoutGraph graph,
+                                    FixedLayoutRenderContext context,
+                                    OutputStream output) throws Exception {
+        List<BufferedImage> pages = new PdfFixedLayoutBackend()
+                .renderToImages(graph, context, rasterSlidesDpi, false, -1);
+        try (XMLSlideShow show = new XMLSlideShow()) {
+            PptxRenderSession session = new PptxRenderSession(
+                    show, graph.canvas().width(), graph.canvas().height(), graph.totalPages());
+            for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
+                XSLFPictureData data = show.addPicture(
+                        encodePng(pages.get(pageIndex)), PictureData.PictureType.PNG);
+                XSLFPictureShape picture = session.slide(pageIndex).createPicture(data);
+                picture.setAnchor(new Rectangle2D.Double(
+                        0, 0, graph.canvas().width(), graph.canvas().height()));
+            }
+            show.write(output);
+        }
+    }
+
+    private static byte[] encodePng(BufferedImage image) throws IOException {
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "png", buffer);
+            return buffer.toByteArray();
         }
     }
 
@@ -253,8 +303,36 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     public static final class Builder {
 
         private final List<PptxFragmentRenderHandler<?>> customHandlers = new ArrayList<>();
+        private int rasterSlidesDpi;
 
         private Builder() {
+        }
+
+        /**
+         * Switches the backend to raster-slide mode: every page renders
+         * through the PDF backend at the given DPI and lands as one
+         * full-slide picture — a pixel-exact copy of the PDF/PNG output for
+         * decks that must look identical everywhere. The trade-off is that
+         * slide content is a picture: text is not selectable or editable and
+         * files grow with resolution. Leave unset for the default editable
+         * vector mode.
+         *
+         * <p>Navigation is baked into the pixels: hyperlinks, bookmarks, and
+         * custom fragment handlers do not apply in raster mode. Every page is
+         * held in memory during the render, so memory grows with page count
+         * and the square of the DPI; the resolution is capped at 600 DPI.</p>
+         *
+         * @param dpi raster resolution in dots per inch (72 = native size, max 600)
+         * @return this builder
+         * @throws IllegalArgumentException if {@code dpi} is not in [1, 600]
+         */
+        public Builder rasterSlides(int dpi) {
+            if (dpi <= 0 || dpi > 600) {
+                throw new IllegalArgumentException(
+                        "Raster DPI must be between 1 and 600: " + dpi);
+            }
+            this.rasterSlidesDpi = dpi;
+            return this;
         }
 
         /**

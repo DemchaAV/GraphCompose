@@ -55,7 +55,7 @@ Payload records live in `core` under
 | Gradient strokes | ✅ `PdfPathPainter` (pattern stroking colour) | 🚧 | ❌ |
 | Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | 🚧 | ✅ semantic images (`DocxSemanticBackend`) |
 | Barcode / QR (`BarcodeFragmentPayload`) | ✅ `PdfBarcodeFragmentRenderHandler` (ZXing raster) | 🚧 | ❌ |
-| Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | 🚧 | ✅ semantic tables (`DocxSemanticBackend`) |
+| Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | ✅ `PptxTableRowFragmentRenderHandler` + row grouping in `PptxFixedLayoutBackend` (positioned rectangles, edge lines, and text frames — never native PPTX tables, which re-lay-out content) | ✅ semantic tables (`DocxSemanticBackend`) |
 | Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | 🚧 (rect crops for pictures; other content degrades with a one-time warning — PPTX has no graphics-state clipping) | ⚠️ inline fallback + one-time capability warning |
 | Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | 🚧 (group shape with `xfrm`) | ⚠️ inline fallback + one-time capability warning |
 | Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | 🚧 | ❌ |

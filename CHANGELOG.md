@@ -42,6 +42,17 @@ follow semantic versioning; release dates are ISO 8601.
   plain family-name reference with a one-time warning, and the run baseline
   compensates the PDF-vs-viewer ascent difference so text sits on the
   measured baseline either way.
+- The fixed PPTX backend renders table rows: cell fills, border edge lines
+  (including the half-stroke internal join extension and the page-start top
+  border), and anchored cell text as positioned frames — never native
+  PowerPoint tables, which re-lay-out their content. Contiguous table rows
+  paint all fills before any border or text, the PDF backend's two-pass
+  discipline, and row-spanning cells grow downward through their merged rows.
+- `PptxFixedLayoutBackend.Builder.rasterSlides(int dpi)` — raster-slide mode:
+  every page renders through the PDF backend and lands as one full-slide
+  picture, a pixel-exact copy of the PDF/PNG output for decks that must look
+  identical everywhere. Slides are not editable as text; the default stays
+  the editable vector mode.
 
 ### Fixed
 
@@ -65,15 +76,14 @@ follow semantic versioning; release dates are ISO 8601.
   deterministic PDF default; `MissingBackendContractTest` (core, backend-free
   classpath) pins the missing-format diagnostics; `DocumentPageSizeTest` pins
   the slide presets.
-- `PptxFixedLayoutBackend.Builder.rasterSlides(int dpi)` — raster-slide mode:
-  every page renders through the PDF backend and lands as one full-slide
-  picture, a pixel-exact copy of the PDF/PNG output for decks that must look
-  identical everywhere. Slides are not editable as text; the default stays
-  the editable vector mode.
 - PPTX text tests re-read line, absolute-span and inline-graphic anchors through
   POI; cover real wrapping, mixed font sizes, vertical seating, custom fonts,
   rich styles, links, chips, SVG fallback and exact inline radii; and lock the
   shared text-fidelity demo with a backend-neutral layout snapshot.
+- PPTX table tests re-derive cell fills, border edge lines, and text frames
+  from the resolved layout graph across a page break with a repeated header
+  and a row-spanning cell, and pin the fills-before-ink paint order plus the
+  page-start top-border branch at the handler level.
 
 ## v2.0.0 — 2026-07-13
 

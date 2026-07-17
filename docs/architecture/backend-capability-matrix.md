@@ -107,3 +107,7 @@ with the fonts installed on the viewing machine. Standard-14 font names are mapp
 metric-compatible system fonts (Helvetica → Arial, Times → Times New
 Roman, Courier → Courier New); document-local fonts use their registered
 viewer-facing `wordFamily` and should be installed on the viewer for exact glyphs.
+Every substitution is explicit: the backend logs
+`render.pptx.font.substitution` once per family per render whenever a
+font travels as a standard-14 replacement or a name-only reference
+instead of an embedded program; embedded families render silently.

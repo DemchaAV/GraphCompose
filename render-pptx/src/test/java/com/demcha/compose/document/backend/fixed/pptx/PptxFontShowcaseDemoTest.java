@@ -52,12 +52,18 @@ class PptxFontShowcaseDemoTest {
             Files.write(output.resolve("font-identity.pptx"), pptx);
 
             var pdfPages = session.toImages(144);
+            for (int i = 0; i < pdfPages.size(); i++) {
+                ImageIO.write(pdfPages.get(i), "png",
+                        output.resolve("font-identity-page-" + (i + 1) + ".pdf.png").toFile());
+            }
             try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
                 assertThat(show.getSlides()).hasSameSizeAs(pdfPages);
-                for (int i = 0; i < pdfPages.size(); i++) {
-                    ImageIO.write(pdfPages.get(i), "png",
-                            output.resolve("font-identity-page-" + (i + 1) + ".pdf.png").toFile());
-                }
+                var embeddedList = show.getCTPresentation().getEmbeddedFontLst();
+                assertThat(embeddedList).as("the deck must embed the specimen fonts").isNotNull();
+                assertThat(embeddedList.getEmbeddedFontList())
+                        .extracting(entry -> entry.getFont().getTypeface())
+                        .as("all four families travel as embedded programs")
+                        .containsExactlyInAnyOrder("Lato", "Poppins", "JetBrains Mono", "Spectral");
             }
         }
     }

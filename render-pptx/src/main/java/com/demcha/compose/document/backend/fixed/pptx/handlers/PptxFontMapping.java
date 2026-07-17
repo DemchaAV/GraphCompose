@@ -40,18 +40,11 @@ public final class PptxFontMapping {
      * @return PPTX family name
      */
     public static String familyFor(FontName fontName) {
-        String name = (fontName == null ? FontName.HELVETICA : fontName).name();
-        String lower = name.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("helvetica")) {
-            return "Arial";
+        String replacement = standardReplacementFor(fontName);
+        if (replacement != null) {
+            return replacement;
         }
-        if (lower.startsWith("times")) {
-            return "Times New Roman";
-        }
-        if (lower.startsWith("courier")) {
-            return "Courier New";
-        }
-        return stripStyleSuffix(name);
+        return stripStyleSuffix((fontName == null ? FontName.HELVETICA : fontName).name());
     }
 
     /**

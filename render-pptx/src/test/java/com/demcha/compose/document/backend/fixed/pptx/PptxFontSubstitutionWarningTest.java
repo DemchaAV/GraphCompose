@@ -44,6 +44,7 @@ class PptxFontSubstitutionWarningTest {
     @AfterEach
     void detachAppender() {
         logger.detachAppender(appender);
+        appender.stop();
     }
 
     @Test
@@ -57,6 +58,9 @@ class PptxFontSubstitutionWarningTest {
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
             assertThat(environment.fontFamily(FontName.HELVETICA)).isEqualTo("Arial");
             assertThat(environment.fontFamily(FontName.of("Roboto-Regular"))).isEqualTo("Roboto");
+            assertThat(environment.fontFamily(FontName.of("Roboto-Bold")))
+                    .as("facet of an already-warned family")
+                    .isEqualTo("Roboto");
             assertThat(environment.fontFamily(EMBEDDED)).isEqualTo("Lato");
 
             List<String> warnings = appender.list.stream()

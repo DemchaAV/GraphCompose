@@ -28,6 +28,20 @@ follow semantic versioning; release dates are ISO 8601.
   `PptxFixedLayoutBackend.Builder#addHandler`). Unsupported payloads fail
   with `UnsupportedNodeCapabilityException`; the live per-capability status
   lives in `docs/architecture/backend-capability-matrix.md`.
+- The fixed PPTX backend renders pre-wrapped paragraph lines as absolute,
+  wrap-disabled, no-autofit text frames with PDF-identical glyph sanitization,
+  standard-14 font-family mapping and rich run styles. External hyperlinks use
+  transparent measured-span hotspots so PowerPoint cannot replace the resolved
+  text colour and decoration with its hyperlink theme.
+  Inline chips, raster images, vector shapes and SVG paths retain their measured
+  baseline boxes. Simple SVG layers stay native; arbitrary clips, exact stroke
+  styles and off-viewBox art use a transparent PNG fallback. SVG gradients use
+  their primary colour. Document-local fonts preserve their registered
+  viewer-facing family name and embed into the deck as EOT-wrapped programs
+  when their license bits allow; restricted or unreadable fonts degrade to a
+  plain family-name reference with a one-time warning, and the run baseline
+  compensates the PDF-vs-viewer ascent difference so text sits on the
+  measured baseline either way.
 
 ### Fixed
 
@@ -51,6 +65,10 @@ follow semantic versioning; release dates are ISO 8601.
   deterministic PDF default; `MissingBackendContractTest` (core, backend-free
   classpath) pins the missing-format diagnostics; `DocumentPageSizeTest` pins
   the slide presets.
+- PPTX text tests re-read line, absolute-span and inline-graphic anchors through
+  POI; cover real wrapping, mixed font sizes, vertical seating, custom fonts,
+  rich styles, links, chips, SVG fallback and exact inline radii; and lock the
+  shared text-fidelity demo with a backend-neutral layout snapshot.
 
 ## v2.0.0 — 2026-07-13
 

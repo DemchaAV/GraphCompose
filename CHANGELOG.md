@@ -72,6 +72,13 @@ follow semantic versioning; release dates are ISO 8601.
   clipping); anchor and bookmark markers record their destinations for the
   navigation pass.
 
+- Clipped composites in the fixed PPTX backend are now pixel-exact: the clip
+  region renders through the PDF backend into one transparent picture placed
+  on the clip bounds (DrawingML has no graphics-state clipping), including any
+  enclosing rotation. The picture is not editable as shapes;
+  `PptxFixedLayoutBackend.Builder.clipRasterFallback(false)` restores the
+  previous unclipped vector rendering with its one-time warning.
+
 ### Fixed
 
 - `DocumentSession.toImages` / `toImage` rasterized documents that use binary

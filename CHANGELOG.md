@@ -29,6 +29,16 @@ follow semantic versioning; release dates are ISO 8601.
   with `UnsupportedNodeCapabilityException`; the live per-capability status
   lives in `docs/architecture/backend-capability-matrix.md`.
 
+### Fixed
+
+- `DocumentSession.toImages` / `toImage` rasterized documents that use binary
+  font families (any non-standard-14 file) with substitute glyphs — visually
+  garbled text with correct spacing. PDFBox writes embedded font subsets only
+  during `save()`, so rendering the unsaved in-memory document never saw the
+  real glyph programs. The PDF backend now saves to an in-memory buffer and
+  reloads before rasterizing; standard-14-only documents are unaffected apart
+  from the marginal serialization cost.
+
 ### Documentation
 
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
+import org.apache.pdfbox.Loader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -325,10 +326,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
 
     /**
      * Renders the document to one rasterized image per page (or a single page
-     * when {@code pageIndex >= 0}). PDF-specific convenience that rasterizes the
-     * in-memory {@link PDDocument} directly via {@link PDFRenderer}, avoiding the
-     * serialize-to-bytes-then-reparse round-trip of {@link #render} +
-     * {@code Loader.loadPDF}.
+     * when {@code pageIndex >= 0}). The document is saved to an in-memory buffer
+     * and reloaded before rasterization: PDFBox writes embedded font subsets only
+     * during {@code save()}, so rendering the unsaved {@link PDDocument} draws
+     * documents that use binary font families (any non-standard-14 file) with
+     * fallback glyphs instead of the embedded program. Standard-14-only documents
+     * pay the extra serialization too — correctness over the marginal copy; the
+     * rasterization itself dominates the cost.
      *
      * @param graph       resolved layout graph
      * @param context     fixed-layout render configuration (output stream/file ignored)
@@ -347,7 +351,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                                               int pageIndex) throws Exception {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(context, "context");
-        try (PDDocument document = buildDocument(graph, context)) {
+        byte[] documentBytes;
+        try (PDDocument document = buildDocument(graph, context);
+             ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            document.save(buffer);
+            documentBytes = buffer.toByteArray();
+        }
+        try (PDDocument document = Loader.loadPDF(documentBytes)) {
             PDFRenderer renderer = new PDFRenderer(document);
             ImageType imageType = transparent ? ImageType.ARGB : ImageType.RGB;
             int pageCount = document.getNumberOfPages();

@@ -13,12 +13,19 @@ import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFPictureData;
+import org.apache.poi.xslf.usermodel.XSLFPictureShape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -216,27 +223,25 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     private void renderRasterSlides(LayoutGraph graph,
                                     FixedLayoutRenderContext context,
                                     OutputStream output) throws Exception {
-        List<java.awt.image.BufferedImage> pages = new PdfFixedLayoutBackend()
+        List<BufferedImage> pages = new PdfFixedLayoutBackend()
                 .renderToImages(graph, context, rasterSlidesDpi, false, -1);
         try (XMLSlideShow show = new XMLSlideShow()) {
             PptxRenderSession session = new PptxRenderSession(
                     show, graph.canvas().width(), graph.canvas().height(), graph.totalPages());
             for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
-                org.apache.poi.xslf.usermodel.XSLFPictureData data = show.addPicture(
-                        encodePng(pages.get(pageIndex)),
-                        org.apache.poi.sl.usermodel.PictureData.PictureType.PNG);
-                org.apache.poi.xslf.usermodel.XSLFPictureShape picture =
-                        session.slide(pageIndex).createPicture(data);
-                picture.setAnchor(new java.awt.geom.Rectangle2D.Double(
+                XSLFPictureData data = show.addPicture(
+                        encodePng(pages.get(pageIndex)), PictureData.PictureType.PNG);
+                XSLFPictureShape picture = session.slide(pageIndex).createPicture(data);
+                picture.setAnchor(new Rectangle2D.Double(
                         0, 0, graph.canvas().width(), graph.canvas().height()));
             }
             show.write(output);
         }
     }
 
-    private static byte[] encodePng(java.awt.image.BufferedImage image) throws java.io.IOException {
+    private static byte[] encodePng(BufferedImage image) throws IOException {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            javax.imageio.ImageIO.write(image, "png", buffer);
+            ImageIO.write(image, "png", buffer);
             return buffer.toByteArray();
         }
     }
@@ -312,13 +317,19 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
          * files grow with resolution. Leave unset for the default editable
          * vector mode.
          *
-         * @param dpi raster resolution in dots per inch (72 = native size)
+         * <p>Navigation is baked into the pixels: hyperlinks, bookmarks, and
+         * custom fragment handlers do not apply in raster mode. Every page is
+         * held in memory during the render, so memory grows with page count
+         * and the square of the DPI; the resolution is capped at 600 DPI.</p>
+         *
+         * @param dpi raster resolution in dots per inch (72 = native size, max 600)
          * @return this builder
-         * @throws IllegalArgumentException if {@code dpi} is not positive
+         * @throws IllegalArgumentException if {@code dpi} is not in [1, 600]
          */
         public Builder rasterSlides(int dpi) {
-            if (dpi <= 0) {
-                throw new IllegalArgumentException("Raster DPI must be positive: " + dpi);
+            if (dpi <= 0 || dpi > 600) {
+                throw new IllegalArgumentException(
+                        "Raster DPI must be between 1 and 600: " + dpi);
             }
             this.rasterSlidesDpi = dpi;
             return this;

@@ -186,13 +186,8 @@ public final class PptxRenderEnvironment {
         if (font == null) {
             return fallbackAscent;
         }
-        double pdfAscentRatio = font.verticalMetrics(style).ascent() / style.size();
-        PptxViewerMetrics.ViewerFontMetrics customMetrics = viewerFontMetrics.get(style.fontName());
-        double viewerAscentRatio = customMetrics == null
-                ? PptxFontMapping.viewerAscentRatio(style.fontName(), pdfAscentRatio)
-                : customMetrics.ascent(PptxFontMapping.isBold(style),
-                        PptxFontMapping.isItalic(style));
-        return viewerAscentRatio * style.size();
+        return PptxViewerMetrics.ascentPoints(
+                style, font, viewerFontMetrics.get(style.fontName()));
     }
 
     /**
@@ -246,7 +241,6 @@ public final class PptxRenderEnvironment {
         }
         return true;
     }
-
 
     void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(

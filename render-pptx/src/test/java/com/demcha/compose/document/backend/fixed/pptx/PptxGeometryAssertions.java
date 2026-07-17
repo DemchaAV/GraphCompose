@@ -92,6 +92,8 @@ final class PptxGeometryAssertions {
                                           List<FontFamilyDefinition> customFonts) throws Exception {
         try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptxBytes));
              PdfMeasurementResources measurement = PdfMeasurementResources.open(customFonts)) {
+            java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics> embedded =
+                    viewerMetricsByFamily(customFonts);
             List<ExpectedTextLine> expected = new ArrayList<>();
             List<ExpectedLinkHotspot> expectedLinks = new ArrayList<>();
             for (PlacedFragment fragment : graph.fragments()) {
@@ -143,7 +145,8 @@ final class PptxGeometryAssertions {
                         }
                         expected.add(new ExpectedTextLine(fragment.pageIndex(),
                                 new Rectangle2D.Double(lineX,
-                                        graph.canvas().height() - baselineY - line.textAscent(),
+                                        graph.canvas().height() - baselineY
+                                                - sharedViewerAscent(line, measurement, embedded),
                                         line.width() + 0.1, line.textLineHeight()),
                                 "GraphCompose Text Line", text.toString()));
                     }
@@ -157,7 +160,9 @@ final class PptxGeometryAssertions {
                                 String sanitized = font.sanitizeForRender(
                                         textSpan.textStyle(), textSpan.text());
                                 PdfFont.VerticalMetrics metrics = font.verticalMetrics(textSpan.textStyle());
-                                double top = graph.canvas().height() - baselineY - metrics.ascent();
+                                double top = graph.canvas().height() - baselineY
+                                        - expectedViewerAscent(textSpan.textStyle(),
+                                                metrics.ascent(), measurement, embedded);
                                 if (textSpan.background() == null) {
                                     expected.add(new ExpectedTextLine(fragment.pageIndex(),
                                             new Rectangle2D.Double(cursorX, top,
@@ -379,6 +384,52 @@ final class PptxGeometryAssertions {
 
     private static double pathY(Rectangle2D box, double normalized) {
         return box.getY() + (1.0 - normalized) * box.getHeight();
+    }
+
+    private static java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics>
+            viewerMetricsByFamily(List<FontFamilyDefinition> customFonts) {
+        java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics> metrics =
+                new java.util.LinkedHashMap<>();
+        for (FontFamilyDefinition family : customFonts) {
+            family.fontSourceSet().ifPresent(sources ->
+                    metrics.put(family.name(), PptxViewerMetrics.load(family, sources)));
+        }
+        return metrics;
+    }
+
+    /** Mirrors the production seat: frame top = baseline − viewer ascent (largest plain run). */
+    private static double sharedViewerAscent(
+            ParagraphLine line,
+            PdfMeasurementResources measurement,
+            java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics> embedded) {
+        double ascent = 0;
+        for (ParagraphSpan span : line.spans()) {
+            if (span instanceof ParagraphTextSpan textSpan && textSpan.background() == null) {
+                ascent = Math.max(ascent, expectedViewerAscent(
+                        textSpan.textStyle(), line.textAscent(), measurement, embedded));
+            }
+        }
+        return ascent > 0 ? ascent : line.textAscent();
+    }
+
+    private static double expectedViewerAscent(
+            com.demcha.compose.engine.components.content.text.TextStyle style,
+            double fallbackAscent,
+            PdfMeasurementResources measurement,
+            java.util.Map<com.demcha.compose.font.FontName, PptxViewerMetrics.ViewerFontMetrics> embedded) {
+        PdfFont font = measurement.fontLibrary().getFont(style.fontName(), PdfFont.class).orElse(null);
+        if (font == null || style.size() <= 0) {
+            return fallbackAscent;
+        }
+        double pdfRatio = font.verticalMetrics(style).ascent() / style.size();
+        PptxViewerMetrics.ViewerFontMetrics custom = embedded.get(style.fontName());
+        double ratio = custom == null
+                ? com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping
+                        .viewerAscentRatio(style.fontName(), pdfRatio)
+                : custom.ascent(
+                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isBold(style),
+                        com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping.isItalic(style));
+        return ratio * style.size();
     }
 
     /** Mirrors the handler's shared-frame gate: mixed plain-run sizes force per-span frames. */

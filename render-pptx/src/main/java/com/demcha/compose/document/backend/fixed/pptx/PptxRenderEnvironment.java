@@ -19,9 +19,6 @@ import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -56,9 +53,6 @@ import java.util.Set;
 public final class PptxRenderEnvironment {
 
     private static final Logger LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
-    private static final FontRenderContext FONT_RENDER_CONTEXT =
-            new FontRenderContext(null, true, true);
-    private static final float FONT_METRICS_SIZE = 1000.0f;
 
     private final XMLSlideShow show;
     private final PptxRenderSession session;
@@ -66,7 +60,7 @@ public final class PptxRenderEnvironment {
     private final double canvasHeight;
     private final FontLibrary fonts;
     private final Map<FontName, String> customFontFamilies;
-    private final Map<FontName, ViewerFontMetrics> viewerFontMetrics;
+    private final Map<FontName, PptxViewerMetrics.ViewerFontMetrics> viewerFontMetrics;
     private final Map<String, XSLFPictureData> pictureDataCache = new LinkedHashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
@@ -84,12 +78,12 @@ public final class PptxRenderEnvironment {
         this.canvasHeight = canvasHeight;
         this.fonts = fonts;
         Map<FontName, String> familyNames = new LinkedHashMap<>();
-        Map<FontName, ViewerFontMetrics> metrics = new LinkedHashMap<>();
+        Map<FontName, PptxViewerMetrics.ViewerFontMetrics> metrics = new LinkedHashMap<>();
         for (FontFamilyDefinition family : customFontFamilies) {
             familyNames.put(family.name(), family.wordFamily());
             family.fontSourceSet().ifPresent(sources -> {
                 if (embedFontFamily(show, family, sources)) {
-                    metrics.put(family.name(), viewerMetrics(family, sources));
+                    metrics.put(family.name(), PptxViewerMetrics.load(family, sources));
                 }
             });
         }
@@ -166,31 +160,39 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Returns the DrawingML baseline shift needed to place the viewer font on
-     * the PDF-measured baseline. PowerPoint seats a run using the viewer font's
-     * hhea ascent, while the layout graph carries the PDF descriptor ascent;
-     * the percentage difference is written to the run's baseline property.
+     * Returns the ascent, in points, that the viewer's font engine uses to seat
+     * this run's first baseline below a top-anchored frame. PowerPoint positions
+     * text by frame, not by baseline: the first baseline lands at
+     * {@code frameTop + viewerAscent}, so frames anchor at
+     * {@code baseline − viewerAscent}. Embedded fonts report their real font
+     * program ascent per facet; standard-14 replacements use the known Arial /
+     * Times New Roman / Courier New ratios; anything else assumes the PDF
+     * descriptor ascent.
      *
-     * @param style resolved text style
-     * @return positive percentage that moves the run upward
+     * <p>Deliberately never written to the run's DrawingML {@code baseline}
+     * property: PowerPoint treats any non-zero baseline as super/subscript and
+     * shrinks the glyphs.</p>
+     *
+     * @param style          resolved text style
+     * @param fallbackAscent ascent to assume when the style cannot be resolved
+     * @return viewer ascent in points
      */
     @Internal
-    public double baselineOffset(TextStyle style) {
+    public double viewerAscent(TextStyle style, double fallbackAscent) {
         if (style == null || style.size() <= 0) {
-            return 0;
+            return fallbackAscent;
         }
         PdfFont font = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
         if (font == null) {
-            return 0;
+            return fallbackAscent;
         }
         double pdfAscentRatio = font.verticalMetrics(style).ascent() / style.size();
-        ViewerFontMetrics customMetrics = viewerFontMetrics.get(style.fontName());
+        PptxViewerMetrics.ViewerFontMetrics customMetrics = viewerFontMetrics.get(style.fontName());
         double viewerAscentRatio = customMetrics == null
                 ? PptxFontMapping.viewerAscentRatio(style.fontName(), pdfAscentRatio)
                 : customMetrics.ascent(PptxFontMapping.isBold(style),
                         PptxFontMapping.isItalic(style));
-        return Math.max(-100.0, Math.min(100.0,
-                (viewerAscentRatio - pdfAscentRatio) * 100.0));
+        return viewerAscentRatio * style.size();
     }
 
     /**
@@ -245,42 +247,6 @@ public final class PptxRenderEnvironment {
         return true;
     }
 
-    private static ViewerFontMetrics viewerMetrics(
-            FontFamilyDefinition family,
-            FontFamilyDefinition.FontSourceSet sources) {
-        return new ViewerFontMetrics(
-                viewerAscent(family, sources.regular()),
-                viewerAscent(family, sources.bold()),
-                viewerAscent(family, sources.italic()),
-                viewerAscent(family, sources.boldItalic()));
-    }
-
-    private static double viewerAscent(FontFamilyDefinition family,
-                                       FontFamilyDefinition.FontBinarySource source) {
-        try (InputStream stream = source.openStream()) {
-            Font font = Font.createFont(Font.TRUETYPE_FONT, stream).deriveFont(FONT_METRICS_SIZE);
-            return font.getLineMetrics("Hg", FONT_RENDER_CONTEXT).getAscent() / FONT_METRICS_SIZE;
-        } catch (IOException | FontFormatException exception) {
-            throw new IllegalStateException(
-                    "Unable to read PPTX font metrics for " + family.name().name()
-                            + " from " + source.description(), exception);
-        }
-    }
-
-    private record ViewerFontMetrics(double regularAscent,
-                                     double boldAscent,
-                                     double italicAscent,
-                                     double boldItalicAscent) {
-        double ascent(boolean bold, boolean italic) {
-            if (bold && italic) {
-                return boldItalicAscent;
-            }
-            if (bold) {
-                return boldAscent;
-            }
-            return italic ? italicAscent : regularAscent;
-        }
-    }
 
     void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(

@@ -86,7 +86,8 @@ public final class PptxParagraphFragmentRenderHandler
                 !(span instanceof ParagraphTextSpan textSpan) || textSpan.background() != null);
         XSLFTextParagraph paragraph = null;
         if (!usesAbsoluteSpans) {
-            double top = environment.canvasHeight() - baselineY - line.textAscent();
+            double top = environment.canvasHeight() - baselineY
+                    - sharedBoxViewerAscent(line, environment);
             XSLFTextBox lineBox = newTextBox(slide,
                     new Rectangle2D.Double(lineX, top,
                             Math.max(FRAME_EPSILON, line.width() + FRAME_EPSILON),
@@ -129,6 +130,23 @@ public final class PptxParagraphFragmentRenderHandler
         // line box — the same per-line emission the PDF backend uses.
         renderExternalLinkOverlay(slide, payload.linkTarget(), lineX, line.width(),
                 lineTop, line, environment);
+    }
+
+    /**
+     * Returns the viewer ascent that will seat the shared frame's first
+     * baseline: PowerPoint uses the tallest run, so the frame top compensates
+     * with the largest viewer ascent among the line's plain runs.
+     */
+    private static double sharedBoxViewerAscent(ParagraphLine line,
+                                                PptxRenderEnvironment environment) {
+        double ascent = 0;
+        for (ParagraphSpan span : line.spans()) {
+            if (span instanceof ParagraphTextSpan textSpan && textSpan.background() == null) {
+                ascent = Math.max(ascent,
+                        environment.viewerAscent(textSpan.textStyle(), line.textAscent()));
+            }
+        }
+        return ascent > 0 ? ascent : line.textAscent();
     }
 
     /**
@@ -197,7 +215,6 @@ public final class PptxParagraphFragmentRenderHandler
         run.setFontFamily(environment.fontFamily(style.fontName()));
         run.setFontSize(style.size());
         run.setFontColor(style.color() == null ? Color.BLACK : style.color());
-        run.setBaselineOffset(environment.baselineOffset(style));
         run.setBold(PptxFontMapping.isBold(style));
         run.setItalic(PptxFontMapping.isItalic(style));
         run.setUnderlined(PptxFontMapping.isUnderline(style));
@@ -213,7 +230,8 @@ public final class PptxParagraphFragmentRenderHandler
                                        double canvasHeight,
                                        PptxRenderEnvironment environment) {
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
-        double top = canvasHeight - baselineY - metrics.ascent();
+        double top = canvasHeight - baselineY
+                - environment.viewerAscent(span.textStyle(), metrics.ascent());
         XSLFTextBox textBox = newTextBox(slide, new Rectangle2D.Double(
                 cursorX, top, Math.max(FRAME_EPSILON, span.width() + FRAME_EPSILON),
                 Math.max(FRAME_EPSILON, metrics.lineHeight())));
@@ -252,7 +270,8 @@ public final class PptxParagraphFragmentRenderHandler
         chip.setLineColor(null);
 
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
-        double textTop = canvasHeight - baselineY - metrics.ascent();
+        double textTop = canvasHeight - baselineY
+                - environment.viewerAscent(span.textStyle(), metrics.ascent());
         double textWidth = Math.max(FRAME_EPSILON, span.width() - padding.horizontal());
         XSLFTextBox textBox = newTextBox(slide, new Rectangle2D.Double(
                 cursorX + padding.left(), textTop, textWidth,

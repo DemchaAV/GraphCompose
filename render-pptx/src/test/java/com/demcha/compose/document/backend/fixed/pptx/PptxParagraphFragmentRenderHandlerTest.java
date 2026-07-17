@@ -80,7 +80,11 @@ class PptxParagraphFragmentRenderHandlerTest {
                         .isEqualTo(Color.BLACK);
                 assertThat(linked.isUnderlined()).isFalse();
                 assertThat(runs).allMatch(run -> "Arial".equals(run.getFontFamily()));
-                assertThat(runs).allMatch(XSLFTextRun::isSuperscript);
+                // No run may carry the DrawingML baseline attribute: PowerPoint
+                // renders any non-zero baseline as super/subscript and SHRINKS
+                // the glyphs. Seat compensation lives in the frame top instead.
+                assertThat(runs).noneMatch(XSLFTextRun::isSuperscript);
+                assertThat(runs).noneMatch(XSLFTextRun::isSubscript);
 
                 XSLFAutoShape linkHotspot = show.getSlides().get(0).getShapes().stream()
                         .filter(XSLFAutoShape.class::isInstance)

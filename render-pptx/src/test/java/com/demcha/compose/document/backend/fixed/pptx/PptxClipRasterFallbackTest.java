@@ -71,18 +71,29 @@ class PptxClipRasterFallbackTest {
                         org.assertj.core.data.Offset.offset(0.5));
                 assertThat(anchor.getWidth()).isCloseTo(clipFragment.width(),
                         org.assertj.core.data.Offset.offset(0.5));
+                assertThat(anchor.getHeight()).isCloseTo(clipFragment.height(),
+                        org.assertj.core.data.Offset.offset(0.5));
 
                 BufferedImage bitmap = ImageIO.read(
                         new ByteArrayInputStream(composite.getPictureData().getData()));
                 assertThat(bitmap.getColorModel().hasAlpha())
                         .as("the composite must keep its transparent background").isTrue();
-                // Centre pixel carries the layer fill; the top-left corner lies
-                // outside the ellipse outline and must stay fully transparent —
-                // the clip actually cut the layer.
-                int centre = bitmap.getRGB(bitmap.getWidth() / 2, bitmap.getHeight() / 2);
-                int corner = bitmap.getRGB(1, 1);
-                assertThat((centre >>> 24)).as("centre opaque").isGreaterThan(200);
-                assertThat((corner >>> 24)).as("corner transparent").isLessThan(30);
+                // The layer circle (top-left aligned, r=25pt at centre 25,25)
+                // covers point (10,10)pt, but that point lies OUTSIDE the
+                // container ellipse (centre 35,35, r=35) — so it is opaque in
+                // an unclipped render and transparent only when the clip
+                // actually cut the layer. The circle centre stays opaque.
+                double pixelsPerPoint = bitmap.getWidth() / clipFragment.width();
+                int cut = bitmap.getRGB(
+                        (int) Math.round(10 * pixelsPerPoint),
+                        (int) Math.round(10 * pixelsPerPoint));
+                int inside = bitmap.getRGB(
+                        (int) Math.round(25 * pixelsPerPoint),
+                        (int) Math.round(25 * pixelsPerPoint));
+                assertThat((inside >>> 24)).as("circle centre opaque").isGreaterThan(200);
+                assertThat((cut >>> 24))
+                        .as("point inside the layer but outside the outline must be clipped away")
+                        .isLessThan(30);
 
                 // No vector ellipse for the clipped layer leaks next to the
                 // picture (the unfilled, unstroked outline draws nothing).
@@ -91,6 +102,63 @@ class PptxClipRasterFallbackTest {
                         .count())
                         .as("the clipped layer must not leak as a vector shape")
                         .isZero();
+            }
+        }
+    }
+
+    @Test
+    void clipInsideATransformStaysInsideTheRotatedGroup() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 240)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.add(new ShapeContainerBuilder()
+                    .ellipse(70, 70)
+                    .layer(new EllipseBuilder().circle(50)
+                            .fillColor(DocumentColor.ROYAL_BLUE).build())
+                    .transform(new com.demcha.compose.document.style.DocumentTransform(30, 1, 1))
+                    .build());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                org.apache.poi.xslf.usermodel.XSLFGroupShape group =
+                        show.getSlides().get(0).getShapes().stream()
+                                .filter(org.apache.poi.xslf.usermodel.XSLFGroupShape.class::isInstance)
+                                .map(org.apache.poi.xslf.usermodel.XSLFGroupShape.class::cast)
+                                .findFirst().orElseThrow();
+                assertThat(group.getRotation())
+                        .as("the enclosing rotation applies to the rasterized clip")
+                        .isEqualTo(30.0);
+                assertThat(group.getShapes())
+                        .anyMatch(shape -> "GraphCompose Clipped Composite"
+                                .equals(shape.getShapeName()));
+            }
+        }
+    }
+
+    @Test
+    void nestedClipOfADifferentOwnerIsConsumedIntoOneComposite() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(320, 260)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.add(new ShapeContainerBuilder()
+                    .ellipse(90, 90)
+                    .layer(new ShapeContainerBuilder()
+                            .ellipse(50, 50)
+                            .layer(new EllipseBuilder().circle(40)
+                                    .fillColor(DocumentColor.ORANGE).build())
+                            .build())
+                    .build());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                List<XSLFShape> shapes = show.getSlides().get(0).getShapes();
+                assertThat(shapes.stream()
+                        .filter(shape -> "GraphCompose Clipped Composite"
+                                .equals(shape.getShapeName()))
+                        .count())
+                        .as("the outer region swallows the inner clip; the PDF "
+                                + "sub-render applies both clips inside one picture")
+                        .isEqualTo(1);
             }
         }
     }

@@ -21,9 +21,13 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTableRowFragm
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
+import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.document.layout.payloads.AnchorMarkerPayload;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
+import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
@@ -295,7 +299,11 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 continue;
             }
             if (clipRasterFallback
-                    && fragment.payload() instanceof com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload) {
+                    && fragment.payload() instanceof ShapeClipBeginPayload
+                    && handlers.get(ShapeClipBeginPayload.class)
+                            instanceof PptxShapeClipBeginRenderHandler) {
+                // A custom clip handler registered via Builder.addHandler keeps
+                // normal dispatch; only the built-in degrade path is replaced.
                 index = renderClippedComposite(graph, fragments, index, environment, context);
                 continue;
             }
@@ -318,12 +326,10 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                                        PptxRenderEnvironment environment,
                                        FixedLayoutRenderContext context) throws Exception {
         PlacedFragment beginFragment = fragments.get(beginIndex);
-        String ownerPath = ((com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload)
-                beginFragment.payload()).ownerPath();
+        String ownerPath = ((ShapeClipBeginPayload) beginFragment.payload()).ownerPath();
         int endIndex = beginIndex + 1;
         while (endIndex < fragments.size()
-                && !(fragments.get(endIndex).payload()
-                        instanceof com.demcha.compose.document.layout.payloads.ShapeClipEndPayload end
+                && !(fragments.get(endIndex).payload() instanceof ShapeClipEndPayload end
                         && Objects.equals(end.ownerPath(), ownerPath))) {
             endIndex++;
         }
@@ -332,65 +338,61 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             renderFragment(beginFragment, environment);
             return beginIndex;
         }
+        if (beginFragment.width() <= 0 || beginFragment.height() <= 0) {
+            recordRegionNavigation(fragments, beginIndex, endIndex, environment);
+            return endIndex;
+        }
 
-        // Re-page the region onto page 0 and let the PDF backend apply the
-        // real clip; the raster is cropped to the clip bounds afterwards.
+        // Translate the region into a clip-sized canvas and rasterize only the
+        // clip box — the PDF backend applies the real clip, and the raster
+        // never exceeds the capped clip size no matter how large the page is.
         List<PlacedFragment> region = new ArrayList<>(endIndex - beginIndex + 1);
         for (int index = beginIndex; index <= endIndex; index++) {
             PlacedFragment fragment = fragments.get(index);
             region.add(new PlacedFragment(fragment.path(), fragment.fragmentIndex(), 0,
-                    fragment.x(), fragment.y(), fragment.width(), fragment.height(),
+                    fragment.x() - beginFragment.x(), fragment.y() - beginFragment.y(),
+                    fragment.width(), fragment.height(),
                     fragment.margin(), fragment.padding(), fragment.payload()));
         }
-        LayoutGraph regionGraph = new LayoutGraph(graph.canvas(), 1, List.of(), region);
-        double canvasHeight = graph.canvas().height();
+        LayoutCanvas clipCanvas = new LayoutCanvas(
+                beginFragment.width(), beginFragment.height(),
+                beginFragment.width(), beginFragment.height(),
+                com.demcha.compose.engine.components.style.Margin.of(0));
+        LayoutGraph regionGraph = new LayoutGraph(clipCanvas, 1, List.of(), region);
         double scale = Math.min(4.0, 2048.0
                 / Math.max(1.0, Math.max(beginFragment.width(), beginFragment.height())));
-        BufferedImage page = new PdfFixedLayoutBackend()
+        BufferedImage raster = new PdfFixedLayoutBackend()
                 .renderToImages(regionGraph, context, (int) Math.round(72.0 * scale), true, 0)
                 .get(0);
-        double pixelsPerPoint = page.getWidth() / graph.canvas().width();
-        int left = clamp((int) Math.floor(beginFragment.x() * pixelsPerPoint), 0, page.getWidth() - 1);
-        int top = clamp((int) Math.floor(
-                (canvasHeight - beginFragment.y() - beginFragment.height()) * pixelsPerPoint),
-                0, page.getHeight() - 1);
-        int right = clamp((int) Math.ceil(
-                (beginFragment.x() + beginFragment.width()) * pixelsPerPoint), left + 1, page.getWidth());
-        int bottom = clamp((int) Math.ceil(
-                (canvasHeight - beginFragment.y()) * pixelsPerPoint), top + 1, page.getHeight());
-        BufferedImage cropped = page.getSubimage(left, top, right - left, bottom - top);
         byte[] png;
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            ImageIO.write(cropped, "png", buffer);
+            ImageIO.write(raster, "png", buffer);
             png = buffer.toByteArray();
         }
         XSLFPictureShape picture =
                 environment.surface(beginFragment.pageIndex()).createPicture(
                         environment.slideShow().addPicture(png, PictureData.PictureType.PNG));
-        // Anchor on the crop pixel bounds converted back to points, so the
-        // floor/ceil snap never shifts the content visually.
-        picture.setAnchor(new Rectangle2D.Double(
-                left / pixelsPerPoint,
-                top / pixelsPerPoint,
-                (right - left) / pixelsPerPoint,
-                (bottom - top) / pixelsPerPoint));
+        picture.setAnchor(PptxCoordinates.anchorOf(environment.canvasHeight(), beginFragment));
         ((org.openxmlformats.schemas.presentationml.x2006.main.CTPicture) picture.getXmlObject())
                 .getNvPicPr().getCNvPr().setName("GraphCompose Clipped Composite");
 
+        recordRegionNavigation(fragments, beginIndex, endIndex, environment);
+        return endIndex;
+    }
+
+    /** Records links, bookmarks, and anchors of a consumed clip region. */
+    private void recordRegionNavigation(List<PlacedFragment> fragments,
+                                        int beginIndex,
+                                        int endIndex,
+                                        PptxRenderEnvironment environment) {
         for (int index = beginIndex; index <= endIndex; index++) {
             PlacedFragment fragment = fragments.get(index);
-            if (fragment.payload()
-                    instanceof com.demcha.compose.document.layout.payloads.AnchorMarkerPayload anchor) {
+            if (fragment.payload() instanceof AnchorMarkerPayload anchor) {
                 environment.registerAnchor(fragment, anchor.anchor());
             } else {
                 finishRenderedFragment(fragment, fragment.payload(), environment);
             }
         }
-        return endIndex;
-    }
-
-    private static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
     }
 
     /**

@@ -10,9 +10,10 @@ import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
  * cannot be expressed in PPTX — DrawingML has no graphics-state clipping, only
  * per-picture source crops — so the marker degrades to a one-time capability
  * warning and the children render unclipped, the sanctioned fallback the
- * payload documents. By default the backend never dispatches here; it
- * rasterizes the whole clip region through the PDF backend instead
- * (pixel-exact clipping as one transparent picture).
+ * payload documents. With the fallback enabled (the default) the backend
+ * dispatches here only for an unmatched begin marker; whole regions
+ * rasterize through the PDF backend instead (pixel-exact clipping as one
+ * transparent picture).
  *
  * @since 2.1.0
  */

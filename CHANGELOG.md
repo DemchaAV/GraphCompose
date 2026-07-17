@@ -48,6 +48,12 @@ follow semantic versioning; release dates are ISO 8601.
   PowerPoint tables, which re-lay-out their content. Contiguous table rows
   paint all fills before any border or text, the PDF backend's two-pass
   discipline, and row-spanning cells grow downward through their merged rows.
+- The fixed PPTX backend warns explicitly whenever a font cannot travel into
+  the deck identically — once per family per render: standard-14 families name
+  their metric-compatible replacement (Helvetica → Arial), families registered
+  without binary sources and unregistered names are flagged as name-only
+  references that viewers may substitute, and license-restricted embeds
+  already degrade with a warning. An embedded family stays silent.
 - `PptxFixedLayoutBackend.Builder.rasterSlides(int dpi)` — raster-slide mode:
   every page renders through the PDF backend and lands as one full-slide
   picture, a pixel-exact copy of the PDF/PNG output for decks that must look

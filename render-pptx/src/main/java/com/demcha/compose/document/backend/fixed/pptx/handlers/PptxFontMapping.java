@@ -55,6 +55,29 @@ public final class PptxFontMapping {
     }
 
     /**
+     * Returns the metric-compatible viewer family that replaces a standard-14
+     * PostScript font in PPTX output, or {@code null} when the name is not a
+     * standard-14 family (binary families keep their own name).
+     *
+     * @param fontName logical document font
+     * @return replacement family name, or {@code null}
+     */
+    public static String standardReplacementFor(FontName fontName) {
+        String lower = (fontName == null ? FontName.HELVETICA : fontName)
+                .name().toLowerCase(Locale.ROOT);
+        if (lower.startsWith("helvetica")) {
+            return "Arial";
+        }
+        if (lower.startsWith("times")) {
+            return "Times New Roman";
+        }
+        if (lower.startsWith("courier")) {
+            return "Courier New";
+        }
+        return null;
+    }
+
+    /**
      * Returns the viewer ascent ratio for a standard-14 replacement font.
      *
      * @param fontName logical document font

@@ -148,13 +148,25 @@ class PptxFixedLayoutBackendTest {
 
     @Test
     void unsupportedPayloadFailsWithACapabilityError() {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(300, 200)
-                .create()) {
-            session.add(new BarcodeBuilder().data("still unsupported").qrCode().size(40, 40).build());
-            assertThatThrownBy(() -> session.render(new PptxFixedLayoutBackend()))
-                    .isInstanceOf(UnsupportedNodeCapabilityException.class)
-                    .hasMessageContaining("BarcodeFragmentPayload");
+        // Every engine payload now has a handler, so the diagnostic is pinned
+        // with a payload type the registry can never know, rendered through
+        // the public render(graph, context) path.
+        record UnknownPayload() {
         }
+        com.demcha.compose.document.layout.LayoutCanvas canvas =
+                new com.demcha.compose.document.layout.LayoutCanvas(
+                        300, 200, 280, 180,
+                        com.demcha.compose.engine.components.style.Margin.of(10));
+        com.demcha.compose.document.layout.LayoutGraph graph =
+                new com.demcha.compose.document.layout.LayoutGraph(
+                        canvas, 1, java.util.List.of(),
+                        java.util.List.of(new com.demcha.compose.document.layout.PlacedFragment(
+                                "root/unknown", 0, 0, 10, 10, 50, 50, null, null,
+                                new UnknownPayload())));
+        assertThatThrownBy(() -> new PptxFixedLayoutBackend().render(graph,
+                new com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext(
+                        canvas, java.util.List.of(), null, null)))
+                .isInstanceOf(UnsupportedNodeCapabilityException.class)
+                .hasMessageContaining("UnknownPayload");
     }
 }

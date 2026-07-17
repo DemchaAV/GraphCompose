@@ -86,6 +86,29 @@ final class PptxShapeStyle {
         });
     }
 
+    /** Applies a line join through the raw line properties (POI has no setter). */
+    static void applyLineJoin(XSLFSimpleShape shape,
+                              com.demcha.compose.document.style.DocumentLineJoin join) {
+        if (join == null) {
+            return;
+        }
+        org.openxmlformats.schemas.drawingml.x2006.main.CTShapeProperties properties;
+        if (shape.getXmlObject() instanceof org.openxmlformats.schemas.presentationml.x2006.main.CTShape ctShape) {
+            properties = ctShape.getSpPr();
+        } else if (shape.getXmlObject() instanceof org.openxmlformats.schemas.presentationml.x2006.main.CTConnector ctConnector) {
+            properties = ctConnector.getSpPr();
+        } else {
+            return;
+        }
+        org.openxmlformats.schemas.drawingml.x2006.main.CTLineProperties line =
+                properties.isSetLn() ? properties.getLn() : properties.addNewLn();
+        switch (join) {
+            case MITER -> line.addNewMiter();
+            case ROUND -> line.addNewRound();
+            case BEVEL -> line.addNewBevel();
+        }
+    }
+
     /**
      * Applies a dash pattern. DrawingML dashes are percent-of-line-width
      * presets rather than point arrays, so a non-solid pattern maps to the

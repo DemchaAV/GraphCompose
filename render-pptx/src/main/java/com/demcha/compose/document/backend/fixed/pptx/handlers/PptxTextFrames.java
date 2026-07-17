@@ -6,7 +6,7 @@ import org.apache.poi.sl.usermodel.TextParagraph.TextAlign;
 import org.apache.poi.sl.usermodel.TextShape.TextAutofit;
 import org.apache.poi.sl.usermodel.VerticalAlignment;
 import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
@@ -37,8 +37,8 @@ final class PptxTextFrames {
      * Creates an absolute text frame that PowerPoint cannot re-lay-out: wrap
      * off, autofit off, zero insets, top-anchored.
      */
-    static XSLFTextBox newTextBox(XSLFSlide slide, Rectangle2D anchor) {
-        XSLFTextBox box = slide.createTextBox();
+    static XSLFTextBox newTextBox(XSLFShapeContainer surface, Rectangle2D anchor) {
+        XSLFTextBox box = surface.createTextBox();
         box.setAnchor(anchor);
         box.setWordWrap(false);
         box.setTextAutofit(TextAutofit.NONE);
@@ -70,13 +70,13 @@ final class PptxTextFrames {
      * Creates a named single-run text frame — the common case for table cells
      * and per-span paragraph frames.
      */
-    static XSLFTextBox singleRunBox(XSLFSlide slide,
+    static XSLFTextBox singleRunBox(XSLFShapeContainer surface,
                                     String shapeName,
                                     Rectangle2D anchor,
                                     String text,
                                     TextStyle style,
                                     PptxRenderEnvironment environment) {
-        XSLFTextBox box = newTextBox(slide, anchor);
+        XSLFTextBox box = newTextBox(surface, anchor);
         setShapeName(box, shapeName);
         addRun(preparedParagraph(box), text, style, environment);
         return box;

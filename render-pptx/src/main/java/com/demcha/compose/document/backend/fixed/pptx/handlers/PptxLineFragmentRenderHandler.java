@@ -51,7 +51,7 @@ public final class PptxLineFragmentRenderHandler
         double x2 = fragment.x() + payload.endX();
         double y2 = PptxCoordinates.flipPoint(canvasHeight, fragment.y() + payload.endY());
 
-        XSLFConnectorShape line = environment.slide(fragment.pageIndex()).createConnector();
+        XSLFConnectorShape line = environment.surface(fragment.pageIndex()).createConnector();
         line.setShapeType(ShapeType.LINE);
         line.setAnchor(new Rectangle2D.Double(
                 Math.min(x1, x2),

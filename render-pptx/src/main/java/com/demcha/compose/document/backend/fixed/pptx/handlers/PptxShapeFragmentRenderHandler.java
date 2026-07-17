@@ -10,7 +10,7 @@ import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFConnectorShape;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 
 import java.awt.geom.Rectangle2D;
 
@@ -59,11 +59,11 @@ public final class PptxShapeFragmentRenderHandler
             return;
         }
 
-        XSLFSlide slide = environment.slide(fragment.pageIndex());
+        XSLFShapeContainer surface = environment.surface(fragment.pageIndex());
         Rectangle2D.Double anchor = PptxCoordinates.anchorOf(environment.canvasHeight(), fragment);
 
         if (hasFill || (hasStroke && !hasSideBorders)) {
-            XSLFAutoShape shape = slide.createAutoShape();
+            XSLFAutoShape shape = surface.createAutoShape();
             double radius = uniformRadius(payload.cornerRadius(), anchor.width, anchor.height);
             if (radius > 0) {
                 shape.setShapeType(ShapeType.ROUND_RECT);
@@ -72,15 +72,13 @@ public final class PptxShapeFragmentRenderHandler
                 shape.setShapeType(ShapeType.RECT);
             }
             shape.setAnchor(anchor);
-            // Solid paints are pre-normalised to fillColor; a non-null fillPaint is
-            // always a gradient, drawn as its primary color until gradient fills land.
+            // Solid paints are pre-normalised to fillColor; a non-null fillPaint
+            // is always a gradient and stamps native DrawingML gradFill.
             if (payload.fillPaint() != null) {
-                PptxCapabilityNotes.gradientApproximated();
+                PptxGradientFill.applyGradientFill(shape, payload.fillPaint());
+            } else {
+                PptxShapeStyle.applyFill(shape, payload.fillColor());
             }
-            java.awt.Color fill = payload.fillColor() != null
-                    ? payload.fillColor()
-                    : (payload.fillPaint() != null ? payload.fillPaint().primaryColor().color() : null);
-            PptxShapeStyle.applyFill(shape, fill);
             PptxShapeStyle.applyStroke(shape, hasSideBorders ? null : payload.stroke());
         }
 
@@ -89,10 +87,10 @@ public final class PptxShapeFragmentRenderHandler
             double bottom = anchor.y + anchor.height;
             double left = anchor.x;
             double right = anchor.x + anchor.width;
-            drawSideBorder(slide, payload.sideBorders().top(), left, top, right, top);
-            drawSideBorder(slide, payload.sideBorders().right(), right, top, right, bottom);
-            drawSideBorder(slide, payload.sideBorders().bottom(), left, bottom, right, bottom);
-            drawSideBorder(slide, payload.sideBorders().left(), left, top, left, bottom);
+            drawSideBorder(surface, payload.sideBorders().top(), left, top, right, top);
+            drawSideBorder(surface, payload.sideBorders().right(), right, top, right, bottom);
+            drawSideBorder(surface, payload.sideBorders().bottom(), left, bottom, right, bottom);
+            drawSideBorder(surface, payload.sideBorders().left(), left, top, left, bottom);
         }
     }
 
@@ -116,13 +114,13 @@ public final class PptxShapeFragmentRenderHandler
         return Math.min(raw, maxAllowed);
     }
 
-    private static void drawSideBorder(XSLFSlide slide,
+    private static void drawSideBorder(XSLFShapeContainer surface,
                                        Stroke side,
                                        double x1, double y1, double x2, double y2) {
         if (!PptxShapeStyle.drawable(side)) {
             return;
         }
-        XSLFConnectorShape line = slide.createConnector();
+        XSLFConnectorShape line = surface.createConnector();
         line.setShapeType(ShapeType.LINE);
         line.setAnchor(new Rectangle2D.Double(
                 Math.min(x1, x2),

@@ -15,6 +15,8 @@ import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFFontInfo;
 import org.apache.poi.xslf.usermodel.XSLFPictureData;
+import org.apache.poi.xslf.usermodel.XSLFGroupShape;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +39,8 @@ import java.util.Set;
  * <p>The environment owns the slide surfaces for one document render pass plus
  * the navigation bookkeeping that resolves after all fragments have been
  * painted: bookmark records, anchor destinations, and fragment-level link
- * rectangles. Handlers draw through {@link #slide(int)} and never create
- * slides themselves.</p>
+ * rectangles. Handlers draw through {@link #surface(int)} - the innermost open
+ * transform group or the page's slide - and never create slides themselves.</p>
  *
  * <p>Navigation records are collected in slide top-down space (rectangles are
  * top-left anchored, in points). Their emission — slide-jump hyperlinks and
@@ -62,10 +64,12 @@ public final class PptxRenderEnvironment {
     private final Map<FontName, String> customFontFamilies;
     private final Map<FontName, PptxViewerMetrics.ViewerFontMetrics> viewerFontMetrics;
     private final Map<String, XSLFPictureData> pictureDataCache = new LinkedHashMap<>();
+    private final Map<String, java.awt.Dimension> pictureSizeCache = new LinkedHashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
     private final Set<String> substitutionWarned = new LinkedHashSet<>();
+    private final java.util.Deque<XSLFGroupShape> groupStack = new java.util.ArrayDeque<>();
 
     PptxRenderEnvironment(XMLSlideShow show,
                           PptxRenderSession session,
@@ -132,6 +136,45 @@ public final class PptxRenderEnvironment {
      */
     public XSLFSlide slide(int pageIndex) {
         return session.slide(pageIndex);
+    }
+
+    /**
+     * Returns the container new shapes must be created on: the innermost open
+     * transform group when one is active, otherwise the page's slide. The
+     * layout compiler guarantees begin/end markers stay balanced on one page,
+     * so the stack never leaks across slides.
+     *
+     * @param pageIndex zero-based page index
+     * @return active drawing container for that page
+     */
+    public XSLFShapeContainer surface(int pageIndex) {
+        XSLFGroupShape group = groupStack.peek();
+        return group != null ? group : session.slide(pageIndex);
+    }
+
+    /**
+     * Opens a transform group as the active drawing container. Called by the
+     * transform-begin handler; every push is popped by the matching end
+     * marker.
+     *
+     * @param group group shape covering the transformed composite
+     */
+    public void pushGroup(XSLFGroupShape group) {
+        groupStack.push(group);
+    }
+
+    /**
+     * Closes the innermost transform group.
+     *
+     * @return the group that was active
+     */
+    public XSLFGroupShape popGroup() {
+        XSLFGroupShape group = groupStack.poll();
+        if (group == null) {
+            throw new IllegalStateException(
+                    "Transform end marker without a matching begin: the group stack is empty.");
+        }
+        return group;
     }
 
     /**
@@ -228,6 +271,28 @@ public final class PptxRenderEnvironment {
     }
 
     /**
+     * Returns the image's intrinsic pixel size, decoded once per fingerprint.
+     * POI's header sniffing mis-reports some images (notably tiny PNGs), which
+     * would break the CONTAIN/COVER aspect math the PDF backend computes from
+     * the real bitmap — so both backends read the same decoded dimensions.
+     *
+     * @param imageData engine image payload
+     * @return decoded pixel dimensions, or {@code null} when undecodable
+     */
+    public java.awt.Dimension pictureSize(ImageData imageData) {
+        return pictureSizeCache.computeIfAbsent(imageData.getFingerprint(), ignored -> {
+            try {
+                java.awt.image.BufferedImage decoded = javax.imageio.ImageIO.read(
+                        new ByteArrayInputStream(imageData.getBytes()));
+                return decoded == null ? null
+                        : new java.awt.Dimension(decoded.getWidth(), decoded.getHeight());
+            } catch (IOException exception) {
+                return null;
+            }
+        });
+    }
+
+    /**
      * Resolves picture data once per distinct image fingerprint.
      *
      * @param imageData engine image payload
@@ -279,7 +344,14 @@ public final class PptxRenderEnvironment {
         return true;
     }
 
-    void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
+    /**
+     * Records a bookmark for the navigation pass.
+     *
+     * @param fragment        placed fragment carrying the bookmark
+     * @param bookmarkOptions resolved bookmark metadata
+     */
+    @Internal
+    public void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(
                 bookmarkOptions.title(),
                 bookmarkOptions.level(),

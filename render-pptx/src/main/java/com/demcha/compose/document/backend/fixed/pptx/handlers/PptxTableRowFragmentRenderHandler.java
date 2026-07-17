@@ -15,7 +15,7 @@ import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFConnectorShape;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -75,7 +75,7 @@ public final class PptxTableRowFragmentRenderHandler
     public void renderFills(PlacedFragment fragment,
                             TableRowFragmentPayload payload,
                             PptxRenderEnvironment environment) {
-        XSLFSlide slide = environment.slide(fragment.pageIndex());
+        XSLFShapeContainer surface = environment.surface(fragment.pageIndex());
         for (TableResolvedCell cell : payload.cells()) {
             Color fill = cell.style().fillColor();
             if (fill == null || cell.width() <= 0 || cell.height() <= 0) {
@@ -83,7 +83,7 @@ public final class PptxTableRowFragmentRenderHandler
             }
             double cellX = fragment.x() + cell.x();
             double cellY = fragment.y() + cell.yOffset();
-            XSLFAutoShape rectangle = slide.createAutoShape();
+            XSLFAutoShape rectangle = surface.createAutoShape();
             rectangle.setShapeType(ShapeType.RECT);
             rectangle.setAnchor(new Rectangle2D.Double(
                     cellX,
@@ -107,7 +107,7 @@ public final class PptxTableRowFragmentRenderHandler
     public void renderBordersAndText(PlacedFragment fragment,
                                      TableRowFragmentPayload payload,
                                      PptxRenderEnvironment environment) {
-        XSLFSlide slide = environment.slide(fragment.pageIndex());
+        XSLFShapeContainer surface = environment.surface(fragment.pageIndex());
         FontLibrary fonts = environment.fonts();
         for (TableResolvedCell cell : payload.cells()) {
             double cellX = fragment.x() + cell.x();
@@ -115,13 +115,13 @@ public final class PptxTableRowFragmentRenderHandler
             // cells, shifting the bottom edge downward through the merged
             // rows — same semantics as the PDF handler.
             double cellY = fragment.y() + cell.yOffset();
-            renderCellBorders(slide, cell, cellX, cellY,
+            renderCellBorders(surface, cell, cellX, cellY,
                     fragment.width(), payload.startsPageFragment(), environment);
-            renderCellText(slide, fonts, cell, cellX, cellY, environment);
+            renderCellText(surface, fonts, cell, cellX, cellY, environment);
         }
     }
 
-    private static void renderCellBorders(XSLFSlide slide,
+    private static void renderCellBorders(XSLFShapeContainer surface,
                                           TableResolvedCell cell,
                                           double cellX,
                                           double cellY,
@@ -148,27 +148,27 @@ public final class PptxTableRowFragmentRenderHandler
         double topY = PptxCoordinates.flipPoint(canvasHeight, cellY + cell.height());
         double bottomY = PptxCoordinates.flipPoint(canvasHeight, cellY);
         if (sides.contains(Side.TOP)) {
-            edgeLine(slide, strokeColor, strokeWidth,
+            edgeLine(surface, strokeColor, strokeWidth,
                     cellX - leftCap, topY, cellX + cell.width() + rightCap, topY);
         }
         if (sides.contains(Side.BOTTOM)) {
-            edgeLine(slide, strokeColor, strokeWidth,
+            edgeLine(surface, strokeColor, strokeWidth,
                     cellX - leftCap, bottomY, cellX + cell.width() + rightCap, bottomY);
         }
         if (sides.contains(Side.LEFT)) {
-            edgeLine(slide, strokeColor, strokeWidth, cellX, topY, cellX, bottomY);
+            edgeLine(surface, strokeColor, strokeWidth, cellX, topY, cellX, bottomY);
         }
         if (sides.contains(Side.RIGHT)) {
-            edgeLine(slide, strokeColor, strokeWidth,
+            edgeLine(surface, strokeColor, strokeWidth,
                     cellX + cell.width(), topY, cellX + cell.width(), bottomY);
         }
     }
 
-    private static void edgeLine(XSLFSlide slide,
+    private static void edgeLine(XSLFShapeContainer surface,
                                  Color color,
                                  double width,
                                  double x1, double y1, double x2, double y2) {
-        XSLFConnectorShape line = slide.createConnector();
+        XSLFConnectorShape line = surface.createConnector();
         line.setShapeType(ShapeType.LINE);
         line.setAnchor(new Rectangle2D.Double(
                 Math.min(x1, x2),
@@ -180,7 +180,7 @@ public final class PptxTableRowFragmentRenderHandler
         PptxTextFrames.setShapeName(line, "GraphCompose Table Cell Border");
     }
 
-    private static void renderCellText(XSLFSlide slide,
+    private static void renderCellText(XSLFShapeContainer surface,
                                        FontLibrary fonts,
                                        TableResolvedCell cell,
                                        double cellX,
@@ -220,7 +220,7 @@ public final class PptxTableRowFragmentRenderHandler
             double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
             String safeText = font.sanitizeForRender(cell.style().textStyle(), line);
-            PptxTextFrames.singleRunBox(slide,
+            PptxTextFrames.singleRunBox(surface,
                     "GraphCompose Table Cell Text",
                     new Rectangle2D.Double(
                             lineX,

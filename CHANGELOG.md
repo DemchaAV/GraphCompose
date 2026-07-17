@@ -60,6 +60,18 @@ follow semantic versioning; release dates are ISO 8601.
   identical everywhere. Slides are not editable as text; the default stays
   the editable vector mode.
 
+- The fixed PPTX backend completes the fragment matrix: images (STRETCH /
+  CONTAIN / COVER via the picture source crop, dimensions decoded from the
+  real bitmap), barcodes (the PDF handler's identical ZXing raster), polygons
+  and free paths as freeform geometry, native DrawingML gradient fills and
+  gradient strokes (radial centres and explicit linear axes approximate, with
+  a one-time note), and transform markers as rotated, centre-pivot-scaled
+  group shapes — every fragment between the markers is created inside the
+  group, PPTX's replacement for PDF's graphics-state matrix. Clip regions
+  render unclipped with a one-time warning (DrawingML has no graphics-state
+  clipping); anchor and bookmark markers record their destinations for the
+  navigation pass.
+
 ### Fixed
 
 - `DocumentSession.toImages` / `toImage` rasterized documents that use binary

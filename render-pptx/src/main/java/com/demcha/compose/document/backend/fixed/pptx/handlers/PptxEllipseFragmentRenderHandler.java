@@ -39,7 +39,7 @@ public final class PptxEllipseFragmentRenderHandler
         if (payload.fillColor() == null && !PptxShapeStyle.drawable(payload.stroke())) {
             return;
         }
-        XSLFAutoShape shape = environment.slide(fragment.pageIndex()).createAutoShape();
+        XSLFAutoShape shape = environment.surface(fragment.pageIndex()).createAutoShape();
         shape.setShapeType(ShapeType.ELLIPSE);
         shape.setAnchor(PptxCoordinates.anchorOf(environment.canvasHeight(), fragment));
         PptxShapeStyle.applyFill(shape, payload.fillColor());

@@ -48,18 +48,18 @@ Payload records live in `core` under
 | Rectangle shape — fill, stroke, per-corner radii, side borders (`ShapeFragmentPayload`) | ✅ `PdfShapeFragmentRenderHandler` | ⚠️ `PptxShapeFragmentRenderHandler` (distinct per-corner radii render with the top-left radius on all corners — single-adjust `roundRect` preset — until custom geometry lands; uniform radii and side borders exact) | ❌ |
 | Ellipse (`EllipseFragmentPayload`) | ✅ `PdfEllipseFragmentRenderHandler` | ✅ `PptxEllipseFragmentRenderHandler` | ❌ |
 | Line — dash pattern, line cap (`LineFragmentPayload`) | ✅ `PdfLineFragmentRenderHandler` | ⚠️ `PptxLineFragmentRenderHandler` (numeric dash arrays map to the generic dashed preset; solid lines and caps exact) | ❌ |
-| Polygon (`PolygonFragmentPayload`) | ✅ `PdfPolygonFragmentRenderHandler` | 🚧 | ❌ |
-| Free path — segments, dash, cap, join (`PathFragmentPayload`) | ✅ `PdfPathFragmentRenderHandler` + `PdfPathPainter` | 🚧 | ❌ |
-| Linear gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | 🚧 | ❌ |
-| Radial gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | 🚧 (approximation expected — DrawingML cannot express radius-to-farthest-corner exactly) | ❌ |
-| Gradient strokes | ✅ `PdfPathPainter` (pattern stroking colour) | 🚧 | ❌ |
-| Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | 🚧 | ✅ semantic images (`DocxSemanticBackend`) |
-| Barcode / QR (`BarcodeFragmentPayload`) | ✅ `PdfBarcodeFragmentRenderHandler` (ZXing raster) | 🚧 | ❌ |
+| Polygon (`PolygonFragmentPayload`) | ✅ `PdfPolygonFragmentRenderHandler` | ✅ `PptxPolygonFragmentRenderHandler` + `PptxInlineGeometry` | ❌ |
+| Free path — segments, dash, cap, join (`PathFragmentPayload`) | ✅ `PdfPathFragmentRenderHandler` + `PdfPathPainter` | ⚠️ `PptxPathFragmentRenderHandler` + `PptxInlineGeometry` (numeric dash arrays map to the dashed preset) | ❌ |
+| Linear gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | ✅ `PptxGradientFill` (native `gradFill`; explicit-axis endpoints approximate to the angle) | ❌ |
+| Radial gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | ⚠️ `PptxGradientFill` (`circle` path shade — DrawingML cannot express radius-to-farthest-corner exactly) | ❌ |
+| Gradient strokes | ✅ `PdfPathPainter` (pattern stroking colour) | ✅ `PptxGradientFill` (native `ln`/`gradFill`) | ❌ |
+| Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | ✅ `PptxImageFragmentRenderHandler` (COVER via the picture source crop) | ✅ semantic images (`DocxSemanticBackend`) |
+| Barcode / QR (`BarcodeFragmentPayload`) | ✅ `PdfBarcodeFragmentRenderHandler` (ZXing raster) | ✅ `PptxBarcodeFragmentRenderHandler` (identical ZXing raster) | ❌ |
 | Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | ✅ `PptxTableRowFragmentRenderHandler` + row grouping in `PptxFixedLayoutBackend` (positioned rectangles, edge lines, and text frames — never native PPTX tables, which re-lay-out content) | ✅ semantic tables (`DocxSemanticBackend`) |
-| Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | 🚧 (rect crops for pictures; other content degrades with a one-time warning — PPTX has no graphics-state clipping) | ⚠️ inline fallback + one-time capability warning |
-| Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | 🚧 (group shape with `xfrm`) | ⚠️ inline fallback + one-time capability warning |
-| Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | 🚧 | ❌ |
-| Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | 🚧 (PPTX has no document outline; mapped to slide names where 1:1) | ❌ |
+| Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | ⚠️ `PptxShapeClipBegin/EndRenderHandler` (children render unclipped with a one-time warning — DrawingML has no graphics-state clipping; use the PDF backend or raster-slide mode for exact clips) | ⚠️ inline fallback + one-time capability warning |
+| Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | ✅ `PptxTransformBegin/EndRenderHandler` (group shape; rotation and centre-pivot scaling via the exterior/interior frame ratio) | ⚠️ inline fallback + one-time capability warning |
+| Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ⚠️ `PptxAnchorMarkerRenderHandler` (destinations recorded; slide-jump emission pending) | ❌ |
+| Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | ⚠️ `PptxBookmarkMarkerRenderHandler` (records collected; slide-name mapping pending — PPTX has no document outline) | ❌ |
 | Alpha / opacity | ✅ `PdfAlphaSupport` (`PDExtendedGraphicsState`) | 🚧 (native fill alpha) | ❌ |
 
 ## Navigation and interactivity

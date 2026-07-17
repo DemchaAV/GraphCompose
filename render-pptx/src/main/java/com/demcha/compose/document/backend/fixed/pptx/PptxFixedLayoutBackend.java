@@ -3,7 +3,17 @@ package com.demcha.compose.document.backend.fixed.pptx;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxAnchorMarkerRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBarcodeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBookmarkMarkerRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxImageFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxPathFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxPolygonFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeClipBeginRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeClipEndRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTransformBeginRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTransformEndRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler;
@@ -49,11 +59,13 @@ import java.util.concurrent.TimeUnit;
  * throws {@link UnsupportedNodeCapabilityException}). Custom handlers replace
  * built-in defaults per payload type via {@link Builder#addHandler}.</p>
  *
- * <p>The backend currently renders paragraphs (including rich runs, chips and
- * inline graphics), table rows, and vector shape, line, and ellipse fragments;
- * the remaining payload types arrive incrementally — see
+ * <p>The backend currently renders every fragment payload the layout compiler
+ * emits — paragraphs (rich runs, chips, inline graphics), table rows, vector
+ * shapes, lines, ellipses, polygons, free paths (with gradient fills and
+ * strokes), images, barcodes, transform groups, and navigation markers; clip
+ * regions degrade with a one-time warning — see
  * {@code docs/architecture/backend-capability-matrix.md} for the live
- * per-capability status. Multi-section rendering and render-to-images are not
+ * per-capability status and documented deviations. Multi-section rendering and render-to-images are not
  * implemented yet and throw {@link UnsupportedOperationException}.</p>
  *
  * <p><b>Thread-safety:</b> immutable and reusable across renders; each render
@@ -107,7 +119,17 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 new PptxLineFragmentRenderHandler(),
                 new PptxEllipseFragmentRenderHandler(),
                 new PptxParagraphFragmentRenderHandler(),
-                new PptxTableRowFragmentRenderHandler());
+                new PptxTableRowFragmentRenderHandler(),
+                new PptxImageFragmentRenderHandler(),
+                new PptxBarcodeFragmentRenderHandler(),
+                new PptxPolygonFragmentRenderHandler(),
+                new PptxPathFragmentRenderHandler(),
+                new PptxTransformBeginRenderHandler(),
+                new PptxTransformEndRenderHandler(),
+                new PptxShapeClipBeginRenderHandler(),
+                new PptxShapeClipEndRenderHandler(),
+                new PptxAnchorMarkerRenderHandler(),
+                new PptxBookmarkMarkerRenderHandler());
     }
 
     @Override

@@ -32,10 +32,22 @@ final class PptxCapabilityNotes {
                 + "the PPTX roundRect preset carries a single adjust value");
     }
 
+    static void clipSkipped() {
+        warnOnce("clip",
+                "clip regions render unclipped — DrawingML has no graphics-state clipping; "
+                + "use the PDF backend or raster-slide mode for exact clipping");
+    }
+
+    static void gradientGeometryApproximated() {
+        warnOnce("gradient-geometry",
+                "radial gradient centres and explicit linear axes approximate — DrawingML "
+                + "expresses gradients relative to the shape box, not exact endpoints");
+    }
+
     static void gradientApproximated() {
         warnOnce("gradient",
-                "gradient fills render as the gradient's primary color until DrawingML gradient "
-                + "support lands");
+                "inline SVG gradient layers render rasterized or as their primary color - "
+                + "per-layer gradient geometry has no native DrawingML mapping inside a glyph box");
     }
 
     static void inlineSvgRasterized() {

@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 import org.apache.poi.xslf.usermodel.*;
 
 import java.awt.Color;
@@ -70,7 +71,7 @@ public final class PptxParagraphFragmentRenderHandler
         if (line.spans().isEmpty()) {
             return;
         }
-        XSLFSlide slide = environment.slide(pageIndex);
+        XSLFShapeContainer surface = environment.surface(pageIndex);
         // PowerPoint seats one shared baseline per paragraph using its largest
         // run, so one shared frame is only safe while every plain run agrees on
         // font size; chips, inline graphics, and mixed sizes go through
@@ -82,7 +83,7 @@ public final class PptxParagraphFragmentRenderHandler
         if (!usesAbsoluteSpans) {
             double top = environment.canvasHeight() - baselineY
                     - sharedBoxViewerAscent(line, environment);
-            XSLFTextBox lineBox = PptxTextFrames.newTextBox(slide,
+            XSLFTextBox lineBox = PptxTextFrames.newTextBox(surface,
                     new Rectangle2D.Double(lineX, top,
                             Math.max(PptxTextFrames.FRAME_EPSILON, line.width() + PptxTextFrames.FRAME_EPSILON),
                             Math.max(PptxTextFrames.FRAME_EPSILON, line.textLineHeight())));
@@ -99,28 +100,28 @@ public final class PptxParagraphFragmentRenderHandler
                 String text = sanitized(fonts, textSpan);
                 if (textSpan.background() == null) {
                     if (paragraph == null) {
-                        renderTextSpan(slide, textSpan, text, cursorX, baselineY, fonts,
+                        renderTextSpan(surface, textSpan, text, cursorX, baselineY, fonts,
                                 environment.canvasHeight(), environment);
                     } else {
                         PptxTextFrames.addRun(paragraph, text, textSpan.textStyle(), environment);
                     }
                 } else {
-                    renderChip(slide, textSpan, text, cursorX, baselineY, line, fonts, environment);
+                    renderChip(surface, textSpan, text, cursorX, baselineY, line, fonts, environment);
                 }
             } else if (span instanceof ParagraphImageSpan imageSpan) {
-                renderImage(slide, imageSpan, cursorX, baselineY, line, environment);
+                renderImage(surface, imageSpan, cursorX, baselineY, line, environment);
             } else if (span instanceof ParagraphShapeSpan shapeSpan) {
-                renderShape(slide, shapeSpan, cursorX, baselineY, line, environment.canvasHeight());
+                renderShape(surface, shapeSpan, cursorX, baselineY, line, environment.canvasHeight());
             } else if (span instanceof ParagraphSvgSpan svgSpan) {
-                renderSvg(slide, svgSpan, cursorX, baselineY, line, environment);
+                renderSvg(surface, svgSpan, cursorX, baselineY, line, environment);
             }
-            renderExternalLinkOverlay(slide, spanLinkTarget(span), cursorX, span.width(),
+            renderExternalLinkOverlay(surface, spanLinkTarget(span), cursorX, span.width(),
                     lineTop, line, environment);
             cursorX += span.width();
         }
         // Paragraph-level links get one hotspot per line, tight to the measured
         // line box — the same per-line emission the PDF backend uses.
-        renderExternalLinkOverlay(slide, payload.linkTarget(), lineX, line.width(),
+        renderExternalLinkOverlay(surface, payload.linkTarget(), lineX, line.width(),
                 lineTop, line, environment);
     }
 
@@ -176,7 +177,7 @@ public final class PptxParagraphFragmentRenderHandler
         return null;
     }
 
-    private static void renderTextSpan(XSLFSlide slide,
+    private static void renderTextSpan(XSLFShapeContainer surface,
                                        ParagraphTextSpan span,
                                        String text,
                                        double cursorX,
@@ -187,14 +188,14 @@ public final class PptxParagraphFragmentRenderHandler
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
         double top = canvasHeight - baselineY
                 - environment.viewerAscent(span.textStyle(), metrics.ascent());
-        XSLFTextBox textBox = PptxTextFrames.newTextBox(slide, new Rectangle2D.Double(
+        XSLFTextBox textBox = PptxTextFrames.newTextBox(surface, new Rectangle2D.Double(
                 cursorX, top, Math.max(PptxTextFrames.FRAME_EPSILON, span.width() + PptxTextFrames.FRAME_EPSILON),
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Text Span");
         PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
     }
 
-    private static void renderChip(XSLFSlide slide,
+    private static void renderChip(XSLFShapeContainer surface,
                                    ParagraphTextSpan span,
                                    String text,
                                    double cursorX,
@@ -212,7 +213,7 @@ public final class PptxParagraphFragmentRenderHandler
         double canvasHeight = environment.canvasHeight();
         Rectangle2D chipAnchor = new Rectangle2D.Double(
                 cursorX, canvasHeight - chipBottom - chipHeight, span.width(), chipHeight);
-        XSLFAutoShape chip = slide.createAutoShape();
+        XSLFAutoShape chip = surface.createAutoShape();
         chip.setShapeType(background.cornerRadius() > 0 ? ShapeType.ROUND_RECT : ShapeType.RECT);
         chip.setAnchor(chipAnchor);
         if (background.cornerRadius() > 0) {
@@ -225,14 +226,14 @@ public final class PptxParagraphFragmentRenderHandler
         double textTop = canvasHeight - baselineY
                 - environment.viewerAscent(span.textStyle(), metrics.ascent());
         double textWidth = Math.max(PptxTextFrames.FRAME_EPSILON, span.width() - padding.horizontal());
-        XSLFTextBox textBox = PptxTextFrames.newTextBox(slide, new Rectangle2D.Double(
+        XSLFTextBox textBox = PptxTextFrames.newTextBox(surface, new Rectangle2D.Double(
                 cursorX + padding.left(), textTop, textWidth,
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
         PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
     }
 
-    private static void renderExternalLinkOverlay(XSLFSlide slide,
+    private static void renderExternalLinkOverlay(XSLFShapeContainer surface,
                                                   com.demcha.compose.document.node.DocumentLinkTarget target,
                                                   double x,
                                                   double width,
@@ -242,7 +243,7 @@ public final class PptxParagraphFragmentRenderHandler
         if (!(target instanceof ExternalLinkTarget external) || width <= 0) {
             return;
         }
-        XSLFAutoShape hotspot = slide.createAutoShape();
+        XSLFAutoShape hotspot = surface.createAutoShape();
         hotspot.setShapeType(ShapeType.RECT);
         hotspot.setAnchor(new Rectangle2D.Double(x,
                 environment.canvasHeight() - lineTop, width, line.lineHeight()));
@@ -254,19 +255,19 @@ public final class PptxParagraphFragmentRenderHandler
         hotspot.createHyperlink().linkToUrl(external.options().uri());
     }
 
-    private static void renderImage(XSLFSlide slide,
+    private static void renderImage(XSLFShapeContainer surface,
                                     ParagraphImageSpan span,
                                     double cursorX,
                                     double baselineY,
                                     ParagraphLine line,
                                     PptxRenderEnvironment environment) {
         double bottom = inlineBottom(span.height(), span.alignment(), span.baselineOffset(), baselineY, line);
-        XSLFPictureShape picture = slide.createPicture(environment.resolvePicture(span.imageData()));
+        XSLFPictureShape picture = surface.createPicture(environment.resolvePicture(span.imageData()));
         picture.setAnchor(new Rectangle2D.Double(cursorX,
                 environment.canvasHeight() - bottom - span.height(), span.width(), span.height()));
     }
 
-    private static void renderShape(XSLFSlide slide,
+    private static void renderShape(XSLFShapeContainer surface,
                                     ParagraphShapeSpan span,
                                     double cursorX,
                                     double baselineY,
@@ -283,11 +284,11 @@ public final class PptxParagraphFragmentRenderHandler
                     cursorX + (span.width() - width) / 2.0,
                     canvasHeight - bottom - (span.height() + height) / 2.0,
                     width, height);
-            PptxInlineGeometry.drawOutline(slide, layer.outline(), box, layer.fillColor(), layer.stroke());
+            PptxInlineGeometry.drawOutline(surface, layer.outline(), box, layer.fillColor(), layer.stroke());
         }
     }
 
-    private static void renderSvg(XSLFSlide slide,
+    private static void renderSvg(XSLFShapeContainer surface,
                                   ParagraphSvgSpan span,
                                   double cursorX,
                                   double baselineY,
@@ -305,7 +306,7 @@ public final class PptxParagraphFragmentRenderHandler
                     layer.fillPaint() != null || layer.strokePaint() != null)) {
                 PptxCapabilityNotes.gradientApproximated();
             }
-            XSLFPictureShape picture = slide.createPicture(
+            XSLFPictureShape picture = surface.createPicture(
                     environment.resolvePicture(PptxInlineSvgRasterizer.rasterize(span)));
             picture.setAnchor(box);
             return;
@@ -321,7 +322,7 @@ public final class PptxParagraphFragmentRenderHandler
                 stroke = new com.demcha.compose.engine.components.content.shape.Stroke(
                         layer.strokePaint().primaryColor().color(), stroke.width());
             }
-            PptxInlineGeometry.drawPath(slide,
+            PptxInlineGeometry.drawPath(surface,
                     PptxInlineGeometry.path(layer.segments(), box), fill, stroke);
         }
     }

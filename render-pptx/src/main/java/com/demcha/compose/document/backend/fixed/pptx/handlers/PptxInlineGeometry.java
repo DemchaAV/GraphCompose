@@ -7,7 +7,7 @@ import com.demcha.compose.engine.components.content.shape.Stroke;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFFreeformShape;
-import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 
 import java.awt.Color;
 import java.awt.geom.Path2D;
@@ -20,33 +20,33 @@ final class PptxInlineGeometry {
     private PptxInlineGeometry() {
     }
 
-    static void drawOutline(XSLFSlide slide,
+    static void drawOutline(XSLFShapeContainer surface,
                             ShapeOutline outline,
                             Rectangle2D box,
                             Color fill,
                             Stroke stroke) {
         if (outline instanceof ShapeOutline.Rectangle) {
-            drawPreset(slide, ShapeType.RECT, box, fill, stroke);
+            drawPreset(surface, ShapeType.RECT, box, fill, stroke);
         } else if (outline instanceof ShapeOutline.RoundedRectangle rounded) {
-            XSLFAutoShape shape = drawPreset(slide, ShapeType.ROUND_RECT, box, fill, stroke);
+            XSLFAutoShape shape = drawPreset(surface, ShapeType.ROUND_RECT, box, fill, stroke);
             PptxShapeStyle.applyRoundRectAdjust(shape, rounded.cornerRadius(),
                     box.getWidth(), box.getHeight());
         } else if (outline instanceof ShapeOutline.RoundedRectanglePerCorner rounded) {
             PptxCapabilityNotes.perCornerRadiiApproximated();
-            XSLFAutoShape shape = drawPreset(slide, ShapeType.ROUND_RECT, box, fill, stroke);
+            XSLFAutoShape shape = drawPreset(surface, ShapeType.ROUND_RECT, box, fill, stroke);
             PptxShapeStyle.applyRoundRectAdjust(shape, rounded.corners().topLeft(),
                     box.getWidth(), box.getHeight());
         } else if (outline instanceof ShapeOutline.Ellipse) {
-            drawPreset(slide, ShapeType.ELLIPSE, box, fill, stroke);
+            drawPreset(surface, ShapeType.ELLIPSE, box, fill, stroke);
         } else if (outline instanceof ShapeOutline.Polygon polygon) {
-            drawPath(slide, polygonPath(polygon.points(), box), fill, stroke);
+            drawPath(surface, polygonPath(polygon.points(), box), fill, stroke);
         } else if (outline instanceof ShapeOutline.Path path) {
-            drawPath(slide, path(path.segments(), box), fill, stroke);
+            drawPath(surface, path(path.segments(), box), fill, stroke);
         }
     }
 
-    static XSLFFreeformShape drawPath(XSLFSlide slide, Path2D path, Color fill, Stroke stroke) {
-        XSLFFreeformShape shape = slide.createFreeform();
+    static XSLFFreeformShape drawPath(XSLFShapeContainer surface, Path2D path, Color fill, Stroke stroke) {
+        XSLFFreeformShape shape = surface.createFreeform();
         shape.setPath(path);
         PptxShapeStyle.applyFill(shape, fill);
         PptxShapeStyle.applyStroke(shape, stroke);
@@ -72,6 +72,15 @@ final class PptxInlineGeometry {
         return path;
     }
 
+    /** Draws a normalized vertex ring scaled to the box as a closed freeform. */
+    static XSLFFreeformShape drawPolygon(XSLFShapeContainer surface,
+                                         List<ShapePoint> points,
+                                         Rectangle2D box,
+                                         Color fill,
+                                         Stroke stroke) {
+        return drawPath(surface, polygonPath(points, box), fill, stroke);
+    }
+
     private static Path2D polygonPath(List<ShapePoint> points, Rectangle2D box) {
         Path2D.Double path = new Path2D.Double(Path2D.WIND_NON_ZERO);
         for (int i = 0; i < points.size(); i++) {
@@ -86,12 +95,12 @@ final class PptxInlineGeometry {
         return path;
     }
 
-    private static XSLFAutoShape drawPreset(XSLFSlide slide,
+    private static XSLFAutoShape drawPreset(XSLFShapeContainer surface,
                                             ShapeType type,
                                             Rectangle2D box,
                                             Color fill,
                                             Stroke stroke) {
-        XSLFAutoShape shape = slide.createAutoShape();
+        XSLFAutoShape shape = surface.createAutoShape();
         shape.setShapeType(type);
         shape.setAnchor(box);
         PptxShapeStyle.applyFill(shape, fill);

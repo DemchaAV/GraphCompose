@@ -194,6 +194,42 @@ class PptxVectorFragmentsTest {
     }
 
     @Test
+    void gradientBoundaryStopsArePinnedToTheDomainLikeThePdfShading() throws Exception {
+        try (XMLSlideShow show = new XMLSlideShow();
+             PdfMeasurementResources measurement = PdfMeasurementResources.open(List.of())) {
+            PptxRenderSession session = new PptxRenderSession(show, 300, 200, 1);
+            PptxRenderEnvironment environment = new PptxRenderEnvironment(
+                    show, session, 0, 200, measurement.fontLibrary(), List.of());
+
+            // The PDF shading functions ignore the first/last stop offsets
+            // (they span the full domain); the deck must shade identically,
+            // so 0.3 / 0.5 / 0.9 lands as 0 / 0.5 / 1.
+            PathFragmentPayload ramp = new PathFragmentPayload(
+                    List.of(new DocumentPathSegment.MoveTo(0, 0),
+                            new DocumentPathSegment.LineTo(1, 0),
+                            new DocumentPathSegment.LineTo(1, 1),
+                            new DocumentPathSegment.Close()),
+                    null,
+                    new DocumentPaint.Linear(List.of(
+                            new DocumentPaint.Stop(0.3, DocumentColor.ROYAL_BLUE),
+                            new DocumentPaint.Stop(0.5, DocumentColor.ORANGE),
+                            new DocumentPaint.Stop(0.9, DocumentColor.DARK_GRAY)), 0.0),
+                    null, null, null, null, null, null, null);
+            new com.demcha.compose.document.backend.fixed.pptx.handlers
+                    .PptxPathFragmentRenderHandler()
+                    .render(new PlacedFragment("root/ramp", 0, 0, 40, 30, 120, 40, null, null,
+                            ramp), ramp, environment);
+
+            var properties = ((CTShape) show.getSlides().get(0).getShapes().get(0).getXmlObject()).getSpPr();
+            var stopArray = properties.getGradFill().getGsLst().getGsArray();
+            assertThat(stopArray.length).isEqualTo(3);
+            assertThat(stopArray[0].getPos()).isEqualTo(0);
+            assertThat(stopArray[1].getPos()).isEqualTo(50000);
+            assertThat(stopArray[2].getPos()).isEqualTo(100000);
+        }
+    }
+
+    @Test
     void transformMarkersBecomeRotatedScaledGroups() throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(300, 260)

@@ -61,8 +61,7 @@ public final class PptxLineFragmentRenderHandler
         // The preset always draws top-left → bottom-right inside the anchor;
         // flip vertically when the segment ascends left-to-right.
         line.setFlipVertical((x2 - x1) * (y2 - y1) < 0);
-        line.setLineColor(stroke.strokeColor().color());
-        line.setLineWidth(stroke.width());
+        PptxShapeStyle.applyStroke(line, stroke);
         PptxShapeStyle.applyLineCap(line, payload.lineCap());
         PptxShapeStyle.applyDashPattern(line, payload.dashPattern());
     }

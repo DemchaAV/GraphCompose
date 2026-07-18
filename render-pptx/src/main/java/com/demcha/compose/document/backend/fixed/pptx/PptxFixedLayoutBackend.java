@@ -468,8 +468,14 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * placed at the clip bounds, so the clip is pixel-exact even though
      * DrawingML cannot express it. Fragment-level links, bookmarks, and
      * anchors inside the region are still recorded; run-level link hotspots
-     * inside a rasterized composite are not emitted. Returns the last
-     * consumed index.
+     * inside a rasterized composite are not emitted, and custom fragment
+     * handlers do not apply inside it (the region renders through the PDF
+     * backend's defaults). Returns the last consumed index.
+     *
+     * <p>When {@link PptxClipSafety} proves the clip cannot remove any ink —
+     * the common defensive-clip case, e.g. a rounded card whose padded
+     * content never reaches the corners — the raster fallback is skipped
+     * entirely and the children render as native, editable shapes.</p>
      */
     private int renderClippedComposite(LayoutGraph graph,
                                        List<PlacedFragment> fragments,
@@ -477,7 +483,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                                        PptxRenderEnvironment environment,
                                        FixedLayoutRenderContext context) throws Exception {
         PlacedFragment beginFragment = fragments.get(beginIndex);
-        String ownerPath = ((ShapeClipBeginPayload) beginFragment.payload()).ownerPath();
+        ShapeClipBeginPayload clipPayload = (ShapeClipBeginPayload) beginFragment.payload();
+        String ownerPath = clipPayload.ownerPath();
         int endIndex = beginIndex + 1;
         while (endIndex < fragments.size()
                 && !(fragments.get(endIndex).payload() instanceof ShapeClipEndPayload end
@@ -492,6 +499,14 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         if (beginFragment.width() <= 0 || beginFragment.height() <= 0) {
             recordRegionNavigation(fragments, beginIndex, endIndex, environment);
             return endIndex;
+        }
+        if (PptxClipSafety.clipCannotRemoveInk(
+                clipPayload, beginFragment, fragments, beginIndex, endIndex)) {
+            // The clip provably cuts nothing: consume only the begin marker
+            // and let the main loop render the children as native, editable
+            // shapes (nested clips and table groups re-dispatch normally; the
+            // end marker is a silent no-op).
+            return beginIndex;
         }
 
         // Translate the region into a clip-sized canvas and rasterize only the
@@ -776,13 +791,30 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
         /**
          * Registers a custom fragment handler. A handler reporting the same
-         * payload type as a built-in default replaces that default.
+         * payload type as a built-in default replaces that default; a second
+         * custom handler for the same payload type is rejected, matching the
+         * PDF builder's contract.
+         *
+         * <p>Custom handlers do not apply inside rasterized clip composites —
+         * a clip region that cannot be proven a visual no-op renders through
+         * the PDF backend's default handlers into one picture.</p>
          *
          * @param handler handler to register
          * @return this builder
+         * @throws IllegalArgumentException if a custom handler for the same
+         *                                  payload type is already registered
          */
         public Builder addHandler(PptxFragmentRenderHandler<?> handler) {
-            customHandlers.add(Objects.requireNonNull(handler, "handler"));
+            Objects.requireNonNull(handler, "handler");
+            for (PptxFragmentRenderHandler<?> existing : customHandlers) {
+                if (existing.payloadType().equals(handler.payloadType())) {
+                    throw new IllegalArgumentException(
+                            "Duplicate custom PPTX handler for payload type "
+                            + handler.payloadType().getName()
+                            + "; remove the previous addHandler() call before registering another");
+                }
+            }
+            customHandlers.add(handler);
             return this;
         }
 

@@ -77,7 +77,10 @@ public final class DocumentColor {
      * rectangles/panels/bars, chart value-label halos, ellipses (chart point
      * markers), polygons, and inline shapes — via a graphics-state alpha
      * constant. Text, lines, and the DOCX backend currently render the colour
-     * fully opaque.</p>
+     * fully opaque. The PPTX backend carries the alpha natively on every
+     * surface — fills, strokes, text runs, and table paint — so a translucent
+     * colour on text or table cells shows through in the deck where the PDF
+     * still paints it opaque.</p>
      *
      * @param red   red channel from 0 to 255
      * @param green green channel from 0 to 255

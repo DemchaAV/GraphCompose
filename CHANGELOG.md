@@ -104,6 +104,22 @@ follow semantic versioning; release dates are ISO 8601.
   byte-identical decks across runs by pinning the OPC created/modified
   properties and normalizing every zip entry timestamp (zone-independent).
 
+- Provably no-op clips stay editable in the fixed PPTX backend: when every
+  child of a clip region sits safely inside the clip outline (the common
+  defensive-clip case — a rounded card whose padded content never reaches the
+  corners), the raster fallback is skipped and the region renders as native,
+  editable shapes. The proof is conservative — unprovable outline kinds
+  (polygons, free paths), transforms inside the region, stroked polygons and
+  paths (mitred joins), path segments outside the unit box, table rows, and
+  ink whose stroke or side-border bleed nears the boundary all keep the
+  pixel-exact raster path.
+- PPTX gradients pin their first and last stop offsets to the domain ends,
+  matching what the PDF shading functions actually paint — a partial-offset
+  ramp now shades identically in both formats.
+- `PptxFixedLayoutBackend.Builder.addHandler` rejects a duplicate custom
+  handler for the same payload type, matching the PDF builder's contract, and
+  documents that custom handlers do not apply inside rasterized clip
+  composites.
 - `DocumentSession.toPptxBytes()` / `writePptx(OutputStream)` /
   `buildPptx()` / `buildPptx(Path)` — the PPTX counterparts of the PDF
   convenience trio. The backend resolves through the format-keyed provider

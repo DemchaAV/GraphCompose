@@ -104,6 +104,16 @@ follow semantic versioning; release dates are ISO 8601.
   byte-identical decks across runs by pinning the OPC created/modified
   properties and normalizing every zip entry timestamp (zone-independent).
 
+- `DocumentSession.toPptxBytes()` / `writePptx(OutputStream)` /
+  `buildPptx()` / `buildPptx(Path)` — the PPTX counterparts of the PDF
+  convenience trio. The backend resolves through the format-keyed provider
+  (`BackendProviders.fixedLayout("pptx")`), so the core stays free of a PPTX
+  dependency: with `graph-compose-render-pptx` on the classpath the session's
+  chrome (metadata, watermark, headers/footers) applies exactly as in the PDF
+  paths, and without it the render fails with a `MissingBackendException`
+  naming the artifact to add. Stream and default-output-file contracts match
+  the PDF trio.
+
 ### Fixed
 
 - `DocumentSession.toImages` / `toImage` rasterized documents that use binary
@@ -142,6 +152,12 @@ follow semantic versioning; release dates are ISO 8601.
   differing-page-size rejection, and render-twice byte equality with pinned
   zip entry times; a chrome-and-navigation parity demo renders the PDF/PPTX
   pair with per-page PNG previews.
+- Session-level PPTX convenience tests pin chrome flow-through (metadata and
+  footer tokens land in the deck), slide-count identity with the resolved
+  layout graph, the caller-owned-stream contract, file output, and the
+  default-output-file and empty-session failure modes; the backend-free
+  missing-format diagnostics were already pinned by the core's
+  `MissingBackendContractTest`.
 
 ## v2.0.0 — 2026-07-13
 

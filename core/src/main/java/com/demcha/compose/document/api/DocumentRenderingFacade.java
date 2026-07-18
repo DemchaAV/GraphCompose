@@ -37,6 +37,10 @@ import java.util.concurrent.TimeUnit;
 final class DocumentRenderingFacade {
     private static final Logger LIFECYCLE_LOG = LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
 
+    /** Provider format keys for the fixed-layout convenience paths. */
+    private static final String PDF = "pdf";
+    private static final String PPTX = "pptx";
+
     private final Context context;
 
     DocumentRenderingFacade(Context context) {
@@ -95,16 +99,41 @@ final class DocumentRenderingFacade {
     }
 
     byte[] toPdfBytes() throws Exception {
+        return renderBytes(PDF);
+    }
+
+    void writePdf(OutputStream output) throws Exception {
+        writeFixedLayout(PDF, output);
+    }
+
+    void buildPdf(Path outputFile) throws Exception {
+        buildFixedLayout(PDF, outputFile);
+    }
+
+    byte[] toPptxBytes() throws Exception {
+        return renderBytes(PPTX);
+    }
+
+    void writePptx(OutputStream output) throws Exception {
+        writeFixedLayout(PPTX, output);
+    }
+
+    void buildPptx(Path outputFile) throws Exception {
+        buildFixedLayout(PPTX, outputFile);
+    }
+
+    private byte[] renderBytes(String format) throws Exception {
         context.ensureOpen();
         long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.bytes.start sessionId={} revision={} roots={}",
-                context.sessionId(), context.revision(), context.rootCount());
+        LIFECYCLE_LOG.debug("document.{}.bytes.start sessionId={} revision={} roots={}",
+                format, context.sessionId(), context.revision(), context.rootCount());
         try {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
-            writePdf(output);
+            writeFixedLayout(format, output);
             byte[] bytes = output.toByteArray();
             LIFECYCLE_LOG.debug(
-                    "document.pdf.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
+                    "document.{}.bytes.end sessionId={} revision={} byteCount={} durationMs={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     bytes.length,
@@ -112,7 +141,8 @@ final class DocumentRenderingFacade {
             return bytes;
         } catch (Exception ex) {
             LIFECYCLE_LOG.error(
-                    "document.pdf.bytes.failed sessionId={} revision={} errorType={}",
+                    "document.{}.bytes.failed sessionId={} revision={} errorType={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     ex.getClass().getSimpleName(),
@@ -121,27 +151,29 @@ final class DocumentRenderingFacade {
         }
     }
 
-    void writePdf(OutputStream output) throws Exception {
+    private void writeFixedLayout(String format, OutputStream output) throws Exception {
         context.ensureOpen();
         context.ensureRenderable();
         OutputStream target = Objects.requireNonNull(output, "output");
         long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.stream.start sessionId={} revision={} roots={}",
-                context.sessionId(), context.revision(), context.rootCount());
+        LIFECYCLE_LOG.debug("document.{}.stream.start sessionId={} revision={} roots={}",
+                format, context.sessionId(), context.revision(), context.rootCount());
         try {
-            context.conveniencePdfBackend().write(context.layoutGraph(), new FixedLayoutRenderContext(
+            context.convenienceBackend(format).write(context.layoutGraph(), new FixedLayoutRenderContext(
                     context.canvas(),
                     context.customFontFamilies(),
                     null,
                     target));
             LIFECYCLE_LOG.debug(
-                    "document.pdf.stream.end sessionId={} revision={} durationMs={}",
+                    "document.{}.stream.end sessionId={} revision={} durationMs={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     elapsedMillis(startNanos));
         } catch (Exception ex) {
             LIFECYCLE_LOG.error(
-                    "document.pdf.stream.failed sessionId={} revision={} errorType={}",
+                    "document.{}.stream.failed sessionId={} revision={} errorType={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     ex.getClass().getSimpleName(),
@@ -150,23 +182,25 @@ final class DocumentRenderingFacade {
         }
     }
 
-    void buildPdf(Path outputFile) throws Exception {
+    private void buildFixedLayout(String format, Path outputFile) throws Exception {
         context.ensureOpen();
         context.ensureRenderable();
         Path target = Objects.requireNonNull(outputFile, "outputFile");
         long startNanos = System.nanoTime();
-        LIFECYCLE_LOG.debug("document.pdf.build.start sessionId={} revision={} roots={}",
-                context.sessionId(), context.revision(), context.rootCount());
+        LIFECYCLE_LOG.debug("document.{}.build.start sessionId={} revision={} roots={}",
+                format, context.sessionId(), context.revision(), context.rootCount());
         try (OutputStream output = Files.newOutputStream(target)) {
-            writePdf(output);
+            writeFixedLayout(format, output);
             LIFECYCLE_LOG.debug(
-                    "document.pdf.build.end sessionId={} revision={} durationMs={}",
+                    "document.{}.build.end sessionId={} revision={} durationMs={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     elapsedMillis(startNanos));
         } catch (Exception ex) {
             LIFECYCLE_LOG.error(
-                    "document.pdf.build.failed sessionId={} revision={} errorType={}",
+                    "document.{}.build.failed sessionId={} revision={} errorType={}",
+                    format,
                     context.sessionId(),
                     context.revision(),
                     ex.getClass().getSimpleName(),
@@ -182,7 +216,7 @@ final class DocumentRenderingFacade {
         LIFECYCLE_LOG.debug("document.images.start sessionId={} revision={} roots={} dpi={} transparent={} pageIndex={}",
                 context.sessionId(), context.revision(), context.rootCount(), dpi, transparent, pageIndex);
         try {
-            List<BufferedImage> images = context.conveniencePdfBackend().renderToImages(
+            List<BufferedImage> images = context.convenienceBackend(PDF).renderToImages(
                     context.layoutGraph(),
                     new FixedLayoutRenderContext(context.canvas(), context.customFontFamilies(), null, null),
                     dpi,
@@ -224,6 +258,10 @@ final class DocumentRenderingFacade {
 
         DocumentOutputOptions outputOptions();
 
-        FixedLayoutRenderer conveniencePdfBackend();
+        /**
+         * Resolves the session-chrome-configured fixed-layout backend for the
+         * given format key ({@code "pdf"}, {@code "pptx"}, ...).
+         */
+        FixedLayoutRenderer convenienceBackend(String format);
     }
 }

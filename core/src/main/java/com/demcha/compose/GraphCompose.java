@@ -85,9 +85,9 @@ public final class GraphCompose {
 
     /**
      * Starts the canonical semantic document composition flow with a default output target
-     * used by {@link DocumentSession#buildPdf()}.
+     * used by {@link DocumentSession#buildPdf()} and {@link DocumentSession#buildPptx()}.
      *
-     * @param outputFile default PDF output path for {@link DocumentSession#buildPdf()}
+     * @param outputFile default output path for the no-arg build methods
      * @return builder for creating a semantic document session
      */
     public static DocumentBuilder document(Path outputFile) {

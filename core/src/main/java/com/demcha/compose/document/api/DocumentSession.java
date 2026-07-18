@@ -53,7 +53,8 @@ import java.util.function.Consumer;
  *       or by adding low-level {@link DocumentNode}s directly</li>
  *   <li>inspect {@link #layoutGraph()} / {@link #layoutSnapshot()} as needed</li>
  *   <li>render with {@link #writePdf(OutputStream)}, {@link #toPdfBytes()}, {@link #buildPdf()},
- *       or a custom backend</li>
+ *       their PPTX counterparts ({@link #writePptx(OutputStream)}, {@link #toPptxBytes()},
+ *       {@link #buildPptx()}), or a custom backend</li>
  * </ol>
  *
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
@@ -88,7 +89,7 @@ public final class DocumentSession implements AutoCloseable {
     /**
      * Creates a canonical document session.
      *
-     * @param defaultOutputFile  optional default PDF output path
+     * @param defaultOutputFile  optional default output path for the no-arg build methods
      * @param pageSize           physical page size
      * @param margin             page margin
      * @param customFontFamilies document-local font families
@@ -123,13 +124,14 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Runs a PDF convenience body and unifies the cross-cutting checked-exception
-     * wrapping: any underlying {@link Exception} is rewrapped as
-     * {@link DocumentRenderingException} with the supplied {@code action} fragment.
-     * {@link RuntimeException}s pass through unchanged so existing callers that
-     * already catch them keep their semantics.
+     * Runs a fixed-layout convenience body (PDF or PPTX) and unifies the
+     * cross-cutting checked-exception wrapping: any underlying
+     * {@link Exception} is rewrapped as {@link DocumentRenderingException}
+     * with the supplied {@code action} fragment. {@link RuntimeException}s
+     * pass through unchanged so existing callers that already catch them keep
+     * their semantics.
      */
-    private static <R> R wrapPdfRendering(String action, PdfRenderingBody<R> body) throws DocumentRenderingException {
+    private static <R> R wrapRendering(String action, RenderingBody<R> body) throws DocumentRenderingException {
         try {
             return body.run();
         } catch (RuntimeException e) {
@@ -140,7 +142,7 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
-     * Image-rendering analogue of {@link #wrapPdfRendering}: rewraps any
+     * Image-rendering analogue of {@link #wrapRendering}: rewraps any
      * underlying checked {@link Exception} as {@link DocumentRenderingException}
      * while letting {@link RuntimeException}s (e.g. argument/state validation)
      * propagate unchanged.
@@ -890,7 +892,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PDF rendering fails
      */
     public byte[] toPdfBytes() throws DocumentRenderingException {
-        return wrapPdfRendering("render PDF bytes", renderingFacade::toPdfBytes);
+        return wrapRendering("render PDF bytes", renderingFacade::toPdfBytes);
     }
 
     /**
@@ -904,7 +906,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PDF rendering fails
      */
     public void writePdf(OutputStream output) throws DocumentRenderingException {
-        wrapPdfRendering("write PDF to stream", () -> {
+        wrapRendering("write PDF to stream", () -> {
             renderingFacade.writePdf(output);
             return null;
         });
@@ -921,7 +923,7 @@ public final class DocumentSession implements AutoCloseable {
         if (defaultOutputFile == null) {
             throw new IllegalStateException("No default output file was configured for this document session.");
         }
-        wrapPdfRendering("build PDF at '" + defaultOutputFile + "'", () -> {
+        wrapRendering("build PDF at '" + defaultOutputFile + "'", () -> {
             renderingFacade.buildPdf(defaultOutputFile);
             return null;
         });
@@ -934,8 +936,89 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PDF rendering fails
      */
     public void buildPdf(Path outputFile) throws DocumentRenderingException {
-        wrapPdfRendering("build PDF at '" + outputFile + "'", () -> {
+        wrapRendering("build PDF at '" + outputFile + "'", () -> {
             renderingFacade.buildPdf(outputFile);
+            return null;
+        });
+    }
+
+    /**
+     * Renders the current session through the fixed-layout PPTX backend and
+     * returns the .pptx bytes. One resolved page becomes one identically-sized
+     * slide with the exact same geometry the PDF backend paints; the session's
+     * chrome (metadata, watermark, headers/footers) applies the same way as in
+     * {@link #toPdfBytes()}, with options PPTX cannot honour skipped with a
+     * one-time warning.
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-render-pptx} on the
+     * classpath; without it the render fails with a
+     * {@link com.demcha.compose.document.exceptions.MissingBackendException}
+     * naming the artifact to add. The returned byte array is not cached by the
+     * session, so server code that can stream should prefer
+     * {@link #writePptx(OutputStream)}.</p>
+     *
+     * @return rendered .pptx bytes
+     * @throws DocumentRenderingException if PPTX rendering fails
+     * @since 2.1.0
+     */
+    public byte[] toPptxBytes() throws DocumentRenderingException {
+        return wrapRendering("render PPTX bytes", renderingFacade::toPptxBytes);
+    }
+
+    /**
+     * Streams the current session through the fixed-layout PPTX backend. See
+     * {@link #toPptxBytes()} for the geometry and classpath contract.
+     *
+     * <p>The caller owns the supplied stream: GraphCompose writes the deck
+     * bytes but does not close the stream.</p>
+     *
+     * @param output destination stream that receives the rendered .pptx bytes
+     * @throws DocumentRenderingException if PPTX rendering fails
+     * @since 2.1.0
+     */
+    public void writePptx(OutputStream output) throws DocumentRenderingException {
+        wrapRendering("write PPTX to stream", () -> {
+            renderingFacade.writePptx(output);
+            return null;
+        });
+    }
+
+    /**
+     * Builds the current document as a .pptx deck into the default output file
+     * configured on the builder. See {@link #toPptxBytes()} for the geometry
+     * and classpath contract.
+     *
+     * <p>The default file is shared with {@link #buildPdf()}: the session has
+     * one configured output path, and this method writes deck bytes to it
+     * as-is — pass an explicit {@code .pptx} path to
+     * {@link #buildPptx(Path)} when the default is named for PDF output.</p>
+     *
+     * @throws IllegalStateException      if no default output file was configured
+     * @throws DocumentRenderingException if PPTX rendering fails
+     * @since 2.1.0
+     */
+    public void buildPptx() throws DocumentRenderingException {
+        ensureOpen();
+        if (defaultOutputFile == null) {
+            throw new IllegalStateException("No default output file was configured for this document session.");
+        }
+        wrapRendering("build PPTX at '" + defaultOutputFile + "'", () -> {
+            renderingFacade.buildPptx(defaultOutputFile);
+            return null;
+        });
+    }
+
+    /**
+     * Builds the current document as a .pptx deck into the supplied output
+     * file. See {@link #toPptxBytes()} for the geometry and classpath contract.
+     *
+     * @param outputFile destination .pptx path
+     * @throws DocumentRenderingException if PPTX rendering fails
+     * @since 2.1.0
+     */
+    public void buildPptx(Path outputFile) throws DocumentRenderingException {
+        wrapRendering("build PPTX at '" + outputFile + "'", () -> {
+            renderingFacade.buildPptx(outputFile);
             return null;
         });
     }
@@ -1080,7 +1163,9 @@ public final class DocumentSession implements AutoCloseable {
     private void ensureRenderable() {
         if (roots.isEmpty()) {
             throw new IllegalStateException(
-                    "Cannot render an empty document. Add at least one root before calling writePdf/toPdfBytes/buildPdf/toImages/toImage.");
+                    "Cannot render an empty document. Add at least one root before calling a "
+                    + "render or output method (writePdf/toPdfBytes/buildPdf, "
+                    + "writePptx/toPptxBytes/buildPptx, toImages/toImage).");
         }
     }
 
@@ -1105,7 +1190,7 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     @FunctionalInterface
-    private interface PdfRenderingBody<R> {
+    private interface RenderingBody<R> {
         R run() throws Exception;
     }
 
@@ -1154,7 +1239,7 @@ public final class DocumentSession implements AutoCloseable {
                 layoutGraph(),
                 canvas,
                 List.copyOf(customFontFamilies),
-                chromeOptions.toConveniencePdfBackend(debug));
+                chromeOptions.toConvenienceBackend("pdf", debug));
     }
 
     /**
@@ -1213,8 +1298,8 @@ public final class DocumentSession implements AutoCloseable {
         }
 
         @Override
-        public FixedLayoutRenderer conveniencePdfBackend() {
-            return chromeOptions.toConveniencePdfBackend(debug);
+        public FixedLayoutRenderer convenienceBackend(String format) {
+            return chromeOptions.toConvenienceBackend(format, debug);
         }
     }
 

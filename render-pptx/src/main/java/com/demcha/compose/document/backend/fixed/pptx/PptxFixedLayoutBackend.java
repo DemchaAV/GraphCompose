@@ -17,21 +17,28 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTransformEndR
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTableRowFragmentRenderHandler;
+import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend;
 import com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources;
+import com.demcha.compose.document.backend.fixed.pdf.PdfOutputOptionsTranslator;
 import com.demcha.compose.document.exceptions.UnsupportedNodeCapabilityException;
 import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.AnchorMarkerPayload;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload;
 import com.demcha.compose.document.layout.payloads.ShapeClipEndPayload;
 import com.demcha.compose.document.layout.payloads.TableRowFragmentPayload;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
+import com.demcha.compose.document.output.DocumentHeaderFooterZone;
+import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentWatermark;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xslf.usermodel.XSLFPictureShape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +51,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -63,14 +72,18 @@ import java.util.concurrent.TimeUnit;
  * throws {@link UnsupportedNodeCapabilityException}). Custom handlers replace
  * built-in defaults per payload type via {@link Builder#addHandler}.</p>
  *
- * <p>The backend currently renders every fragment payload the layout compiler
- * emits — paragraphs (rich runs, chips, inline graphics), table rows, vector
- * shapes, lines, ellipses, polygons, free paths (with gradient fills and
- * strokes), images, barcodes, transform groups, and navigation markers; clip
- * regions degrade with a one-time warning — see
+ * <p>The backend renders every fragment payload the layout compiler emits —
+ * paragraphs (rich runs, chips, inline graphics), table rows, vector shapes,
+ * lines, ellipses, polygons, free paths (with gradient fills and strokes),
+ * images, barcodes, transform groups, and navigation markers (hyperlinks,
+ * slide-jump internal links, bookmark slide names) — plus document chrome
+ * (metadata, watermark, repeating headers/footers), multi-section
+ * concatenation, and deterministic byte-identical output; clip regions render
+ * through a pixel-exact raster fallback — see
  * {@code docs/architecture/backend-capability-matrix.md} for the live
- * per-capability status and documented deviations. Multi-section rendering and render-to-images are not
- * implemented yet and throw {@link UnsupportedOperationException}.</p>
+ * per-capability status and documented deviations. Render-to-images is not
+ * implemented and throws {@link UnsupportedOperationException}; rasterize
+ * through the PDF backend, which shares the same resolved geometry.</p>
  *
  * <p><b>Thread-safety:</b> immutable and reusable across renders; each render
  * pass owns its own slide show and environment.</p>
@@ -81,13 +94,26 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
     private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");
 
+    private static final Instant DEFAULT_DETERMINISTIC_INSTANT = Instant.parse("2000-01-01T00:00:00Z");
+
     private final Map<Class<?>, PptxFragmentRenderHandler<?>> handlers;
+
+    // Package-private: the deck assembly reads each section's chrome directly.
+    final DocumentMetadata metadataOptions;
+    final DocumentWatermark watermarkOptions;
+    final List<DocumentHeaderFooter> headerFooterOptions;
+
+    /**
+     * Timestamp all output clocks pin to when deterministic output is enabled;
+     * {@code null} keeps POI's wall-clock stamps.
+     */
+    final Instant deterministicTimestamp;
 
     /**
      * Raster-slide resolution in DPI; {@code 0} keeps the default editable
-     * vector mode.
+     * vector mode. Package-private for the deck assembly.
      */
-    private final int rasterSlidesDpi;
+    final int rasterSlidesDpi;
 
     /**
      * When {@code true} (the default), a clipped composite renders through the
@@ -113,6 +139,10 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         this.handlers = Map.copyOf(merged);
         this.rasterSlidesDpi = builder.rasterSlidesDpi;
         this.clipRasterFallback = builder.clipRasterFallback;
+        this.metadataOptions = builder.metadataOptions;
+        this.watermarkOptions = builder.watermarkOptions;
+        this.headerFooterOptions = List.copyOf(builder.headerFooterOptions);
+        this.deterministicTimestamp = builder.deterministicTimestamp;
     }
 
     /**
@@ -212,30 +242,119 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
-     * Multi-section concatenation is not implemented for the PPTX backend yet.
+     * Concatenates several {@link SectionUnit sections} into one .pptx and
+     * returns its bytes. Each section renders through its own
+     * {@link SectionUnit#chrome() chrome} backend — handlers, watermark,
+     * header/footer with section-local page numbering, and raster-slide mode
+     * are all per-section settings; only deck-global concerns come from the
+     * backend this method is invoked on (deterministic output) or from the
+     * first section that declares them (metadata), matching the PDF backend's
+     * combined-document rules. Anchors, links, and slide names resolve across
+     * section boundaries against the combined deck; a raster-slide section
+     * still resolves incoming links and bookmarks, but its own outgoing
+     * navigation is baked into the pixels. A PPTX deck carries one slide
+     * size, so every section must share the same page canvas.
+     *
+     * @param sections ordered, non-empty list of sections
+     * @return rendered combined-deck bytes
+     * @throws Exception                     if rendering or saving fails
+     * @throws UnsupportedOperationException if sections declare differing page sizes
+     * @since 2.1.0
      */
+    @Beta
     @Override
-    public byte[] renderSections(List<SectionUnit> sections) {
-        throw new UnsupportedOperationException(
-                "The PPTX backend does not render multi-section documents yet.");
+    public byte[] renderSections(List<SectionUnit> sections) throws Exception {
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            writeSections(sections, output);
+            return output.toByteArray();
+        }
     }
 
     /**
-     * Multi-section concatenation is not implemented for the PPTX backend yet.
+     * Concatenates several {@link SectionUnit sections} into one .pptx written
+     * to the caller-owned stream (never closed by the backend). See
+     * {@link #renderSections(List)} for the shared-slide-size constraint.
+     *
+     * @param sections ordered, non-empty list of sections
+     * @param output   caller-owned output stream
+     * @throws Exception                     if rendering or saving fails
+     * @throws UnsupportedOperationException if sections declare differing page sizes
+     * @since 2.1.0
      */
+    @Beta
     @Override
-    public void writeSections(List<SectionUnit> sections, OutputStream output) {
-        throw new UnsupportedOperationException(
-                "The PPTX backend does not render multi-section documents yet.");
+    public void writeSections(List<SectionUnit> sections, OutputStream output) throws Exception {
+        Objects.requireNonNull(sections, "sections");
+        Objects.requireNonNull(output, "output");
+        if (sections.isEmpty()) {
+            throw new IllegalArgumentException("A multi-section document needs at least one section.");
+        }
+        LayoutCanvas firstCanvas = sections.get(0).canvas();
+        for (int index = 0; index < sections.size(); index++) {
+            SectionUnit section = sections.get(index);
+            if (!(section.chrome() instanceof PptxFixedLayoutBackend)) {
+                throw new IllegalArgumentException(
+                        "Section " + index + " carries a "
+                        + section.chrome().getClass().getSimpleName()
+                        + " chrome; every section of a PPTX multi-section render must use a "
+                        + "PptxFixedLayoutBackend.");
+            }
+            if (section.canvas().width() != firstCanvas.width()
+                    || section.canvas().height() != firstCanvas.height()) {
+                throw new UnsupportedOperationException(
+                        "A PPTX deck carries one slide size, so every section must share the same "
+                        + "page canvas; got " + firstCanvas.width() + "x" + firstCanvas.height()
+                        + " and " + section.canvas().width() + "x" + section.canvas().height()
+                        + " pt. Render differing page sizes through the PDF backend.");
+            }
+        }
+        if (deterministicTimestamp == null) {
+            PptxDeckAssembly.renderSections(sections, firstCanvas, this, output);
+            return;
+        }
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            PptxDeckAssembly.renderSections(sections, firstCanvas, this, buffer);
+            writeFinishedDeck(buffer.toByteArray(), output);
+        }
     }
 
     private void renderToOutput(LayoutGraph graph,
                                 FixedLayoutRenderContext context,
                                 OutputStream output) throws Exception {
-        if (rasterSlidesDpi > 0) {
-            renderRasterSlides(graph, context, output);
+        // Without determinism there is no normalization pass, so the deck
+        // streams straight to the caller instead of paying a full-size buffer.
+        if (deterministicTimestamp == null) {
+            if (rasterSlidesDpi > 0) {
+                renderRasterSlides(graph, context, output);
+            } else {
+                renderVectorSlides(graph, context, output);
+            }
             return;
         }
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            if (rasterSlidesDpi > 0) {
+                renderRasterSlides(graph, context, buffer);
+            } else {
+                renderVectorSlides(graph, context, buffer);
+            }
+            writeFinishedDeck(buffer.toByteArray(), output);
+        }
+    }
+
+    /**
+     * Applies the deterministic zip normalization (when enabled) and streams
+     * the finished deck bytes.
+     */
+    private void writeFinishedDeck(byte[] deck, OutputStream output) throws IOException {
+        if (deterministicTimestamp != null) {
+            deck = PptxDeterminismWriter.normalizeZipEntries(deck, deterministicTimestamp);
+        }
+        output.write(deck);
+    }
+
+    private void renderVectorSlides(LayoutGraph graph,
+                                    FixedLayoutRenderContext context,
+                                    OutputStream output) throws Exception {
         try (XMLSlideShow show = new XMLSlideShow();
              PdfMeasurementResources measurement =
                      PdfMeasurementResources.open(context.customFontFamilies())) {
@@ -244,7 +363,21 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxRenderEnvironment environment =
                     new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
                             measurement.fontLibrary(), context.customFontFamilies());
+            int pageCount = Math.max(graph.totalPages(), 1);
+            PptxChromeRenderer.applyWatermarkBehindContent(
+                    environment, watermarkOptions, graph.canvas(), pageCount);
             renderGraph(graph, environment, context);
+            PptxChromeRenderer.applyWatermarkAboveContent(
+                    environment, watermarkOptions, graph.canvas(), pageCount);
+            PptxChromeRenderer.applyHeadersAndFooters(
+                    environment, headerFooterOptions, graph.canvas(), pageCount);
+            PptxNavigationWriter.apply(environment);
+            if (metadataOptions != null) {
+                PptxDeckAssembly.applyMetadata(show, metadataOptions);
+            }
+            if (deterministicTimestamp != null) {
+                PptxDeterminismWriter.pinCoreProperties(show, deterministicTimestamp);
+            }
             show.write(output);
         }
     }
@@ -252,32 +385,50 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     /**
      * Raster-slide mode: every page is rendered through the PDF backend at the
      * configured DPI and placed as one full-slide picture — a pixel-exact copy
-     * of the PDF/PNG output in .pptx form. Slides are not editable as text.
+     * of the PDF/PNG output in .pptx form. Slides are not editable as text,
+     * and visible chrome (watermark, headers/footers) is baked into the pixels
+     * by the PDF backend; metadata still lands in the deck's core properties.
      */
     private void renderRasterSlides(LayoutGraph graph,
                                     FixedLayoutRenderContext context,
                                     OutputStream output) throws Exception {
-        List<BufferedImage> pages = new PdfFixedLayoutBackend()
+        List<BufferedImage> pages = pdfBackendWithVisibleChrome()
                 .renderToImages(graph, context, rasterSlidesDpi, false, -1);
         try (XMLSlideShow show = new XMLSlideShow()) {
             PptxRenderSession session = new PptxRenderSession(
                     show, graph.canvas().width(), graph.canvas().height(), graph.totalPages());
-            for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
-                XSLFPictureData data = show.addPicture(
-                        encodePng(pages.get(pageIndex)), PictureData.PictureType.PNG);
-                XSLFPictureShape picture = session.slide(pageIndex).createPicture(data);
-                picture.setAnchor(new Rectangle2D.Double(
-                        0, 0, graph.canvas().width(), graph.canvas().height()));
+            PptxRenderEnvironment environment = new PptxRenderEnvironment(
+                    show, session, 0, graph.canvas().height());
+            PptxDeckAssembly.placeRasterPages(environment, pages, graph.canvas());
+            if (metadataOptions != null) {
+                PptxDeckAssembly.applyMetadata(show, metadataOptions);
+            }
+            if (deterministicTimestamp != null) {
+                PptxDeterminismWriter.pinCoreProperties(show, deterministicTimestamp);
             }
             show.write(output);
         }
     }
 
-    private static byte[] encodePng(BufferedImage image) throws IOException {
-        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "png", buffer);
-            return buffer.toByteArray();
+    /**
+     * Builds the PDF sub-backend raster renders go through, carrying this
+     * backend's visible chrome so watermarks and headers/footers land in the
+     * rasterized pixels.
+     */
+    PdfFixedLayoutBackend pdfBackendWithVisibleChrome() {
+        if (watermarkOptions == null && headerFooterOptions.isEmpty()) {
+            return new PdfFixedLayoutBackend();
         }
+        PdfFixedLayoutBackend.Builder builder = PdfFixedLayoutBackend.builder()
+                .watermark(PdfOutputOptionsTranslator.toPdf(watermarkOptions));
+        for (DocumentHeaderFooter entry : headerFooterOptions) {
+            if (entry.getZone() == DocumentHeaderFooterZone.FOOTER) {
+                builder.footer(PdfOutputOptionsTranslator.toPdf(entry));
+            } else {
+                builder.header(PdfOutputOptionsTranslator.toPdf(entry));
+            }
+        }
+        return builder.build();
     }
 
     /**
@@ -285,9 +436,9 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * fragments so every cell fill of a table lands beneath its borders and
      * text — the PDF backend's two-pass discipline.
      */
-    private void renderGraph(LayoutGraph graph,
-                             PptxRenderEnvironment environment,
-                             FixedLayoutRenderContext context) throws Exception {
+    void renderGraph(LayoutGraph graph,
+                     PptxRenderEnvironment environment,
+                     FixedLayoutRenderContext context) throws Exception {
         PptxFragmentRenderHandler<?> tableRowHandler =
                 handlers.get(TableRowFragmentPayload.class);
         List<PlacedFragment> fragments = graph.fragments();
@@ -390,7 +541,9 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             if (fragment.payload() instanceof AnchorMarkerPayload anchor) {
                 environment.registerAnchor(fragment, anchor.anchor());
             } else {
-                finishRenderedFragment(fragment, fragment.payload(), environment);
+                // Inside a rasterized composite no per-line hotspots were
+                // emitted, so paragraph links keep their fragment rectangle.
+                finishRenderedFragment(fragment, fragment.payload(), environment, true);
             }
         }
     }
@@ -422,7 +575,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             TableRowFragmentPayload payload =
                     (TableRowFragmentPayload) fragment.payload();
             handler.renderBordersAndText(fragment, payload, environment);
-            finishRenderedFragment(fragment, payload, environment);
+            finishRenderedFragment(fragment, payload, environment, false);
         }
         return endExclusive - 1;
     }
@@ -431,19 +584,23 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         Object payload = fragment.payload();
         PptxFragmentRenderHandler<Object> handler = handlerFor(payload);
         handler.render(fragment, payload, environment);
-        finishRenderedFragment(fragment, payload, environment);
+        finishRenderedFragment(fragment, payload, environment, false);
     }
 
     /**
      * Generic post-render bookkeeping shared by every semantic payload:
      * fragment-rectangle links and bookmark records are collected here so no
-     * individual handler has to remember navigation concerns.
+     * individual handler has to remember navigation concerns. Paragraph link
+     * rectangles are skipped on the normal path — the paragraph handler emits
+     * tighter per-line hotspots itself — unless the caller says otherwise.
      */
     private void finishRenderedFragment(PlacedFragment fragment,
                                         Object payload,
-                                        PptxRenderEnvironment environment) {
+                                        PptxRenderEnvironment environment,
+                                        boolean includeParagraphLinks) {
         if (payload instanceof PdfSemanticFragmentPayload semanticPayload) {
-            if (semanticPayload.linkTarget() != null) {
+            if (semanticPayload.linkTarget() != null
+                    && (includeParagraphLinks || !(payload instanceof ParagraphFragmentPayload))) {
                 environment.recordFragmentLink(fragment, semanticPayload.linkTarget());
             }
             if (semanticPayload.bookmarkOptions() != null) {
@@ -486,8 +643,108 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         private final List<PptxFragmentRenderHandler<?>> customHandlers = new ArrayList<>();
         private int rasterSlidesDpi;
         private boolean clipRasterFallback = true;
+        private DocumentMetadata metadataOptions;
+        private DocumentWatermark watermarkOptions;
+        private final List<DocumentHeaderFooter> headerFooterOptions = new ArrayList<>();
+        private Instant deterministicTimestamp;
 
         private Builder() {
+        }
+
+        /**
+         * Configures deck metadata, written into the OPC core properties
+         * (title, author, subject, keywords) and the extended application
+         * property.
+         *
+         * @param metadata canonical metadata, or {@code null} for none
+         * @return this builder
+         */
+        public Builder metadata(DocumentMetadata metadata) {
+            this.metadataOptions = metadata;
+            return this;
+        }
+
+        /**
+         * Configures a document-wide watermark, rendered on every slide with
+         * the PDF backend's placement math — behind or above the content per
+         * its layer.
+         *
+         * @param watermark canonical watermark, or {@code null} for none
+         * @return this builder
+         */
+        public Builder watermark(DocumentWatermark watermark) {
+            this.watermarkOptions = watermark;
+            return this;
+        }
+
+        /**
+         * Adds a repeating header, rendered on every slide with resolved
+         * {@code {page}} / {@code {pages}} / {@code {date}} tokens.
+         *
+         * @param options header chrome
+         * @return this builder
+         */
+        public Builder header(DocumentHeaderFooter options) {
+            headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(DocumentHeaderFooterZone.HEADER));
+            return this;
+        }
+
+        /**
+         * Adds a repeating footer, rendered on every slide with resolved
+         * {@code {page}} / {@code {pages}} / {@code {date}} tokens.
+         *
+         * @param options footer chrome
+         * @return this builder
+         */
+        public Builder footer(DocumentHeaderFooter options) {
+            headerFooterOptions.add(Objects.requireNonNull(options, "options")
+                    .withZone(DocumentHeaderFooterZone.FOOTER));
+            return this;
+        }
+
+        /**
+         * Enables (or disables) deterministic output. When enabled, the deck's
+         * OPC created / modified core properties are pinned to a fixed default
+         * timestamp and every zip entry's modification time is normalized, so
+         * the same document renders to byte-identical output across runs — for
+         * reproducible builds and byte-level output tests. Disabled by
+         * default.
+         *
+         * <p>A {@code {date}} token in header/footer chrome resolves against
+         * the wall-clock date, so decks using it stay byte-identical only
+         * within one day — the same limitation the PDF backend has.</p>
+         *
+         * @param enabled {@code true} to pin output at the default timestamp,
+         *                {@code false} to keep POI's live timestamps
+         * @return this builder
+         * @since 2.1.0
+         */
+        @Beta
+        public Builder deterministic(boolean enabled) {
+            this.deterministicTimestamp = enabled ? DEFAULT_DETERMINISTIC_INSTANT : null;
+            return this;
+        }
+
+        /**
+         * Enables deterministic output with an explicit timestamp. See
+         * {@link #deterministic(boolean)}.
+         *
+         * <p>The instant is truncated to whole seconds up front: zip DOS
+         * times carry two-second resolution and OPC dates whole seconds, so
+         * truncating keeps every serialized clock in agreement for sub-second
+         * inputs.</p>
+         *
+         * @param timestamp the instant to pin the deck's clocks to
+         * @return this builder
+         * @throws NullPointerException if {@code timestamp} is null
+         * @since 2.1.0
+         */
+        @Beta
+        public Builder deterministic(Instant timestamp) {
+            this.deterministicTimestamp =
+                    Objects.requireNonNull(timestamp, "timestamp").truncatedTo(ChronoUnit.SECONDS);
+            return this;
         }
 
         /**

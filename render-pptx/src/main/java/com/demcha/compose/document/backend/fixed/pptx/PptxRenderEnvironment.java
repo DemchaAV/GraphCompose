@@ -58,7 +58,7 @@ public final class PptxRenderEnvironment {
 
     private final XMLSlideShow show;
     private final PptxRenderSession session;
-    private final int pageIndexOffset;
+    private int pageIndexOffset;
     private final double canvasHeight;
     private final FontLibrary fonts;
     private final Map<FontName, String> customFontFamilies;
@@ -129,13 +129,32 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Returns the drawing surface for one resolved page.
+     * Moves the environment to the next section window of a multi-section
+     * render: section-local page indexes now resolve to slides (and record
+     * navigation) at the given offset into the combined deck.
+     */
+    void beginSection(int pageIndexOffset) {
+        this.pageIndexOffset = pageIndexOffset;
+    }
+
+    /**
+     * Returns the drawing surface for one resolved page of the active section
+     * window.
      *
-     * @param pageIndex zero-based page index
+     * @param pageIndex zero-based section-local page index
      * @return the slide backing that page
      */
     public XSLFSlide slide(int pageIndex) {
-        return session.slide(pageIndex);
+        return session.slide(pageIndex + pageIndexOffset);
+    }
+
+    /**
+     * Returns a slide by its absolute index in the combined deck — the space
+     * the navigation records live in. Used by the post-pass emission, which
+     * runs after every section window has been rendered.
+     */
+    XSLFSlide globalSlide(int globalPageIndex) {
+        return session.slide(globalPageIndex);
     }
 
     /**
@@ -149,7 +168,7 @@ public final class PptxRenderEnvironment {
      */
     public XSLFShapeContainer surface(int pageIndex) {
         XSLFGroupShape group = groupStack.peek();
-        return group != null ? group : session.slide(pageIndex);
+        return group != null ? group : slide(pageIndex);
     }
 
     /**
@@ -354,7 +373,6 @@ public final class PptxRenderEnvironment {
     public void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(
                 bookmarkOptions.title(),
-                bookmarkOptions.level(),
                 fragment.pageIndex() + pageIndexOffset));
     }
 
@@ -387,6 +405,20 @@ public final class PptxRenderEnvironment {
                 target));
     }
 
+    /**
+     * Records a clickable rectangle for deferred emission once every anchor is
+     * placed — the path span- and line-level internal links take, since their
+     * targets may still be unrendered forward references.
+     *
+     * @param pageIndex zero-based section-local page index
+     * @param rectangle clickable rectangle in slide top-down points
+     * @param target    resolved link target
+     */
+    @Internal
+    public void deferLink(int pageIndex, Rectangle2D.Double rectangle, DocumentLinkTarget target) {
+        fragmentLinks.add(new FragmentLink(pageIndex + pageIndexOffset, rectangle, target));
+    }
+
     List<BookmarkRecord> bookmarkRecords() {
         return List.copyOf(bookmarkRecords);
     }
@@ -399,7 +431,14 @@ public final class PptxRenderEnvironment {
         return List.copyOf(fragmentLinks);
     }
 
-    record BookmarkRecord(String title, int level, int pageIndex) {
+    /**
+     * A recorded bookmark awaiting slide-name emission. PPTX has no outline
+     * hierarchy, so the engine bookmark's nesting level is not carried.
+     *
+     * @param title     bookmark title
+     * @param pageIndex zero-based slide index the bookmark resolved to
+     */
+    record BookmarkRecord(String title, int pageIndex) {
     }
 
     /**

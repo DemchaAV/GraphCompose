@@ -56,19 +56,19 @@ Payload records live in `core` under
 | Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | ✅ `PptxImageFragmentRenderHandler` (COVER via the picture source crop) | ✅ semantic images (`DocxSemanticBackend`) |
 | Barcode / QR (`BarcodeFragmentPayload`) | ✅ `PdfBarcodeFragmentRenderHandler` (ZXing raster) | ✅ `PptxBarcodeFragmentRenderHandler` (identical ZXing raster) | ❌ |
 | Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | ✅ `PptxTableRowFragmentRenderHandler` + row grouping in `PptxFixedLayoutBackend` (positioned rectangles, edge lines, and text frames — never native PPTX tables, which re-lay-out content) | ✅ semantic tables (`DocxSemanticBackend`) |
-| Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | ✅ raster fallback in `PptxFixedLayoutBackend` — the clip region renders through the PDF backend into one transparent picture on the clip bounds (pixel-exact, not editable as shapes; `Builder.clipRasterFallback(false)` restores unclipped vectors + warning) | ⚠️ inline fallback + one-time capability warning |
+| Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | ✅ raster fallback in `PptxFixedLayoutBackend` — the clip region renders through the PDF backend into one transparent picture on the clip bounds (pixel-exact, not editable as shapes; `Builder.clipRasterFallback(false)` restores unclipped vectors + warning; a true vector clip is tracked in [#413](https://github.com/DemchaAV/GraphCompose/issues/413)) | ⚠️ inline fallback + one-time capability warning |
 | Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | ✅ `PptxTransformBegin/EndRenderHandler` (group shape; rotation and centre-pivot scaling via the exterior/interior frame ratio) | ⚠️ inline fallback + one-time capability warning |
-| Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ⚠️ `PptxAnchorMarkerRenderHandler` (destinations recorded; slide-jump emission pending) | ❌ |
-| Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | ⚠️ `PptxBookmarkMarkerRenderHandler` (records collected; slide-name mapping pending — PPTX has no document outline) | ❌ |
+| Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ✅ `PptxAnchorMarkerRenderHandler` + `PptxNavigationWriter` (slide-jump hyperlinks resolved after all fragments, so forward references work) | ❌ |
+| Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | ⚠️ `PptxBookmarkMarkerRenderHandler` + `PptxNavigationWriter` (PPTX has no outline tree — the first bookmark on a page names its slide, further bookmarks on the same page are dropped with a debug note) | ❌ |
 | Alpha / opacity | ✅ `PdfAlphaSupport` (`PDExtendedGraphicsState`) | 🚧 (native fill alpha) | ❌ |
 
 ## Navigation and interactivity
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| External hyperlinks (fragment- and run-level) | ✅ `PdfLinkAnnotationWriter` + link rects in `PdfFixedLayoutBackend` | ⚠️ `PptxParagraphFragmentRenderHandler` (transparent measured-span shape hotspots preserve resolved text styling; fragment rectangles arrive with navigation support) | ❌ |
-| Internal links (anchor jump, forward references) | ✅ `PdfInternalLinkWriter` (two-pass) | 🚧 (slide-jump hyperlinks) | ❌ |
-| Document outline / bookmarks tree | ✅ `PdfBookmarkOutlineWriter` | 🚧 (no PPTX outline concept — slide names where 1:1, otherwise dropped with a note) | ❌ |
+| External hyperlinks (fragment- and run-level) | ✅ `PdfLinkAnnotationWriter` + link rects in `PdfFixedLayoutBackend` | ✅ `PptxNavigationWriter` (transparent hotspots for measured span, line, and fragment rectangles, emitted above all content after the fragment pass) | ❌ |
+| Internal links (anchor jump, forward references) | ✅ `PdfInternalLinkWriter` (two-pass) | ✅ `PptxNavigationWriter` (deferred slide-jump hyperlinks, resolved after all fragments — including across sections) | ❌ |
+| Document outline / bookmarks tree | ✅ `PdfBookmarkOutlineWriter` | ⚠️ `PptxNavigationWriter` (no PPTX outline concept — slide names where 1:1, extra bookmarks dropped with a note) | ❌ |
 
 ## Document chrome and output options
 
@@ -77,22 +77,22 @@ honour an option ignores it (documented contract).
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| Metadata (title, author, …) | ✅ `PdfDocumentPostProcessor` | 🚧 (OPC core properties) | ✅ (`DocxSemanticBackend` via `SemanticExportContext`) |
-| Watermark (front/back layers) | ✅ `PdfWatermarkRenderer` | 🚧 (per-slide shape, send-to-back/front) | ❌ |
-| Repeating headers / footers | ✅ `PdfHeaderFooterRenderer` | 🚧 (positioned per-slide text boxes) | ❌ |
-| Protection / encryption | ✅ `PdfDocumentPostProcessor` | ❌ (ignored — no OOXML encryption support planned) | ❌ |
-| Viewer preferences | ✅ `applyViewerPreferences` in `PdfFixedLayoutBackend` | ❌ (ignored — PDF-viewer concept) | n/a |
-| Debug guide lines / node labels | ✅ `PdfGuideLinesRenderer`, `PdfNodeLabelRenderer` | 🚧 | n/a |
+| Metadata (title, author, …) | ✅ `PdfDocumentPostProcessor` | ⚠️ `applyMetadata` in `PptxFixedLayoutBackend` (OPC core properties + extended `Application`; OPC has no producer field, so that value is not representable) | ✅ (`DocxSemanticBackend` via `SemanticExportContext`) |
+| Watermark (front/back layers) | ✅ `PdfWatermarkRenderer` | ✅ `PptxChromeRenderer` (per-slide shape at the PDF placement math; behind-content applies before fragments, so no z-order surgery) | ❌ |
+| Repeating headers / footers | ✅ `PdfHeaderFooterRenderer` | ✅ `PptxChromeRenderer` (positioned per-slide text boxes; `{page}` / `{pages}` / `{date}` tokens with the numbering window rules) | ❌ |
+| Protection / encryption | ✅ `PdfDocumentPostProcessor` | ❌ (ignored with a one-time warning — no OOXML encryption support planned) | ❌ |
+| Viewer preferences | ✅ `applyViewerPreferences` in `PdfFixedLayoutBackend` | ❌ (ignored with a one-time warning — PDF-viewer concept) | n/a |
+| Debug guide lines / node labels | ✅ `PdfGuideLinesRenderer`, `PdfNodeLabelRenderer` | ❌ (ignored with a one-time warning — render through the PDF backend to see overlays) | n/a |
 
 ## Output surface and lifecycle
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
 | Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | ✅ `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
-| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | 🚧 (decision pending: POI `XSLFSlide.draw` quality) | ❌ |
+| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | ❌ (throws with a pointer to the PDF backend — POI's slide rasterizer cannot honour embedded fonts, and the PDF raster of the same graph is the canonical image output) | ❌ |
 | Raster-slide mode — every page as one full-slide picture, pixel-exact to the PDF/PNG output (`Builder.rasterSlides(dpi)`) | n/a (the PDF raster is the source) | ✅ `PptxFixedLayoutBackend` | ❌ |
-| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | 🚧 | ❌ |
-| Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | 🚧 (pinned OPC timestamps + zip normalization) | ❌ |
+| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | ❌ |
+| Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | ✅ `PptxDeterminismWriter` (pinned OPC created/modified + zip entry-time normalization) | ❌ |
 | ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
 | `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | 🚧 (`buildPptx` / `writePptx` / `toPptxBytes` planned) | via `session.export(new DocxSemanticBackend(...))` |
 

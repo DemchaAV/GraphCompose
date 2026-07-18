@@ -79,6 +79,31 @@ follow semantic versioning; release dates are ISO 8601.
   `PptxFixedLayoutBackend.Builder.clipRasterFallback(false)` restores the
   previous unclipped vector rendering with its one-time warning.
 
+- The fixed PPTX backend renders document chrome and emits navigation.
+  Metadata lands in the OPC core properties (title, author, subject, keywords,
+  plus the extended application property; OPC has no producer field).
+  Watermarks render per slide with the PDF placement math — text rotated about
+  its baseline start, images with native alpha, tiling supported — and
+  behind-content watermarks apply before fragment rendering, so document order
+  produces the PDF's layering without z-order surgery. Repeating
+  headers/footers resolve `{page}` / `{pages}` / `{date}` tokens with the
+  numbering window rules (start-at, count-from, show-on-first-page, numeral
+  styles). Recorded link rectangles become transparent hotspots after every
+  fragment is placed: external targets as URL hyperlinks, internal targets as
+  slide-jump hyperlinks (forward references included; a dangling anchor is
+  skipped with a warning), and the first bookmark on a page names its slide.
+  Protection, viewer preferences, and debug overlays have no PPTX counterpart
+  and are skipped with a one-time warning.
+- `PptxFixedLayoutBackend.renderSections` / `writeSections` concatenate
+  multi-section documents into one deck: each section keeps its own chrome
+  with section-local page numbering, navigation resolves across section
+  boundaries, and deck metadata follows the first section that declares it.
+  A deck carries one slide size, so sections with differing page canvases are
+  rejected.
+- `PptxFixedLayoutBackend.Builder.deterministic(boolean | Instant)` renders
+  byte-identical decks across runs by pinning the OPC created/modified
+  properties and normalizing every zip entry timestamp (zone-independent).
+
 ### Fixed
 
 - `DocumentSession.toImages` / `toImage` rasterized documents that use binary
@@ -109,6 +134,14 @@ follow semantic versioning; release dates are ISO 8601.
   from the resolved layout graph across a page break with a repeated header
   and a row-spanning cell, and pin the fills-before-ink paint order plus the
   page-start top-border branch at the handler level.
+- PPTX chrome, navigation, section, and determinism tests pin the OPC core
+  properties, the watermark's layer order and pass-through rotation, header/
+  footer token resolution with numbering windows and roman styles, resolved
+  URL and slide-jump hotspots (a dangling anchor degrades to a warning, not a
+  failure), section-local footer restarts with a cross-section slide jump, the
+  differing-page-size rejection, and render-twice byte equality with pinned
+  zip entry times; a chrome-and-navigation parity demo renders the PDF/PPTX
+  pair with per-page PNG previews.
 
 ## v2.0.0 — 2026-07-13
 

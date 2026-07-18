@@ -4,7 +4,6 @@ import com.demcha.compose.document.backend.fixed.pptx.PptxFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.payloads.*;
-import com.demcha.compose.document.node.ExternalLinkTarget;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -115,14 +114,14 @@ public final class PptxParagraphFragmentRenderHandler
             } else if (span instanceof ParagraphSvgSpan svgSpan) {
                 renderSvg(surface, svgSpan, cursorX, baselineY, line, environment);
             }
-            renderExternalLinkOverlay(surface, spanLinkTarget(span), cursorX, span.width(),
-                    lineTop, line, environment);
+            deferLinkOverlay(pageIndex, spanLinkTarget(span), span, cursorX, span.width(),
+                    lineTop, baselineY, line, environment);
             cursorX += span.width();
         }
         // Paragraph-level links get one hotspot per line, tight to the measured
         // line box — the same per-line emission the PDF backend uses.
-        renderExternalLinkOverlay(surface, payload.linkTarget(), lineX, line.width(),
-                lineTop, line, environment);
+        deferLinkOverlay(pageIndex, payload.linkTarget(), null, lineX, line.width(),
+                lineTop, baselineY, line, environment);
     }
 
     /**
@@ -233,26 +232,53 @@ public final class PptxParagraphFragmentRenderHandler
         PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
     }
 
-    private static void renderExternalLinkOverlay(XSLFShapeContainer surface,
-                                                  com.demcha.compose.document.node.DocumentLinkTarget target,
-                                                  double x,
-                                                  double width,
-                                                  double lineTop,
-                                                  ParagraphLine line,
-                                                  PptxRenderEnvironment environment) {
-        if (!(target instanceof ExternalLinkTarget external) || width <= 0) {
+    /**
+     * Records one clickable span or line rectangle for deferred emission:
+     * hotspots land on the slide after every fragment is painted, so they sit
+     * above all content (the PDF annotation contract) and internal targets can
+     * resolve forward references. Inline-graphic spans get their
+     * baseline-aligned box, everything else the full line box — the PDF
+     * backend's span-rectangle rules.
+     */
+    private static void deferLinkOverlay(int pageIndex,
+                                         com.demcha.compose.document.node.DocumentLinkTarget target,
+                                         ParagraphSpan span,
+                                         double x,
+                                         double width,
+                                         double lineTop,
+                                         double baselineY,
+                                         ParagraphLine line,
+                                         PptxRenderEnvironment environment) {
+        if (target == null || width <= 0) {
             return;
         }
-        XSLFAutoShape hotspot = surface.createAutoShape();
-        hotspot.setShapeType(ShapeType.RECT);
-        hotspot.setAnchor(new Rectangle2D.Double(x,
-                environment.canvasHeight() - lineTop, width, line.lineHeight()));
-        // A fully transparent solid fill keeps the whole rectangle clickable
-        // in slide-show mode. noFill shapes only hit-test their outline.
-        hotspot.setFillColor(new Color(0, 0, 0, 0));
-        hotspot.setLineColor(null);
-        PptxTextFrames.setShapeName(hotspot, "GraphCompose Text Link Hotspot");
-        hotspot.createHyperlink().linkToUrl(external.options().uri());
+        double canvasHeight = environment.canvasHeight();
+        InlineImageAlignment alignment = null;
+        double graphicHeight = 0;
+        double baselineOffset = 0;
+        if (span instanceof ParagraphImageSpan imageSpan) {
+            alignment = imageSpan.alignment();
+            graphicHeight = imageSpan.height();
+            baselineOffset = imageSpan.baselineOffset();
+        } else if (span instanceof ParagraphShapeSpan shapeSpan) {
+            alignment = shapeSpan.alignment();
+            graphicHeight = shapeSpan.height();
+            baselineOffset = shapeSpan.baselineOffset();
+        } else if (span instanceof ParagraphSvgSpan svgSpan) {
+            alignment = svgSpan.alignment();
+            graphicHeight = svgSpan.height();
+            baselineOffset = svgSpan.baselineOffset();
+        }
+        Rectangle2D.Double rectangle;
+        if (graphicHeight > 0) {
+            double bottom = inlineBottom(graphicHeight, alignment, baselineOffset, baselineY, line);
+            rectangle = new Rectangle2D.Double(
+                    x, canvasHeight - bottom - graphicHeight, width, graphicHeight);
+        } else {
+            rectangle = new Rectangle2D.Double(
+                    x, canvasHeight - lineTop, width, line.lineHeight());
+        }
+        environment.deferLink(pageIndex, rectangle, target);
     }
 
     private static void renderImage(XSLFShapeContainer surface,

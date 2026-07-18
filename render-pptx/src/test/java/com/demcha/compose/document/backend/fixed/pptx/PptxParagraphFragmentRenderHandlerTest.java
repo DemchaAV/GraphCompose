@@ -95,7 +95,7 @@ class PptxParagraphFragmentRenderHandlerTest {
                 XSLFAutoShape linkHotspot = show.getSlides().get(0).getShapes().stream()
                         .filter(XSLFAutoShape.class::isInstance)
                         .map(XSLFAutoShape.class::cast)
-                        .filter(shape -> "GraphCompose Text Link Hotspot".equals(shape.getShapeName()))
+                        .filter(shape -> "GraphCompose Link Hotspot".equals(shape.getShapeName()))
                         .findFirst().orElseThrow();
                 assertThat(linkHotspot.getHyperlink().getAddress())
                         .isEqualTo("https://example.com");

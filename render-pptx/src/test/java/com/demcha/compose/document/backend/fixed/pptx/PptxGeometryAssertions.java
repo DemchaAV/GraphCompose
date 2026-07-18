@@ -210,7 +210,7 @@ final class PptxGeometryAssertions {
             for (int page = 0; page < show.getSlides().size(); page++) {
                 for (XSLFShape shape : show.getSlides().get(page).getShapes()) {
                     if (shape instanceof XSLFAutoShape autoShape
-                            && "GraphCompose Text Link Hotspot".equals(shape.getShapeName())) {
+                            && "GraphCompose Link Hotspot".equals(shape.getShapeName())) {
                         assertThat(autoShape.getHyperlink())
                                 .as("external link hotspot on slide %d", page)
                                 .isNotNull();

@@ -94,7 +94,7 @@ honour an option ignores it (documented contract).
 | Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | ❌ |
 | Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | ✅ `PptxDeterminismWriter` (pinned OPC created/modified + zip entry-time normalization) | ❌ |
 | ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
-| `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | 🚧 (`buildPptx` / `writePptx` / `toPptxBytes` planned) | via `session.export(new DocxSemanticBackend(...))` |
+| `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | ✅ `buildPptx` / `writePptx` / `toPptxBytes` (resolved via `BackendProviders.fixedLayout("pptx")`; session chrome applies; fails with `MissingBackendException` naming `graph-compose-render-pptx` when the backend is absent) | via `session.export(new DocxSemanticBackend(...))` |
 
 ## Fidelity notes (PPTX)
 

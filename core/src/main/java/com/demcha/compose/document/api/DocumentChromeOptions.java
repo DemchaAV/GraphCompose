@@ -97,15 +97,18 @@ final class DocumentChromeOptions {
     }
 
     /**
-     * Resolves and configures the fixed-layout backend for the session's
-     * convenience output methods, translating the attached chrome through the
-     * registered
+     * Resolves and configures the fixed-layout backend of the requested format
+     * for the session's convenience output methods, translating the attached
+     * chrome through the registered
      * {@link com.demcha.compose.document.backend.fixed.FixedLayoutBackendProvider}.
      *
-     * @param debug debug overlay options; never {@code null}
+     * @param format backend format key, e.g. {@code "pdf"} or {@code "pptx"}
+     * @param debug  debug overlay options; never {@code null}
      * @return a configured renderer
+     * @throws com.demcha.compose.document.exceptions.MissingBackendException
+     *         if no provider for the format is on the classpath
      */
-    FixedLayoutRenderer toConveniencePdfBackend(DocumentDebugOptions debug) {
-        return BackendProviders.fixedLayout("pdf").create(snapshot(), debug);
+    FixedLayoutRenderer toConvenienceBackend(String format, DocumentDebugOptions debug) {
+        return BackendProviders.fixedLayout(format).create(snapshot(), debug);
     }
 }

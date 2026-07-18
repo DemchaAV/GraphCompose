@@ -148,7 +148,8 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        # Reactor slice: the engine, the render-docx / render-pptx semantic backends,
+        # Reactor slice: the engine, the render-docx semantic backend, the
+        # render-pptx fixed-layout backend,
         # the graph-compose wrapper + graph-compose-bundle (the published empty-jar
         # aggregates — covered here so a packaging break is caught on every push, not
         # only via the examples job), the extracted graph-compose-testing module, the
@@ -235,6 +236,13 @@ jobs:
         # is not on Central. Install it after the engine (its graph-compose
         # dependency) so the examples build resolves it.
         run: ./mvnw -B -ntp -f render-docx/pom.xml -DskipTests install
+
+      - name: Install graph-compose-render-pptx (consumed by the examples module)
+        # The Engine Deck PPTX example renders the flagship deck through the
+        # fixed-layout PPTX backend, which is not on Central. Install it after
+        # the wrapper (its core + render-pdf dependencies) so the examples
+        # build resolves it.
+        run: ./mvnw -B -ntp -f render-pptx/pom.xml -DskipTests install
 
       - name: Install graph-compose-testing (consumed by the examples module)
         # LayoutSnapshotRegressionExample uses LayoutSnapshotJson and EngineDeckData

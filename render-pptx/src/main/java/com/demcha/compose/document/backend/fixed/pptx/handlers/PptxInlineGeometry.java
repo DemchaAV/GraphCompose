@@ -42,6 +42,13 @@ final class PptxInlineGeometry {
             drawPath(surface, polygonPath(polygon.points(), box), fill, stroke);
         } else if (outline instanceof ShapeOutline.Path path) {
             drawPath(surface, path(path.segments(), box), fill, stroke);
+        } else {
+            // Exhaustiveness backstop: silently rendering nothing would let a
+            // new ShapeOutline permit ship without a PPTX branch — the qa
+            // coverage guard relies on this throw to catch it.
+            throw new IllegalStateException(
+                    "No PPTX inline-geometry branch for outline kind "
+                    + outline.getClass().getName() + ".");
         }
     }
 

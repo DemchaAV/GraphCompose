@@ -37,12 +37,8 @@ import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentHeaderFooterZone;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentWatermark;
-import com.demcha.compose.font.FontFamilyDefinition;
-import com.demcha.compose.font.FontName;
-import org.apache.poi.ooxml.POIXMLProperties;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
-import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xslf.usermodel.XSLFPictureShape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,21 +98,22 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
     private final Map<Class<?>, PptxFragmentRenderHandler<?>> handlers;
 
-    private final DocumentMetadata metadataOptions;
-    private final DocumentWatermark watermarkOptions;
-    private final List<DocumentHeaderFooter> headerFooterOptions;
+    // Package-private: the deck assembly reads each section's chrome directly.
+    final DocumentMetadata metadataOptions;
+    final DocumentWatermark watermarkOptions;
+    final List<DocumentHeaderFooter> headerFooterOptions;
 
     /**
      * Timestamp all output clocks pin to when deterministic output is enabled;
      * {@code null} keeps POI's wall-clock stamps.
      */
-    private final Instant deterministicTimestamp;
+    final Instant deterministicTimestamp;
 
     /**
      * Raster-slide resolution in DPI; {@code 0} keeps the default editable
-     * vector mode.
+     * vector mode. Package-private for the deck assembly.
      */
-    private final int rasterSlidesDpi;
+    final int rasterSlidesDpi;
 
     /**
      * When {@code true} (the default), a clipped composite renders through the
@@ -293,7 +290,15 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             throw new IllegalArgumentException("A multi-section document needs at least one section.");
         }
         LayoutCanvas firstCanvas = sections.get(0).canvas();
-        for (SectionUnit section : sections) {
+        for (int index = 0; index < sections.size(); index++) {
+            SectionUnit section = sections.get(index);
+            if (!(section.chrome() instanceof PptxFixedLayoutBackend)) {
+                throw new IllegalArgumentException(
+                        "Section " + index + " carries a "
+                        + section.chrome().getClass().getSimpleName()
+                        + " chrome; every section of a PPTX multi-section render must use a "
+                        + "PptxFixedLayoutBackend.");
+            }
             if (section.canvas().width() != firstCanvas.width()
                     || section.canvas().height() != firstCanvas.height()) {
                 throw new UnsupportedOperationException(
@@ -303,102 +308,29 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                         + " pt. Render differing page sizes through the PDF backend.");
             }
         }
+        if (deterministicTimestamp == null) {
+            PptxDeckAssembly.renderSections(sections, firstCanvas, this, output);
+            return;
+        }
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            renderSectionsToBuffer(sections, firstCanvas, buffer);
+            PptxDeckAssembly.renderSections(sections, firstCanvas, this, buffer);
             writeFinishedDeck(buffer.toByteArray(), output);
         }
-    }
-
-    private void renderSectionsToBuffer(List<SectionUnit> sections,
-                                        LayoutCanvas canvas,
-                                        ByteArrayOutputStream buffer) throws Exception {
-        int totalPages = sections.stream()
-                .mapToInt(section -> Math.max(section.graph().totalPages(), 1))
-                .sum();
-        List<FontFamilyDefinition> unionFonts = unionCustomFonts(sections);
-        try (XMLSlideShow show = new XMLSlideShow();
-             PdfMeasurementResources measurement = PdfMeasurementResources.open(unionFonts)) {
-            PptxRenderSession session = new PptxRenderSession(
-                    show, canvas.width(), canvas.height(), totalPages);
-            PptxRenderEnvironment environment = new PptxRenderEnvironment(
-                    show, session, 0, canvas.height(), measurement.fontLibrary(), unionFonts);
-            int pageOffset = 0;
-            for (SectionUnit section : sections) {
-                // Each section renders with its OWN backend's handlers and
-                // chrome, but records navigation against the combined deck
-                // through the environment's section window.
-                PptxFixedLayoutBackend chrome = (PptxFixedLayoutBackend) section.chrome();
-                LayoutGraph graph = section.graph();
-                int pages = Math.max(graph.totalPages(), 1);
-                environment.beginSection(pageOffset);
-                FixedLayoutRenderContext sectionContext = new FixedLayoutRenderContext(
-                        section.canvas(), section.customFonts(), null, null);
-                if (chrome.rasterSlidesDpi > 0) {
-                    placeRasterPages(environment,
-                            chrome.pdfBackendWithVisibleChrome().renderToImages(
-                                    graph, sectionContext, chrome.rasterSlidesDpi, false, -1),
-                            section.canvas());
-                    // The pixels bake this section's outgoing navigation, but
-                    // its anchors and bookmarks still exist as destinations
-                    // for the other sections' links and for slide names.
-                    recordRasterSectionDestinations(graph, environment);
-                } else {
-                    PptxChromeRenderer.applyWatermarkBehindContent(
-                            environment, chrome.watermarkOptions, section.canvas(), pages);
-                    chrome.renderGraph(graph, environment, sectionContext);
-                    PptxChromeRenderer.applyWatermarkAboveContent(
-                            environment, chrome.watermarkOptions, section.canvas(), pages);
-                    PptxChromeRenderer.applyHeadersAndFooters(
-                            environment, chrome.headerFooterOptions, section.canvas(), pages);
-                }
-                pageOffset += pages;
-            }
-            environment.beginSection(0);
-            PptxNavigationWriter.apply(environment);
-            // Metadata is deck-global: the first section that declares it wins,
-            // matching the PDF backend's combined-document rule.
-            sections.stream()
-                    .map(section -> ((PptxFixedLayoutBackend) section.chrome()).metadataOptions)
-                    .filter(Objects::nonNull)
-                    .findFirst()
-                    .ifPresent(metadata -> applyMetadata(show, metadata));
-            if (deterministicTimestamp != null) {
-                PptxDeterminismWriter.pinCoreProperties(show, deterministicTimestamp);
-            }
-            show.write(buffer);
-        }
-    }
-
-    /**
-     * Registers a raster section's anchor destinations and bookmarks so
-     * incoming cross-section links and slide names still resolve even though
-     * the section's content is one picture.
-     */
-    private static void recordRasterSectionDestinations(LayoutGraph graph,
-                                                        PptxRenderEnvironment environment) {
-        for (PlacedFragment fragment : graph.fragments()) {
-            if (fragment.payload() instanceof AnchorMarkerPayload anchor) {
-                environment.registerAnchor(fragment, anchor.anchor());
-            } else if (fragment.payload() instanceof PdfSemanticFragmentPayload semanticPayload
-                    && semanticPayload.bookmarkOptions() != null) {
-                environment.registerBookmark(fragment, semanticPayload.bookmarkOptions());
-            }
-        }
-    }
-
-    private static List<FontFamilyDefinition> unionCustomFonts(List<SectionUnit> sections) {
-        Map<FontName, FontFamilyDefinition> byName = new LinkedHashMap<>();
-        for (SectionUnit section : sections) {
-            for (FontFamilyDefinition family : section.customFonts()) {
-                byName.putIfAbsent(family.name(), family);
-            }
-        }
-        return List.copyOf(byName.values());
     }
 
     private void renderToOutput(LayoutGraph graph,
                                 FixedLayoutRenderContext context,
                                 OutputStream output) throws Exception {
+        // Without determinism there is no normalization pass, so the deck
+        // streams straight to the caller instead of paying a full-size buffer.
+        if (deterministicTimestamp == null) {
+            if (rasterSlidesDpi > 0) {
+                renderRasterSlides(graph, context, output);
+            } else {
+                renderVectorSlides(graph, context, output);
+            }
+            return;
+        }
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
             if (rasterSlidesDpi > 0) {
                 renderRasterSlides(graph, context, buffer);
@@ -441,7 +373,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                     environment, headerFooterOptions, graph.canvas(), pageCount);
             PptxNavigationWriter.apply(environment);
             if (metadataOptions != null) {
-                applyMetadata(show, metadataOptions);
+                PptxDeckAssembly.applyMetadata(show, metadataOptions);
             }
             if (deterministicTimestamp != null) {
                 PptxDeterminismWriter.pinCoreProperties(show, deterministicTimestamp);
@@ -467,9 +399,9 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                     show, graph.canvas().width(), graph.canvas().height(), graph.totalPages());
             PptxRenderEnvironment environment = new PptxRenderEnvironment(
                     show, session, 0, graph.canvas().height());
-            placeRasterPages(environment, pages, graph.canvas());
+            PptxDeckAssembly.placeRasterPages(environment, pages, graph.canvas());
             if (metadataOptions != null) {
-                applyMetadata(show, metadataOptions);
+                PptxDeckAssembly.applyMetadata(show, metadataOptions);
             }
             if (deterministicTimestamp != null) {
                 PptxDeterminismWriter.pinCoreProperties(show, deterministicTimestamp);
@@ -479,26 +411,11 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
-     * Places one full-slide picture per rendered page onto the environment's
-     * active section window.
-     */
-    private static void placeRasterPages(PptxRenderEnvironment environment,
-                                         List<BufferedImage> pages,
-                                         LayoutCanvas canvas) throws IOException {
-        for (int pageIndex = 0; pageIndex < pages.size(); pageIndex++) {
-            XSLFPictureData data = environment.slideShow().addPicture(
-                    encodePng(pages.get(pageIndex)), PictureData.PictureType.PNG);
-            XSLFPictureShape picture = environment.slide(pageIndex).createPicture(data);
-            picture.setAnchor(new Rectangle2D.Double(0, 0, canvas.width(), canvas.height()));
-        }
-    }
-
-    /**
      * Builds the PDF sub-backend raster renders go through, carrying this
      * backend's visible chrome so watermarks and headers/footers land in the
      * rasterized pixels.
      */
-    private PdfFixedLayoutBackend pdfBackendWithVisibleChrome() {
+    PdfFixedLayoutBackend pdfBackendWithVisibleChrome() {
         if (watermarkOptions == null && headerFooterOptions.isEmpty()) {
             return new PdfFixedLayoutBackend();
         }
@@ -515,45 +432,13 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
-     * Writes the canonical metadata into the deck's OPC properties: title,
-     * author, subject, and keywords map onto the Dublin Core fields, the
-     * creating application onto the extended {@code Application} property.
-     * OPC has no producer field, so that value is not representable in .pptx.
-     */
-    private static void applyMetadata(XMLSlideShow show, DocumentMetadata metadata) {
-        POIXMLProperties.CoreProperties core = show.getProperties().getCoreProperties();
-        if (metadata.getTitle() != null) {
-            core.setTitle(metadata.getTitle());
-        }
-        if (metadata.getAuthor() != null) {
-            core.setCreator(metadata.getAuthor());
-        }
-        if (metadata.getSubject() != null) {
-            core.setSubjectProperty(metadata.getSubject());
-        }
-        if (metadata.getKeywords() != null) {
-            core.setKeywords(metadata.getKeywords());
-        }
-        if (metadata.getCreator() != null) {
-            show.getProperties().getExtendedProperties().setApplication(metadata.getCreator());
-        }
-    }
-
-    private static byte[] encodePng(BufferedImage image) throws IOException {
-        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "png", buffer);
-            return buffer.toByteArray();
-        }
-    }
-
-    /**
      * Paints every fragment in graph order, grouping contiguous table-row
      * fragments so every cell fill of a table lands beneath its borders and
      * text — the PDF backend's two-pass discipline.
      */
-    private void renderGraph(LayoutGraph graph,
-                             PptxRenderEnvironment environment,
-                             FixedLayoutRenderContext context) throws Exception {
+    void renderGraph(LayoutGraph graph,
+                     PptxRenderEnvironment environment,
+                     FixedLayoutRenderContext context) throws Exception {
         PptxFragmentRenderHandler<?> tableRowHandler =
                 handlers.get(TableRowFragmentPayload.class);
         List<PlacedFragment> fragments = graph.fragments();

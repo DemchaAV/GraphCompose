@@ -373,7 +373,6 @@ public final class PptxRenderEnvironment {
     public void registerBookmark(PlacedFragment fragment, DocumentBookmarkOptions bookmarkOptions) {
         bookmarkRecords.add(new BookmarkRecord(
                 bookmarkOptions.title(),
-                bookmarkOptions.level(),
                 fragment.pageIndex() + pageIndexOffset));
     }
 
@@ -432,7 +431,14 @@ public final class PptxRenderEnvironment {
         return List.copyOf(fragmentLinks);
     }
 
-    record BookmarkRecord(String title, int level, int pageIndex) {
+    /**
+     * A recorded bookmark awaiting slide-name emission. PPTX has no outline
+     * hierarchy, so the engine bookmark's nesting level is not carried.
+     *
+     * @param title     bookmark title
+     * @param pageIndex zero-based slide index the bookmark resolved to
+     */
+    record BookmarkRecord(String title, int pageIndex) {
     }
 
     /**

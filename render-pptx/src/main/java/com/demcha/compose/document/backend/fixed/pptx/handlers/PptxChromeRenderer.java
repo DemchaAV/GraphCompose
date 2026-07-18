@@ -112,11 +112,32 @@ public final class PptxChromeRenderer {
         if (layer != targetLayer) {
             return;
         }
-        for (int local = 0; local < pageCount; local++) {
-            if (watermark.isTextBased()) {
-                renderTextWatermark(environment, watermark, canvas, local);
-            } else if (watermark.isImageBased()) {
-                renderImageWatermark(environment, watermark, canvas, local);
+        // Measurement, sanitization, and image decoding are page-invariant:
+        // prepare once, place per page.
+        if (watermark.isTextBased()) {
+            PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+            float fontSize = watermark.getFontSize();
+            String text = GlyphFallbackLogger.sanitize(font, watermark.getText());
+            float textWidth = font.getStringWidth(text) / 1000f * fontSize;
+            Color color = withOpacity(
+                    watermark.getColor() == null ? Color.LIGHT_GRAY : watermark.getColor().color(),
+                    watermark.getOpacity());
+            TextStyle style = new TextStyle(
+                    FontName.HELVETICA_BOLD, fontSize, TextDecoration.DEFAULT, color);
+            for (int local = 0; local < pageCount; local++) {
+                renderTextWatermark(environment, watermark, canvas, local, text, style, textWidth);
+            }
+        } else if (watermark.isImageBased()) {
+            byte[] bytes = watermark.getImagePath() != null
+                    ? Files.readAllBytes(watermark.getImagePath())
+                    : watermark.getImageBytes();
+            BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (decoded == null) {
+                throw new IOException("The watermark image could not be decoded.");
+            }
+            for (int local = 0; local < pageCount; local++) {
+                renderImageWatermark(environment, watermark, canvas, local,
+                        bytes, decoded.getWidth(), decoded.getHeight());
             }
         }
     }
@@ -124,16 +145,11 @@ public final class PptxChromeRenderer {
     private static void renderTextWatermark(PptxRenderEnvironment environment,
                                             DocumentWatermark watermark,
                                             LayoutCanvas canvas,
-                                            int localPageIndex) throws IOException {
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+                                            int localPageIndex,
+                                            String text,
+                                            TextStyle style,
+                                            float textWidth) {
         float fontSize = watermark.getFontSize();
-        String text = GlyphFallbackLogger.sanitize(font, watermark.getText());
-        float textWidth = font.getStringWidth(text) / 1000f * fontSize;
-        Color color = withOpacity(
-                watermark.getColor() == null ? Color.LIGHT_GRAY : watermark.getColor().color(),
-                watermark.getOpacity());
-        TextStyle style = new TextStyle(FontName.HELVETICA_BOLD, fontSize, TextDecoration.DEFAULT, color);
-
         DocumentWatermarkPosition position = watermark.getPosition() == null
                 ? DocumentWatermarkPosition.CENTER
                 : watermark.getPosition();
@@ -212,17 +228,10 @@ public final class PptxChromeRenderer {
     private static void renderImageWatermark(PptxRenderEnvironment environment,
                                              DocumentWatermark watermark,
                                              LayoutCanvas canvas,
-                                             int localPageIndex) throws IOException {
-        byte[] bytes = watermark.getImagePath() != null
-                ? Files.readAllBytes(watermark.getImagePath())
-                : watermark.getImageBytes();
-        BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
-        if (decoded == null) {
-            throw new IOException("The watermark image could not be decoded.");
-        }
-        float imageWidth = decoded.getWidth();
-        float imageHeight = decoded.getHeight();
-
+                                             int localPageIndex,
+                                             byte[] bytes,
+                                             float imageWidth,
+                                             float imageHeight) {
         DocumentWatermarkPosition position = watermark.getPosition() == null
                 ? DocumentWatermarkPosition.CENTER
                 : watermark.getPosition();
@@ -321,24 +330,25 @@ public final class PptxChromeRenderer {
         List<HeaderFooterConfig> configs = entries.stream()
                 .map(PptxChromeRenderer::toEngine)
                 .toList();
+        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         for (int local = 0; local < pageCount; local++) {
             for (HeaderFooterConfig config : configs) {
                 if (!config.appliesTo(local + 1)) {
                     continue;
                 }
-                renderZone(environment, config, canvas, local, pageCount, marginLeft, marginRight);
+                renderZone(environment, config, font, canvas, local, pageCount, marginLeft, marginRight);
             }
         }
     }
 
     private static void renderZone(PptxRenderEnvironment environment,
                                    HeaderFooterConfig config,
+                                   PDFont font,
                                    LayoutCanvas canvas,
                                    int localPageIndex,
                                    int pageCount,
                                    float marginLeft,
                                    float marginRight) throws IOException {
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         float fontSize = config.getFontSize();
         float pageWidth = (float) canvas.width();
         float usableWidth = pageWidth - marginLeft - marginRight;

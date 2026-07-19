@@ -224,6 +224,96 @@ class PdfDecorationAndAlphaRenderTest {
     }
 
     @Test
+    void anOpaqueInlineShapeAfterATranslucentRunStaysFullyDark() throws Exception {
+        // The dot draws in its own q..Q AFTER the translucent run's gs was
+        // emitted; without the ambient-alpha reset before nested draws it
+        // would inherit the run's translucency.
+        BufferedImage image = render(session -> session.add(new ParagraphBuilder().name("DotLine")
+                .inlineText("GHOST ", DocumentTextStyle.builder().size(16)
+                        .color(DocumentColor.rgba(0, 0, 0, 40)).build())
+                .dot(8, DocumentColor.rgb(0, 0, 0))
+                .build()));
+        assertThat(minLuminance(image))
+                .as("the opaque dot must not inherit the translucent run's alpha")
+                .isLessThan(60);
+    }
+
+    @Test
+    void translucentTableBordersRenderLighterThanOpaque() throws Exception {
+        BufferedImage opaque = render(session -> session.add(new TableBuilder()
+                .name("Borders")
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                DocumentColor.rgb(0, 0, 0), 3))
+                        .build())
+                .row("")
+                .build()));
+        BufferedImage translucent = render(session -> session.add(new TableBuilder()
+                .name("Borders")
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                DocumentColor.rgba(0, 0, 0, 100), 3))
+                        .build())
+                .row("")
+                .build()));
+        assertThat(minLuminance(opaque)).isLessThan(60);
+        // Perpendicular borders double-blend where they cross at the cell
+        // corners (1−(1−α)² ≈ 0.63), so the darkest translucent pixel sits
+        // lower than a single pass — still far from opaque.
+        assertThat(minLuminance(translucent)).isGreaterThan(80);
+    }
+
+    @Test
+    void translucentTableCellTextRendersLighterThanOpaque() throws Exception {
+        BufferedImage opaque = render(session -> session.add(new TableBuilder()
+                .name("CellText")
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .textStyle(DocumentTextStyle.builder().size(14)
+                                .color(DocumentColor.rgb(0, 0, 0)).build())
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                DocumentColor.WHITE, 0))
+                        .build())
+                .row("INK")
+                .build()));
+        BufferedImage translucent = render(session -> session.add(new TableBuilder()
+                .name("CellText")
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .textStyle(DocumentTextStyle.builder().size(14)
+                                .color(DocumentColor.rgba(0, 0, 0, 100)).build())
+                        .stroke(com.demcha.compose.document.style.DocumentStroke.of(
+                                DocumentColor.WHITE, 0))
+                        .build())
+                .row("INK")
+                .build()));
+        assertThat(minLuminance(opaque)).isLessThan(60);
+        assertThat(minLuminance(translucent)).isGreaterThan(100);
+    }
+
+    @Test
+    void translucentSideBordersRenderLighterThanOpaque() throws Exception {
+        // White text keeps the section non-empty without adding dark ink,
+        // so the left accent border is the only measurable paint.
+        DocumentTextStyle invisible = DocumentTextStyle.builder().size(12)
+                .color(DocumentColor.WHITE).build();
+        BufferedImage opaque = render(session -> session.dsl().pageFlow().name("Flow")
+                .addSection("Card", section -> section
+                        .borders(com.demcha.compose.document.style.DocumentBorders.left(
+                                com.demcha.compose.document.style.DocumentStroke.of(
+                                        DocumentColor.rgb(0, 0, 0), 5)))
+                        .addParagraph(p -> p.text("HOLD").textStyle(invisible)))
+                .build());
+        BufferedImage translucent = render(session -> session.dsl().pageFlow().name("Flow")
+                .addSection("Card", section -> section
+                        .borders(com.demcha.compose.document.style.DocumentBorders.left(
+                                com.demcha.compose.document.style.DocumentStroke.of(
+                                        DocumentColor.rgba(0, 0, 0, 100), 5)))
+                        .addParagraph(p -> p.text("HOLD").textStyle(invisible)))
+                .build());
+        assertThat(minLuminance(opaque)).isLessThan(60);
+        assertThat(minLuminance(translucent)).isGreaterThan(100);
+    }
+
+    @Test
     void underlinedTableCellTextDrawsMarks() throws Exception {
         Consumer<DocumentSession> plainTable = session -> session.add(new TableBuilder()
                 .name("Cells")

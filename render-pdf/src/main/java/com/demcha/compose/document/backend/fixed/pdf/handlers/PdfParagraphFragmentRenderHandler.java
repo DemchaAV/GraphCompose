@@ -15,7 +15,6 @@ import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
 import java.awt.*;
 import java.io.IOException;
@@ -483,9 +482,7 @@ public final class PdfParagraphFragmentRenderHandler
                     // setNonStrokingColor drops the alpha channel, so a
                     // translucent run carries it as a graphics-state constant
                     // (the gs operator is legal inside a text object).
-                    PDExtendedGraphicsState state = new PDExtendedGraphicsState();
-                    state.setNonStrokingAlphaConstant(newAlpha);
-                    stream.setGraphicsStateParameters(state);
+                    PdfAlphaSupport.setFillAlpha(stream, newAlpha);
                     alpha = newAlpha;
                 }
                 stream.setNonStrokingColor(newColor);
@@ -502,9 +499,7 @@ public final class PdfParagraphFragmentRenderHandler
          */
         void resetAlpha(PDPageContentStream stream) throws IOException {
             if (alpha != 1f) {
-                PDExtendedGraphicsState state = new PDExtendedGraphicsState();
-                state.setNonStrokingAlphaConstant(1f);
-                stream.setGraphicsStateParameters(state);
+                PdfAlphaSupport.setFillAlpha(stream, 1f);
                 alpha = 1f;
                 // The next translucent run must re-emit its gs even when its
                 // colour is unchanged.

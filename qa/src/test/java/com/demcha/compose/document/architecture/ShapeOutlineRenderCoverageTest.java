@@ -24,11 +24,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Exhaustiveness guard: every {@link ShapeOutline} permit must render through
  * <em>all three</em> outline-consuming surfaces — the shape-container outline
  * fill/stroke, the shape-container clip path, and the inline-shape run —
- * without throwing. Each surface dispatches on the outline kind with an
- * {@code instanceof} chain that ends in an {@code IllegalStateException}; this
- * test reflects over {@code getPermittedSubclasses()} so the next permit added
- * to the sealed type cannot silently miss a render branch (the lesson from the
+ * without throwing, on <em>both</em> fixed-layout backends. Each PDF surface
+ * dispatches on the outline kind with an {@code instanceof} chain that ends in
+ * an {@code IllegalStateException}; this test reflects over
+ * {@code getPermittedSubclasses()} so the next permit added to the sealed type
+ * cannot silently miss a render branch (the lesson from the
  * {@code ShapeOutline.Path} clipper, where the inline-shape switch was missed).
+ *
+ * <p>On PPTX the discriminating chains are the fill-geometry resolution in
+ * core (shared with PDF) and {@code PptxInlineGeometry.drawOutline}'s own
+ * dispatch with its terminal throw; the clip surface renders through the PDF
+ * raster fallback, so its PPTX assertion re-proves the PDF chain rather than a
+ * PPTX-native one.</p>
  *
  * <p>The fill surface is isolated with {@link ClipPolicy#OVERFLOW_VISIBLE}: the
  * clip test exercises {@code ShapeContainerDefinition}'s fill-geometry chain
@@ -82,6 +89,10 @@ class ShapeOutlineRenderCoverageTest {
                 assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII))
                         .as("fill render of " + outline.getClass().getSimpleName())
                         .isEqualTo("%PDF-");
+                byte[] pptx = session.toPptxBytes();
+                assertThat(new String(pptx, 0, 2, StandardCharsets.US_ASCII))
+                        .as("PPTX fill render of " + outline.getClass().getSimpleName())
+                        .isEqualTo("PK");
             }
         }
     }
@@ -104,6 +115,10 @@ class ShapeOutlineRenderCoverageTest {
                 assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII))
                         .as("clip render of " + outline.getClass().getSimpleName())
                         .isEqualTo("%PDF-");
+                byte[] pptx = session.toPptxBytes();
+                assertThat(new String(pptx, 0, 2, StandardCharsets.US_ASCII))
+                        .as("PPTX clip render of " + outline.getClass().getSimpleName())
+                        .isEqualTo("PK");
             }
         }
     }
@@ -124,6 +139,10 @@ class ShapeOutlineRenderCoverageTest {
                 assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII))
                         .as("inline render of " + outline.getClass().getSimpleName())
                         .isEqualTo("%PDF-");
+                byte[] pptx = session.toPptxBytes();
+                assertThat(new String(pptx, 0, 2, StandardCharsets.US_ASCII))
+                        .as("PPTX inline render of " + outline.getClass().getSimpleName())
+                        .isEqualTo("PK");
             }
         }
     }

@@ -148,7 +148,8 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        # Reactor slice: the engine, the render-docx / render-pptx semantic backends,
+        # Reactor slice: the engine, the render-docx semantic backend, the
+        # render-pptx fixed-layout backend,
         # the graph-compose wrapper + graph-compose-bundle (the published empty-jar
         # aggregates — covered here so a packaging break is caught on every push, not
         # only via the examples job), the extracted graph-compose-testing module, the
@@ -242,6 +243,14 @@ jobs:
         # not on Central, so install it after the engine (its graph-compose
         # dependency) before the examples build resolves it.
         run: ./mvnw -B -ntp -f testing/pom.xml -DskipTests install
+
+      - name: Install graph-compose-render-pptx (consumed by the examples module)
+        # The Engine Deck PPTX example renders the flagship deck through the
+        # fixed-layout PPTX backend, which is not on Central. Install it after
+        # the wrapper (its core + render-pdf compile dependencies) AND the
+        # testing module — -DskipTests skips execution but Maven still
+        # resolves render-pptx's test-scope graph-compose-testing dependency.
+        run: ./mvnw -B -ntp -f render-pptx/pom.xml -DskipTests install
 
       - name: Install graph-compose-templates (consumed by the examples module)
         # The flagship + template examples render the built-in CV/invoice/proposal

@@ -76,6 +76,14 @@
             <version>${graphcompose.version}</version>
         </dependency>
 
+        <!-- The fixed-layout PPTX backend: the Engine Deck PPTX example renders
+             the flagship deck as a geometry-identical PowerPoint file. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pptx</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+
         <!-- The built-in CV / cover-letter / invoice / proposal templates that the
              flagship + template examples render. -->
         <dependency>

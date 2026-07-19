@@ -89,6 +89,15 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- The PPTX backend — on the qa classpath so the cross-module boundary
+             rules have POI-using subjects and the outline-coverage guard can
+             render every ShapeOutline permit through both fixed-layout backends. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pptx</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
         <!-- The built-in templates (the relocated visual-parity + smoke suites
              render them) plus their tests-classifier jar, which carries the template
              data fixtures (com.demcha.mock.*DataFixtures). -->

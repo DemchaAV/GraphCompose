@@ -56,7 +56,7 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 The **module-first** release &mdash; the single jar becomes a family of per-concern artifacts, so you install exactly what you render.
 
 - **Lean engine** &mdash; `graph-compose-core` is the document model, DSL, themes, and deterministic layout with **no PDFBox, POI, or template code** on its dependency tree. Backends plug in through a `ServiceLoader` seam; a core-only classpath asked to render throws `MissingBackendException` naming the artifact to add.
-- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-docx` and `graph-compose-render-pptx` (Apache POI, semantic export).
+- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-pptx` (Apache POI, geometry-identical PowerPoint decks from the same resolved layout — one page per editable slide; clipped regions land as pixel-exact pictures), `graph-compose-render-docx` (Apache POI, semantic export).
 - **`graph-compose` stays a drop-in** &mdash; the 1.x coordinate is now a thin wrapper over core + the PDF backend, so existing callers upgrade with **no code and no dependency change**.
 - **Templates are their own artifact** &mdash; the CV / cover-letter / invoice / proposal preset families moved to `graph-compose-templates` (imports unchanged). This is the [one dependency-level break](./docs/migration/v2.0.0-modules.md#the-one-break-templates) of the split.
 - **`graph-compose-bundle`** &mdash; one batteries-included coordinate: PDF stack + templates + fonts + colour emoji.
@@ -91,7 +91,8 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
 > | **Batteries-included** (PDF + templates + fonts + emoji) | `graph-compose-bundle` |
 > | **Lean core, bring your own backend** | `graph-compose-core` |
 > | **Built-in CV / cover-letter / invoice / proposal templates** | add `graph-compose-templates` |
-> | **DOCX / PPTX export** | add `graph-compose-render-docx` / `graph-compose-render-pptx` |
+> | **PowerPoint deck, geometry-identical to the PDF** | add `graph-compose-render-pptx` |
+> | **DOCX export (semantic)** | add `graph-compose-render-docx` |
 >
 > Every 2.0 coordinate shares the `graph-compose` version (the fonts and emoji companions
 > keep their own lines). A bare `graph-compose-core` renders nothing until a backend is on

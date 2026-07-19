@@ -129,6 +129,18 @@ follow semantic versioning; release dates are ISO 8601.
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
   of what each render backend supports and which class implements it,
   maintained as part of every capability-changing PR.
+- The README's backend descriptions now present `graph-compose-render-pptx`
+  as the fixed-layout, geometry-identical PowerPoint backend (one page per
+  editable slide) instead of a semantic exporter, with its own
+  quick-start dependency row; the Engine Deck flagship example additionally
+  renders as a .pptx deck (`EngineDeckPptxExample`, part of
+  `GenerateAllExamples`).
+
+### Build
+
+- The examples CI job installs `graph-compose-render-pptx` before generating,
+  so the Engine Deck PPTX example resolves the backend the same way the DOCX
+  example resolves its own.
 
 ### Tests
 
@@ -158,6 +170,13 @@ follow semantic versioning; release dates are ISO 8601.
   default-output-file and empty-session failure modes; the backend-free
   missing-format diagnostics were already pinned by the core's
   `MissingBackendContractTest`.
+- The qa module now guards the PPTX backend's boundaries at bytecode level:
+  POI stays a PPTX-backend implementation detail (the engine, the PDF backend,
+  and the templates must not touch it), the render backends stay
+  template-agnostic, and the PDF backend must not depend on the PPTX artifact
+  (the reverse dependency is by design). The `ShapeOutline` exhaustiveness
+  guard now renders every permit through both fixed-layout backends, so a new
+  outline kind cannot silently miss a PPTX dispatch branch.
 
 ## v2.0.0 — 2026-07-13
 

@@ -106,6 +106,7 @@ public final class PdfTableRowFragmentRenderHandler
             if (cell.width() > 0 && cell.height() > 0) {
                 stream.saveGraphicsState();
                 try {
+                    PdfAlphaSupport.applyFillAlpha(stream, cell.style().fillColor());
                     stream.setNonStrokingColor(cell.style().fillColor());
                     stream.addRect((float) cellX, (float) cellY, (float) cell.width(), (float) cell.height());
                     stream.fill();
@@ -134,6 +135,7 @@ public final class PdfTableRowFragmentRenderHandler
         stream.saveGraphicsState();
         try {
             double strokeWidth = cell.style().stroke().width();
+            PdfAlphaSupport.applyStrokeAlpha(stream, cell.style().stroke().strokeColor().color());
             stream.setStrokingColor(cell.style().stroke().strokeColor().color());
             stream.setLineWidth((float) strokeWidth);
             // Default butt caps. Adjacent cells' perpendicular borders
@@ -185,8 +187,10 @@ public final class PdfTableRowFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
+            PdfAlphaSupport.applyFillAlpha(stream, cell.style().textStyle().color());
             stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
             stream.setNonStrokingColor(cell.style().textStyle().color());
+            List<PdfTextDecorations.Segment> decorations = null;
             for (ResolvedTextLine line : lines) {
                 if (line.text().isEmpty()) {
                     continue;
@@ -198,6 +202,20 @@ public final class PdfTableRowFragmentRenderHandler
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
                 stream.showText(safeText);
                 stream.endText();
+                if (PdfTextDecorations.drawsMark(cell.style().textStyle().decoration())) {
+                    if (decorations == null) {
+                        decorations = new ArrayList<>();
+                    }
+                    decorations.add(new PdfTextDecorations.Segment(
+                            line.x(), line.baselineY(),
+                            font.getTextWidth(cell.style().textStyle(), safeText),
+                            cell.style().textStyle().size(),
+                            cell.style().textStyle().color(),
+                            cell.style().textStyle().decoration()));
+                }
+            }
+            if (decorations != null) {
+                PdfTextDecorations.draw(stream, decorations);
             }
         } finally {
             stream.restoreGraphicsState();

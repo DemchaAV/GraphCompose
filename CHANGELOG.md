@@ -176,6 +176,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- New `TwinOutputExample` flagship: a single 16:9 page written once and
+  emitted twice from the same session — `buildPdf()` and `buildPptx(Path)`
+  produce a print-ready PDF and a PowerPoint slide with identical geometry.
+  The README gains a dual-output section showing the PDF render next to
+  PowerPoint's own export of the generated slide, plus a screenshot of the
+  deck open in PowerPoint with the headline text frame selected — the
+  committed artifacts land 68 native shapes with only the clip-masked logo
+  as a picture.
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
   of what each render backend supports and which class implements it,
   maintained as part of every capability-changing PR.

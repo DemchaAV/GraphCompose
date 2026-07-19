@@ -46,6 +46,7 @@ import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
 import com.demcha.examples.flagships.EngineDeckExample;
 import com.demcha.examples.flagships.EngineDeckPptxExample;
+import com.demcha.examples.flagships.TwinOutputExample;
 import com.demcha.examples.flagships.FeatureCatalogExample;
 import com.demcha.examples.flagships.FinancialReportExample;
 import com.demcha.examples.flagships.MasterShowcaseExample;
@@ -214,6 +215,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BusinessReportExample.generate());
         System.out.println("Generated: " + EngineDeckExample.generate());
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
+        System.out.println("Generated: " + TwinOutputExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
         System.out.println("Generated: " + BookTemplateExample.generate());
         System.out.println("Generated: " + PoetryTitlePageExample.generate());

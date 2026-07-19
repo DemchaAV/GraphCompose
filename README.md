@@ -42,6 +42,38 @@
   <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the 2.0 module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
 </p>
 
+## One source → a PDF <i>and</i> an editable PowerPoint deck
+
+The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides with identical geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 68 native shapes; only its clip-masked logo art is a picture).
+
+```java
+try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
+        .pageSize(DocumentPageSize.SLIDE_16_9)
+        .create()) {
+    compose(doc);        // one description
+    doc.buildPdf();      // print-ready PDF
+    doc.buildPptx(deck); // editable PowerPoint
+}
+```
+
+<table>
+<tr>
+<td width="50%" align="center"><sub><b>twin-output.pdf</b> — rendered by the PDF backend</sub></td>
+<td width="50%" align="center"><sub><b>twin-output.pptx</b> — the same page, as <b>PowerPoint itself</b> renders it</sub></td>
+</tr>
+<tr>
+<td><img src="./assets/readme/twin-output-pdf.png" alt="The twin-output page rendered from the PDF"/></td>
+<td><img src="./assets/readme/twin-output-pptx.png" alt="The same page exported as a PNG by PowerPoint from the generated .pptx"/></td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="./assets/readme/twin-output-editing.png" alt="The generated deck open in PowerPoint with the headline text frame selected for editing" width="820"/>
+</p>
+<p align="center">
+  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, ~380 lines, page included).</sub>
+</p>
+
 ## Why GraphCompose
 
 - **Author intent, not coordinates.** Fluent DSL for sections, paragraphs, tables, lists, layer stacks, themes &mdash; the engine handles measurement, pagination, and rendering.

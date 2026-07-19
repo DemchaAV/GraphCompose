@@ -227,6 +227,28 @@ class PptxClipSafetyTest {
     }
 
     @Test
+    void aNestedClipConfinesItsUnprovableChildrenToItsOwnBox() {
+        PlacedFragment clip = clipFragment(new ShapeOutline.Rectangle(CLIP_W, CLIP_H), ClipPolicy.CLIP_PATH);
+        // The nested icon clip contains an unprovable child (a stroked
+        // diamond), but the nested region confines its ink to its own box —
+        // the outer verdict judges just that box, so the outer region stays
+        // native and only the icon rasters at its own 16x16 granularity.
+        PlacedFragment nestedBegin = child(20, 20, 16, 16, new ShapeClipBeginPayload(
+                new ShapeOutline.Rectangle(16, 16), ClipPolicy.CLIP_PATH, "root/card/icon"));
+        PlacedFragment unprovableIcon = child(20, 20, 16, 16, new PolygonFragmentPayload(
+                List.of(new ShapePoint(0.5, 0), new ShapePoint(1, 0.5),
+                        new ShapePoint(0.5, 1), new ShapePoint(0, 0.5)),
+                Color.ORANGE, new Stroke(Color.BLACK, 1), null, null));
+        PlacedFragment nestedEnd = child(20, 20, 0, 0, new ShapeClipEndPayload("root/card/icon"));
+        assertThat(verdict(clip, nestedBegin, unprovableIcon, nestedEnd)).isTrue();
+
+        // A nested clip box that itself leaves the outer outline still fails.
+        PlacedFragment overflowingBegin = child(CLIP_W - 8, 20, 16, 16, new ShapeClipBeginPayload(
+                new ShapeOutline.Rectangle(16, 16), ClipPolicy.CLIP_PATH, "root/card/icon"));
+        assertThat(verdict(clip, overflowingBegin, unprovableIcon, nestedEnd)).isFalse();
+    }
+
+    @Test
     void markersThemselvesDoNotBlockTheProof() {
         PlacedFragment clip = clipFragment(new ShapeOutline.Rectangle(CLIP_W, CLIP_H), ClipPolicy.CLIP_PATH);
         // A nested clip whose markers sit at the region edge draws nothing

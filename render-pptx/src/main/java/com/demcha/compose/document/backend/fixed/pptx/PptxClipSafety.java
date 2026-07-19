@@ -91,15 +91,24 @@ final class PptxClipSafety {
                 // children's untransformed boxes — never provable.
                 return false;
             }
+            if (payload instanceof ShapeClipBeginPayload nested) {
+                // A nested clip region confines its ink to its own clip box —
+                // either as a raster composite anchored exactly on those
+                // bounds, or as children its own proof kept inside — so the
+                // outer verdict judges just that box and skips the subregion.
+                // The main loop re-dispatches the nested clip on its own
+                // merits afterwards, at its own (finer) granularity.
+                if (!insideOutline(clip, clipFragment, child, -PLACEMENT_TOLERANCE)) {
+                    return false;
+                }
+                index = matchingEnd(fragments, index, nested.ownerPath(), endIndex);
+                continue;
+            }
             if (payload instanceof TransformEndPayload
-                    || payload instanceof ShapeClipBeginPayload
                     || payload instanceof ShapeClipEndPayload
                     || payload instanceof AnchorMarkerPayload
                     || payload instanceof BookmarkMarkerPayload) {
-                // Markers draw nothing themselves; a nested clip's children
-                // are checked individually right here, and if the verdict is
-                // "no-op" the main loop re-dispatches the nested region on
-                // its own merits.
+                // Markers draw nothing themselves.
                 continue;
             }
             if (!safelyInside(clip, clipFragment, child)) {
@@ -109,10 +118,35 @@ final class PptxClipSafety {
         return true;
     }
 
+    /**
+     * Returns the index of the nested region's matching end marker (found by
+     * owner path), or {@code stopIndex} when the pairing is broken — the scan
+     * then simply runs out, which errs on checking too much, never too little.
+     */
+    private static int matchingEnd(List<PlacedFragment> fragments,
+                                   int nestedBeginIndex,
+                                   String ownerPath,
+                                   int stopIndex) {
+        for (int index = nestedBeginIndex + 1; index < stopIndex; index++) {
+            if (fragments.get(index).payload() instanceof ShapeClipEndPayload end
+                    && ownerPath.equals(end.ownerPath())) {
+                return index;
+            }
+        }
+        return stopIndex;
+    }
+
     private static boolean safelyInside(ShapeClipBeginPayload clip,
                                         PlacedFragment clipFragment,
                                         PlacedFragment child) {
-        double guard = requiredInset(child.payload()) - PLACEMENT_TOLERANCE;
+        return insideOutline(clip, clipFragment, child,
+                requiredInset(child.payload()) - PLACEMENT_TOLERANCE);
+    }
+
+    private static boolean insideOutline(ShapeClipBeginPayload clip,
+                                         PlacedFragment clipFragment,
+                                         PlacedFragment child,
+                                         double guard) {
         if (Double.isNaN(guard)) {
             // A NaN stroke width would make every comparison below false-pass.
             return false;

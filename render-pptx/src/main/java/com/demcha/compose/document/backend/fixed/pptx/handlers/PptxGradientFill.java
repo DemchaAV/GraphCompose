@@ -119,9 +119,18 @@ final class PptxGradientFill {
 
     private static void stops(CTGradientFillProperties fill, List<DocumentPaint.Stop> stops) {
         var stopList = fill.isSetGsLst() ? fill.getGsLst() : fill.addNewGsLst();
-        for (DocumentPaint.Stop stop : stops) {
+        for (int index = 0; index < stops.size(); index++) {
+            DocumentPaint.Stop stop = stops.get(index);
             CTGradientStop gradientStop = stopList.addNewGs();
-            gradientStop.setPos((int) Math.round(stop.offset() * 100000.0));
+            // The PDF backend's shading functions span the full domain — the
+            // first and last stop offsets are effectively 0 and 1, only the
+            // interior offsets survive as bounds. Pin the boundary stops the
+            // same way so a partial-offset ramp shades identically in both
+            // formats.
+            double offset = index == 0 ? 0.0
+                    : index == stops.size() - 1 ? 1.0
+                    : stop.offset();
+            gradientStop.setPos((int) Math.round(offset * 100000.0));
             // Stop colors are opaque by contract (DocumentPaint.Stop rejects
             // alpha), so only the RGB channels travel.
             Color color = stop.color().color();

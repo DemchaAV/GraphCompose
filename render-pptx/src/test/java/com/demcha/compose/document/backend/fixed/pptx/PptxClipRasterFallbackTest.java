@@ -164,6 +164,38 @@ class PptxClipRasterFallbackTest {
     }
 
     @Test
+    void aProvablyNoOpClipStaysNativeAndEditable() throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 240)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            // A defensive clip: the centered circle never reaches the card's
+            // corners, so clipping removes no ink and the raster fallback is
+            // skipped — the card and its content stay editable vector shapes.
+            session.add(new ShapeContainerBuilder()
+                    .outline(new com.demcha.compose.document.style.ShapeOutline
+                            .RoundedRectangle(80, 44, 8))
+                    .clipPolicy(com.demcha.compose.document.style.ClipPolicy.CLIP_PATH)
+                    .fillColor(DocumentColor.LIGHT_GRAY)
+                    .center(new EllipseBuilder().circle(16)
+                            .fillColor(DocumentColor.ROYAL_BLUE).build())
+                    .build());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                List<XSLFShape> shapes = show.getSlides().get(0).getShapes();
+                assertThat(shapes)
+                        .noneMatch(shape -> "GraphCompose Clipped Composite"
+                                .equals(shape.getShapeName()));
+                assertThat(shapes.stream()
+                        .filter(org.apache.poi.xslf.usermodel.XSLFAutoShape.class::isInstance)
+                        .count())
+                        .as("card fill and its layer circle render as native shapes")
+                        .isEqualTo(2);
+            }
+        }
+    }
+
+    @Test
     void disablingTheFallbackRendersUnclippedVectors() throws Exception {
         try (DocumentSession session = composeClippedBadge()) {
             byte[] pptx = session.render(

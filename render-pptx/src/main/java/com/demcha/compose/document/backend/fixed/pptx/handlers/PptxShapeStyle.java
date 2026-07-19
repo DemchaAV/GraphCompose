@@ -41,6 +41,8 @@ final class PptxShapeStyle {
             shape.setLineColor(null);
             return;
         }
+        // POI's setLineColor writes the color's alpha as an <a:alpha> child
+        // in the XML; only its getLineColor getter hides it on read-back.
         shape.setLineColor(stroke.strokeColor().color());
         shape.setLineWidth(stroke.width());
     }

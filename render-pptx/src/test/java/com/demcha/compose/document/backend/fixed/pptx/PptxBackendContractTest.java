@@ -37,6 +37,18 @@ class PptxBackendContractTest {
     }
 
     @Test
+    void aDuplicateCustomHandlerIsRejected() {
+        PptxFixedLayoutBackend.Builder builder = PptxFixedLayoutBackend.builder()
+                .addHandler(new com.demcha.compose.document.backend.fixed.pptx.handlers
+                        .PptxEllipseFragmentRenderHandler());
+        assertThatThrownBy(() -> builder.addHandler(
+                new com.demcha.compose.document.backend.fixed.pptx.handlers
+                        .PptxEllipseFragmentRenderHandler()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Duplicate custom PPTX handler");
+    }
+
+    @Test
     void renderToImagesPointsAtThePdfBackend() throws Exception {
         try (DocumentSession session = composeOnePage()) {
             LayoutGraph graph = session.render(new GraphCapturingBackend());

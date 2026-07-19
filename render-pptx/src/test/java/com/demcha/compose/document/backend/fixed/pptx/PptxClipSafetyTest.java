@@ -246,13 +246,31 @@ class PptxClipSafetyTest {
         PlacedFragment overflowingBegin = child(CLIP_W - 8, 20, 16, 16, new ShapeClipBeginPayload(
                 new ShapeOutline.Rectangle(16, 16), ClipPolicy.CLIP_PATH, "root/card/icon"));
         assertThat(verdict(clip, overflowingBegin, unprovableIcon, nestedEnd)).isFalse();
+
+        // A nested begin without its matching end fails the proof: the
+        // backend's defensive branch would render that subregion unclipped,
+        // so nothing confines its ink.
+        assertThat(verdict(clip, nestedBegin, unprovableIcon)).isFalse();
+
+        // A degenerate nested box (the zero-area clip removes all its ink)
+        // passes trivially, whatever it contains.
+        PlacedFragment degenerateBegin = child(20, 20, 0, 0, new ShapeClipBeginPayload(
+                new ShapeOutline.Rectangle(16, 16), ClipPolicy.CLIP_PATH, "root/card/icon"));
+        assertThat(verdict(clip, degenerateBegin, unprovableIcon, nestedEnd)).isTrue();
+
+        // Nested-inside-nested: the outer verdict still judges only the
+        // outermost nested box; the deeper pairing resolves by owner path.
+        PlacedFragment innerBegin = child(22, 22, 8, 8, new ShapeClipBeginPayload(
+                new ShapeOutline.Rectangle(8, 8), ClipPolicy.CLIP_PATH, "root/card/icon/glyph"));
+        PlacedFragment innerEnd = child(22, 22, 0, 0, new ShapeClipEndPayload("root/card/icon/glyph"));
+        assertThat(verdict(clip, nestedBegin, innerBegin, unprovableIcon, innerEnd, nestedEnd)).isTrue();
     }
 
     @Test
     void markersThemselvesDoNotBlockTheProof() {
         PlacedFragment clip = clipFragment(new ShapeOutline.Rectangle(CLIP_W, CLIP_H), ClipPolicy.CLIP_PATH);
-        // A nested clip whose markers sit at the region edge draws nothing
-        // itself; only its renderable children are judged.
+        // An exact-fit nested clip region is judged by its box (which fills
+        // the outer outline exactly — safe) and its subregion is skipped.
         assertThat(verdict(clip,
                 child(0, 0, CLIP_W, CLIP_H, new ShapeClipBeginPayload(
                         new ShapeOutline.Rectangle(CLIP_W, CLIP_H), ClipPolicy.CLIP_PATH, "root/card/inner")),

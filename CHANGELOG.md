@@ -108,11 +108,14 @@ follow semantic versioning; release dates are ISO 8601.
   child of a clip region sits safely inside the clip outline (the common
   defensive-clip case — a rounded card whose padded content never reaches the
   corners), the raster fallback is skipped and the region renders as native,
-  editable shapes. The proof is conservative — unprovable outline kinds
-  (polygons, free paths), transforms inside the region, stroked polygons and
-  paths (mitred joins), path segments outside the unit box, table rows, and
-  ink whose stroke or side-border bleed nears the boundary all keep the
-  pixel-exact raster path.
+  editable shapes. Nested clip regions are judged by their confining clip box
+  and re-dispatch at their own granularity, so an unprovable icon inside a
+  card no longer rasterizes the whole card — only the icon. The proof is
+  conservative — unprovable outline kinds (polygons, free paths), transforms
+  inside the region, stroked polygons and paths (mitred joins), path segments
+  outside the unit box, table rows, broken nested pairings, and ink whose
+  stroke or side-border bleed nears the boundary all keep the pixel-exact
+  raster path.
 - PPTX gradients pin their first and last stop offsets to the domain ends,
   matching what the PDF shading functions actually paint — a partial-offset
   ramp now shades identically in both formats.

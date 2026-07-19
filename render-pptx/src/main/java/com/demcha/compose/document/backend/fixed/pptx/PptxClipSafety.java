@@ -61,6 +61,8 @@ final class PptxClipSafety {
     /**
      * Float-placement tolerance: ink exactly on the boundary is not cut, so an
      * exact-fit child (an SVG path spanning its clip box) still proves safe.
+     * Nested clip regions apply it once per nesting level, so the worst-case
+     * acceptance is 0.01pt × depth — far below a pixel at any raster scale.
      */
     private static final double PLACEMENT_TOLERANCE = 0.01;
 
@@ -70,7 +72,9 @@ final class PptxClipSafety {
     /**
      * Returns {@code true} when every renderable fragment between the clip
      * markers provably stays inside the clip outline, so clipping is a visual
-     * no-op.
+     * no-op. Nested clip regions are judged by their confining clip box alone
+     * (their ink never leaves it — see the in-loop note) and re-dispatch at
+     * their own granularity; a broken nested pairing fails the proof.
      *
      * @param clip         the clip-begin payload (outline + policy)
      * @param clipFragment the placed clip fragment (absolute outline box)
@@ -101,7 +105,14 @@ final class PptxClipSafety {
                 if (!insideOutline(clip, clipFragment, child, -PLACEMENT_TOLERANCE)) {
                     return false;
                 }
-                index = matchingEnd(fragments, index, nested.ownerPath(), endIndex);
+                int nestedEnd = matchingEnd(fragments, index, nested.ownerPath(), endIndex);
+                if (nestedEnd < 0) {
+                    // Broken pairing: the backend's defensive branch renders
+                    // an unmatched nested region's children unclipped, so
+                    // nothing confines their ink — unprovable.
+                    return false;
+                }
+                index = nestedEnd;
                 continue;
             }
             if (payload instanceof TransformEndPayload
@@ -120,8 +131,8 @@ final class PptxClipSafety {
 
     /**
      * Returns the index of the nested region's matching end marker (found by
-     * owner path), or {@code stopIndex} when the pairing is broken — the scan
-     * then simply runs out, which errs on checking too much, never too little.
+     * owner path), or {@code -1} when the pairing is broken before
+     * {@code stopIndex} — the caller then fails the proof.
      */
     private static int matchingEnd(List<PlacedFragment> fragments,
                                    int nestedBeginIndex,
@@ -133,7 +144,7 @@ final class PptxClipSafety {
                 return index;
             }
         }
-        return stopIndex;
+        return -1;
     }
 
     private static boolean safelyInside(ShapeClipBeginPayload clip,

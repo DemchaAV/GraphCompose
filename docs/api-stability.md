@@ -46,6 +46,16 @@ matrix.
 > additional Extension SPI surfaces (render-handler interfaces,
 > fragment-payload interfaces designed for extension) will gain the
 > marker incrementally as their contract solidifies.
+>
+> The Experimental surface currently carrying `@Beta` is the **fixed-layout
+> PPTX backend**, shipping its first release in 2.1.0: the
+> `document.backend.fixed.pptx` and `…pptx.handlers` packages (package-level
+> marker plus explicit markers on `PptxFixedLayoutBackend`,
+> `PptxFixedLayoutBackendProvider`, `PptxFragmentRenderHandler`,
+> `PptxRenderEnvironment`, `PptxCoordinates`) and the PPTX convenience
+> methods on `DocumentSession` (`toPptxBytes`, `writePptx`, `buildPptx`).
+> Geometry identity with the PDF backend is a design invariant and will not
+> change; the API shape around it may still move in a minor release.
 
 ### What each tier promises
 

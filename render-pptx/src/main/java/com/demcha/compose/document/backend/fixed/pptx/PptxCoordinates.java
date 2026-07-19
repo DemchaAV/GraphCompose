@@ -1,5 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
+import com.demcha.compose.document.api.Beta;
+
 import com.demcha.compose.document.layout.PlacedFragment;
 
 import java.awt.geom.Rectangle2D;
@@ -20,8 +22,13 @@ import java.awt.geom.Rectangle2D;
  * need the same mapping; the canvas height comes from
  * {@link PptxRenderEnvironment#canvasHeight()}.</p>
  *
+ * <p><b>Experimental</b> ({@code @Beta}): first release of the PPTX backend
+ * (2.1.0) — this type's contract may still change in a minor release; see
+ * {@code docs/api-stability.md}.</p>
+ *
  * @since 2.1.0
  */
+@Beta
 public final class PptxCoordinates {
 
     private PptxCoordinates() {

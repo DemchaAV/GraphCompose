@@ -88,8 +88,13 @@ import java.util.concurrent.TimeUnit;
  * <p><b>Thread-safety:</b> immutable and reusable across renders; each render
  * pass owns its own slide show and environment.</p>
  *
+ * <p><b>Experimental</b> ({@code @Beta}): first release of the PPTX backend
+ * (2.1.0) — this type's contract may still change in a minor release; see
+ * {@code docs/api-stability.md}.</p>
+ *
  * @since 2.1.0
  */
+@Beta
 public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
     private static final Logger RENDER_LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");

@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -68,7 +69,9 @@ final class PdfTextDecorations {
      * Paints every collected mark. Each segment runs in its own graphics
      * state, so the fill colour and alpha never leak into later content.
      */
-    static void draw(PDPageContentStream stream, List<Segment> segments) throws IOException {
+    static void draw(PdfRenderEnvironment environment,
+                     PDPageContentStream stream,
+                     List<Segment> segments) throws IOException {
         for (Segment segment : segments) {
             if (segment.width() <= 0) {
                 continue;
@@ -79,7 +82,7 @@ final class PdfTextDecorations {
                     : segment.baselineY() + STRIKETHROUGH_OFFSET_EM * segment.fontSize();
             stream.saveGraphicsState();
             try {
-                PdfAlphaSupport.applyFillAlpha(stream, segment.color());
+                PdfAlphaSupport.applyFillAlpha(environment, stream, segment.color());
                 stream.setNonStrokingColor(segment.color());
                 stream.addRect((float) segment.x(),
                         (float) (markY - thickness / 2.0),

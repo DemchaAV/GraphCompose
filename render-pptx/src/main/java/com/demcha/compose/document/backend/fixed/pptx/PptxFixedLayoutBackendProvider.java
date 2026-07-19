@@ -1,5 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
+import com.demcha.compose.document.api.Beta;
+
 import com.demcha.compose.document.backend.fixed.FixedLayoutBackendProvider;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.output.DocumentDebugOptions;
@@ -23,8 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * no .pptx counterpart and are ignored with a one-time warning, per the
  * {@link DocumentOutputOptions} contract; debug overlays are PDF-only.</p>
  *
+ * <p><b>Experimental</b> ({@code @Beta}): first release of the PPTX backend
+ * (2.1.0) — this type's contract may still change in a minor release; see
+ * {@code docs/api-stability.md}.</p>
+ *
  * @since 2.1.0
  */
+@Beta
 public final class PptxFixedLayoutBackendProvider implements FixedLayoutBackendProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger("com.demcha.compose.engine.render");

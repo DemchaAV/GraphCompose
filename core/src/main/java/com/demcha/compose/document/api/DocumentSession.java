@@ -957,10 +957,15 @@ public final class DocumentSession implements AutoCloseable {
      * session, so server code that can stream should prefer
      * {@link #writePptx(OutputStream)}.</p>
      *
+     *
+     * <p><b>Experimental</b> ({@code @Beta}): the PPTX backend ships its
+     * first release in 2.1.0, so the PPTX-facing contract may still change in
+     * a minor release — see {@code docs/api-stability.md}.</p>
      * @return rendered .pptx bytes
      * @throws DocumentRenderingException if PPTX rendering fails
      * @since 2.1.0
      */
+    @Beta
     public byte[] toPptxBytes() throws DocumentRenderingException {
         return wrapRendering("render PPTX bytes", renderingFacade::toPptxBytes);
     }
@@ -976,6 +981,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PPTX rendering fails
      * @since 2.1.0
      */
+    @Beta
     public void writePptx(OutputStream output) throws DocumentRenderingException {
         wrapRendering("write PPTX to stream", () -> {
             renderingFacade.writePptx(output);
@@ -997,6 +1003,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PPTX rendering fails
      * @since 2.1.0
      */
+    @Beta
     public void buildPptx() throws DocumentRenderingException {
         ensureOpen();
         if (defaultOutputFile == null) {
@@ -1016,6 +1023,7 @@ public final class DocumentSession implements AutoCloseable {
      * @throws DocumentRenderingException if PPTX rendering fails
      * @since 2.1.0
      */
+    @Beta
     public void buildPptx(Path outputFile) throws DocumentRenderingException {
         wrapRendering("build PPTX at '" + outputFile + "'", () -> {
             renderingFacade.buildPptx(outputFile);

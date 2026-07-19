@@ -1,5 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pptx;
 
+import com.demcha.compose.document.api.Beta;
+
 import com.demcha.compose.document.layout.PlacedFragment;
 
 /**
@@ -16,9 +18,14 @@ import com.demcha.compose.document.layout.PlacedFragment;
  * A custom handler reporting the same {@link #payloadType()} as a built-in
  * default replaces that default for the backend instance.</p>
  *
+ * <p><b>Experimental</b> ({@code @Beta}): first release of the PPTX backend
+ * (2.1.0) — this type's contract may still change in a minor release; see
+ * {@code docs/api-stability.md}.</p>
+ *
  * @param <T> payload type supported by the handler
  * @since 2.1.0
  */
+@Beta
 public interface PptxFragmentRenderHandler<T> {
 
     /**

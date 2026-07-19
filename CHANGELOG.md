@@ -7,6 +7,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- The fixed-layout PPTX backend ships as `@Beta` (Experimental) in its first
+  release: the `document.backend.fixed.pptx` packages and the
+  `DocumentSession` PPTX convenience methods (`toPptxBytes`, `writePptx`,
+  `buildPptx`) carry the marker, so their API shape may still change in a
+  minor release while feedback lands. Geometry identity with the PDF backend
+  is a design invariant and is not subject to change; see
+  `docs/api-stability.md` for the policy.
 - `BackendProviders.fixedLayout(String format)` selects a fixed-layout render
   backend by its `FixedLayoutBackendProvider.format()` key (case-insensitive),
   so several fixed-layout backends can coexist on one classpath. The no-arg

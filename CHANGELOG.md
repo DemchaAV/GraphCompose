@@ -135,6 +135,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- The PDF backend now draws `DocumentTextDecoration.UNDERLINE` and
+  `STRIKETHROUGH` marks — previously the decoration flags resolved only to
+  font faces (which alias to the regular program), so decorated text rendered
+  as plain glyphs while the PPTX backend already drew real marks. Marks are
+  em-proportional filled bands (underline 0.10 em below the baseline,
+  strikethrough 0.28 em above, thickness 0.05 em — the Type 1 underline
+  convention) in the run's colour, on paragraph runs, chips, and table cell
+  text alike.
+- The PDF backend honours the alpha channel of `DocumentColor.rgba` on every
+  remaining surface — text runs, lines, side borders, and table fills,
+  borders, and cell text — matching the shape fills/strokes that already
+  carried it and the PPTX backend's native behaviour. Fully opaque documents
+  render byte-identically to before.
 - `DocumentSession.toImages` / `toImage` rasterized documents that use binary
   font families (any non-standard-14 file) with substitute glyphs — visually
   garbled text with correct spacing. PDFBox writes embedded font subsets only

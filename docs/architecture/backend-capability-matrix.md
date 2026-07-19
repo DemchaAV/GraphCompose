@@ -60,8 +60,8 @@ Payload records live in `core` under
 | Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | ✅ `PptxTransformBegin/EndRenderHandler` (group shape; rotation and centre-pivot scaling via the exterior/interior frame ratio) | ⚠️ inline fallback + one-time capability warning |
 | Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ✅ `PptxAnchorMarkerRenderHandler` + `PptxNavigationWriter` (slide-jump hyperlinks resolved after all fragments, so forward references work) | ❌ |
 | Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | ⚠️ `PptxBookmarkMarkerRenderHandler` + `PptxNavigationWriter` (PPTX has no outline tree — the first bookmark on a page names its slide, further bookmarks on the same page are dropped with a debug note) | ❌ |
-| Alpha / opacity | ⚠️ `PdfAlphaSupport` (`PDExtendedGraphicsState` on shape fills and strokes; text, lines, and table paint render opaque) | ✅ native `<a:alpha>` via POI on every surface — fills, strokes, text runs, table paint | ❌ |
-| Text decorations — underline / strikethrough (`DocumentTextDecoration`) | ❌ (the decoration flags resolve to font faces, but no decoration lines are drawn) | ✅ `PptxTextFrames.applyStyle` | ❌ |
+| Alpha / opacity | ✅ `PdfAlphaSupport` (`PDExtendedGraphicsState` on every surface — shape fills/strokes, text runs, lines, side borders, table paint) | ✅ native `<a:alpha>` via POI on every surface — fills, strokes, text runs, table paint | ❌ |
+| Text decorations — underline / strikethrough (`DocumentTextDecoration`) | ✅ `PdfTextDecorations` (em-proportional marks: underline −0.10 em, strikethrough +0.28 em, thickness 0.05 em) | ✅ `PptxTextFrames.applyStyle` (PowerPoint draws its own marks — sub-point placement differences vs the PDF's constants) | ❌ |
 
 ## Navigation and interactivity
 

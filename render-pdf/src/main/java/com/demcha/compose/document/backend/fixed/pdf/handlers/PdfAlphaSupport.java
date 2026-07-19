@@ -35,8 +35,21 @@ final class PdfAlphaSupport {
         if (color == null || color.getAlpha() >= 255) {
             return;
         }
+        setFillAlpha(stream, color.getAlpha() / 255f);
+    }
+
+    /**
+     * Writes an explicit non-stroking alpha constant, including {@code 1.0} —
+     * used by the paragraph text state, which must also RESTORE opacity (the
+     * {@code gs} survives {@code ET} and nested draws inherit it).
+     *
+     * @param stream page content stream
+     * @param alpha  alpha constant in [0, 1]
+     * @throws IOException when the graphics-state write fails
+     */
+    static void setFillAlpha(PDPageContentStream stream, float alpha) throws IOException {
         PDExtendedGraphicsState state = new PDExtendedGraphicsState();
-        state.setNonStrokingAlphaConstant(color.getAlpha() / 255f);
+        state.setNonStrokingAlphaConstant(alpha);
         stream.setGraphicsStateParameters(state);
     }
 

@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -125,7 +126,7 @@ public final class PdfParagraphFragmentRenderHandler
      * fill band is the line's text box expanded by vertical padding, so the chip
      * overflows the line box like a browser highlight without enlarging it.
      */
-    private static void renderChip(PDPageContentStream stream,
+    private static boolean renderChip(PDPageContentStream stream,
                                    FontLibrary fonts,
                                    ParagraphTextSpan span,
                                    double cursorX,
@@ -135,7 +136,7 @@ public final class PdfParagraphFragmentRenderHandler
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
         String text = font.sanitizeForRender(span.textStyle(), span.text());
         if (text.isEmpty()) {
-            return;                                             // nothing to paint — no glyph-less fill
+            return false;                                       // nothing to paint — no glyph-less fill or mark
         }
         InlineBackground background = span.background();
         DocumentInsets pad = background.padding();
@@ -156,6 +157,7 @@ public final class PdfParagraphFragmentRenderHandler
         textState.applyColor(stream, span.textStyle().color());
         stream.showText(text);
         stream.endText();
+        return true;
     }
 
     private static void renderShape(PDPageContentStream stream,
@@ -322,6 +324,10 @@ public final class PdfParagraphFragmentRenderHandler
 
         boolean inTextBlock = false;
         double cursorX = lineX;
+        // Underline/strikethrough marks are path fills, illegal inside a
+        // BT/ET block — collect them while the glyphs stream out and paint
+        // them after the text. Lazily allocated: most lines carry none.
+        List<PdfTextDecorations.Segment> decorations = null;
         try {
             for (ParagraphSpan span : spans) {
                 if (span instanceof ParagraphTextSpan textSpan) {
@@ -333,8 +339,17 @@ public final class PdfParagraphFragmentRenderHandler
                             stream.endText();
                             inTextBlock = false;
                         }
-                        renderChip(stream, fonts, textSpan, cursorX, baselineY, line, textState);
+                        textState.resetAlpha(stream);
+                        boolean chipPainted = renderChip(stream, fonts, textSpan, cursorX, baselineY, line, textState);
                         textState.invalidate();
+                        if (chipPainted && PdfTextDecorations.drawsMark(textSpan.textStyle().decoration())) {
+                            DocumentInsets pad = textSpan.background().padding();
+                            decorations = addDecoration(decorations, new PdfTextDecorations.Segment(
+                                    cursorX + pad.left(), baselineY,
+                                    textSpan.width() - pad.horizontal(),
+                                    textSpan.textStyle().size(), textSpan.textStyle().color(),
+                                    textSpan.textStyle().decoration()));
+                        }
                         cursorX += textSpan.width();
                         continue;
                     }
@@ -360,6 +375,12 @@ public final class PdfParagraphFragmentRenderHandler
                             (float) textSpan.textStyle().size());
                     textState.applyColor(stream, textSpan.textStyle().color());
                     stream.showText(text);
+                    if (PdfTextDecorations.drawsMark(textSpan.textStyle().decoration())) {
+                        decorations = addDecoration(decorations, new PdfTextDecorations.Segment(
+                                cursorX, baselineY, textSpan.width(),
+                                textSpan.textStyle().size(), textSpan.textStyle().color(),
+                                textSpan.textStyle().decoration()));
+                    }
                     cursorX += textSpan.width();
                 } else if (span instanceof ParagraphImageSpan imageSpan) {
                     if (inTextBlock) {
@@ -372,6 +393,7 @@ public final class PdfParagraphFragmentRenderHandler
                             line.textAscent(),
                             line.baselineOffsetFromBottom(),
                             line.lineHeight());
+                    textState.resetAlpha(stream);
                     PDImageXObject image = environment.resolveImage(imageSpan.imageData());
                     stream.drawImage(image,
                             (float) cursorX,
@@ -388,6 +410,7 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.endText();
                         inTextBlock = false;
                     }
+                    textState.resetAlpha(stream);
                     renderShape(stream, shapeSpan, cursorX, baselineY,
                             line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
                     textState.invalidate();
@@ -397,6 +420,7 @@ public final class PdfParagraphFragmentRenderHandler
                         stream.endText();
                         inTextBlock = false;
                     }
+                    textState.resetAlpha(stream);
                     renderSvg(stream, svgSpan, environment, pageIndex, cursorX, baselineY,
                             line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
                     textState.invalidate();
@@ -408,6 +432,21 @@ public final class PdfParagraphFragmentRenderHandler
                 stream.endText();
             }
         }
+        if (decorations != null) {
+            // Marks inherit the ambient alpha into their q..Q, so restore
+            // opacity first; each mark then applies its own colour's alpha.
+            textState.resetAlpha(stream);
+            PdfTextDecorations.draw(stream, decorations);
+        }
+    }
+
+    private static List<PdfTextDecorations.Segment> addDecoration(
+            List<PdfTextDecorations.Segment> decorations,
+            PdfTextDecorations.Segment segment) {
+        List<PdfTextDecorations.Segment> target =
+                decorations == null ? new ArrayList<>() : decorations;
+        target.add(segment);
+        return target;
     }
 
     /**
@@ -422,6 +461,11 @@ public final class PdfParagraphFragmentRenderHandler
         private PDFont font;
         private float size = Float.NaN;
         private Color color;
+        // A fresh q block inherits the page default of fully opaque; every
+        // nested draw (chips, inline graphics, decoration marks) runs in its
+        // own q..Q, so the alpha WE set is what survives — invalidate() must
+        // not reset it.
+        private float alpha = 1f;
 
         void applyFont(PDPageContentStream stream, PDFont newFont, float newSize) throws IOException {
             if (newFont != font || newSize != size) {
@@ -433,8 +477,33 @@ public final class PdfParagraphFragmentRenderHandler
 
         void applyColor(PDPageContentStream stream, Color newColor) throws IOException {
             if (!newColor.equals(color)) {
+                float newAlpha = newColor.getAlpha() / 255f;
+                if (newAlpha != alpha) {
+                    // setNonStrokingColor drops the alpha channel, so a
+                    // translucent run carries it as a graphics-state constant
+                    // (the gs operator is legal inside a text object).
+                    PdfAlphaSupport.setFillAlpha(stream, newAlpha);
+                    alpha = newAlpha;
+                }
                 stream.setNonStrokingColor(newColor);
                 color = newColor;
+            }
+        }
+
+        /**
+         * Restores full opacity before a nested draw. The {@code gs} alpha
+         * survives {@code ET}, and the nested q..Q blocks (chips, inline
+         * graphics, decoration marks) inherit it — their own alpha helpers
+         * no-op for opaque colours, so without this reset an opaque nested
+         * draw after a translucent run would render translucent.
+         */
+        void resetAlpha(PDPageContentStream stream) throws IOException {
+            if (alpha != 1f) {
+                PdfAlphaSupport.setFillAlpha(stream, 1f);
+                alpha = 1f;
+                // The next translucent run must re-emit its gs even when its
+                // colour is unchanged.
+                color = null;
             }
         }
 

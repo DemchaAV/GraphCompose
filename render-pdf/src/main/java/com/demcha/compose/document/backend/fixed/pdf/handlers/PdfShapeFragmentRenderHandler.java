@@ -32,6 +32,7 @@ public final class PdfShapeFragmentRenderHandler
         }
         stream.saveGraphicsState();
         try {
+            PdfAlphaSupport.applyStrokeAlpha(stream, side.strokeColor().color());
             stream.setStrokingColor(side.strokeColor().color());
             stream.setLineWidth((float) side.width());
             stream.moveTo(x1, y1);

@@ -127,6 +127,7 @@ public final class PdfParagraphFragmentRenderHandler
      * overflows the line box like a browser highlight without enlarging it.
      */
     private static boolean renderChip(PDPageContentStream stream,
+                                   PdfRenderEnvironment environment,
                                    FontLibrary fonts,
                                    ParagraphTextSpan span,
                                    double cursorX,
@@ -146,7 +147,7 @@ public final class PdfParagraphFragmentRenderHandler
         Color fill = background.fill() == null ? null : background.fill().color();
         if (fill != null && chipWidth > 0 && chipHeight > 0) {
             float radius = (float) Math.min(background.cornerRadius(), Math.min(chipWidth, chipHeight) / 2.0f);
-            PdfShapeGeometry.fillAndStrokePath(stream, fill, null, s ->
+            PdfShapeGeometry.fillAndStrokePath(stream, environment, fill, null, s ->
                     PdfShapeFragmentRenderHandler.drawRoundedRectangle(
                             s, (float) cursorX, chipBottom, chipWidth, chipHeight, radius, radius, radius, radius));
         }
@@ -161,6 +162,7 @@ public final class PdfParagraphFragmentRenderHandler
     }
 
     private static void renderShape(PDPageContentStream stream,
+                                    PdfRenderEnvironment environment,
                                     ParagraphShapeSpan span,
                                     double cursorX,
                                     double baselineY,
@@ -188,7 +190,7 @@ public final class PdfParagraphFragmentRenderHandler
             // checkmark sits inside its larger checkbox frame.
             float lx = (float) (cursorX + (width - outline.width()) / 2.0);
             float ly = (float) (bottom + (height - outline.height()) / 2.0);
-            PdfShapeGeometry.fillAndStrokePath(stream, layer.fillColor(), layer.stroke(), s -> {
+            PdfShapeGeometry.fillAndStrokePath(stream, environment, layer.fillColor(), layer.stroke(), s -> {
                 if (outline instanceof ShapeOutline.Ellipse) {
                     PdfEllipseFragmentRenderHandler.drawEllipse(s, lx, ly, lw, lh);
                 } else if (outline instanceof ShapeOutline.Rectangle) {
@@ -284,7 +286,7 @@ public final class PdfParagraphFragmentRenderHandler
             // q...Q block, so track the last-written pair and re-emit Tf/rg only
             // when a span actually changes them — a single-style paragraph then
             // emits one setFont + one setNonStrokingColor instead of one per span.
-            TextRenderState textState = new TextRenderState();
+            TextRenderState textState = new TextRenderState(environment);
             double cursorTop = contentTop;
             for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
                 ParagraphLine line = payload.lines().get(lineIndex);
@@ -340,7 +342,7 @@ public final class PdfParagraphFragmentRenderHandler
                             inTextBlock = false;
                         }
                         textState.resetAlpha(stream);
-                        boolean chipPainted = renderChip(stream, fonts, textSpan, cursorX, baselineY, line, textState);
+                        boolean chipPainted = renderChip(stream, environment, fonts, textSpan, cursorX, baselineY, line, textState);
                         textState.invalidate();
                         if (chipPainted && PdfTextDecorations.drawsMark(textSpan.textStyle().decoration())) {
                             DocumentInsets pad = textSpan.background().padding();
@@ -411,7 +413,7 @@ public final class PdfParagraphFragmentRenderHandler
                         inTextBlock = false;
                     }
                     textState.resetAlpha(stream);
-                    renderShape(stream, shapeSpan, cursorX, baselineY,
+                    renderShape(stream, environment, shapeSpan, cursorX, baselineY,
                             line.textAscent(), line.baselineOffsetFromBottom(), line.lineHeight());
                     textState.invalidate();
                     cursorX += shapeSpan.width();
@@ -436,7 +438,7 @@ public final class PdfParagraphFragmentRenderHandler
             // Marks inherit the ambient alpha into their q..Q, so restore
             // opacity first; each mark then applies its own colour's alpha.
             textState.resetAlpha(stream);
-            PdfTextDecorations.draw(stream, decorations);
+            PdfTextDecorations.draw(environment, stream, decorations);
         }
     }
 
@@ -458,6 +460,7 @@ public final class PdfParagraphFragmentRenderHandler
      * the persisted text state (inline images, shapes).
      */
     private static final class TextRenderState {
+        private final PdfRenderEnvironment environment;
         private PDFont font;
         private float size = Float.NaN;
         private Color color;
@@ -466,6 +469,10 @@ public final class PdfParagraphFragmentRenderHandler
         // own q..Q, so the alpha WE set is what survives — invalidate() must
         // not reset it.
         private float alpha = 1f;
+
+        TextRenderState(PdfRenderEnvironment environment) {
+            this.environment = environment;
+        }
 
         void applyFont(PDPageContentStream stream, PDFont newFont, float newSize) throws IOException {
             if (newFont != font || newSize != size) {
@@ -482,7 +489,7 @@ public final class PdfParagraphFragmentRenderHandler
                     // setNonStrokingColor drops the alpha channel, so a
                     // translucent run carries it as a graphics-state constant
                     // (the gs operator is legal inside a text object).
-                    PdfAlphaSupport.setFillAlpha(stream, newAlpha);
+                    PdfAlphaSupport.setFillAlpha(environment, stream, newAlpha);
                     alpha = newAlpha;
                 }
                 stream.setNonStrokingColor(newColor);
@@ -499,7 +506,7 @@ public final class PdfParagraphFragmentRenderHandler
          */
         void resetAlpha(PDPageContentStream stream) throws IOException {
             if (alpha != 1f) {
-                PdfAlphaSupport.setFillAlpha(stream, 1f);
+                PdfAlphaSupport.setFillAlpha(environment, stream, 1f);
                 alpha = 1f;
                 // The next translucent run must re-emit its gs even when its
                 // colour is unchanged.

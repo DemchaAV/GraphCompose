@@ -156,6 +156,17 @@ follow semantic versioning; release dates are ISO 8601.
   reloads before rasterizing; standard-14-only documents are unaffected apart
   from the marginal serialization cost.
 
+### Internal
+
+- The PDF backend reuses one `PDExtendedGraphicsState` per distinct
+  (channel, alpha) pair for the whole render pass (each section of a
+  combined document runs its own pass) — `PdfRenderEnvironment` now owns
+  the shared states the alpha helpers emit. PDFBox maps repeated
+  writes of the same instance to one `/ExtGState` resource entry, so a page's
+  resource dictionary stays bounded by the number of distinct alpha values
+  instead of growing with every translucent draw. Fully opaque documents
+  still carry no `/ExtGState` resources at all.
+
 ### Documentation
 
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix

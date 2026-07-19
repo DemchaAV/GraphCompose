@@ -7,6 +7,7 @@ import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,8 @@ public final class PdfRenderEnvironment {
     private final PdfRenderSession session;
     private final int pageIndexOffset;
     private final Map<String, PDImageXObject> imageCache = new HashMap<>();
+    private final Map<Float, PDExtendedGraphicsState> fillAlphaStates = new HashMap<>();
+    private final Map<Float, PDExtendedGraphicsState> strokeAlphaStates = new HashMap<>();
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
@@ -105,6 +108,44 @@ public final class PdfRenderEnvironment {
      */
     public org.apache.pdfbox.pdmodel.PDPage documentPage(int localPageIndex) {
         return document.getPage(localPageIndex + pageIndexOffset);
+    }
+
+    /**
+     * Returns the shared graphics state carrying a non-stroking alpha
+     * constant, minting one per distinct value on first use.
+     *
+     * <p>PDFBox maps repeated writes of the <em>same</em>
+     * {@link PDExtendedGraphicsState} instance to one {@code /ExtGState}
+     * resource entry per page, so sharing instances keeps a page's resource
+     * dictionary bounded by the number of distinct alpha values instead of
+     * growing with every translucent draw. Callers must treat the returned
+     * state as immutable.</p>
+     *
+     * @param alpha non-stroking alpha constant in {@code [0, 1]}
+     * @return shared graphics state owned by the current render pass
+     */
+    public PDExtendedGraphicsState fillAlphaState(float alpha) {
+        return fillAlphaStates.computeIfAbsent(alpha, value -> {
+            PDExtendedGraphicsState state = new PDExtendedGraphicsState();
+            state.setNonStrokingAlphaConstant(value);
+            return state;
+        });
+    }
+
+    /**
+     * Returns the shared graphics state carrying a stroking alpha constant,
+     * minting one per distinct value on first use. Sharing semantics match
+     * {@link #fillAlphaState(float)}.
+     *
+     * @param alpha stroking alpha constant in {@code [0, 1]}
+     * @return shared graphics state owned by the current render pass
+     */
+    public PDExtendedGraphicsState strokeAlphaState(float alpha) {
+        return strokeAlphaStates.computeIfAbsent(alpha, value -> {
+            PDExtendedGraphicsState state = new PDExtendedGraphicsState();
+            state.setStrokingAlphaConstant(value);
+            return state;
+        });
     }
 
     /**

@@ -182,7 +182,7 @@ follow semantic versioning; release dates are ISO 8601.
   The README gains a dual-output section showing the PDF render next to
   PowerPoint's own export of the generated slide, plus a screenshot of the
   deck open in PowerPoint with the headline text frame selected — the
-  committed artifacts land 68 native shapes with only the clip-masked logo
+  committed artifacts land 69 native shapes with only the clip-masked logo
   as a picture.
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
   of what each render backend supports and which class implements it,

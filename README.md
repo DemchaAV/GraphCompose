@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <b>Declarative Java DSL for structured business PDFs.</b><br/>
-  Describe what the document <i>says</i>; the engine resolves layout, pagination, themes, and PDFBox rendering. <b>Cinematic by default.</b>
+  <b>Declarative Java DSL for structured business documents.</b><br/>
+  Describe what the document <i>says</i>; the engine resolves layout, pagination, themes, and backend rendering &mdash; print-ready PDF first, an editable PowerPoint deck from the same source. <b>Cinematic by default.</b>
 </p>
 
 <p align="center">
@@ -44,9 +44,10 @@
 
 ## One source → a PDF <i>and</i> an editable PowerPoint deck
 
-The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides with identical geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 68 native shapes; only its clip-masked logo art is a picture).
+The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides with identical geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 69 native shapes; only its clip-masked logo art is a picture).
 
 ```java
+Path deck = Path.of("twin-output.pptx");
 try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
         .pageSize(DocumentPageSize.SLIDE_16_9)
         .create()) {
@@ -71,7 +72,7 @@ try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
   <img src="./assets/readme/twin-output-editing.png" alt="The generated deck open in PowerPoint with the headline text frame selected for editing" width="820"/>
 </p>
 <p align="center">
-  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, ~380 lines, page included).</sub>
+  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, ~370 lines, page included).</sub>
 </p>
 
 ## Why GraphCompose
@@ -207,7 +208,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 |---|---|---|
 | PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
 | DOCX | Partial | Semantic export via Apache POI. Unsupported nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently &mdash; layout fidelity is best-effort for paragraph / list / table content. |
-| PPTX | Skeleton | Validates supported node types and emits a manifest. **Not a real PowerPoint export yet** &mdash; planned only if there is demand. |
+| PPTX | Beta | Fixed-layout export via Apache POI from the same resolved layout &mdash; one page per editable slide with native shapes and text frames; clipped regions land as pixel-exact pictures. First shipped in 2.1, marked `@Beta` while the API shape settles. |
 
 ### Text &amp; internationalization
 

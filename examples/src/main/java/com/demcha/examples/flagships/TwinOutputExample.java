@@ -23,7 +23,6 @@ import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
-import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -93,24 +92,6 @@ public final class TwinOutputExample {
     }
 
     /**
-     * Renders the page to an image for README previews, without a PDF round trip.
-     *
-     * @param dpi raster resolution in dots per inch
-     * @return rendered page image
-     * @throws Exception when composition or rendering fails
-     */
-    public static BufferedImage renderImage(int dpi) throws Exception {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(DocumentPageSize.SLIDE_16_9)
-                .pageBackground(NIGHT)
-                .margin(DocumentInsets.zero())
-                .create()) {
-            compose(document);
-            return document.toImage(0, dpi);
-        }
-    }
-
-    /**
      * Composes the single hook page shared by both outputs.
      *
      * @param document open session configured for the 960 x 540 slide canvas
@@ -148,7 +129,7 @@ public final class TwinOutputExample {
                         + "and vectors stay native, editable shapes.",
                 body(12.3, ON_DARK_MUTED), 450), 54, 228));
 
-        layers.add(at(codeCard(), 52, 296));
+        layers.add(at(codeCard(), 52, 292));
 
         layers.add(at(canvasText("GraphLabel", "ONE RESOLVED LAYOUT / TWO BACKENDS",
                 mono(8.8, MINT, true), 690), 622, 118));
@@ -158,7 +139,7 @@ public final class TwinOutputExample {
                 "fixed layout - print-ready", MINT), 585, 288));
         layers.add(at(formatCard("ppt-file", "twin-output.pptx",
                 "native shapes - editable", BLUE), 785, 288));
-        layers.add(at(canvasText("ParityNote", "same coordinates - same fonts - same colours",
+        layers.add(at(canvasText("ParityNote", "same coordinates - same metrics - same colours",
                 body(9.3, ON_DARK_MUTED), 690), 622, 398));
 
         String[][] proof = {
@@ -204,6 +185,7 @@ public final class TwinOutputExample {
         // {indent level, code, trailing comment} — indentation is positional
         // because paragraph text trims leading whitespace.
         String[][] lines = {
+                {"0", "Path deck = Path.of(\"twin-output.pptx\");", ""},
                 {"0", "try (DocumentSession doc = GraphCompose", ""},
                 {"2", ".document(Path.of(\"twin-output.pdf\"))", ""},
                 {"2", ".pageSize(DocumentPageSize.SLIDE_16_9)", ""},
@@ -215,11 +197,11 @@ public final class TwinOutputExample {
         };
         ShapeContainerBuilder card = new ShapeContainerBuilder()
                 .name("TwinCode")
-                .roundedRect(470, 148, 14)
+                .roundedRect(470, 152, 14)
                 .fillColor(DocumentColor.rgba(7, 10, 24, 220))
                 .stroke(DocumentStroke.of(DARK_LINE, 0.8));
         for (int i = 0; i < lines.length; i++) {
-            double y = 14 + i * 15.5;
+            double y = 12 + i * 14.6;
             double indent = 20 + Integer.parseInt(lines[i][0]) * 18;
             card.position(new ParagraphBuilder()
                     .name("TwinCodeLine" + i)

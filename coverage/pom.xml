@@ -80,7 +80,7 @@
         -->
         <coverage.min.instruction>0.875</coverage.min.instruction>
         <coverage.min.branch>0.68</coverage.min.branch>
-        <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
+        <maven.dependency.plugin.version>3.11.0</maven.dependency.plugin.version>
     </properties>
 
     <build>

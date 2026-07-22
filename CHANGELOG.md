@@ -302,8 +302,10 @@ for this cycle.
   section heading with the first line of its body across a page break: a standalone
   header section binds to the following body section (a multi-node rule + banner + rule
   group binds as one run), and a combined header+body module keeps the heading in a
-  nested keep-with-next group. Multi-column presets place their sections in fixed
-  columns that do not paginate, so no heading can strand there.
+  nested keep-with-next group — including Panel's full-width Profile card, whose header
+  now stays with the summary if a long profile splits the card. Multi-column presets
+  place their sections in fixed columns that do not paginate, so no heading can strand
+  there.
 - **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
   (or `.deterministic(Instant)` for an explicit timestamp) pins the document
   CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead

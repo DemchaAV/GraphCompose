@@ -26,6 +26,10 @@ import java.util.Objects;
  *                     or {@link DocumentBleed#none()} for normal in-margin placement
  * @param bookmarkOptions optional PDF outline entry placed at the section's top on
  *                        its start page, or {@code null} for none
+ * @param keepWithNext when {@code true}, the section stays with the block that
+ *                     follows it — it is relocated to the next page rather than
+ *                     stranded at a page bottom apart from the first line of the
+ *                     following content (see {@link DocumentNode#keepWithNext()})
  * @author Artem Demchyshyn
  */
 public record SectionNode(
@@ -41,7 +45,8 @@ public record SectionNode(
         boolean keepTogether,
         String anchor,
         DocumentBleed bleed,
-        DocumentBookmarkOptions bookmarkOptions
+        DocumentBookmarkOptions bookmarkOptions,
+        boolean keepWithNext
 ) implements DocumentNode {
     /**
      * Normalizes optional section fields and validates child spacing.
@@ -59,6 +64,41 @@ public record SectionNode(
         if (spacing < 0 || Double.isNaN(spacing) || Double.isInfinite(spacing)) {
             throw new IllegalArgumentException("spacing must be finite and non-negative: " + spacing);
         }
+    }
+
+    /**
+     * Backward-compatible constructor without the keep-with-next flag (defaults to
+     * normal flow).
+     *
+     * @param name            node name
+     * @param children        child nodes
+     * @param spacing         vertical spacing
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param fillColor       optional background fill
+     * @param stroke          optional uniform border stroke
+     * @param cornerRadius    optional render-only corner radius
+     * @param borders         optional per-side borders
+     * @param keepTogether    keep-together relocation flag
+     * @param anchor          optional navigation anchor name
+     * @param bleed           optional bleed declaration
+     * @param bookmarkOptions optional PDF outline entry, or {@code null} for none
+     */
+    public SectionNode(String name,
+                       List<DocumentNode> children,
+                       double spacing,
+                       DocumentInsets padding,
+                       DocumentInsets margin,
+                       DocumentColor fillColor,
+                       DocumentStroke stroke,
+                       DocumentCornerRadius cornerRadius,
+                       DocumentBorders borders,
+                       boolean keepTogether,
+                       String anchor,
+                       DocumentBleed bleed,
+                       DocumentBookmarkOptions bookmarkOptions) {
+        this(name, children, spacing, padding, margin, fillColor, stroke, cornerRadius, borders, keepTogether,
+                anchor, bleed, bookmarkOptions, false);
     }
 
     /**

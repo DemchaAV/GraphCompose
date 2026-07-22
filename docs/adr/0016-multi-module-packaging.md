@@ -60,9 +60,10 @@ render backends discovered at runtime through a `ServiceLoader` SPI.
   (via the wrapper) + templates + the independently-versioned `graph-compose-fonts` and
   `graph-compose-emoji` companions. Office backends are not bundled.
 
-The engine sources stay at the repository root and only the **root coordinate** is
-renamed `graph-compose` → `graph-compose-core`; the new wrapper is a small module. The
-default coordinate `graph-compose` therefore continues to mean "PDF out of the box".
+The engine sources live in the `core/` module under the coordinate `graph-compose-core`;
+the repository root is the `graph-compose-build` aggregator pom that binds the modules
+into one lockstep reactor, and `graph-compose` is the small jar-wrapper. The default
+coordinate `graph-compose` therefore continues to mean "PDF out of the box".
 
 No JPMS: modules carry an `Automatic-Module-Name` only, so a split package across
 test-scope jars stays legal on the classpath.
@@ -82,6 +83,8 @@ test-scope jars stays legal on the classpath.
   `graph-compose-emoji` keep their own lines (they change rarely).
 - **A `MissingBackendException` is now the "why won't it render" signal** for a lean
   `graph-compose-core`, replacing the pre-split assumption that the backend is always present.
-- The legacy `Entity`-Component-System render pipeline moves into `graph-compose-render-pdf`
-  rather than being deleted; it is dead on the canonical path but still exercised by
-  test scaffolding, so its removal is deferred beyond 2.0.
+- The dormant `Entity`-Component-System engine internals — the `EntityManager` /
+  `SystemECS` runtime, the `Entity` component model, and the ECS render pipeline —
+  were removed in 2.0.0 rather than carried into a module. They were unreachable from
+  the live `DocumentSession` → layout compiler → fixed-layout backend path, so document
+  layout, PDF output, and the public `guideLines(...)` overlay are unchanged.

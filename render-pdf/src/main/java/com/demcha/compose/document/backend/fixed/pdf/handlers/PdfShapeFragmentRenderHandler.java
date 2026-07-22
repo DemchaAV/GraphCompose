@@ -25,6 +25,7 @@ public final class PdfShapeFragmentRenderHandler
     }
 
     private static void drawSideBorder(PDPageContentStream stream,
+                                       PdfRenderEnvironment environment,
                                        Stroke side,
                                        float x1, float y1, float x2, float y2) throws IOException {
         if (side == null || side.strokeColor() == null || side.width() <= 0) {
@@ -32,6 +33,7 @@ public final class PdfShapeFragmentRenderHandler
         }
         stream.saveGraphicsState();
         try {
+            PdfAlphaSupport.applyStrokeAlpha(environment, stream, side.strokeColor().color());
             stream.setStrokingColor(side.strokeColor().color());
             stream.setLineWidth((float) side.width());
             stream.moveTo(x1, y1);
@@ -128,7 +130,7 @@ public final class PdfShapeFragmentRenderHandler
                     stream.restoreGraphicsState();
                 }
             } else if (hasFill) {
-                PdfAlphaSupport.applyFillAlpha(stream, payload.fillColor());
+                PdfAlphaSupport.applyFillAlpha(environment, stream, payload.fillColor());
                 stream.setNonStrokingColor(payload.fillColor());
                 if (anyRounded) {
                     drawRoundedRectangle(stream, x, y, width, height,
@@ -142,12 +144,12 @@ public final class PdfShapeFragmentRenderHandler
             if (hasSideBorders) {
                 // Per-side borders override the uniform rectangle stroke; rounded
                 // corners are not combined with mixed-side borders in v1.3.
-                drawSideBorder(stream, payload.sideBorders().top(), x, y + height, x + width, y + height);
-                drawSideBorder(stream, payload.sideBorders().right(), x + width, y + height, x + width, y);
-                drawSideBorder(stream, payload.sideBorders().bottom(), x, y, x + width, y);
-                drawSideBorder(stream, payload.sideBorders().left(), x, y + height, x, y);
+                drawSideBorder(stream, environment, payload.sideBorders().top(), x, y + height, x + width, y + height);
+                drawSideBorder(stream, environment, payload.sideBorders().right(), x + width, y + height, x + width, y);
+                drawSideBorder(stream, environment, payload.sideBorders().bottom(), x, y, x + width, y);
+                drawSideBorder(stream, environment, payload.sideBorders().left(), x, y + height, x, y);
             } else if (hasStroke) {
-                PdfAlphaSupport.applyStrokeAlpha(stream, payload.stroke().strokeColor().color());
+                PdfAlphaSupport.applyStrokeAlpha(environment, stream, payload.stroke().strokeColor().color());
                 stream.setStrokingColor(payload.stroke().strokeColor().color());
                 stream.setLineWidth((float) payload.stroke().width());
                 if (anyRounded) {

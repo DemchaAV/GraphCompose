@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <!--
+        Isolated settings for the release-smoke harness. A single mirror with
+        mirrorOf=* forces EVERY artifact and plugin request through Maven Central,
+        overriding any repository a consumed POM might declare (e.g. JitPack). A
+        scenario can therefore only pass if the published GraphCompose coordinate —
+        and everything it transitively needs — is genuinely resolvable from Central.
+        Passed to each scenario with `-s` by run.sh / run.ps1.
+    -->
+    <mirrors>
+        <mirror>
+            <id>central-only</id>
+            <name>Maven Central only</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>

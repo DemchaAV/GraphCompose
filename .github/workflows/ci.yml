@@ -148,13 +148,19 @@ jobs:
           cache: maven
 
       - name: Build and run tests
-        # Reactor slice: the engine, the render-docx / render-pptx semantic backends,
-        # the extracted graph-compose-testing module, the graph-compose-qa
-        # cross-module suites (which need the testing module + the engine test-jar on
-        # the classpath and so cannot live in the engine's own test scope), and the
-        # graph-compose-coverage aggregator (report-only JaCoCo over core + qa exec).
-        # -am pulls the fonts / emoji upstreams; bundle / examples / benchmarks are excluded.
-        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-qa,:graph-compose-coverage -am
+        # Reactor slice: the engine, the render-docx semantic backend, the
+        # render-pptx fixed-layout backend,
+        # the graph-compose wrapper + graph-compose-bundle (the published empty-jar
+        # aggregates — covered here so a packaging break is caught on every push, not
+        # only via the examples job), the extracted graph-compose-testing module, the
+        # graph-compose-qa cross-module suites (which need the testing module + the
+        # engine test-jar on the classpath and so cannot live in the engine's own test
+        # scope), and the graph-compose-coverage aggregator (JaCoCo over core +
+        # render-pdf + templates, counting the qa exec, now with a NON-REGRESSION
+        # RATCHET — this step fails if aggregate INSTRUCTION or BRANCH coverage drops
+        # below the floor in coverage/pom.xml). -am pulls the fonts / emoji upstreams;
+        # only examples / benchmarks are excluded (their own CI jobs cover them).
+        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose,:graph-compose-bundle,:graph-compose-qa,:graph-compose-coverage -am
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
@@ -165,14 +171,15 @@ jobs:
         run: ./mvnw -B -ntp javadoc:javadoc -pl :graph-compose-core
 
       - name: Upload aggregate coverage report
-        # Report-only: the cross-module JaCoCo report (core coverage counting the
-        # qa suites) is published as an artifact for inspection; no threshold gate.
-        # One JDK is enough — coverage is identical across JVMs.
+        # The cross-module JaCoCo report (core + render-pdf + templates coverage,
+        # counting the qa suites) is published as an artifact for inspection. The
+        # non-regression gate itself is enforced by the `verify` step above; this just
+        # captures the numbers. One JDK is enough — coverage is identical across JVMs.
         if: matrix.java == '17'
         uses: actions/upload-artifact@v7
         with:
-          # Core-scope aggregate (engine coverage counting the qa suites);
-          # render-pdf / templates are a follow-up, so the name is explicit.
+          # Cross-module aggregate (core + render-pdf + templates, counting the qa
+          # suites). The artifact name is kept for continuity with earlier runs.
           name: coverage-core-aggregate-${{ github.run_id }}
           path: coverage/target/site/jacoco-aggregate/**
           if-no-files-found: error
@@ -237,6 +244,14 @@ jobs:
         # dependency) before the examples build resolves it.
         run: ./mvnw -B -ntp -f testing/pom.xml -DskipTests install
 
+      - name: Install graph-compose-render-pptx (consumed by the examples module)
+        # The Engine Deck PPTX example renders the flagship deck through the
+        # fixed-layout PPTX backend, which is not on Central. Install it after
+        # the wrapper (its core + render-pdf compile dependencies) AND the
+        # testing module — -DskipTests skips execution but Maven still
+        # resolves render-pptx's test-scope graph-compose-testing dependency.
+        run: ./mvnw -B -ntp -f render-pptx/pom.xml -DskipTests install
+
       - name: Install graph-compose-templates (consumed by the examples module)
         # The flagship + template examples render the built-in CV/invoice/proposal
         # presets, which now ship in graph-compose-templates.
@@ -288,12 +303,11 @@ jobs:
 
       - name: Compare public API against baseline
         # The `japicmp` profile resolves the baseline release pinned
-        # by the `japicmp.baseline` property in core/pom.xml (via the
-        # profile-local JitPack repository) and diffs it against the
-        # freshly-built artifact. Fails the job on any binary-
+        # by the `japicmp.baseline` property in core/pom.xml (the
+        # published graph-compose-core on Maven Central) and diffs it
+        # against the freshly-built artifact. Fails the job on any binary-
         # incompatible modification to the public surface. Source-
         # incompatible changes are reported only (phased policy).
-        # See CHANGELOG v1.6.6 "Build" notes for the policy rationale.
         run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core
 
       - name: Upload japicmp report

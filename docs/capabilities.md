@@ -53,6 +53,7 @@ tracks what is `Partial` or `Planned`.
 | Write a PDF file | `buildPdf()`, `buildPdf(Path)` | Stable | [Getting started](getting-started.md) |
 | Stream to a caller-owned stream | `writePdf(OutputStream)` | Stable | [Streaming](recipes/streaming.md) |
 | In-memory bytes | `toPdfBytes()` | Stable | [Getting started](getting-started.md) |
+| Geometry-identical PowerPoint deck | `buildPptx()`, `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — needs `graph-compose-render-pptx` on the classpath | Stable | [Backend capability matrix](architecture/backend-capability-matrix.md) |
 | Editable Word (semantic) | `export(new DocxSemanticBackend())` | Stable (semantic, not PDF parity) | [Troubleshooting](troubleshooting.md) |
 | PDF chrome (metadata / watermark / header / footer / protection) | `metadata(...)`, `watermark(...)`, `header(...)`, `footer(...)`, `protect(...)` | Stable | [Getting started](getting-started.md) |
 | Layout snapshot regression | `LayoutSnapshotAssertions.assertMatches(...)` | Stable | [Layout snapshot testing](operations/layout-snapshot-testing.md) |

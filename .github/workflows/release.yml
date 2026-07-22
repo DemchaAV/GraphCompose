@@ -45,24 +45,30 @@ jobs:
           cache: maven
 
       - name: Verify (gate the release on a green build)
-        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core
+        run: ./mvnw -B -ntp clean verify
 
       - name: Extract CHANGELOG section for the tag
         id: notes
         run: |
           TAG="${GITHUB_REF_NAME}"
+          # A pre-release (vX.Y.Z-rc.N / -alpha / -beta) has no CHANGELOG section of its
+          # own — it is cut against the upcoming FINAL version's notes. Strip the
+          # pre-release suffix so the lookup uses the final section (## vX.Y.Z, whether
+          # still "— Planned" or already dated). A final tag has no suffix, so NOTES_TAG
+          # == TAG.
+          NOTES_TAG="${TAG%%-*}"
           NOTES_FILE="${RUNNER_TEMP}/release-notes.md"
-          # Print the "## <tag> — ..." heading and every line up to the
+          # Print the "## <NOTES_TAG> — ..." heading and every line up to the
           # next "## v" heading. index()==1 is a literal prefix match, so
           # the dots in the version are not treated as regex wildcards and
           # the trailing space stops "## v1.6.5 " from matching "v1.6.50".
-          awk -v hdr="## ${TAG} " '
+          awk -v hdr="## ${NOTES_TAG} " '
             index($0, hdr) == 1 { flag = 1; print; next }
             /^## v/ && flag { flag = 0 }
             flag { print }
           ' CHANGELOG.md > "${NOTES_FILE}"
           if [ ! -s "${NOTES_FILE}" ]; then
-            echo "::warning::No CHANGELOG section found for ${TAG}; using a generic note."
+            echo "::warning::No CHANGELOG section found for ${NOTES_TAG}; using a generic note."
             printf '%s\n' "Release ${TAG}. See [CHANGELOG.md](CHANGELOG.md) for details." > "${NOTES_FILE}"
           fi
           echo "notes_file=${NOTES_FILE}" >> "${GITHUB_OUTPUT}"

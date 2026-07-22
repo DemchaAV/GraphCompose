@@ -23,5 +23,18 @@ engine reads it from the classpath.
 
 ## Install
 
-Independent version line (`emoji-v*`), pinned to a version compatible with your engine train.
-See [root README → Installation](../README.md#installation) for the pinned coordinate.
+Independent version line (`emoji-v*`) — pinned, not the engine version:
+
+```xml
+<dependency>
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-emoji</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```kotlin
+dependencies { implementation("io.github.demchaav:graph-compose-emoji:1.0.0") }
+```
+
+The full "which artifact?" table: [root README → Installation](../README.md#installation).

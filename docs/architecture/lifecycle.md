@@ -19,8 +19,8 @@ flowchart TD
     Authoring --> Nodes["Semantic document nodes"]
     Nodes --> Layout["Layout graph"]
     Layout --> Snapshot["layoutSnapshot()"]
-    Layout --> Render["PDF fixed-layout render"]
-    Render --> Output["writePdf(OutputStream), buildPdf(), or toPdfBytes()"]
+    Layout --> Render["Fixed-layout render (PDF or PPTX)"]
+    Render --> Output["writePdf/buildPdf/toPdfBytes or writePptx/buildPptx/toPptxBytes"]
     Session --> Close["close()"]
 ```
 

@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf.handlers;
 
+import com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment;
 import com.demcha.compose.document.style.DocumentDashPattern;
 import com.demcha.compose.document.style.DocumentLineCap;
 import com.demcha.compose.document.style.DocumentLineJoin;
@@ -28,24 +29,26 @@ final class PdfShapeGeometry {
      * render handler. No-op when neither a fill nor a visible stroke is present.
      */
     static void fillAndStrokePath(PDPageContentStream stream,
+                                  PdfRenderEnvironment environment,
                                   Color fillColor,
                                   Stroke stroke,
                                   PathEmitter path) throws IOException {
-        fillAndStrokePath(stream, fillColor, stroke, null, path);
+        fillAndStrokePath(stream, environment, fillColor, stroke, null, path);
     }
 
     /**
-     * Variant of {@link #fillAndStrokePath(PDPageContentStream, Color, Stroke, PathEmitter)}
+     * Variant of {@link #fillAndStrokePath(PDPageContentStream, PdfRenderEnvironment, Color, Stroke, PathEmitter)}
      * with an optional dash pattern applied to the stroke inside the saved
      * graphics state ({@code null} or {@link DocumentDashPattern#NONE} keeps
      * the stroke solid).
      */
     static void fillAndStrokePath(PDPageContentStream stream,
+                                  PdfRenderEnvironment environment,
                                   Color fillColor,
                                   Stroke stroke,
                                   DocumentDashPattern dashPattern,
                                   PathEmitter path) throws IOException {
-        fillAndStrokePath(stream, fillColor, stroke, dashPattern, null, null, path);
+        fillAndStrokePath(stream, environment, fillColor, stroke, dashPattern, null, null, path);
     }
 
     /**
@@ -54,6 +57,7 @@ final class PdfShapeGeometry {
      * every existing call site stays byte-identical.
      */
     static void fillAndStrokePath(PDPageContentStream stream,
+                                  PdfRenderEnvironment environment,
                                   Color fillColor,
                                   Stroke stroke,
                                   DocumentDashPattern dashPattern,
@@ -71,14 +75,14 @@ final class PdfShapeGeometry {
         stream.saveGraphicsState();
         try {
             if (hasStroke) {
-                PdfAlphaSupport.applyStrokeAlpha(stream, stroke.strokeColor().color());
+                PdfAlphaSupport.applyStrokeAlpha(environment, stream, stroke.strokeColor().color());
                 stream.setStrokingColor(stroke.strokeColor().color());
                 stream.setLineWidth((float) stroke.width());
                 applyDashPattern(stream, dashPattern);
                 applyStrokeStyle(stream, lineCap, lineJoin);
             }
             if (hasFill) {
-                PdfAlphaSupport.applyFillAlpha(stream, fillColor);
+                PdfAlphaSupport.applyFillAlpha(environment, stream, fillColor);
                 stream.setNonStrokingColor(fillColor);
             }
             path.emit(stream);

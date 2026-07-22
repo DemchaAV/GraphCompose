@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        Semantic PPTX export backend, split out of graph-compose-render-docx in the
-        2.0 module line so a consumer that wants slide output does not also pull the
-        DOCX backend's Apache POI. Today PptxSemanticBackend is a skeleton that
-        validates slide-safe semantic nodes and returns an export manifest, so this
-        module needs nothing beyond the core — POI joins only when real .pptx
-        emission lands. SemanticBackend / SemanticExportContext / manifest — the SPI
-        — stay in the core `document.backend.semantic` package.
+        PPTX render backend. Two surfaces share this artifact: the fixed-layout
+        backend (document.backend.fixed.pptx, POI XSLF) consuming the resolved
+        LayoutGraph for geometry-identical slide output next to the PDF render,
+        and the semantic PptxSemanticBackend skeleton that validates slide-safe
+        semantic nodes and returns an export manifest. SemanticBackend /
+        SemanticExportContext / manifest — the SPI — stay in the core
+        `document.backend.semantic` package.
 
         Standalone pom (no aggregator parent, like fonts/render-docx); its version
         tracks the engine line in lockstep (bumped by cut-release.ps1), and the
@@ -19,10 +19,10 @@
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-pptx</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
 
     <name>GraphCompose Render — PPTX</name>
-    <description>Semantic PPTX export backend for GraphCompose (slide-safe semantic node validation).</description>
+    <description>PPTX render backends for GraphCompose: the coordinate-exact fixed-layout backend (POI XSLF) and the slide-safe semantic export skeleton.</description>
     <url>https://github.com/DemchaAV/GraphCompose</url>
 
     <licenses>
@@ -57,9 +57,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <poi.version>5.5.1</poi.version>
+        <!-- Keep in lockstep with render-pdf/pom.xml: a drift would mix fontbox
+             and pdfbox versions at runtime (the direct fontbox wins mediation). -->
+        <pdfbox.version>3.0.8</pdfbox.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <graphcompose.fonts.version>1.0.0</graphcompose.fonts.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
@@ -80,16 +84,31 @@
             <artifactId>graph-compose-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- The fixed-layout PPTX backend emits .pptx through POI XSLF. -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <!-- FontBox reads the OpenType metadata required by the EOT wrapper
+             used for native PowerPoint font embedding. -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>fontbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
 
-        <!-- Test dependencies -->
-        <!-- The export test builds a DocumentSession, which lays out through the
-             font-metrics seam now provided by graph-compose-render-pdf. -->
+        <!-- The fixed PPTX backend deliberately reuses the PDF measurement font
+             library so glyph sanitization stays byte-for-byte aligned with the
+             widths that produced the LayoutGraph. A backend-neutral metrics
+             artifact is a separate future extraction. -->
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-pdf</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
+
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -100,6 +119,12 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-testing</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

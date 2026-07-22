@@ -42,6 +42,7 @@ public final class PdfLineFragmentRenderHandler
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
         stream.saveGraphicsState();
         try {
+            PdfAlphaSupport.applyStrokeAlpha(environment, stream, stroke.strokeColor().color());
             stream.setStrokingColor(stroke.strokeColor().color());
             stream.setLineWidth((float) stroke.width());
             PdfShapeGeometry.applyDashPattern(stream, payload.dashPattern());

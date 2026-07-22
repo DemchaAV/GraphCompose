@@ -169,6 +169,24 @@ public final class ClassicSerif {
                 });
             }
 
+            /**
+             * Renders the spaced-caps rule header inside a keep-with-next subsection so
+             * the title + rule stay with the first line of the module body across a page
+             * break instead of stranding at a page bottom. The subsection's spacing
+             * matches the module spacing and it adds no padding or margin, so header and
+             * body placement is unchanged from rendering the header directly into the
+             * module host.
+             */
+            private void keptHeader(SectionBuilder host, String title) {
+                host.addSection("Header", header -> {
+                    header.keepWithNext()
+                            .spacing(theme.spacing().sectionBodySpacing());
+                    SectionHeader.spacedCapsRule(header, title, theme,
+                            titleStyle(), ACCENT, 72, 1.0,
+                            new DocumentInsets(0, 0, 2, 0));
+                });
+            }
+
             private void addCoverSkillsModule(PageFlowBuilder flow, CvSection section) {
                 if (!SectionLookup.hasContent(section)) {
                     return;
@@ -177,9 +195,7 @@ public final class ClassicSerif {
                 flow.addSection("CvV2ClassicSerifCoreSkills", host -> {
                     host.spacing(theme.spacing().sectionBodySpacing())
                             .padding(new DocumentInsets(0, 0, 2, 0));
-                    SectionHeader.spacedCapsRule(host, "Core Skills", theme,
-                            titleStyle(), ACCENT, 72, 1.0,
-                            new DocumentInsets(0, 0, 2, 0));
+                    keptHeader(host, "Core Skills");
                     renderCoverSkillsBody(host, section);
                 });
             }
@@ -205,9 +221,7 @@ public final class ClassicSerif {
                 flow.addSection("CvV2ClassicSerif" + SectionLookup.normalize(title), host -> {
                     host.spacing(theme.spacing().sectionBodySpacing())
                             .padding(new DocumentInsets(0, 0, 2, 0));
-                    SectionHeader.spacedCapsRule(host, title, theme,
-                            titleStyle(), ACCENT, 72, 1.0,
-                            new DocumentInsets(0, 0, 2, 0));
+                    keptHeader(host, title);
                     renderDetailBody(host, section);
                 });
             }

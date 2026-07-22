@@ -149,11 +149,17 @@ public final class CenteredHeadline {
                 for (int i = 0; i < sections.size(); i++) {
                     final CvSection sec = sections.get(i);
                     final int idx = i;
-                    pageFlow.addSection("Title_" + idx, host ->
-                            SectionHeader.flatSpacedCaps(host, sec.title(),
-                                    theme.palette().muted(), theme, null));
-                    pageFlow.addLine(line ->
-                            rule(line, "TitleBottomRule_" + idx, ruleWidth, 8, 8));
+                    // Title + its trailing rule form one keep-with-next run so the group
+                    // stays with the first line of the body across a page break.
+                    pageFlow.addSection("Title_" + idx, host -> {
+                        host.keepWithNext();
+                        SectionHeader.flatSpacedCaps(host, sec.title(),
+                                theme.palette().muted(), theme, null);
+                    });
+                    pageFlow.addLine(line -> {
+                        rule(line, "TitleBottomRule_" + idx, ruleWidth, 8, 8);
+                        line.keepWithNext();
+                    });
                     pageFlow.addSection("Body_" + idx, host ->
                             renderBody(host, sec));
                     if (idx < sections.size() - 1) {

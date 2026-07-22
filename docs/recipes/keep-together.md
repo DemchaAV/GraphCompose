@@ -51,7 +51,7 @@ it introduces (a boxed title torn from its background is the visible symptom).
 
 `keepWithNext()` is the tool for that case. A section marked keep-with-next is
 never left as the last block on a page when a sibling follows it: if the
-section **plus the first line** of the following block would overflow the
+section **plus the first slice** of the following block would overflow the
 remaining space (but fit on a fresh page), the section relocates to the next
 page so the heading stays glued to its body.
 
@@ -67,21 +67,23 @@ document.pageFlow()
 ```
 
 The difference from `keepTogether()`: keep-with-next binds the heading to only
-the **first following line**, not the whole body — so it works even when the
-body spans several pages.
+the **first slice** of the following block, not the whole body — so it works even
+when the body spans several pages.
 
-"First line" means the first line of text when the following block starts with
-prose or list entries (the usual heading-over-body case). When it instead starts
-with an indivisible unit (an image, a row) or a table/list, the heading is kept
-with that whole first block. Consecutive keep-with-next sections relocate as one
-run, so a multi-part heading (rule + banner + rule) moves together.
+The **first slice** is the first line when the following block is a paragraph, the
+repeated header rows plus the first body row when it is a table, and the first item
+when it is a list — so the heading is kept with the *start* of a page-spanning table
+or list, not just prose. When the following block is a truly indivisible unit (an
+image, a chart, a horizontal row), the whole unit is that first slice and the heading
+is kept with it. Consecutive keep-with-next sections relocate as one run, so a
+multi-part heading (rule + banner + rule) moves together.
 
 Two boundaries, mirroring `keepTogether()`:
 
 - **Inert when nothing follows.** A trailing heading (no following sibling, or
   nothing that places a line on the page) is never relocated — there is no
   orphan to avoid.
-- **Best-effort.** If the heading plus one following line cannot share a page
+- **Best-effort.** If the heading plus the first slice cannot share a page
   at all, the heading flows in place rather than jumping to a page it still
   cannot share with its body.
 

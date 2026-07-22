@@ -48,4 +48,9 @@ public final class TableDefinition implements NodeDefinition<TableNode> {
                                               FragmentPlacement placement) {
         return emitTableFragments(prepared, ctx, placement);
     }
+
+    @Override
+    public double firstSliceHeight(PreparedNode<TableNode> prepared) {
+        return tableFirstSliceHeight(prepared);
+    }
 }

@@ -49,4 +49,9 @@ public final class ListDefinition implements NodeDefinition<ListNode> {
                                               FragmentPlacement placement) {
         return emitListFragments(prepared, placement);
     }
+
+    @Override
+    public double firstSliceHeight(PreparedNode<ListNode> prepared) {
+        return listFirstSliceHeight(prepared);
+    }
 }

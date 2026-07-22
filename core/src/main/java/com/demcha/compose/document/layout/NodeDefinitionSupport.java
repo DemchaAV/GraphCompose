@@ -531,6 +531,36 @@ public final class NodeDefinitionSupport {
     }
 
     /**
+     * First-slice content height of a prepared table: the repeated header rows
+     * plus the first body row. This mirrors the smallest head {@link #splitTable}
+     * will emit &mdash; a head must carry more than the repeated header rows
+     * ({@code rowCount > headerCount}), so its minimum is the header rows plus
+     * one body row. With no repeated header ({@code repeatedHeaderRowCount == 0})
+     * this is just the first row. Backs
+     * {@link com.demcha.compose.document.layout.definitions.TableDefinition#firstSliceHeight}.
+     *
+     * @param prepared prepared table node
+     * @return the summed height of the repeated header rows and the first body
+     * row, or the whole content height for a table with no rows
+     */
+    public static double tableFirstSliceHeight(PreparedNode<TableNode> prepared) {
+        TableNode node = prepared.node();
+        TableLayoutSupport.PreparedTableLayout preparedTable = prepared
+                .requirePreparedLayout(TableLayoutSupport.PreparedTableLayout.class);
+        List<Double> rowHeights = preparedTable.resolvedLayout().rowHeights();
+        if (rowHeights.isEmpty()) {
+            return prepared.measureResult().height();
+        }
+        int headerCount = Math.min(node.repeatedHeaderRowCount(), rowHeights.size());
+        int sliceRows = Math.min(headerCount + 1, rowHeights.size());
+        double height = 0.0;
+        for (int i = 0; i < sliceRows; i++) {
+            height += rowHeights.get(i);
+        }
+        return height;
+    }
+
+    /**
      * Emits row fragments for a prepared table.
      *
      * @param prepared  prepared table node

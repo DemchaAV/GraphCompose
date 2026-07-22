@@ -73,11 +73,11 @@ public final class DocumentColor {
     /**
      * Creates a translucent document color from RGBA components.
      *
-     * <p>The PDF backend honours the alpha channel on shape fills and strokes —
-     * rectangles/panels/bars, chart value-label halos, ellipses (chart point
-     * markers), polygons, and inline shapes — via a graphics-state alpha
-     * constant. Text, lines, and the DOCX backend currently render the colour
-     * fully opaque.</p>
+     * <p>Both fixed-layout backends honour the alpha channel on every
+     * surface: the PDF backend through a graphics-state alpha constant on
+     * shape fills and strokes, text runs, lines, side borders, and table
+     * paint; the PPTX backend natively in DrawingML. The DOCX backend
+     * currently renders the colour fully opaque.</p>
      *
      * @param red   red channel from 0 to 255
      * @param green green channel from 0 to 255

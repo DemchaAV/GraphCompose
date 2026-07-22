@@ -109,7 +109,7 @@ final class PdfPathPainter {
                                        DocumentLineCap lineCap,
                                        DocumentLineJoin lineJoin) throws IOException {
         if (fillPaint == null && strokePaint == null) {
-            PdfShapeGeometry.fillAndStrokePath(stream, fillColor, stroke,
+            PdfShapeGeometry.fillAndStrokePath(stream, environment, fillColor, stroke,
                     dashPattern, lineCap, lineJoin,
                     s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, segments));
             return;
@@ -131,7 +131,7 @@ final class PdfPathPainter {
                     stream.restoreGraphicsState();
                 }
             } else if (fillColor != null) {
-                PdfShapeGeometry.fillAndStrokePath(stream, fillColor, null, null,
+                PdfShapeGeometry.fillAndStrokePath(stream, environment, fillColor, null, null,
                         s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, segments));
             }
 
@@ -150,7 +150,7 @@ final class PdfPathPainter {
                 PdfShapeGeometry.addPathSegments(stream, x, y, width, height, segments);
                 stream.stroke();
             } else if (hasStrokeWidth && stroke.strokeColor() != null) {
-                PdfShapeGeometry.fillAndStrokePath(stream, null, stroke,
+                PdfShapeGeometry.fillAndStrokePath(stream, environment, null, stroke,
                         dashPattern, lineCap, lineJoin,
                         s -> PdfShapeGeometry.addPathSegments(s, x, y, width, height, segments));
             }

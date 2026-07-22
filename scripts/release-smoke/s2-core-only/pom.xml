@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Standalone consumer smoke project: no <parent>, never part of the
+         GraphCompose reactor. Resolves graph-compose-core from Maven Central. -->
+    <groupId>com.demcha.smoke</groupId>
+    <artifactId>graph-compose-smoke-core-only</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <gc.version>2.0.0</gc.version>
+        <junit.version>5.11.4</junit.version>
+        <assertj.version>3.27.3</assertj.version>
+        <surefire.version>3.5.2</surefire.version>
+        <enforcer.version>3.5.0</enforcer.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-core</artifactId>
+            <version>${gc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+            </plugin>
+
+            <!--
+                Dependency-tree assertion: a lean graph-compose-core must NOT drag
+                in the PDF backend, the Office backends, ZXing, the templates, or
+                the font / emoji companions. This fails `verify` if the published
+                core's transitive tree ever regresses.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${enforcer.version}</version>
+                <executions>
+                    <execution>
+                        <id>core-stays-lean</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.apache.pdfbox</exclude>
+                                        <exclude>org.apache.poi</exclude>
+                                        <exclude>com.google.zxing</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-render-pdf</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-render-docx</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-render-pptx</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-templates</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-fonts</exclude>
+                                        <exclude>io.github.demchaav:graph-compose-emoji</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

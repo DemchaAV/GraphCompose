@@ -68,7 +68,7 @@ public final class PdfEllipseFragmentRenderHandler
         float y = (float) fragment.y();
         float width = (float) fragment.width();
         float height = (float) fragment.height();
-        PdfShapeGeometry.fillAndStrokePath(stream, payload.fillColor(), payload.stroke(),
+        PdfShapeGeometry.fillAndStrokePath(stream, environment, payload.fillColor(), payload.stroke(),
                 s -> drawEllipse(s, x, y, width, height));
     }
 }

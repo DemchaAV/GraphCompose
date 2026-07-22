@@ -3,7 +3,240 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.0.0 — Planned
+## v2.1.0 — in progress
+
+### Public API
+
+- The fixed-layout PPTX backend ships as `@Beta` (Experimental) in its first
+  release: the `document.backend.fixed.pptx` packages and the
+  `DocumentSession` PPTX convenience methods (`toPptxBytes`, `writePptx`,
+  `buildPptx`) carry the marker, so their API shape may still change in a
+  minor release while feedback lands. Geometry identity with the PDF backend
+  is a design invariant and is not subject to change; see
+  `docs/api-stability.md` for the policy.
+- `BackendProviders.fixedLayout(String format)` selects a fixed-layout render
+  backend by its `FixedLayoutBackendProvider.format()` key (case-insensitive),
+  so several fixed-layout backends can coexist on one classpath. The no-arg
+  `BackendProviders.fixedLayout()` default is now deterministic regardless of
+  classpath order: the `"pdf"` provider wins when present, otherwise the
+  provider with the lexicographically smallest format. The PDF convenience
+  paths (`toPdfBytes`, `buildPdf`, multi-section rendering) resolve the PDF
+  backend explicitly by format. A missing format fails with a
+  `MissingBackendException` naming the artifact to add.
+- `DocumentPageSize.SLIDE_16_9` (960 × 540 pt) and `DocumentPageSize.SLIDE_4_3`
+  (720 × 540 pt) presets matching the PowerPoint slide defaults.
+- `graph-compose-render-pptx` gains a coordinate-exact fixed-layout backend:
+  `PptxFixedLayoutBackend` (with `PptxFixedLayoutBackendProvider`,
+  `format() == "pptx"`) consumes the same resolved `LayoutGraph` as the PDF
+  backend — one page becomes one identically-sized slide and fragments render
+  at identical coordinates. First capability slice: rectangle shapes (solid
+  fill, stroke, corner radii, per-side borders), ellipses, and lines, plus a
+  custom-handler seam (`PptxFragmentRenderHandler`,
+  `PptxFixedLayoutBackend.Builder#addHandler`). Unsupported payloads fail
+  with `UnsupportedNodeCapabilityException`; the live per-capability status
+  lives in `docs/architecture/backend-capability-matrix.md`.
+- The fixed PPTX backend renders pre-wrapped paragraph lines as absolute,
+  wrap-disabled, no-autofit text frames with PDF-identical glyph sanitization,
+  standard-14 font-family mapping and rich run styles. External hyperlinks use
+  transparent measured-span hotspots so PowerPoint cannot replace the resolved
+  text colour and decoration with its hyperlink theme.
+  Inline chips, raster images, vector shapes and SVG paths retain their measured
+  baseline boxes. Simple SVG layers stay native; arbitrary clips, exact stroke
+  styles and off-viewBox art use a transparent PNG fallback. SVG gradients use
+  their primary colour. Document-local fonts preserve their registered
+  viewer-facing family name and embed into the deck as EOT-wrapped programs
+  when their license bits allow; restricted or unreadable fonts degrade to a
+  plain family-name reference with a one-time warning, and the run baseline
+  compensates the PDF-vs-viewer ascent difference so text sits on the
+  measured baseline either way.
+- The fixed PPTX backend renders table rows: cell fills, border edge lines
+  (including the half-stroke internal join extension and the page-start top
+  border), and anchored cell text as positioned frames — never native
+  PowerPoint tables, which re-lay-out their content. Contiguous table rows
+  paint all fills before any border or text, the PDF backend's two-pass
+  discipline, and row-spanning cells grow downward through their merged rows.
+- The fixed PPTX backend warns explicitly whenever a font cannot travel into
+  the deck identically — once per family per render: standard-14 families name
+  their metric-compatible replacement (Helvetica → Arial), families registered
+  without binary sources and unregistered names are flagged as name-only
+  references that viewers may substitute, and license-restricted embeds
+  already degrade with a warning. An embedded family stays silent.
+- `PptxFixedLayoutBackend.Builder.rasterSlides(int dpi)` — raster-slide mode:
+  every page renders through the PDF backend and lands as one full-slide
+  picture, a pixel-exact copy of the PDF/PNG output for decks that must look
+  identical everywhere. Slides are not editable as text; the default stays
+  the editable vector mode.
+
+- The fixed PPTX backend completes the fragment matrix: images (STRETCH /
+  CONTAIN / COVER via the picture source crop, dimensions decoded from the
+  real bitmap), barcodes (the PDF handler's identical ZXing raster), polygons
+  and free paths as freeform geometry, native DrawingML gradient fills and
+  gradient strokes (radial centres and explicit linear axes approximate, with
+  a one-time note), and transform markers as rotated, centre-pivot-scaled
+  group shapes — every fragment between the markers is created inside the
+  group, PPTX's replacement for PDF's graphics-state matrix. Clip regions
+  render unclipped with a one-time warning (DrawingML has no graphics-state
+  clipping); anchor and bookmark markers record their destinations for the
+  navigation pass.
+
+- Clipped composites in the fixed PPTX backend are now pixel-exact: the clip
+  region renders through the PDF backend into one transparent picture placed
+  on the clip bounds (DrawingML has no graphics-state clipping), including any
+  enclosing rotation. The picture is not editable as shapes;
+  `PptxFixedLayoutBackend.Builder.clipRasterFallback(false)` restores the
+  previous unclipped vector rendering with its one-time warning.
+
+- The fixed PPTX backend renders document chrome and emits navigation.
+  Metadata lands in the OPC core properties (title, author, subject, keywords,
+  plus the extended application property; OPC has no producer field).
+  Watermarks render per slide with the PDF placement math — text rotated about
+  its baseline start, images with native alpha, tiling supported — and
+  behind-content watermarks apply before fragment rendering, so document order
+  produces the PDF's layering without z-order surgery. Repeating
+  headers/footers resolve `{page}` / `{pages}` / `{date}` tokens with the
+  numbering window rules (start-at, count-from, show-on-first-page, numeral
+  styles). Recorded link rectangles become transparent hotspots after every
+  fragment is placed: external targets as URL hyperlinks, internal targets as
+  slide-jump hyperlinks (forward references included; a dangling anchor is
+  skipped with a warning), and the first bookmark on a page names its slide.
+  Protection, viewer preferences, and debug overlays have no PPTX counterpart
+  and are skipped with a one-time warning.
+- `PptxFixedLayoutBackend.renderSections` / `writeSections` concatenate
+  multi-section documents into one deck: each section keeps its own chrome
+  with section-local page numbering, navigation resolves across section
+  boundaries, and deck metadata follows the first section that declares it.
+  A deck carries one slide size, so sections with differing page canvases are
+  rejected.
+- `PptxFixedLayoutBackend.Builder.deterministic(boolean | Instant)` renders
+  byte-identical decks across runs by pinning the OPC created/modified
+  properties and normalizing every zip entry timestamp (zone-independent).
+
+- Provably no-op clips stay editable in the fixed PPTX backend: when every
+  child of a clip region sits safely inside the clip outline (the common
+  defensive-clip case — a rounded card whose padded content never reaches the
+  corners), the raster fallback is skipped and the region renders as native,
+  editable shapes. Nested clip regions are judged by their confining clip box
+  and re-dispatch at their own granularity, so an unprovable icon inside a
+  card no longer rasterizes the whole card — only the icon. The proof is
+  conservative — unprovable outline kinds (polygons, free paths), transforms
+  inside the region, stroked polygons and paths (mitred joins), path segments
+  outside the unit box, table rows, broken nested pairings, and ink whose
+  stroke or side-border bleed nears the boundary all keep the pixel-exact
+  raster path.
+- PPTX gradients pin their first and last stop offsets to the domain ends,
+  matching what the PDF shading functions actually paint — a partial-offset
+  ramp now shades identically in both formats.
+- `PptxFixedLayoutBackend.Builder.addHandler` rejects a duplicate custom
+  handler for the same payload type, matching the PDF builder's contract, and
+  documents that custom handlers do not apply inside rasterized clip
+  composites.
+- `DocumentSession.toPptxBytes()` / `writePptx(OutputStream)` /
+  `buildPptx()` / `buildPptx(Path)` — the PPTX counterparts of the PDF
+  convenience trio. The backend resolves through the format-keyed provider
+  (`BackendProviders.fixedLayout("pptx")`), so the core stays free of a PPTX
+  dependency: with `graph-compose-render-pptx` on the classpath the session's
+  chrome (metadata, watermark, headers/footers) applies exactly as in the PDF
+  paths, and without it the render fails with a `MissingBackendException`
+  naming the artifact to add. Stream and default-output-file contracts match
+  the PDF trio.
+
+### Fixed
+
+- The PDF backend now draws `DocumentTextDecoration.UNDERLINE` and
+  `STRIKETHROUGH` marks — previously the decoration flags resolved only to
+  font faces (which alias to the regular program), so decorated text rendered
+  as plain glyphs while the PPTX backend already drew real marks. Marks are
+  em-proportional filled bands (underline 0.10 em below the baseline,
+  strikethrough 0.28 em above, thickness 0.05 em — the Type 1 underline
+  convention) in the run's colour, on paragraph runs, chips, and table cell
+  text alike.
+- The PDF backend honours the alpha channel of `DocumentColor.rgba` on every
+  remaining surface — text runs, lines, side borders, and table fills,
+  borders, and cell text — matching the shape fills/strokes that already
+  carried it and the PPTX backend's native behaviour. Fully opaque documents
+  render byte-identically to before.
+- `DocumentSession.toImages` / `toImage` rasterized documents that use binary
+  font families (any non-standard-14 file) with substitute glyphs — visually
+  garbled text with correct spacing. PDFBox writes embedded font subsets only
+  during `save()`, so rendering the unsaved in-memory document never saw the
+  real glyph programs. The PDF backend now saves to an in-memory buffer and
+  reloads before rasterizing; standard-14-only documents are unaffected apart
+  from the marginal serialization cost.
+
+### Internal
+
+- The PDF backend reuses one `PDExtendedGraphicsState` per distinct
+  (channel, alpha) pair for the whole render pass (each section of a
+  combined document runs its own pass) — `PdfRenderEnvironment` now owns
+  the shared states the alpha helpers emit. PDFBox maps repeated
+  writes of the same instance to one `/ExtGState` resource entry, so a page's
+  resource dictionary stays bounded by the number of distinct alpha values
+  instead of growing with every translucent draw. Fully opaque documents
+  still carry no `/ExtGState` resources at all.
+
+### Documentation
+
+- New `TwinOutputExample` flagship: a single 16:9 page written once and
+  emitted twice from the same session — `buildPdf()` and `buildPptx(Path)`
+  produce a print-ready PDF and a PowerPoint slide with identical geometry.
+  The README gains a dual-output section showing the PDF render next to
+  PowerPoint's own export of the generated slide, plus a screenshot of the
+  deck open in PowerPoint with the headline text frame selected — the
+  committed artifacts land 69 native shapes with only the clip-masked logo
+  as a picture.
+- `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
+  of what each render backend supports and which class implements it,
+  maintained as part of every capability-changing PR.
+- The README's backend descriptions now present `graph-compose-render-pptx`
+  as the fixed-layout, geometry-identical PowerPoint backend (one page per
+  editable slide) instead of a semantic exporter, with its own
+  quick-start dependency row; the Engine Deck flagship example additionally
+  renders as a .pptx deck (`EngineDeckPptxExample`, part of
+  `GenerateAllExamples`).
+
+### Build
+
+- The examples CI job installs `graph-compose-render-pptx` before generating,
+  so the Engine Deck PPTX example resolves the backend the same way the DOCX
+  example resolves its own.
+
+### Tests
+
+- `BackendProvidersTest` (qa) pins format-keyed resolution and the
+  deterministic PDF default; `MissingBackendContractTest` (core, backend-free
+  classpath) pins the missing-format diagnostics; `DocumentPageSizeTest` pins
+  the slide presets.
+- PPTX text tests re-read line, absolute-span and inline-graphic anchors through
+  POI; cover real wrapping, mixed font sizes, vertical seating, custom fonts,
+  rich styles, links, chips, SVG fallback and exact inline radii; and lock the
+  shared text-fidelity demo with a backend-neutral layout snapshot.
+- PPTX table tests re-derive cell fills, border edge lines, and text frames
+  from the resolved layout graph across a page break with a repeated header
+  and a row-spanning cell, and pin the fills-before-ink paint order plus the
+  page-start top-border branch at the handler level.
+- PPTX chrome, navigation, section, and determinism tests pin the OPC core
+  properties, the watermark's layer order and pass-through rotation, header/
+  footer token resolution with numbering windows and roman styles, resolved
+  URL and slide-jump hotspots (a dangling anchor degrades to a warning, not a
+  failure), section-local footer restarts with a cross-section slide jump, the
+  differing-page-size rejection, and render-twice byte equality with pinned
+  zip entry times; a chrome-and-navigation parity demo renders the PDF/PPTX
+  pair with per-page PNG previews.
+- Session-level PPTX convenience tests pin chrome flow-through (metadata and
+  footer tokens land in the deck), slide-count identity with the resolved
+  layout graph, the caller-owned-stream contract, file output, and the
+  default-output-file and empty-session failure modes; the backend-free
+  missing-format diagnostics were already pinned by the core's
+  `MissingBackendContractTest`.
+- The qa module now guards the PPTX backend's boundaries at bytecode level:
+  POI stays a PPTX-backend implementation detail (the engine, the PDF backend,
+  and the templates must not touch it), the render backends stay
+  template-agnostic, and the PDF backend must not depend on the PPTX artifact
+  (the reverse dependency is by design). The `ShapeOutline` exhaustiveness
+  guard now renders every permit through both fixed-layout backends, so a new
+  outline kind cannot silently miss a PPTX dispatch branch.
+
+## v2.0.0 — 2026-07-13
 
 The 2.0 development line. Binary-breaking by design — japicmp runs report-only
 for this cycle.
@@ -59,6 +292,18 @@ for this cycle.
   follows (a trailing heading is never moved) and best-effort when the heading plus the
   first slice cannot share a page. Default off, so layouts that do not opt in are
   unchanged.
+- `LineBuilder.keepWithNext()` — the line counterpart of
+  `SectionBuilder.keepWithNext()`, so a full-width header rule joins its banner's
+  keep-with-next run and the whole title block (rule + banner + rule) relocates
+  together instead of the banner stranding apart from its rules or its body.
+- **Single-column CV presets no longer orphan a section title.** Every preset whose
+  sections flow down the page — BoxedSections, MinimalUnderlined, ModernProfessional,
+  Executive, CenteredHeadline, BlueBanner, EditorialBlue, and ClassicSerif — keeps a
+  section heading with the first line of its body across a page break: a standalone
+  header section binds to the following body section (a multi-node rule + banner + rule
+  group binds as one run), and a combined header+body module keeps the heading in a
+  nested keep-with-next group. Multi-column presets place their sections in fixed
+  columns that do not paginate, so no heading can strand there.
 - **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
   (or `.deterministic(Instant)` for an explicit timestamp) pins the document
   CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead

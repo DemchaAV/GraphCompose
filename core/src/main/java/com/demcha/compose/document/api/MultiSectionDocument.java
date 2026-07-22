@@ -48,7 +48,7 @@ public final class MultiSectionDocument implements AutoCloseable {
     private final Path defaultOutputFile;
     private final List<DocumentSession> sections;
     private final FixedLayoutRenderer backend =
-            BackendProviders.fixedLayout().create(DocumentOutputOptions.EMPTY, DocumentDebugOptions.none());
+            BackendProviders.fixedLayout("pdf").create(DocumentOutputOptions.EMPTY, DocumentDebugOptions.none());
     private boolean closed;
 
     MultiSectionDocument(Path defaultOutputFile, List<DocumentSession> sections) {

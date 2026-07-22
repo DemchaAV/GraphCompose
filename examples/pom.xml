@@ -7,7 +7,7 @@
     <parent>
         <groupId>io.github.demchaav</groupId>
         <artifactId>graph-compose-build</artifactId>
-        <version>2.0.0-SNAPSHOT</version>
+        <version>2.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -18,10 +18,10 @@
 
     <properties>
         <graphcompose.version>${project.version}</graphcompose.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
-        <junit.bom.version>6.1.1</junit.bom.version>
+        <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
     </properties>
 
@@ -73,6 +73,14 @@
         <dependency>
             <groupId>io.github.demchaav</groupId>
             <artifactId>graph-compose-render-docx</artifactId>
+            <version>${graphcompose.version}</version>
+        </dependency>
+
+        <!-- The fixed-layout PPTX backend: the Engine Deck PPTX example renders
+             the flagship deck as a geometry-identical PowerPoint file. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pptx</artifactId>
             <version>${graphcompose.version}</version>
         </dependency>
 

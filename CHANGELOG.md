@@ -46,6 +46,16 @@ for this cycle.
 
 ### Public API
 
+- **Keep a heading with its content** — `SectionBuilder.keepWithNext()`. A section
+  marked keep-with-next is never left stranded as the last block on a page apart from
+  the content it introduces: when the section plus the first line of the following
+  block would overflow the remaining page space (but fit on a fresh page), the section
+  relocates to the next page so the heading stays glued to its body. Distinct from
+  `keepTogether()`, which relocates a *whole* block — keep-with-next binds only the
+  first following line, the right tool for a boxed section title above a long,
+  page-spanning body. Inert when nothing follows (a trailing heading is never moved)
+  and best-effort when the heading plus one line cannot share a page. Default off, so
+  layouts that do not opt in are unchanged.
 - **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
   (or `.deterministic(Instant)` for an explicit timestamp) pins the document
   CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead

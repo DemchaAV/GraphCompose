@@ -125,10 +125,12 @@ public final class Executive {
                 for (int i = 0; i < sections.size(); i++) {
                     CvSection sec = sections.get(i);
                     int idx = i;
-                    flow.addSection("CvV2ExecutiveTitle_" + idx, host ->
-                            SectionHeader.flat(host,
-                                    sec.title().toUpperCase(Locale.ROOT),
-                                    ACCENT, theme));
+                    flow.addSection("CvV2ExecutiveTitle_" + idx, host -> {
+                        host.keepWithNext();
+                        SectionHeader.flat(host,
+                                sec.title().toUpperCase(Locale.ROOT),
+                                ACCENT, theme);
+                    });
                     flow.addSection("CvV2ExecutiveBody_" + idx, host ->
                             SectionDispatcher.renderBody(host, sec, theme));
                 }

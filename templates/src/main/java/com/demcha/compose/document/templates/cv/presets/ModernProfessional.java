@@ -173,8 +173,10 @@ public final class ModernProfessional {
                 for (int i = 0; i < sections.size(); i++) {
                     final CvSection sec = sections.get(i);
                     final int idx = i;
-                    pageFlow.addSection("Title_" + idx, host ->
-                            SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme));
+                    pageFlow.addSection("Title_" + idx, host -> {
+                        host.keepWithNext();
+                        SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme);
+                    });
                     pageFlow.addSection("Body_" + idx, host ->
                             SectionDispatcher.renderBody(host, sec, theme));
                 }

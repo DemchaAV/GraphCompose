@@ -34,6 +34,11 @@ import com.demcha.compose.document.style.DocumentTransform;
  *                        available where it is placed (its row slot, or the
  *                        content width) instead of {@code width}; the flex line
  *                        behind a dot leader. Defaults to {@code false}.
+ * @param keepWithNext    when {@code true}, the line stays with the block that
+ *                        follows it rather than stranding at a page bottom apart
+ *                        from it (see {@link DocumentNode#keepWithNext()}); lets a
+ *                        header rule join its banner's keep-with-next run.
+ *                        Defaults to {@code false}.
  * @author Artem Demchyshyn
  */
 public record LineNode(
@@ -53,7 +58,8 @@ public record LineNode(
         DocumentDashPattern dashPattern,
         String anchor,
         DocumentLineCap lineCap,
-        boolean fillWidth
+        boolean fillWidth,
+        boolean keepWithNext
 ) implements DocumentNode {
     /**
      * Normalizes spacing defaults and validates explicit line geometry.
@@ -72,6 +78,49 @@ public record LineNode(
         requireFinite(startY, "startY");
         requireFinite(endX, "endX");
         requireFinite(endY, "endY");
+    }
+
+    /**
+     * Backward-compatible canonical constructor without the keep-with-next flag —
+     * defaults to {@code false} (normal flow, byte-identical placement).
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param width           resolved line box width
+     * @param height          resolved line box height
+     * @param startX          line start x offset inside the box
+     * @param startY          line start y offset inside the box
+     * @param endX            line end x offset inside the box
+     * @param endY            line end y offset inside the box
+     * @param stroke          line stroke descriptor
+     * @param linkTarget      optional node-level link target
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param transform       render-time affine transform
+     * @param dashPattern     dash pattern for the stroke
+     * @param anchor          optional navigation anchor name
+     * @param lineCap         end-cap style for the stroke
+     * @param fillWidth       whether the line stretches to the available width
+     */
+    public LineNode(String name,
+                    double width,
+                    double height,
+                    double startX,
+                    double startY,
+                    double endX,
+                    double endY,
+                    DocumentStroke stroke,
+                    DocumentLinkTarget linkTarget,
+                    DocumentBookmarkOptions bookmarkOptions,
+                    DocumentInsets padding,
+                    DocumentInsets margin,
+                    DocumentTransform transform,
+                    DocumentDashPattern dashPattern,
+                    String anchor,
+                    DocumentLineCap lineCap,
+                    boolean fillWidth) {
+        this(name, width, height, startX, startY, endX, endY, stroke, linkTarget, bookmarkOptions,
+                padding, margin, transform, dashPattern, anchor, lineCap, fillWidth, false);
     }
 
     /**

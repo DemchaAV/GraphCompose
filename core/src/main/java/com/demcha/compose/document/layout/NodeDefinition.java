@@ -107,6 +107,36 @@ public interface NodeDefinition<E extends DocumentNode> {
                                                       FragmentPlacement placement) {
         return List.of();
     }
+
+    /**
+     * Returns the height of the node's first indivisible pagination slice, as a
+     * hint for the keep-with-next heading lookahead. An overriding splittable
+     * leaf returns the inner height of its first slice measured from the top of
+     * its content region &mdash; a paragraph its first visual line, a table its
+     * repeated header rows plus first body row, a list its first item &mdash;
+     * excluding its outer margin and top reservation (margin-top + padding-top),
+     * which the caller adds. The default returns the whole measured content
+     * height, so an atomic leaf, which has no smaller unit, is kept whole.
+     *
+     * <p>Consumed only by the opt-in
+     * {@link com.demcha.compose.document.node.DocumentNode#keepWithNext()}
+     * lookahead in {@code LayoutCompiler}, so the heading stays with the start
+     * of its body rather than the whole (possibly page-spanning) block. The
+     * value gates a page-break decision, never any geometry, so it is
+     * deliberately approximate: a small over- or under-estimate only shifts a
+     * cosmetic page break by one line. In particular the default's whole
+     * content box already includes the leaf's own padding, so the caller's
+     * added top reservation slightly over-reserves for a padded atomic leaf
+     * &mdash; harmless, since it only makes an already-indivisible block a touch
+     * more eager to relocate.</p>
+     *
+     * @param prepared prepared node whose first slice is being measured
+     * @return the first slice's height in points
+     * @since 2.0.0
+     */
+    default double firstSliceHeight(PreparedNode<E> prepared) {
+        return prepared.measureResult().height();
+    }
 }
 
 

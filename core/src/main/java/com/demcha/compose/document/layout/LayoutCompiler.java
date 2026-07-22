@@ -1,7 +1,6 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.exceptions.AtomicNodeTooLargeException;
-import com.demcha.compose.document.layout.payloads.PreparedParagraphLayout;
 import com.demcha.compose.document.layout.payloads.PreparedStackLayout;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -1069,13 +1068,15 @@ public final class LayoutCompiler {
             return topReservation + leadingUnitHeight(children.get(0), innerRegionWidth, prepareContext);
         }
 
-        // A paragraph is anchored by its first visual line; every other leaf (image,
-        // shape, chart, non-paragraph splittable) moves as a whole indivisible unit.
-        if (prepared.preparedLayout() instanceof PreparedParagraphLayout paragraph
-            && !paragraph.visualLines().isEmpty()) {
-            return topReservation + paragraph.visualLines().get(0).lineHeight();
-        }
-        return prepared.measureResult().height() + margin.vertical();
+        // The leading unit of a splittable leaf is its first slice: a paragraph's
+        // first visual line, a table's repeated header rows plus first body row, a
+        // list's first item. An indivisible (atomic) leaf has no smaller unit, so
+        // the default seam returns the whole content height and the block is kept
+        // whole. Delegating keeps each node type's split granularity in its own
+        // definition instead of special-casing types here.
+        @SuppressWarnings("unchecked")
+        NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
+        return topReservation + definition.firstSliceHeight(prepared);
     }
 
     private void addPlacedFragments(List<LayoutFragment> emitted,

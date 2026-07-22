@@ -73,6 +73,38 @@ class SectionKeepWithNextTest {
     }
 
     /**
+     * The body's first unit is a page-spanning table (taller than a page, so
+     * {@code keepTogether()} would be inert). {@code keepWithNext()} still
+     * relocates the header, because only the table's first slice — its repeated
+     * header row plus first body row — must join it. Without a real first-slice
+     * estimate the whole-table height would exceed a page and the header would
+     * strand, so this is the distinguishing behavior for a splittable table body.
+     */
+    @Test
+    void relocatesHeaderBasedOnFirstSliceOfPageSpanningTable() {
+        LayoutGraph on = tableBody(true);
+        assertThat(page(on, "HeaderMark")).isEqualTo(page(on, "TableMark"));
+
+        LayoutGraph off = tableBody(false);
+        assertThat(page(off, "HeaderMark")).isLessThan(page(off, "TableMark"));
+    }
+
+    /**
+     * The body's first unit is a page-spanning list. {@code keepWithNext()}
+     * relocates the header to join the list's first item, where the whole-list
+     * height estimate would otherwise strand it — the list counterpart of the
+     * table case above.
+     */
+    @Test
+    void relocatesHeaderBasedOnFirstItemOfPageSpanningList() {
+        LayoutGraph on = listBody(true);
+        assertThat(page(on, "HeaderMark")).isEqualTo(page(on, "ListMark"));
+
+        LayoutGraph off = listBody(false);
+        assertThat(page(off, "HeaderMark")).isLessThan(page(off, "ListMark"));
+    }
+
+    /**
      * A multi-part heading — several consecutive keep-with-next siblings (a top
      * rule, a banner, a bottom rule) — relocates as a whole unit: the break is
      * hoisted before the first member, so no part is stranded above the body.
@@ -210,6 +242,62 @@ class SectionKeepWithNextTest {
                         s.addShape(shape -> shape.name("HeaderMark").size(260, 40).fillColor(INK));
                     })
                     .addSection("Body", s -> s.addParagraph(p -> p.name("BodyMark").text(pageSpanning)))
+                    .build();
+            return document.layoutGraph();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Header sits flush to the page bottom; the body is a table taller than a page. */
+    private static LayoutGraph tableBody(boolean keepWithNext) {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(300, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow().name("Flow").spacing(12)
+                    // 308 + spacing(12) + header(40) = 360 inner height: header lands flush to the bottom.
+                    .addSection("Filler", s -> s.addShape(260, 308, GREY))
+                    .addSection("Header", s -> {
+                        if (keepWithNext) {
+                            s.keepWithNext();
+                        }
+                        s.addShape(shape -> shape.name("HeaderMark").size(260, 40).fillColor(INK));
+                    })
+                    .addSection("Body", s -> s.addTable(t -> {
+                        t.name("TableMark").autoColumns(2).header("Column A", "Column B").repeatHeader();
+                        for (int i = 0; i < 40; i++) {
+                            t.row("Row " + i, "Value " + i);
+                        }
+                    }))
+                    .build();
+            return document.layoutGraph();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Header sits flush to the page bottom; the body is a list taller than a page. */
+    private static LayoutGraph listBody(boolean keepWithNext) {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(300, 400)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow().name("Flow").spacing(12)
+                    // 308 + spacing(12) + header(40) = 360 inner height: header lands flush to the bottom.
+                    .addSection("Filler", s -> s.addShape(260, 308, GREY))
+                    .addSection("Header", s -> {
+                        if (keepWithNext) {
+                            s.keepWithNext();
+                        }
+                        s.addShape(shape -> shape.name("HeaderMark").size(260, 40).fillColor(INK));
+                    })
+                    .addSection("Body", s -> s.addList(l -> {
+                        l.name("ListMark");
+                        for (int i = 0; i < 40; i++) {
+                            l.addItem("List item number " + i + " with enough text to measure a real line height");
+                        }
+                    }))
                     .build();
             return document.layoutGraph();
         } catch (Exception e) {

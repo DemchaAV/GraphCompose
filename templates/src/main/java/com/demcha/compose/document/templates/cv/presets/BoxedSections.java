@@ -122,8 +122,11 @@ public final class BoxedSections {
                 for (int i = 0; i < sections.size(); i++) {
                     final CvSection sec = sections.get(i);
                     final int idx = i;
-                    pageFlow.addSection("CvV2Banner_" + idx,
-                            host -> SectionHeader.banner(host, sec.title(), theme));
+                    pageFlow.addSection("CvV2Banner_" + idx, host -> {
+                        // Keep the banner with the first line of its body across a page break.
+                        host.keepWithNext();
+                        SectionHeader.banner(host, sec.title(), theme);
+                    });
                     pageFlow.addSection("CvV2Body_" + idx,
                             host -> SectionDispatcher.renderBody(host, sec, theme));
                 }

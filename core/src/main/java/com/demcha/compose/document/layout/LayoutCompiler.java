@@ -298,8 +298,49 @@ public final class LayoutCompiler {
                 thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
                 thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
             }
+            PreparedNode<DocumentNode> childPrepared =
+                    prepareForRegionWidth(prepareContext, child, thisChildRegionWidth);
+
+            // Opt-in keep-with-next: at the start of a run of consecutive
+            // keep-with-next siblings, ensure the whole run plus the first line of the
+            // block it introduces shares one page. Hoisting the break to before the
+            // run's first member lets a multi-part heading (rule + banner + rule)
+            // relocate as a unit, so no part is stranded above its body. Inert when
+            // the run ends the flow (nothing to introduce) and best-effort when the
+            // run plus one line cannot fit even on a fresh page — matching
+            // keepTogether's fallback. Gated on keepWithNext(), so layouts that do not
+            // opt in are byte-identical.
+            if (child.keepWithNext()
+                && (index == 0 || !children.get(index - 1).keepWithNext())
+                && state.usedHeight > EPS) {
+                int runEnd = index;
+                while (runEnd < children.size() && children.get(runEnd).keepWithNext()) {
+                    runEnd++;
+                }
+                if (runEnd < children.size()) {
+                    double needed = 0.0;
+                    for (int k = index; k < runEnd; k++) {
+                        PreparedNode<DocumentNode> memberPrepared = k == index
+                                ? childPrepared
+                                : prepareForRegionWidth(prepareContext, children.get(k), childRegionWidth);
+                        needed += memberPrepared.measureResult().height()
+                                  + toMargin(children.get(k).margin()).vertical()
+                                  + layoutSpec.spacing();
+                    }
+                    needed += leadingUnitHeight(children.get(runEnd), childRegionWidth, prepareContext);
+                    // Relocate only when the run + first line genuinely fits on a fresh
+                    // page (EPS, not CAPACITY_TOLERANCE): a run that would still overflow
+                    // the next page by a hair should stay put rather than strand there and
+                    // waste this page too.
+                    if (needed > state.remainingHeight() + EPS
+                        && needed <= state.activeInnerHeight() + EPS) {
+                        state.newPage();
+                    }
+                }
+            }
+
             compileNode(
-                    prepareForRegionWidth(prepareContext, child, thisChildRegionWidth),
+                    childPrepared,
                     path,
                     index,
                     depth + 1,
@@ -986,6 +1027,56 @@ public final class LayoutCompiler {
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
         Margin margin = toMargin(node.margin());
         return Math.max(0.0, regionWidth - margin.horizontal());
+    }
+
+    /**
+     * Best-effort height a node consumes to place its first flow line: the top
+     * reservation (margin-top + padding-top) plus the leading unit of the content
+     * below it &mdash; the first child's leading unit for a vertical composite, the
+     * first visual line for a paragraph, or the whole outer height for any other
+     * leaf or an atomic (row / stack) composite that cannot split.
+     *
+     * <p>Used only by the opt-in {@link DocumentNode#keepWithNext()} lookahead to
+     * decide whether a heading would strand apart from the block it introduces. A
+     * small over- or under-estimate only shifts a cosmetic page break by one line;
+     * it can never affect placement correctness, since the value gates a
+     * {@code newPage()} decision, not any geometry.</p>
+     *
+     * @param node           the following sibling whose first line anchors the heading
+     * @param regionWidth    the content-region width the sibling is measured at
+     * @param prepareContext measurement context
+     * @return the height consumed down to the bottom of the node's first flow line
+     */
+    private double leadingUnitHeight(DocumentNode node, double regionWidth, PrepareContext prepareContext) {
+        Margin margin = toMargin(node.margin());
+        Padding padding = toPadding(node.padding());
+        PreparedNode<DocumentNode> prepared = prepareForRegionWidth(prepareContext, node, regionWidth);
+        double topReservation = margin.top() + padding.top();
+
+        if (prepared.isComposite()) {
+            CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
+            @SuppressWarnings("unchecked")
+            NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
+            List<DocumentNode> children = definition.children(node);
+            // A horizontal row or layer stack is atomic (never splits) and an empty
+            // vertical box has no first line — the whole box is the leading unit.
+            if (layoutSpec.axis() != CompositeLayoutSpec.Axis.VERTICAL || children.isEmpty()) {
+                return prepared.measureResult().height() + margin.vertical();
+            }
+            double availableWidth = childAvailableWidth(regionWidth, node);
+            double innerRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+            return topReservation + leadingUnitHeight(children.get(0), innerRegionWidth, prepareContext);
+        }
+
+        // The leading unit of a splittable leaf is its first slice: a paragraph's
+        // first visual line, a table's repeated header rows plus first body row, a
+        // list's first item. An indivisible (atomic) leaf has no smaller unit, so
+        // the default seam returns the whole content height and the block is kept
+        // whole. Delegating keeps each node type's split granularity in its own
+        // definition instead of special-casing types here.
+        @SuppressWarnings("unchecked")
+        NodeDefinition<DocumentNode> definition = (NodeDefinition<DocumentNode>) registry.definitionFor(node);
+        return topReservation + definition.firstSliceHeight(prepared);
     }
 
     private void addPlacedFragments(List<LayoutFragment> emitted,

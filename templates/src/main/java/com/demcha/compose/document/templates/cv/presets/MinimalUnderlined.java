@@ -118,8 +118,10 @@ public final class MinimalUnderlined {
                 for (int i = 0; i < sections.size(); i++) {
                     final CvSection sec = sections.get(i);
                     final int idx = i;
-                    pageFlow.addSection("Title_" + idx, host ->
-                            SectionHeader.underlined(host, sec.title(), theme));
+                    pageFlow.addSection("Title_" + idx, host -> {
+                        host.keepWithNext();
+                        SectionHeader.underlined(host, sec.title(), theme);
+                    });
                     pageFlow.addSection("Body_" + idx, host ->
                             SectionDispatcher.renderBody(host, sec, theme));
                 }

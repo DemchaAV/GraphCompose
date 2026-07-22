@@ -71,8 +71,12 @@ public final class FlowSectionHeader {
                               DocumentInsets bottomRuleMargin) {
         addRule(flow, name + "RuleTop", ruleWidth, ruleColor, theme,
                 topRuleMargin);
-        flow.addSection(name, host -> SectionHeader.fullWidthBanner(host,
-                title, theme, titleStyle));
+        flow.addSection(name, host -> {
+            // Whole title group (rule + banner + rule) is one keep-with-next run so it
+            // relocates together and stays with the first line of the body below.
+            host.keepWithNext();
+            SectionHeader.fullWidthBanner(host, title, theme, titleStyle);
+        });
         addRule(flow, name + "RuleBottom", ruleWidth, ruleColor, theme,
                 bottomRuleMargin);
     }
@@ -139,6 +143,7 @@ public final class FlowSectionHeader {
                     topRuleMargin);
         }
         flow.addSection(name, section -> section
+                .keepWithNext()
                 .spacing(0)
                 .padding(titlePadding)
                 .addParagraph(paragraph -> paragraph
@@ -156,8 +161,12 @@ public final class FlowSectionHeader {
                                 DocumentColor color,
                                 BrandTheme theme,
                                 DocumentInsets margin) {
+        // Rules are marked keep-with-next so the whole title run (top rule + banner
+        // + bottom rule) relocates together and the banner never strands apart from
+        // its rules or its body across a page break.
         flow.addLine(line -> line
                 .name(name)
+                .keepWithNext()
                 .horizontal(width)
                 .color(color)
                 .thickness(theme.spacing().accentRuleWidth())

@@ -48,4 +48,9 @@ public final class ParagraphDefinition implements NodeDefinition<ParagraphNode> 
                                               FragmentPlacement placement) {
         return emitParagraphFragments(prepared, placement);
     }
+
+    @Override
+    public double firstSliceHeight(PreparedNode<ParagraphNode> prepared) {
+        return paragraphFirstSliceHeight(prepared);
+    }
 }

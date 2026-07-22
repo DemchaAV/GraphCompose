@@ -279,6 +279,31 @@ for this cycle.
 
 ### Public API
 
+- **Keep a heading with its content** — `SectionBuilder.keepWithNext()`. A section
+  marked keep-with-next is never left stranded as the last block on a page apart from
+  the content it introduces: when the section plus the first slice of the following
+  block would overflow the remaining page space (but fit on a fresh page), the section
+  relocates to the next page so the heading stays glued to its body. The first slice is
+  a paragraph's first line, a table's repeated header rows plus first body row, or a
+  list's first item, so the rule holds whether the following block is atomic or a
+  page-spanning table or list. Distinct from `keepTogether()`, which relocates a
+  *whole* block — keep-with-next binds only the start of the following block, the right
+  tool for a boxed section title above a long, page-spanning body. Inert when nothing
+  follows (a trailing heading is never moved) and best-effort when the heading plus the
+  first slice cannot share a page. Default off, so layouts that do not opt in are
+  unchanged.
+- `LineBuilder.keepWithNext()` — the line counterpart of
+  `SectionBuilder.keepWithNext()`, so a full-width header rule joins its banner's
+  keep-with-next run and the whole title block (rule + banner + rule) relocates
+  together instead of the banner stranding apart from its rules or its body.
+- **Single-column CV presets no longer orphan a section title.** Every preset whose
+  sections flow down the page — BoxedSections, MinimalUnderlined, ModernProfessional,
+  Executive, CenteredHeadline, BlueBanner, EditorialBlue, and ClassicSerif — keeps a
+  section heading with the first line of its body across a page break: a standalone
+  header section binds to the following body section (a multi-node rule + banner + rule
+  group binds as one run), and a combined header+body module keeps the heading in a
+  nested keep-with-next group. Multi-column presets place their sections in fixed
+  columns that do not paginate, so no heading can strand there.
 - **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
   (or `.deterministic(Instant)` for an explicit timestamp) pins the document
   CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead

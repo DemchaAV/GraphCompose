@@ -108,6 +108,23 @@ class PresetHeaderKeepWithNextTest {
     }
 
     /**
+     * Panel renders each module's header (title + accent strip) in a nested
+     * keep-with-next subsection so its full-width single-column Profile card keeps
+     * the title with the body if a long summary splits the card. Every header
+     * subsection is kept; the card sections that wrap header and body are not (marking
+     * them would bind a card to the next card).
+     */
+    @Test
+    void panelKeepsCardHeaderSubsectionNotCard() {
+        List<DocumentNode> nodes = nodesOf(Panel.create());
+        assertThat(nodes.stream().filter(n -> "Header".equals(n.name())).toList())
+                .isNotEmpty().allMatch(DocumentNode::keepWithNext);
+        assertThat(nodes.stream()
+                .filter(n -> n.name().startsWith("CvV2Panel") && n.name().endsWith("Card")).toList())
+                .isNotEmpty().noneMatch(DocumentNode::keepWithNext);
+    }
+
+    /**
      * End-to-end for the combined-preset shape: a module section whose header is a
      * nested keep-with-next subsection relocates the header with the first line of the
      * body across a page break, rather than stranding it at the page bottom.

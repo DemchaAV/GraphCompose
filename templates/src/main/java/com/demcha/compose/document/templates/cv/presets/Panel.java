@@ -352,7 +352,17 @@ public final class Panel {
 
             private void renderModuleBody(SectionBuilder card, String title,
                                           CvSection section) {
-                card.addParagraph(paragraph -> paragraph
+                // Header (title + accent strip) in a keep-with-next subsection so, when
+                // this is the full-width single-column Profile card and a long summary
+                // splits it across a page break, the title stays with the first line of
+                // the body rather than stranding at the page bottom. The subsection's
+                // spacing matches the card, so placement is unchanged; in the side
+                // columns (fixed Row slots) keep-with-next is inert, so those cards are
+                // byte-identical.
+                card.addSection("Header", header -> header
+                        .keepWithNext()
+                        .spacing(theme.spacing().sectionBodySpacing())
+                        .addParagraph(paragraph -> paragraph
                                 .text(title.toUpperCase(Locale.ROOT))
                                 .textStyle(moduleTitleStyle())
                                 .align(TextAlign.LEFT)
@@ -365,7 +375,7 @@ public final class Panel {
                                 .fillColor(ACCENT)
                                 .cornerRadius(
                                         theme.spacing().accentRuleWidth() / 2.0)
-                                .margin(DocumentInsets.zero()));
+                                .margin(DocumentInsets.zero())));
                 renderCardBody(card, section);
             }
 

@@ -32,6 +32,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     private DocumentDashPattern dashPattern = DocumentDashPattern.NONE;
     private DocumentLineCap lineCap = DocumentLineCap.BUTT;
     private boolean fillWidth = false;
+    private boolean keepWithNext = false;
 
     /**
      * Creates a line builder.
@@ -281,6 +282,33 @@ public final class LineBuilder implements Transformable<LineBuilder> {
     }
 
     /**
+     * Keeps this line with the block that follows it: the line relocates to the
+     * next page rather than stranding at a page bottom apart from the content it
+     * leads into. Used so a header rule joins its banner's keep-with-next run and
+     * the whole title block (rule + banner + rule) moves together — see
+     * {@link SectionBuilder#keepWithNext()}.
+     *
+     * @return this builder
+     * @since 2.0.0
+     */
+    public LineBuilder keepWithNext() {
+        this.keepWithNext = true;
+        return this;
+    }
+
+    /**
+     * Sets whether the line stays with the block that follows it.
+     *
+     * @param value true to keep the line with the next block
+     * @return this builder
+     * @since 2.0.0
+     */
+    public LineBuilder keepWithNext(boolean value) {
+        this.keepWithNext = value;
+        return this;
+    }
+
+    /**
      * Attaches line-level external link metadata.
      *
      * @param linkOptions link metadata
@@ -404,7 +432,8 @@ public final class LineBuilder implements Transformable<LineBuilder> {
                 dashPattern,
                 anchor,
                 lineCap,
-                fillWidth);
+                fillWidth,
+                keepWithNext);
     }
 
     private boolean isHorizontalLine() {

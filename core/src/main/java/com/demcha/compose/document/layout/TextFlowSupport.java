@@ -115,6 +115,25 @@ public final class TextFlowSupport {
         return new PreparedSplitResult<>(head, tail);
     }
 
+    /**
+     * First-slice content height of a prepared paragraph: the height of its
+     * first visual line, which is the smallest unit {@link #splitParagraph}
+     * places on a page. Backs
+     * {@link com.demcha.compose.document.layout.definitions.ParagraphDefinition#firstSliceHeight}.
+     *
+     * @param prepared prepared paragraph node
+     * @return the first visual line's height, or the whole content height when
+     * the paragraph has no visual lines
+     */
+    public static double paragraphFirstSliceHeight(PreparedNode<ParagraphNode> prepared) {
+        PreparedParagraphLayout layout = prepared.requirePreparedLayout(PreparedParagraphLayout.class);
+        List<ParagraphLine> lines = layout.visualLines();
+        if (lines.isEmpty()) {
+            return prepared.measureResult().height();
+        }
+        return lines.get(0).lineHeight();
+    }
+
     // ------------------------------------------------------------------
     // List entry points
     // ------------------------------------------------------------------
@@ -287,6 +306,26 @@ public final class TextFlowSupport {
                 ? null
                 : sliceListPreparedNode(node, layout, tailItems, false, true);
         return new PreparedSplitResult<>(head, tail);
+    }
+
+    /**
+     * First-slice content height of a prepared list: the height of its first
+     * item. Backs
+     * {@link com.demcha.compose.document.layout.definitions.ListDefinition#firstSliceHeight}
+     * &mdash; the leading unit that anchors a keep-with-next heading to a
+     * page-spanning list is its first item.
+     *
+     * @param prepared prepared list node
+     * @return the first item's height, or the whole content height for an empty
+     * list
+     */
+    public static double listFirstSliceHeight(PreparedNode<ListNode> prepared) {
+        PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
+        List<PreparedListItemLayout> items = layout.items();
+        if (items.isEmpty()) {
+            return prepared.measureResult().height();
+        }
+        return items.get(0).paragraphLayout().totalHeight();
     }
 
     /**

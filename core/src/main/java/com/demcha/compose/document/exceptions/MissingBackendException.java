@@ -6,10 +6,12 @@ package com.demcha.compose.document.exceptions;
  *
  * <p>Since GraphCompose 2.0 the engine and document model ship without a bundled
  * backend: rendering and text measurement are provided by a separate artifact
- * (for example {@code io.github.demchaav:graph-compose-render-pdf}) discovered at
+ * (for example {@code io.github.demchaav:graph-compose-render-pdf} or
+ * {@code io.github.demchaav:graph-compose-render-pptx}) discovered at
  * runtime through {@link java.util.ServiceLoader}. Calling a convenience output
- * method — {@code toPdfBytes()}, {@code buildPdf()}, {@code toImages()} — or
- * requesting {@code layoutSnapshot()} without such an artifact on the classpath
+ * method — {@code toPdfBytes()}, {@code buildPdf()}, {@code toImages()},
+ * {@code toPptxBytes()}, {@code buildPptx()} — or requesting
+ * {@code layoutSnapshot()} without the matching artifact on the classpath
  * fails with this exception. The message names the artifact to add.</p>
  *
  * <p>This is an unchecked exception: a missing backend is a build/classpath

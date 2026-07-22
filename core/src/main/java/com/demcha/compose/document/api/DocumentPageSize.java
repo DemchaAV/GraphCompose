@@ -27,6 +27,22 @@ public record DocumentPageSize(double width, double height) {
     public static final DocumentPageSize LEGAL = new DocumentPageSize(612.0, 1008.0);
 
     /**
+     * Widescreen 16:9 slide size in points (13.333 × 7.5 in), matching the
+     * PowerPoint widescreen default.
+     *
+     * @since 2.1.0
+     */
+    public static final DocumentPageSize SLIDE_16_9 = new DocumentPageSize(960.0, 540.0);
+
+    /**
+     * Classic 4:3 slide size in points (10 × 7.5 in), matching the classic
+     * PowerPoint slide default.
+     *
+     * @since 2.1.0
+     */
+    public static final DocumentPageSize SLIDE_4_3 = new DocumentPageSize(720.0, 540.0);
+
+    /**
      * Creates a page size from point dimensions.
      *
      * @param width  page width in points

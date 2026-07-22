@@ -46,6 +46,16 @@ matrix.
 > additional Extension SPI surfaces (render-handler interfaces,
 > fragment-payload interfaces designed for extension) will gain the
 > marker incrementally as their contract solidifies.
+>
+> The Experimental surface currently carrying `@Beta` is the **fixed-layout
+> PPTX backend**, shipping its first release in 2.1.0: the
+> `document.backend.fixed.pptx` and `…pptx.handlers` packages (package-level
+> marker plus explicit markers on `PptxFixedLayoutBackend`,
+> `PptxFixedLayoutBackendProvider`, `PptxFragmentRenderHandler`,
+> `PptxRenderEnvironment`, `PptxCoordinates`) and the PPTX convenience
+> methods on `DocumentSession` (`toPptxBytes`, `writePptx`, `buildPptx`).
+> Geometry identity with the PDF backend is a design invariant and will not
+> change; the API shape around it may still move in a minor release.
 
 ### What each tier promises
 
@@ -182,6 +192,32 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 |---|---|---|---|---|---|---|
 | `DocumentSession.pageMargins(List<PageMarginRule>)` / `PageMarginRule` | Stable | planned | Per-page margins resolve a block's content width by the page it *begins* on (the engine measures each block once, before pagination). A margin that changes the content width therefore does not re-wrap a block mid-flow across a page boundary. | Revisit a page-aware per-line/per-fragment width model so a block can re-wrap when it crosses a margin boundary, if demand warrants. | — | — |
 | `io.github.demchaav:graph-compose` single-jar packaging | Stable | **landed 2.0** | The one published jar bundled the engine, the PDFBox render backend, the POI semantic backend, zxing, and the template families, so an engine-only or bring-your-own-backend consumer still pulled all of them. | **Done in 2.0.** Split into per-concern lockstep modules, render backends discovered via a `ServiceLoader` SPI. The root coordinate is renamed `graph-compose-core` (the lean engine); `graph-compose` is kept as a back-compat wrapper over `graph-compose-core` + `graph-compose-render-pdf`, so it still renders PDF out of the box. Templates are opt-in (`graph-compose-templates`); DOCX / PPTX ship in `graph-compose-render-docx` / `-render-pptx`. Migration: [modules guide](migration/v2.0.0-modules.md). | [ADR 0016](adr/0016-multi-module-packaging.md) | — |
+
+### Binary-compatibility enforcement
+
+The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
+mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
+profile on the engine module during `verify`.
+
+- **Baseline:** the published `graph-compose-core` on Maven Central, pinned by the
+  `japicmp.baseline` property in `core/pom.xml`. It is the current major's **floor** —
+  `2.0.0` for the whole 2.x line — and advances only at the next major. Holding it at
+  the floor (rather than the previous release) is what enforces the Stable promise:
+  every 2.x build must stay binary-compatible with the `2.0.0` public surface, not
+  merely with the last minor.
+- **What fails the build:** any binary-incompatible change to the public surface
+  against the baseline — a removed or less-accessible public method/field/type, a
+  changed signature, and so on. `@Internal` packages (`com.demcha.compose.engine.*`,
+  `com.demcha.compose.document.layout.*` and its render-handoff payload records) are
+  excluded; they carry no compatibility promise (§ 1). Source-only incompatibilities
+  (e.g. adding a default method to an interface) are reported but do not fail, pending
+  a finalized 2.x source-compatibility policy.
+- **Activity window:** the gate compares the working version against the baseline, so
+  it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
+  active for every `-SNAPSHOT` development cycle across the 2.x line that follows.
+
+During the 2.0 major transition the gate ran report-only (the major intentionally
+broke 1.x binary compatibility); it enforces from the `2.0.0` baseline forward.
 
 ---
 

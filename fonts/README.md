@@ -19,6 +19,19 @@ catalog when it is on the classpath. `graph-compose-bundle` includes it.
 
 ## Install
 
-Independent version line (`fonts-v*`), pinned to a version compatible with your engine train.
-See [root README → Installation](../README.md#installation) for the pinned coordinate and the
-[v1.8.0 fonts migration note](../docs/migration/v1.8.0-fonts.md).
+Independent version line (`fonts-v*`) — pinned, not the engine version:
+
+```xml
+<dependency>
+    <groupId>io.github.demchaav</groupId>
+    <artifactId>graph-compose-fonts</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```kotlin
+dependencies { implementation("io.github.demchaav:graph-compose-fonts:1.0.0") }
+```
+
+The full "which artifact?" table: [root README → Installation](../README.md#installation);
+background in the [v1.8.0 fonts migration note](../docs/migration/v1.8.0-fonts.md).

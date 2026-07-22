@@ -67,7 +67,7 @@ public final class PdfTableRowFragmentRenderHandler
         for (TableResolvedCell cell : payload.cells()) {
             double cellX = fragment.x() + cell.x();
             double cellY = fragment.y() + cell.yOffset();
-            renderCellFill(stream, cell, cellX, cellY);
+            renderCellFill(stream, environment, cell, cellX, cellY);
         }
     }
 
@@ -93,12 +93,13 @@ public final class PdfTableRowFragmentRenderHandler
             // coordinates so the cell rectangle covers all the rows it
             // merges instead of overflowing above the starting row.
             double cellY = fragment.y() + cell.yOffset();
-            renderCellBorders(stream, cell, cellX, cellY, fragment.width(), payload.startsPageFragment());
-            renderCellText(stream, fonts, cell, cellX, cellY);
+            renderCellBorders(stream, environment, cell, cellX, cellY, fragment.width(), payload.startsPageFragment());
+            renderCellText(stream, environment, fonts, cell, cellX, cellY);
         }
     }
 
     private void renderCellFill(PDPageContentStream stream,
+                                PdfRenderEnvironment environment,
                                 TableResolvedCell cell,
                                 double cellX,
                                 double cellY) throws IOException {
@@ -106,6 +107,7 @@ public final class PdfTableRowFragmentRenderHandler
             if (cell.width() > 0 && cell.height() > 0) {
                 stream.saveGraphicsState();
                 try {
+                    PdfAlphaSupport.applyFillAlpha(environment, stream, cell.style().fillColor());
                     stream.setNonStrokingColor(cell.style().fillColor());
                     stream.addRect((float) cellX, (float) cellY, (float) cell.width(), (float) cell.height());
                     stream.fill();
@@ -117,6 +119,7 @@ public final class PdfTableRowFragmentRenderHandler
     }
 
     private void renderCellBorders(PDPageContentStream stream,
+                                   PdfRenderEnvironment environment,
                                    TableResolvedCell cell,
                                    double cellX,
                                    double cellY,
@@ -134,6 +137,7 @@ public final class PdfTableRowFragmentRenderHandler
         stream.saveGraphicsState();
         try {
             double strokeWidth = cell.style().stroke().width();
+            PdfAlphaSupport.applyStrokeAlpha(environment, stream, cell.style().stroke().strokeColor().color());
             stream.setStrokingColor(cell.style().stroke().strokeColor().color());
             stream.setLineWidth((float) strokeWidth);
             // Default butt caps. Adjacent cells' perpendicular borders
@@ -176,6 +180,7 @@ public final class PdfTableRowFragmentRenderHandler
     }
 
     private void renderCellText(PDPageContentStream stream,
+                                PdfRenderEnvironment environment,
                                 FontLibrary fonts,
                                 TableResolvedCell cell,
                                 double cellX,
@@ -185,8 +190,10 @@ public final class PdfTableRowFragmentRenderHandler
 
         stream.saveGraphicsState();
         try {
+            PdfAlphaSupport.applyFillAlpha(environment, stream, cell.style().textStyle().color());
             stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
             stream.setNonStrokingColor(cell.style().textStyle().color());
+            List<PdfTextDecorations.Segment> decorations = null;
             for (ResolvedTextLine line : lines) {
                 if (line.text().isEmpty()) {
                     continue;
@@ -198,6 +205,20 @@ public final class PdfTableRowFragmentRenderHandler
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
                 stream.showText(safeText);
                 stream.endText();
+                if (PdfTextDecorations.drawsMark(cell.style().textStyle().decoration())) {
+                    if (decorations == null) {
+                        decorations = new ArrayList<>();
+                    }
+                    decorations.add(new PdfTextDecorations.Segment(
+                            line.x(), line.baselineY(),
+                            font.getTextWidth(cell.style().textStyle(), safeText),
+                            cell.style().textStyle().size(),
+                            cell.style().textStyle().color(),
+                            cell.style().textStyle().decoration()));
+                }
+            }
+            if (decorations != null) {
+                PdfTextDecorations.draw(environment, stream, decorations);
             }
         } finally {
             stream.restoreGraphicsState();

@@ -37,6 +37,21 @@ on:
         description: 'Existing v*-prefixed tag to (re-)publish'
         required: true
         type: string
+      start_at:
+        description: 'Resume the module deploys from here. Keep "all" for a normal publish; pick a module ONLY to complete a confirmed-partial publication — never blindly re-run a full deploy, Central rejects re-uploading an already-published coordinate.'
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - core
+          - render-pdf
+          - wrapper
+          - render-docx
+          - render-pptx
+          - templates
+          - testing
+          - bundle
 
 permissions:
   contents: read
@@ -63,6 +78,22 @@ jobs:
       JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
 
     steps:
+      - name: Reject non-final tags (Central publishes vX.Y.Z only)
+        # This job runs on tag pushes AND workflow_dispatch. The job `if:` skips a PUSHED
+        # pre-release tag, but a manual dispatch bypasses that clause (the first `if`
+        # operand is unconditionally true for workflow_dispatch), so guard here as the
+        # very first stage: Maven Central never receives a pre-release / snapshot tag,
+        # matching cut-release.ps1's final-vs-pre-release split. The tag is passed via env
+        # (not inlined into the script) to avoid shell injection from a crafted ref name.
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Maven Central accepts only final vX.Y.Z tags: '$TAG' is a pre-release/snapshot and must not be published."
+            exit 1
+          fi
+          echo "Publishing final release $TAG to Maven Central."
+
       - name: Check out repository at tag
         uses: actions/checkout@v7
         with:
@@ -88,20 +119,72 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-      - name: Verify (full canonical suite green at tagged commit)
-        # Re-verify the tagged commit before publishing — defence in
-        # depth against a tag pushed from a broken branch by mistake.
-        # The publish step below would also fail at signing/upload,
-        # but failing here surfaces a clearer error.
-        run: ./mvnw -B -ntp clean verify -pl :graph-compose-core
+      - name: Build, test and install to local m2 (verify + seed the deploys)
+        # Re-verify the tagged commit before publishing (defence in depth
+        # against a tag pushed from a broken branch). `install` — not `verify` —
+        # seeds the runner's local m2 with EVERY module artifact, including the
+        # core tests-jar that render-pdf depends on at test scope but the release
+        # profile never publishes. Each per-module `-P release deploy` below
+        # builds in isolation and resolves its inter-module deps (Maven resolves
+        # test-scope deps even with -DskipTests) from this local m2, so the
+        # unpublished tests-jar no longer fails the deploy.
+        run: ./mvnw -B -ntp clean install
+
+      - name: Verify binary compatibility against the published baseline
+        # Defence in depth: run the japicmp gate on the tagged commit before any
+        # deploy, so an accidental binary-incompatible change to the public
+        # surface aborts the publish even when the tag reached here by bypassing
+        # branch protection (the CI japicmp job only gates pull requests). Compares
+        # the freshly built graph-compose-core against the japicmp.baseline release
+        # on Maven Central and fails the job on any Stable-surface break; the
+        # Internal packages (engine.**, document.layout.**) are excluded per
+        # docs/api-stability.md. Test build is skipped — the install step above
+        # already ran the full suite on this commit.
+        run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
+
+      - name: Plan the deploy set (start_at resume)
+        id: plan
+        # A partial Central publication CANNOT be blindly re-dispatched: the deploys
+        # always start at core, and Central rejects re-uploading a coordinate that
+        # already validated, so a full re-run fails at the first already-published
+        # module before ever reaching the missing ones. `start_at` lets a maintainer
+        # resume from the first UNPUBLISHED module after confirming which coordinates
+        # are already live (via `mvn dependency:get`, or the release-smoke matrix). The
+        # default `all` — and every tag-triggered run, where the input is empty —
+        # deploys the whole train. The `clean install` preflight already seeded local m2
+        # with every module, so a skipped earlier deploy never breaks a later one's deps.
+        env:
+          START_AT: ${{ github.event.inputs.start_at }}
+        run: |
+          order="core render-pdf wrapper render-docx render-pptx templates testing bundle"
+          # Fail loudly on an unknown start_at: an unrecognised value would leave every
+          # run_* false and silently publish NOTHING while the job stayed green. Empty
+          # (a tag-triggered run) is allowed and means "all".
+          if [ -n "$START_AT" ]; then
+            case " $order all " in
+              *" $START_AT "*) ;;
+              *) echo "::error::Invalid start_at: '$START_AT'"; exit 1 ;;
+            esac
+          fi
+          started="false"
+          if [ -z "$START_AT" ] || [ "$START_AT" = "all" ]; then started="true"; fi
+          for m in $order; do
+            if [ "$m" = "$START_AT" ]; then started="true"; fi
+            key="run_$(echo "$m" | tr '-' '_')"
+            echo "$key=$started" >> "$GITHUB_OUTPUT"
+          done
+          echo "Deploying the train from: ${START_AT:-all}"
 
       - name: Publish engine to Maven Central
+        if: steps.plan.outputs.run_core == 'true'
         # Activates the release profile (sources + javadoc + gpg sign +
         # central-publishing) and flips gpg.skip=false. The deploy
         # phase invokes central-publishing-maven-plugin's upload goal
         # which blocks until Sonatype's validator confirms validation.
         # The release profile also disables the tests-jar execution, so
         # only the main + sources + javadoc + pom artefacts are uploaded.
+        # Inter-module deps (incl. the core tests-jar render-pdf needs) resolve
+        # from the local m2 seeded by the install step above.
         run: ./mvnw -B -ntp -f core/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
@@ -109,6 +192,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish render-pdf to Maven Central
+        if: steps.plan.outputs.run_render_pdf == 'true'
         # The PDF render backend, lockstep-versioned with the engine (ships on the
         # same v* tag). graph-compose-core resolves from the local repo installed by
         # the engine deploy above; the wrapper below depends on this.
@@ -119,6 +203,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish graph-compose (compat wrapper) to Maven Central
+        if: steps.plan.outputs.run_wrapper == 'true'
         # The empty jar that keeps the `graph-compose` coordinate a drop-in: it
         # depends on graph-compose-core + graph-compose-render-pdf, resolved from the
         # local repo installed by the deploys above. Ships on the same v* tag.
@@ -129,6 +214,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish render-docx to Maven Central
+        if: steps.plan.outputs.run_render_docx == 'true'
         # The semantic DOCX backend, lockstep-versioned with the engine (ships on
         # the same v* tag). graph-compose-core resolves from the local repo installed
         # by the engine deploy above.
@@ -139,6 +225,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish render-pptx to Maven Central
+        if: steps.plan.outputs.run_render_pptx == 'true'
         # The semantic PPTX backend, lockstep-versioned with the engine (ships on
         # the same v* tag). graph-compose-core resolves from the local repo installed
         # by the engine deploy above.
@@ -149,6 +236,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish templates to Maven Central
+        if: steps.plan.outputs.run_templates == 'true'
         # The built-in document templates, lockstep-versioned with the engine (ships
         # on the same v* tag). graph-compose-core resolves from the local repo
         # installed by the engine deploy above.
@@ -159,6 +247,7 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish testing to Maven Central
+        if: steps.plan.outputs.run_testing == 'true'
         # Consumer testing support (LayoutSnapshotAssertions / PdfVisualRegression),
         # lockstep-versioned with the engine (ships on the same v* tag). graph-compose
         # resolves from the local repo installed by the engine deploy above.
@@ -169,11 +258,14 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - name: Publish bundle to Maven Central
+        if: steps.plan.outputs.run_bundle == 'true'
         # The graph-compose-bundle convenience aggregate pins this engine
-        # version + a compatible graph-compose-fonts version. It tracks the
-        # engine line, so it ships on the same v* tag. pom-packaged → only a
-        # signed .pom is uploaded; engine + fonts resolve from the local repo
-        # (installed by the engine deploy above and the fonts step earlier).
+        # version + compatible graph-compose-fonts and graph-compose-emoji
+        # versions. It tracks the engine line, so it ships on the same v* tag.
+        # Packaged as an empty jar carrying only <dependencies> (like the
+        # graph-compose wrapper), so the signed jar + pom are uploaded. The
+        # train artifacts resolve from the preceding deploy steps; the
+        # independently versioned fonts and emoji artifacts resolve from Maven Central.
         run: ./mvnw -B -ntp -f bundle/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}

@@ -32,4 +32,26 @@ class BackendProvidersTest {
         assertThat(provider).isInstanceOf(PdfFixedLayoutBackendProvider.class);
         assertThat(provider.format()).isEqualTo("pdf");
     }
+
+    @Test
+    void resolvesTheFixedLayoutBackendProviderByFormatCaseInsensitively() {
+        assertThat(BackendProviders.fixedLayout("pdf"))
+                .isInstanceOf(PdfFixedLayoutBackendProvider.class);
+        assertThat(BackendProviders.fixedLayout("PDF"))
+                .isSameAs(BackendProviders.fixedLayout("pdf"));
+    }
+
+    /**
+     * The qa test classpath registers a fake {@code "aaa"} provider next to the
+     * real PDF one, so this only passes if the default genuinely prefers PDF —
+     * both classpath enumeration order and lexicographic order would pick the
+     * fake.
+     */
+    @Test
+    void theDefaultFixedLayoutProviderIsThePdfProvider() {
+        assertThat(BackendProviders.fixedLayout())
+                .isSameAs(BackendProviders.fixedLayout("pdf"));
+        assertThat(BackendProviders.fixedLayout("aaa"))
+                .isInstanceOf(AlphaFakeFixedLayoutBackendProvider.class);
+    }
 }

@@ -1,6 +1,7 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.backend.fixed.BackendProviders;
 import com.demcha.compose.document.exceptions.MissingBackendException;
 import org.junit.jupiter.api.Test;
 
@@ -30,5 +31,21 @@ class MissingBackendContractTest {
         })
                 .isInstanceOf(MissingBackendException.class)
                 .hasMessageContaining("graph-compose-render-pdf");
+    }
+
+    @Test
+    void missingKnownFormatNamesTheArtifactToAdd() {
+        assertThatThrownBy(() -> BackendProviders.fixedLayout("pptx"))
+                .isInstanceOf(MissingBackendException.class)
+                .hasMessageContaining("\"pptx\"")
+                .hasMessageContaining("io.github.demchaav:graph-compose-render-pptx");
+    }
+
+    @Test
+    void missingUnknownFormatFailsWithTheFormatInTheMessage() {
+        assertThatThrownBy(() -> BackendProviders.fixedLayout("xps"))
+                .isInstanceOf(MissingBackendException.class)
+                .hasMessageContaining("\"xps\"")
+                .hasMessageContaining("FixedLayoutBackendProvider");
     }
 }

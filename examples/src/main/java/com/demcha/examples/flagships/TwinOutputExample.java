@@ -60,6 +60,8 @@ public final class TwinOutputExample {
     private static final DocumentColor ON_DARK = DocumentColor.rgb(245, 247, 252);
     private static final DocumentColor ON_DARK_MUTED = DocumentColor.rgb(177, 185, 207);
     private static final DocumentColor CODE_TXT = DocumentColor.rgb(190, 195, 214);
+    private static final DocumentColor CODE_TYPE = DocumentColor.rgb(150, 190, 255);
+    private static final DocumentColor CODE_STR = DocumentColor.rgb(120, 204, 170);
 
     // Accent family.
     private static final DocumentColor VIOLET = DocumentColor.rgb(124, 92, 252);
@@ -181,38 +183,75 @@ public final class TwinOutputExample {
                 .build();
     }
 
-    private static DocumentNode codeCard() {
-        // {indent level, code, trailing comment} — indentation is positional
-        // because paragraph text trims leading whitespace.
-        String[][] lines = {
-                {"0", "Path deck = Path.of(\"twin-output.pptx\");", ""},
-                {"0", "try (DocumentSession doc = GraphCompose", ""},
-                {"2", ".document(Path.of(\"twin-output.pdf\"))", ""},
-                {"2", ".pageSize(DocumentPageSize.SLIDE_16_9)", ""},
-                {"2", ".create()) {", ""},
-                {"1", "compose(doc);", "// one description"},
-                {"1", "doc.buildPdf();", "// print-ready PDF"},
-                {"1", "doc.buildPptx(deck);", "// editable PowerPoint"},
-                {"0", "}", ""},
+    /** One syntax-coloured slice of a code line: {@code kind} selects the style. */
+    private record CodeRun(char kind, String text) {
+    }
+
+    private static CodeRun t(String text) {
+        return new CodeRun('t', text);   // plain code
+    }
+
+    private static CodeRun c(String text) {
+        return new CodeRun('c', text);   // class / type
+    }
+
+    private static CodeRun s(String text) {
+        return new CodeRun('s', text);   // string literal
+    }
+
+    private static CodeRun k(String text) {
+        return new CodeRun('k', text);   // keyword / hero call
+    }
+
+    private static DocumentColor codeColor(char kind) {
+        return switch (kind) {
+            case 'c' -> CODE_TYPE;
+            case 's' -> CODE_STR;
+            case 'k' -> VIOLET_LIGHT;
+            default -> CODE_TXT;
         };
+    }
+
+    private static DocumentNode codeCard() {
+        // {indent, runs, trailing comment} — indentation is positional because
+        // paragraph text trims leading whitespace; each line is ONE paragraph
+        // of styled inline runs, so both backends carry it as rich text (the
+        // PPTX side lands one editable text frame with coloured runs per line).
+        record CodeLine(int indent, List<CodeRun> runs, String note) {
+        }
+        List<CodeLine> lines = List.of(
+                new CodeLine(0, List.of(c("Path"), t(" deck = "), c("Path"), t(".of("),
+                        s("\"twin-output.pptx\""), t(");")), ""),
+                new CodeLine(0, List.of(k("try"), t(" ("), c("DocumentSession"), t(" doc = "),
+                        c("GraphCompose")), ""),
+                new CodeLine(2, List.of(t(".document("), c("Path"), t(".of("),
+                        s("\"twin-output.pdf\""), t("))")), ""),
+                new CodeLine(2, List.of(t(".pageSize("), c("DocumentPageSize"),
+                        t(".SLIDE_16_9)")), ""),
+                new CodeLine(2, List.of(t(".create()) {")), ""),
+                new CodeLine(1, List.of(t("compose(doc);")), "// one description"),
+                new CodeLine(1, List.of(t("doc."), k("buildPdf"), t("();")), "// print-ready PDF"),
+                new CodeLine(1, List.of(t("doc."), k("buildPptx"), t("(deck);")), "// editable PowerPoint"),
+                new CodeLine(0, List.of(t("}")), ""));
         ShapeContainerBuilder card = new ShapeContainerBuilder()
                 .name("TwinCode")
                 .roundedRect(470, 152, 14)
                 .fillColor(DocumentColor.rgba(7, 10, 24, 220))
                 .stroke(DocumentStroke.of(DARK_LINE, 0.8));
-        for (int i = 0; i < lines.length; i++) {
+        for (int i = 0; i < lines.size(); i++) {
+            CodeLine line = lines.get(i);
             double y = 12 + i * 14.6;
-            double indent = 20 + Integer.parseInt(lines[i][0]) * 18;
-            card.position(new ParagraphBuilder()
+            ParagraphBuilder code = new ParagraphBuilder()
                     .name("TwinCodeLine" + i)
-                    .text(lines[i][1])
-                    .textStyle(mono(9.5, CODE_TXT, false))
-                    .margin(DocumentInsets.zero())
-                    .build(), indent, y, LayerAlign.TOP_LEFT);
-            if (!lines[i][2].isEmpty()) {
+                    .margin(DocumentInsets.zero());
+            for (CodeRun run : line.runs()) {
+                code.inlineText(run.text(), mono(9.5, codeColor(run.kind()), false));
+            }
+            card.position(code.build(), 20 + line.indent() * 18, y, LayerAlign.TOP_LEFT);
+            if (!line.note().isEmpty()) {
                 card.position(new ParagraphBuilder()
                         .name("TwinCodeNote" + i)
-                        .text(lines[i][2])
+                        .text(line.note())
                         .textStyle(mono(9.5, MINT, false))
                         .margin(DocumentInsets.zero())
                         .build(), 250, y, LayerAlign.TOP_LEFT);

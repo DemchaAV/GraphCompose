@@ -1,6 +1,7 @@
 package com.demcha.examples.flagships;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
@@ -39,15 +40,16 @@ import java.util.List;
  * <p>The palette is a warm amber accent on a deep navy field: the wordmark and
  * tagline sit over a Maven-coordinate card and capability tags, while a compact
  * "one model, two outputs" diagram on the right traces DSL code through the
- * layout engine to PDF and DOCX documents.</p>
+ * layout engine to PDF and PPTX documents.</p>
  *
  * @author Artem Demchyshyn
+ * @since 2.1.0
  */
 public final class MavenBannerPptxExample {
 
     /** 16:9 slide canvas shared by the PPTX slide, the PDF copy and the preview image. */
-    private static final double PAGE_W = 960;
-    private static final double PAGE_H = 540;
+    private static final double PAGE_W = DocumentPageSize.SLIDE_16_9.width();
+    private static final double PAGE_H = DocumentPageSize.SLIDE_16_9.height();
 
     // Deep-navy surfaces.
     private static final DocumentColor NIGHT = DocumentColor.rgb(13, 17, 33);
@@ -92,7 +94,7 @@ public final class MavenBannerPptxExample {
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "maven-banner.pptx");
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PAGE_W, PAGE_H)
+                .pageSize(DocumentPageSize.SLIDE_16_9)
                 .pageBackground(NIGHT)
                 .margin(DocumentInsets.zero())
                 .create()) {
@@ -111,7 +113,7 @@ public final class MavenBannerPptxExample {
     public static Path generatePdf() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "maven-banner.pdf");
         try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(PAGE_W, PAGE_H)
+                .pageSize(DocumentPageSize.SLIDE_16_9)
                 .pageBackground(NIGHT)
                 .margin(DocumentInsets.zero())
                 .create()) {
@@ -131,7 +133,7 @@ public final class MavenBannerPptxExample {
      */
     public static Path renderPreview(Path outputPng, int dpi) throws Exception {
         try (DocumentSession document = GraphCompose.document()
-                .pageSize(PAGE_W, PAGE_H)
+                .pageSize(DocumentPageSize.SLIDE_16_9)
                 .pageBackground(NIGHT)
                 .margin(DocumentInsets.zero())
                 .create()) {
@@ -148,7 +150,7 @@ public final class MavenBannerPptxExample {
         return outputPng;
     }
 
-    private static void compose(DocumentSession document) {
+    static void compose(DocumentSession document) {
         document.metadata(DocumentMetadata.builder()
                 .title("GraphCompose — available on Maven Central")
                 .author("GraphCompose")
@@ -421,7 +423,7 @@ public final class MavenBannerPptxExample {
     }
 
     private static DocumentNode arrowHead(double tipX, double tipY) {
-        return new PathBuilder().name("Head").size(PAGE_W, PAGE_H)
+        return new PathBuilder().name("Head_" + Math.round(tipX) + "_" + Math.round(tipY)).size(PAGE_W, PAGE_H)
                 .moveTo(tipX - 9, tipY - 6)
                 .lineTo(tipX - 9, tipY + 6)
                 .lineTo(tipX + 1, tipY)

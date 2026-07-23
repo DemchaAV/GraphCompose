@@ -119,9 +119,9 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Word export (DOCX)](#word-export-docx) | `DocxSemanticBackend` — the same session renders a fixed-layout PDF and an editable Word file; paragraphs / lists / tables / images map 1:1, charts fall back to their data table | [PDF](../assets/readme/examples/word-export-companion.pdf) · [DOCX](../assets/readme/examples/word-export-companion.docx) · [Source](src/main/java/com/demcha/examples/features/docx/WordExportExample.java) |
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
 | [Debug overlay](#debug-overlay) | `DocumentDebugOptions` — guide lines + semantic node-path labels on the sheet; trace any misplaced block back to the builder call that authored it | [PDF](../assets/readme/examples/debug-overlay.pdf) · [Source](src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java) |
-| [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table | [PDF](../assets/readme/examples/business-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) |
-| Financial report one-pager | Single-page monthly financial dashboard — three margin gauges, cash & stacked-OPEX charts, a revenue donut, and forecast bars; all v1.8 native vector charts plus inline sparklines and a path-clipped photo masthead | [PDF](../assets/readme/examples/financial-report.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FinancialReportExample.java) |
-| [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end | [PDF](../assets/readme/examples/master-showcase.pdf) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
+| [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table; the same composition also renders as an editable PowerPoint deck (KPI cards, chart, and table stay native shapes) via `buildPptx()` | [PDF](../assets/readme/examples/business-report.pdf) · [PPTX](../assets/readme/examples/business-report.pptx) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/BusinessReportPptxExample.java) |
+| Financial report one-pager | Single-page monthly financial dashboard — three margin gauges, cash & stacked-OPEX charts, a revenue donut, and forecast bars; all v1.8 native vector charts plus inline sparklines and a path-clipped photo masthead; the same composition also renders as an editable PowerPoint deck via `buildPptx()` | [PDF](../assets/readme/examples/financial-report.pdf) · [PPTX](../assets/readme/examples/financial-report.pptx) · [Source](src/main/java/com/demcha/examples/flagships/FinancialReportExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/FinancialReportPptxExample.java) |
+| [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end; the same composition also renders as a multi-slide editable PowerPoint deck via `buildPptx()` | [PDF](../assets/readme/examples/master-showcase.pdf) · [PPTX](../assets/readme/examples/master-showcase.pptx) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/MasterShowcasePptxExample.java) |
 | Feature catalog | Browsable reference PDF: every shipped capability as a block — outline-clickable heading, the exact API call, the rendered result right under it | [PDF](../assets/readme/examples/feature-catalog.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java) |
 | Book template | A full novel front: full-bleed wave cover, a clickable dotted-leader table of contents with live page numbers, and chapters — the v1.9 book primitives (`pageMargins`, `addTableOfContents`, `DocumentPageNumbering`, container `bookmark`, `viewerPreferences`) in **one session**, no external PDF merge | [PDF](../assets/readme/examples/book-template.pdf) · [Source](src/main/java/com/demcha/examples/features/title/BookTemplateExample.java) |
 
@@ -1104,8 +1104,12 @@ strategic-highlights bullet list paired with a five-quarter Revenue /
 Profit bar chart, YoY metrics table, and a confidential / page-number
 footer. Use this as the visual reference for landing-page hero shots.
 
+The same composition also emits an editable PowerPoint deck (`BusinessReportPptxExample` — one page, one slide; KPI cards, the native chart, and the metrics table stay editable shapes).
+
 [📄 View PDF](../assets/readme/examples/business-report.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java)
+[🖥 View PPTX](../assets/readme/examples/business-report.pptx) ·
+[📜 Full source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) ·
+[📜 PPTX twin](src/main/java/com/demcha/examples/flagships/BusinessReportPptxExample.java)
 
 ### Master showcase
 
@@ -1115,8 +1119,12 @@ shape container + branded QR + executive summary + zebra-striped
 totals table + accent-bordered highlight cards + Code 128 footer
 barcode. Reference it when composing your own multi-page documents.
 
+The same composition also emits an editable PowerPoint deck (`MasterShowcasePptxExample` — each page becomes one slide; rich text, the advanced table, and chrome stay native shapes, and only the rotated clip-masked seal and the barcodes rasterise).
+
 [📄 View PDF](../assets/readme/examples/master-showcase.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java)
+[🖥 View PPTX](../assets/readme/examples/master-showcase.pptx) ·
+[📜 Full source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) ·
+[📜 PPTX twin](src/main/java/com/demcha/examples/flagships/MasterShowcasePptxExample.java)
 
 ---
 

@@ -22,9 +22,12 @@ Backends:
   `com.demcha.compose.document.backend.fixed.pdf`. Consumes the resolved
   `LayoutGraph`; the reference implementation.
 - **PPTX (fixed-layout)** — `graph-compose-render-pptx`,
-  `com.demcha.compose.document.backend.fixed.pptx` (in development).
-  Consumes the same resolved `LayoutGraph`; geometry-identical to PDF by
-  construction, since layout is compiled in core before any backend runs.
+  `com.demcha.compose.document.backend.fixed.pptx`. Consumes the same
+  resolved `LayoutGraph`; geometry-identical to PDF by construction, since
+  layout is compiled in core before any backend runs. Ships as `@Beta`
+  (Experimental) in its first release — usable, with the per-capability
+  status in the tables below; the API shape may still change in a minor
+  while feedback lands (see [../api-stability.md](../api-stability.md)).
 - **DOCX (semantic)** — `graph-compose-render-docx`,
   `DocxSemanticBackend`. Walks the semantic node tree, deliberately
   ignores fixed-layout geometry; Word owns the flow. Geometry rows are

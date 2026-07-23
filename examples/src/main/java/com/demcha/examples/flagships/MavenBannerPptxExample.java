@@ -394,27 +394,30 @@ public final class MavenBannerPptxExample {
                 .build();
     }
 
-    /** Amber connectors + arrowheads linking code card → layout → the two documents. */
+    /**
+     * Amber connectors + arrowheads linking the code card → layout → both
+     * output backends. The layout box feeds a vertical distribution bus that
+     * branches into the PDF icon (top) and the PPTX icon (bottom), so the flow
+     * visibly reaches each backend.
+     */
     private static List<CanvasChild> connectors() {
+        double pdfMidY = 132;    // PDF icon left-edge centre
+        double pptxMidY = 354;   // PPTX icon left-edge centre
+        double busX = 836;       // vertical distribution bus
+        double docX = 858;       // both icons' left edge
         List<CanvasChild> parts = new ArrayList<>();
-        // Straight shafts.
-        parts.add(at(rect(56, 2, ORANGE), 636, 200));      // code → layout
-        parts.add(at(rect(20, 2, ORANGE), 818, 200));      // layout → fork
-        // Diagonal shafts fanning out to each document's left edge.
-        parts.add(at(diagonal(838, 201, 849, 133), 0, 0)); // fork → pdf
-        parts.add(at(diagonal(838, 201, 849, 353), 0, 0)); // fork → docx
-        // Arrowheads (right-pointing triangles at each destination).
+        // code → layout.
+        parts.add(at(rect(56, 2, ORANGE), 636, 200));
         parts.add(at(arrowHead(700, 201), 0, 0));
-        parts.add(at(arrowHead(858, 132), 0, 0));
-        parts.add(at(arrowHead(858, 354), 0, 0));
+        // layout → distribution bus.
+        parts.add(at(rect(busX - 818 + 1, 2, ORANGE), 818, 200));
+        parts.add(at(rect(2, pptxMidY - pdfMidY + 2, ORANGE), busX, pdfMidY - 1));
+        // bus → each backend.
+        parts.add(at(rect(docX - busX, 2, ORANGE), busX, pdfMidY - 1));
+        parts.add(at(rect(docX - busX, 2, ORANGE), busX, pptxMidY - 1));
+        parts.add(at(arrowHead(docX, pdfMidY), 0, 0));
+        parts.add(at(arrowHead(docX, pptxMidY), 0, 0));
         return parts;
-    }
-
-    private static DocumentNode diagonal(double x1, double y1, double x2, double y2) {
-        return new PathBuilder().name("Conn").size(PAGE_W, PAGE_H)
-                .moveTo(x1, y1).lineTo(x2, y2)
-                .stroke(DocumentStroke.of(ORANGE, 2.0))
-                .build();
     }
 
     private static DocumentNode arrowHead(double tipX, double tipY) {

@@ -306,6 +306,10 @@ for this cycle.
   now stays with the summary if a long profile splits the card. Multi-column presets
   place their sections in fixed columns that do not paginate, so no heading can strand
   there.
+- **The Modern Proposal template no longer orphans a section heading.** Its flowing
+  section bodies, the Timeline and Investment tables, and the Acceptance terms each keep
+  their title with the first line of the block it introduces across a page break — each
+  title now renders in its own keep-with-next section rather than a bare paragraph.
 - **Reproducible PDF output** (`@Beta`). `PdfFixedLayoutBackend.builder().deterministic(true)`
   (or `.deterministic(Instant)` for an explicit timestamp) pins the document
   CreationDate / ModDate and derives the PDF `/ID` from the document metadata instead

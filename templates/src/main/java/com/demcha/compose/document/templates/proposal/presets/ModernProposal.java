@@ -220,10 +220,12 @@ public final class ModernProposal {
                 document.dsl().pageFlow()
                         .name("ProposalSectionGroup")
                         .spacing(4)
-                        .addParagraph(p -> p
-                                .text(section.title())
-                                .textStyle(sectionTitleStyle)
-                                .margin(new DocumentInsets(12, 0, 4, 0)))
+                        .addSection("ProposalSectionTitle", s -> s
+                                .keepWithNext()
+                                .addParagraph(p -> p
+                                        .text(section.title())
+                                        .textStyle(sectionTitleStyle)
+                                        .margin(new DocumentInsets(12, 0, 4, 0))))
                         .addSection("ProposalSectionBody", col -> {
                             for (String paragraph : section.paragraphs()) {
                                 col.addParagraph(p -> p
@@ -240,10 +242,12 @@ public final class ModernProposal {
                 document.dsl().pageFlow()
                         .name("ProposalTimelineGroup")
                         .spacing(4)
-                        .addParagraph(p -> p
-                                .text("Timeline")
-                                .textStyle(sectionTitleStyle)
-                                .margin(new DocumentInsets(12, 0, 4, 0)))
+                        .addSection("ProposalTimelineTitle", s -> s
+                                .keepWithNext()
+                                .addParagraph(p -> p
+                                        .text("Timeline")
+                                        .textStyle(sectionTitleStyle)
+                                        .margin(new DocumentInsets(12, 0, 4, 0))))
                         .addTable(table -> {
                             // The last column is auto-sized to its content (matching the
                             // cinematic builtin). Very long details/descriptions can push
@@ -271,10 +275,12 @@ public final class ModernProposal {
                 document.dsl().pageFlow()
                         .name("ProposalPricingGroup")
                         .spacing(4)
-                        .addParagraph(p -> p
-                                .text("Investment")
-                                .textStyle(sectionTitleStyle)
-                                .margin(new DocumentInsets(12, 0, 4, 0)))
+                        .addSection("ProposalPricingTitle", s -> s
+                                .keepWithNext()
+                                .addParagraph(p -> p
+                                        .text("Investment")
+                                        .textStyle(sectionTitleStyle)
+                                        .margin(new DocumentInsets(12, 0, 4, 0))))
                         .addTable(table -> {
                             TableBuilder configured = table
                                     .name("ProposalPricing")
@@ -308,10 +314,12 @@ public final class ModernProposal {
                 document.dsl().pageFlow()
                         .name("ProposalAcceptanceGroup")
                         .spacing(4)
-                        .addParagraph(p -> p
-                                .text("Acceptance terms")
-                                .textStyle(sectionTitleStyle)
-                                .margin(new DocumentInsets(12, 0, 4, 0)))
+                        .addSection("ProposalAcceptanceTitle", s -> s
+                                .keepWithNext()
+                                .addParagraph(p -> p
+                                        .text("Acceptance terms")
+                                        .textStyle(sectionTitleStyle)
+                                        .margin(new DocumentInsets(12, 0, 4, 0))))
                         .addSection("ProposalAcceptanceBody", col -> col
                                 .accentLeft(ACCENT, 3)
                                 .padding(0, 0, 0, 8)

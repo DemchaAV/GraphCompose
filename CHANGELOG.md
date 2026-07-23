@@ -184,6 +184,16 @@ follow semantic versioning; release dates are ISO 8601.
   deck open in PowerPoint with the headline text frame selected — the
   committed artifacts land 69 native shapes with only the clip-masked logo
   as a picture.
+- New `MavenBannerPptxExample` flagship: a single 16:9 "Available on Maven
+  Central" brand slide — the `GraphCompose` wordmark, an
+  `io.github.demchaav:graph-compose` coordinate card, `JAVA 17+ / PDF / PPTX /
+  AUTO-PAGINATION` tags and a `code → layout → PDF/PPTX` diagram whose amber
+  connectors branch to both backends — composed as one full-bleed
+  `CanvasLayerNode` and emitted as an editable PowerPoint slide via
+  `buildPptx()`. Registered in `GenerateAllExamples` and listed in the
+  examples gallery with committed PDF/PPTX previews; a native-shape guard
+  (`MavenBannerNativeShapeTest`) pins the slide to a single picture (the badge
+  checkmark) with the panels, tags, code and diagram all native.
 - `docs/architecture/backend-capability-matrix.md` — a per-capability matrix
   of what each render backend supports and which class implements it,
   maintained as part of every capability-changing PR.

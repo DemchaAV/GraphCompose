@@ -35,24 +35,23 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 
 ## How to propose changes
 
-GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. **Target the branch that matches your change** &mdash; GraphCompose is mid-transition to the 2.0 module line, so pick the base branch from this table before you fork:
+GraphCompose follows a fork &rarr; feature branch &rarr; pull request flow. **Target the branch that matches your change** &mdash; pick the base branch from this table before you fork:
 
 | Change type | Base branch |
 |---|---|
-| **2.0 feature / fix** (almost all current work) | `2.0-dev` |
-| **Critical 1.9.x fix** (bug / security backport) | `develop` |
+| **Feature / fix** (almost all work) | `develop` |
+| **Critical 1.9.x fix** (bug / security backport) | `1.x` |
 | Stable releases (tags) | `main` |
-| After 2.0 GA | `develop` |
 
-Almost all current work is 2.0 and targets **`2.0-dev`**. `develop` and `main` carry the shipping **1.9.x** line and take only critical fixes; `main` is the public stable surface and accepts release merges only. See [Version lines](#version-lines-and-the-1x-maintenance-branch) below for the full transition.
+Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch takes critical fixes and security backports only &mdash; no features. `main` is the public stable surface and accepts release merges only. See [Version lines](#version-lines-and-the-1x-maintenance-branch) below.
 
 ### Contribution flow
 
 1. **Fork** the repository on GitHub and clone your fork locally.
-2. **Create a feature branch** from your target base (`2.0-dev` for 2.0 work &mdash; substitute `develop` for a critical 1.9.x fix):
+2. **Create a feature branch** from your target base (`develop` for feature work &mdash; substitute `1.x` for a critical 1.9.x backport):
    ```bash
-   git checkout 2.0-dev
-   git pull --ff-only origin 2.0-dev
+   git checkout develop
+   git pull --ff-only origin develop
    git checkout -b feature/short-description
    ```
    Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes. Issue-prefixed names (`42/fix/short-description`) are also welcome &mdash; convenient when the branch closes a specific issue.
@@ -62,7 +61,7 @@ Almost all current work is 2.0 and targets **`2.0-dev`**. `develop` and `main` c
    ./mvnw -B -ntp clean verify
    ```
    This runs the architecture-and-documentation guards plus the full test suite. The same gate runs in CI on every PR.
-5. **Push** your feature branch to your fork and open a pull request against the base branch you started from (`2.0-dev` for 2.0 work) on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
+5. **Push** your feature branch to your fork and open a pull request against the base branch you started from (`develop` for feature work) on `DemchaAV/GraphCompose`. Reference any related issue and describe the user-visible change in the PR body.
 6. **CI runs automatically.** Active jobs:
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
@@ -71,7 +70,7 @@ Almost all current work is 2.0 and targets **`2.0-dev`**. `develop` and `main` c
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
    - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
 
-   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build &mdash; a **docs-only PR runs the guards only**; `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `2.0-dev` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
+   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build &mdash; a **docs-only PR runs the guards only**; `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `develop` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
 
    The PR cannot merge into a protected branch until all required checks are green.
 7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.
@@ -85,7 +84,7 @@ Almost all current work is 2.0 and targets **`2.0-dev`**. `develop` and `main` c
 - linear history is enforced (squash or rebase, no merge commits)
 - force pushes and branch deletion are disabled
 
-`2.0-dev` (and, for 1.9.x fixes, `develop`) accepts feature-branch PRs from contributors. The maintainer may push directly for solo-driven release-prep work; external contributions still flow through PRs.
+`develop` (and, for 1.9.x backports, `1.x`) accepts feature-branch PRs from contributors. The maintainer may push directly for solo-driven release-prep work; external contributions still flow through PRs.
 
 ### Release flow
 
@@ -98,16 +97,11 @@ See [docs/contributing/release-process.md](./docs/contributing/release-process.m
 
 ### Version lines and the 1.x maintenance branch
 
-GraphCompose is mid-transition to the 2.0 module line. Until 2.0 ships:
+The 2.0 GA shipped, so the branches now hold their long-term roles:
 
-- **`2.0-dev`** is the working branch for 2.0 &mdash; feature branches for 2.0 work target `2.0-dev`, not `develop`.
-- **`develop`** and **`main`** carry the shipping **1.9.x** line; `main` is its stable, tagged surface (latest `v1.9.x`).
-
-At the **2.0 GA** merge the branches take their long-term roles:
-
-- **`main`** fast-forwards to 2.0 and becomes the stable 2.0 line.
-- **`develop`** becomes the ongoing 2.x working branch (what `2.0-dev` was); `2.0-dev` retires.
-- A **`1.x`** maintenance branch is cut from the final 1.9.x commit on `main` at that moment. It receives **critical fixes and security / CVE backports only &mdash; no features** &mdash; released as `1.9.x` patches from `1.x` via the same `cut-release.ps1` + tag flow. New feature work always targets the 2.x line.
+- **`develop`** is the ongoing 2.x working branch &mdash; all feature branches target it.
+- **`main`** is the stable 2.x line, tagged at each release (latest `v2.x`).
+- **`1.x`** is the maintenance branch cut from the final 1.9.x commit. It receives **critical fixes and security / CVE backports only &mdash; no features** &mdash; released as `1.9.x` patches from `1.x` via the same `cut-release.ps1` + tag flow. New feature work always targets the 2.x line.
 
 ## Repository map
 

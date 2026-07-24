@@ -477,7 +477,8 @@ public final class EngineeringResume {
                                         .lineSpacing(1.06)
                                         .margin(DocumentInsets.zero())
                                         .rich(rich -> {
-                                            rich.style(label.title(),
+                                            MarkdownInline.append(rich,
+                                                    label.title(),
                                                     projectTitleStyle());
                                             if (!label.stack().isBlank()) {
                                                 rich.style(" (" + label.stack()

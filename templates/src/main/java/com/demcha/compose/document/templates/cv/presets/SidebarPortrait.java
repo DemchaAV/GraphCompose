@@ -754,7 +754,7 @@ public final class SidebarPortrait {
                         .lineSpacing(1.2)
                         .margin(DocumentInsets.top(topMargin))
                         .rich(rich -> {
-                            rich.style(label.title(), titleStyle);
+                            MarkdownInline.append(rich, label.title(), titleStyle);
                             if (!label.stack().isBlank()) {
                                 rich.style(" (" + label.stack() + ")",
                                         contextStyle);

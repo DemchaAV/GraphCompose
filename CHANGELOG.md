@@ -16,6 +16,11 @@ follow semantic versioning; release dates are ISO 8601.
   the combined subtitle+date meta line of MintEditorial/SidebarPortrait experience
   entries — the link's label text is shown instead. Titles without inline-Markdown
   syntax render exactly as before, so the change is backward-compatible.
+- **Project-card titles accept inline `[text](url)` links in the `EngineeringResume`
+  and `SidebarPortrait` presets.** Their hand-rolled project cards previously emitted
+  the title as flat styled text, so a `[label](url)` there stayed literal; it now runs
+  through the same link-aware path as project rows, entry titles, and body text, with
+  the trailing `" (stack)"` run preserved. Plain titles render exactly as before.
 - The fixed-layout PPTX backend ships as `@Beta` (Experimental) in its first
   release: the `document.backend.fixed.pptx` packages and the
   `DocumentSession` PPTX convenience methods (`toPptxBytes`, `writePptx`,

@@ -3,13 +3,12 @@ package com.demcha.compose.document.templates.cv.components;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.core.text.RichParagraphRenderer;
 
+import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
-
-import java.util.Locale;
 
 /**
  * Compact entry renderer for editorial/card/rail presets where title,
@@ -59,11 +58,11 @@ public final class EntryCompactRenderer {
                 .addSection("Title", titleColumn -> titleColumn
                         .padding(DocumentInsets.zero())
                         .addParagraph(paragraph -> paragraph
-                                .text(formattedTitle(entry.title(),
-                                        uppercaseTitle))
                                 .textStyle(titleStyle)
                                 .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.zero())))
+                                .margin(DocumentInsets.zero())
+                                .rich(rich -> richTitle(rich, entry.title(),
+                                        titleStyle, uppercaseTitle))))
                 .addSection("Date", dateColumn -> dateColumn
                         .padding(DocumentInsets.zero())
                         .addParagraph(paragraph -> paragraph
@@ -74,10 +73,10 @@ public final class EntryCompactRenderer {
 
         if (!entry.subtitle().isBlank()) {
             host.addParagraph(paragraph -> paragraph
-                    .text(MarkdownInline.plainText(entry.subtitle()))
                     .textStyle(subtitleStyle)
                     .align(TextAlign.LEFT)
-                    .margin(subtitleMargin));
+                    .margin(subtitleMargin)
+                    .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), subtitleStyle)));
         }
         RichParagraphRenderer.render(host, entry.body(), bodyStyle,
                 bodyLineSpacing, bodyMargin);
@@ -106,9 +105,8 @@ public final class EntryCompactRenderer {
                 .align(TextAlign.LEFT)
                 .margin(margin)
                 .rich(rich -> {
-                    rich.style(MarkdownInline.plainText(entry.title()),
-                            titleStyle);
-                    MarkdownInline.appendPlainIfPresent(rich, " / ",
+                    MarkdownInline.append(rich, entry.title(), titleStyle);
+                    MarkdownInline.appendIfPresent(rich, " / ",
                             entry.subtitle(), metaStyle);
                     MarkdownInline.appendPlainIfPresent(rich, " / ",
                             entry.date(), metaStyle);
@@ -140,9 +138,8 @@ public final class EntryCompactRenderer {
                 .align(TextAlign.LEFT)
                 .margin(margin)
                 .rich(rich -> {
-                    rich.style(MarkdownInline.plainText(entry.title()),
-                            titleStyle);
-                    MarkdownInline.appendPlainIfPresent(rich, " / ",
+                    MarkdownInline.append(rich, entry.title(), titleStyle);
+                    MarkdownInline.appendIfPresent(rich, " / ",
                             entry.subtitle(), subtitleStyle);
                     MarkdownInline.appendPlainIfPresent(rich, " / ",
                             entry.date(), dateStyle);
@@ -187,8 +184,7 @@ public final class EntryCompactRenderer {
                 .align(TextAlign.LEFT)
                 .margin(headerMargin)
                 .rich(rich -> {
-                    rich.style(formattedTitle(entry.title(), uppercaseTitle),
-                            titleStyle);
+                    richTitle(rich, entry.title(), titleStyle, uppercaseTitle);
                     if (!entry.date().isBlank()) {
                         rich.style(datePrefix, titleStyle);
                         rich.style(MarkdownInline.plainText(entry.date()),
@@ -197,10 +193,10 @@ public final class EntryCompactRenderer {
                 }));
         if (!entry.subtitle().isBlank()) {
             host.addParagraph(paragraph -> paragraph
-                    .text(MarkdownInline.plainText(entry.subtitle()))
                     .textStyle(subtitleStyle)
                     .align(TextAlign.LEFT)
-                    .margin(subtitleMargin));
+                    .margin(subtitleMargin)
+                    .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), subtitleStyle)));
         }
         RichParagraphRenderer.render(host, entry.body(), bodyStyle,
                 bodyLineSpacing, bodyMargin);
@@ -242,9 +238,8 @@ public final class EntryCompactRenderer {
                 .align(TextAlign.LEFT)
                 .margin(headerMargin)
                 .rich(rich -> {
-                    rich.style(MarkdownInline.plainText(entry.title()),
-                            titleStyle);
-                    MarkdownInline.appendPlainIfPresent(rich, subtitlePrefix,
+                    MarkdownInline.append(rich, entry.title(), titleStyle);
+                    MarkdownInline.appendIfPresent(rich, subtitlePrefix,
                             entry.subtitle(), subtitleStyle);
                     MarkdownInline.appendPlainIfPresent(rich, datePrefix,
                             entry.date(), dateStyle);
@@ -253,8 +248,18 @@ public final class EntryCompactRenderer {
                 bodyLineSpacing, bodyMargin);
     }
 
-    private static String formattedTitle(String title, boolean uppercase) {
-        String clean = MarkdownInline.plainText(title);
-        return uppercase ? clean.toUpperCase(Locale.ROOT) : clean;
+    /**
+     * Appends the entry title to {@code rich}, expanding inline markdown so a
+     * {@code [name](url)} title renders as a clickable link. When
+     * {@code uppercase} is set the visible label is upper-cased while the link
+     * URL is preserved.
+     */
+    private static void richTitle(RichText rich, String title,
+                                  DocumentTextStyle style, boolean uppercase) {
+        if (uppercase) {
+            MarkdownInline.appendUpperCased(rich, title, style);
+        } else {
+            MarkdownInline.append(rich, title, style);
+        }
     }
 }

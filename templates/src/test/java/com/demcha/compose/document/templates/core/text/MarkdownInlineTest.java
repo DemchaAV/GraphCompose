@@ -195,4 +195,72 @@ class MarkdownInlineTest {
         assertThat(a.text()).isEqualTo(b.text()).isEqualTo("hi");
         assertThat(linkUri(a)).isEqualTo(linkUri(b)).isEqualTo("https://h");
     }
+
+    // --- appendUpperCased / appendTransformed: stylised titles keep their link ---
+
+    @Test
+    void appendUpperCasedUpperCasesLabelButLeavesUrlUntouched() {
+        RichText rich = RichText.empty();
+        MarkdownInline.appendUpperCased(rich, "[GraphCompose](https://GC)", BASE);
+
+        List<InlineTextRun> runs = rich.runs().stream()
+                .map(r -> (InlineTextRun) r).toList();
+        assertThat(runs).hasSize(1);
+        assertThat(runs.get(0).text()).isEqualTo("GRAPHCOMPOSE");
+        assertThat(hasExternalLink(runs.get(0))).isTrue();
+        assertThat(linkUri(runs.get(0))).isEqualTo("https://GC");
+    }
+
+    @Test
+    void appendUpperCasedOnPlainTitleMatchesPlainTextUpperCase() {
+        RichText rich = RichText.empty();
+        MarkdownInline.appendUpperCased(rich, "Senior Engineer", BASE);
+
+        String text = rich.runs().stream()
+                .map(r -> ((InlineTextRun) r).text()).reduce("", String::concat);
+        assertThat(text).isEqualTo("SENIOR ENGINEER");
+        assertThat(rich.runs()).allSatisfy(run ->
+                assertThat(((InlineTextRun) run).linkTarget()).isNull());
+    }
+
+    @Test
+    void appendTransformedAppliesTransformToLabelButNotUrl() {
+        RichText rich = RichText.empty();
+        MarkdownInline.appendTransformed(rich, "[ACME](https://acme.example)",
+                BASE, s -> "<" + s + ">");
+
+        InlineTextRun link = rich.runs().stream()
+                .map(r -> (InlineTextRun) r)
+                .filter(MarkdownInlineTest::hasExternalLink)
+                .findFirst().orElseThrow();
+        assertThat(link.text()).isEqualTo("<ACME>");
+        assertThat(linkUri(link)).isEqualTo("https://acme.example");
+    }
+
+    // --- appendIfPresent: link-aware supplementary segment ----------------------
+
+    @Test
+    void appendIfPresentEmitsPrefixThenLinkForNonBlankValue() {
+        RichText rich = RichText.empty();
+        MarkdownInline.appendIfPresent(rich, " / ", "[ACME](https://acme)", BASE);
+
+        List<InlineTextRun> runs = rich.runs().stream()
+                .map(r -> (InlineTextRun) r).toList();
+        String all = runs.stream().map(InlineTextRun::text).reduce("", String::concat);
+        assertThat(all).isEqualTo(" / ACME");
+
+        InlineTextRun link = runs.stream()
+                .filter(MarkdownInlineTest::hasExternalLink)
+                .findFirst().orElseThrow();
+        assertThat(link.text()).isEqualTo("ACME");
+        assertThat(linkUri(link)).isEqualTo("https://acme");
+    }
+
+    @Test
+    void appendIfPresentIsANoOpForBlankOrNullValue() {
+        RichText rich = RichText.empty();
+        MarkdownInline.appendIfPresent(rich, " / ", "   ", BASE);
+        MarkdownInline.appendIfPresent(rich, " / ", null, BASE);
+        assertThat(rich.runs()).isEmpty();
+    }
 }

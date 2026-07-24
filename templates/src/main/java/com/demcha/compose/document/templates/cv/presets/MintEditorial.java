@@ -738,17 +738,17 @@ public final class MintEditorial {
                 DocumentTextStyle metaStyle = smallStyle();
                 for (CvEntry entry : entries) {
                     block.addParagraph(p -> p
-                            .text(TextOrnaments.spacedUpper(
-                                    MarkdownInline.plainText(entry.title())))
                             .textStyle(degreeStyle)
                             .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.bottom(5)));
+                            .margin(DocumentInsets.bottom(5))
+                            .rich(rich -> MarkdownInline.appendTransformed(rich, entry.title(),
+                                    degreeStyle, TextOrnaments::spacedUpper)));
                     if (!entry.subtitle().isBlank()) {
                         block.addParagraph(p -> p
-                                .text(MarkdownInline.plainText(entry.subtitle()))
                                 .textStyle(metaStyle)
                                 .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.bottom(5)));
+                                .margin(DocumentInsets.bottom(5))
+                                .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), metaStyle)));
                     }
                     if (!entry.date().isBlank()) {
                         block.addParagraph(p -> p
@@ -894,11 +894,11 @@ public final class MintEditorial {
                 DocumentTextStyle bodyStyle = bodyStyle();
                 for (CvEntry entry : entries) {
                     block.addParagraph(p -> p
-                            .text(TextOrnaments.spacedUpper(
-                                    MarkdownInline.plainText(entry.title())))
                             .textStyle(titleStyle)
                             .align(TextAlign.LEFT)
-                            .margin(DocumentInsets.bottom(5)));
+                            .margin(DocumentInsets.bottom(5))
+                            .rich(rich -> MarkdownInline.appendTransformed(rich, entry.title(),
+                                    titleStyle, TextOrnaments::spacedUpper)));
                     String meta = composeMeta(entry);
                     if (!meta.isBlank()) {
                         block.addParagraph(p -> p
@@ -1187,6 +1187,9 @@ public final class MintEditorial {
     // -- Static helpers ----------------------------------------------------
 
     private static String composeMeta(CvEntry entry) {
+        // Deliberately flattened: this experience subtitle shares one fused meta
+        // line with the date, so an inline [label](url) is reduced to its label
+        // text here (the entry title and the education subtitle still link).
         String subtitle = MarkdownInline.plainText(entry.subtitle());
         String date = MarkdownInline.plainText(entry.date());
         if (subtitle.isBlank()) {

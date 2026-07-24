@@ -5,6 +5,8 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
+import java.util.Locale;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,6 +95,60 @@ public final class MarkdownInline {
     }
 
     /**
+     * Expands inline markdown links while applying {@code displayTransform} to the
+     * <em>visible</em> text only: each plain segment and each {@code [label](url)}
+     * link label is passed through the transform, but the link's {@code url} is left
+     * untouched so the hyperlink still resolves. Plain segments are first reduced to
+     * their {@link #plainText(String) plain-text projection}, so a decorative
+     * transform (upper-casing, letter-spacing) never has to cope with emphasis
+     * markers. Used by renderers that display a stylised title (caps, spaced caps)
+     * yet still want {@code [name](url)} to render as a clickable link.
+     *
+     * @param rich             target rich-text builder
+     * @param text             source string; null treated as empty
+     * @param baseStyle        style applied to the transformed runs
+     * @param displayTransform transform applied to visible text (never the url)
+     */
+    public static void appendTransformed(RichText rich, String text,
+                                         DocumentTextStyle baseStyle,
+                                         UnaryOperator<String> displayTransform) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        Matcher matcher = LINK_PATTERN.matcher(text);
+        int cursor = 0;
+        while (matcher.find()) {
+            appendTransformedSegment(rich, text.substring(cursor, matcher.start()),
+                    baseStyle, displayTransform);
+            rich.link(displayTransform.apply(matcher.group(1)), matcher.group(2));
+            cursor = matcher.end();
+        }
+        appendTransformedSegment(rich, text.substring(cursor), baseStyle, displayTransform);
+    }
+
+    /**
+     * Convenience {@link #appendTransformed} that upper-cases the visible text
+     * (link labels and plain segments) while preserving each link's url.
+     *
+     * @param rich      target rich-text builder
+     * @param text      source string; null treated as empty
+     * @param baseStyle style applied to the upper-cased runs
+     */
+    public static void appendUpperCased(RichText rich, String text,
+                                        DocumentTextStyle baseStyle) {
+        appendTransformed(rich, text, baseStyle, s -> s.toUpperCase(Locale.ROOT));
+    }
+
+    private static void appendTransformedSegment(RichText rich, String segment,
+                                                 DocumentTextStyle baseStyle,
+                                                 UnaryOperator<String> displayTransform) {
+        String clean = plainText(segment);
+        if (!clean.isEmpty()) {
+            rich.style(displayTransform.apply(clean), baseStyle);
+        }
+    }
+
+    /**
      * Appends {@code prefix + plainText(value)} only when the
      * plain-text projection is non-blank. Used by renderers that
      * label optional supplementary content like {@code " (since
@@ -109,6 +165,28 @@ public final class MarkdownInline {
         String clean = plainText(value);
         if (!clean.isBlank()) {
             rich.style(prefix + clean, style);
+        }
+    }
+
+    /**
+     * Link-aware counterpart of {@link #appendPlainIfPresent}: when the
+     * plain-text projection of {@code value} is non-blank, appends {@code prefix}
+     * as a plain run and then {@code value} through
+     * {@link #append(RichText, String, DocumentTextStyle)}, so inline
+     * {@code [label](url)} in the supplementary segment renders as a clickable
+     * link instead of being flattened to text.
+     *
+     * @param rich   target rich-text builder
+     * @param prefix separator prepended before the value (never a link)
+     * @param value  source string; null treated as empty
+     * @param style  style applied to the prefix and the value's plain runs
+     */
+    public static void appendIfPresent(RichText rich, String prefix,
+                                       String value,
+                                       DocumentTextStyle style) {
+        if (!plainText(value).isBlank()) {
+            rich.style(prefix, style);
+            append(rich, value, style);
         }
     }
 

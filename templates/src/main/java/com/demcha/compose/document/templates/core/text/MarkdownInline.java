@@ -108,6 +108,7 @@ public final class MarkdownInline {
      * @param text             source string; null treated as empty
      * @param baseStyle        style applied to the transformed runs
      * @param displayTransform transform applied to visible text (never the url)
+     * @since 2.1.0
      */
     public static void appendTransformed(RichText rich, String text,
                                          DocumentTextStyle baseStyle,
@@ -133,6 +134,7 @@ public final class MarkdownInline {
      * @param rich      target rich-text builder
      * @param text      source string; null treated as empty
      * @param baseStyle style applied to the upper-cased runs
+     * @since 2.1.0
      */
     public static void appendUpperCased(RichText rich, String text,
                                         DocumentTextStyle baseStyle) {
@@ -180,6 +182,7 @@ public final class MarkdownInline {
      * @param prefix separator prepended before the value (never a link)
      * @param value  source string; null treated as empty
      * @param style  style applied to the prefix and the value's plain runs
+     * @since 2.1.0
      */
     public static void appendIfPresent(RichText rich, String prefix,
                                        String value,

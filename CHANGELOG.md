@@ -7,6 +7,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **CV entry titles and subtitles accept inline `[text](url)` links.** In the layered
+  CV presets, a `[label](url)` in an experience/education entry title or subtitle now
+  renders as a clickable hyperlink — the same inline-Markdown convention already used
+  for project rows and body text. Upper-cased and letter-spaced preset titles keep the
+  link too, with the visible label styled and the URL preserved. Where a preset fuses a
+  line that cannot carry a clickable link — the single-line TimelineMinimal excerpt, and
+  the combined subtitle+date meta line of MintEditorial/SidebarPortrait experience
+  entries — the link's label text is shown instead. Titles without inline-Markdown
+  syntax render exactly as before, so the change is backward-compatible.
 - The fixed-layout PPTX backend ships as `@Beta` (Experimental) in its first
   release: the `document.backend.fixed.pptx` packages and the
   `DocumentSession` PPTX convenience methods (`toPptxBytes`, `writePptx`,

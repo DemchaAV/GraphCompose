@@ -498,19 +498,18 @@ public final class SidebarPortrait {
             for (int i = 0; i < Math.min(list.size(), EDUCATION_LIMIT); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
-                        .text(MarkdownInline.plainText(entry.title())
-                                .toUpperCase(Locale.ROOT))
                         .textStyle(headingStyle)
                         .align(TextAlign.LEFT)
                         .lineSpacing(1.2)
-                        .margin(DocumentInsets.top(6)));
+                        .margin(DocumentInsets.top(6))
+                        .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), headingStyle)));
                 if (!entry.subtitle().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
-                            .text(MarkdownInline.plainText(entry.subtitle()))
                             .textStyle(metaStyle)
                             .align(TextAlign.LEFT)
                             .lineSpacing(1.2)
-                            .margin(DocumentInsets.zero()));
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), metaStyle)));
                 }
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
@@ -681,11 +680,10 @@ public final class SidebarPortrait {
             for (int i = 0; i < Math.min(list.size(), EXPERIENCE_LIMIT); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
-                        .text(MarkdownInline.plainText(entry.title())
-                                .toUpperCase(Locale.ROOT))
                         .textStyle(positionStyle)
                         .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.top(8)));
+                        .margin(DocumentInsets.top(8))
+                        .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), positionStyle)));
 
                 String subtitle = composeSubtitle(entry);
                 if (!subtitle.isBlank()) {
@@ -709,6 +707,9 @@ public final class SidebarPortrait {
         }
 
         private static String composeSubtitle(CvEntry entry) {
+            // Deliberately flattened: this experience subtitle shares one fused meta
+            // line with the date, so an inline [label](url) is reduced to its label
+            // text here (the entry title and the education subtitle still link).
             String sub = MarkdownInline.plainText(entry.subtitle());
             String date = MarkdownInline.plainText(entry.date());
             if (sub.isBlank()) {

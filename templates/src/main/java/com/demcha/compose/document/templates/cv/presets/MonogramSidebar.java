@@ -489,19 +489,18 @@ public final class MonogramSidebar {
             for (int i = 0; i < Math.min(list.size(), EDUCATION_LIMIT); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
-                        .text(MarkdownInline.plainText(entry.title())
-                                .toUpperCase(Locale.ROOT))
                         .textStyle(headingStyle)
                         .align(TextAlign.CENTER)
                         .lineSpacing(1.2)
-                        .margin(DocumentInsets.top(6)));
+                        .margin(DocumentInsets.top(6))
+                        .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), headingStyle)));
                 if (!entry.subtitle().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
-                            .text(MarkdownInline.plainText(entry.subtitle()))
                             .textStyle(subStyle)
                             .align(TextAlign.CENTER)
                             .lineSpacing(1.2)
-                            .margin(DocumentInsets.zero()));
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), subStyle)));
                 }
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
@@ -701,12 +700,11 @@ public final class MonogramSidebar {
             for (int i = 0; i < Math.min(list.size(), EXPERIENCE_LIMIT); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
-                        .text(MarkdownInline.plainText(entry.title())
-                                .toUpperCase(Locale.ROOT))
                         .textStyle(positionStyle)
                         .align(TextAlign.LEFT)
                         .lineSpacing(1.15)
-                        .margin(DocumentInsets.top(5)));
+                        .margin(DocumentInsets.top(5))
+                        .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), positionStyle)));
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
                             .text(TextOrnaments.spacedUpper(

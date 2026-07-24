@@ -5,6 +5,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
+import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
 /**
@@ -54,10 +55,10 @@ public final class EntryRenderer {
                 .addSection("Title", titleColumn -> titleColumn
                         .padding(DocumentInsets.zero())
                         .addParagraph(p -> p
-                                .text(entry.title())
                                 .textStyle(titleStyle)
                                 .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.zero())))
+                                .margin(DocumentInsets.zero())
+                                .rich(rich -> MarkdownInline.append(rich, entry.title(), titleStyle))))
                 .addSection("Date", dateColumn -> dateColumn
                         .padding(DocumentInsets.zero())
                         .addParagraph(p -> p

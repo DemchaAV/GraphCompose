@@ -356,7 +356,7 @@ public final class EngineeringResume {
                                 .lineSpacing(1.0)
                                 .margin(DocumentInsets.bottom(2.3))
                                 .rich(rich -> {
-                                    rich.style(entry.title(), railTitleStyle());
+                                    MarkdownInline.append(rich, entry.title(), railTitleStyle());
                                     if (!entry.date().isBlank()) {
                                         rich.style(" / " + entry.date(),
                                                 railDateStyle());
@@ -437,10 +437,10 @@ public final class EngineeringResume {
                             addRoleHeader(card, entry);
                             if (!entry.subtitle().isBlank()) {
                                 card.addParagraph(paragraph -> paragraph
-                                        .text(MarkdownInline.plainText(
-                                                entry.subtitle()))
                                         .textStyle(subtitleBodyStyle())
-                                        .margin(DocumentInsets.zero()));
+                                        .margin(DocumentInsets.zero())
+                                        .rich(rich -> MarkdownInline.append(rich,
+                                                entry.subtitle(), subtitleBodyStyle())));
                             }
                             if (!entry.body().isBlank()) {
                                 card.addParagraph(paragraph -> paragraph
@@ -526,7 +526,7 @@ public final class EngineeringResume {
                         .textStyle(roleTitleStyle())
                         .margin(DocumentInsets.zero())
                         .rich(rich -> {
-                            rich.style(entry.title(), roleTitleStyle());
+                            MarkdownInline.append(rich, entry.title(), roleTitleStyle());
                             if (!entry.date().isBlank()) {
                                 rich.style(" / " + entry.date(),
                                         roleDateStyle());

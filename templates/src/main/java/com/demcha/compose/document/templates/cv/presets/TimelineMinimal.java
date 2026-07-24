@@ -504,8 +504,11 @@ public final class TimelineMinimal {
             }
         } else if (section instanceof EntriesSection entries) {
             for (CvEntry entry : entries.entries()) {
-                String header = entry.title();
-                String subtitle = entry.subtitle();
+                // Flattened single-line excerpt: strip inline markdown so a
+                // [label](url) title/subtitle shows its label text — this preset
+                // fuses and truncates the line, so it cannot carry a clickable link.
+                String header = MarkdownInline.plainText(entry.title());
+                String subtitle = MarkdownInline.plainText(entry.subtitle());
                 String dates = entry.date();
                 String body = entry.body();
                 StringBuilder line = new StringBuilder();

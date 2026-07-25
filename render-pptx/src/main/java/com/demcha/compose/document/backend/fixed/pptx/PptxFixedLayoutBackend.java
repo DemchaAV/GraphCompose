@@ -101,6 +101,23 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
 
     private static final Instant DEFAULT_DETERMINISTIC_INSTANT = Instant.parse("2000-01-01T00:00:00Z");
 
+    /**
+     * Long edge, in pixels, a rasterized clip region aims for. Small regions are
+     * upscaled towards it so the picture stays crisp on a projector.
+     */
+    private static final double CLIP_RASTER_TARGET_PIXELS = 2048.0;
+
+    /** Upscale ceiling, so a tiny badge does not mint a needlessly heavy picture. */
+    private static final double CLIP_RASTER_MAX_SCALE = 4.0;
+
+    /**
+     * Downscale floor. Without it, a clip region wider than
+     * {@link #CLIP_RASTER_TARGET_PIXELS} points rasterizes <em>below</em> native
+     * size — an A0-scale composite would land at ~44 DPI and read as visibly
+     * blurry, since the picture is anchored at the full clip size regardless.
+     */
+    private static final double CLIP_RASTER_MIN_SCALE = 1.0;
+
     private final Map<Class<?>, PptxFragmentRenderHandler<?>> handlers;
 
     // Package-private: the deck assembly reads each section's chrome directly.
@@ -377,6 +394,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxChromeRenderer.applyHeadersAndFooters(
                     environment, headerFooterOptions, graph.canvas(), pageCount);
             PptxNavigationWriter.apply(environment);
+            environment.logRasterizedClipSummary();
             if (metadataOptions != null) {
                 PptxDeckAssembly.applyMetadata(show, metadataOptions);
             }
@@ -530,11 +548,14 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 beginFragment.width(), beginFragment.height(),
                 com.demcha.compose.engine.components.style.Margin.of(0));
         LayoutGraph regionGraph = new LayoutGraph(clipCanvas, 1, List.of(), region);
-        double scale = Math.min(4.0, 2048.0
-                / Math.max(1.0, Math.max(beginFragment.width(), beginFragment.height())));
+        double longestEdge = Math.max(1.0,
+                Math.max(beginFragment.width(), beginFragment.height()));
+        double scale = Math.max(CLIP_RASTER_MIN_SCALE,
+                Math.min(CLIP_RASTER_MAX_SCALE, CLIP_RASTER_TARGET_PIXELS / longestEdge));
         BufferedImage raster = new PdfFixedLayoutBackend()
                 .renderToImages(regionGraph, context, (int) Math.round(72.0 * scale), true, 0)
                 .get(0);
+        environment.recordRasterizedClip(raster.getWidth(), raster.getHeight());
         byte[] png;
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
             ImageIO.write(raster, "png", buffer);

@@ -1,2 +1,4 @@
 com.demcha.compose.document.backend.fixed.ZuluFakeFixedLayoutBackendProvider
 com.demcha.compose.document.backend.fixed.AlphaFakeFixedLayoutBackendProvider
+com.demcha.compose.document.backend.fixed.DuplicateFormatFakeProviders$One
+com.demcha.compose.document.backend.fixed.DuplicateFormatFakeProviders$Two

@@ -11,7 +11,7 @@ import java.nio.file.Path;
  * The Engine Deck flagship rendered as a PowerPoint deck: the exact
  * composition of {@link EngineDeckExample} — banner infographic, authoring
  * pipeline, and two benchmark pages — built once and emitted through the
- * fixed-layout PPTX backend via {@link DocumentSession#buildPptx()}. One
+ * fixed-layout PPTX backend via {@link DocumentSession#buildPptx(java.nio.file.Path)}. One
  * resolved page becomes one identically-sized slide with the same geometry
  * the PDF carries, so the .pptx opens in PowerPoint as a slide-per-page copy
  * of the PDF deck — editable shapes and text frames, except clipped regions,
@@ -35,7 +35,7 @@ public final class EngineDeckPptxExample {
                 .margin(16, 16, 30, 16)
                 .create()) {
             EngineDeckExample.compose(document);
-            document.buildPptx();
+            document.buildPptx(outputFile);
         }
         return outputFile;
     }

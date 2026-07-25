@@ -189,8 +189,8 @@ final class DocumentRenderingFacade {
         long startNanos = System.nanoTime();
         LIFECYCLE_LOG.debug("document.{}.build.start sessionId={} revision={} roots={}",
                 format, context.sessionId(), context.revision(), context.rootCount());
-        try (OutputStream output = Files.newOutputStream(target)) {
-            writeFixedLayout(format, output);
+        try {
+            AtomicFileOutput.write(target, output -> writeFixedLayout(format, output));
             LIFECYCLE_LOG.debug(
                     "document.{}.build.end sessionId={} revision={} durationMs={}",
                     format,

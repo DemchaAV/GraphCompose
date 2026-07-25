@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Single-slide "Available on Maven Central" brand banner, composed with the
  * canonical document DSL and emitted through the fixed-layout PPTX backend via
- * {@link DocumentSession#buildPptx()}. One resolved 16:9 page becomes one
+ * {@link DocumentSession#buildPptx(java.nio.file.Path)}. One resolved 16:9 page becomes one
  * identically-sized slide carrying the same geometry, so the {@code .pptx}
  * opens in PowerPoint as an editable copy of the banner — gradient, rounded
  * panels, native paths and text frames.
@@ -99,7 +99,7 @@ public final class MavenBannerPptxExample {
                 .margin(DocumentInsets.zero())
                 .create()) {
             compose(document);
-            document.buildPptx();
+            document.buildPptx(outputFile);
         }
         return outputFile;
     }

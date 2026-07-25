@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Locates the fixed-layout backend service providers registered on the
@@ -76,13 +77,16 @@ public final class BackendProviders {
      * format, resolving and caching it on first use.
      *
      * <p>Matching against {@link FixedLayoutBackendProvider#format()} is
-     * case-insensitive. When several providers declare the same format the
-     * first one enumerated by {@link ServiceLoader} wins.</p>
+     * case-insensitive. Two providers claiming the same format is a classpath
+     * mistake rather than a preference, so it fails loudly instead of letting
+     * {@link ServiceLoader} enumeration order silently decide which backend
+     * renders the document.</p>
      *
      * @param format output format identifier such as {@code "pdf"} or {@code "pptx"}
      * @return the provider rendering that format
      * @throws MissingBackendException if no provider for the format is registered
      *                                 on the classpath
+     * @throws IllegalStateException   if more than one provider declares the format
      * @since 2.1.0
      */
     public static FixedLayoutBackendProvider fixedLayout(String format) {
@@ -92,11 +96,31 @@ public final class BackendProviders {
         if (cached != null) {
             return cached;
         }
-        FixedLayoutBackendProvider resolved = fixedLayoutProviders().stream()
+        return cacheByFormat(key, resolveExactlyOne(key));
+    }
+
+    /**
+     * Resolves the single provider declaring {@code key}, refusing an ambiguous
+     * classpath. Shared by the by-format lookup and the default lookup so both
+     * entry points agree about what "registered" means.
+     */
+    private static FixedLayoutBackendProvider resolveExactlyOne(String key) {
+        List<FixedLayoutBackendProvider> matches = fixedLayoutProviders().stream()
                 .filter(provider -> key.equals(normalizedFormat(provider)))
-                .findFirst()
-                .orElseThrow(() -> new MissingBackendException(missingFormatMessage(key)));
-        return cacheByFormat(key, resolved);
+                .toList();
+        if (matches.isEmpty()) {
+            throw new MissingBackendException(missingFormatMessage(key));
+        }
+        if (matches.size() > 1) {
+            String names = matches.stream()
+                    .map(provider -> provider.getClass().getName())
+                    .collect(Collectors.joining(", "));
+            throw new IllegalStateException(
+                    "Multiple fixed-layout backends are registered for format \"" + key + "\": " + names
+                            + ". Remove the duplicate artifact from the classpath, or select a backend "
+                            + "explicitly instead of resolving it by format.");
+        }
+        return matches.get(0);
     }
 
     /**
@@ -122,7 +146,10 @@ public final class BackendProviders {
                                 !DEFAULT_FIXED_LAYOUT_FORMAT.equals(normalizedFormat(provider)))
                         .thenComparing(BackendProviders::normalizedFormat))
                 .orElseThrow(missingBackend());
-        return cacheByFormat(normalizedFormat(chosen), chosen);
+        // The comparator picks a format deterministically, but two providers
+        // claiming that format would still make the winner arbitrary.
+        String key = normalizedFormat(chosen);
+        return cacheByFormat(key, resolveExactlyOne(key));
     }
 
     /**

@@ -19,6 +19,13 @@ build never touches them. Run them explicitly with the harness below.
 | `s4-templates` | `graph-compose-templates` | a built-in template composes and renders through the PDF stack |
 | `s5-testing` | `graph-compose` + `graph-compose-testing` | the consumer testing helper (`LayoutSnapshotAssertions`) resolves and round-trips a layout snapshot |
 | `s6-bundle` | `graph-compose-bundle` | the batteries-included aggregate renders a templated document, exposes the bundled fonts (`DefaultFonts.bundledFontNames()`), and makes the colour-emoji set resolvable (`GraphComposeEmoji.isAvailable()`) |
+| `s7-core-render-pptx` | `graph-compose-core` + `graph-compose-render-pptx` | the PPTX backend is discovered by format, and `toPptxBytes()` produces a real OPC package — one slide part, 16:9 slide dimensions in EMU, editable text runs, and **no** full-slide picture in vector mode. **Requires 2.1.0+**: the fixed-layout backend and `DocumentPageSize.SLIDE_16_9` do not exist in 2.0.0, so this scenario cannot pass against an earlier version |
+| `s8-core-render-docx` | `graph-compose-core` + `graph-compose-render-docx` + `graph-compose-render-pdf` | the semantic Word exporter is on the consumer's compile classpath (it is named directly, not discovered through the ServiceLoader) and `export(new DocxSemanticBackend())` produces a `word/document.xml` carrying the text. The PDF backend is in the set because it is **required**: opening a session resolves a `FontMetricsProvider` and render-pdf is the only artifact that publishes one, while render-docx declares it at test scope only — so core + render-docx alone cannot construct a session |
+
+Both new scenarios inspect the emitted OPC package with `java.util.zip` rather than
+Apache POI. The point is to prove the *published* artifacts work for a consumer who
+installed nothing else, so a scenario must not pull a parsing library of its own to make
+its assertions pass.
 
 The "must pull core + render-pdf" (wrapper) and "must pull the documented
 aggregate" (bundle) assertions are proven positively: `s1` / `s6` can only

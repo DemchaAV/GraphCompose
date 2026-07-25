@@ -29,7 +29,7 @@ $repoRoot = (Resolve-Path (Join-Path $here '..\..')).Path
 $mvnw = Join-Path $repoRoot 'mvnw.cmd'
 $settings = Join-Path $here 'settings.xml'
 
-$scenarios = @('s1-graph-compose', 's2-core-only', 's3-core-render-pdf', 's4-templates', 's5-testing', 's6-bundle')
+$scenarios = @('s1-graph-compose', 's2-core-only', 's3-core-render-pdf', 's4-templates', 's5-testing', 's6-bundle', 's7-core-render-pptx', 's8-core-render-docx')
 $repo = Join-Path $repoRoot 'target\release-smoke-m2\repo'
 New-Item -ItemType Directory -Force -Path $repo | Out-Null
 

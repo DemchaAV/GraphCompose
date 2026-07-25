@@ -132,7 +132,7 @@ public interface NodeDefinition<E extends DocumentNode> {
      *
      * @param prepared prepared node whose first slice is being measured
      * @return the first slice's height in points
-     * @since 2.0.0
+     * @since 2.1.0
      */
     default double firstSliceHeight(PreparedNode<E> prepared) {
         return prepared.measureResult().height();

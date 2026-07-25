@@ -99,7 +99,7 @@ public interface DocumentNode {
      * siblings relocate together, with the break hoisted before the run.</p>
      *
      * @return true to keep this node with the first line of the following block
-     * @since 2.0.0
+     * @since 2.1.0
      */
     default boolean keepWithNext() {
         return false;

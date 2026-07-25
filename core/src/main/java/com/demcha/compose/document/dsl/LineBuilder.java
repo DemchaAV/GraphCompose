@@ -289,7 +289,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
      * {@link SectionBuilder#keepWithNext()}.
      *
      * @return this builder
-     * @since 2.0.0
+     * @since 2.1.0
      */
     public LineBuilder keepWithNext() {
         this.keepWithNext = true;
@@ -301,7 +301,7 @@ public final class LineBuilder implements Transformable<LineBuilder> {
      *
      * @param value true to keep the line with the next block
      * @return this builder
-     * @since 2.0.0
+     * @since 2.1.0
      */
     public LineBuilder keepWithNext(boolean value) {
         this.keepWithNext = value;

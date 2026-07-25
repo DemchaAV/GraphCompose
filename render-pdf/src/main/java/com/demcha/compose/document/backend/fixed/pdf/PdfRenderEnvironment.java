@@ -123,6 +123,7 @@ public final class PdfRenderEnvironment {
      *
      * @param alpha non-stroking alpha constant in {@code [0, 1]}
      * @return shared graphics state owned by the current render pass
+     * @since 2.1.0
      */
     public PDExtendedGraphicsState fillAlphaState(float alpha) {
         return fillAlphaStates.computeIfAbsent(alpha, value -> {
@@ -139,6 +140,7 @@ public final class PdfRenderEnvironment {
      *
      * @param alpha stroking alpha constant in {@code [0, 1]}
      * @return shared graphics state owned by the current render pass
+     * @since 2.1.0
      */
     public PDExtendedGraphicsState strokeAlphaState(float alpha) {
         return strokeAlphaStates.computeIfAbsent(alpha, value -> {

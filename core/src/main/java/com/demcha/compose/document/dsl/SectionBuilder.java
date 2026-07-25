@@ -60,7 +60,7 @@ public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, Se
      * nothing follows the section on the page.
      *
      * @return this builder
-     * @since 2.0.0
+     * @since 2.1.0
      */
     public SectionBuilder keepWithNext() {
         this.keepWithNext = true;
@@ -72,7 +72,7 @@ public final class SectionBuilder extends AbstractFlowBuilder<SectionBuilder, Se
      *
      * @param value true to keep the section with the first line of the next block
      * @return this builder
-     * @since 2.0.0
+     * @since 2.1.0
      */
     public SectionBuilder keepWithNext(boolean value) {
         this.keepWithNext = value;

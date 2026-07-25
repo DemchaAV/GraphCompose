@@ -79,8 +79,11 @@ follow semantic versioning; release dates are ISO 8601.
 The per-capability status — what is native, what is approximated, what is unsupported
 — lives in
 [docs/architecture/backend-capability-matrix.md](docs/architecture/backend-capability-matrix.md).
-Of the 38 capabilities it tracks, 24 map to a native equivalent, 10 render natively
-with an approximated styling detail, and 4 are unsupported.
+Of the 38 capabilities it tracks, 24 map to a native equivalent and 4 are unsupported.
+The remaining 10 are partial, and not all in the same way: some render natively with an
+approximated styling detail (distinct per-corner radii collapse to one value, numeric
+dash arrays map to the nearest preset, a radial gradient uses the closest DrawingML
+shade), while others lose something the format cannot carry — see Known limitations.
 
 - **Content.** Paragraphs render as absolute, wrap-disabled text frames seated on the
   measured baselines with PDF-identical glyph sanitization, carrying rich runs, inline
@@ -215,6 +218,14 @@ with an approximated styling detail, and 4 are unsupported.
   `renderToImages` is not implemented on it and throws.
 - Distinct per-corner radii collapse to a single value and numeric dash arrays map to
   the nearest preset in PPTX.
+- PPTX has no outline tree: the first bookmark on a page names its slide and **further
+  bookmarks on that page are dropped**, so a bookmark-heavy document does not survive
+  the round trip as navigation.
+- Inline SVG stays native for simple layers, but arbitrary clips, exact dash/cap/join
+  styles and off-viewBox art fall back to a transparent PNG, and gradient paints use
+  their primary colour.
+- OPC has no producer field, so document metadata's producer value is not representable
+  in a deck.
 - `graph-compose-render-docx` needs `graph-compose-render-pdf` on the classpath as
   well: opening a session resolves a font-metrics provider and the PDF backend is the
   only artifact that publishes one.

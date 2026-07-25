@@ -99,6 +99,7 @@ final class PptxDeckAssembly {
             }
             environment.beginSection(0);
             PptxNavigationWriter.apply(environment);
+            environment.logRasterizedClipSummary();
             // Metadata is deck-global: the first section that declares it wins,
             // matching the PDF backend's combined-document rule.
             sections.stream()

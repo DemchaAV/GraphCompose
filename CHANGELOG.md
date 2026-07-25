@@ -215,6 +215,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A large clipped region in a PPTX deck is no longer downscaled.** The raster
+  fallback aims for a 2048-pixel long edge, and that ratio was only capped from
+  above, so a clip box wider than 2048 pt rasterized *below* native size — an
+  A0-scale composite landed near 44 DPI and read as visibly blurry, since the
+  picture is anchored at the full clip size regardless. The scale is now clamped
+  between native size and 4×. Decks whose clip regions fit a normal page are
+  unaffected: their scale already saturated at the upper cap.
+- The PPTX backend now logs, once per render at `DEBUG` on
+  `com.demcha.compose.engine.render`, how many clip regions were rasterized and
+  their total megapixels. Each rasterized region costs a full sub-render through
+  the PDF backend and loses text editability inside its bounds, so a clip-heavy
+  deck's cost is visible rather than inferred from render time. Silent when
+  nothing was rasterized.
 - The PDF backend now draws `DocumentTextDecoration.UNDERLINE` and
   `STRIKETHROUGH` marks — previously the decoration flags resolved only to
   font faces (which alias to the regular program), so decorated text rendered

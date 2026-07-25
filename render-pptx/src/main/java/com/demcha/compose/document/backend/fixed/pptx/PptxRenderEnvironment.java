@@ -77,6 +77,8 @@ public final class PptxRenderEnvironment {
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
     private final Set<String> substitutionWarned = new LinkedHashSet<>();
     private final java.util.Deque<XSLFGroupShape> groupStack = new java.util.ArrayDeque<>();
+    private int rasterizedClipCount;
+    private long rasterizedClipPixels;
 
     PptxRenderEnvironment(XMLSlideShow show,
                           PptxRenderSession session,
@@ -162,6 +164,34 @@ public final class PptxRenderEnvironment {
      */
     XSLFSlide globalSlide(int globalPageIndex) {
         return session.slide(globalPageIndex);
+    }
+
+    /**
+     * Records that one clip region was rasterized rather than rendered as
+     * native shapes. Each such region costs a full sub-render through the PDF
+     * backend and loses text editability inside its bounds, so the cost of a
+     * clip-heavy deck should be visible rather than inferred from render time.
+     *
+     * @param pixelWidth  rasterized picture width in pixels
+     * @param pixelHeight rasterized picture height in pixels
+     */
+    void recordRasterizedClip(int pixelWidth, int pixelHeight) {
+        rasterizedClipCount++;
+        rasterizedClipPixels += (long) pixelWidth * pixelHeight;
+    }
+
+    /**
+     * Emits the one-line clip-rasterization summary for the finished render
+     * pass. Silent when nothing was rasterized, so an all-vector deck adds no
+     * noise to the log.
+     */
+    void logRasterizedClipSummary() {
+        if (rasterizedClipCount == 0) {
+            return;
+        }
+        LOG.debug("render.pptx.fixed.clip-raster regions={} megapixels={}",
+                rasterizedClipCount,
+                String.format(java.util.Locale.ROOT, "%.2f", rasterizedClipPixels / 1_000_000.0));
     }
 
     /**

@@ -213,4 +213,49 @@ class PptxClipRasterFallbackTest {
             }
         }
     }
+
+    @Test
+    void aClipRegionLargerThanTheRasterTargetStillRendersAtLeastAtNativeResolution() throws Exception {
+        // The raster scale aims for a 2048px long edge. A clip box WIDER than
+        // 2048pt drives that ratio below 1.0, and without a floor the picture is
+        // downscaled while still being anchored at the full clip size — an
+        // A0-scale composite landing at ~44 DPI, visibly blurry. Every other clip
+        // test uses a page a few hundred points wide, where the ratio saturates at
+        // the upscale cap, so this branch was never exercised.
+        double pageWidth = 3400;
+        double pageHeight = 2400;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(pageWidth, pageHeight)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.add(new ShapeContainerBuilder()
+                    .ellipse(3000, 2000)
+                    .layer(new EllipseBuilder().circle(2600)
+                            .fillColor(DocumentColor.ROYAL_BLUE).build())
+                    .build());
+
+            LayoutGraph graph = session.render(new GraphCapturingBackend());
+            byte[] pptx = session.render(new PptxFixedLayoutBackend());
+
+            PlacedFragment clipFragment = graph.fragments().stream()
+                    .filter(fragment -> fragment.payload() instanceof ShapeClipBeginPayload)
+                    .findFirst().orElseThrow();
+            assertThat(clipFragment.width())
+                    .as("the fixture must actually exceed the raster target, or it proves nothing")
+                    .isGreaterThan(2048.0);
+
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                XSLFPictureShape composite = show.getSlides().get(0).getShapes().stream()
+                        .filter(shape -> "GraphCompose Clipped Composite".equals(shape.getShapeName()))
+                        .map(XSLFPictureShape.class::cast)
+                        .findFirst().orElseThrow();
+                BufferedImage bitmap = ImageIO.read(
+                        new ByteArrayInputStream(composite.getPictureData().getData()));
+
+                assertThat(bitmap.getWidth() / clipFragment.width())
+                        .as("a rasterized clip must never be published below native 72 DPI")
+                        .isGreaterThanOrEqualTo(1.0);
+            }
+        }
+    }
 }

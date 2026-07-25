@@ -7,6 +7,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A failed render no longer destroys the document it was replacing.**
+  `buildPdf(Path)`, `buildPptx(Path)` and multi-section `buildPdf(Path)` render into
+  a scratch file in the destination's own directory and move it onto the destination
+  only after the render returns. Previously the destination was opened — and therefore
+  truncated — before the backend produced a byte, so an oversized node, a missing
+  backend, or a full disk left an empty file where a published document used to be.
+  The move is atomic where the filesystem supports it, so a concurrent reader never
+  observes a half-written document; on POSIX the destination keeps the permissions it
+  already had, or gets `rw-r--r--` when it is new.
+- **`DocumentSession.buildPptx()` (no-arg) is removed**; use `buildPptx(Path)`. The
+  session has a single configured output path, shared with `buildPdf()`, so the no-arg
+  form wrote deck bytes into whatever that path was — including a file named `.pdf`.
+  PPTX output now always names its destination, which is also what lets one session
+  emit both formats. The PPTX surface is `@Beta` (Experimental) and was never published,
+  so no released code can depend on the removed overload.
+- **Two backends registered for one format now fail loudly.**
+  `BackendProviders.fixedLayout(format)` and the no-arg default previously took the
+  first `ServiceLoader` match, so a third-party provider declaring an existing format
+  silently decided the renderer by classpath order. Both entry points now throw
+  `IllegalStateException` naming the competing provider classes.
 - **Keep a heading with its content** — `SectionBuilder.keepWithNext()`. A section
   marked keep-with-next is never left stranded as the last block on a page apart from
   the content it introduces: when the section plus the first slice of the following
@@ -184,7 +204,7 @@ follow semantic versioning; release dates are ISO 8601.
   documents that custom handlers do not apply inside rasterized clip
   composites.
 - `DocumentSession.toPptxBytes()` / `writePptx(OutputStream)` /
-  `buildPptx()` / `buildPptx(Path)` — the PPTX counterparts of the PDF
+  `buildPptx(Path)` / `buildPptx(Path)` — the PPTX counterparts of the PDF
   convenience trio. The backend resolves through the format-keyed provider
   (`BackendProviders.fixedLayout("pptx")`), so the core stays free of a PPTX
   dependency: with `graph-compose-render-pptx` on the classpath the session's
@@ -243,7 +263,7 @@ follow semantic versioning; release dates are ISO 8601.
   AUTO-PAGINATION` tags and a `code → layout → PDF/PPTX` diagram whose amber
   connectors branch to both backends — composed as one full-bleed
   `CanvasLayerNode` and emitted as an editable PowerPoint slide via
-  `buildPptx()`. Registered in `GenerateAllExamples` and listed in the
+  `buildPptx(Path)`. Registered in `GenerateAllExamples` and listed in the
   examples gallery with committed PDF/PPTX previews; a native-shape guard
   (`MavenBannerNativeShapeTest`) pins the slide to a single picture (the badge
   checkmark) with the panels, tags, code and diagram all native.

@@ -140,9 +140,7 @@ public final class MultiSectionDocument implements AutoCloseable {
     public void buildPdf(Path outputFile) throws DocumentRenderingException {
         Objects.requireNonNull(outputFile, "outputFile");
         render("build PDF at '" + outputFile + "'", () -> {
-            try (OutputStream output = Files.newOutputStream(outputFile)) {
-                backend.writeSections(renderUnits(), output);
-            }
+            AtomicFileOutput.write(outputFile, output -> backend.writeSections(renderUnits(), output));
             return null;
         });
     }

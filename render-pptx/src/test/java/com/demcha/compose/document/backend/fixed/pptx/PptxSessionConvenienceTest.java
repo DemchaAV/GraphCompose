@@ -102,28 +102,24 @@ class PptxSessionConvenienceTest {
     }
 
     @Test
-    void buildPptxUsesTheConfiguredDefaultOutputFile(@TempDir Path tempDir) throws Exception {
-        Path target = tempDir.resolve("default-deck.pptx");
-        try (DocumentSession session = GraphCompose.document(target)
+    void buildPptxNeverWritesDeckBytesIntoTheSessionsDefaultPdfFile(@TempDir Path tempDir) throws Exception {
+        // The session's default output file is a PDF target. PPTX output takes an
+        // explicit path, so the deck can never land in it by omission.
+        Path pdfTarget = tempDir.resolve("report.pdf");
+        Path deckTarget = tempDir.resolve("report.pptx");
+        try (DocumentSession session = GraphCompose.document(pdfTarget)
                 .pageSize(400, 300)
                 .margin(DocumentInsets.of(24))
                 .create()) {
             session.add(session.dsl().shape().name("Card").size(140, 40)
                     .fillColor(DocumentColor.ROYAL_BLUE)
                     .build());
-            session.buildPptx();
-            try (XMLSlideShow show = new XMLSlideShow(Files.newInputStream(target))) {
+            session.buildPptx(deckTarget);
+
+            assertThat(pdfTarget).doesNotExist();
+            try (XMLSlideShow show = new XMLSlideShow(Files.newInputStream(deckTarget))) {
                 assertThat(show.getSlides()).hasSize(1);
             }
-        }
-    }
-
-    @Test
-    void buildPptxWithoutADefaultOutputFileFails() {
-        try (DocumentSession session = composeWithChrome()) {
-            assertThatThrownBy(session::buildPptx)
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("default output file");
         }
     }
 

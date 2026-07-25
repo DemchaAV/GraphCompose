@@ -85,9 +85,11 @@ public final class GraphCompose {
 
     /**
      * Starts the canonical semantic document composition flow with a default output target
-     * used by {@link DocumentSession#buildPdf()} and {@link DocumentSession#buildPptx()}.
+     * used by {@link DocumentSession#buildPdf()}. PPTX output always takes an explicit
+     * path — see {@link DocumentSession#buildPptx(Path)} — so one session can emit both
+     * formats without the deck overwriting the PDF.
      *
-     * @param outputFile default output path for the no-arg build methods
+     * @param outputFile default output path for {@code buildPdf()}
      * @return builder for creating a semantic document session
      */
     public static DocumentBuilder document(Path outputFile) {

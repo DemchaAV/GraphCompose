@@ -39,4 +39,21 @@ class BackendProvidersSelectionTest {
                 .hasMessageContaining("graph-compose-render-pdf")
                 .hasMessageContaining("graph-compose-bundle");
     }
+
+    @Test
+    void twoProvidersClaimingOneFormatFailInsteadOfLettingClasspathOrderDecide() {
+        assertThatThrownBy(() -> BackendProviders.fixedLayout(DuplicateFormatFakeProviders.FORMAT))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("\"dup\"")
+                .hasMessageContaining("DuplicateFormatFakeProviders$One")
+                .hasMessageContaining("DuplicateFormatFakeProviders$Two");
+    }
+
+    @Test
+    void anAmbiguousFormatDoesNotDisturbTheUnambiguousOnes() {
+        // The duplicate registration must stay contained: resolving it throws,
+        // but every other format still resolves, and the default is unchanged.
+        assertThat(BackendProviders.fixedLayout("aaa").format()).isEqualTo("aaa");
+        assertThat(BackendProviders.fixedLayout().format()).isEqualTo("aaa");
+    }
 }

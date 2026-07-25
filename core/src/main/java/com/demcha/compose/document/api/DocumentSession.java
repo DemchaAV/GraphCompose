@@ -54,7 +54,7 @@ import java.util.function.Consumer;
  *   <li>inspect {@link #layoutGraph()} / {@link #layoutSnapshot()} as needed</li>
  *   <li>render with {@link #writePdf(OutputStream)}, {@link #toPdfBytes()}, {@link #buildPdf()},
  *       their PPTX counterparts ({@link #writePptx(OutputStream)}, {@link #toPptxBytes()},
- *       {@link #buildPptx()}), or a custom backend</li>
+ *       {@link #buildPptx(Path)}), or a custom backend</li>
  * </ol>
  *
  * <p><b>Thread-safety:</b> this type is mutable and not thread-safe.</p>
@@ -985,32 +985,6 @@ public final class DocumentSession implements AutoCloseable {
     public void writePptx(OutputStream output) throws DocumentRenderingException {
         wrapRendering("write PPTX to stream", () -> {
             renderingFacade.writePptx(output);
-            return null;
-        });
-    }
-
-    /**
-     * Builds the current document as a .pptx deck into the default output file
-     * configured on the builder. See {@link #toPptxBytes()} for the geometry
-     * and classpath contract.
-     *
-     * <p>The default file is shared with {@link #buildPdf()}: the session has
-     * one configured output path, and this method writes deck bytes to it
-     * as-is — pass an explicit {@code .pptx} path to
-     * {@link #buildPptx(Path)} when the default is named for PDF output.</p>
-     *
-     * @throws IllegalStateException      if no default output file was configured
-     * @throws DocumentRenderingException if PPTX rendering fails
-     * @since 2.1.0
-     */
-    @Beta
-    public void buildPptx() throws DocumentRenderingException {
-        ensureOpen();
-        if (defaultOutputFile == null) {
-            throw new IllegalStateException("No default output file was configured for this document session.");
-        }
-        wrapRendering("build PPTX at '" + defaultOutputFile + "'", () -> {
-            renderingFacade.buildPptx(defaultOutputFile);
             return null;
         });
     }

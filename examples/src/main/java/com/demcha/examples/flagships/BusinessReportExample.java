@@ -73,178 +73,197 @@ public final class BusinessReportExample {
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "business-report.pdf");
 
-        try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(DocumentPageSize.A4)
-                .pageBackground(PAPER)
-                .margin(28, 40, 28, 40)
-                .create()) {
-
-            // Running footer — repeats on every page with live page numbers,
-            // instead of a hardcoded "Page 1 of 8" paragraph in the flow.
-            document.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
-                    .zone(com.demcha.compose.document.output.DocumentHeaderFooterZone.FOOTER)
-                    .leftText("Confidential and proprietary")
-                    .rightText("Page {page} of {pages}")
-                    .fontSize(8f)
-                    .textColor(MUTED)
-                    .showSeparator(true)
-                    .separatorColor(SUBTLE_RULE)
-                    .separatorThickness(0.5f)
-                    .build());
-
-            document.pageFlow()
-                    .name("BusinessReportCover")
-                    .spacing(11)
-
-                    // Top band — report identifier + month
-                    .addRow("Band", row -> row
-                            .spacing(0)
-                            .weights(1, 1)
-                            .addSection("BandLeft", section -> section
-                                    .addParagraph(p -> p
-                                            .text("Q1 2024 - BUSINESS REPORT")
-                                            .textStyle(bandLeft())
-                                            .margin(DocumentInsets.zero())))
-                            .addSection("BandRight", section -> section
-                                    .addParagraph(p -> p
-                                            .text("APRIL 2024")
-                                            .textStyle(bandRight())
-                                            .align(TextAlign.RIGHT)
-                                            .margin(DocumentInsets.zero()))))
-
-                    // Thin gold rule under the band - rendered as a thin
-                    // shape because LineBuilder applies thickness-based
-                    // padding that pushes the natural width past the
-                    // page inner width.
-                    .addShape(s -> s.size(500, 0.8).fillColor(GOLD).margin(DocumentInsets.zero()))
-
-                    // Hero — headline + image
-                    .addRow("Hero", row -> row
-                            .spacing(18)
-                            .weights(11, 9)
-                            .addSection("HeroCopy", section -> section
-                                    .padding(new DocumentInsets(4, 0, 0, 0))
-                                    .spacing(4)
-                                    .addParagraph(p -> p
-                                            .text("Building the future")
-                                            .textStyle(heroTitle())
-                                            .margin(DocumentInsets.zero()))
-                                    .addParagraph(p -> p
-                                            .text("with clarity and purpose")
-                                            .textStyle(heroTitle())
-                                            .margin(DocumentInsets.zero()))
-                                    .addParagraph(p -> p
-                                            .text("We combine strategy, design, and engineering to deliver impactful digital products that drive real business results and lasting customer value.")
-                                            .textStyle(heroBody())
-                                            .lineSpacing(1.4)
-                                            .margin(new DocumentInsets(4, 0, 0, 0))))
-                            .addSection("HeroImage", section -> section
-                                    .padding(DocumentInsets.zero())
-                                    // The hero scene is fully vector now: a
-                                    // gradient-sky shape with two polygon
-                                    // mountain ranges, clipped to the rounded
-                                    // frame. No raster, no AWT.
-                                    .addContainer(frame -> frame
-                                            .name("HeroFrame")
-                                            .roundedRect(210, 110, 12)
-                                            .fillColor(NAVY_DARK)
-                                            .stroke(DocumentStroke.of(GOLD, 1.5))
-                                            .clipPolicy(ClipPolicy.CLIP_PATH)
-                                            .center(buildHeroScene(212, 112)))))
-
-                    // Three KPI cards
-                    .addRow("KpiRow", row -> row
-                            .spacing(14)
-                            .weights(1, 1, 1)
-                            .addSection("Kpi1", section -> kpiCard(section,
-                                    "$", "24%", "Revenue Growth",
-                                    "Strong performance across all core business units."))
-                            .addSection("Kpi2", section -> kpiCard(section,
-                                    "U", "18k+", "Active Customers",
-                                    "Growing community and engagement."))
-                            .addSection("Kpi3", section -> kpiCard(section,
-                                    "%", "98.6%", "SLA Compliance",
-                                    "Reliable platform with enterprise-grade uptime.")))
-
-                    // Highlights + Performance overview row
-                    .addRow("InsightsRow", row -> row
-                            .spacing(18)
-                            .weights(8, 12)
-                            .addSection("Highlights", section -> section
-                                    .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 16)
-                                    .stroke(DocumentStroke.of(CARD_RING, 0.5))
-                                    .accentLeft(NAVY, 3)
-                                    .spacing(8)
-                                    .addParagraph(p -> p
-                                            .text("Strategic highlights")
-                                            .textStyle(sectionTitle())
-                                            .margin(DocumentInsets.zero()))
-                                    .addParagraph(p -> p
-                                            .text("•  Expanded market presence in key regions with double-digit growth.")
-                                            .textStyle(highlightLine())
-                                            .lineSpacing(1.45)
-                                            .margin(new DocumentInsets(2, 0, 0, 0)))
-                                    .addParagraph(p -> p
-                                            .text("•  Launched new platform capabilities improving performance and scalability.")
-                                            .textStyle(highlightLine())
-                                            .lineSpacing(1.45)
-                                            .margin(DocumentInsets.zero()))
-                                    .addParagraph(p -> p
-                                            .text("•  Strengthened partnerships to accelerate innovation and delivery.")
-                                            .textStyle(highlightLine())
-                                            .lineSpacing(1.45)
-                                            .margin(DocumentInsets.zero())))
-                            .addSection("Chart", section -> section
-                                    .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 14)
-                                    .stroke(DocumentStroke.of(CARD_RING, 0.5))
-                                    .accentLeft(GOLD, 3)
-                                    .spacing(6)
-                                    .addParagraph(p -> p
-                                            .text("Performance overview")
-                                            .textStyle(sectionTitle())
-                                            .margin(DocumentInsets.zero()))
-                                    .addRich(rich -> rich
-                                            .style("Revenue", DocumentTextStyle.builder()
-                                                    .fontName(FontName.HELVETICA_BOLD)
-                                                    .size(9)
-                                                    .color(NAVY)
-                                                    .build())
-                                            .style("    ", legendLabel())
-                                            .style("Profit", DocumentTextStyle.builder()
-                                                    .fontName(FontName.HELVETICA_BOLD)
-                                                    .size(9)
-                                                    .color(GOLD)
-                                                    .build()))
-                                    .add(buildChart())))
-
-                    // Key metrics — wrapped in a soft panel with an
-                    // accent strip so the table reads as a distinct
-                    // dashboard card rather than a bare grid.
-                    .addSection("MetricsCard", card -> card
-                            .softPanel(DocumentColor.WHITE, DocumentCornerRadius.bottom(10), 12)
-                            .stroke(DocumentStroke.of(CARD_RING, 0.5))
-                            .accentTop(GOLD, 1.5)
-                            .spacing(4)
-                            .addParagraph(p -> p
-                                    .text("Key metrics")
-                                    .textStyle(sectionTitle())
-                                    .margin(DocumentInsets.zero()))
-                            .addParagraph(p -> p
-                                    .text("Year-over-year delta in the right column. Retention reported in percentage points.")
-                                    .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA)
-                                            .size(8.4)
-                                            .color(MUTED)
-                                            .build())
-                                    .lineSpacing(1.35)
-                                    .margin(new DocumentInsets(0, 0, 2, 0)))
-                            .addTable(BusinessReportExample::buildMetricsTable))
-                    .build();
-
+        try (DocumentSession document = document(outputFile).create()) {
+            compose(document);
             document.buildPdf();
         }
-
         return outputFile;
+    }
+
+    /**
+     * The example's canonical session setup, shared by the PDF {@link #generate()}
+     * and its PPTX twin so both emit from an identically configured document —
+     * the "one source, two formats" contract.
+     *
+     * @param outputFile the file the session writes to (.pdf or .pptx)
+     * @return the configured builder, ready to {@code create()}
+     */
+    static GraphCompose.DocumentBuilder document(Path outputFile) {
+        return GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4)
+                .pageBackground(PAPER)
+                .margin(28, 40, 28, 40);
+    }
+
+    /**
+     * Composes the single-page investor report into {@code document}. Shared by
+     * {@link #generate()} and its PPTX twin so both lay out identical geometry.
+     *
+     * @param document the open session to compose into
+     */
+    static void compose(DocumentSession document) {
+
+        // Running footer — repeats on every page with live page numbers,
+        // instead of a hardcoded "Page 1 of 8" paragraph in the flow.
+        document.footer(com.demcha.compose.document.output.DocumentHeaderFooter.builder()
+                .zone(com.demcha.compose.document.output.DocumentHeaderFooterZone.FOOTER)
+                .leftText("Confidential and proprietary")
+                .rightText("Page {page} of {pages}")
+                .fontSize(8f)
+                .textColor(MUTED)
+                .showSeparator(true)
+                .separatorColor(SUBTLE_RULE)
+                .separatorThickness(0.5f)
+                .build());
+
+        document.pageFlow()
+                .name("BusinessReportCover")
+                .spacing(11)
+
+                // Top band — report identifier + month
+                .addRow("Band", row -> row
+                        .spacing(0)
+                        .weights(1, 1)
+                        .addSection("BandLeft", section -> section
+                                .addParagraph(p -> p
+                                        .text("Q1 2024 - BUSINESS REPORT")
+                                        .textStyle(bandLeft())
+                                        .margin(DocumentInsets.zero())))
+                        .addSection("BandRight", section -> section
+                                .addParagraph(p -> p
+                                        .text("APRIL 2024")
+                                        .textStyle(bandRight())
+                                        .align(TextAlign.RIGHT)
+                                        .margin(DocumentInsets.zero()))))
+
+                // Thin gold rule under the band - rendered as a thin
+                // shape because LineBuilder applies thickness-based
+                // padding that pushes the natural width past the
+                // page inner width.
+                .addShape(s -> s.size(500, 0.8).fillColor(GOLD).margin(DocumentInsets.zero()))
+
+                // Hero — headline + image
+                .addRow("Hero", row -> row
+                        .spacing(18)
+                        .weights(11, 9)
+                        .addSection("HeroCopy", section -> section
+                                .padding(new DocumentInsets(4, 0, 0, 0))
+                                .spacing(4)
+                                .addParagraph(p -> p
+                                        .text("Building the future")
+                                        .textStyle(heroTitle())
+                                        .margin(DocumentInsets.zero()))
+                                .addParagraph(p -> p
+                                        .text("with clarity and purpose")
+                                        .textStyle(heroTitle())
+                                        .margin(DocumentInsets.zero()))
+                                .addParagraph(p -> p
+                                        .text("We combine strategy, design, and engineering to deliver impactful digital products that drive real business results and lasting customer value.")
+                                        .textStyle(heroBody())
+                                        .lineSpacing(1.4)
+                                        .margin(new DocumentInsets(4, 0, 0, 0))))
+                        .addSection("HeroImage", section -> section
+                                .padding(DocumentInsets.zero())
+                                // The hero scene is fully vector now: a
+                                // gradient-sky shape with two polygon
+                                // mountain ranges, clipped to the rounded
+                                // frame. No raster, no AWT.
+                                .addContainer(frame -> frame
+                                        .name("HeroFrame")
+                                        .roundedRect(210, 110, 12)
+                                        .fillColor(NAVY_DARK)
+                                        .stroke(DocumentStroke.of(GOLD, 1.5))
+                                        .clipPolicy(ClipPolicy.CLIP_PATH)
+                                        .center(buildHeroScene(212, 112)))))
+
+                // Three KPI cards
+                .addRow("KpiRow", row -> row
+                        .spacing(14)
+                        .weights(1, 1, 1)
+                        .addSection("Kpi1", section -> kpiCard(section,
+                                "$", "24%", "Revenue Growth",
+                                "Strong performance across all core business units."))
+                        .addSection("Kpi2", section -> kpiCard(section,
+                                "U", "18k+", "Active Customers",
+                                "Growing community and engagement."))
+                        .addSection("Kpi3", section -> kpiCard(section,
+                                "%", "98.6%", "SLA Compliance",
+                                "Reliable platform with enterprise-grade uptime.")))
+
+                // Highlights + Performance overview row
+                .addRow("InsightsRow", row -> row
+                        .spacing(18)
+                        .weights(8, 12)
+                        .addSection("Highlights", section -> section
+                                .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 16)
+                                .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                                .accentLeft(NAVY, 3)
+                                .spacing(8)
+                                .addParagraph(p -> p
+                                        .text("Strategic highlights")
+                                        .textStyle(sectionTitle())
+                                        .margin(DocumentInsets.zero()))
+                                .addParagraph(p -> p
+                                        .text("•  Expanded market presence in key regions with double-digit growth.")
+                                        .textStyle(highlightLine())
+                                        .lineSpacing(1.45)
+                                        .margin(new DocumentInsets(2, 0, 0, 0)))
+                                .addParagraph(p -> p
+                                        .text("•  Launched new platform capabilities improving performance and scalability.")
+                                        .textStyle(highlightLine())
+                                        .lineSpacing(1.45)
+                                        .margin(DocumentInsets.zero()))
+                                .addParagraph(p -> p
+                                        .text("•  Strengthened partnerships to accelerate innovation and delivery.")
+                                        .textStyle(highlightLine())
+                                        .lineSpacing(1.45)
+                                        .margin(DocumentInsets.zero())))
+                        .addSection("Chart", section -> section
+                                .softPanel(DocumentColor.WHITE, DocumentCornerRadius.right(10), 14)
+                                .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                                .accentLeft(GOLD, 3)
+                                .spacing(6)
+                                .addParagraph(p -> p
+                                        .text("Performance overview")
+                                        .textStyle(sectionTitle())
+                                        .margin(DocumentInsets.zero()))
+                                .addRich(rich -> rich
+                                        .style("Revenue", DocumentTextStyle.builder()
+                                                .fontName(FontName.HELVETICA_BOLD)
+                                                .size(9)
+                                                .color(NAVY)
+                                                .build())
+                                        .style("    ", legendLabel())
+                                        .style("Profit", DocumentTextStyle.builder()
+                                                .fontName(FontName.HELVETICA_BOLD)
+                                                .size(9)
+                                                .color(GOLD)
+                                                .build()))
+                                .add(buildChart())))
+
+                // Key metrics — wrapped in a soft panel with an
+                // accent strip so the table reads as a distinct
+                // dashboard card rather than a bare grid.
+                .addSection("MetricsCard", card -> card
+                        .softPanel(DocumentColor.WHITE, DocumentCornerRadius.bottom(10), 12)
+                        .stroke(DocumentStroke.of(CARD_RING, 0.5))
+                        .accentTop(GOLD, 1.5)
+                        .spacing(4)
+                        .addParagraph(p -> p
+                                .text("Key metrics")
+                                .textStyle(sectionTitle())
+                                .margin(DocumentInsets.zero()))
+                        .addParagraph(p -> p
+                                .text("Year-over-year delta in the right column. Retention reported in percentage points.")
+                                .textStyle(DocumentTextStyle.builder()
+                                        .fontName(FontName.HELVETICA)
+                                        .size(8.4)
+                                        .color(MUTED)
+                                        .build())
+                                .lineSpacing(1.35)
+                                .margin(new DocumentInsets(0, 0, 2, 0)))
+                        .addTable(BusinessReportExample::buildMetricsTable))
+                .build();
     }
 
     public static void main(String[] args) throws Exception {

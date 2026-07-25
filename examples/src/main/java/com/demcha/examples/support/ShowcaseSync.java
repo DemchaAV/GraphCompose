@@ -33,6 +33,11 @@ import java.util.stream.Stream;
  *   <li>Renders page 0 of the PDF to a {@code 1.5x} PNG and writes it to
  *       {@code web/showcase/screenshots/<category>/<group>/<file>.png}
  *       — the static site uses these as preview thumbnails.</li>
+ *   <li>Copies a same-named {@code .pptx} sitting beside the PDF to
+ *       {@code web/showcase/pptx/<category>/<group>/<file>.pptx}, published as a
+ *       second download on the same card. The twin shares the PDF's preview:
+ *       both backends draw the same resolved layout, and POI has no page
+ *       rasterizer to build a separate thumbnail with.</li>
  * </ol>
  *
  * <p>Then it writes a structured {@code web/examples.json} manifest
@@ -72,6 +77,7 @@ public final class ShowcaseSync {
         Map<String, Map<String, List<ManifestEntry>>> tree = new TreeMap<>();
         int copied = 0;
         int rendered = 0;
+        int decks = 0;
 
         try (Stream<Path> walk = Files.walk(generatedPdfs)) {
             List<Path> pdfs = walk
@@ -107,6 +113,23 @@ public final class ShowcaseSync {
                 renderPreview(pdf, pngTarget);
                 rendered++;
 
+                // A twin flagship renders the same composition to a deck beside its
+                // PDF. The deck is published as a second download on the same card:
+                // it shares the PDF's preview by construction — both backends draw
+                // the same resolved layout — and POI has no page rasterizer to make
+                // a separate one with.
+                String pptxUrl = null;
+                Path pptxSource = pdf.resolveSibling(basename + ".pptx");
+                if (Files.isRegularFile(pptxSource)) {
+                    Path pptxTarget = showcaseRoot.resolve("pptx").resolve(category).resolve(group)
+                            .resolve(basename + ".pptx");
+                    Files.createDirectories(pptxTarget.getParent());
+                    Files.copy(pptxSource, pptxTarget, StandardCopyOption.REPLACE_EXISTING);
+                    copied++;
+                    decks++;
+                    pptxUrl = relativeUrl(showcaseRoot, pptxTarget, siteRoot);
+                }
+
                 ShowcaseMetadata.Entry meta = ShowcaseMetadata.lookup(basename, category, group);
                 ManifestEntry entry = new ManifestEntry(
                         basename,
@@ -114,6 +137,7 @@ public final class ShowcaseSync {
                         meta.description(),
                         meta.tags(),
                         relativeUrl(showcaseRoot, pdfTarget, siteRoot),
+                        pptxUrl,
                         relativeUrl(showcaseRoot, pngTarget, siteRoot),
                         meta.codeUrl());
                 tree.computeIfAbsent(category, c -> new TreeMap<>())
@@ -131,8 +155,8 @@ public final class ShowcaseSync {
         String json = renderManifest(tree);
         Files.writeString(manifestFile, json);
 
-        System.out.println("Synced " + copied + " PDFs and " + rendered
-                + " preview PNGs into " + showcaseRoot);
+        System.out.println("Synced " + copied + " documents (" + rendered + " PDFs, "
+                + decks + " PPTX twins) and " + rendered + " preview PNGs into " + showcaseRoot);
         System.out.println("Wrote manifest to " + manifestFile);
     }
 
@@ -262,12 +286,17 @@ public final class ShowcaseSync {
         return sb.toString();
     }
 
+    /**
+     * One showcase card. {@code pptx} is {@code null} for the majority of
+     * examples that render PDF only; the twin flagships carry both.
+     */
     private record ManifestEntry(
             String id,
             String title,
             String description,
             List<String> tags,
             String pdf,
+            String pptx,
             String screenshot,
             String code) {
 
@@ -283,6 +312,9 @@ public final class ShowcaseSync {
             }
             sb.append("],\n");
             sb.append("              \"pdf\": ").append(jsonString(pdf)).append(",\n");
+            if (pptx != null) {
+                sb.append("              \"pptx\": ").append(jsonString(pptx)).append(",\n");
+            }
             sb.append("              \"screenshot\": ").append(jsonString(screenshot)).append(",\n");
             sb.append("              \"code\": ").append(jsonString(code)).append("\n");
             sb.append("            }");

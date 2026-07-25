@@ -99,15 +99,26 @@ public final class FinancialReportExample {
      */
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "financial-report.pdf");
-        try (DocumentSession document = GraphCompose.document(outputFile)
-                .pageSize(DocumentPageSize.A4)
-                .pageBackground(PAPER)
-                .margin(18, 28, 14, 28)
-                .create()) {
+        try (DocumentSession document = document(outputFile).create()) {
             compose(document);
             document.buildPdf();
         }
         return outputFile;
+    }
+
+    /**
+     * The example's canonical session setup, shared by the PDF {@link #generate()}
+     * and its PPTX twin so both emit from an identically configured document —
+     * the "one source, two formats" contract.
+     *
+     * @param outputFile the file the session writes to (.pdf or .pptx)
+     * @return the configured builder, ready to {@code create()}
+     */
+    static GraphCompose.DocumentBuilder document(Path outputFile) {
+        return GraphCompose.document(outputFile)
+                .pageSize(DocumentPageSize.A4)
+                .pageBackground(PAPER)
+                .margin(18, 28, 14, 28);
     }
 
     /**

@@ -44,11 +44,14 @@ import com.demcha.examples.features.title.BookTemplateExample;
 import com.demcha.examples.features.title.PoetryTitlePageExample;
 import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
+import com.demcha.examples.flagships.BusinessReportPptxExample;
 import com.demcha.examples.flagships.EngineDeckExample;
 import com.demcha.examples.flagships.EngineDeckPptxExample;
 import com.demcha.examples.flagships.FeatureCatalogExample;
 import com.demcha.examples.flagships.FinancialReportExample;
+import com.demcha.examples.flagships.FinancialReportPptxExample;
 import com.demcha.examples.flagships.MasterShowcaseExample;
+import com.demcha.examples.flagships.MasterShowcasePptxExample;
 import com.demcha.examples.flagships.MavenBannerPptxExample;
 import com.demcha.examples.flagships.ModuleFirstFileExample;
 import com.demcha.examples.flagships.TwinOutputExample;
@@ -212,13 +215,16 @@ public final class GenerateAllExamples {
         // === Flagships ===
         System.out.println("Generated: " + ModuleFirstFileExample.generate());
         System.out.println("Generated: " + MasterShowcaseExample.generate());
+        System.out.println("Generated: " + MasterShowcasePptxExample.generate());
         System.out.println("Generated: " + FeatureCatalogExample.generate());
         System.out.println("Generated: " + BusinessReportExample.generate());
+        System.out.println("Generated: " + BusinessReportPptxExample.generate());
         System.out.println("Generated: " + EngineDeckExample.generate());
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
         System.out.println("Generated: " + MavenBannerPptxExample.generate());
         System.out.println("Generated: " + TwinOutputExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
+        System.out.println("Generated: " + FinancialReportPptxExample.generate());
         System.out.println("Generated: " + BookTemplateExample.generate());
         System.out.println("Generated: " + PoetryTitlePageExample.generate());
     }

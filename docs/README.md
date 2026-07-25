@@ -38,6 +38,11 @@ back here.
 - **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
 - **[templates/v1-classic/](templates/v1-classic/)** — 🗄️ archived: the classic spec/builder/presets surface removed in 2.0; kept for pre-2.0 callers.
 
+### Output backends
+- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for PDF vs PPTX fidelity.
+- **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF (`@Beta`, first shipped in 2.1.0).
+- **[api-stability.md](api-stability.md)** — stability tier per package, and what a tier promises.
+
 ### Architecture
 - **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).
 - **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.

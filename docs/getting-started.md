@@ -204,6 +204,44 @@ without the outline frame and logs a one-time capability warning. See
 [`docs/recipes/shape-as-container.md`](recipes/shape-as-container.md)
 for the full recipe.
 
+## PowerPoint output
+
+Add `graph-compose-render-pptx` to the classpath and the same session
+also emits an editable `.pptx` deck. The backend registers itself
+through `ServiceLoader`, so there is nothing to wire up:
+
+<!-- doc-example: id=getting-started-pptx mode=method -->
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
+import com.demcha.compose.document.api.DocumentSession;
+
+import java.nio.file.Path;
+
+try (DocumentSession document = GraphCompose.document()
+        .pageSize(DocumentPageSize.SLIDE_16_9)
+        .margin(48, 48, 48, 48)
+        .create()) {
+
+    document.pageFlow(page -> page
+            .module("Title", module -> module.paragraph("Quarterly review")));
+
+    document.buildPptx(Path.of("deck.pptx"));
+}
+```
+
+One resolved page becomes one identically-sized slide, and fragments
+land at the same coordinates as in the PDF — both backends consume the
+same layout graph, compiled in core before either runs. Glyphs are
+still drawn by the viewer, so the rendered text depends on the fonts
+installed on the viewing machine.
+
+The backend ships as `@Beta` (Experimental) in 2.1.0: it is usable for
+production decks, but its API shape may change in a minor release.
+Per-capability fidelity — what is a native shape, what is approximated,
+and the raster fallback used for clipped regions — is documented in the
+[backend capability matrix](architecture/backend-capability-matrix.md).
+
 ## Templates
 
 Templates compose into the same `DocumentSession`. Data specs live

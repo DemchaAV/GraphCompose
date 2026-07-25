@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Standalone consumer smoke project: no <parent>, never part of the
+         GraphCompose reactor. The lean core plus the PPTX backend — the
+         coordinate a PowerPoint consumer actually installs. -->
+    <groupId>com.demcha.smoke</groupId>
+    <artifactId>graph-compose-smoke-core-render-pptx</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <gc.version>2.0.0</gc.version>
+        <junit.version>5.11.4</junit.version>
+        <assertj.version>3.27.3</assertj.version>
+        <surefire.version>3.5.2</surefire.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-core</artifactId>
+            <version>${gc.version}</version>
+        </dependency>
+        <!-- Declared at runtime scope on purpose: the consumer compiles against
+             core only and discovers the backend through META-INF/services. The
+             PDF stack arrives transitively — the backend reuses its font
+             measurement and the clip raster pass — which this scenario asserts
+             rather than hides. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pptx</artifactId>
+            <version>${gc.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

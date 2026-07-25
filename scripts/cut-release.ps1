@@ -404,6 +404,42 @@ function Update-ModuleReadmeInstallVersion($readmePath, $newVersion) {
     }
 }
 
+function Update-ReleaseSmokeDefaultVersion($repoRoot, $newVersion) {
+    # The consumer-smoke harness hard-codes the version it tests when none is
+    # passed. Left behind, a post-release run that accepts the prefilled default
+    # re-verifies the PREVIOUS release and reports green — the one failure mode a
+    # release gate must not have. Each pattern is anchored to its own construct so
+    # a bump cannot smear across unrelated version strings in the same file.
+    $targets = @(
+        @{ Path = 'scripts/release-smoke/run.sh';        Pattern = '(?<=^GC_VERSION=")[\w\.\-]+(?=")';               Label = 'run.sh default' },
+        @{ Path = 'scripts/release-smoke/run.sh';        Pattern = '(?<=tests gc\.version=)[\w\.\-]+';                Label = 'run.sh usage' },
+        @{ Path = 'scripts/release-smoke/run.ps1';       Pattern = "(?<=\[string\]\`$Version = ')[\w\.\-]+(?=')";     Label = 'run.ps1 default' },
+        @{ Path = 'scripts/release-smoke/run.ps1';       Pattern = '(?<=# isolated, tests )[\w\.\-]+';                Label = 'run.ps1 usage' },
+        @{ Path = '.github/workflows/release-smoke.yml'; Pattern = "(?<=^\s{8}default: ')[\w\.\-]+(?=')";             Label = 'workflow input default' },
+        @{ Path = 'scripts/release-smoke/README.md';     Pattern = '(?<=defaults to the current published release \(`)[\w\.\-]+(?=`\))'; Label = 'README prose' }
+    )
+
+    foreach ($target in $targets) {
+        $path = Join-Path $repoRoot $target.Path
+        if (-not (Test-Path $path)) {
+            Note "skip (no file): $($target.Path)"
+            continue
+        }
+        $content = Get-Content $path -Raw
+        $updated = [regex]::Replace($content, $target.Pattern, $newVersion, 'Multiline')
+        if ($content -eq $updated) {
+            Note "no change: $($target.Path) [$($target.Label)] (already $newVersion?)"
+            continue
+        }
+        if ($DryRun) {
+            Write-Host "    [DRY RUN] Bump $($target.Path) [$($target.Label)] -> $newVersion" -ForegroundColor Yellow
+        } else {
+            [System.IO.File]::WriteAllText($path, $updated)
+            Note "bumped release-smoke $($target.Label): $($target.Path) -> $newVersion"
+        }
+    }
+}
+
 function Update-IndexHtmlVersion($indexHtmlPath, $newVersion) {
     if (-not (Test-Path $indexHtmlPath)) {
         Note "skip (no file): $indexHtmlPath"
@@ -815,6 +851,9 @@ try {
             Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $moduleReadme) $Version
         }
         Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
+        # The smoke harness's default version must follow the release, or the
+        # post-release run silently re-verifies the previous one.
+        Update-ReleaseSmokeDefaultVersion $repoRoot $Version
     } else {
         Note "pre-release: skipped README / module-README / web install-snippet bumps (stay on last stable)"
     }
@@ -941,7 +980,13 @@ try {
         'benchmarks/pom.xml',
         'README.md',
         'CHANGELOG.md',
-        'web/index.html'
+        'web/index.html',
+        # Bumped by Update-ReleaseSmokeDefaultVersion so the post-release smoke run
+        # defaults to the version just published, not the previous one.
+        'scripts/release-smoke/run.sh',
+        'scripts/release-smoke/run.ps1',
+        'scripts/release-smoke/README.md',
+        '.github/workflows/release-smoke.yml'
     )
     # qa + coverage exist only in the 2.0 aggregator layout; add them to the commit
     # only when present so the script stays layout-agnostic (the 1.x single-artifact

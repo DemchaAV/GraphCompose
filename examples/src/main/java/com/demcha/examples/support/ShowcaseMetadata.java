@@ -244,10 +244,15 @@ final class ShowcaseMetadata {
         return new Entry(title, desc, tags, code);
     }
 
+    /**
+     * Prefixes the category onto an entry's own tags, keeping first-seen order
+     * and dropping repeats. Most call sites pass their group again as a tag,
+     * which used to render the same chip twice on a card.
+     */
     private static List<String> withCategory(String category, String... extra) {
-        List<String> tags = new java.util.ArrayList<>();
+        java.util.Set<String> tags = new java.util.LinkedHashSet<>();
         tags.add(category);
-        for (String t : extra) tags.add(t);
+        java.util.Collections.addAll(tags, extra);
         return List.copyOf(tags);
     }
 }

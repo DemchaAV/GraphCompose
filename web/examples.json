@@ -162,7 +162,7 @@
               "id": "project-proposal-cinematic",
               "title": "Project Proposal (cinematic)",
               "description": "End-to-end project proposal with mountain hero, scope panels, and pricing summary.",
-              "tags": ["proposal", "proposal", "cinematic"],
+              "tags": ["proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/project-proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/project-proposal-cinematic.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java"
@@ -171,7 +171,7 @@
               "id": "proposal-cinematic",
               "title": "Cinematic Proposal",
               "description": "Layered ModernProposal layout with cover panel, hero spread, and rich typography.",
-              "tags": ["proposal", "proposal", "cinematic"],
+              "tags": ["proposal", "cinematic"],
               "pdf": "showcase/pdf/templates/proposal/proposal-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-cinematic.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/templates/proposal/ProposalCinematicFileExample.java"
@@ -195,7 +195,7 @@
               "id": "invoice-cinematic",
               "title": "Cinematic Invoice",
               "description": "Layered ModernInvoice preset with theme-driven layout, advanced tables, and totals.",
-              "tags": ["invoice", "invoice", "cinematic"],
+              "tags": ["invoice", "cinematic"],
               "pdf": "showcase/pdf/templates/invoice/invoice-cinematic.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-cinematic.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java"
@@ -219,7 +219,7 @@
               "id": "weekly-schedule",
               "title": "Weekly Schedule",
               "description": "Multi-day weekly schedule with shift assignments, category fills, and repeated header.",
-              "tags": ["schedule", "schedule", "table"],
+              "tags": ["schedule", "table"],
               "pdf": "showcase/pdf/templates/schedule/weekly-schedule.pdf",
               "screenshot": "showcase/screenshots/templates/schedule/weekly-schedule.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java"
@@ -381,7 +381,7 @@
               "id": "canvas-layer-showcase",
               "title": "Canvas Layer (free-canvas)",
               "description": "CanvasLayerNode — pixel-precise (x,y) placement of children inside a fixed bounding box.",
-              "tags": ["canvas", "canvas", "v1.6", "absolute"],
+              "tags": ["canvas", "v1.6", "absolute"],
               "pdf": "showcase/pdf/features/canvas/canvas-layer-showcase.pdf",
               "screenshot": "showcase/screenshots/features/canvas/canvas-layer-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/canvas/CanvasLayerExample.java"
@@ -396,7 +396,7 @@
               "id": "composed-table-cell-showcase",
               "title": "Composed Table Cells",
               "description": "DocumentTableCell.node(DocumentNode) — paragraphs, lists, sub-tables inside cells with two-pass measurement.",
-              "tags": ["tables", "tables", "v1.6"],
+              "tags": ["tables", "v1.6"],
               "pdf": "showcase/pdf/features/tables/composed-table-cell-showcase.pdf",
               "screenshot": "showcase/screenshots/features/tables/composed-table-cell-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/tables/ComposedTableCellExample.java"
@@ -414,7 +414,7 @@
               "id": "table-advanced",
               "title": "Advanced Tables",
               "description": "Row span, column span, zebra rows, total rows, and repeating headers across page breaks.",
-              "tags": ["tables", "tables", "pagination"],
+              "tags": ["tables", "pagination"],
               "pdf": "showcase/pdf/features/tables/table-advanced.pdf",
               "screenshot": "showcase/screenshots/features/tables/table-advanced.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java"
@@ -429,7 +429,7 @@
               "id": "nested-list-showcase",
               "title": "Nested Lists",
               "description": "ListBuilder.addItem(label, Consumer) — depth cascade, per-depth markers, mixed flat / nested authoring.",
-              "tags": ["lists", "lists", "v1.6"],
+              "tags": ["lists", "v1.6"],
               "pdf": "showcase/pdf/features/lists/nested-list-showcase.pdf",
               "screenshot": "showcase/screenshots/features/lists/nested-list-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/lists/NestedListExample.java"
@@ -444,7 +444,7 @@
               "id": "line-cap",
               "title": "Line Caps & Dotted Lines",
               "description": "addLine(...).lineCap(DocumentLineCap.ROUND) — round/square end-caps on plain lines; a ROUND cap on a near-zero dashed(0.1, 4) rule draws the classic dotted TOC leader.",
-              "tags": ["shapes", "shapes", "lines", "v1.9"],
+              "tags": ["shapes", "lines", "v1.9"],
               "pdf": "showcase/pdf/features/shapes/line-cap.pdf",
               "screenshot": "showcase/screenshots/features/shapes/line-cap.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/shapes/LineCapExample.java"
@@ -453,7 +453,7 @@
               "id": "line-fill",
               "title": "Fill Lines & Dot Leaders",
               "description": "line().fill() — a rule or dotted leader stretches to the content width or its weighted row slot, drawing table-of-contents leaders without measuring the gap by hand.",
-              "tags": ["shapes", "shapes", "layout", "v1.9"],
+              "tags": ["shapes", "layout", "v1.9"],
               "pdf": "showcase/pdf/features/shapes/line-fill.pdf",
               "screenshot": "showcase/screenshots/features/shapes/line-fill.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/shapes/LineFillExample.java"
@@ -462,7 +462,7 @@
               "id": "photo-clip",
               "title": "Photo Clip (silhouette)",
               "description": "A raster photo clipped to a free-form silhouette — circle, SVG heart, star — via ShapeContainer.path(...) + ClipPolicy.CLIP_PATH; the image COVER-fills each box so the native-curve outline crops it crisply at any zoom.",
-              "tags": ["shapes", "shapes", "clip", "v1.8"],
+              "tags": ["shapes", "clip", "v1.8"],
               "pdf": "showcase/pdf/features/shapes/photo-clip.pdf",
               "screenshot": "showcase/screenshots/features/shapes/photo-clip.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/shapes/PhotoClipExample.java"
@@ -471,7 +471,7 @@
               "id": "shape-container",
               "title": "Shape-as-Container",
               "description": "Rounded rect, ellipse, circle containers with ClipPolicy and layered children.",
-              "tags": ["shapes", "shapes", "clip"],
+              "tags": ["shapes", "clip"],
               "pdf": "showcase/pdf/features/shapes/shape-container.pdf",
               "screenshot": "showcase/screenshots/features/shapes/shape-container.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/shapes/ShapeContainerExample.java"
@@ -480,7 +480,7 @@
               "id": "vector-path",
               "title": "Vector Paths (Bézier)",
               "description": "addPath(...) — free-form design shapes with native cubic Bézier curves: stroked waves, filled blobs, mixed line/curve ribbons. No tessellation.",
-              "tags": ["shapes", "shapes", "bezier", "v1.8"],
+              "tags": ["shapes", "bezier", "v1.8"],
               "pdf": "showcase/pdf/features/shapes/vector-path.pdf",
               "screenshot": "showcase/screenshots/features/shapes/vector-path.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/shapes/VectorPathExample.java"
@@ -495,7 +495,7 @@
               "id": "transforms",
               "title": "Layers + Transforms",
               "description": "rotate / scale on every leaf builder + LayerStack with explicit z-index.",
-              "tags": ["transforms", "transforms", "layers"],
+              "tags": ["transforms", "layers"],
               "pdf": "showcase/pdf/features/transforms/transforms.pdf",
               "screenshot": "showcase/screenshots/features/transforms/transforms.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/transforms/TransformsExample.java"
@@ -573,7 +573,7 @@
               "id": "rich-text-showcase",
               "title": "Rich Text",
               "description": "Inline runs with bold / italic / colour / link options, markdown parsing.",
-              "tags": ["text", "text", "rich"],
+              "tags": ["text", "rich"],
               "pdf": "showcase/pdf/features/text/rich-text-showcase.pdf",
               "screenshot": "showcase/screenshots/features/text/rich-text-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java"
@@ -582,7 +582,7 @@
               "id": "section-presets",
               "title": "Section Presets",
               "description": "Pre-baked section bands, accent strips, soft panels for templates.",
-              "tags": ["text", "text", "sections"],
+              "tags": ["text", "sections"],
               "pdf": "showcase/pdf/features/text/section-presets.pdf",
               "screenshot": "showcase/screenshots/features/text/section-presets.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java"
@@ -597,7 +597,7 @@
               "id": "barcode-showcase",
               "title": "Barcodes & QR",
               "description": "QR code, Code128, EAN-13, PDF417 — every supported barcode + per-barcode styling.",
-              "tags": ["barcodes", "barcodes", "qr"],
+              "tags": ["barcodes", "qr"],
               "pdf": "showcase/pdf/features/barcodes/barcode-showcase.pdf",
               "screenshot": "showcase/screenshots/features/barcodes/barcode-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java"
@@ -612,7 +612,7 @@
               "id": "page-numbering",
               "title": "Page Numbering",
               "description": "DocumentHeaderFooter.numbering(DocumentPageNumbering) — {page}/{pages} footer tokens with countFrom(2) leaving the cover uncounted and LOWER_ROMAN restyling the body.",
-              "tags": ["chrome", "chrome", "footer", "v1.9"],
+              "tags": ["chrome", "footer", "v1.9"],
               "pdf": "showcase/pdf/features/chrome/page-numbering.pdf",
               "screenshot": "showcase/screenshots/features/chrome/page-numbering.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java"
@@ -621,7 +621,7 @@
               "id": "pdf-chrome",
               "title": "PDF Chrome",
               "description": "Headers, footers, watermarks, metadata, document protection / encryption.",
-              "tags": ["chrome", "chrome", "metadata", "watermark"],
+              "tags": ["chrome", "metadata", "watermark"],
               "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
               "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java"
@@ -630,7 +630,7 @@
               "id": "viewer-preferences",
               "title": "Viewer Preferences",
               "description": "chrome().viewerPreferences(DocumentViewerPreferences) — opens the PDF with pageMode(USE_OUTLINES) showing the bookmark panel and displayDocTitle(true) in the title bar.",
-              "tags": ["chrome", "chrome", "v1.9"],
+              "tags": ["chrome", "v1.9"],
               "pdf": "showcase/pdf/features/chrome/viewer-preferences.pdf",
               "screenshot": "showcase/screenshots/features/chrome/viewer-preferences.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java"
@@ -645,7 +645,7 @@
               "id": "invoice-http-stream",
               "title": "HTTP Streaming",
               "description": "Stream PDF directly to a Servlet response with no buffering.",
-              "tags": ["streaming", "streaming", "http"],
+              "tags": ["streaming", "http"],
               "pdf": "showcase/pdf/features/streaming/invoice-http-stream.pdf",
               "screenshot": "showcase/screenshots/features/streaming/invoice-http-stream.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java"
@@ -660,7 +660,7 @@
               "id": "invoice-snapshot-regression",
               "title": "Layout Snapshots",
               "description": "How LayoutSnapshotAssertions captures the resolved layout graph for regression testing.",
-              "tags": ["snapshots", "snapshots", "testing"],
+              "tags": ["snapshots", "testing"],
               "pdf": "showcase/pdf/features/snapshots/invoice-snapshot-regression.pdf",
               "screenshot": "showcase/screenshots/features/snapshots/invoice-snapshot-regression.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java"
@@ -675,7 +675,7 @@
               "id": "chart-showcase",
               "title": "Vector Charts",
               "description": "section.chart(ChartSpec, ChartStyle) — bar/line/area/pie/donut specs (ChartSpec.bar(), LineInterpolation.MONOTONE, SliceLabelMode) compiled into engine primitives, no chart-specific render code.",
-              "tags": ["charts", "charts", "data-viz", "v1.9"],
+              "tags": ["charts", "data-viz", "v1.9"],
               "pdf": "showcase/pdf/features/charts/chart-showcase.pdf",
               "screenshot": "showcase/screenshots/features/charts/chart-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java"
@@ -690,7 +690,7 @@
               "id": "debug-overlay",
               "title": "Debug Overlay",
               "description": "DocumentDebugOptions — guide lines plus semantic node-path labels on the rendered sheet; trace any misplaced block back to the builder call that authored it.",
-              "tags": ["debug", "debug", "labels", "v1.8"],
+              "tags": ["debug", "labels", "v1.8"],
               "pdf": "showcase/pdf/features/debug/debug-overlay.pdf",
               "screenshot": "showcase/screenshots/features/debug/debug-overlay.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java"
@@ -705,7 +705,7 @@
               "id": "word-export-companion",
               "title": "Word Export (DOCX)",
               "description": "DocxSemanticBackend — the same document as a fixed-layout PDF and an editable Word file; charts fall back to their data table.",
-              "tags": ["docx", "docx", "word", "export"],
+              "tags": ["docx", "word", "export"],
               "pdf": "showcase/pdf/features/docx/word-export-companion.pdf",
               "screenshot": "showcase/screenshots/features/docx/word-export-companion.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/docx/WordExportExample.java"
@@ -720,7 +720,7 @@
               "id": "block-align",
               "title": "Block Alignment",
               "description": "addAligned(align, node) / addSvgIcon(icon, w, align) — seat any fixed-size node left / centre / right across the content width.",
-              "tags": ["layout", "layout", "align", "v1.8"],
+              "tags": ["layout", "align", "v1.8"],
               "pdf": "showcase/pdf/features/layout/block-align.pdf",
               "screenshot": "showcase/screenshots/features/layout/block-align.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/BlockAlignExample.java"
@@ -729,7 +729,7 @@
               "id": "content-bleed",
               "title": "Content Bleed",
               "description": "section.bleedToEdge(TOP, LEFT, RIGHT) and bleed(DocumentBleed.of(...)) push a fill to the trimmed page edge while children stay in the content margin.",
-              "tags": ["layout", "layout", "v1.9", "bleed"],
+              "tags": ["layout", "v1.9", "bleed"],
               "pdf": "showcase/pdf/features/layout/content-bleed.pdf",
               "screenshot": "showcase/screenshots/features/layout/content-bleed.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/BleedExample.java"
@@ -738,7 +738,7 @@
               "id": "per-page-margin",
               "title": "Per-Page Margins",
               "description": "document.pageMargins(List.of(PageMarginRule.page(1, DocumentInsets.zero()), PageMarginRule.from(2, ...))) — a full-bleed cover then wide book margins in one session.",
-              "tags": ["layout", "layout", "v1.9"],
+              "tags": ["layout", "v1.9"],
               "pdf": "showcase/pdf/features/layout/per-page-margin.pdf",
               "screenshot": "showcase/screenshots/features/layout/per-page-margin.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/PerPageMarginExample.java"
@@ -747,7 +747,7 @@
               "id": "row-columns",
               "title": "Row Columns",
               "description": "columns(auto(), weight(1), auto()) sizes row cells as intrinsic or weighted shares; paired with line().fill() a dotted leader fills the gap for a measureless table-of-contents row.",
-              "tags": ["layout", "layout", "v1.9", "rows"],
+              "tags": ["layout", "v1.9", "rows"],
               "pdf": "showcase/pdf/features/layout/row-columns.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-columns.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/RowColumnsExample.java"
@@ -756,7 +756,7 @@
               "id": "row-flex",
               "title": "Row Flex & Arrangement",
               "description": "RowBuilder.pushRight()/flexSpacer() springs absorb leftover row width while arrangement(RowArrangement.SPACE_BETWEEN/CENTER) justifies content-sized children — no manual coordinates.",
-              "tags": ["layout", "layout", "v1.9", "row"],
+              "tags": ["layout", "v1.9", "row"],
               "pdf": "showcase/pdf/features/layout/row-flex.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-flex.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/RowFlexExample.java"
@@ -765,7 +765,7 @@
               "id": "row-vertical-align",
               "title": "Row Vertical Align",
               "description": "RowBuilder.verticalAlign(RowVerticalAlign) — seats a row's children TOP, CENTER, or BOTTOM within the band set by the tallest child, no manual coordinates.",
-              "tags": ["layout", "layout", "v1.9"],
+              "tags": ["layout", "v1.9"],
               "pdf": "showcase/pdf/features/layout/row-vertical-align.pdf",
               "screenshot": "showcase/screenshots/features/layout/row-vertical-align.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/layout/RowVerticalAlignExample.java"
@@ -780,7 +780,7 @@
               "id": "container-bookmark",
               "title": "PDF Outline Bookmarks",
               "description": "bookmark(new DocumentBookmarkOptions(title)) on a container flow — each section becomes a PDF outline entry targeting its start page, building a navigable viewer panel with no manual coordinates.",
-              "tags": ["navigation", "navigation", "structure", "v1.9"],
+              "tags": ["navigation", "structure", "v1.9"],
               "pdf": "showcase/pdf/features/navigation/container-bookmark.pdf",
               "screenshot": "showcase/screenshots/features/navigation/container-bookmark.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/navigation/ContainerBookmarkExample.java"
@@ -789,7 +789,7 @@
               "id": "in-pdf-navigation",
               "title": "In-PDF Navigation",
               "description": "anchor(...) plus linkTo(...) — named destinations and internal go-to links for a clickable table of contents and bidirectional footnotes, resolved in a deferred pass for forward references.",
-              "tags": ["navigation", "navigation", "v1.9", "links"],
+              "tags": ["navigation", "v1.9", "links"],
               "pdf": "showcase/pdf/features/navigation/in-pdf-navigation.pdf",
               "screenshot": "showcase/screenshots/features/navigation/in-pdf-navigation.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java"
@@ -798,7 +798,7 @@
               "id": "page-reference",
               "title": "Page References",
               "description": "addPageReference(anchor, style, align) — prints the resolved page an anchor(...) lands on for \"see page N\" cross-refs, in one authoring pass via a second layout pass.",
-              "tags": ["navigation", "navigation", "v1.9", "structure"],
+              "tags": ["navigation", "v1.9", "structure"],
               "pdf": "showcase/pdf/features/navigation/page-reference.pdf",
               "screenshot": "showcase/screenshots/features/navigation/page-reference.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java"
@@ -807,7 +807,7 @@
               "id": "table-of-contents",
               "title": "Table of Contents",
               "description": "page.addTableOfContents(...) with entry(label, anchor) — clickable rows, a DocumentLeader.DOTS leader, and page numbers resolved automatically from the laid-out document.",
-              "tags": ["navigation", "navigation", "structure", "v1.9"],
+              "tags": ["navigation", "structure", "v1.9"],
               "pdf": "showcase/pdf/features/navigation/table-of-contents.pdf",
               "screenshot": "showcase/screenshots/features/navigation/table-of-contents.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/navigation/TocExample.java"
@@ -822,7 +822,7 @@
               "id": "multi-section-document",
               "title": "Multi-Section Document",
               "description": "GraphCompose.documents(out).section(cover).section(body) — concatenate independent DocumentSessions, each with its own page size and chrome, into one PDF with no external merge.",
-              "tags": ["structure", "structure", "v1.9"],
+              "tags": ["structure", "v1.9"],
               "pdf": "showcase/pdf/features/structure/multi-section-document.pdf",
               "screenshot": "showcase/screenshots/features/structure/multi-section-document.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/structure/MultiSectionExample.java"
@@ -837,7 +837,7 @@
               "id": "svg-icon-gallery",
               "title": "SVG Icon Gallery",
               "description": "34 real-world multicolour svgrepo icons through SvgIcon.parse — native vector layers, the whole set 156 KB of sources.",
-              "tags": ["svg", "svg", "icons", "v1.8"],
+              "tags": ["svg", "icons", "v1.8"],
               "pdf": "showcase/pdf/features/svg/svg-icon-gallery.pdf",
               "screenshot": "showcase/screenshots/features/svg/svg-icon-gallery.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/features/svg/SvgIconGalleryExample.java"
@@ -884,6 +884,7 @@
               "description": "Flagship cover page with hero panel, KPI table, and accent strip — ready-to-ship template.",
               "tags": ["flagship", "showcase", "cover"],
               "pdf": "showcase/pdf/flagships/default/business-report.pdf",
+              "pptx": "showcase/pptx/flagships/default/business-report.pptx",
               "screenshot": "showcase/screenshots/flagships/default/business-report.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/BusinessReportExample.java"
             },
@@ -891,25 +892,17 @@
               "id": "engine-deck",
               "title": "Engine Deck",
               "description": "Landscape flagship deck — hero banner, SVG-icon feature spreads, and benchmark tables and charts the engine renders from comparative data.",
-              "tags": ["flagship", "showcase", "flagship"],
+              "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/engine-deck.pdf",
+              "pptx": "showcase/pptx/flagships/default/engine-deck.pptx",
               "screenshot": "showcase/screenshots/flagships/default/engine-deck.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java"
-            },
-            {
-              "id": "engine-deck-v2",
-              "title": "Engine Deck V2",
-              "description": "Generated showcase for flagships / default.",
-              "tags": ["flagships", "default"],
-              "pdf": "showcase/pdf/flagships/default/engine-deck-v2.pdf",
-              "screenshot": "showcase/screenshots/flagships/default/engine-deck-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples"
             },
             {
               "id": "feature-catalog",
               "title": "Feature Catalog",
               "description": "A guided catalog of the engine's primitives, one section per capability, every heading registered as a PDF outline bookmark for a navigable index.",
-              "tags": ["flagship", "showcase", "flagship"],
+              "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/feature-catalog.pdf",
               "screenshot": "showcase/screenshots/flagships/default/feature-catalog.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java"
@@ -918,8 +911,9 @@
               "id": "financial-report",
               "title": "Financial Report",
               "description": "A polished financial-report flagship — clipped-photo masthead, KPI tables, and vector charts combining the engine's data-viz and shape primitives.",
-              "tags": ["flagship", "showcase", "flagship"],
+              "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/financial-report.pdf",
+              "pptx": "showcase/pptx/flagships/default/financial-report.pptx",
               "screenshot": "showcase/screenshots/flagships/default/financial-report.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java"
             },
@@ -929,6 +923,7 @@
               "description": "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.",
               "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/master-showcase.pdf",
+              "pptx": "showcase/pptx/flagships/default/master-showcase.pptx",
               "screenshot": "showcase/screenshots/flagships/default/master-showcase.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
@@ -940,6 +935,16 @@
               "pdf": "showcase/pdf/flagships/default/module-first-profile.pdf",
               "screenshot": "showcase/screenshots/flagships/default/module-first-profile.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
+            },
+            {
+              "id": "twin-output",
+              "title": "Twin Output",
+              "description": "One 16:9 page written once and emitted twice from the same session — a print-ready PDF and a PowerPoint slide with identical geometry where text, panels, and vectors stay native, editable shapes.",
+              "tags": ["flagship", "showcase"],
+              "pdf": "showcase/pdf/flagships/default/twin-output.pdf",
+              "pptx": "showcase/pptx/flagships/default/twin-output.pptx",
+              "screenshot": "showcase/screenshots/flagships/default/twin-output.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/v2.0.0/examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"
             }
           ]
         }

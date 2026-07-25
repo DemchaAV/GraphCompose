@@ -353,6 +353,7 @@
       .map(t => '<span class="tag">' + escHtml(t) + '</span>').join('');
     const screenshot = ex.screenshot || '';
     const pdf = ex.pdf || '';
+    const pptx = ex.pptx || '';
     const code = ex.code || '#';
     const altText = buildAlt(ex);
     return [
@@ -375,6 +376,12 @@
       tags ? '    <div class="example-tags">' + tags + '</div>' : '',
       '    <div class="example-actions">',
       '      <a class="example-action" href="' + escAttr(pdf) + '" target="_blank" rel="noopener" aria-label="Open PDF">View PDF</a>',
+      // A twin flagship also ships the deck the same session emitted. Only the
+      // examples that actually rendered one carry `pptx`, so the link is omitted
+      // rather than dead for every PDF-only card.
+      pptx
+        ? '      <a class="example-action example-action-ghost" href="' + escAttr(pptx) + '" download aria-label="Download PowerPoint deck">Get PPTX</a>'
+        : '',
       '      <a class="example-action example-action-ghost" href="' + escAttr(code) + '" target="_blank" rel="noopener" aria-label="Open source on GitHub">View Code</a>',
       '    </div>',
       '  </div>',

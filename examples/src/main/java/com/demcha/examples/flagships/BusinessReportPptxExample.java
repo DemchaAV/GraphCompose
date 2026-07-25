@@ -9,7 +9,7 @@ import java.nio.file.Path;
  * The {@link BusinessReportExample} investor report emitted as a PowerPoint
  * deck: the same composition, built once through the shared session config and
  * written through the fixed-layout PPTX backend via
- * {@link DocumentSession#buildPptx()}. One resolved page becomes one
+ * {@link DocumentSession#buildPptx(java.nio.file.Path)}. One resolved page becomes one
  * identically-sized slide, so the report opens in PowerPoint as an editable copy
  * of the PDF — the KPI cards, the native revenue/profit chart, and the metrics
  * table arrive as editable shapes and text frames, not a screenshot.
@@ -31,7 +31,7 @@ public final class BusinessReportPptxExample {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "business-report.pptx");
         try (DocumentSession document = BusinessReportExample.document(outputFile).create()) {
             BusinessReportExample.compose(document);
-            document.buildPptx();
+            document.buildPptx(outputFile);
         }
         return outputFile;
     }

@@ -9,7 +9,7 @@ import java.nio.file.Path;
  * The {@link MasterShowcaseExample} kitchen-sink report emitted as a PowerPoint
  * deck: the same composition, built once through the shared session config and
  * written through the fixed-layout PPTX backend via
- * {@link DocumentSession#buildPptx()}. Each resolved page becomes one
+ * {@link DocumentSession#buildPptx(java.nio.file.Path)}. Each resolved page becomes one
  * identically-sized slide, so the multi-page report opens in PowerPoint as an
  * editable copy of the PDF — rich text, the advanced table, header/footer
  * chrome, and barcodes arrive as native shapes and text frames; the rotated,
@@ -32,7 +32,7 @@ public final class MasterShowcasePptxExample {
         Path outputFile = ExampleOutputPaths.prepare("flagships", "master-showcase.pptx");
         try (DocumentSession document = MasterShowcaseExample.document(outputFile).create()) {
             MasterShowcaseExample.compose(document);
-            document.buildPptx();
+            document.buildPptx(outputFile);
         }
         return outputFile;
     }

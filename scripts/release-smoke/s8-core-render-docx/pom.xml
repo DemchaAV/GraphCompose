@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Standalone consumer smoke project: no <parent>, never part of the
+         GraphCompose reactor. The lean core plus the semantic Word exporter. -->
+    <groupId>com.demcha.smoke</groupId>
+    <artifactId>graph-compose-smoke-core-render-docx</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <gc.version>2.0.0</gc.version>
+        <junit.version>5.11.4</junit.version>
+        <assertj.version>3.27.3</assertj.version>
+        <surefire.version>3.5.2</surefire.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-core</artifactId>
+            <version>${gc.version}</version>
+        </dependency>
+        <!-- Compile scope, unlike the fixed-layout backends: the DOCX exporter is
+             named directly by the caller (session.export(new DocxSemanticBackend()))
+             rather than discovered through the ServiceLoader. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-docx</artifactId>
+            <version>${gc.version}</version>
+        </dependency>
+        <!-- Required, and not transitive: opening a DocumentSession resolves a
+             FontMetricsProvider, and render-pdf is the only artifact that publishes
+             one. render-docx declares it at test scope for its own suite, so a
+             consumer installing core + render-docx alone cannot construct a session
+             at all. This scenario therefore pins the combination that actually
+             works — see render-docx/README.md. -->
+        <dependency>
+            <groupId>io.github.demchaav</groupId>
+            <artifactId>graph-compose-render-pdf</artifactId>
+            <version>${gc.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

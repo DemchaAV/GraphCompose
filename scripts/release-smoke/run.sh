@@ -24,7 +24,7 @@ REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 MVNW="$REPO_ROOT/mvnw"
 SETTINGS="$HERE/settings.xml"
 
-SCENARIOS=(s1-graph-compose s2-core-only s3-core-render-pdf s4-templates s5-testing s6-bundle)
+SCENARIOS=(s1-graph-compose s2-core-only s3-core-render-pdf s4-templates s5-testing s6-bundle s7-core-render-pptx s8-core-render-docx)
 REPO="$REPO_ROOT/target/release-smoke-m2/repo"
 
 # Default version under test: the currently published release. Release smoke must

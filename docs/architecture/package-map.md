@@ -23,7 +23,8 @@ ships them differs.
 | --- | --- |
 | `graph-compose-core` | The lean engine: `com.demcha.compose`, the canonical `document.*` authoring surface (`api` / `dsl` / `node` / `style` / `table` / `snapshot`), `document.showcase` (`FontShowcase`), the `document.backend.fixed` SPI seam, the public `document.backend.fixed.pdf.options` records, `document.layout`, `font.*`, and the internal `engine.*` foundation. |
 | `graph-compose-render-pdf` | The PDFBox backend: `document.backend.fixed.pdf.**` (the `PdfFixedLayoutBackend` impl + handlers) and the `engine.render.pdf.**` render tree. Registers the PDF `FixedLayoutBackendProvider` / `FontMetricsProvider`. |
-| `graph-compose-render-docx` / `graph-compose-render-pptx` | The POI semantic exporters — `document.backend.semantic.docx` / `.pptx`. |
+| `graph-compose-render-pptx` | The POI XSLF backend: `document.backend.fixed.pptx.**` (the `PptxFixedLayoutBackend` impl + handlers), registering the `"pptx"` `FixedLayoutBackendProvider`. Also carries the older `document.backend.semantic.pptx` manifest exporter. Depends on `graph-compose-render-pdf` for shared font measurement and the clip raster pass. |
+| `graph-compose-render-docx` | The POI semantic exporter — `document.backend.semantic.docx`. |
 | `graph-compose-templates` | The built-in preset families — `document.templates.**`. |
 | `graph-compose-testing` | Consumer test support — `com.demcha.compose.testing.**`. |
 | `graph-compose` | Back-compat wrapper: an empty jar over `graph-compose-core` + `graph-compose-render-pdf`. |
@@ -54,6 +55,7 @@ per-package artifact.
 | `com.demcha.compose.document.layout` (`@Internal` at package level) | Semantic layout compiler, node definitions, fragments, split/measure contracts, and layout graph. | `NodeDefinition` is `@Beta` — Extension SPI for custom node types. New node behavior must be deterministic and covered by layout or render tests. |
 | `com.demcha.compose.document.backend.fixed` | Backend-neutral fixed-layout rendering contract. | Keep it independent from PDFBox and semantic template data. |
 | `com.demcha.compose.document.backend.fixed.pdf` | Canonical fixed-layout PDF backend, fragment handlers, PDF-specific options, and PDF-backed measurement resources. | Keep PDFBox lifecycle internal; normal callers should use `DocumentSession` and default PDF convenience methods. |
+| `com.demcha.compose.document.backend.fixed.pptx` (`@Beta` at package level) | Fixed-layout PowerPoint backend — `PptxFixedLayoutBackend`, its provider, deterministic writer, embedded-font and clip support, plus the `.handlers` fragment handler set. Consumes the same resolved `LayoutGraph` as the PDF backend. | Keep POI XSLF lifecycle internal. Any capability change must update [backend-capability-matrix.md](./backend-capability-matrix.md) in the same commit. |
 | `com.demcha.compose.document.dsl.internal` | Internal helpers for public DSL builders such as semantic name normalization and builder callback application. | Do not expose these helpers in examples; move reusable authoring concepts to public builder classes instead. |
 | `com.demcha.compose.document.backend.semantic` | Experimental semantic export contracts for non-fixed outputs. | Keep exporters separate from PDF fixed-layout rendering. |
 | `com.demcha.compose.document.debug` | Snapshot/debug adapters for canonical layout graph inspection. | Debug output should be deterministic and safe for tests. |
@@ -62,9 +64,9 @@ per-package artifact.
 
 | Package | Responsibility | Extension rule |
 | --- | --- | --- |
-| `com.demcha.compose.engine.components.*` | Low-level ECS components, content payloads, style values, geometry, layout, and render markers. | Use only for engine primitives; public document authoring should go through `DocumentDsl` and semantic nodes. |
-| `com.demcha.compose.engine.core` | Entity manager, canvas, traversal context, and base ECS system contracts. | Keep core thin; put stage-specific logic in layout, pagination, measurement, or render packages. |
-| `com.demcha.compose.engine.pagination` | Pagination markers and helpers (`Breakable`, `ParentContainerUpdater`, `Offset`). | Maintain child-first ordering and page-shift propagation rules. |
+| `com.demcha.compose.engine.components.*` | Engine content payloads and their caches — decoded image data and intrinsic sizes, barcode payloads, and the shared bounded LRU cache behind them. | Use only for engine primitives; public document authoring should go through `DocumentDsl` and semantic nodes. |
+| `com.demcha.compose.engine.debug` | Layout snapshot value types (`LayoutSnapshot`, `LayoutNodeSnapshot`, `LayoutCanvasSnapshot`, `LayoutInsetsSnapshot`) behind `DocumentSession.layoutSnapshot()`. | Snapshot output must stay deterministic — it is a regression-test contract. |
+| `com.demcha.compose.engine.font` | Backend-neutral font abstraction: `Font`, `FontBase`, `FontLineMetrics`. | Backends implement the seam; the catalogue and lookup live in the public `com.demcha.compose.font`. |
 | `com.demcha.compose.engine.measurement` | Text measurement contracts and font-backed implementations. | Builders/layout helpers depend on this seam instead of reaching into renderers. |
 | `com.demcha.compose.engine.render` | Backend-neutral render contracts, handler registry, and render-pass session lifetime. | Add backend-neutral contracts here, backend-specific drawing elsewhere. |
 | `com.demcha.compose.engine.render.pdf` | Shared PDFBox primitives for the canonical fixed-layout backend: `PdfFont`, `GlyphFallbackLogger`, and the header/footer + watermark renderers under `helpers`. | Add canonical-shared PDF support here; per-fragment PDF drawing lives in the `PdfFragmentRenderHandler` implementations under `document.backend.fixed.pdf.handlers`. |

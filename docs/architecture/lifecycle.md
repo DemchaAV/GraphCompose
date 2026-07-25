@@ -1,6 +1,6 @@
 # Canonical Document Lifecycle
 
-GraphCompose v1.2 follows the canonical session-first lifecycle:
+GraphCompose follows a session-first lifecycle:
 
 ```text
 GraphCompose.document(...)
@@ -9,7 +9,7 @@ GraphCompose.document(...)
   -> semantic nodes
   -> layout graph
   -> layout snapshot or fixed backend render
-  -> PDF stream/bytes/file
+  -> PDF or PPTX stream/bytes/file
 ```
 
 ```mermaid
@@ -41,10 +41,12 @@ for layout, pagination, diagnostics, and rendering.
 
 `DocumentSession` is mutable and not thread-safe. Create one session per document/request.
 
-Advanced PDF-only options such as metadata, protection, watermark, headers,
-and footers are configured through `PdfFixedLayoutBackend.builder()`. The
-session convenience PDF methods expose only the common document-level options,
-including guide-line overlays.
+Backend-level tuning is configured through the backend builder —
+`PdfFixedLayoutBackend.builder()` for PDF-specific options such as protection,
+and `PptxFixedLayoutBackend.builder()` for PPTX-specific ones such as
+deterministic output and the clip raster fallback. The backend-neutral chrome
+(metadata, watermark, headers/footers) is set on the session itself and reaches
+whichever backend renders, subject to the coverage noted in §5.
 
 ## 2. Authoring
 
@@ -78,9 +80,9 @@ snapshot.
 
 Pagination happens during layout. Semantic nodes define whether they are atomic or splittable. Long paragraphs/lists can split into fragments; atomic blocks move to the next page when needed.
 
-The lower-level ECS engine still has pagination helpers under `com.demcha.compose.engine.pagination` for internal tests, diagnostics, and backend/tooling work.
+Pagination lives entirely in `LayoutCompiler` and the `NodeDefinition` split contracts under `com.demcha.compose.document.layout`. A node opts into keep-together or keep-with-next behaviour through its semantic flags; the compiler resolves the page break and emits the resulting `PlacedFragment` records.
 
-## 5. Render
+## 5. Render (PDF / PPTX)
 
 `DocumentSession.writePdf(OutputStream)` renders the resolved layout graph through `PdfFixedLayoutBackend` and writes the PDF to a caller-owned stream without closing it. This is the preferred server path because the session does not keep a PDF byte-array cache.
 
@@ -93,6 +95,10 @@ The canonical PDF backend:
 - opens a page-scoped render session
 - dispatches placed fragments to payload handlers
 - applies bookmarks, links, guide lines, metadata, watermarks, headers/footers, and protection
+
+`writePptx(OutputStream)`, `toPptxBytes()` and `buildPptx(...)` are the PowerPoint counterparts, resolved through the `"pptx"` provider when `graph-compose-render-pptx` is on the classpath. `PptxFixedLayoutBackend` consumes the **same** resolved layout graph — one page becomes one identically-sized slide, and fragments land at the same coordinates — then emits native POI XSLF shapes rather than a rasterised page.
+
+The chrome options are backend-neutral, but coverage differs. Watermarks and repeating headers/footers apply to both backends; metadata applies to both, mapping onto OPC core properties for PPTX where the producer field has no equivalent. Protection, viewer preferences and the debug guide-line overlays are PDF concepts that the PPTX backend ignores with a one-time warning. See the [backend capability matrix](./backend-capability-matrix.md) for the per-capability breakdown.
 
 ## 6. Close
 

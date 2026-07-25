@@ -8,9 +8,9 @@ Public application code should start with:
 
 `GraphCompose.document(...) -> DocumentSession -> DocumentDsl -> layout graph -> PdfFixedLayoutBackend`
 
-`EntityManager` and raw engine builders remain internal, test-support, or
-compatibility concerns. New authoring features should be added through
-`com.demcha.compose.document.*`, not through low-level entity assembly.
+The `com.demcha.compose.engine.*` foundation remains internal. New authoring
+features should be added through `com.demcha.compose.document.*`, not by
+reaching into engine internals.
 
 ## Status Legend
 
@@ -92,7 +92,7 @@ compatibility concerns. New authoring features should be added through
 | Guide lines | Done | `guideLines(true)` is available on document builder and session. |
 | Metadata/protection/watermark/header/footer | Done | Configure on `DocumentSession` (e.g. `metadata(...)`, `watermark(...)`, `protect(...)`, `header(...)`, `footer(...)`); convenience PDF entrypoints (`buildPdf`, `writePdf`, `toPdfBytes`) honour these options without an explicit backend builder. `PdfFixedLayoutBackend.builder()` remains for advanced cases. |
 | DOCX semantic export | Done | Use `session.export(new DocxSemanticBackend())` for paragraph/table/image-aware Word output. Requires `org.apache.poi:poi-ooxml` on the consumer classpath. |
-| PPTX semantic export | Planned for v1.6 (stretch) | Build out `PptxSemanticBackend` from the existing manifest skeleton to a working POI-based exporter — paragraphs as text boxes, tables as PowerPoint tables, sections as slides. See [v1.6 roadmap, Phase D](../roadmaps/v1.6-roadmap.md). |
+| PPTX export | Done (fixed-layout, `@Beta` since 2.1.0) | `session.buildPptx(path)` with `graph-compose-render-pptx` on the classpath emits an editable deck from the same resolved layout graph as the PDF — one page per slide, native shapes, matching geometry. See the [backend capability matrix](backend-capability-matrix.md). The older `PptxSemanticBackend` manifest remains in the module but is not what the convenience methods use. |
 | PDFBox types in session API | Rejected | Keep PDFBox behind the fixed PDF backend. |
 
 ## Diagnostics

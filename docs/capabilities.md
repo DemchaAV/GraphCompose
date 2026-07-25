@@ -53,7 +53,7 @@ tracks what is `Partial` or `Planned`.
 | Write a PDF file | `buildPdf()`, `buildPdf(Path)` | Stable | [Getting started](getting-started.md) |
 | Stream to a caller-owned stream | `writePdf(OutputStream)` | Stable | [Streaming](recipes/streaming.md) |
 | In-memory bytes | `toPdfBytes()` | Stable | [Getting started](getting-started.md) |
-| Geometry-identical PowerPoint deck | `buildPptx()`, `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — needs `graph-compose-render-pptx` on the classpath | Stable | [Backend capability matrix](architecture/backend-capability-matrix.md) |
+| Geometry-identical PowerPoint deck | `buildPptx()`, `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — needs `graph-compose-render-pptx` on the classpath | Experimental (`@Beta`, first shipped in 2.1.0) | [Backend capability matrix](architecture/backend-capability-matrix.md) |
 | Editable Word (semantic) | `export(new DocxSemanticBackend())` | Stable (semantic, not PDF parity) | [Troubleshooting](troubleshooting.md) |
 | PDF chrome (metadata / watermark / header / footer / protection) | `metadata(...)`, `watermark(...)`, `header(...)`, `footer(...)`, `protect(...)` | Stable | [Getting started](getting-started.md) |
 | Layout snapshot regression | `LayoutSnapshotAssertions.assertMatches(...)` | Stable | [Layout snapshot testing](operations/layout-snapshot-testing.md) |
@@ -70,9 +70,20 @@ tracks what is `Partial` or `Planned`.
 
 ---
 
+## New in 2.1.0
+
+These ship from 2.1.0 onward — confirm your dependency version before relying on them:
+
+| Capability | Main API |
+|---|---|
+| Editable PowerPoint deck (`@Beta`) | `buildPptx(Path)`, `writePptx(OutputStream)`, `toPptxBytes()` — add `graph-compose-render-pptx` |
+| Slide page-size presets | `DocumentPageSize.SLIDE_16_9`, `DocumentPageSize.SLIDE_4_3` |
+| Select a render backend by format | `BackendProviders.fixedLayout("pptx")` |
+| Keep a heading with its content | `SectionBuilder.keepWithNext()`, `LineBuilder.keepWithNext()` |
+
 ## New in 1.9.0
 
-These ship from 1.9.0 onward — confirm your dependency version before relying on them:
+These ship from 1.9.0 onward:
 
 | Capability | Main API |
 |---|---|

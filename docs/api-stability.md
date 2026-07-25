@@ -241,6 +241,8 @@ Javadoc per element.
 | `com.demcha.compose.document.templates.invoice.*` | **Stable** | `graph-compose-templates` | Layered invoice family — `ModernInvoice` on `InvoiceDocumentSpec`. |
 | `com.demcha.compose.document.templates.proposal.*` | **Stable** | `graph-compose-templates` | Layered proposal family — `ModernProposal` on `ProposalDocumentSpec`. |
 | `com.demcha.compose.document.templates.data.*` | **Stable** | `graph-compose-templates` | Family-neutral document data records (invoice / proposal / schedule specs). |
+| `com.demcha.compose.document.backend.fixed.pptx` | **Experimental** | `graph-compose-render-pptx` | Marked `@Beta` at the package level — `PptxFixedLayoutBackend`, its builder, and `PptxFixedLayoutBackendProvider`. First shipped in 2.1.0. |
+| `com.demcha.compose.document.backend.fixed.pptx.handlers` | **Experimental** | `graph-compose-render-pptx` | Marked `@Beta` at the package level — the `PptxFragmentRenderHandler` seam and its built-in handlers. |
 | `com.demcha.compose.document.layout.*` | **Internal** | `graph-compose-core` | Marked `@Internal` at the package level. Engine surface. |
 | `com.demcha.compose.engine.*` | **Internal** | `graph-compose-core` | Engine surface; not part of the public contract regardless of `public` keyword. `engine.render.pdf.*` ships in `graph-compose-render-pdf`. |
 

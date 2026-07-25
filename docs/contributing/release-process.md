@@ -1,6 +1,8 @@
 # GraphCompose release process
 
-This is the canonical release runbook for GraphCompose 1.x.
+This is the canonical release runbook for GraphCompose 2.x, cut from `develop`.
+For a 1.9.x critical-fix release the same flow applies from the `1.x` maintenance
+branch, on the older single-jar layout where `-pl .` is the engine.
 
 - Maven Central — `io.github.demchaav:graph-compose:<version>` (canonical, from v1.6.6)
 - JitPack — `com.github.DemchaAV:GraphCompose:v<version>` (legacy; resolves for callers pinned to v1.6.5 and earlier, no longer the documented install channel)
@@ -17,7 +19,7 @@ Run this every time, in order. Stop on the first red gate and fix it before cont
 
 The shell setup and exact PowerShell commands live in the `graphcompose-release-engineer` skill (loaded via `Skill` tool). On Git Bash use `./mvnw` instead of `.\mvnw.cmd`; the gates are identical.
 
-> **Cutting the 2.0 line?** This checklist is written for the 1.9.x line on `develop` (the old single-jar layout, where `-pl .` is the engine). For a 2.0 cut from `2.0-dev`, substitute throughout: branch `develop` → `2.0-dev`; the full gate `clean verify -pl .` → the whole reactor **`./mvnw -B -ntp clean verify`** (the root pom is the aggregator now); engine-only commands `-pl .` → `-pl :graph-compose-core`; `aggregator/pom.xml` → the root `pom.xml`, with the engine version in `core/pom.xml`. The cut itself uses `cut-release.ps1 -Branch 2.0-dev` — see [§2.G](#2g-cutting-the-20-line-branch-flow).
+> **Backporting to 1.9.x?** This checklist is written for the 2.x reactor on `develop`. On the `1.x` maintenance branch substitute throughout: the full gate `./mvnw -B -ntp clean verify` → `clean verify -pl .`; engine-only commands `-pl :graph-compose-core` → `-pl .`; the root `pom.xml` reactor → `aggregator/pom.xml`, with the engine version in the standalone `pom.xml`. The cut itself uses `cut-release.ps1 -Branch 1.x`.
 
 ### A. Branch + working tree
 
@@ -28,10 +30,11 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 
 ### B. Build + test gates
 
-- [ ] `./mvnw -B -ntp -q clean verify -pl .` exits 0. Every test must pass — no skips, no flake retries. Confirm `Tests run: <N>, Failures: 0, Errors: 0, Skipped: 0` from `target/surefire-reports/*.txt`.
-- [ ] Examples module compiles cleanly: `./mvnw -B -ntp -q -f examples/pom.xml clean compile` exits 0. Catches `double → float` lossy narrowing and similar bugs that don't surface in the root module.
-- [ ] All examples regenerate: `./mvnw -B -ntp -q -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples` produces 26+ `Generated:` lines, exits 0, and emits no `Fixed column ... is smaller than required natural width` or `Spanned cell ... requires extra width` errors. (Requires `./mvnw install -DskipTests -pl .` once first so the local `~/.m2` resolves the current SNAPSHOT/beta version.)
-- [ ] Architecture-guard suite explicitly green: `./mvnw -B -ntp test -pl . -Dtest='CanonicalSurfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,InternalAnnotationCoverageTest,PublicApiNoEngineLeakTest,SemanticLayerNoPdfBoxDependencyTest,VersionConsistencyGuardTest'` exits 0. These guard against legacy-API leakage in docs and engine internals leaking into the public surface, and — via `VersionConsistencyGuardTest` — against version drift between the library pom, the aggregator, the inherited examples/benchmarks modules, and the README install snippets. They fail loudly when README/CHANGELOG drift from the canonical authoring surface.
+- [ ] `./mvnw -B -ntp clean verify` exits 0 over the whole reactor. Every test must pass — no skips, no flake retries. Confirm `Tests run: <N>, Failures: 0, Errors: 0, Skipped: 0` per module from `*/target/surefire-reports/*.txt`. **Read Maven's own exit code** — never end the command in a pipe, or the shell reports the last stage's status and a `BUILD FAILURE` slips through as `0`.
+- [ ] Examples module compiles cleanly: `./mvnw -B -ntp -q -f examples/pom.xml clean compile` exits 0. Catches `double → float` lossy narrowing and similar bugs that don't surface in the engine module.
+- [ ] All examples regenerate: `./mvnw -B -ntp -q -f examples/pom.xml exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples` produces 26+ `Generated:` lines, exits 0, and emits no `Fixed column ... is smaller than required natural width` or `Spanned cell ... requires extra width` errors. (Requires `./mvnw install -DskipTests` once first so the local `~/.m2` resolves the current SNAPSHOT version — any standalone goal that resolves train modules from `~/.m2`, including the `qa` suite and `javadoc:javadoc`, needs this after a version bump.)
+- [ ] Architecture-guard suite explicitly green: `./mvnw -B -ntp test -pl :graph-compose-core -Dtest='CanonicalSurfaceGuardTest,DocumentationCoverageTest,InternalAnnotationCoverageTest,PublicApiNoEngineLeakTest,PackageMapGuardTest,VersionConsistencyGuardTest'` exits 0. These guard against legacy-API leakage in docs and engine internals leaking into the public surface, and — via `VersionConsistencyGuardTest` — against version drift between the train poms and the README install snippets. Note `PackageMapGuardTest` also scans the gitignored `docs/private/`, so a stale local note there fails a local run that CI cannot reproduce.
+- [ ] Javadoc gate green on the published modules: `./mvnw -B -ntp javadoc:javadoc -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing` exits 0. The release profile publishes a javadoc jar per module with `failOnError=false`, so a broken link only surfaces here.
 
 ### C. Documentation freeze (matches target version)
 
@@ -48,7 +51,10 @@ The shell setup and exact PowerShell commands live in the `graphcompose-release-
 
 The script's Step 1–4 mutates these. The agent only confirms the *current state is one the script can transition from*:
 
-- [ ] The engine version lives in **five** sites that must stay in lockstep: the standalone library `pom.xml`, the reactor `aggregator/pom.xml`, the inherited `<parent>` version of `examples/pom.xml` and `benchmarks/pom.xml` (the children no longer pin their own `<version>` — they inherit from `graph-compose-build`, and declare `<graphcompose.version>${project.version}</graphcompose.version>` rather than a literal), and the standalone `bundle/pom.xml` (`graph-compose-bundle`, whose `graph-compose` dep is `${project.version}`). All five read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree; `cut-release.ps1` Step 1 moves all five (plus the README) together. Note `mvn -f aggregator/pom.xml versions:set` only rewrites the aggregator + its inheriting children — it does **not** touch the standalone `pom.xml` or `bundle/pom.xml`, so prefer the script. **`fonts/pom.xml` (`graph-compose-fonts`) is intentionally NOT in this set** — it carries an independent version line (see §2.D) and must be free to diverge from the engine.
+- [ ] The train version lives in **13** poms that must stay in lockstep. `cut-release.ps1` Step 1 moves them together, so this list is the script's own array — keep the two in sync rather than re-deriving it by hand:
+  `pom.xml` (root reactor), `core/pom.xml`, `render-pdf/pom.xml`, `render-docx/pom.xml`, `render-pptx/pom.xml`, `templates/pom.xml`, `testing/pom.xml`, `wrapper/pom.xml`, `bundle/pom.xml`, plus the four that inherit `<parent>`: `examples/pom.xml`, `benchmarks/pom.xml`, `qa/pom.xml`, `coverage/pom.xml`.
+  All read the same value: either the in-flight develop value or already the target. `VersionConsistencyGuardTest` asserts they agree. Prefer the script over `versions:set`, which only rewrites a reactor and its inheriting children and misses the standalone poms.
+  **`fonts/pom.xml` and `emoji/pom.xml` are intentionally NOT in this set** — they carry independent version lines (see §2.D) and must be free to diverge from the engine.
 - [ ] `examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java` `GH_BASE` points to `/blob/develop`. The script flips it to `/blob/v<target>` and regenerates `web/examples.json`.
 
 ### E. Tag must not exist
@@ -62,13 +68,13 @@ The script's Step 1–4 mutates these. The agent only confirms the *current stat
 Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 
 1. **Pre-flight** — re-checks all of A above (branch, clean tree, in-sync, no existing tag).
-2. **Bump versions** to `<X.Y.Z>` across the library `pom.xml`, the `aggregator/pom.xml`, the inherited `<parent>` refs in `examples/pom.xml` and `benchmarks/pom.xml`, the standalone `bundle/pom.xml` (`graph-compose-bundle`), **and** the README Maven + Gradle install snippets — all in one pass, so `VersionConsistencyGuardTest` stays green at Step 5. (`fonts/pom.xml` is left alone — it versions independently; see §2.D.)
+2. **Bump versions** to `<X.Y.Z>` across all 13 train poms (§0.D), **and** the install snippets — the root `README.md` plus every per-module README, which a separate pass (`Update-ModuleReadmeInstallVersion`) rewrites because their coordinates carry an artifact suffix the root regex does not match. All in one pass, so `VersionConsistencyGuardTest` stays green at Step 5. (`fonts/pom.xml` and `emoji/pom.xml` are left alone — they version independently; see §2.D.)
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
 3b. **Validate release metadata** — a fast, build-free pre-tag gate: the CHANGELOG is dated for the target, the README `Latest stable` prose block names the target, the README install snippet reads the target, and every published-train pom carries the target version. Fails immediately (before showcase / verify / commit / tag) if any is stale. This is the **only automated guard against the stale-tag-README bug** — `cut-release.ps1` does not rewrite the `Latest stable` prose block, and no test covers it. (The full per-module + Gradle + showcase snippet consistency is separately enforced by `VersionConsistencyGuardTest` in the Step-5 verify.)
 4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `web/examples.json`.
-5. **`mvnw verify`** — full reactor sanity build (the older 1.x layout scopes to `-pl .`; the script auto-detects by `core/pom.xml`). Skip with `-SkipVerify` only if you just ran it.
+5. **`mvnw verify`** — full reactor sanity build (the script auto-detects the layout by the presence of `core/pom.xml`, scoping to `-pl .` on the 1.x line). Skip with `-SkipVerify` only if you just ran it.
 5b. **Binary-compatibility gate** — `mvnw -P japicmp verify -pl :graph-compose-core` against the published baseline (2.0 module layout only). Fails the cut if the tagged code breaks binary compatibility of the `graph-compose-core` public API (the japicmp profile lives only in `core/pom.xml`) with the baseline — a second line of defence independent of the PR-time CI japicmp job, which a direct-to-branch push could bypass. Skipped by `-SkipVerify`.
-6. **Commit** as `Release v<X.Y.Z>`. Files committed: the library `pom.xml`, `aggregator/pom.xml`, `examples/pom.xml`, `benchmarks/pom.xml`, `bundle/pom.xml`, `README.md` (install snippets), `CHANGELOG.md`, `ShowcaseMetadata.java`, `web/examples.json`, `web/index.html`, and `web/showcase/`. `examples/README.md` and any other docs are NOT touched by the script — fix those pre-release.
+6. **Commit** as `Release v<X.Y.Z>`. Staging is an explicit allow-list, not `git add -A`. It covers the 13 train poms, `README.md` and the seven per-module READMEs (`core`, `render-pdf`, `render-docx`, `render-pptx`, `templates`, `testing`, `wrapper`, `bundle`), `CHANGELOG.md`, `ShowcaseMetadata.java`, `web/examples.json`, `web/index.html`, `web/showcase/`, and the regenerated `assets/readme/repository_showcase_render.png`. `examples/README.md` and every other doc are NOT touched by the script — fix those pre-release.
 7. **Annotated tag** `v<X.Y.Z>` (`git tag -a -m "Release v<X.Y.Z>"`).
 8. **Push** `develop` and the tag to `origin` (skip with `-SkipPush`).
 
@@ -101,7 +107,7 @@ Run within 1 hour of the tag push. Independent steps can run in parallel.
 6. **Re-run all examples against the published artifact** — `./mvnw -f examples/pom.xml clean package` followed by `exec:java -Dexec.mainClass=com.demcha.examples.GenerateAllExamples`. Expect 26+ `Generated:` lines.
 6b. **Run the external release-smoke suite** — once Central has indexed the train, dispatch the **Release Smoke** workflow ([`.github/workflows/release-smoke.yml`](../../.github/workflows/release-smoke.yml)) with `version=<target>`, or run `bash scripts/release-smoke/run.sh --version <target>`. This resolves every published coordinate from Maven Central in a clean, GraphCompose-evicted repository (no reactor / local install) and exercises the documented consumer scenarios — the wrapper renders PDF, `graph-compose-core` alone throws `MissingBackendException`, core+render-pdf renders, and templates/testing/bundle perform their roles. It is the authoritative "a real user can install and use this" check; the minimal step-5 snippet resolve is a faster subset. (Release smoke tests **published** artifacts, so it necessarily runs post-publish, not pre-tag.)
 7. **Open the next development line** — `pwsh ./scripts/cut-release.ps1 -PostReleaseOnly`. This bumps the train poms to the next patch `-SNAPSHOT` (so develop builds are distinguishable from the release and the japicmp gate compares against it) **and** restores linkable "View Code" buttons by flipping ShowcaseMetadata back to `/blob/develop`. The README/showcase install snippets stay on the just-published release.
-8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify -pl .` against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
+8. **GitHub Release — automated.** Pushing the `v<target>` tag triggers [`.github/workflows/release.yml`](../../.github/workflows/release.yml): it re-runs `./mvnw clean verify` over the whole reactor against the tagged commit, then creates the Release with that version's CHANGELOG section as the body (hyphenated tags like `v1.7.0-rc.1` ship as pre-releases; the step is idempotent — it edits the notes if the Release already exists). The workflow titles it `GraphCompose v<target>`; for a **minor** release, edit the title to add the codename (`v1.4`=cinematic, `v1.5`=intuitive, `v1.6`=expressive; patches drop it). Create the Release by hand (`gh release create v<target> --notes-file <CHANGELOG section>`) only if the workflow is unavailable.
 9. **Maven Central publish — automated (from v1.6.6).** The same `v<target>` tag push triggers [`.github/workflows/publish.yml`](../../.github/workflows/publish.yml): it re-runs `mvnw verify` at the tagged commit, signs the four artefacts (main / sources / javadoc / pom) with the repo's GPG key, and uploads to Maven Central via the `central-publishing-maven-plugin`. Hyphenated tags (`-rc`, `-alpha`, `-beta`, `-snapshot`) are skipped — those go only to the GitHub Release pre-release surface. `autoPublish=false` in the plugin config means the artefact lands in the Central validation queue; the maintainer flips the switch on [central.sonatype.com](https://central.sonatype.com) for the first publish, then can opt into auto-release in a follow-up. Verify via `mvn dependency:get -DgroupId=io.github.demchaav -DartifactId=graph-compose -Dversion=<target>` once the artifact appears (usually 5–15 minutes after the workflow turns green).
 10. **Optional**: GitHub Discussions announcement (mirror the prior release's style; close with *"author intent, not coordinates"*), LinkedIn post, r/java post.
 
@@ -128,14 +134,14 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
   [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
   only `graph-compose-fonts` to Central. Then bump
-  `<graphcompose.fonts.version>` in `aggregator/pom.xml` (inherited by
+  `<graphcompose.fonts.version>` in the root reactor `pom.xml` (inherited by
   examples + benchmarks) and `bundle/pom.xml` to the new fonts version so those
-  consumers pin it. The engine `pom.xml` does **not** carry this property — the
+  consumers pin it. `core/pom.xml` does **not** carry this property — the
   engine has no dependency on the fonts artifact (its tests read the fonts from
   the sibling module's source via `<testResources>`).
 - **No fonts bootstrap for the engine.** Because the engine does not depend on
-  the fonts artifact, `./mvnw clean verify -pl .` builds standalone without the
-  fonts jar being published or installed. Only the consumer modules (examples,
+  the fonts artifact, `./mvnw clean verify -pl :graph-compose-core` builds it
+  without the fonts jar being published or installed. Only the consumer modules (examples,
   benchmarks) need `graph-compose-fonts` in the local repo — their CI jobs run
   `./mvnw -f fonts/pom.xml install` before building.
 
@@ -155,9 +161,9 @@ fonts, so cutting an emoji release needs the same consumer re-pin.
   `emoji/pom.xml` `<version>`, push an `emoji-vX.Y.Z` tag. That tag triggers
   [`publish-emoji.yml`](../../.github/workflows/publish-emoji.yml), which deploys
   only `graph-compose-emoji` to Central. Then bump `<graphcompose.emoji.version>`
-  in `aggregator/pom.xml` (inherited by examples) and `bundle/pom.xml` to the new
-  emoji version so those consumers pin it — the `bundledEmojiVersionAgreesAcrossModules`
-  version guard enforces that the two stay in agreement. The engine `pom.xml` does
+  in the root reactor `pom.xml` (inherited by examples) and `bundle/pom.xml` to the
+  new emoji version so those consumers pin it — the `bundledEmojiVersionAgreesAcrossModules`
+  version guard enforces that the two stay in agreement. `core/pom.xml` does
   **not** carry this property — the engine has no dependency on the emoji artifact
   (its tests read the glyphs from the sibling module's source via `<testResources>`).
 - **Regenerating the set.** `emoji/tools/build-emoji-set.py` rebuilds
@@ -194,28 +200,30 @@ aggregate. They all carry the **same** version.
   skips Central for hyphenated tags (§2.B step 9). A beta is therefore installable from
   the GitHub pre-release (and from JitPack, which builds any tag), not from Central.
 
-### 2.G Cutting the 2.0 line (branch flow)
+### 2.G Branch flow
 
-The 2.0 train is cut from **`2.0-dev`**, not `develop`; `cut-release.ps1` takes the
-branch as a parameter. On the 2.0 layout the engine lives in `core/pom.xml` and the
-repository root `pom.xml` is the reactor aggregator — the script bumps both (plus the
-rest of the train) and its `Test-Path` guard skips `core/pom.xml` on the old 1.x layout,
-so the same script serves both lines.
+The 2.x train is cut from **`develop`**, which is `cut-release.ps1`'s default branch.
+On this layout the engine lives in `core/pom.xml` and the repository root `pom.xml` is
+the reactor — the script bumps both plus the rest of the train, and its `Test-Path`
+guard skips `core/pom.xml` on the older 1.x layout, so the same script serves both lines.
 
-- **Release candidate:** `pwsh ./scripts/cut-release.ps1 -Version 2.0.0-rc.1 -Branch 2.0-dev`.
+- **Release candidate:** `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>-rc.1`.
   The hyphenated `-rc` tag ships to the GitHub pre-release surface only (Central skipped, §2.F).
-- **GA:** `pwsh ./scripts/cut-release.ps1 -Version 2.0.0 -Branch 2.0-dev`. The plain
-  `v2.0.0` tag fires `publish.yml`, which deploys the eight-module train to Maven Central in
-  dependency order — that sequence is version-agnostic and needs no per-release change.
+- **GA:** `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>`. The plain `v<X.Y.Z>` tag fires
+  `publish.yml`, which deploys the eight-module train to Maven Central in dependency order
+  — that sequence is version-agnostic and needs no per-release change.
+- **1.9.x backport:** `pwsh ./scripts/cut-release.ps1 -Version 1.9.<n> -Branch 1.x`.
 
-At **2.0 GA** the branches take their long-term roles, in this order:
+After a GA the branches settle back into their standing roles: `main` is fast-forwarded
+to the release, `develop` carries on as the 2.x working branch, and `1.x` continues to
+take critical fixes only. `cut-release.ps1 -PostReleaseOnly` opens the next
+`-SNAPSHOT` line and returns `ShowcaseMetadata.GH_BASE` to `/blob/develop`.
 
-1. **Cut `1.x` from the current `main` tip first** (the final 1.9.x commit), *before* moving
-   main: `git branch 1.x main && git push origin 1.x`. It receives 1.9.x critical fixes only.
-2. **Fast-forward `main` to 2.0:** `git push origin 2.0-dev:main`. This is a clean
-   fast-forward because the pre-GA sync keeps `main`'s history an ancestor of `2.0-dev`.
-3. **Repoint ongoing work:** `develop` becomes the 2.x working branch; `2.0-dev` retires.
-   From then on `cut-release.ps1` runs with its default `-Branch develop` again.
+> **Post-GA `-SNAPSHOT` naming.** `-PostReleaseOnly` always opens the next *patch*
+> `-SNAPSHOT`. If the next release is a minor, bump the train to `<X.Y+1.0>-SNAPSHOT`
+> by hand so the in-flight version matches the `@since` tags and the open CHANGELOG
+> heading — nothing publishes from a SNAPSHOT, but the mismatch misleads every reader
+> of a pom.
 
 ---
 

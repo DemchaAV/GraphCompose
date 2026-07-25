@@ -8,9 +8,9 @@ Public application code should start with:
 
 `GraphCompose.document(...) -> DocumentSession -> DocumentDsl -> layout graph -> PdfFixedLayoutBackend`
 
-`EntityManager` and raw engine builders remain internal, test-support, or
-compatibility concerns. New authoring features should be added through
-`com.demcha.compose.document.*`, not through low-level entity assembly.
+The `com.demcha.compose.engine.*` foundation remains internal. New authoring
+features should be added through `com.demcha.compose.document.*`, not by
+reaching into engine internals.
 
 ## Status Legend
 

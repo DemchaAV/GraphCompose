@@ -20,12 +20,18 @@ flowchart TD
     A["Application code — GraphCompose.document(...)"] --> B["DocumentSession + DocumentDsl<br/>(document.api · document.dsl)"]
     B --> C["Semantic DocumentNode tree<br/>(document.node) — renderer-neutral"]
     C --> D["LayoutCompiler + NodeRegistry<br/>(document.layout) → LayoutFragments"]
+    C -->|"export(...)"| H["DocxSemanticBackend — Apache POI<br/>(document.backend.semantic) — reads DocumentGraph"]
     D --> E["Shared engine foundation — @Internal<br/>(engine.*): measure → paginate → place → order"]
-    E --> F{"Active backend"}
+    E --> F{"Fixed-layout backend"}
     F -->|PDF| G["PdfFixedLayoutBackend<br/>(document.backend.fixed.pdf + engine.render.pdf)"]
-    F -->|DOCX| H["DocxSemanticBackend — Apache POI<br/>(document.backend.semantic)"]
+    F -->|PPTX| P["PptxFixedLayoutBackend — POI XSLF<br/>(document.backend.fixed.pptx) — @Beta"]
     E -.->|"layoutSnapshot()"| I["Deterministic layout snapshot<br/>(regression tests — no bytes rendered)"]
 ```
+
+The two fixed-layout backends branch from the **same** resolved graph, which
+is why page and slide geometry match by construction. The semantic DOCX
+exporter branches earlier, straight off the `DocumentGraph`: it never sees a
+`LayoutGraph`, which is why it cannot reproduce fixed-layout geometry.
 
 The PDF path deliberately spans **two** packages: the canonical backend
 `document.backend.fixed.pdf` owns PDFBox lifecycle and option translation,
@@ -48,8 +54,10 @@ Concretely:
    placement, and render ordering against those prepared fragments.
 5. the active backend turns the resolved `LayoutGraph` /
    `PlacedFragment` stream into output bytes — `PdfFixedLayoutBackend`
-   for PDF, `DocxSemanticBackend` for DOCX, future PPTX backend
-   skeleton in place.
+   for PDF and `PptxFixedLayoutBackend` for PowerPoint, both consuming
+   the same resolved graph, so page and slide geometry match by
+   construction. `DocxSemanticBackend` takes the other route: it
+   consumes the semantic node tree directly, without the layout graph.
 
 That separation is the core project concept. Public code describes
 document intent, layout resolves geometry, renderers only draw already
@@ -105,11 +113,19 @@ need to reach below it.
   does not need to touch it.
 - **`document.backend.fixed.pdf`** — the canonical PDF backend
   (`PdfFixedLayoutBackend`, fragment render handlers, option
-  translators). The only place PDFBox imports are allowed outside the
-  engine foundation.
-- **`document.backend.semantic`** — semantic exporters
-  (`DocxSemanticBackend` based on Apache POI; `PptxSemanticBackend`
-  manifest skeleton).
+  translators), shipped in **graph-compose-render-pdf**. The only place
+  PDFBox imports are allowed outside the engine foundation.
+- **`document.backend.fixed.pptx`** — the fixed-layout PowerPoint
+  backend (`PptxFixedLayoutBackend`, `PptxFragmentRenderHandler` and its
+  handler set), shipped in **graph-compose-render-pptx**. Consumes the
+  same resolved `LayoutGraph` as the PDF backend — one page becomes one
+  identically-sized slide. Marked `@Beta` at the package level; see the
+  [backend capability matrix](./backend-capability-matrix.md) for
+  per-capability fidelity.
+- **`document.backend.semantic`** — semantic exporters that bypass the
+  layout graph (`DocxSemanticBackend`, Apache POI; and `PptxSemanticBackend`,
+  a slide-safe node-graph manifest that predates the fixed-layout backend
+  and is not what `buildPptx(...)` uses).
 
 ## Template layer (`com.demcha.compose.document.templates.*`)
 
@@ -165,26 +181,11 @@ objects are resolved before their parent containers so parent
 finalized. See [pagination-ordering.md](./pagination-ordering.md) for
 the detailed rationale and the failure modes that motivated it.
 
-The engine materializes one deterministic hierarchy snapshot per
-layout pass: parent links from `ParentComponent`, sibling order from
-`Entity.children`, roots / layers / depth metadata rebuilt every pass.
-Layout, pagination, snapshot extraction, and render backends all
-agree on the same tree semantics.
-
-### Entity / ECS responsibilities (engine-internal)
-
-`Entity` is intentionally a thin ECS-style identity object. It owns:
-
-- stable identity
-- the component map
-- canonical child order through `Entity.children`
-- a cached render marker reference for fast `hasRender()` checks
-
-Layout-specific math and pagination mutation live in dedicated
-helpers — `EntityBounds` for geometry reads,
-`ParentContainerUpdater` for parent-container size and page-shift
-propagation. Deprecated helper methods on `Entity` are migration
-shims, not extension points.
+The compiler materializes one deterministic result per layout pass:
+`LayoutCompiler` prepares each semantic node into a `PreparedNode`,
+paginates it, and emits `PlacedFragment` records into a `LayoutGraph`.
+Layout, pagination, snapshot extraction, and render backends all read
+that one resolved graph, so they cannot disagree about geometry.
 
 ### Semantic modules
 
@@ -219,26 +220,22 @@ rows it merges.
 These rules apply to engine and backend contributors. Application
 code should not need any of them.
 
-- engine builders and layout helpers consume an engine-level
-  `TextMeasurementSystem` instead of reaching through the active
-  renderer
-- render marker components identify *what* needs to be rendered;
-  *how* it is drawn lives in renderer-owned handler packages such as
-  the `PdfFragmentRenderHandler` implementations under
-  `document.backend.fixed.pdf.handlers`
-- `RenderStream` acts as a session factory, not as a per-entity
-  content-stream opener
-- `RenderPassSession` is the shared seam for page lifetime and
-  page-surface reuse — it must stay free of PDFBox and backend
-  package imports
-- the PDF entity path dispatches through registered render handlers;
-  there is no backend-specific render fallback path
-
-Fixed leaf primitives (such as `TextComponent` and `BlockText`)
-follow the same engine contract: they materialize as regular
-entities with render/content/layout components, rely on normal
-`ContentSize` / `Padding` / `Margin` / `Placement`, and do not
-introduce a separate layout subsystem.
+- layout helpers consume an engine-level `TextMeasurementSystem`
+  instead of reaching through the active renderer, so measurement is
+  backend-neutral and the same widths produce the layout graph that
+  every backend then draws
+- a `PlacedFragment`'s payload identifies *what* needs to be rendered;
+  *how* it is drawn lives in renderer-owned handler packages — the
+  `PdfFragmentRenderHandler` implementations under
+  `document.backend.fixed.pdf.handlers` and the
+  `PptxFragmentRenderHandler` set under
+  `document.backend.fixed.pptx.handlers`
+- each fixed-layout backend owns its own render-pass session and page
+  surface lifetime; that seam stays free of backend-library imports so a
+  new backend does not have to touch engine code
+- fragment dispatch goes through registered handlers only; there is no
+  backend-specific render fallback path, and an unhandled payload fails
+  with `UnsupportedNodeCapabilityException` rather than drawing nothing
 
 ## Current package roots
 
@@ -276,8 +273,16 @@ last:
   `ShapeContainerNode` clip and `DocumentTransform` rotation/scale
   fall back to inline content with a one-time capability warning.
   Authors who need clipped or rotated output must export to PDF.
-- The PPTX skeleton lives behind `PptxSemanticBackend`; richer slide
-  layout is roadmap for v1.6+.
+- The PPTX backend (`PptxFixedLayoutBackend`, Apache POI XSLF) renders
+  the same resolved `LayoutGraph` as PDF into an editable deck — one
+  page per identically-sized slide, native shapes rather than pictures.
+  It ships `@Beta` in 2.1.0: usable for production decks, with the API
+  shape still open to change in a minor. Clipped composites fall back to
+  a rasterised island (switchable via `clipRasterFallback(false)`), and
+  `renderToImages` is unsupported — the per-capability breakdown is the
+  [backend capability matrix](./backend-capability-matrix.md).
+  The older `PptxSemanticBackend` manifest remains in the module but is
+  not on the `buildPptx(...)` path.
 - New backends should add their own rendering system, render-pass
   session, text measurement system, and handler set without changing
   engine builders such as tables or template data models. The shared

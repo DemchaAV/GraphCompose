@@ -38,16 +38,27 @@ try (var doc = GraphCompose.document().create()) {
 ## What it maps, and what it does not
 
 DOCX walks the **semantic node graph**, not the fixed PDF layout — Word owns the flow, so
-the page geometry the PDF backend resolves is deliberately ignored. Shapes, gradients,
-clips, transforms and alpha have no DOCX counterpart by design; a document that draws with
-them exports its text and tables, not its drawing.
+the page geometry the PDF backend resolves is deliberately ignored. Drawing nodes — shape,
+line, ellipse, polygon, path, barcode — do reach the backend, and are dropped there with one
+logged warning per kind; a clip or transform container renders its children inline, without
+the boundary and without the transform. A document that draws exports its text and tables,
+not its drawing.
 
-What maps: paragraphs (runs, alignment), block images (`STRETCH` / `CONTAIN` / `COVER`),
-table rows including row and column spans, and document metadata. Run styling carries font
-family, size, colour, bold, italic and underline.
+What maps: paragraphs, lists, block images, tables, and document metadata (title, author,
+subject, keywords). Run styling carries font family, size, colour, bold, italic and
+underline.
 
-Beyond geometry, these are **not implemented** even though Word itself can express them —
-check the list before you promise a `.docx` to a reader:
+What maps only in part:
+
+- **Table cells keep their text, not their structure.** `colSpan` and `rowSpan` are not
+  applied, so a table with merged cells exports with its columns misaligned. Per-cell
+  style and fill/border paint are dropped, and cell text carries no run styling.
+- **Image fit is ignored.** The picture is embedded at the node's width and height;
+  `CONTAIN` and `COVER` therefore behave as `STRETCH`, and an image sized only by `scale`
+  falls back to 100 × 100 pt.
+
+These are **not implemented** even though Word itself can express them — check the list
+before you promise a `.docx` to a reader:
 
 - **Hyperlinks are dropped**, external and internal alike; the link text survives as plain text.
 - **No bookmarks and no navigation outline.**
@@ -57,9 +68,11 @@ check the list before you promise a `.docx` to a reader:
 - **Per-run styling in a mixed-style paragraph is flattened.** Every run in a `RichText`
   paragraph is written with the paragraph's style, so a bold or accent-coloured segment
   loses its own styling; the text itself is kept.
-- **Multi-section documents export through the fixed-layout backends only** —
-  `renderSections` is not part of the semantic path.
 - **Output is not byte-deterministic**: rendering twice does not produce identical files.
+
+Multi-section documents are a separate case: `renderSections` is declared on the
+fixed-layout SPI, and `SemanticBackend` carries only `name()` and `export(...)`, so a
+multi-section export runs through the PDF or PPTX backend rather than this one.
 
 Per-capability detail, with the implementing class for every supported cell:
 [backend capability matrix](../docs/architecture/backend-capability-matrix.md).

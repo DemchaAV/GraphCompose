@@ -207,7 +207,7 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 | Format | Status | Notes |
 |---|---|---|
 | PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
-| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped silently. Beyond geometry, **hyperlinks, bookmarks, headers/footers and multi-section documents are not implemented** &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
+| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, lists, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped, one logged warning per kind. **Hyperlinks, bookmarks and headers/footers are not implemented**, table `colSpan`/`rowSpan` is not applied, and image fit modes are ignored &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
 | PPTX | Beta | Fixed-layout export via Apache POI from the same resolved layout &mdash; one page per editable slide with native shapes and text frames; clipped regions land as pixel-exact pictures. First shipped in 2.1, marked `@Beta` while the API shape settles. |
 
 ### Text &amp; internationalization

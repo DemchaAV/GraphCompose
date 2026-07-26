@@ -30,8 +30,19 @@ Backends:
   while feedback lands (see [../api-stability.md](../api-stability.md)).
 - **DOCX (semantic)** — `graph-compose-render-docx`,
   `DocxSemanticBackend`. Walks the semantic node tree, deliberately
-  ignores fixed-layout geometry; Word owns the flow. Geometry rows are
-  n/a for it by design.
+  ignores fixed-layout geometry; Word owns the flow.
+
+Reading the DOCX column: a row is `n/a` only when the capability is
+declared on the fixed-layout SPI and can never reach a semantic backend —
+`SemanticBackend` carries just `name()` and `export(DocumentGraph,
+SemanticExportContext)`, so `renderSections`, `renderToImages` and the
+raster-slide builder option are not questions it can be asked. Drawing
+nodes are a different case: `ShapeNode`, `LineNode`, `EllipseNode`,
+`PolygonNode`, `PathNode` and `BarcodeNode` all reach
+`DocxSemanticBackend.writeNode` and are dropped there with a logged
+warning, and Word can express floating shapes, pictures and gradient
+fills. Those rows are ❌ — no implementation, no current plan — not
+`n/a`.
 
 The PPTX *semantic* skeleton (`PptxSemanticBackend`, slide-safe node
 validation + manifest, writes no file) is out of scope for this matrix.
@@ -56,9 +67,9 @@ Payload records live in `core` under
 | Linear gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | ✅ `PptxGradientFill` (native `gradFill`; explicit-axis endpoints approximate to the angle) | ❌ |
 | Radial gradient fill (`DocumentPaint`) | ✅ `PdfShadingSupport` | ⚠️ `PptxGradientFill` (`circle` path shade — DrawingML cannot express radius-to-farthest-corner exactly) | ❌ |
 | Gradient strokes | ✅ `PdfPathPainter` (pattern stroking colour) | ✅ `PptxGradientFill` (native `ln`/`gradFill`) | ❌ |
-| Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | ✅ `PptxImageFragmentRenderHandler` (COVER via the picture source crop) | ✅ semantic images (`DocxSemanticBackend`) |
+| Image — STRETCH / CONTAIN / COVER fit (`ImageFragmentPayload`) | ✅ `PdfImageFragmentRenderHandler` | ✅ `PptxImageFragmentRenderHandler` (COVER via the picture source crop) | ⚠️ `DocxSemanticBackend.writeImage` (the picture is embedded at the node's width/height; `fitMode` and `scale` are never read, so CONTAIN and COVER behave as STRETCH, a node with neither width nor height falls back to 100×100 pt, and every picture is declared `PICTURE_TYPE_PNG`) |
 | Barcode / QR (`BarcodeFragmentPayload`) | ✅ `PdfBarcodeFragmentRenderHandler` (ZXing raster) | ✅ `PptxBarcodeFragmentRenderHandler` (identical ZXing raster) | ❌ |
-| Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | ✅ `PptxTableRowFragmentRenderHandler` + row grouping in `PptxFixedLayoutBackend` (positioned rectangles, edge lines, and text frames — never native PPTX tables, which re-lay-out content) | ✅ semantic tables (`DocxSemanticBackend`) |
+| Table rows — resolved cells, row/col spans, two-pass fill/border paint (`TableRowFragmentPayload`) | ✅ `PdfTableRowFragmentRenderHandler` + row grouping in `PdfFixedLayoutBackend` | ✅ `PptxTableRowFragmentRenderHandler` + row grouping in `PptxFixedLayoutBackend` (positioned rectangles, edge lines, and text frames — never native PPTX tables, which re-lay-out content) | ⚠️ `DocxSemanticBackend.writeTable` (cell text becomes a real Word table; `colSpan` / `rowSpan`, the per-cell `DocumentTableStyle`, and fill/border paint are not applied, and cell runs carry no text style) |
 | Clip region open/close (`ShapeClipBegin/EndPayload`) | ✅ `PdfShapeClipBegin/EndRenderHandler` (CLIP_BOUNDS + CLIP_PATH) | ✅ `PptxClipSafety` + raster fallback in `PptxFixedLayoutBackend` — a provably no-op clip (padded content that cannot be cut) skips the fallback entirely and stays native, editable shapes; a clip that can cut ink renders through the PDF backend into one transparent picture on the clip bounds (pixel-exact, not editable as shapes; run-level link hotspots are not emitted and custom fragment handlers do not apply inside the picture; `Builder.clipRasterFallback(false)` restores unclipped vectors + warning; the raster targets a 2048px long edge, clamped to between native size and 4x, so a region larger than that is rendered at native resolution rather than downscaled — which also means its transient memory grows with the clip instead of stopping at the target (a 3370pt A0-landscape region costs ~45MB while rendering, against ~17MB for anything up to 2048pt); a true vector clip is tracked in [#413](https://github.com/DemchaAV/GraphCompose/issues/413)) | ⚠️ inline fallback + one-time capability warning |
 | Transform open/close — rotate/scale about fragment centre (`TransformBegin/EndPayload`) | ✅ `PdfTransformBegin/EndRenderHandler` | ✅ `PptxTransformBegin/EndRenderHandler` (group shape; rotation and centre-pivot scaling via the exterior/interior frame ratio) | ⚠️ inline fallback + one-time capability warning |
 | Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ✅ `PptxAnchorMarkerRenderHandler` + `PptxNavigationWriter` (slide-jump hyperlinks resolved after all fragments, so forward references work) | ❌ |
@@ -81,7 +92,7 @@ honour an option ignores it (documented contract).
 
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| Metadata (title, author, …) | ✅ `PdfDocumentPostProcessor` | ⚠️ `applyMetadata` in `PptxFixedLayoutBackend` (OPC core properties + extended `Application`; OPC has no producer field, so that value is not representable) | ✅ (`DocxSemanticBackend` via `SemanticExportContext`) |
+| Metadata (title, author, …) | ✅ `PdfDocumentPostProcessor` | ⚠️ `applyMetadata` in `PptxFixedLayoutBackend` (OPC core properties + extended `Application`; OPC has no producer field, so that value is not representable) | ⚠️ `applyOutputOptions` (OPC core properties — title, author as creator, subject, keywords; OPC has no producer field here either, so that value is not representable) |
 | Watermark (front/back layers) | ✅ `PdfWatermarkRenderer` | ✅ `PptxChromeRenderer` (per-slide shape at the PDF placement math; behind-content applies before fragments, so no z-order surgery) | ❌ |
 | Repeating headers / footers | ✅ `PdfHeaderFooterRenderer` | ✅ `PptxChromeRenderer` (positioned per-slide text boxes; `{page}` / `{pages}` / `{date}` tokens with the numbering window rules) | ❌ |
 | Protection / encryption | ✅ `PdfDocumentPostProcessor` | ❌ (ignored with a one-time warning — no OOXML encryption support planned) | ❌ |
@@ -93,12 +104,12 @@ honour an option ignores it (documented contract).
 | Capability | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
 | Render to bytes / stream / file (`FixedLayoutRenderer`) | ✅ `PdfFixedLayoutBackend` | ✅ `PptxFixedLayoutBackend` | ✅ `DocxSemanticBackend` (`SemanticBackend<byte[]>`) |
-| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | ❌ (throws with a pointer to the PDF backend — POI's slide rasterizer cannot honour embedded fonts, and the PDF raster of the same graph is the canonical image output) | ❌ |
-| Raster-slide mode — every page as one full-slide picture, pixel-exact to the PDF/PNG output (`Builder.rasterSlides(dpi)`) | n/a (the PDF raster is the source) | ✅ `PptxFixedLayoutBackend` | ❌ |
-| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | ❌ |
+| Render to images (`renderToImages`) | ✅ PDFBox `PDFRenderer` | ❌ (throws with a pointer to the PDF backend — POI's slide rasterizer cannot honour embedded fonts, and the PDF raster of the same graph is the canonical image output) | n/a (a `FixedLayoutRenderer` surface; the semantic SPI has no raster output) |
+| Raster-slide mode — every page as one full-slide picture, pixel-exact to the PDF/PNG output (`Builder.rasterSlides(dpi)`) | n/a (the PDF raster is the source) | ✅ `PptxFixedLayoutBackend` | n/a (a fixed-layout backend builder option) |
+| Multi-section documents (`renderSections`, per-section chrome, cross-section links) | ✅ `buildSectionsDocument` in `PdfFixedLayoutBackend` | ⚠️ `renderSections` in `PptxFixedLayoutBackend` (a deck carries one slide size, so every section must share the same page canvas — differing sizes throw) | n/a (`renderSections` is declared on `FixedLayoutRenderer`; `MultiSectionDocument` drives fixed-layout backends only) |
 | Deterministic output (render twice → identical bytes) | ✅ `PdfDeterminismWriter` | ✅ `PptxDeterminismWriter` (pinned OPC created/modified + zip entry-time normalization) | ❌ |
 | ServiceLoader discovery (`FixedLayoutBackendProvider`) | ✅ `PdfFixedLayoutBackendProvider` (`format() == "pdf"`) | ✅ `PptxFixedLayoutBackendProvider` (`format() == "pptx"`) | n/a (semantic SPI: `SemanticBackend`) |
-| `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | ✅ `buildPptx` / `writePptx` / `toPptxBytes` (resolved via `BackendProviders.fixedLayout("pptx")`; session chrome applies; fails with `MissingBackendException` naming `graph-compose-render-pptx` when the backend is absent) | via `session.export(new DocxSemanticBackend(...))` |
+| `DocumentSession` convenience methods | ✅ `buildPdf` / `writePdf` / `toPdfBytes` / `toImages` | ✅ `buildPptx` / `writePptx` / `toPptxBytes` (resolved via `BackendProviders.fixedLayout("pptx")`; session chrome applies; fails with `MissingBackendException` naming `graph-compose-render-pptx` when the backend is absent) | ✅ `session.export(new DocxSemanticBackend(...), target)` — the semantic backend is named directly rather than discovered |
 
 ## Fidelity notes (PPTX)
 

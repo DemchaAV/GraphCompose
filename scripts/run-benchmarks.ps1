@@ -328,6 +328,22 @@ try {
         & $mavenWrapper "-B" "-ntp" "-DskipTests" "install" "-pl" $enginePl
     }
 
+    # The benchmark also resolves render-pdf and templates (plus the templates
+    # tests-classifier jar, which is never published) at the branch's own
+    # version. Installing only the engine leaves those coming from ~/.m2, so an
+    # A/B between two branches that share a version compares the SAME backend and
+    # template jars on both sides and reports a delta of exactly zero for any
+    # change in them. Guarded by existence: a pre-split layout builds them from
+    # the root instead.
+    foreach ($module in @('render-pdf', 'templates')) {
+        $modulePom = Join-Path $repoRoot "$module/pom.xml"
+        if (Test-Path $modulePom) {
+            Invoke-LoggedCommand -Name "01-install-$module" -Command {
+                & $mavenWrapper "-B" "-ntp" "-f" $modulePom "-DskipTests" "install"
+            }
+        }
+    }
+
     Invoke-LoggedCommand -Name "01-build-classpath" -Command {
         & $mavenWrapper "-B" "-ntp" "-f" $benchmarksPom "test-compile" "dependency:build-classpath" "-DincludeScope=test" "-Dmdep.outputFile=target/benchmark.classpath"
     }

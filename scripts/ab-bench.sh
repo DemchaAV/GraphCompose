@@ -157,6 +157,19 @@ build_engine_and_classpath() {
   local engine_pl="."
   [ -f core/pom.xml ] && engine_pl=":graph-compose-core"
   "$MVNW" -B -ntp -DskipTests install -pl "$engine_pl" >/dev/null
+  # The benchmark also resolves render-pdf and templates (plus the templates
+  # tests-classifier jar, which is never published) at the branch's own version,
+  # so those have to be rebuilt per branch as well. Install only the engine and
+  # both sides resolve the SAME jars from ~/.m2 whenever the two branches share a
+  # version — the normal case for two branches off develop — so every change in
+  # the PDF backend or the templates module reports a delta of exactly zero.
+  # Guarded by existence: a pre-split layout builds them from the root instead.
+  local module
+  for module in render-pdf templates; do
+    if [ -f "$module/pom.xml" ]; then
+      "$MVNW" -B -ntp -f "$module/pom.xml" -DskipTests install >/dev/null
+    fi
+  done
   "$MVNW" -B -ntp -f benchmarks/pom.xml test-compile dependency:build-classpath \
           -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath >/dev/null
   CP="benchmarks/target/test-classes${SEP}benchmarks/target/classes${SEP}$(cat benchmarks/target/benchmark.classpath)"

@@ -514,8 +514,14 @@ function Run-ShowcaseSync {
     # as a single literal argument.
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
     # The examples module depends on these bumped SNAPSHOT siblings (not on
-    # Central); each must be installed before exec:java can resolve them.
-    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml', 'templates/pom.xml', 'testing/pom.xml')
+    # Central); each must be installed before exec:java can resolve them. Keep
+    # this list in lockstep with examples/pom.xml — a module the examples depend
+    # on but that is missing here fails Step 4 with "Could not find artifact
+    # …:<new version>", because the just-bumped version exists nowhere yet.
+    # ReleaseScriptInstallListGuardTest fails the build if the two drift apart.
+    # render-pptx must follow render-pdf: it depends on it at compile scope.
+    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml',
+                                 'render-pptx/pom.xml', 'templates/pom.xml', 'testing/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl :graph-compose-core" -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {

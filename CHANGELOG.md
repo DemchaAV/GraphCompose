@@ -121,6 +121,15 @@ shade), while others lose something the format cannot carry — see Known limita
 
 ### Fixed
 
+- **PPTX text no longer overruns the frame the engine measured for it.** A span that
+  named a standard-14 style variant — `Helvetica-Bold`, `Times-Italic` and their
+  siblings — travelled to PowerPoint as a bold or italic run flag. Those names are
+  family aliases: the engine resolves each to its regular base and takes the real face
+  from the span's decoration, so the layout had measured the regular metrics. The viewer
+  then drew a face about 6% wider than its slot, which pushed a chip label past its card
+  and closed the gap between two words of a rich-text heading until they read as one.
+  Run flags now follow the decoration for those families, so a deck renders the same
+  face the PDF does; a binary family still carries its face in its own name.
 - **A large clipped region in a PPTX deck is no longer downscaled.** The raster scale
   was capped only from above, so a clip box wider than 2048 pt rasterized *below*
   native size — an A0-scale composite landed near 44 DPI and read as visibly blurry,

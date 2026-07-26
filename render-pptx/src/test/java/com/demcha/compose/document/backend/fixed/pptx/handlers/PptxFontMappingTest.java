@@ -36,15 +36,46 @@ class PptxFontMappingTest {
     }
 
     @Test
-    void combinesDecorationWithFaceSuffixes() {
-        TextStyle boldFace = new TextStyle(FontName.HELVETICA_BOLD, 12,
-                TextDecoration.DEFAULT, Color.BLACK);
+    void decorationDrivesTheFace() {
         TextStyle decorated = new TextStyle(FontName.HELVETICA, 12,
                 TextDecoration.BOLD_ITALIC, Color.BLACK);
 
-        assertThat(PptxFontMapping.isBold(boldFace)).isTrue();
-        assertThat(PptxFontMapping.isItalic(boldFace)).isFalse();
         assertThat(PptxFontMapping.isBold(decorated)).isTrue();
         assertThat(PptxFontMapping.isItalic(decorated)).isTrue();
+    }
+
+    /**
+     * The standard-14 style variants are family aliases: the engine resolves
+     * {@code Helvetica-Bold} to the Helvetica family and takes the face from
+     * the decoration, so a span naming one without a decoration is measured
+     * with the regular metrics. Claiming the flag here would make the viewer
+     * draw a wider face than the frame was sized for.
+     */
+    @Test
+    void standard14FaceSuffixDoesNotBecomeARunFlag() {
+        TextStyle aliasedBold = new TextStyle(FontName.HELVETICA_BOLD, 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+        TextStyle aliasedOblique = new TextStyle(FontName.COURIER_BOLD_OBLIQUE, 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+
+        assertThat(PptxFontMapping.isBold(aliasedBold)).isFalse();
+        assertThat(PptxFontMapping.isItalic(aliasedBold)).isFalse();
+        assertThat(PptxFontMapping.isBold(aliasedOblique)).isFalse();
+        assertThat(PptxFontMapping.isItalic(aliasedOblique)).isFalse();
+    }
+
+    /**
+     * A binary family keeps its own name and is measured as itself, so its
+     * suffix is the only signal of the face and must still travel as a flag.
+     */
+    @Test
+    void binaryFamilySuffixStillCarriesTheFace() {
+        TextStyle bold = new TextStyle(FontName.of("Acme-Sans-Bold"), 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+        TextStyle italic = new TextStyle(FontName.of("Acme-Sans-Italic"), 12,
+                TextDecoration.DEFAULT, Color.BLACK);
+
+        assertThat(PptxFontMapping.isBold(bold)).isTrue();
+        assertThat(PptxFontMapping.isItalic(italic)).isTrue();
     }
 }

@@ -98,8 +98,7 @@ public final class PptxFontMapping {
         if (decoration == TextDecoration.BOLD || decoration == TextDecoration.BOLD_ITALIC) {
             return true;
         }
-        return style.fontName() != null
-                && style.fontName().name().toLowerCase(Locale.ROOT).contains("bold");
+        return nameCarriesStyle(style.fontName(), "bold");
     }
 
     /** Returns whether the run selects an italic face. */
@@ -108,8 +107,32 @@ public final class PptxFontMapping {
         if (decoration == TextDecoration.ITALIC || decoration == TextDecoration.BOLD_ITALIC) {
             return true;
         }
-        String name = style.fontName() == null ? "" : style.fontName().name().toLowerCase(Locale.ROOT);
-        return name.contains("italic") || name.contains("oblique");
+        return nameCarriesStyle(style.fontName(), "italic")
+                || nameCarriesStyle(style.fontName(), "oblique");
+    }
+
+    /**
+     * Reports whether a font name's own style suffix should become a run flag.
+     *
+     * <p>Only binary families carry their face in the name. The standard-14
+     * PostScript variants — {@code Helvetica-Bold}, {@code Times-Italic},
+     * {@code Courier-BoldOblique} and their siblings — are <em>family
+     * aliases</em>: the engine resolves each to its regular base family and
+     * then picks the real face from the span's {@link TextDecoration}, so a
+     * span that names one of them without a decoration is measured with the
+     * regular metrics. Turning the suffix into a run flag would ask the viewer
+     * for a bold or italic face the layout never measured, and the placed text
+     * would render wider than the frame the engine sized for it.</p>
+     *
+     * @param fontName logical document font, may be {@code null}
+     * @param token lowercase style token to look for
+     * @return {@code true} when the name may contribute the flag
+     */
+    private static boolean nameCarriesStyle(FontName fontName, String token) {
+        if (fontName == null || standardReplacementFor(fontName) != null) {
+            return false;
+        }
+        return fontName.name().toLowerCase(Locale.ROOT).contains(token);
     }
 
     static boolean isUnderline(TextStyle style) {

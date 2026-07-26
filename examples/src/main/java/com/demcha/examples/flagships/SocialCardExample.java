@@ -86,6 +86,16 @@ public final class SocialCardExample {
     /** Height the title, body line and their spacing consume above the chart. */
     private static final double TEXT_BLOCK = 40;
 
+    /**
+     * Body lines below the chart, as fractions of the content width. Ragged on
+     * purpose — a paragraph that ends mid-line is what makes a block read as
+     * prose rather than as a bar chart lying on its side.
+     */
+    private static final double[] BODY_LINES = {1.00, 0.94, 0.97, 0.62};
+
+    /** Height one body line and its gap consume. */
+    private static final double BODY_LINE_STEP = 9.5;
+
     /** The one document both outputs render. Same text, same series, both shapes. */
     private static final String DOC_TITLE = "Quarterly revenue";
     private static final String DOC_LINE = "Composed once, resolved once, rendered twice.";
@@ -172,29 +182,177 @@ public final class SocialCardExample {
 
     private static DocumentNode scene() {
         List<CanvasChild> layers = new ArrayList<>();
-
         layers.addAll(grid());
 
-        // Left third: the identity block.
-        layers.add(at(logoBlock(), 62, 214));
+        // Header. A social card has to say whose it is; the pipeline says why.
+        layers.add(at(logoBlock(), 56, 34));
         layers.add(at(text("Tagline", "One layout pass. Two outputs.",
-                display(20, ON_DARK), 360), 66, 300));
-        layers.add(at(text("Sub",
-                "The same resolved layout renders a PDF and an editable deck.",
-                body(11.5, ON_DARK_MUTED), 350), 66, 334));
+                display(15, ON_DARK), 300), 60, 88));
         layers.add(at(text("Footer", "Java 17+   ·   MIT   ·   Maven Central",
-                mono(10, MINT), 340), 66, 370));
+                mono(8.6, MINT), 300), 60, 592));
 
-        // Right two thirds: the diagram.
+        // Stage 1 - what you hand the engine.
+        layers.add(at(sourceTray(), 62, 300));
+        layers.add(at(arrow(46), 196, 356));
+
+        // Stage 2 - the resolved graph. The middle is the product.
+        layers.add(at(graphPanel(), 254, 150));
+        layers.add(at(text("GraphLabel", "RESOLVED LAYOUT GRAPH",
+                mono(7.6, ON_DARK_MUTED), 260), 258, 132));
+
+        // Stage 3 - two backends reading that one graph.
         layers.addAll(beams());
-        layers.add(at(sheet(), 452, 236));
-        layers.add(at(outputCard("PdfOut", 232, 292, VIOLET, VIOLET_LIGHT), 892, 58));
-        layers.add(at(outputCard("PptxOut", 356, 200, MINT, MINT), 828, 396));
-        layers.add(at(text("PdfLabel", "PDF", mono(9.5, VIOLET_LIGHT), 60), 892, 40));
-        layers.add(at(text("PptxLabel", "PPTX", mono(9.5, MINT), 60), 828, 378));
+        layers.add(at(outputCard("PdfOut", 190, 250, VIOLET, VIOLET_LIGHT), 782, 84));
+        layers.add(at(outputCard("PptxOut", 400, 196, MINT, MINT), 782, 396));
+        layers.add(at(text("PdfLabel", "PDF", mono(8.6, VIOLET_LIGHT), 60), 782, 66));
+        layers.add(at(text("PptxLabel", "PPTX", mono(8.6, MINT), 60), 782, 378));
 
         return new CanvasLayerNode("SocialCard", CARD_WIDTH, CARD_HEIGHT, layers,
                 ClipPolicy.CLIP_BOUNDS, DocumentInsets.zero(), DocumentInsets.zero());
+    }
+
+    /** Stage 1: a tray of authored documents waiting to be composed. */
+    private static DocumentNode sourceTray() {
+        ShapeContainerBuilder tray = new ShapeContainerBuilder()
+                .name("SourceTray")
+                .roundedRect(118, 112, 6)
+                .fillColor(DocumentColor.rgba(0, 0, 0, 0))
+                .stroke(DocumentStroke.of(MINT.withOpacity(0.45), 0.9));
+        for (int i = 0; i < 3; i++) {
+            tray.position(miniSheet(), 16 + i * 12, 20 + i * 7, LayerAlign.TOP_LEFT);
+        }
+        return tray.build();
+    }
+
+    private static DocumentNode miniSheet() {
+        ShapeContainerBuilder sheet = new ShapeContainerBuilder()
+                .name("MiniSheet")
+                .roundedRect(58, 74, 3)
+                .fillColor(SURFACE.withOpacity(0.92))
+                .stroke(DocumentStroke.of(SHEET_EDGE.withOpacity(0.45), 0.7));
+        for (int i = 0; i < 4; i++) {
+            sheet.position(rect(i == 0 ? 26 : 38 - i * 4, 2.4, ON_DARK.withOpacity(0.24)),
+                    9, 12 + i * 8, LayerAlign.TOP_LEFT);
+        }
+        return sheet.build();
+    }
+
+    /**
+     * A short connector between stages.
+     *
+     * @param width connector length in points
+     * @return the composed connector
+     */
+    private static DocumentNode arrow(double width) {
+        return new ShapeContainerBuilder()
+                .name("Arrow")
+                .rectangle(width, 10)
+                .fillColor(DocumentColor.rgba(0, 0, 0, 0))
+                .position(rect(width - 8, 1.1, MINT.withOpacity(0.75)), 0, 4.5,
+                        LayerAlign.TOP_LEFT)
+                .position(dot(5, MINT), width - 8, 2.5, LayerAlign.TOP_LEFT)
+                .build();
+    }
+
+    /**
+     * Stage 2: the resolved layout graph - the thing the name is about.
+     *
+     * <p>A document root, its sections, and the leaf fragments each section
+     * resolves to, over the flat ordered fragment stream the compiler emits.
+     * Every backend downstream reads this and nothing else, which is why two of
+     * them agree.</p>
+     *
+     * @return the composed panel
+     */
+    private static DocumentNode graphPanel() {
+        double w = 416;
+        double h = 396;
+        ShapeContainerBuilder panel = new ShapeContainerBuilder()
+                .name("GraphPanel")
+                .roundedRect(w, h, 8)
+                .fillColor(DocumentColor.rgba(15, 20, 40, 170))
+                .stroke(DocumentStroke.of(VIOLET.withOpacity(0.42), 1.0));
+
+        panel.position(graphNode(68, 30, VIOLET_LIGHT), w / 2 - 34, 26, LayerAlign.TOP_LEFT);
+        panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), w / 2, 56, LayerAlign.TOP_LEFT);
+
+        double[] tier = {0.14, 0.42, 0.70};
+        panel.position(rect(w * 0.56 + 2, 1.0, VIOLET.withOpacity(0.5)),
+                w * tier[0] + 31, 76, LayerAlign.TOP_LEFT);
+        for (double t : tier) {
+            panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), w * t + 31, 76,
+                    LayerAlign.TOP_LEFT);
+            panel.position(graphNode(62, 28, VIOLET.withOpacity(0.85)), w * t, 96,
+                    LayerAlign.TOP_LEFT);
+            panel.position(rect(1.0, 18, VIOLET.withOpacity(0.35)), w * t + 31, 124,
+                    LayerAlign.TOP_LEFT);
+            panel.position(rect(58, 1.0, VIOLET.withOpacity(0.35)), w * t + 2, 142,
+                    LayerAlign.TOP_LEFT);
+            for (int leaf = 0; leaf < 3; leaf++) {
+                double lx = w * t + 2 + leaf * 29;
+                panel.position(rect(1.0, 12, VIOLET.withOpacity(0.35)), lx, 142,
+                        LayerAlign.TOP_LEFT);
+                panel.position(leafNode(), lx - 9, 154, LayerAlign.TOP_LEFT);
+            }
+        }
+
+        // The flat, ordered fragment stream the backends actually consume.
+        panel.position(rect(w - 56, 1.0, VIOLET.withOpacity(0.28)), 28, 216,
+                LayerAlign.TOP_LEFT);
+        for (int i = 0; i < 9; i++) {
+            panel.position(rect(28, 10, VIOLET.withOpacity(0.30)), 30 + i * 40, 234,
+                    LayerAlign.TOP_LEFT);
+        }
+        for (int i = 0; i < 7; i++) {
+            panel.position(rect(36, 6, ON_DARK.withOpacity(0.13)), 30 + i * 52, 264,
+                    LayerAlign.TOP_LEFT);
+        }
+        for (int i = 0; i < 5; i++) {
+            panel.position(rect(52, 6, ON_DARK.withOpacity(0.10)), 30 + i * 72, 284,
+                    LayerAlign.TOP_LEFT);
+        }
+        panel.position(rect(w - 56, 1.0, VIOLET.withOpacity(0.22)), 28, 312,
+                LayerAlign.TOP_LEFT);
+        panel.position(textIn("GraphFoot", "measure  ·  paginate  ·  place",
+                mono(7.2, ON_DARK_MUTED), w - 56), 28, 330, LayerAlign.TOP_LEFT);
+        return panel.build();
+    }
+
+    /**
+     * One node box in the tree.
+     *
+     * @param w box width in points
+     * @param h box height in points
+     * @param accent outline colour
+     * @return the composed node
+     */
+    private static DocumentNode graphNode(double w, double h, DocumentColor accent) {
+        return new ShapeContainerBuilder()
+                .name("GraphNode")
+                .roundedRect(w, h, 4)
+                .fillColor(SURFACE.withOpacity(0.85))
+                .stroke(DocumentStroke.of(accent, 0.9))
+                .position(rect(w * 0.55, 3, accent.withOpacity(0.55)), 8, 8,
+                        LayerAlign.TOP_LEFT)
+                .position(rect(w * 0.36, 2.4, ON_DARK.withOpacity(0.22)), 8, 16,
+                        LayerAlign.TOP_LEFT)
+                .build();
+    }
+
+    /**
+     * A leaf fragment box. A plain shape rather than a container: a
+     * {@code ShapeContainerNode} requires at least one layer, and this one holds
+     * nothing.
+     *
+     * @return the composed leaf
+     */
+    private static DocumentNode leafNode() {
+        return new ShapeBuilder()
+                .size(18, 16)
+                .fillColor(SURFACE.withOpacity(0.9))
+                .stroke(DocumentStroke.of(VIOLET.withOpacity(0.5), 0.7))
+                .cornerRadius(DocumentCornerRadius.of(3))
+                .build();
     }
 
     /** Faint measurement grid: this is a layout engine, so the paper has coordinates. */
@@ -221,54 +379,34 @@ public final class SocialCardExample {
     }
 
     /**
-     * The source sheet, drawn as a plane in three-quarter view with a folded
-     * corner — a document before anyone has decided what it will be rendered to.
-     */
-    private static DocumentNode sheet() {
-        // PathBuilder coordinates are fractions of the declared box, with y
-        // running bottom-up — the same convention BookTemplateExample uses.
-        return new PathBuilder()
-                .name("SourceSheet")
-                .size(148, 208)
-                .moveTo(0.00, 0.94)
-                .lineTo(1.00, 1.00)
-                .lineTo(1.00, 0.06)
-                .lineTo(0.00, 0.00)
-                .closePath()
-                .fillColor(SURFACE.withOpacity(0.55))
-                .stroke(DocumentStroke.of(SHEET_EDGE.withOpacity(0.85), 1.4))
-                .build();
-    }
-
-    /**
-     * The two beams. Flat translucent fills rather than gradients — the paint
+     * The two wedges leaving the graph panel. Flat translucent fills: the paint
      * surface exposes solid colours, and a flat wedge reads cleaner at the size
      * a social card is actually viewed.
+     *
+     * @return the composed wedges and their origin dots
      */
     private static List<CanvasChild> beams() {
         List<CanvasChild> out = new ArrayList<>();
-        // Both wedges start on the sheet's right edge, so the eye follows one
-        // document splitting rather than two unrelated shapes being lit.
         out.add(at(new PathBuilder()
                 .name("BeamPdf")
-                .size(292, 292)
-                .moveTo(0.00, 0.21)
+                .size(112, 250)
+                .moveTo(0.00, 0.34)
                 .lineTo(1.00, 1.00)
                 .lineTo(1.00, 0.00)
                 .closePath()
-                .fillColor(VIOLET.withOpacity(0.16))
-                .build(), 600, 58));
+                .fillColor(VIOLET.withOpacity(0.15))
+                .build(), 670, 84));
         out.add(at(new PathBuilder()
                 .name("BeamPptx")
-                .size(228, 200)
-                .moveTo(0.00, 0.88)
+                .size(112, 196)
+                .moveTo(0.00, 0.72)
                 .lineTo(1.00, 1.00)
                 .lineTo(1.00, 0.00)
                 .closePath()
-                .fillColor(MINT.withOpacity(0.14))
-                .build(), 600, 396));
-        out.add(at(dot(9, VIOLET), 596, 286));
-        out.add(at(dot(9, MINT), 596, 416));
+                .fillColor(MINT.withOpacity(0.13))
+                .build(), 670, 396));
+        out.add(at(dot(8, VIOLET), 666, 246));
+        out.add(at(dot(8, MINT), 666, 448));
         return out;
     }
 
@@ -289,7 +427,8 @@ public final class SocialCardExample {
                 .roundedRect(width, height, 6)
                 .fillColor(DocumentColor.rgba(12, 16, 34, 236))
                 .stroke(DocumentStroke.of(outline, 1.5))
-                .position(documentBody(accent, height - 2 * CARD_PAD - TEXT_BLOCK),
+                .position(documentBody(accent, width - 2 * CARD_PAD,
+                        height - 2 * CARD_PAD - TEXT_BLOCK - proseHeight()),
                         CARD_PAD, CARD_PAD, LayerAlign.TOP_LEFT)
                 .build();
     }
@@ -301,10 +440,12 @@ public final class SocialCardExample {
      * document without either being cropped.
      *
      * @param accent series colour for the chart
+     * @param width content width, in points
      * @param chartHeight height available to the chart, in points
      * @return the composed body
      */
-    private static DocumentNode documentBody(DocumentColor accent, double chartHeight) {
+    private static DocumentNode documentBody(DocumentColor accent, double width,
+                                            double chartHeight) {
         return new SectionBuilder()
                 .spacing(7)
                 .padding(DocumentInsets.zero())
@@ -315,7 +456,39 @@ public final class SocialCardExample {
                         .textStyle(body(6.4, ON_DARK_MUTED))
                         .margin(DocumentInsets.zero()))
                 .chart(revenueChart(chartHeight), chartStyle(accent))
+                .add(prose(width))
                 .build();
+    }
+
+    /**
+     * The paragraph block under the chart: flat bars standing in for body text.
+     *
+     * <p>Real text at this size would be unreadable on a social card and would
+     * invite the viewer to try; bars say "prose continues here" and stop.</p>
+     *
+     * @param width content width, in points
+     * @return the composed block
+     */
+    private static DocumentNode prose(double width) {
+        ShapeContainerBuilder block = new ShapeContainerBuilder()
+                .name("Prose")
+                .rectangle(width, proseHeight())
+                .fillColor(DocumentColor.rgba(0, 0, 0, 0));
+        for (int i = 0; i < BODY_LINES.length; i++) {
+            block.position(rect(width * BODY_LINES[i], 3.4, ON_DARK.withOpacity(0.22)),
+                    0, i * BODY_LINE_STEP, LayerAlign.TOP_LEFT);
+        }
+        return block.build();
+    }
+
+    /**
+     * Height the prose block occupies, including the gap that separates it from
+     * the chart above.
+     *
+     * @return height in points
+     */
+    private static double proseHeight() {
+        return BODY_LINES.length * BODY_LINE_STEP;
     }
 
     /**
@@ -357,6 +530,30 @@ public final class SocialCardExample {
 
     private static DocumentNode dot(double diameter, DocumentColor fill) {
         return new EllipseBuilder().circle(diameter).fillColor(fill).build();
+    }
+
+    /**
+     * A paragraph laid out inside a container rather than on the page canvas.
+     *
+     * <p>{@link #text} sizes its box by subtracting from {@link #CARD_WIDTH},
+     * which collapses to nothing inside a narrower parent — the panel footer
+     * silently rendered at zero width until this existed.</p>
+     *
+     * @param name node name
+     * @param value the text
+     * @param style text style
+     * @param available width available inside the parent, in points
+     * @return the composed paragraph
+     */
+    private static DocumentNode textIn(String name, String value, DocumentTextStyle style,
+                                       double available) {
+        return new ParagraphBuilder()
+                .name(name)
+                .text(value)
+                .textStyle(style)
+                .align(TextAlign.LEFT)
+                .margin(DocumentInsets.zero())
+                .build();
     }
 
     private static DocumentNode text(String name, String value, DocumentTextStyle style,

@@ -12,7 +12,7 @@
     release.
 
     Usage:
-      pwsh ./scripts/release-smoke/run.ps1                  # isolated, tests 2.0.0
+      pwsh ./scripts/release-smoke/run.ps1                  # isolated, tests 2.1.0
       pwsh ./scripts/release-smoke/run.ps1 -Version 2.0.1   # test a different published version
       pwsh ./scripts/release-smoke/run.ps1 -Warm            # keep everything cached (fast dev iteration)
 #>
@@ -20,7 +20,7 @@ param(
     [switch]$Warm,
     # Default version under test: the currently published release. Release smoke
     # must test PUBLISHED artifacts — never a -SNAPSHOT.
-    [string]$Version = '2.0.0'
+    [string]$Version = '2.1.0'
 )
 
 $ErrorActionPreference = 'Continue'

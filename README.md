@@ -105,12 +105,12 @@ Everything the 1.9 line added &mdash; in-document navigation, native TOC and pag
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:2.0.0") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.1.0") }
 ```
 
 > **Which artifact? (2.0 module split).** `graph-compose` above is the drop-in default —

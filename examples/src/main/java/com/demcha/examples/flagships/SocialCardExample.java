@@ -96,6 +96,9 @@ public final class SocialCardExample {
     /** Height one body line and its gap consume. */
     private static final double BODY_LINE_STEP = 9.5;
 
+    /** Horizontal gap between leaf fragments in the graph panel. */
+    private static final double LEAF_STEP = 29;
+
     /** The one document both outputs render. Same text, same series, both shapes. */
     private static final String DOC_TITLE = "Quarterly revenue";
     private static final String DOC_LINE = "Composed once, resolved once, rendered twice.";
@@ -204,8 +207,8 @@ public final class SocialCardExample {
         layers.addAll(beams());
         layers.add(at(outputCard("PdfOut", 190, 250, VIOLET, VIOLET_LIGHT), 782, 84));
         layers.add(at(outputCard("PptxOut", 400, 196, MINT, MINT), 782, 396));
-        layers.add(at(text("PdfLabel", "PDF", mono(8.6, VIOLET_LIGHT), 60), 782, 66));
-        layers.add(at(text("PptxLabel", "PPTX", mono(8.6, MINT), 60), 782, 378));
+        layers.add(at(text("PdfLabel", "PDF", mono(8.6, VIOLET_LIGHT), 60), 786, 62));
+        layers.add(at(text("PptxLabel", "PPTX", mono(8.6, MINT), 60), 786, 374));
 
         return new CanvasLayerNode("SocialCard", CARD_WIDTH, CARD_HEIGHT, layers,
                 ClipPolicy.CLIP_BOUNDS, DocumentInsets.zero(), DocumentInsets.zero());
@@ -277,7 +280,9 @@ public final class SocialCardExample {
         panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), w / 2, 56, LayerAlign.TOP_LEFT);
 
         double[] tier = {0.14, 0.42, 0.70};
-        panel.position(rect(w * 0.56 + 2, 1.0, VIOLET.withOpacity(0.5)),
+        // The rail spans exactly first-drop to last-drop; any overshoot shows as
+        // a whisker past the junction at this size.
+        panel.position(rect(w * (tier[2] - tier[0]), 1.0, VIOLET.withOpacity(0.5)),
                 w * tier[0] + 31, 76, LayerAlign.TOP_LEFT);
         for (double t : tier) {
             panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), w * t + 31, 76,
@@ -286,10 +291,10 @@ public final class SocialCardExample {
                     LayerAlign.TOP_LEFT);
             panel.position(rect(1.0, 18, VIOLET.withOpacity(0.35)), w * t + 31, 124,
                     LayerAlign.TOP_LEFT);
-            panel.position(rect(58, 1.0, VIOLET.withOpacity(0.35)), w * t + 2, 142,
-                    LayerAlign.TOP_LEFT);
+            panel.position(rect(LEAF_STEP * 2, 1.0, VIOLET.withOpacity(0.35)),
+                    w * t + 2, 142, LayerAlign.TOP_LEFT);
             for (int leaf = 0; leaf < 3; leaf++) {
-                double lx = w * t + 2 + leaf * 29;
+                double lx = w * t + 2 + leaf * LEAF_STEP;
                 panel.position(rect(1.0, 12, VIOLET.withOpacity(0.35)), lx, 142,
                         LayerAlign.TOP_LEFT);
                 panel.position(leafNode(), lx - 9, 154, LayerAlign.TOP_LEFT);
@@ -427,9 +432,33 @@ public final class SocialCardExample {
                 .roundedRect(width, height, 6)
                 .fillColor(DocumentColor.rgba(12, 16, 34, 236))
                 .stroke(DocumentStroke.of(outline, 1.5))
-                .position(documentBody(accent, width - 2 * CARD_PAD,
-                        height - 2 * CARD_PAD - TEXT_BLOCK - proseHeight()),
+                .position(contentBox(width - 2 * CARD_PAD, height - 2 * CARD_PAD,
+                        documentBody(accent, width - 2 * CARD_PAD,
+                                height - 2 * CARD_PAD - TEXT_BLOCK - proseHeight())),
                         CARD_PAD, CARD_PAD, LayerAlign.TOP_LEFT)
+                .build();
+    }
+
+    /**
+     * An invisible box that gives its child an explicit width to lay out
+     * against.
+     *
+     * <p>A node positioned straight into a card is measured against the card,
+     * not against the card minus its padding — which is how the chart ended up
+     * touching the border on the right.</p>
+     *
+     * @param width content width, in points
+     * @param height content height, in points
+     * @param child the node to constrain
+     * @return the composed box
+     */
+    private static DocumentNode contentBox(double width, double height, DocumentNode child) {
+        return new ShapeContainerBuilder()
+                .name("ContentBox")
+                .rectangle(width, height)
+                .fillColor(DocumentColor.rgba(0, 0, 0, 0))
+                .clipPolicy(ClipPolicy.CLIP_BOUNDS)
+                .position(child, 0, 0, LayerAlign.TOP_LEFT)
                 .build();
     }
 

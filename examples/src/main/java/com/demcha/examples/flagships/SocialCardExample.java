@@ -2,9 +2,17 @@ package com.demcha.examples.flagships;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.chart.AxisSpec;
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.ChartSize;
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.ValueLabelMode;
 import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.PathBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.node.CanvasChild;
@@ -15,6 +23,8 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
+import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -45,10 +55,10 @@ import java.util.Objects;
  *
  * <p>What it draws is the claim the 2.1 line rests on. A single sheet on the
  * left resolves into two shapes on the right — a portrait page and a 16:9
- * slide. The content bars inside both are placed from the <em>same</em> set of
- * relative fractions ({@link #CONTENT_BARS}), so the picture's assertion that
- * one layout arrives in two shapes is enforced by the code that draws it rather
- * than by the illustrator's hand.</p>
+ * slide. Both shapes are handed the <em>same</em> content: the same title, the
+ * same line of body text and the same chart spec, built once by
+ * {@link #documentBody}. The engine lays that content out into each box. So the
+ * picture is not an illustration of the claim — it is the claim running.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.1.1
@@ -70,22 +80,15 @@ public final class SocialCardExample {
     private static final DocumentColor MINT = DocumentColor.rgb(55, 214, 161);
     private static final DocumentColor SHEET_EDGE = DocumentColor.rgb(206, 213, 235);
 
-    /**
-     * Content bars as fractions of the destination shape, in draw order:
-     * {@code x, y, width, height}. Both outputs read this same table — that is
-     * the whole point of the picture.
-     */
-    private static final double[][] CONTENT_BARS = {
-            {0.07, 0.09, 0.62, 0.085},
-            {0.07, 0.30, 0.72, 0.048},
-            {0.07, 0.40, 0.55, 0.048},
-    };
+    /** Inner padding of an output shape, in points. */
+    private static final double CARD_PAD = 14;
 
-    /** The chart block, same fractions in both outputs. */
-    private static final double[] CHART_BLOCK = {0.07, 0.56, 0.80, 0.32};
+    /** Height the title, body line and their spacing consume above the chart. */
+    private static final double TEXT_BLOCK = 40;
 
-    /** Sparkline heights above the block floor, bottom-up like the path axis. */
-    private static final double[] SERIES = {0.18, 0.45, 0.38, 0.66, 0.86};
+    /** The one document both outputs render. Same text, same series, both shapes. */
+    private static final String DOC_TITLE = "Quarterly revenue";
+    private static final String DOC_LINE = "Composed once, resolved once, rendered twice.";
 
     private SocialCardExample() {
     }
@@ -227,11 +230,10 @@ public final class SocialCardExample {
         return new PathBuilder()
                 .name("SourceSheet")
                 .size(148, 208)
-                .moveTo(0.02, 0.97)
-                .lineTo(0.74, 1.00)
-                .lineTo(1.00, 0.80)
-                .lineTo(1.00, 0.03)
-                .lineTo(0.18, 0.00)
+                .moveTo(0.00, 0.94)
+                .lineTo(1.00, 1.00)
+                .lineTo(1.00, 0.06)
+                .lineTo(0.00, 0.00)
                 .closePath()
                 .fillColor(SURFACE.withOpacity(0.55))
                 .stroke(DocumentStroke.of(SHEET_EDGE.withOpacity(0.85), 1.4))
@@ -271,69 +273,78 @@ public final class SocialCardExample {
     }
 
     /**
-     * One destination shape. The bars come from {@link #CONTENT_BARS} scaled to
-     * this shape's box, so both outputs place the same content at the same
-     * relative coordinates by construction.
+     * One destination shape, holding a real rendered document.
      *
      * @param name canvas node name
      * @param width shape width in points
      * @param height shape height in points
      * @param outline outline colour
-     * @param accent colour for the chart marks
+     * @param accent series colour for the chart
      * @return the composed output shape
      */
     private static DocumentNode outputCard(String name, double width, double height,
                                            DocumentColor outline, DocumentColor accent) {
-        ShapeContainerBuilder card = new ShapeContainerBuilder()
+        return new ShapeContainerBuilder()
                 .name(name)
                 .roundedRect(width, height, 6)
-                .fillColor(DocumentColor.rgba(12, 16, 34, 232))
-                .stroke(DocumentStroke.of(outline, 1.5));
-
-        for (double[] bar : CONTENT_BARS) {
-            card.position(rect(width * bar[2], height * bar[3], ON_DARK.withOpacity(0.30)),
-                    width * bar[0], height * bar[1], LayerAlign.TOP_LEFT);
-        }
-
-        double chartW = width * CHART_BLOCK[2];
-        double chartH = height * CHART_BLOCK[3];
-        card.position(chartBlock(chartW, chartH, accent),
-                width * CHART_BLOCK[0], height * CHART_BLOCK[1], LayerAlign.TOP_LEFT);
-        return card.build();
+                .fillColor(DocumentColor.rgba(12, 16, 34, 236))
+                .stroke(DocumentStroke.of(outline, 1.5))
+                .position(documentBody(accent, height - 2 * CARD_PAD - TEXT_BLOCK),
+                        CARD_PAD, CARD_PAD, LayerAlign.TOP_LEFT)
+                .build();
     }
 
     /**
-     * A framed sparkline standing in for "a chart the engine drew".
+     * The document both outputs carry: same title, same line, same series.
+     * Only the chart's height follows the box it lands in — which is what a
+     * layout engine is for, and why the page and the slide can hold one
+     * document without either being cropped.
      *
-     * <p>{@code SERIES} values are heights above the block's floor, matching the
-     * path's bottom-up axis; the marker dots are positioned by a container,
-     * whose axis runs top-down, hence the inversion.</p>
+     * @param accent series colour for the chart
+     * @param chartHeight height available to the chart, in points
+     * @return the composed body
      */
-    private static DocumentNode chartBlock(double width, double height, DocumentColor accent) {
-        ShapeContainerBuilder block = new ShapeContainerBuilder()
-                .name("ChartBlock")
-                .rectangle(width, height)
-                .fillColor(DocumentColor.rgba(0, 0, 0, 0))
-                .stroke(DocumentStroke.of(ON_DARK.withOpacity(0.22), 0.8));
+    private static DocumentNode documentBody(DocumentColor accent, double chartHeight) {
+        return new SectionBuilder()
+                .spacing(7)
+                .padding(DocumentInsets.zero())
+                .addParagraph(p -> p.text(DOC_TITLE)
+                        .textStyle(display(9.5, ON_DARK))
+                        .margin(DocumentInsets.zero()))
+                .addParagraph(p -> p.text(DOC_LINE)
+                        .textStyle(body(6.4, ON_DARK_MUTED))
+                        .margin(DocumentInsets.zero()))
+                .chart(revenueChart(chartHeight), chartStyle(accent))
+                .build();
+    }
 
-        PathBuilder line = new PathBuilder().name("Spark").size(width, height);
-        for (int i = 0; i < SERIES.length; i++) {
-            double x = 0.10 + 0.20 * i;
-            if (i == 0) {
-                line.moveTo(x, SERIES[i]);
-            } else {
-                line.lineTo(x, SERIES[i]);
-            }
-        }
-        block.position(line.stroke(DocumentStroke.of(accent, 1.6)).build(), 0, 0,
-                LayerAlign.TOP_LEFT);
-        for (int i = 0; i < SERIES.length; i++) {
-            block.position(dot(5, accent),
-                    width * (0.10 + 0.20 * i) - 2.5,
-                    height * (1 - SERIES[i]) - 2.5,
-                    LayerAlign.TOP_LEFT);
-        }
-        return block.build();
+    /**
+     * Four labelled quarters — small enough to read, real enough to be a chart.
+     *
+     * @param height drawn height in points
+     * @return the chart spec
+     */
+    private static ChartSpec revenueChart(double height) {
+        return ChartSpec.bar()
+                .data(ChartData.builder()
+                        .categories("Q1", "Q2", "Q3", "Q4")
+                        .series("Revenue", 42, 58, 51, 74)
+                        .build())
+                .valueAxis(AxisSpec.builder().baselineAtZero(true).build())
+                .showCategoryLabels(true)
+                .legend(LegendPosition.NONE)
+                .valueLabels(ValueLabelMode.NONE)
+                .size(ChartSize.fixedHeight(height))
+                .build();
+    }
+
+    private static ChartStyle chartStyle(DocumentColor accent) {
+        return ChartStyle.builder()
+                .seriesPaint(0, DocumentPaint.solid(accent))
+                .barCornerRadius(DocumentCornerRadius.of(1.5))
+                .barWidthRatio(0.55)
+                .axisTextStyle(mono(5.4, ON_DARK_MUTED))
+                .build();
     }
 
     private static CanvasChild at(DocumentNode node, double x, double y) {

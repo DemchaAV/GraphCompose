@@ -3,6 +3,21 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.1.1 — Planned
+
+### Fixed
+
+- **A heading no longer strands above a block that was asked to stay whole.**
+  `keepWithNext()` decides by asking whether the heading plus the *first line* of
+  the next block fits, but a `keepTogether()` block has no first line to break
+  after — it relocates entire. The lookahead measured the first line anyway,
+  concluded it fit, left the heading in place, and the compiler then moved the
+  whole block to the next page. It affected every heading above a kept-whole
+  block: quotes, code blocks, callouts and alerts in the Markdown renderer, and
+  the card sections of the CV and proposal presets. A block taller than a page
+  still anchors by its first line, because its keep-together request is ignored
+  anyway.
+
 ## v2.1.0 — 2026-07-26
 
 ### Highlights

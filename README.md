@@ -350,13 +350,3 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 ## License
 
 MIT &mdash; see [`LICENSE`](./LICENSE).
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=DemchaAV%2FGraphCompose&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&legend=top-left" />
- </picture>
-</a>

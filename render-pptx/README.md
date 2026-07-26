@@ -11,13 +11,17 @@ compiled in core before either of them runs.
 ## Status
 
 **Experimental (`@Beta`), first shipped in 2.1.0.** The backend is complete
-enough for production decks: text, tables, shapes, images, gradients, links and
-navigation, headers/footers/watermarks, and multi-section documents all arrive as
-native PowerPoint objects rather than pictures. Across the 38 capabilities the
-matrix tracks, 24 map to a native equivalent, 10 render natively with an
-approximated styling detail (distinct per-corner radii collapse to one value,
-numeric dash arrays map to the nearest preset, some inline SVG layers fall back
-to a transparent PNG), and 4 are not supported at all — see the limitations below.
+enough for production decks: text, tables, shapes, images, gradients, hyperlinks
+and slide jumps, headers/footers/watermarks, and multi-section documents all
+arrive as native PowerPoint objects rather than pictures.
+
+Across the 38 capabilities the matrix tracks, 24 map to a native equivalent and 4
+are not supported at all. The remaining 10 are partial, and not all in the same
+way. Some render natively with an approximated styling detail — distinct
+per-corner radii collapse to one value, numeric dash arrays map to the nearest
+preset, a radial gradient uses the closest DrawingML shade. Others lose something
+the format cannot carry: bookmarks beyond the first on a slide, parts of an inline
+SVG, the metadata producer field. Both kinds are listed under limitations below.
 
 The `@Beta` marker covers the *API shape* (`PptxFixedLayoutBackend`, its builder,
 and the `PptxFragmentRenderHandler` seam), which may still change in a minor
@@ -54,8 +58,11 @@ the slide simply takes that size.
 
 - **Clipping falls back to a raster island.** A clipped composite is re-rendered
   through the PDF backend and placed as a picture, so that region loses text
-  editability and any run-level links inside it. It is pixel-accurate and can be
-  switched off with `PptxFixedLayoutBackend.builder().clipRasterFallback(false)`.
+  editability and any run-level links inside it. It is pixel-accurate — the raster
+  targets a 2048-pixel long edge, clamped between native size and 4×, so a region
+  larger than that is rendered at native resolution rather than downscaled, at a
+  transient memory cost proportional to its size. Switch it off with
+  `PptxFixedLayoutBackend.builder().clipRasterFallback(false)`.
   True vector clipping is tracked in
   [#413](https://github.com/DemchaAV/GraphCompose/issues/413).
 - **Glyphs are drawn by the viewer, not by GraphCompose.** Shape frames, line
@@ -74,6 +81,15 @@ the slide simply takes that size.
   backend — POI's slide rasteriser cannot honour embedded fonts. The session-level
   `toImage(...)` / `toImages(...)` are unaffected: they resolve the PDF backend
   explicitly.
+- **Bookmarks do not survive as a tree.** PPTX has no outline concept, so the
+  first bookmark on a page names its slide and further bookmarks on that page are
+  dropped with a debug note. A bookmark-heavy document loses most of its
+  navigation structure; hyperlinks and internal slide jumps are unaffected.
+- **Inline SVG is native only for simple layers.** Arbitrary clips, exact
+  dash/cap/join styles and off-viewBox art fall back to a transparent PNG, and
+  gradient paints use their primary colour.
+- **Document metadata loses its producer value** — OPC core properties have no
+  equivalent field.
 - **Multi-section documents** render into one deck; the sections must share a
   slide size.
 

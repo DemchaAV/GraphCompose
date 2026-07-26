@@ -13,10 +13,10 @@
   <a href="https://github.com/DemchaAV/GraphCompose/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/DemchaAV/GraphCompose/ci.yml?branch=main&style=for-the-badge&label=CI" alt="CI"/></a>
   <a href="https://github.com/DemchaAV/GraphCompose/releases/latest"><img src="https://img.shields.io/github/v/release/DemchaAV/GraphCompose?style=for-the-badge&label=Release" alt="Latest release"/></a>
   <a href="https://central.sonatype.com/artifact/io.github.demchaav/graph-compose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graph-compose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
-  <img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/>
-  <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0 — PDF backend"/>
-  <img src="https://img.shields.io/badge/Apache%20POI-5.5-blueviolet?style=for-the-badge" alt="Apache POI 5.5 — PPTX and DOCX backends"/>
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
+  <a href="#installation"><img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/></a>
+  <a href="./docs/architecture/backend-capability-matrix.md"><img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0 — PDF backend"/></a>
+  <a href="./docs/architecture/backend-capability-matrix.md"><img src="https://img.shields.io/badge/Apache%20POI-5.5-blueviolet?style=for-the-badge" alt="Apache POI 5.5 — PPTX and DOCX backends"/></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/></a>
 </p>
 
 > **Release status** &mdash;
@@ -85,19 +85,6 @@ try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
-## What's new in 2.0
-
-The **module-first** release &mdash; the single jar becomes a family of per-concern artifacts, so you install exactly what you render.
-
-- **Lean engine** &mdash; `graph-compose-core` is the document model, DSL, themes, and deterministic layout with **no PDFBox, POI, or template code** on its dependency tree. Backends plug in through a `ServiceLoader` seam; a core-only classpath asked to render throws `MissingBackendException` naming the artifact to add.
-- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-pptx` (Apache POI, geometry-identical PowerPoint decks from the same resolved layout — one page per editable slide; clipped regions land as pixel-exact pictures; ships as **beta** in its first release), `graph-compose-render-docx` (Apache POI, semantic export).
-- **`graph-compose` stays a drop-in** &mdash; the 1.x coordinate is now a thin wrapper over core + the PDF backend, so existing callers upgrade with **no code and no dependency change**.
-- **Templates are their own artifact** &mdash; the CV / cover-letter / invoice / proposal preset families moved to `graph-compose-templates` (imports unchanged). This is the [one dependency-level break](./docs/migration/v2.0.0-modules.md#the-one-break-templates) of the split.
-- **`graph-compose-bundle`** &mdash; one batteries-included coordinate: PDF stack + templates + fonts + colour emoji.
-- **Retired surface** &mdash; the APIs deprecated across 1.6&ndash;1.9 are removed, the layered template packages dropped their `.v2` suffix, and `BusinessTheme` plus the classic pre-layered presets are gone &mdash; each removal has a named replacement in the [migration guide](./docs/migration/v2.0.0-modules.md).
-
-Everything the 1.9 line added &mdash; in-document navigation, native TOC and page references, bookmarks, multi-section documents, inline chips / SVG icons / colour emoji, render-to-image &mdash; ships unchanged in 2.0. Full history in [`CHANGELOG.md`](./CHANGELOG.md).
-
 ## Installation
 
 **Requires Java 17+** (enforced by the build).
@@ -114,43 +101,56 @@ Everything the 1.9 line added &mdash; in-document navigation, native TOC and pag
 dependencies { implementation("io.github.demchaav:graph-compose:2.1.0") }
 ```
 
-> **Which artifact? (2.0 module split).** `graph-compose` above is the drop-in default —
-> it renders PDF out of the box because it aggregates the lean `graph-compose-core` engine
-> plus the `graph-compose-render-pdf` backend, so existing 1.x callers upgrade with **no
-> code change**. Reach for a different coordinate only to take less or more:
->
-> | Goal | Depend on |
-> |---|---|
-> | **PDF — the 1.x default** | `graph-compose` |
-> | **Batteries-included** (PDF + templates + fonts + emoji) | `graph-compose-bundle` |
-> | **Lean core, bring your own backend** | `graph-compose-core` |
-> | **Built-in CV / cover-letter / invoice / proposal templates** | add `graph-compose-templates` |
-> | **PowerPoint deck, geometry-identical to the PDF** | add `graph-compose-render-pptx` |
-> | **DOCX export (semantic)** | add `graph-compose-render-docx` |
->
-> Every 2.0 coordinate shares the `graph-compose` version (the fonts and emoji companions
-> keep their own lines). A bare `graph-compose-core` renders nothing until a backend is on
-> the classpath — asking it to build a PDF throws `MissingBackendException`, which names the
-> artifact to add (`graph-compose-render-pdf`, already included in `graph-compose`).
+That coordinate renders PDF out of the box: it aggregates the lean `graph-compose-core`
+engine plus the `graph-compose-render-pdf` backend, so existing 1.x callers upgrade with
+**no code change**.
 
-> **Companion artifacts: fonts &amp; colour emoji.** Two opt-in companions carry
-> their own version lines (they change on their own cadence, so an engine upgrade
-> never re-downloads them): `graph-compose-fonts:1.0.0` &mdash; the curated Google
-> font families (~18&nbsp;MB; pure-text and standard-14 documents need nothing
-> extra; details in the [fonts migration note](./docs/migration/v1.8.0-fonts.md)) &mdash;
-> and `graph-compose-emoji:1.0.0` &mdash; inline colour emoji for
-> `RichText.emoji(":star:", size)` (an unknown shortcode falls back to its literal
-> text, so documents without emoji render unchanged). Both are already included in
-> `graph-compose-bundle`.
+<details>
+<summary><b>Which artifact?</b> &mdash; the 2.0 module split, when you want to take less or more</summary>
 
-> **Distribution** &mdash; Maven Central is the canonical channel from **v1.6.6** onwards
-> (`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
-> [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)
-> shortly after each Central release. The legacy JitPack URL
-> (`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
-> pinned to v1.6.5 and earlier but is no longer the documented install option.
+| Goal | Depend on |
+|---|---|
+| **PDF — the 1.x default** | `graph-compose` |
+| **Batteries-included** (PDF + templates + fonts + emoji) | `graph-compose-bundle` |
+| **Lean core, bring your own backend** | `graph-compose-core` |
+| **Built-in CV / cover-letter / invoice / proposal templates** | add `graph-compose-templates` |
+| **PowerPoint deck, geometry-identical to the PDF** | add `graph-compose-render-pptx` |
+| **DOCX export (semantic)** | add `graph-compose-render-docx` |
 
-> **Upgrading from 1.x?** Rendering PDF through `graph-compose` needs no change at all. If you reached the built-in templates through the single 1.x jar, add `graph-compose-templates` (imports are unchanged) &mdash; the [2.0 migration guide](./docs/migration/v2.0.0-modules.md) walks every case, including the removed deprecated APIs and their replacements.
+Every 2.0 coordinate shares the `graph-compose` version (the fonts and emoji companions
+keep their own lines). A bare `graph-compose-core` renders nothing until a backend is on
+the classpath — asking it to build a PDF throws `MissingBackendException`, which names the
+artifact to add (`graph-compose-render-pdf`, already included in `graph-compose`).
+
+</details>
+
+<details>
+<summary><b>Bundled fonts &amp; colour emoji</b> &mdash; optional companions</summary>
+
+Two opt-in companions carry their own version lines (they change on their own cadence, so
+an engine upgrade never re-downloads them):
+
+- `graph-compose-fonts:1.0.0` &mdash; the curated Google font families (~18&nbsp;MB).
+  Pure-text and standard-14 documents need nothing extra; details in the
+  [fonts migration note](./docs/migration/v1.8.0-fonts.md).
+- `graph-compose-emoji:1.0.0` &mdash; inline colour emoji for `RichText.emoji(":star:", size)`.
+  An unknown shortcode falls back to its literal text, so documents without emoji render unchanged.
+
+Both are already included in `graph-compose-bundle`.
+
+</details>
+
+<details>
+<summary><b>Distribution</b> &mdash; Maven Central, hosted Javadocs, legacy JitPack</summary>
+
+Maven Central is the canonical channel from **v1.6.6** onwards
+(`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
+[javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)
+shortly after each Central release. The legacy JitPack URL
+(`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
+pinned to v1.6.5 and earlier but is no longer the documented install option.
+
+</details>
 
 ## Hello world
 
@@ -200,6 +200,19 @@ class Hello {
 ```
 
 For a Spring Boot `@RestController` streaming the PDF straight to the response, see [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java).
+
+## What's new in 2.0
+
+The **module-first** release &mdash; the single jar becomes a family of per-concern artifacts, so you install exactly what you render.
+
+- **Lean engine** &mdash; `graph-compose-core` is the document model, DSL, themes, and deterministic layout with **no PDFBox, POI, or template code** on its dependency tree. Backends plug in through a `ServiceLoader` seam; a core-only classpath asked to render throws `MissingBackendException` naming the artifact to add.
+- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-pptx` (Apache POI, geometry-identical PowerPoint decks from the same resolved layout — one page per editable slide; clipped regions land as pixel-exact pictures; ships as **beta** in its first release), `graph-compose-render-docx` (Apache POI, semantic export).
+- **`graph-compose` stays a drop-in** &mdash; the 1.x coordinate is now a thin wrapper over core + the PDF backend, so existing callers upgrade with **no code and no dependency change**. Reached the built-in templates through the single 1.x jar? Add `graph-compose-templates` (imports are unchanged) &mdash; the [migration guide](./docs/migration/v2.0.0-modules.md) walks every case, including the removed deprecated APIs and their replacements.
+- **Templates are their own artifact** &mdash; the CV / cover-letter / invoice / proposal preset families moved to `graph-compose-templates` (imports unchanged). This is the [one dependency-level break](./docs/migration/v2.0.0-modules.md#the-one-break-templates) of the split.
+- **`graph-compose-bundle`** &mdash; one batteries-included coordinate: PDF stack + templates + fonts + colour emoji.
+- **Retired surface** &mdash; the APIs deprecated across 1.6&ndash;1.9 are removed, the layered template packages dropped their `.v2` suffix, and `BusinessTheme` plus the classic pre-layered presets are gone &mdash; each removal has a named replacement in the [migration guide](./docs/migration/v2.0.0-modules.md).
+
+Everything the 1.9 line added &mdash; in-document navigation, native TOC and page references, bookmarks, multi-section documents, inline chips / SVG icons / colour emoji, render-to-image &mdash; ships unchanged in 2.0. Full history in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Scope and comparison
 

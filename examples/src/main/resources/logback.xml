@@ -7,7 +7,7 @@
 
     <logger name="org.apache.pdfbox" level="WARN"/>
     <logger name="org.apache.fontbox" level="WARN"/>
-    <logger name="com.demcha.compose" level="OFF"/>
+    <logger name="com.demcha.compose" level="WARN"/>
 
     <root level="ERROR">
         <appender-ref ref="CONSOLE"/>

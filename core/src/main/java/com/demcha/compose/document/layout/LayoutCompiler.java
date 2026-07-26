@@ -327,7 +327,8 @@ public final class LayoutCompiler {
                                   + toMargin(children.get(k).margin()).vertical()
                                   + layoutSpec.spacing();
                     }
-                    needed += leadingUnitHeight(children.get(runEnd), childRegionWidth, prepareContext);
+                    needed += leadingUnitHeight(children.get(runEnd), childRegionWidth, prepareContext,
+                                               state.activeInnerHeight());
                     // Relocate only when the run + first line genuinely fits on a fresh
                     // page (EPS, not CAPACITY_TOLERANCE): a run that would still overflow
                     // the next page by a hair should stay put rather than strand there and
@@ -1045,13 +1046,28 @@ public final class LayoutCompiler {
      * @param node           the following sibling whose first line anchors the heading
      * @param regionWidth    the content-region width the sibling is measured at
      * @param prepareContext measurement context
+     * @param pageInnerHeight the active page's inner height, used to tell a honoured
+     *                        keep-together request from one the compiler will ignore
      * @return the height consumed down to the bottom of the node's first flow line
      */
-    private double leadingUnitHeight(DocumentNode node, double regionWidth, PrepareContext prepareContext) {
+    private double leadingUnitHeight(DocumentNode node, double regionWidth, PrepareContext prepareContext,
+                                     double pageInnerHeight) {
         Margin margin = toMargin(node.margin());
         Padding padding = toPadding(node.padding());
         PreparedNode<DocumentNode> prepared = prepareForRegionWidth(prepareContext, node, regionWidth);
         double topReservation = margin.top() + padding.top();
+
+        // A node that asked to be kept whole has no first line to seam after: when
+        // the request will actually be honoured, its whole outer height IS its
+        // leading unit, because it relocates entire rather than splitting. Mirrors
+        // the keepWhole test in compileNode — a node taller than the page has its
+        // keep-together ignored and flows, so the first-slice estimate stays right
+        // there. Without this a heading above a boxed callout is told "one line
+        // fits", stays put, and is stranded when the whole box moves.
+        double outerHeight = prepared.measureResult().height() + margin.vertical();
+        if (node.keepTogether() && outerHeight <= pageInnerHeight + CAPACITY_TOLERANCE) {
+            return outerHeight;
+        }
 
         if (prepared.isComposite()) {
             CompositeLayoutSpec layoutSpec = prepared.requireCompositeLayout();
@@ -1065,7 +1081,8 @@ public final class LayoutCompiler {
             }
             double availableWidth = childAvailableWidth(regionWidth, node);
             double innerRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
-            return topReservation + leadingUnitHeight(children.get(0), innerRegionWidth, prepareContext);
+            return topReservation + leadingUnitHeight(children.get(0), innerRegionWidth, prepareContext,
+                                                      pageInnerHeight);
         }
 
         // The leading unit of a splittable leaf is its first slice: a paragraph's

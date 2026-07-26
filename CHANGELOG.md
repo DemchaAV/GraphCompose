@@ -185,8 +185,9 @@ shade), while others lose something the format cannot carry — see Known limita
 - **The examples now show the engine's warnings.** Their logging config silenced
   `com.demcha.compose` entirely, so a reader running a deck example never saw which
   fonts the viewer would substitute or which capability had degraded — the warnings
-  fired into a muted logger. Across all 87 documents the whole suite emits 14 lines,
-  since each warning is deduplicated per family or per kind for a render.
+  fired into a muted logger. The output stays short because every warning is
+  deduplicated before it is logged: a font substitution once per family per render, a
+  capability note once per kind for the process.
 - **`render-pptx` documents how to get a glyph-identical deck.** Geometry matches the
   PDF by construction, but glyphs are drawn by the viewer; the page now states the
   three cases — a standard-14 name travels as a metric-compatible viewer font with

@@ -117,28 +117,55 @@ class SectionKeepWithNextKeepTogetherTest {
      * is the case the fix must NOT change — sizing it by the whole block would
      * exceed the page, fail the {@code needed <= activeInnerHeight} guard, and
      * strand headers that relocate correctly today.
+     *
+     * <p>Asserted in both directions at a filler height where the rule actually
+     * fires. It has to be: with a 300pt filler the body's first line still fits
+     * under the header, so the two land together whether or not anything relocates
+     * them, and the test would pass against an engine with no {@code keepWithNext}
+     * at all. The live window here is 310–320pt.</p>
      */
     @Test
     void pageSpanningKeepTogetherBodyStillAnchorsByItsFirstSlice() {
+        LayoutGraph on = pageSpanningBody(true);
+        assertThat(page(on, "HeaderMark"))
+                .describedAs("keep-together is inert above a page-spanning body, "
+                             + "so the first line still anchors the header")
+                .isEqualTo(page(on, "BodyMark"));
+
+        LayoutGraph off = pageSpanningBody(false);
+        assertThat(page(off, "HeaderMark"))
+                .describedAs("without the opt-in the same header strands — which is "
+                             + "what makes the assertion above meaningful")
+                .isLessThan(page(off, "BodyMark"));
+    }
+
+    /**
+     * A header above a body far taller than a page, at a filler height inside the
+     * window where {@code keepWithNext} decides the outcome.
+     *
+     * @param keepWithNext whether the header opts into staying with its body
+     * @return the compiled layout graph
+     */
+    private static LayoutGraph pageSpanningBody(boolean keepWithNext) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
                 .margin(DocumentInsets.of(20))
                 .create()) {
             document.pageFlow().name("Flow").spacing(6)
-                    .addSection("Filler", s -> s.addShape(260, 300, GREY))
-                    .addSection("Header", s -> s.keepWithNext()
-                            .addShape(shape -> shape.name("HeaderMark")
-                                    .size(260, 30).fillColor(INK)))
+                    .addSection("Filler", s -> s.addShape(260, 310, GREY))
+                    .addSection("Header", s -> {
+                        if (keepWithNext) {
+                            s.keepWithNext();
+                        }
+                        s.addShape(shape -> shape.name("HeaderMark")
+                                .size(260, 30).fillColor(INK));
+                    })
                     .addSection("Body", s -> s.keepTogether(true).spacing(0)
                             .addParagraph(p -> p.name("BodyMark")
-                                    .text(("A page-spanning paragraph. ").repeat(220))
+                                    .text("A page-spanning paragraph. ".repeat(220))
                                     .margin(DocumentInsets.zero())))
                     .build();
-            LayoutGraph graph = document.layoutGraph();
-            assertThat(page(graph, "HeaderMark"))
-                    .describedAs("keep-together is inert above a page-spanning body, "
-                                 + "so the first line still anchors the header")
-                    .isEqualTo(page(graph, "BodyMark"));
+            return document.layoutGraph();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -149,6 +176,10 @@ class SectionKeepWithNextKeepTogetherTest {
      * an empty page, {@code keepWithNext} declines to relocate rather than strand
      * the header on a page of its own. Documents the limit instead of leaving it
      * to be discovered.
+     *
+     * <p>This one asserts an <em>absence</em>, so it reads the same as "the opt-in
+     * was never applied" and cannot fail for the right reason on its own. It pins
+     * the documented boundary; the sweeps above are what drive the behaviour.</p>
      */
     @Test
     void headerDoesNotRelocateWhenItCannotShareAPageWithTheWholeBody() {

@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parallel 2.0 release concept for the GraphCompose README hero and engine
@@ -113,6 +115,15 @@ public final class EngineDeckV2Example {
     private static final DocumentColor PALE_MINT = DocumentColor.rgb(230, 249, 242);
 
     private static final String VERSION = loadVersion();
+
+    /**
+     * The {@code major.minor} of {@link #VERSION}, for the banner's prose labels.
+     *
+     * <p>Derived rather than written out: the banner is regenerated on every release,
+     * so a literal would keep announcing whichever line it was typed on — the hero
+     * still read "2.0" while the pill beside it read v2.1.0.</p>
+     */
+    private static final String VERSION_LINE = majorMinor(VERSION);
 
     private EngineDeckV2Example() {
     }
@@ -251,7 +262,7 @@ public final class EngineDeckV2Example {
         layers.add(at(heroLogo(), 42, 24));
         layers.add(at(versionPill(), 742, 36));
 
-        layers.add(at(canvasText("HeroKicker", "GRAPHCOMPOSE 2.0 / MODULE-FIRST",
+        layers.add(at(canvasText("HeroKicker", "GRAPHCOMPOSE " + VERSION_LINE + " / MODULE-FIRST",
                 darkEyebrow(), TextAlign.LEFT, 420), 52, 126));
         layers.add(at(canvasText("HeroLine1", "Compose once.", heroTitle(), TextAlign.LEFT, 410), 52, 156));
         layers.add(at(canvasText("HeroLine2", "Render through modules.", heroAccentTitle(), TextAlign.LEFT, 330), 52, 202));
@@ -261,13 +272,17 @@ public final class EngineDeckV2Example {
                 heroBody(), TextAlign.LEFT, 410), 54, 262));
         layers.add(at(heroCoordinate(), 52, 333));
 
-        layers.add(at(canvasText("GraphLabel", "THE 2.0 MODULE GRAPH",
+        layers.add(at(canvasText("GraphLabel", "THE " + VERSION_LINE + " MODULE GRAPH",
                 darkEyebrow(), TextAlign.LEFT, 690), 622, 112));
         layers.addAll(heroModuleConnectors());
         layers.add(at(heroCoreCard(), 646, 152));
+        // The three shipped render backends. The two fixed-layout cards read alike on
+        // purpose — they consume the same resolved layout graph, which is why a deck
+        // matches the PDF. The extension slot that used to sit here is already stated
+        // by the "ServiceLoader SPI" proof chip below, so nothing is lost.
         layers.add(at(heroModuleCard("pdf-file", "render-pdf", "fixed layout", MINT), 582, 330));
-        layers.add(at(heroModuleCard("docx", "render-docx", "semantic", BLUE), 712, 330));
-        layers.add(at(heroModuleCard("code", "backend SPI", "extension slot", VIOLET_LIGHT), 842, 330));
+        layers.add(at(heroModuleCard("ppt-file", "render-pptx", "fixed layout", VIOLET_LIGHT), 712, 330));
+        layers.add(at(heroModuleCard("docx", "render-docx", "semantic", BLUE), 842, 330));
 
         String[][] proof = {
                 {"graph-compose-core", "lean engine"},
@@ -893,6 +908,18 @@ public final class EngineDeckV2Example {
     private static String snapshotDate(EngineDeckData.BenchRun bench) {
         String timestamp = bench.timestamp();
         return timestamp.substring(0, Math.min(10, timestamp.length()));
+    }
+
+    /**
+     * Reduces a version to its {@code major.minor} line for display.
+     *
+     * @param version the resolved build version, possibly a qualifier or {@code "dev"}
+     * @return {@code "2.1"} for {@code "2.1.0"} / {@code "2.1.0-SNAPSHOT"}; the input
+     *         unchanged when it carries no dotted numeric prefix
+     */
+    private static String majorMinor(String version) {
+        Matcher matcher = Pattern.compile("^(\\d+)\\.(\\d+)").matcher(version);
+        return matcher.find() ? matcher.group(1) + "." + matcher.group(2) : version;
     }
 
     private static String loadVersion() {

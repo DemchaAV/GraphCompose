@@ -2354,8 +2354,8 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]",
-    "entityName" : "HeroModule_render-docx",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]",
+    "entityName" : "HeroModule_render-pptx",
     "entityKind" : "ShapeContainerNode",
     "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]",
     "childIndex" : 35,
@@ -2384,10 +2384,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
     "entityName" : "SvgIcon",
     "entityKind" : "LayerStackNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]",
     "childIndex" : 0,
     "depth" : 4,
     "layer" : 4,
@@ -2414,10 +2414,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]/SvgLayer0[0]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]/SvgLayer0[0]",
     "entityName" : "SvgLayer0",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
@@ -2444,10 +2444,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]/SvgLayer1[1]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]/SvgLayer1[1]",
     "entityName" : "SvgLayer1",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
@@ -2474,10 +2474,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]/SvgLayer2[2]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]/SvgLayer2[2]",
     "entityName" : "SvgLayer2",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
     "childIndex" : 2,
     "depth" : 5,
     "layer" : 5,
@@ -2504,10 +2504,70 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/ParagraphNode[1]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]/SvgLayer3[3]",
+    "entityName" : "SvgLayer3",
+    "entityKind" : "Path",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 724.0,
+    "computedY" : 181.0,
+    "placementX" : 724.0,
+    "placementY" : 181.0,
+    "placementWidth" : 18.0,
+    "placementHeight" : 18.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 18.0,
+    "contentHeight" : 18.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]/SvgLayer4[4]",
+    "entityName" : "SvgLayer4",
+    "entityKind" : "Path",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/SvgIcon[0]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 724.0,
+    "computedY" : 181.0,
+    "placementX" : 724.0,
+    "placementY" : 181.0,
+    "placementWidth" : 18.0,
+    "placementHeight" : 18.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 18.0,
+    "contentHeight" : 18.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/ParagraphNode[1]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]",
     "childIndex" : 1,
     "depth" : 4,
     "layer" : 4,
@@ -2534,10 +2594,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]/ParagraphNode[2]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]/ParagraphNode[2]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[35]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-pptx[35]",
     "childIndex" : 2,
     "depth" : 4,
     "layer" : 4,
@@ -2545,11 +2605,11 @@
     "computedY" : 157.838,
     "placementX" : 724.0,
     "placementY" : 157.838,
-    "placementWidth" : 36.009,
+    "placementWidth" : 45.522,
     "placementHeight" : 8.325,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 36.009,
+    "contentWidth" : 45.522,
     "contentHeight" : 8.325,
     "margin" : {
       "top" : 0.0,
@@ -2564,8 +2624,8 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]",
-    "entityName" : "HeroModule_backend SPI",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]",
+    "entityName" : "HeroModule_render-docx",
     "entityKind" : "ShapeContainerNode",
     "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]",
     "childIndex" : 36,
@@ -2594,10 +2654,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]",
     "entityName" : "SvgIcon",
     "entityKind" : "LayerStackNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]",
     "childIndex" : 0,
     "depth" : 4,
     "layer" : 4,
@@ -2624,10 +2684,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]/SvgLayer0[0]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]/SvgLayer0[0]",
     "entityName" : "SvgLayer0",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
@@ -2654,10 +2714,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]/SvgLayer1[1]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]/SvgLayer1[1]",
     "entityName" : "SvgLayer1",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
@@ -2684,10 +2744,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]/SvgLayer2[2]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]/SvgLayer2[2]",
     "entityName" : "SvgLayer2",
     "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/SvgIcon[0]",
     "childIndex" : 2,
     "depth" : 5,
     "layer" : 5,
@@ -2714,40 +2774,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]/SvgLayer3[3]",
-    "entityName" : "SvgLayer3",
-    "entityKind" : "Path",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/SvgIcon[0]",
-    "childIndex" : 3,
-    "depth" : 5,
-    "layer" : 5,
-    "computedX" : 854.0,
-    "computedY" : 181.0,
-    "placementX" : 854.0,
-    "placementY" : 181.0,
-    "placementWidth" : 18.0,
-    "placementHeight" : 18.0,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 18.0,
-    "contentHeight" : 18.0,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/ParagraphNode[1]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/ParagraphNode[1]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]",
     "childIndex" : 1,
     "depth" : 4,
     "layer" : 4,
@@ -2774,10 +2804,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]/ParagraphNode[2]",
+    "path" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]/ParagraphNode[2]",
     "entityName" : null,
     "entityKind" : "ParagraphNode",
-    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_backend SPI[36]",
+    "parentPath" : "EngineDeckV2[0]/ModuleFirstHero[0]/HeroModule_render-docx[36]",
     "childIndex" : 2,
     "depth" : 4,
     "layer" : 4,
@@ -2785,11 +2815,11 @@
     "computedY" : 157.838,
     "placementX" : 854.0,
     "placementY" : 157.838,
-    "placementWidth" : 55.026,
+    "placementWidth" : 36.009,
     "placementHeight" : 8.325,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 55.026,
+    "contentWidth" : 36.009,
     "contentHeight" : 8.325,
     "margin" : {
       "top" : 0.0,

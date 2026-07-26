@@ -190,7 +190,7 @@ public final class SocialCardExample {
         // Header. A social card has to say whose it is; the pipeline says why.
         layers.add(at(logoBlock(), 56, 34));
         layers.add(at(text("Tagline", "One layout pass. Two outputs.",
-                display(15, ON_DARK), 300), 60, 88));
+                display(15, ON_DARK), 300), 60, 104));
         layers.add(at(text("Footer", "Java 17+   ·   MIT   ·   Maven Central",
                 mono(8.6, MINT), 300), 60, 592));
 
@@ -396,6 +396,10 @@ public final class SocialCardExample {
      * surface exposes solid colours, and a flat wedge reads cleaner at the size
      * a social card is actually viewed.
      *
+     * <p>Each wedge stops short of its card's full height so the point tucks
+     * behind the straight part of the border. Running it to the corner left a
+     * sharp spike poking out past the rounded edge.</p>
+     *
      * @return the composed wedges and their origin dots
      */
     private static List<CanvasChild> beams() {
@@ -404,8 +408,8 @@ public final class SocialCardExample {
                 .name("BeamPdf")
                 .size(112, 250)
                 .moveTo(0.00, 0.34)
-                .lineTo(1.00, 1.00)
-                .lineTo(1.00, 0.00)
+                .lineTo(1.00, 0.96)
+                .lineTo(1.00, 0.04)
                 .closePath()
                 .fillColor(VIOLET.withOpacity(0.15))
                 .build(), 670, 84));
@@ -413,8 +417,8 @@ public final class SocialCardExample {
                 .name("BeamPptx")
                 .size(112, 196)
                 .moveTo(0.00, 0.72)
-                .lineTo(1.00, 1.00)
-                .lineTo(1.00, 0.00)
+                .lineTo(1.00, 0.95)
+                .lineTo(1.00, 0.05)
                 .closePath()
                 .fillColor(MINT.withOpacity(0.13))
                 .build(), 670, 396));

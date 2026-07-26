@@ -65,7 +65,12 @@ import java.util.Objects;
  */
 public final class SocialCardExample {
 
-    /** GitHub renders social previews at 1280x640; anything else is letterboxed. */
+    /**
+     * GitHub renders social previews at 1280x640; anything else is letterboxed.
+     *
+     * <p>Feeds show the card at roughly 40% of that, so every type size here is
+     * chosen to survive the reduction rather than to look balanced at 1:1.</p>
+     */
     public static final double CARD_WIDTH = 1280;
     /** GitHub renders social previews at 1280x640; anything else is letterboxed. */
     public static final double CARD_HEIGHT = 640;
@@ -84,7 +89,7 @@ public final class SocialCardExample {
     private static final double CARD_PAD = 14;
 
     /** Height the title, body line and their spacing consume above the chart. */
-    private static final double TEXT_BLOCK = 40;
+    private static final double TEXT_BLOCK = 54;
 
     /**
      * Body lines below the chart, as fractions of the content width. Ragged on
@@ -94,7 +99,7 @@ public final class SocialCardExample {
     private static final double[] BODY_LINES = {1.00, 0.94, 0.97, 0.62};
 
     /** Height one body line and its gap consume. */
-    private static final double BODY_LINE_STEP = 9.5;
+    private static final double BODY_LINE_STEP = 11;
 
     /** Horizontal gap between leaf fragments in the graph panel. */
     private static final double LEAF_STEP = 29;
@@ -156,7 +161,30 @@ public final class SocialCardExample {
     }
 
     /**
-     * Runs the example: writes the PDF, then the PNG beside it.
+     * Emits the same card as an editable PowerPoint deck.
+     *
+     * <p>The card claims one composition reaches a PDF and a deck; writing it
+     * both ways from one session is the cheapest possible proof, and it keeps
+     * the claim honest whenever this file changes.</p>
+     *
+     * @return generated PPTX path under {@code target/generated-pdfs/flagships}
+     * @throws Exception when composition or rendering fails
+     */
+    public static Path generatePptx() throws Exception {
+        Path outputFile = ExampleOutputPaths.prepare("flagships", "social-card.pptx");
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(CARD_WIDTH, CARD_HEIGHT)
+                .pageBackground(NIGHT)
+                .margin(DocumentInsets.zero())
+                .create()) {
+            compose(document);
+            document.buildPptx(outputFile);
+        }
+        return outputFile;
+    }
+
+    /**
+     * Runs the example: writes the PDF, the deck, then the PNG beside them.
      *
      * @param args optional single argument — the PNG destination path
      * @throws Exception when composition or rendering fails
@@ -164,6 +192,7 @@ public final class SocialCardExample {
     public static void main(String[] args) throws Exception {
         Path pdf = generate();
         System.out.println("Generated: " + pdf);
+        System.out.println("Generated: " + generatePptx());
         Path png = args.length > 0 ? Path.of(args[0]) : pdf.resolveSibling("social-card.png");
         Files.createDirectories(png.toAbsolutePath().getParent());
         writePng(png);
@@ -190,9 +219,9 @@ public final class SocialCardExample {
         // Header. A social card has to say whose it is; the pipeline says why.
         layers.add(at(logoBlock(), 56, 34));
         layers.add(at(text("Tagline", "One layout pass. Two outputs.",
-                display(15, ON_DARK), 300), 60, 104));
+                display(18, ON_DARK), 320), 60, 104));
         layers.add(at(text("Footer", "Java 17+   ·   MIT   ·   Maven Central",
-                mono(8.6, MINT), 300), 60, 592));
+                mono(11.5, MINT), 320), 60, 586));
 
         // Stage 1 - what you hand the engine.
         layers.add(at(sourceTray(), 62, 300));
@@ -201,14 +230,14 @@ public final class SocialCardExample {
         // Stage 2 - the resolved graph. The middle is the product.
         layers.add(at(graphPanel(), 254, 150));
         layers.add(at(text("GraphLabel", "RESOLVED LAYOUT GRAPH",
-                mono(7.6, ON_DARK_MUTED), 260), 258, 132));
+                mono(11, VIOLET_LIGHT), 300), 258, 124));
 
         // Stage 3 - two backends reading that one graph.
         layers.addAll(beams());
         layers.add(at(outputCard("PdfOut", 190, 250, VIOLET, VIOLET_LIGHT), 782, 84));
         layers.add(at(outputCard("PptxOut", 400, 196, MINT, MINT), 782, 396));
-        layers.add(at(text("PdfLabel", "PDF", mono(8.6, VIOLET_LIGHT), 60), 786, 62));
-        layers.add(at(text("PptxLabel", "PPTX", mono(8.6, MINT), 60), 786, 374));
+        layers.add(at(text("PdfLabel", "PDF", mono(12, VIOLET_LIGHT), 80), 786, 56));
+        layers.add(at(text("PptxLabel", "PPTX", mono(12, MINT), 80), 786, 368));
 
         return new CanvasLayerNode("SocialCard", CARD_WIDTH, CARD_HEIGHT, layers,
                 ClipPolicy.CLIP_BOUNDS, DocumentInsets.zero(), DocumentInsets.zero());
@@ -327,7 +356,7 @@ public final class SocialCardExample {
         panel.position(rect(w - 56, 1.0, VIOLET.withOpacity(0.22)), 28, 312,
                 LayerAlign.TOP_LEFT);
         panel.position(textIn("GraphFoot", "measure  ·  paginate  ·  place",
-                mono(7.2, ON_DARK_MUTED), w - 56), 28, 330, LayerAlign.TOP_LEFT);
+                mono(9.5, ON_DARK_MUTED), w - 56), 28, 326, LayerAlign.TOP_LEFT);
         return panel.build();
     }
 
@@ -469,7 +498,11 @@ public final class SocialCardExample {
                 .name("ContentBox")
                 .rectangle(width, height)
                 .fillColor(DocumentColor.rgba(0, 0, 0, 0))
-                .clipPolicy(ClipPolicy.CLIP_BOUNDS)
+                // Not CLIP_BOUNDS: a clip that could cut ink sends the whole
+                // region through the PPTX raster fallback, and the deck would
+                // stop being editable exactly where the document lives. The
+                // content is sized to this box already, so nothing needs cutting.
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .position(child, 0, 0, LayerAlign.TOP_LEFT)
                 .build();
     }
@@ -491,10 +524,10 @@ public final class SocialCardExample {
                 .spacing(7)
                 .padding(DocumentInsets.zero())
                 .addParagraph(p -> p.text(DOC_TITLE)
-                        .textStyle(display(9.5, ON_DARK))
+                        .textStyle(display(13, ON_DARK))
                         .margin(DocumentInsets.zero()))
                 .addParagraph(p -> p.text(DOC_LINE)
-                        .textStyle(body(6.4, ON_DARK_MUTED))
+                        .textStyle(body(8.2, ON_DARK_MUTED))
                         .margin(DocumentInsets.zero()))
                 .chart(revenueChart(chartHeight), chartStyle(accent))
                 .add(prose(width))
@@ -516,7 +549,7 @@ public final class SocialCardExample {
                 .rectangle(width, proseHeight())
                 .fillColor(DocumentColor.rgba(0, 0, 0, 0));
         for (int i = 0; i < BODY_LINES.length; i++) {
-            block.position(rect(width * BODY_LINES[i], 3.4, ON_DARK.withOpacity(0.22)),
+            block.position(rect(width * BODY_LINES[i], 4.2, ON_DARK.withOpacity(0.24)),
                     0, i * BODY_LINE_STEP, LayerAlign.TOP_LEFT);
         }
         return block.build();
@@ -557,7 +590,7 @@ public final class SocialCardExample {
                 .seriesPaint(0, DocumentPaint.solid(accent))
                 .barCornerRadius(DocumentCornerRadius.of(1.5))
                 .barWidthRatio(0.55)
-                .axisTextStyle(mono(5.4, ON_DARK_MUTED))
+                .axisTextStyle(mono(7.5, ON_DARK_MUTED))
                 .build();
     }
 

@@ -224,6 +224,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
         System.out.println("Generated: " + MavenBannerPptxExample.generate());
         System.out.println("Generated: " + SocialCardExample.generate());
+        System.out.println("Generated: " + SocialCardExample.generatePptx());
         System.out.println("Generated: " + TwinOutputExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
         System.out.println("Generated: " + FinancialReportPptxExample.generate());

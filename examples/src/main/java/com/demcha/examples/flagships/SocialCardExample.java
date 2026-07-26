@@ -276,10 +276,18 @@ public final class SocialCardExample {
                 .fillColor(DocumentColor.rgba(15, 20, 40, 170))
                 .stroke(DocumentStroke.of(VIOLET.withOpacity(0.42), 1.0));
 
-        panel.position(graphNode(68, 30, VIOLET_LIGHT), w / 2 - 34, 26, LayerAlign.TOP_LEFT);
-        panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), w / 2, 56, LayerAlign.TOP_LEFT);
-
         double[] tier = {0.14, 0.42, 0.70};
+
+        // The root hangs over the middle of the TIER ROW, which is not the middle
+        // of the panel: the drops sit at w*t + 31, so their span is centred 2.3pt
+        // left of w/2. Centring the root on the panel put it visibly off its own
+        // subtree.
+        double rowCentre = w * (tier[0] + tier[2]) / 2 + 31;
+        panel.position(graphNode(68, 30, VIOLET_LIGHT), rowCentre - 34, 26,
+                LayerAlign.TOP_LEFT);
+        panel.position(rect(1.0, 20, VIOLET.withOpacity(0.5)), rowCentre, 56,
+                LayerAlign.TOP_LEFT);
+
         // The rail spans exactly first-drop to last-drop; any overshoot shows as
         // a whisker past the junction at this size.
         panel.position(rect(w * (tier[2] - tier[0]), 1.0, VIOLET.withOpacity(0.5)),

@@ -67,9 +67,9 @@ the slide simply takes that size.
   [#413](https://github.com/DemchaAV/GraphCompose/issues/413).
 - **Glyphs are drawn by the viewer, not by GraphCompose.** Shape frames, line
   boxes and positions are fixed by the layout graph, but the actual glyph
-  rasterisation depends on the fonts installed on the viewing machine. Fonts are
-  embedded where the font's licensing bits allow it; otherwise PowerPoint
-  substitutes, and the backend logs which family was substituted.
+  rasterisation depends on the fonts available to the viewing machine. See
+  [Getting glyph-identical decks](#getting-glyph-identical-decks) for what that
+  costs and how to avoid it.
 - **Byte-for-byte reproducibility is opt-in.** The default path streams the deck
   with live timestamps. Pass
   `PptxFixedLayoutBackend.builder().deterministic(instant)` to pin the core
@@ -92,6 +92,40 @@ the slide simply takes that size.
   equivalent field.
 - **Multi-section documents** render into one deck; the sections must share a
   slide size.
+
+## Getting glyph-identical decks
+
+Geometry is identical to the PDF by construction — both backends consume the
+same resolved layout, and every line is pre-wrapped and absolutely placed, so
+PowerPoint can never reflow content. **Glyphs are the one thing PPTX cannot
+guarantee on its own**, because a deck names its fonts and the viewer draws
+them. Which of the three cases you land in depends on how the font reached the
+document, and the backend warns once per family for the two that are not exact:
+
+| How the font reached the document | In the deck | Glyphs |
+|---|---|---|
+| A standard-14 name (`FontName.HELVETICA`, `TIMES`, `COURIER`) | referenced as its metric-compatible viewer font — Arial, Times New Roman, Courier New | **widths identical, letterforms differ** |
+| A binary family whose licensing bits allow embedding | embedded in the deck | **identical everywhere** |
+| A family registered without binary sources, or one whose bits refuse embedding | referenced by name only | identical **if** the viewer has that font installed, otherwise the viewer substitutes |
+
+So for a deck that matches the PDF glyph for glyph, use a real font program
+rather than a PDF built-in — either a bundled family from `graph-compose-fonts`,
+or your own file registered on the session:
+
+```java
+try (DocumentSession document = GraphCompose.document()
+        .pageSize(DocumentPageSize.SLIDE_16_9)
+        .create()) {
+    document.registerFontFamily(myFamily);   // embedded when licensing allows
+    compose(document);
+    document.buildPptx(Path.of("deck.pptx"));
+}
+```
+
+Every substitution is announced at `WARN` under the key
+`render.pptx.font.substitution`, once per family per render, naming the font the
+document asked for and what the deck will reference instead. Embedded families
+log nothing — silence means the deck carries its own glyphs.
 
 ## When to depend on it
 

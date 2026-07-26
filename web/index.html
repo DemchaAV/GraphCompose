@@ -76,11 +76,11 @@
         "featureList": [
           "Semantic node tree DSL (ParagraphNode, TableNode, SectionNode, LayerStackNode, CanvasLayerNode)",
           "Atomic pagination with row-by-row table splitting",
-          "14 CV presets and 14 letter pairs out of the box",
-          "Theme tokens via BusinessTheme.modern() / classic() / executive()",
+          "16 CV presets and 15 matching cover letters out of the box",
+          "Theme tokens via BrandTheme.modernProfessional() / executive() / boxedClassic()",
           "Markdown-aware bodies (bold, italic) in every paragraph and list block",
-          "PDFBox-backed render pipeline plus a DOCX backend for editable output",
-          "819-test verify gate with layout snapshots and pixel-diff visual parity"
+          "PDFBox-backed render pipeline, an editable PowerPoint backend geometry-identical to the PDF, and a semantic DOCX backend",
+          "Full-reactor verify gate with layout snapshots and pixel-diff visual parity"
         ]
       },
       {
@@ -172,6 +172,7 @@
         <h1 id="hero-title">Java PDF layout engine for structured business documents.</h1>
         <p class="hero-lead">Describe documents. Render polished PDFs. A semantic layout engine for Java services that need <b>structured, paginated, theme-driven</b> output &mdash; CVs, invoices, proposals, reports.</p>
         <p class="hero-text">No drawing API. No pixel arithmetic. You compose <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>; GraphCompose handles measurement, pagination, fonts, and PDFBox rendering.</p>
+        <p class="hero-text">The same resolved layout also renders to an <b>editable PowerPoint deck</b> &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Opt in with <code>graph-compose-render-pptx</code> (<code>@Beta</code>).</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#showcase">Browse Examples</a>
           <a class="button button-secondary" href="https://github.com/DemchaAV/GraphCompose">Source on GitHub</a>
@@ -212,12 +213,12 @@
           <p>Tables split row-by-row, rows are atomic, layer stacks atomic. No manual page math.</p>
         </div>
         <div>
-          <h3>14 CV presets, 14 letter pairs</h3>
-          <p>Every preset is one final class with a one-liner <code>create(BusinessTheme)</code> factory.</p>
+          <h3>16 CV presets, 15 matching letters</h3>
+          <p>Every preset is one final class with a one-liner <code>create(BrandTheme)</code> factory.</p>
         </div>
         <div>
           <h3>Tested at every layer</h3>
-          <p>819 green tests, layout snapshots per preset, pixel-diff visual parity gate, public-API leak guards.</p>
+          <p>A full-reactor verify gate on every push: layout snapshots per preset, pixel-diff visual parity, public-API leak guards.</p>
         </div>
       </div>
     </section>
@@ -286,7 +287,7 @@
 
           <h3 id="templates-section">Templates</h3>
 
-          <h4>CV (14 presets)</h4>
+          <h4>CV</h4>
           <ul>
             <li><a href="showcase/pdf/templates/cv/cv-modern-professional-v2.pdf">Modern Professional CV</a></li>
             <li><a href="showcase/pdf/templates/cv/cv-nordic-clean-v2.pdf">Nordic Clean CV</a></li>
@@ -304,7 +305,7 @@
             <li><a href="showcase/pdf/templates/cv/cv-monogram-sidebar-v2.pdf">Monogram Sidebar CV</a></li>
           </ul>
 
-          <h4>Cover Letter (14 paired layouts)</h4>
+          <h4>Cover Letter</h4>
           <ul>
             <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf">Cover Letter (canonical)</a></li>
             <li><a href="showcase/pdf/templates/coverletter/cover-letter-modern-professional-v2.pdf">Modern Professional letter</a></li>
@@ -359,7 +360,7 @@
       <ol class="pipeline" aria-label="Document pipeline">
         <li><strong>Semantic DSL.</strong> You build a tree of <code>ParagraphNode</code>, <code>TableNode</code>, <code>SectionNode</code>, <code>LayerStackNode</code>, <code>CanvasLayerNode</code>.</li>
         <li><strong>Layout pass.</strong> The engine resolves measurements, pagination, decoration, overlays. Output is a <code>LayoutGraph</code> &mdash; geometry only, no draw calls.</li>
-        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. DOCX backend exists for editable output.</li>
+        <li><strong>Render backend.</strong> The <code>FixedLayoutBackend</code> consumes placed fragments. Default: <code>PdfFixedLayoutBackend</code> via PDFBox. <code>PptxFixedLayoutBackend</code> consumes the same fragments, so a deck is geometry-identical to the PDF by construction. A semantic DOCX backend maps the node tree instead, with much narrower coverage.</li>
       </ol>
     </section>
 
@@ -379,7 +380,7 @@
         </article>
         <article class="feature-card">
           <h3>Theme tokens, not magic numbers</h3>
-          <p><code>BusinessTheme.modern()</code> / <code>.classic()</code> / <code>.executive()</code> set palette, typography, table styles. Override one or all.</p>
+          <p><code>BrandTheme.modernProfessional()</code> / <code>.executive()</code> / <code>.boxedClassic()</code> set palette, typography, table styles. Override one or all. Ships in <code>graph-compose-templates</code>.</p>
         </article>
         <article class="feature-card">
           <h3>Markdown-aware bodies</h3>

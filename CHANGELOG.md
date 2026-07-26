@@ -182,6 +182,16 @@ shade), while others lose something the format cannot carry — see Known limita
 
 ### Documentation and examples
 
+- **The examples now show the engine's warnings.** Their logging config silenced
+  `com.demcha.compose` entirely, so a reader running a deck example never saw which
+  fonts the viewer would substitute or which capability had degraded — the warnings
+  fired into a muted logger. Across all 87 documents the whole suite emits 14 lines,
+  since each warning is deduplicated per family or per kind for a render.
+- **`render-pptx` documents how to get a glyph-identical deck.** Geometry matches the
+  PDF by construction, but glyphs are drawn by the viewer; the page now states the
+  three cases — a standard-14 name travels as a metric-compatible viewer font with
+  identical widths and different letterforms, an embeddable binary family travels as
+  itself, and a name-only family depends on the viewer having it installed.
 - **`TwinOutputExample`** — a single 16:9 page written once and emitted twice from the
   same session. The README gains a dual-output section showing the PDF render beside
   PowerPoint's own export of the generated slide, plus the deck open in PowerPoint with

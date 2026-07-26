@@ -14,7 +14,8 @@
   <a href="https://github.com/DemchaAV/GraphCompose/releases/latest"><img src="https://img.shields.io/github/v/release/DemchaAV/GraphCompose?style=for-the-badge&label=Release" alt="Latest release"/></a>
   <a href="https://central.sonatype.com/artifact/io.github.demchaav/graph-compose"><img src="https://img.shields.io/maven-central/v/io.github.demchaav/graph-compose?style=for-the-badge&label=Maven%20Central" alt="Maven Central"/></a>
   <img src="https://img.shields.io/badge/Java-17%2B-orange?style=for-the-badge&logo=openjdk" alt="Java 17+"/>
-  <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0"/>
+  <img src="https://img.shields.io/badge/PDFBox-3.0-red?style=for-the-badge" alt="PDFBox 3.0 — PDF backend"/>
+  <img src="https://img.shields.io/badge/Apache%20POI-5.5-blueviolet?style=for-the-badge" alt="Apache POI 5.5 — PPTX and DOCX backends"/>
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License"/>
 </p>
 
@@ -291,7 +292,7 @@ flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
 
 ## Architecture
 
-GraphCompose splits into a **public canonical surface** you author against (`com.demcha.compose.document.*`) and an **internal shared engine foundation** (`com.demcha.compose.engine.*`, marked `@Internal`) that resolves geometry, pagination, and rendering behind it. Since 2.0 that boundary is also a **packaging** boundary: the surface and engine ship in `graph-compose-core`, and each render backend is a separate module that registers through a `ServiceLoader` seam. You author intent; the engine resolves the rest.
+GraphCompose splits into a **public canonical surface** you author against (`com.demcha.compose.document.*`) and an **internal shared engine foundation** (`com.demcha.compose.engine.*`, marked `@Internal`) that resolves geometry, pagination, and rendering behind it. Since 2.0 that boundary is also a **packaging** boundary: the surface and engine ship in `graph-compose-core`, and each render backend is a separate module. The **fixed-layout** backends (PDF, PPTX) register through a `ServiceLoader` seam and consume the same resolved `LayoutGraph`, which is why a deck matches the PDF geometrically. The **semantic** DOCX exporter registers nothing — you name it directly, and it walks the node tree without a layout pass. You author intent; the engine resolves the rest.
 
 ```mermaid
 flowchart LR
@@ -300,7 +301,8 @@ flowchart LR
     C --> D["Engine foundation @Internal<br/>measure → paginate → place"]
     D --> E{ServiceLoader}
     E -->|render-pdf| F["PdfFixedLayoutBackend<br/>PDFBox"]
-    E -->|render-docx| G["DocxSemanticBackend<br/>POI"]
+    E -->|render-pptx| G["PptxFixedLayoutBackend<br/>POI · same LayoutGraph as the PDF"]
+    B -.->|render-docx · named directly| I["DocxSemanticBackend<br/>POI · no layout pass"]
     D -.->|layoutSnapshot| H["Deterministic snapshot<br/>(regression tests)"]
 ```
 
@@ -348,13 +350,3 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 ## License
 
 MIT &mdash; see [`LICENSE`](./LICENSE).
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=DemchaAV%2FGraphCompose&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=DemchaAV/GraphCompose&type=date&legend=top-left" />
- </picture>
-</a>

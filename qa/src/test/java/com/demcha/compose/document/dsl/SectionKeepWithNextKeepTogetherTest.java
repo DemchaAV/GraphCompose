@@ -126,13 +126,30 @@ class SectionKeepWithNextKeepTogetherTest {
      */
     @Test
     void pageSpanningKeepTogetherBodyStillAnchorsByItsFirstSlice() {
-        LayoutGraph on = pageSpanningBody(true);
+        assertPageSpanningBodyAnchorsByItsFirstSlice(false);
+    }
+
+    /**
+     * The same, with the keep-together block one level down — the shape
+     * {@code TimelineBuilder.keepEntriesTogether()} produces. The lookahead
+     * recurses into the wrapper's first child, so the page height has to travel
+     * down with it; hand the recursive frame a wrong value and this is the case
+     * that notices, because only a page-spanning child distinguishes "estimate
+     * the whole block" from "estimate its first slice".
+     */
+    @Test
+    void nestedPageSpanningKeepTogetherBodyStillAnchorsByItsFirstSlice() {
+        assertPageSpanningBodyAnchorsByItsFirstSlice(true);
+    }
+
+    private static void assertPageSpanningBodyAnchorsByItsFirstSlice(boolean nested) {
+        LayoutGraph on = pageSpanningBody(true, nested);
         assertThat(page(on, "HeaderMark"))
                 .describedAs("keep-together is inert above a page-spanning body, "
                              + "so the first line still anchors the header")
                 .isEqualTo(page(on, "BodyMark"));
 
-        LayoutGraph off = pageSpanningBody(false);
+        LayoutGraph off = pageSpanningBody(false, nested);
         assertThat(page(off, "HeaderMark"))
                 .describedAs("without the opt-in the same header strands — which is "
                              + "what makes the assertion above meaningful")
@@ -144,9 +161,11 @@ class SectionKeepWithNextKeepTogetherTest {
      * window where {@code keepWithNext} decides the outcome.
      *
      * @param keepWithNext whether the header opts into staying with its body
+     * @param nested       whether the keep-together block sits one level down,
+     *                     inside a plain wrapper
      * @return the compiled layout graph
      */
-    private static LayoutGraph pageSpanningBody(boolean keepWithNext) {
+    private static LayoutGraph pageSpanningBody(boolean keepWithNext, boolean nested) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
                 .margin(DocumentInsets.of(20))
@@ -160,15 +179,65 @@ class SectionKeepWithNextKeepTogetherTest {
                         s.addShape(shape -> shape.name("HeaderMark")
                                 .size(260, 30).fillColor(INK));
                     })
-                    .addSection("Body", s -> s.keepTogether(true).spacing(0)
-                            .addParagraph(p -> p.name("BodyMark")
-                                    .text("A page-spanning paragraph. ".repeat(220))
-                                    .margin(DocumentInsets.zero())))
+                    .addSection("Body", body -> {
+                        if (nested) {
+                            body.spacing(0).addSection("Entry",
+                                    entry -> pageSpanningBlock(entry.keepTogether(true)));
+                        } else {
+                            pageSpanningBlock(body.keepTogether(true));
+                        }
+                    })
                     .build();
             return document.layoutGraph();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * The keep-together block one level down, which is the shape
+     * {@code TimelineBuilder.keepEntriesTogether()} produces: a plain wrapper
+     * whose first child is the atomic one. The lookahead recurses into that
+     * child, so the page height has to travel down with it — pass the wrong
+     * value there and a header above a timeline strands exactly as it did
+     * before the fix.
+     */
+    @Test
+    void headerStaysWithAKeepTogetherBlockNestedInsideAPlainWrapper() {
+        for (double filler = 10; filler <= 330; filler += 10) {
+            final double f = filler;
+            try (DocumentSession document = GraphCompose.document()
+                    .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
+                    .margin(DocumentInsets.of(20))
+                    .create()) {
+                document.pageFlow().name("Flow").spacing(6)
+                        .addSection("Filler", s -> s.addShape(260, f, GREY))
+                        .addSection("Header", s -> s.keepWithNext()
+                                .addShape(shape -> shape.name("HeaderMark")
+                                        .size(260, 30).fillColor(INK)))
+                        .addSection("Wrapper", wrapper -> wrapper.spacing(0)
+                                .addSection("Entry", entry -> entry.keepTogether(true).spacing(0)
+                                        .addShape(shape -> shape.name("BodyMark")
+                                                .size(260, 100).fillColor(INK))
+                                        .addShape(shape -> shape.name("BodyTail")
+                                                .size(260, 100).fillColor(GREY))))
+                        .build();
+                LayoutGraph graph = document.layoutGraph();
+                assertThat(page(graph, "HeaderMark"))
+                        .describedAs("filler=%.0f: the wrapper's first child relocates "
+                                     + "whole, so the header must travel with it", f)
+                        .isEqualTo(page(graph, "BodyMark"));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /** Fills a section with a paragraph several pages tall. */
+    private static void pageSpanningBlock(SectionBuilder section) {
+        section.spacing(0).addParagraph(p -> p.name("BodyMark")
+                .text("A page-spanning paragraph. ".repeat(220))
+                .margin(DocumentInsets.zero()));
     }
 
     /**

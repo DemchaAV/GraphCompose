@@ -9,7 +9,10 @@ it, with **no PDFBox, POI, or template code** on its dependency tree.
 ## When to depend on it
 
 - You want the smallest engine and will **bring your own render backend** — add
-  `graph-compose-render-pdf`, or implement the `FixedLayoutBackendProvider` SPI.
+  `graph-compose-render-pdf`, or implement the `FixedLayoutBackendProvider` SPI. A custom
+  backend needs **both** halves of the SPI: opening a session measures text through a
+  `FontMetricsProvider`, so publish one alongside your backend. `graph-compose-render-pdf`
+  is the only shipped artifact that registers one.
 - You are building a library on top of GraphCompose and don't want to impose a backend
   on your consumers.
 
@@ -27,8 +30,9 @@ try (var doc = GraphCompose.document(out).create()) {
 } // with graph-compose-render-pdf present, buildPdf() / toPdfBytes() / toImages() work
 ```
 
-A core-only classpath asked to render throws `MissingBackendException`, whose message
-names the artifact to add.
+A core-only classpath throws `MissingBackendException` at `create()` — before any render
+call, since the session resolves its font metrics as it opens — and the message names the
+artifact to add.
 
 ## Install
 

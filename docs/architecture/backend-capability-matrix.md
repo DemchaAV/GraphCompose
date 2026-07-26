@@ -43,7 +43,7 @@ Payload records live in `core` under
 
 | Capability (payload) | PDF (fixed) | PPTX (fixed) | DOCX (semantic) |
 |---|---|---|---|
-| Paragraph — pre-wrapped lines, runs, alignment (`ParagraphFragmentPayload`) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` (one absolute, wrap-disabled frame per measured line) | ✅ semantic paragraphs (`DocxSemanticBackend`) |
+| Paragraph — pre-wrapped lines, runs, alignment (`ParagraphFragmentPayload`) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` (one absolute, wrap-disabled frame per measured line) | ⚠️ semantic paragraphs (`DocxSemanticBackend`) — every run takes the paragraph's style, so per-run styling and `linkTarget` are dropped |
 | Inline code/badge chips (`InlineBackground` on text spans) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` | ❌ |
 | Inline images (`ParagraphImageSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | ✅ `PptxParagraphFragmentRenderHandler` | ❌ |
 | Inline vector shapes (`ParagraphShapeSpan`) | ✅ `PdfParagraphFragmentRenderHandler` | ⚠️ `PptxParagraphFragmentRenderHandler` + `PptxInlineGeometry` (distinct per-corner radii render with the top-left radius — single-adjust preset) | ❌ |
@@ -64,7 +64,7 @@ Payload records live in `core` under
 | Anchor markers (`AnchorMarkerPayload`) | ✅ `PdfAnchorMarkerRenderHandler` + `PdfInternalLinkWriter` | ✅ `PptxAnchorMarkerRenderHandler` + `PptxNavigationWriter` (slide-jump hyperlinks resolved after all fragments, so forward references work) | ❌ |
 | Bookmark markers (`BookmarkMarkerPayload`) | ✅ `PdfBookmarkMarkerRenderHandler` + `PdfBookmarkOutlineWriter` | ⚠️ `PptxBookmarkMarkerRenderHandler` + `PptxNavigationWriter` (PPTX has no outline tree — the first bookmark on a page names its slide, further bookmarks on the same page are dropped with a debug note) | ❌ |
 | Alpha / opacity | ✅ `PdfAlphaSupport` (`PDExtendedGraphicsState` on every surface — shape fills/strokes, text runs, lines, side borders, table paint) | ✅ native `<a:alpha>` via POI on every surface — fills, strokes, text runs, table paint | ❌ |
-| Text decorations — underline / strikethrough (`DocumentTextDecoration`) | ✅ `PdfTextDecorations` (em-proportional marks: underline −0.10 em, strikethrough +0.28 em, thickness 0.05 em) | ✅ `PptxTextFrames.applyStyle` (PowerPoint draws its own marks — sub-point placement differences vs the PDF's constants) | ❌ |
+| Text decorations — underline / strikethrough (`DocumentTextDecoration`) | ✅ `PdfTextDecorations` (em-proportional marks: underline −0.10 em, strikethrough +0.28 em, thickness 0.05 em) | ✅ `PptxTextFrames.applyStyle` (PowerPoint draws its own marks — sub-point placement differences vs the PDF's constants) | ⚠️ `DocxSemanticBackend.applyStyle` (underline maps to Word's single underline; `STRIKETHROUGH` is dropped) |
 
 ## Navigation and interactivity
 

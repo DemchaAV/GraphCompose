@@ -1,54 +1,54 @@
 {
-  "timestamp" : "2026-06-15 19:41:29",
+  "timestamp" : "2026-07-26 23:00:56",
   "warmupIterations" : 50,
   "measurementIterations" : 100,
   "libraries" : [ {
     "library" : "GraphCompose Canonical",
-    "avgTimeMs" : 2.34,
-    "avgHeapMb" : 0.16
+    "avgTimeMs" : 2.84,
+    "avgHeapMb" : 0.17
   }, {
     "library" : "iText 9",
-    "avgTimeMs" : 2.48,
+    "avgTimeMs" : 2.75,
     "avgHeapMb" : 0.16
   }, {
     "library" : "JasperReports",
-    "avgTimeMs" : 4.6,
-    "avgHeapMb" : 0.15
+    "avgTimeMs" : 5.7,
+    "avgHeapMb" : 0.16
   }, {
     "library" : "GraphCompose (40 rows)",
-    "avgTimeMs" : 4.52,
-    "avgHeapMb" : 0.84
+    "avgTimeMs" : 5.7,
+    "avgHeapMb" : 0.99
   }, {
     "library" : "iText 9 (40 rows)",
-    "avgTimeMs" : 12.87,
-    "avgHeapMb" : 2.96
+    "avgTimeMs" : 14.54,
+    "avgHeapMb" : 3.05
   }, {
     "library" : "JasperReports (40 rows)",
-    "avgTimeMs" : 9.13,
-    "avgHeapMb" : 2.52
+    "avgTimeMs" : 9.89,
+    "avgHeapMb" : 2.53
   }, {
     "library" : "GraphCompose (200 rows)",
-    "avgTimeMs" : 11.75,
-    "avgHeapMb" : 3.22
+    "avgTimeMs" : 15.26,
+    "avgHeapMb" : 3.93
   }, {
     "library" : "iText 9 (200 rows)",
-    "avgTimeMs" : 50.34,
-    "avgHeapMb" : 13.37
+    "avgTimeMs" : 57.57,
+    "avgHeapMb" : 13.81
   }, {
     "library" : "JasperReports (200 rows)",
-    "avgTimeMs" : 16.45,
-    "avgHeapMb" : 10.7
+    "avgTimeMs" : 21.13,
+    "avgHeapMb" : 10.81
   }, {
     "library" : "GraphCompose (1000 rows)",
-    "avgTimeMs" : 45.27,
-    "avgHeapMb" : 15.73
+    "avgTimeMs" : 64.08,
+    "avgHeapMb" : 19.16
   }, {
     "library" : "iText 9 (1000 rows)",
-    "avgTimeMs" : 243.66,
-    "avgHeapMb" : 65.95
+    "avgTimeMs" : 291.03,
+    "avgHeapMb" : 68.16
   }, {
     "library" : "JasperReports (1000 rows)",
-    "avgTimeMs" : 48.47,
-    "avgHeapMb" : 51.95
+    "avgTimeMs" : 64.77,
+    "avgHeapMb" : 52.53
   } ]
 }

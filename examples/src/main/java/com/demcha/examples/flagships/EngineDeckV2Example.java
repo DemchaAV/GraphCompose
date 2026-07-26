@@ -702,9 +702,9 @@ public final class EngineDeckV2Example {
         });
 
         page.addParagraph(p -> p
-                .text("Scope: one developer machine; CPU, OS, JDK and commit were not stored in this historical file. "
-                        + "The JSON stores 50/100 only for its small-invoice tier and omits scaling iteration metadata. "
-                        + "Refresh both data and provenance on the final 2.0 commit before release claims.")
+                .text("Scope: one developer machine, single run. The file records neither CPU, OS and JDK nor the "
+                        + "commit measured, and its iteration counts cover only the small-invoice tier. Absolute "
+                        + "milliseconds therefore travel badly between machines - read the ratios, not the timings.")
                 .textStyle(body(7.9, MUTED))
                 .lineSpacing(1.25)
                 .margin(DocumentInsets.top(1)));
@@ -744,9 +744,9 @@ public final class EngineDeckV2Example {
         });
         page.addParagraph(p -> p
                 .rich(r -> r
-                        .plain("What 2.0 can claim today: ")
+                        .plain("What the 2.x line can claim today: ")
                         .bold("modular packaging, renderer isolation and deterministic layout snapshots")
-                        .plain(". Refresh performance evidence separately on the release commit."))
+                        .plain(". The figures above are one machine's reference run, refreshed with the data file."))
                 .textStyle(body(8.4, BODY))
                 .lineSpacing(1.3)
                 .margin(DocumentInsets.zero()));

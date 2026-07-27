@@ -58,10 +58,10 @@
         <lombok.version>1.18.46</lombok.version>
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.38</logback.version>
+        <logback.version>1.6.0</logback.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
-        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+        <maven.jar.plugin.version>3.5.1</maven.jar.plugin.version>
         <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
         <!-- Keep in lockstep with the engine pom's jacoco.plugin.version
              (VersionConsistencyGuardTest enforces the equality). -->

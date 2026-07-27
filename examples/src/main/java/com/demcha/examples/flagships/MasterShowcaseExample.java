@@ -23,8 +23,11 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
+import com.demcha.examples.support.PerfBaseline;
 
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Kitchen-sink showcase combining the canonical surface end-to-end —
@@ -34,10 +37,17 @@ import java.nio.file.Path;
  * QR + Code 128 barcodes, document metadata, and header / footer chrome.
  *
  * <p>The rendered PDF reads like a fictional "GraphCompose Q2 Sample
- * Report" — three pages of designed content meant to look at a glance
+ * Report" — designed content meant to look at a glance
  * like the kind of business document GraphCompose was built to
  * generate, not a feature checklist. Use it as a reference when
  * composing your own multi-page documents.</p>
+ *
+ * <p>The narrative is deliberately undated. This file is regenerated and
+ * re-committed on every release, so anything that names a version, a date or a
+ * measurement would go stale between one release and the next — as it did. What
+ * survives is either sample copy that cannot age or a figure read at render time
+ * from {@link com.demcha.examples.support.PerfBaseline} and
+ * {@link com.demcha.examples.support.ExampleVersion}.</p>
  */
 public final class MasterShowcaseExample {
     private static final BusinessTheme THEME = BusinessTheme.modern();
@@ -90,7 +100,7 @@ public final class MasterShowcaseExample {
         document.metadata(DocumentMetadata.builder()
                 .title("GraphCompose master showcase")
                 .author("Jordan Rivera")
-                .subject("Comprehensive end-to-end demo of the v1.5 canonical surface")
+                .subject("Comprehensive end-to-end demo of the canonical document surface")
                 .keywords("graphcompose, showcase, business, theme, rich-text, table, shape, transform, barcode")
                 .creator("GraphCompose Examples")
                 .producer("GraphCompose")
@@ -109,7 +119,7 @@ public final class MasterShowcaseExample {
 
         document.footer(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.FOOTER)
-                .leftText("v1.5 — \"intuitive\" release")
+                .leftText("GraphCompose " + ExampleVersion.currentLine() + " — sample report")
                 .rightText("Page {page} of {pages}")
                 .fontSize(9f)
                 .textColor(MUTED)
@@ -165,16 +175,17 @@ public final class MasterShowcaseExample {
                                         .plain("Status: ")
                                         .bold("On track")
                                         .plain(" — ")
-                                        .accent("675 / 675 tests green", BRAND)
-                                        .plain(" — Q2 release window confirmed for ")
-                                        .underline("June 2026")
+                                        .accent("every gate green", BRAND)
+                                        .plain(" — release window confirmed for the ")
+                                        .underline("current quarter")
                                         .plain("."))
                                 .addRich(rich -> rich
                                         .plain("Performance: ")
                                         .color("invoice-template", BRAND_DEEP)
-                                        .plain(" 13.4 ms avg, 75 docs/sec; ")
+                                        .plain(" " + speed("invoice-template") + "; ")
                                         .color("feature-rich", BRAND_DEEP)
-                                        .plain(" 36.8 ms avg, 27 docs/sec.")))
+                                        .plain(" " + speed("feature-rich") + ". One machine, "
+                                               + PerfBaseline.get().capturedOn() + ".")))
                         .addSection("Seal", section -> section
                                 .padding(DocumentInsets.of(2))
                                 .addCircle(118, BRAND, circle -> circle
@@ -187,7 +198,7 @@ public final class MasterShowcaseExample {
                                                 style(FontName.HELVETICA_BOLD, 13,
                                                         DocumentTextDecoration.BOLD,
                                                         DocumentColor.WHITE)))
-                                        .position(label("Q2 / 2026",
+                                        .position(label("SAMPLE",
                                                         style(FontName.HELVETICA_BOLD, 7.5,
                                                                 DocumentTextDecoration.BOLD,
                                                                 SOFT_GOLD)),
@@ -222,7 +233,7 @@ public final class MasterShowcaseExample {
                                 .textStyle(THEME.text().h2())
                                 .margin(DocumentInsets.zero()))
                         .addRich(rich -> rich
-                                .plain("v1.5 lands the cinematic features that turn GraphCompose from \"tidy PDF layouter\" into a designed-document engine: ")
+                                .plain("The features below are what turn GraphCompose from a \"tidy PDF layouter\" into a designed-document engine: ")
                                 .bold("shape-as-container with clip path")
                                 .plain(", ")
                                 .bold("rotate / scale + per-layer z-index")
@@ -314,7 +325,7 @@ public final class MasterShowcaseExample {
                         .addSection("Card3", section -> highlightCard(section,
                                 "Transformable mixin",
                                 "rotate / scale on every shape",
-                                "v1.5 extends Transformable<T> to every leaf builder so any shape rotates around its placement centre.")))
+                                "Transformable<T> reaches every leaf builder, so any shape rotates around its placement centre.")))
 
                 // ───── Action items + status legend ─────
                 .addSection("ActionItems", section -> section
@@ -328,9 +339,9 @@ public final class MasterShowcaseExample {
                                 .textStyle(THEME.text().h2())
                                 .margin(DocumentInsets.zero()))
                         .addRich(rich -> rich
-                                .plain("• Tag ")
-                                .bold("v1.5.0")
-                                .plain(" on main once develop is merged through PR. ")
+                                .plain("• Publish the release notes once the branch ")
+                                .bold("merges through review")
+                                .plain(". ")
                                 .accent("Owner: maintainer", BRAND)
                                 .plain("."))
                         .addRich(rich -> rich
@@ -360,7 +371,7 @@ public final class MasterShowcaseExample {
                                 .padding(DocumentInsets.zero())
                                 .addBarcode(barcode -> barcode
                                         .code128()
-                                        .data("GC-MASTER-Q2-2026")
+                                        .data("GC-MASTER-SAMPLE")
                                         .foreground(BRAND)
                                         .size(180, 36))))
                 .build();
@@ -401,6 +412,23 @@ public final class MasterShowcaseExample {
                 .align(TextAlign.CENTER)
                 .margin(DocumentInsets.zero())
                 .build();
+    }
+
+    /**
+     * One scenario's measured speed, phrased for the report.
+     *
+     * <p>Restates the committed baseline rather than a literal, so the figure
+     * moves when the measurement does instead of when somebody remembers.</p>
+     *
+     * @param scenario benchmark scenario name
+     * @return e.g. {@code "6.6 ms avg, 152 docs/sec"}, or a plain note when the
+     *         baseline does not carry the scenario
+     */
+    private static String speed(String scenario) {
+        return PerfBaseline.get().scenario(scenario)
+                .map(measured -> String.format(Locale.ROOT, "%.1f ms avg, %.0f docs/sec",
+                        measured.avgMillis(), measured.docsPerSecond()))
+                .orElse("not measured");
     }
 
     private static DocumentTextStyle label() {

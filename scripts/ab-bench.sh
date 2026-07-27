@@ -164,9 +164,17 @@ build_engine_and_classpath() {
   # version — the normal case for two branches off develop — so every change in
   # the PDF backend or the templates module reports a delta of exactly zero.
   # Guarded by existence: a pre-split layout builds them from the root instead.
+  # render-pdf contributes only its main jar, so skip building its tests too:
+  # -DskipTests still compiles them, and a branch whose render-pdf tests do not
+  # compile would abort the whole A/B at the install step with its output sent to
+  # /dev/null. templates must keep -DskipTests, because the benchmark resolves its
+  # tests-classifier jar and maven.test.skip would not produce one.
   local module
   for module in render-pdf templates; do
-    if [ -f "$module/pom.xml" ]; then
+    [ -f "$module/pom.xml" ] || continue
+    if [ "$module" = "render-pdf" ]; then
+      "$MVNW" -B -ntp -f "$module/pom.xml" -Dmaven.test.skip=true install >/dev/null
+    else
       "$MVNW" -B -ntp -f "$module/pom.xml" -DskipTests install >/dev/null
     fi
   done

@@ -230,10 +230,12 @@ The wrappers above benchmark whatever is currently checked out. To answer "is
 branch B faster or slower than branch A?" fairly on a noisy laptop, use the
 dedicated A/B scripts. They **interleave** the two branches (A,B,A,B,…) so
 thermal drift averages out, **repeat** each branch and compare **medians**, and
-**cool down** between runs. Each branch is rebuilt (`install -pl :graph-compose-core`) before its
-runs so the benchmark measures that branch's engine, and untracked benchmark
-probes are moved aside around the branch switch so they cannot break the other
-branch's compile.
+**cool down** between runs. Each branch is rebuilt before its runs so the benchmark measures that branch:
+the engine, plus `render-pdf` and `templates`, because the benchmarks module
+resolves all three at the branch's own version. Installing only the engine would
+leave both sides sharing whichever backend and template jars happened to be in
+`~/.m2`. Untracked benchmark probes are moved aside around the branch switch so
+they cannot break the other branch's compile.
 
 - **Windows (PowerShell)** — `scripts/ab-bench.ps1`, full suite (latency,
   throughput, scalability, stress, comparative):

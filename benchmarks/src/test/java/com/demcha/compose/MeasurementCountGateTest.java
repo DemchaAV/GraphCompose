@@ -1,5 +1,6 @@
 package com.demcha.compose;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -84,17 +85,21 @@ class MeasurementCountGateTest {
 
     @Test
     void everyScenarioMeasuresExactlyAsMuchTextAsRecorded() throws Exception {
+        // Soft, so a deliberate engine change reports all four scenarios' new
+        // numbers in one run instead of surfacing them one failure at a time.
+        SoftAssertions soft = new SoftAssertions();
         for (var scenario : MeasurementCountBenchmark.scenarios().entrySet()) {
             Work actual = Work.of(
                     MeasurementCountBenchmark.measureScenario(scenario.getKey(), scenario.getValue()));
 
-            assertThat(actual)
+            soft.assertThat(actual)
                     .describedAs("measurement work for '%s' changed - re-run "
                                  + "MeasurementCountBenchmark and update the expectation "
                                  + "in the same commit if the change was intended",
                             scenario.getKey())
                     .isEqualTo(EXPECTED.get(scenario.getKey()));
         }
+        soft.assertAll();
     }
 
     /**

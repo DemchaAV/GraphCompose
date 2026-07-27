@@ -30,13 +30,14 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * A five-slide carousel sized for a LinkedIn document post, composed through the
+ * A six-slide carousel sized for a LinkedIn document post, composed through the
  * canonical DSL and rendered by the engine it describes.
  *
- * <p>Portrait 1080&times;1350 (4:5), which is the tallest frame LinkedIn shows
- * without cropping and therefore the most readable on a phone. Type is sized for
- * that phone, not for a desktop preview: the smallest text on a slide is 18pt at
- * a 1080-wide page, so it survives the reduction.</p>
+ * <p>Portrait 1280&times;1600 (4:5), which is the tallest frame LinkedIn shows
+ * without cropping and therefore the most readable on a phone. The width is set
+ * by the opening slide: it carries {@link SocialCardExample}'s card at native
+ * size rather than a scaled copy. Type is sized for that phone, not for a
+ * desktop preview.</p>
  *
  * <p>Every figure is read at render time — the version from the filtered
  * {@code banner.properties}, the comparative timings from the committed
@@ -59,8 +60,10 @@ public final class LinkedInCarouselExample {
 
     /**
      * Everything below was drawn against a 1080-wide page. Rather than restate
-     * every size, the type helpers scale by this ratio, so the slides keep their
-     * proportions on the wider frame.
+     * every size, the type helpers and the box metrics scale by this ratio, so
+     * the slides keep their proportions on the wider frame. Apply it to any
+     * length that was eyeballed against the narrower page; the only literals
+     * that stay absolute are ones derived from the page itself.
      */
     private static final double SCALE = PAGE_WIDTH / 1080.0;
 
@@ -172,7 +175,7 @@ public final class LinkedInCarouselExample {
     }
 
     /**
-     * Composes all five slides.
+     * Composes all six slides.
      *
      * @param document the open session to compose into
      */
@@ -213,8 +216,10 @@ public final class LinkedInCarouselExample {
 
     private static void cardSlide(SectionBuilder slide) {
         slide.spacing(0);
-        slide.addSpacer(sp -> sp.width(PAGE_WIDTH)
-                .height((PAGE_HEIGHT - SocialCardExample.CARD_HEIGHT) / 2));
+        // Floored: a card taller than the page would otherwise ask for a
+        // negative spacer rather than simply filling the frame.
+        double bleed = Math.max(0, (PAGE_HEIGHT - SocialCardExample.CARD_HEIGHT) / 2);
+        slide.addSpacer(sp -> sp.width(PAGE_WIDTH).height(bleed));
         slide.add(SocialCardExample.scene());
     }
 
@@ -237,7 +242,7 @@ public final class LinkedInCarouselExample {
                 .lineSpacing(1.45)
                 .margin(DocumentInsets.zero()));
         slide.addRow("Formats", row -> {
-            row.spacing(14).evenWeights();
+            row.spacing(14 * SCALE).evenWeights();
             formatChip(row, "PDF", "fixed layout", "PDFBox", MINT);
             formatChip(row, "PPTX", "fixed layout", "Apache POI", VIOLET_LIGHT);
             formatChip(row, "DOCX", "semantic", "Apache POI", AMBER);
@@ -282,15 +287,15 @@ public final class LinkedInCarouselExample {
         slide.addParagraph(p -> p
                 .text("Average render latency, milliseconds — lower is faster.")
                 .textStyle(body(30, ON_DARK_MUTED))
-                .margin(DocumentInsets.bottom(10)));
+                .margin(DocumentInsets.bottom(10 * SCALE)));
 
         slide.addSection("Chart", card -> card
-                .softPanel(SURFACE, 20, 26)
-                .stroke(DocumentStroke.of(LINE, 1))
+                .softPanel(SURFACE, 20 * SCALE, 26 * SCALE)
+                .stroke(DocumentStroke.of(LINE, 1 * SCALE))
                 .chart(latencyChart(bench), latencyStyle()));
 
         slide.addRow("Ratios", row -> {
-            row.spacing(14).evenWeights();
+            row.spacing(14 * SCALE).evenWeights();
             ratio(row, times(bench.timeMs("iText 9", TIER) / bench.timeMs("GraphCompose", TIER)),
                     "faster than iText 9", VIOLET_LIGHT);
             ratio(row, times(bench.heapMb("iText 9", TIER) / bench.heapMb("GraphCompose", TIER)),
@@ -339,9 +344,9 @@ public final class LinkedInCarouselExample {
                 .textStyle(headline(132))
                 .margin(DocumentInsets.zero()));
         slide.addSection("Coords", card -> {
-            card.softPanel(SURFACE, 20, CARD_PAD)
-                    .stroke(DocumentStroke.of(LINE, 1))
-                    .spacing(4);
+            card.softPanel(SURFACE, 20 * SCALE, CARD_PAD)
+                    .stroke(DocumentStroke.of(LINE, 1 * SCALE))
+                    .spacing(4 * SCALE);
             card.addSpacer(sp -> sp.width(CARD_INNER).height(0));
             // Split on the colon rather than set in one line: the coordinate is
             // wider than the card at this size and broke mid-artifact.
@@ -362,9 +367,9 @@ public final class LinkedInCarouselExample {
                     .margin(DocumentInsets.zero()));
         });
         slide.addSection("Snippet", card -> {
-            card.softPanel(SURFACE_2, 20, CARD_PAD)
-                    .accentLeft(VIOLET, 4)
-                    .spacing(2);
+            card.softPanel(SURFACE_2, 20 * SCALE, CARD_PAD)
+                    .accentLeft(VIOLET, 4 * SCALE)
+                    .spacing(2 * SCALE);
             card.addSpacer(sp -> sp.width(CARD_INNER).height(0));
             for (String line : SNIPPET) {
                 card.addParagraph(p -> p
@@ -377,7 +382,7 @@ public final class LinkedInCarouselExample {
         slide.addParagraph(p -> p
                 .text("github.com/DemchaAV/GraphCompose")
                 .textStyle(body(46, VIOLET_LIGHT))
-                .margin(DocumentInsets.top(4)));
+                .margin(DocumentInsets.top(4 * SCALE)));
         slide.addParagraph(p -> footnote(p,
                 "Java 17+. Every slide in this carousel was composed with the library "
                 + "and rendered by its own PDF backend - the PPTX beside it comes from "
@@ -398,9 +403,9 @@ public final class LinkedInCarouselExample {
         // longest line, which leaves a stack of cards with ragged right edges.
         // An even-weighted row gives every card the full content width.
         slide.addSection("Point", card -> {
-            card.softPanel(SURFACE, 26, CARD_PAD)
-                    .accentLeft(accent, 4)
-                    .spacing(6);
+            card.softPanel(SURFACE, 26 * SCALE, CARD_PAD)
+                    .accentLeft(accent, 4 * SCALE)
+                    .spacing(6 * SCALE);
             card.addSpacer(sp -> sp.width(CARD_INNER).height(0));
             card.addParagraph(p -> p
                     .text(title)
@@ -422,8 +427,8 @@ public final class LinkedInCarouselExample {
                                    String engine, DocumentColor accent) {
         row.addSection(name, card -> {
             card.softPanel(SURFACE_2, 20, 24)
-                    .stroke(DocumentStroke.of(LINE, 1))
-                    .spacing(2);
+                    .stroke(DocumentStroke.of(LINE, 1 * SCALE))
+                    .spacing(2 * SCALE);
             card.addParagraph(p -> p
                     .text(name)
                     .textStyle(DocumentTextStyle.builder()
@@ -442,15 +447,15 @@ public final class LinkedInCarouselExample {
                     .text(engine)
                     .textStyle(mono(23, DocumentColor.rgb(122, 131, 162)))
                     .align(TextAlign.CENTER)
-                    .margin(DocumentInsets.top(4)));
+                    .margin(DocumentInsets.top(4 * SCALE)));
         });
     }
 
     private static void ratio(RowBuilder row, String value, String label, DocumentColor accent) {
         row.addSection("Ratio", card -> {
-            card.softPanel(SURFACE_2, 14, 24)
-                    .accentTop(accent, 3)
-                    .spacing(2);
+            card.softPanel(SURFACE_2, 14 * SCALE, 24 * SCALE)
+                    .accentTop(accent, 3 * SCALE)
+                    .spacing(2 * SCALE);
             card.addParagraph(p -> p
                     .text(value)
                     .textStyle(DocumentTextStyle.builder()
@@ -487,7 +492,7 @@ public final class LinkedInCarouselExample {
     private static ChartStyle latencyStyle() {
         return ChartStyle.builder()
                 .seriesPaint(0, DocumentPaint.solid(VIOLET))
-                .barCornerRadius(DocumentCornerRadius.of(4))
+                .barCornerRadius(DocumentCornerRadius.of(4 * SCALE))
                 .barWidthRatio(0.5)
                 .axisTextStyle(mono(22, ON_DARK_MUTED))
                 .valueLabelTextStyle(mono(25, ON_DARK))
@@ -498,7 +503,7 @@ public final class LinkedInCarouselExample {
         return p.text(text)
                 .textStyle(body(22, DocumentColor.rgb(130, 139, 170)))
                 .lineSpacing(1.4)
-                .margin(DocumentInsets.top(6));
+                .margin(DocumentInsets.top(6 * SCALE));
     }
 
     private static String times(double ratio) {

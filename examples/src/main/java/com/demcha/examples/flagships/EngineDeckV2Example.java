@@ -66,9 +66,11 @@ import java.util.regex.Pattern;
  * <p>Benchmark wording is intentionally conservative. The bundled JSON is a
  * dated single-machine reference run without hardware or commit provenance;
  * allocation values are average thread-allocated MiB per render, not peak
- * heap, and scaling iteration metadata is absent from the historical file.
- * A final 2.0 release asset should refresh both data and provenance on the
- * release commit.</p>
+ * heap, and scaling iteration metadata covers only the small-invoice tier.
+ * Read the ratios rather than the timings: both libraries are measured in the
+ * same run, so their proportions survive a change of machine while the
+ * milliseconds do not. Refresh the data file and these figures together — see
+ * {@code docs/operations/benchmarks.md}.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.0.0

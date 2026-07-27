@@ -490,7 +490,7 @@ public final class EngineDeckV2Example {
                     PALE_VIOLET, VIOLET);
             proofCard(row, "FIXED BACKEND SPI", "FixedLayoutBackendProvider and FontMetricsProvider are discovered by ServiceLoader.",
                     PALE_BLUE, BLUE);
-            proofCard(row, "SEMANTIC EXPORT", "DOCX is a working POI exporter; PPTX is a slide-safe manifest skeleton in 2.0.",
+            proofCard(row, "SEMANTIC EXPORT", "DOCX is a working POI exporter; PPTX carries a slide-safe skeleton beside its fixed backend.",
                     PALE_MINT, MINT);
         });
         page.addParagraph(p -> pageNote(p, "The renderer boundary is explicit; Android or another backend is an extension opportunity, not a shipped 2.0 claim."));
@@ -640,7 +640,7 @@ public final class EngineDeckV2Example {
                 {"core", "authoring + model"},
                 {"render-pdf", "fixed PDF"},
                 {"render-docx", "semantic DOCX"},
-                {"render-pptx", "manifest only"},
+                {"render-pptx", "fixed PPTX"},
                 {"templates", "opt-in presets"},
                 {"testing", "snapshot tools"},
                 {"graph-compose", "PDF wrapper"},

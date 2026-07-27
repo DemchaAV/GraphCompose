@@ -157,6 +157,27 @@ build_engine_and_classpath() {
   local engine_pl="."
   [ -f core/pom.xml ] && engine_pl=":graph-compose-core"
   "$MVNW" -B -ntp -DskipTests install -pl "$engine_pl" >/dev/null
+  # The benchmark also resolves render-pdf and templates (plus the templates
+  # tests-classifier jar, which is never published) at the branch's own version,
+  # so those have to be rebuilt per branch as well. Install only the engine and
+  # both sides resolve the SAME jars from ~/.m2 whenever the two branches share a
+  # version — the normal case for two branches off develop — so every change in
+  # the PDF backend or the templates module reports a delta of exactly zero.
+  # Guarded by existence: a pre-split layout builds them from the root instead.
+  # render-pdf contributes only its main jar, so skip building its tests too:
+  # -DskipTests still compiles them, and a branch whose render-pdf tests do not
+  # compile would abort the whole A/B at the install step with its output sent to
+  # /dev/null. templates must keep -DskipTests, because the benchmark resolves its
+  # tests-classifier jar and maven.test.skip would not produce one.
+  local module
+  for module in render-pdf templates; do
+    [ -f "$module/pom.xml" ] || continue
+    if [ "$module" = "render-pdf" ]; then
+      "$MVNW" -B -ntp -f "$module/pom.xml" -Dmaven.test.skip=true install >/dev/null
+    else
+      "$MVNW" -B -ntp -f "$module/pom.xml" -DskipTests install >/dev/null
+    fi
+  done
   "$MVNW" -B -ntp -f benchmarks/pom.xml test-compile dependency:build-classpath \
           -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath >/dev/null
   CP="benchmarks/target/test-classes${SEP}benchmarks/target/classes${SEP}$(cat benchmarks/target/benchmark.classpath)"

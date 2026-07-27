@@ -34,6 +34,14 @@ updates:
       # jackson-bom >= 2.22.1 (or 2.23.0) lands on Central with full module sync.
       - dependency-name: "com.fasterxml.jackson:jackson-bom"
         versions: ["2.22.0"]
+      # JavaFX follows the JDK it was built against: the 21.x line is the last
+      # one that runs on Java 17, and the CI matrix still builds and tests on 17.
+      # A major bump therefore fails qa's compile outright — javafx-controls 26
+      # resolves, but Label / TextArea / FontWeight are not visible to a release-17
+      # compile, so the JavaFX dev-preview tool stops building. Drop this entry
+      # when the matrix's floor moves past 17.
+      - dependency-name: "org.openjfx:*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"

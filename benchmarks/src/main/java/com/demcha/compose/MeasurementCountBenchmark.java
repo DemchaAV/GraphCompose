@@ -20,7 +20,9 @@ import java.lang.management.ManagementFactory;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -93,13 +95,7 @@ public final class MeasurementCountBenchmark {
         System.out.println("Thread allocation measurement: " + (allocationSupported() ? "enabled" : "UNAVAILABLE (Alloc KB = n/a)"));
         System.out.println();
 
-        Consumer<PageFlowBuilder> longText = flow ->
-                flow.addParagraph(p -> p.text(LONG_PARAGRAPH).textStyle(BODY_STYLE));
-        Consumer<PageFlowBuilder> longToken = flow ->
-                flow.addParagraph(p -> p.text(LONG_TOKEN_PARAGRAPH).textStyle(BODY_STYLE));
-        Consumer<PageFlowBuilder> accentedText = flow ->
-                flow.addParagraph(p -> p.text(ACCENTED_LATIN_PARAGRAPH).textStyle(BODY_STYLE));
-        Consumer<PageFlowBuilder> largeTable = MeasurementCountBenchmark::authorLargeTable;
+        Map<String, Consumer<PageFlowBuilder>> scenarios = scenarios();
 
         // Warm up the JVM (class loading + JIT) BEFORE the allocation window so the
         // "Alloc KB" column reflects steady-state per-document layout allocation, not
@@ -108,17 +104,15 @@ public final class MeasurementCountBenchmark {
         // layout cost (verified: cold first compile 36.6 MB vs warm 0.65 MB for the
         // same long-text document). The measurement-COUNT columns are exact either way.
         for (int warmup = 0; warmup < 5; warmup++) {
-            measureScenario("warmup", longText);
-            measureScenario("warmup", longToken);
-            measureScenario("warmup", accentedText);
-            measureScenario("warmup", largeTable);
+            for (Consumer<PageFlowBuilder> author : scenarios.values()) {
+                measureScenario("warmup", author);
+            }
         }
 
         List<Result> results = new ArrayList<>();
-        results.add(measureScenario("long-text", longText));
-        results.add(measureScenario("long-token", longToken));
-        results.add(measureScenario("accented-latin", accentedText));
-        results.add(measureScenario("large-table", largeTable));
+        for (Map.Entry<String, Consumer<PageFlowBuilder>> scenario : scenarios.entrySet()) {
+            results.add(measureScenario(scenario.getKey(), scenario.getValue()));
+        }
 
         System.out.printf("%-14s | %11s | %9s | %9s | %11s | %8s | %11s | %10s | %6s%n",
                 "Scenario", "WidthReqs", "Distinct", "Repeat %", "Sum chars", "Max arg", "LineMetrics", "Alloc KB", "Pages");
@@ -140,7 +134,37 @@ public final class MeasurementCountBenchmark {
         writeReport(results);
     }
 
-    private Result measureScenario(String scenario, Consumer<PageFlowBuilder> author) throws Exception {
+    /**
+     * The probe's scenarios, in report order. Single source for the probe and for
+     * {@code MeasurementCountGateTest}, so a scenario added here cannot slip past
+     * the gate unnoticed.
+     *
+     * @return scenario name to document author
+     */
+    static Map<String, Consumer<PageFlowBuilder>> scenarios() {
+        Map<String, Consumer<PageFlowBuilder>> scenarios = new LinkedHashMap<>();
+        scenarios.put("long-text", flow ->
+                flow.addParagraph(p -> p.text(LONG_PARAGRAPH).textStyle(BODY_STYLE)));
+        scenarios.put("long-token", flow ->
+                flow.addParagraph(p -> p.text(LONG_TOKEN_PARAGRAPH).textStyle(BODY_STYLE)));
+        scenarios.put("accented-latin", flow ->
+                flow.addParagraph(p -> p.text(ACCENTED_LATIN_PARAGRAPH).textStyle(BODY_STYLE)));
+        scenarios.put("large-table", MeasurementCountBenchmark::authorLargeTable);
+        return scenarios;
+    }
+
+    /**
+     * Compiles one scenario and returns its exact measurement counts.
+     *
+     * <p>Package-private and static so the gate test can drive the real layout
+     * pass rather than re-implementing the instrumentation.</p>
+     *
+     * @param scenario report label
+     * @param author   document author for the scenario
+     * @return the scenario's counts, page/fragment totals and compile allocation
+     * @throws Exception when composition or measurement fails
+     */
+    static Result measureScenario(String scenario, Consumer<PageFlowBuilder> author) throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
                 .margin(24, 24, 24, 24)
@@ -244,7 +268,7 @@ public final class MeasurementCountBenchmark {
         System.out.println("Saved CSV counter report to " + csvPath);
     }
 
-    private record Result(String scenario,
+    record Result(String scenario,
                           CountingTextMeasurementSystem.Counts counts,
                           int pages,
                           int fragments,

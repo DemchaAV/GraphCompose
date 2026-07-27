@@ -362,8 +362,10 @@ jobs:
 
       - name: Run deterministic benchmark gates
         # Fast, machine-independent unit/gate tests (image-cache reuse,
-        # render-operator coalescing, scenario/threshold coverage, diff tooling).
-        # Catches structural regressions the timing smoke run cannot.
+        # render-operator coalescing, measurement counts, scenario/threshold
+        # coverage, diff tooling). Catches structural regressions the timing
+        # smoke run cannot: these are exact integers, so unlike a millisecond
+        # ceiling they separate a slower engine from a slower machine.
         run: ./mvnw -B -ntp -f benchmarks/pom.xml test
 
       - name: Run coarse performance smoke benchmark

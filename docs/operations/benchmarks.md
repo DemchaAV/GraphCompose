@@ -200,6 +200,23 @@ Changing the engine (layout, pagination, render ordering, PDF session, text
 measurement, fonts) and want to see how it moves performance? Pick the view that
 fits, cheapest first:
 
+- **"Did the engine change how much work it does?" — the deterministic gate.**
+  `MeasurementCountGateTest` compiles four fixtures and asserts the exact number
+  of text measurements each one costs. These are integers, identical on every
+  machine, so they answer the question a timing run cannot: whether the *engine*
+  changed or just the hardware it ran on. It runs on every performance-relevant
+  PR as part of the `Run deterministic benchmark gates` step, and locally in a
+  second:
+
+  ```bash
+  ./mvnw -B -ntp test -Dtest=MeasurementCountGateTest -f benchmarks/pom.xml
+  ```
+
+  A failure prints the recorded and actual counts side by side. Fewer requests
+  for the same document is an improvement worth recording, more is a regression
+  worth explaining; either way, re-run `MeasurementCountBenchmark` and update the
+  expectation in the same commit as the behaviour change.
+
 - **"Did I regress?" — gate against the committed baseline.** Run a median and
   let the `11-verdict-current-speed` step score each scenario IMPROVED /
   NEUTRAL / REGRESSED against `baselines/current-speed-full.json` (hard gate:

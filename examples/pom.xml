@@ -146,6 +146,20 @@
                     <exclude>banner.properties</exclude>
                 </excludes>
             </resource>
+            <!--
+                The committed perf baseline, read straight from where the gate
+                keeps it. Examples that quote engine speed restate this file
+                rather than carrying literals, and pointing at the original
+                instead of copying it is what keeps the two from drifting.
+            -->
+            <resource>
+                <directory>${project.basedir}/../baselines</directory>
+                <targetPath>baselines</targetPath>
+                <filtering>false</filtering>
+                <includes>
+                    <include>current-speed-full.json</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

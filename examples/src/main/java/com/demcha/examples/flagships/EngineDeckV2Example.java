@@ -37,9 +37,9 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -47,9 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Parallel 2.0 release concept for the GraphCompose README hero and engine
@@ -116,7 +113,7 @@ public final class EngineDeckV2Example {
     private static final DocumentColor PALE_BLUE = DocumentColor.rgb(232, 243, 255);
     private static final DocumentColor PALE_MINT = DocumentColor.rgb(230, 249, 242);
 
-    private static final String VERSION = loadVersion();
+    private static final String VERSION = ExampleVersion.current();
 
     /**
      * The {@code major.minor} of {@link #VERSION}, for the banner's prose labels.
@@ -125,7 +122,7 @@ public final class EngineDeckV2Example {
      * so a literal would keep announcing whichever line it was typed on — the hero
      * still read "2.0" while the pill beside it read v2.1.0.</p>
      */
-    private static final String VERSION_LINE = majorMinor(VERSION);
+    private static final String VERSION_LINE = ExampleVersion.majorMinor(VERSION);
 
     private EngineDeckV2Example() {
     }
@@ -919,23 +916,7 @@ public final class EngineDeckV2Example {
      * @return {@code "2.1"} for {@code "2.1.0"} / {@code "2.1.0-SNAPSHOT"}; the input
      *         unchanged when it carries no dotted numeric prefix
      */
-    private static String majorMinor(String version) {
-        Matcher matcher = Pattern.compile("^(\\d+)\\.(\\d+)").matcher(version);
-        return matcher.find() ? matcher.group(1) + "." + matcher.group(2) : version;
-    }
 
-    private static String loadVersion() {
-        Properties banner = new Properties();
-        try (InputStream in = EngineDeckV2Example.class.getResourceAsStream("/banner.properties")) {
-            if (in != null) {
-                banner.load(in);
-            }
-        } catch (IOException ignored) {
-            // Fall through to the development label below.
-        }
-        String value = banner.getProperty("version");
-        return value == null || value.isBlank() || value.startsWith("@") ? "dev" : value.trim();
-    }
 
     private static SvgIcon logo() {
         return icon("logo");

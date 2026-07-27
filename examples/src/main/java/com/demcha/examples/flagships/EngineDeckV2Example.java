@@ -909,15 +909,6 @@ public final class EngineDeckV2Example {
         return timestamp.substring(0, Math.min(10, timestamp.length()));
     }
 
-    /**
-     * Reduces a version to its {@code major.minor} line for display.
-     *
-     * @param version the resolved build version, possibly a qualifier or {@code "dev"}
-     * @return {@code "2.1"} for {@code "2.1.0"} / {@code "2.1.0-SNAPSHOT"}; the input
-     *         unchanged when it carries no dotted numeric prefix
-     */
-
-
     private static SvgIcon logo() {
         return icon("logo");
     }

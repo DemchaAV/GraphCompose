@@ -3,8 +3,8 @@ package com.demcha.examples.support;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -21,10 +21,18 @@ import java.util.Optional;
  * <p>The figures are one machine's median over several runs. Absolute
  * milliseconds do not travel between machines, so anything rendering them
  * should show {@link #capturedOn()} beside them and let the reader judge.</p>
+ *
+ * <p>Loading never throws: a resource that is missing, unreadable or malformed
+ * yields an empty baseline, and callers render a plain "not measured" rather
+ * than a number nobody measured. {@code PerfBaselineTest} keeps that fallback
+ * from becoming the normal case by asserting the resource really is on the
+ * classpath with the scenarios the examples quote.</p>
  */
 public final class PerfBaseline {
 
     private static final String RESOURCE = "/baselines/current-speed-full.json";
+
+    private static final PerfBaseline EMPTY = new PerfBaseline("undated", Map.of());
 
     private static final PerfBaseline INSTANCE = load();
 
@@ -74,23 +82,36 @@ public final class PerfBaseline {
     }
 
     private static PerfBaseline load() {
+        // Never throws. This runs in a static initializer, so a malformed file
+        // would otherwise fail class-load and take down every example in the
+        // module, not just the one quoting a figure. Absent and unreadable
+        // degrade the same way, and the caller renders the honest fallback.
         try (InputStream in = PerfBaseline.class.getResourceAsStream(RESOURCE)) {
             if (in == null) {
-                return new PerfBaseline("undated", Map.of());
+                return EMPTY;
             }
             JsonNode root = new ObjectMapper().readTree(in);
             Map<String, Scenario> scenarios = new HashMap<>();
             for (JsonNode row : root.path("latency")) {
-                scenarios.put(row.path("scenario").asText(),
-                        new Scenario(row.path("avgMillis").asDouble(),
-                                row.path("docsPerSecond").asDouble()));
+                String name = row.path("scenario").asText("");
+                // Require both figures to be present and numeric: a renamed or
+                // dropped field would otherwise read as 0.0 and render a
+                // plausible "0.0 ms avg, 0 docs/sec" instead of admitting the
+                // measurement is missing.
+                if (name.isEmpty()
+                    || !row.path("avgMillis").isNumber()
+                    || !row.path("docsPerSecond").isNumber()) {
+                    continue;
+                }
+                scenarios.put(name, new Scenario(row.path("avgMillis").asDouble(),
+                        row.path("docsPerSecond").asDouble()));
             }
             String timestamp = root.path("timestamp").asText("");
             return new PerfBaseline(
                     timestamp.length() >= 10 ? timestamp.substring(0, 10) : "undated",
                     Map.copyOf(scenarios));
-        } catch (java.io.IOException e) {
-            throw new UncheckedIOException("Cannot read " + RESOURCE, e);
+        } catch (IOException | RuntimeException e) {
+            return EMPTY;
         }
     }
 }

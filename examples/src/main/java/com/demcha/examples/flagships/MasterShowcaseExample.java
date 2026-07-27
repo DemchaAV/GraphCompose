@@ -37,7 +37,7 @@ import java.util.Locale;
  * QR + Code 128 barcodes, document metadata, and header / footer chrome.
  *
  * <p>The rendered PDF reads like a fictional "GraphCompose Q2 Sample
- * Report" — three pages of designed content meant to look at a glance
+ * Report" — designed content meant to look at a glance
  * like the kind of business document GraphCompose was built to
  * generate, not a feature checklist. Use it as a reference when
  * composing your own multi-page documents.</p>

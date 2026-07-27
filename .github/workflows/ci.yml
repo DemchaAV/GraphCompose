@@ -79,6 +79,9 @@ jobs:
               - '**/pom.xml'
               - '**/src/main/resources/**'
               - '**/src/test/resources/**'
+              # The examples module renders figures from the committed perf
+              # baseline, so a baseline-only refresh changes generated output.
+              - 'baselines/**'
               - '.mvn/**'
               - 'mvnw'
               - 'mvnw.cmd'

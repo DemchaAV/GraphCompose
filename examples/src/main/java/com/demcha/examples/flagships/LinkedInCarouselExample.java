@@ -2,6 +2,7 @@ package com.demcha.examples.flagships;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.api.PageMarginRule;
 import com.demcha.compose.document.chart.AxisSpec;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.ChartSize;
@@ -25,6 +26,7 @@ import com.demcha.examples.support.ExampleOutputPaths;
 import com.demcha.examples.support.ExampleVersion;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -46,12 +48,23 @@ import java.util.Locale;
  */
 public final class LinkedInCarouselExample {
 
-    /** LinkedIn renders document posts in a 4:5 frame; this is that frame. */
-    public static final double PAGE_WIDTH = 1080;
-    /** LinkedIn renders document posts in a 4:5 frame; this is that frame. */
-    public static final double PAGE_HEIGHT = 1350;
+    /**
+     * LinkedIn renders document posts in a 4:5 frame; this is that frame, sized
+     * so the opening slide can carry {@link SocialCardExample}'s card at its
+     * native {@value SocialCardExample#CARD_WIDTH}pt width without scaling.
+     */
+    public static final double PAGE_WIDTH = SocialCardExample.CARD_WIDTH;
+    /** Four-by-five against {@link #PAGE_WIDTH}. */
+    public static final double PAGE_HEIGHT = PAGE_WIDTH * 5 / 4;
 
-    private static final double MARGIN = 80;
+    /**
+     * Everything below was drawn against a 1080-wide page. Rather than restate
+     * every size, the type helpers scale by this ratio, so the slides keep their
+     * proportions on the wider frame.
+     */
+    private static final double SCALE = PAGE_WIDTH / 1080.0;
+
+    private static final double MARGIN = 80 * SCALE;
     private static final double CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN;
 
     private static final DocumentColor NIGHT = DocumentColor.rgb(9, 12, 27);
@@ -66,7 +79,7 @@ public final class LinkedInCarouselExample {
     private static final DocumentColor AMBER = DocumentColor.rgb(230, 160, 68);
 
     /** Uniform padding inside every card, as passed to {@code softPanel}. */
-    private static final double CARD_PAD = 30;
+    private static final double CARD_PAD = 30 * SCALE;
 
     /**
      * Width available inside a card.
@@ -173,9 +186,17 @@ public final class LinkedInCarouselExample {
                 .producer("GraphCompose")
                 .build());
 
+        // The opening slide is the social card at native size. Its own page gets
+        // no margin so the artwork reaches the edges, and a spacer centres it in
+        // the taller frame - both share the same night background, so the space above
+        // and below reads as deliberate letterboxing rather than a gap.
+        document.pageMargins(List.of(PageMarginRule.page(1, DocumentInsets.zero())));
+
         document.pageFlow()
                 .name("Carousel")
                 .spacing(0)
+                .addSection("Card", LinkedInCarouselExample::cardSlide)
+                .addPageBreak(b -> b.name("ToCover"))
                 .addSection("Cover", LinkedInCarouselExample::cover)
                 .addPageBreak(b -> b.name("ToBackend"))
                 .addSection("Backend", LinkedInCarouselExample::backendSlide)
@@ -190,15 +211,22 @@ public final class LinkedInCarouselExample {
 
     // ───────────────────────── slides ─────────────────────────
 
+    private static void cardSlide(SectionBuilder slide) {
+        slide.spacing(0);
+        slide.addSpacer(sp -> sp.width(PAGE_WIDTH)
+                .height((PAGE_HEIGHT - SocialCardExample.CARD_HEIGHT) / 2));
+        slide.add(SocialCardExample.scene());
+    }
+
     private static void cover(SectionBuilder slide) {
-        slide.spacing(56);
+        slide.spacing(56 * SCALE);
         eyebrow(slide, "GRAPHCOMPOSE " + ExampleVersion.currentLine(), VIOLET_LIGHT);
         slide.addParagraph(p -> p
                 .text("One composition.\nTwo formats.")
                 .textStyle(headline(132))
                 .lineSpacing(1.03)
                 .margin(DocumentInsets.zero()));
-        slide.addShape(shape -> shape.size(160, 7).fillColor(VIOLET)
+        slide.addShape(shape -> shape.size(160 * SCALE, 7 * SCALE).fillColor(VIOLET)
                 .margin(DocumentInsets.symmetric(14, 0)));
         slide.addParagraph(p -> p
                 .text("A Java DSL describes the document. The engine resolves layout "
@@ -219,7 +247,7 @@ public final class LinkedInCarouselExample {
     }
 
     private static void backendSlide(SectionBuilder slide) {
-        slide.spacing(30);
+        slide.spacing(30 * SCALE);
         eyebrow(slide, "WHAT " + ExampleVersion.currentLine() + " ADDS", MINT);
         slide.addParagraph(p -> p
                 .text("PowerPoint is a\nfirst-class backend.")
@@ -245,7 +273,7 @@ public final class LinkedInCarouselExample {
     }
 
     private static void numbersSlide(SectionBuilder slide, EngineDeckData.BenchRun bench) {
-        slide.spacing(40);
+        slide.spacing(40 * SCALE);
         eyebrow(slide, "MEASURED, NOT CLAIMED", AMBER);
         slide.addParagraph(p -> p
                 .text("A " + TIER + "-row report")
@@ -279,7 +307,7 @@ public final class LinkedInCarouselExample {
     }
 
     private static void guaranteesSlide(SectionBuilder slide) {
-        slide.spacing(30);
+        slide.spacing(30 * SCALE);
         eyebrow(slide, "HOW IT STAYS HONEST", VIOLET_LIGHT);
         slide.addParagraph(p -> p
                 .text("Guarantees you\ncan run.")
@@ -304,8 +332,8 @@ public final class LinkedInCarouselExample {
     }
 
     private static void closeSlide(SectionBuilder slide) {
-        slide.spacing(30);
-        eyebrow(slide, "OPEN SOURCE · APACHE-2.0", MINT);
+        slide.spacing(30 * SCALE);
+        eyebrow(slide, "OPEN SOURCE · MIT", MINT);
         slide.addParagraph(p -> p
                 .text("Try it.")
                 .textStyle(headline(132))
@@ -315,9 +343,15 @@ public final class LinkedInCarouselExample {
                     .stroke(DocumentStroke.of(LINE, 1))
                     .spacing(4);
             card.addSpacer(sp -> sp.width(CARD_INNER).height(0));
+            // Split on the colon rather than set in one line: the coordinate is
+            // wider than the card at this size and broke mid-artifact.
             card.addParagraph(p -> p
-                    .text("io.github.demchaav:graph-compose-bundle")
-                    .textStyle(mono(37, ON_DARK))
+                    .text("io.github.demchaav")
+                    .textStyle(mono(31, ON_DARK_MUTED))
+                    .margin(DocumentInsets.zero()));
+            card.addParagraph(p -> p
+                    .text("graph-compose-bundle")
+                    .textStyle(mono(40, ON_DARK))
                     .margin(DocumentInsets.zero()));
             // Deliberately not the reactor version: this file renders from a
             // -SNAPSHOT tree, and printing that would advertise a coordinate that
@@ -372,7 +406,7 @@ public final class LinkedInCarouselExample {
                     .text(title)
                     .textStyle(DocumentTextStyle.builder()
                             .fontName(FontName.HELVETICA_BOLD)
-                            .size(40)
+                            .size(40 * SCALE)
                             .color(ON_DARK)
                             .build())
                     .margin(DocumentInsets.zero()));
@@ -394,7 +428,7 @@ public final class LinkedInCarouselExample {
                     .text(name)
                     .textStyle(DocumentTextStyle.builder()
                             .fontName(FontName.HELVETICA_BOLD)
-                            .size(56)
+                            .size(56 * SCALE)
                             .color(accent)
                             .build())
                     .align(TextAlign.CENTER)
@@ -421,7 +455,7 @@ public final class LinkedInCarouselExample {
                     .text(value)
                     .textStyle(DocumentTextStyle.builder()
                             .fontName(FontName.HELVETICA_BOLD)
-                            .size(64)
+                            .size(64 * SCALE)
                             .color(accent)
                             .build())
                     .margin(DocumentInsets.zero()));
@@ -446,7 +480,7 @@ public final class LinkedInCarouselExample {
                 .showCategoryLabels(true)
                 .legend(LegendPosition.NONE)
                 .valueLabels(ValueLabelMode.OUTSIDE)
-                .size(ChartSize.fixedHeight(470))
+                .size(ChartSize.fixedHeight(470 * SCALE))
                 .build();
     }
 
@@ -479,19 +513,19 @@ public final class LinkedInCarouselExample {
     private static DocumentTextStyle headline(double size) {
         return DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA_BOLD)
-                .size(size)
+                .size(size * SCALE)
                 .color(ON_DARK)
                 .build();
     }
 
     private static DocumentTextStyle body(double size, DocumentColor color) {
-        return DocumentTextStyle.builder().size(size).color(color).build();
+        return DocumentTextStyle.builder().size(size * SCALE).color(color).build();
     }
 
     private static DocumentTextStyle mono(double size, DocumentColor color) {
         return DocumentTextStyle.builder()
                 .fontName(FontName.COURIER)
-                .size(size)
+                .size(size * SCALE)
                 .color(color)
                 .build();
     }

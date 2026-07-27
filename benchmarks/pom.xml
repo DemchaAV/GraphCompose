@@ -27,10 +27,10 @@
         <jmh.version>1.37</jmh.version>
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.5.38</logback.version>
+        <logback.version>1.6.0</logback.version>
 
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
-        <itext.version>9.7.0</itext.version>
+        <itext.version>9.7.1</itext.version>
         <jasperreports.version>7.0.7</jasperreports.version>
     </properties>
 

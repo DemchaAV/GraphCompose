@@ -1,98 +1,133 @@
 {
-  "timestamp" : "2026-06-09 17:19:39",
+  "timestamp" : "2026-07-26 22:59:52",
   "profile" : "full",
   "warmupIterations" : 12,
   "measurementIterations" : 40,
   "docsPerThread" : 12,
-  "threadCounts" : [ 1, 2, 4, 8 ],
+  "threadCounts" : [ 1, 2, 4, 8, 16 ],
   "latency" : [ {
     "scenario" : "cv-template",
     "description" : "Compose-first CV template",
-    "avgMillis" : 2.45,
-    "p50Millis" : 2.24,
-    "p95Millis" : 3.53,
-    "maxMillis" : 4.27,
-    "docsPerSecond" : 408.15,
-    "avgKilobytes" : 2.22,
-    "peakHeapMb" : 20.0
+    "avgMillis" : 4.81,
+    "p50Millis" : 4.52,
+    "p95Millis" : 7.09,
+    "maxMillis" : 7.56,
+    "docsPerSecond" : 208.05,
+    "avgKilobytes" : 2.46,
+    "peakHeapMb" : 27.48
   }, {
     "scenario" : "engine-simple",
     "description" : "One-page engine composition",
-    "avgMillis" : 2.0,
-    "p50Millis" : 1.8,
-    "p95Millis" : 2.88,
-    "maxMillis" : 3.97,
-    "docsPerSecond" : 498.91,
+    "avgMillis" : 3.36,
+    "p50Millis" : 3.08,
+    "p95Millis" : 5.12,
+    "maxMillis" : 6.84,
+    "docsPerSecond" : 297.83,
     "avgKilobytes" : 1.08,
-    "peakHeapMb" : 8.0
+    "peakHeapMb" : 10.0
   }, {
     "scenario" : "feature-rich",
     "description" : "QR, barcode, watermark, header/footer, page break",
-    "avgMillis" : 31.99,
-    "p50Millis" : 31.32,
-    "p95Millis" : 36.35,
-    "maxMillis" : 40.65,
-    "docsPerSecond" : 31.26,
+    "avgMillis" : 54.16,
+    "p50Millis" : 52.0,
+    "p95Millis" : 62.22,
+    "maxMillis" : 83.58,
+    "docsPerSecond" : 18.47,
     "avgKilobytes" : 6.33,
-    "peakHeapMb" : 58.89
+    "peakHeapMb" : 171.2
   }, {
     "scenario" : "invoice-template",
     "description" : "Compose-first invoice template",
-    "avgMillis" : 13.12,
-    "p50Millis" : 12.88,
-    "p95Millis" : 17.01,
-    "maxMillis" : 19.6,
-    "docsPerSecond" : 76.22,
-    "avgKilobytes" : 9.72,
-    "peakHeapMb" : 45.11
+    "avgMillis" : 6.58,
+    "p50Millis" : 6.41,
+    "p95Millis" : 9.82,
+    "maxMillis" : 10.97,
+    "docsPerSecond" : 152.08,
+    "avgKilobytes" : 3.03,
+    "peakHeapMb" : 19.42
   }, {
     "scenario" : "long-token",
     "description" : "Long unbreakable tokens (URLs/IDs) forcing character-level wrap",
-    "avgMillis" : 3.38,
-    "p50Millis" : 3.15,
-    "p95Millis" : 4.72,
-    "maxMillis" : 5.51,
-    "docsPerSecond" : 295.43,
-    "avgKilobytes" : 3.97,
-    "peakHeapMb" : 52.0
+    "avgMillis" : 5.6,
+    "p50Millis" : 5.28,
+    "p95Millis" : 7.6,
+    "maxMillis" : 8.37,
+    "docsPerSecond" : 178.56,
+    "avgKilobytes" : 4.08,
+    "peakHeapMb" : 56.0
   }, {
     "scenario" : "proposal-template",
     "description" : "Long multi-page proposal template",
-    "avgMillis" : 9.63,
-    "p50Millis" : 9.24,
-    "p95Millis" : 12.44,
-    "maxMillis" : 13.24,
-    "docsPerSecond" : 103.84,
-    "avgKilobytes" : 7.68,
-    "peakHeapMb" : 51.99
+    "avgMillis" : 6.53,
+    "p50Millis" : 6.21,
+    "p95Millis" : 7.92,
+    "maxMillis" : 10.34,
+    "docsPerSecond" : 153.19,
+    "avgKilobytes" : 5.27,
+    "peakHeapMb" : 31.25
+  }, {
+    "scenario" : "vector-rich",
+    "description" : "v1.8 vector surface: bar + pie charts, SVG icons, gradient path",
+    "avgMillis" : 5.46,
+    "p50Millis" : 5.15,
+    "p95Millis" : 7.89,
+    "maxMillis" : 9.21,
+    "docsPerSecond" : 183.23,
+    "avgKilobytes" : 7.27,
+    "peakHeapMb" : 33.43
+  } ],
+  "stages" : [ {
+    "scenario" : "cv-template",
+    "composeMillis" : 0.45,
+    "layoutMillis" : 1.02,
+    "renderMillis" : 1.27,
+    "totalMillis" : 2.8
+  }, {
+    "scenario" : "invoice-template",
+    "composeMillis" : 0.27,
+    "layoutMillis" : 1.02,
+    "renderMillis" : 1.55,
+    "totalMillis" : 2.9
+  }, {
+    "scenario" : "proposal-template",
+    "composeMillis" : 0.34,
+    "layoutMillis" : 2.5,
+    "renderMillis" : 2.47,
+    "totalMillis" : 5.3
   } ],
   "throughput" : [ {
     "scenario" : "invoice-template",
     "threads" : 1,
     "totalDocs" : 12,
-    "docsPerSecond" : 121.21,
-    "avgMillisPerDoc" : 8.25
+    "docsPerSecond" : 283.9,
+    "avgMillisPerDoc" : 3.52
+  }, {
+    "scenario" : "invoice-template",
+    "threads" : 16,
+    "totalDocs" : 192,
+    "docsPerSecond" : 1693.47,
+    "avgMillisPerDoc" : 0.59
   }, {
     "scenario" : "invoice-template",
     "threads" : 2,
     "totalDocs" : 24,
-    "docsPerSecond" : 223.67,
-    "avgMillisPerDoc" : 4.47
+    "docsPerSecond" : 630.89,
+    "avgMillisPerDoc" : 1.59
   }, {
     "scenario" : "invoice-template",
     "threads" : 4,
     "totalDocs" : 48,
-    "docsPerSecond" : 335.65,
-    "avgMillisPerDoc" : 2.98
+    "docsPerSecond" : 1148.54,
+    "avgMillisPerDoc" : 0.87
   }, {
     "scenario" : "invoice-template",
     "threads" : 8,
     "totalDocs" : 96,
-    "docsPerSecond" : 414.73,
-    "avgMillisPerDoc" : 2.41
+    "docsPerSecond" : 1596.51,
+    "avgMillisPerDoc" : 0.63
   } ],
-  "totalBytes" : 3062560,
+  "totalBytes" : 2361736,
   "aggregation" : "median",
   "sourceCount" : 5,
-  "sourceRuns" : [ "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171909.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171916.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171924.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171931.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\current-speed\\run-20260609-171938.json" ]
+  "sourceRuns" : [ "target\\benchmarks\\current-speed\\run-20260726-225913.json", "target\\benchmarks\\current-speed\\run-20260726-225923.json", "target\\benchmarks\\current-speed\\run-20260726-225932.json", "target\\benchmarks\\current-speed\\run-20260726-225942.json", "target\\benchmarks\\current-speed\\run-20260726-225950.json" ]
 }

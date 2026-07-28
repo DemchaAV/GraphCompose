@@ -47,6 +47,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -112,7 +113,7 @@ public final class EngineDeckExample {
      * filtering (e.g. straight from an IDE), so the banner never prints the raw
      * {@code @…@} token.
      */
-    private static final String VERSION;
+    private static final String VERSION = ExampleVersion.withoutQualifier();
     private static final String CODENAME;
 
     static {
@@ -122,9 +123,8 @@ public final class EngineDeckExample {
                 banner.load(in);
             }
         } catch (IOException ignored) {
-            // Missing/unreadable metadata falls through to the defaults below.
+            // Missing/unreadable metadata falls through to the default below.
         }
-        VERSION = resolved(banner.getProperty("version"), "dev");
         CODENAME = resolved(banner.getProperty("codename"), "");
     }
 
@@ -411,10 +411,10 @@ public final class EngineDeckExample {
 
     /** Version pill ("v1.8.0") with the codename centred beside it as a tag. */
     private static DocumentNode versionBlock() {
-        // Show the base version only: a dev/pre-release qualifier ("2.0.0-SNAPSHOT",
-        // "2.0.0-beta.1") is wider than the 96pt pill, and the engine wraps long
-        // tokens at their "." / "-" seams — the pill would break onto two lines.
-        String pillVersion = VERSION.replaceFirst("-.*$", "");
+        // VERSION already carries no qualifier: one would be wider than the 96pt
+        // pill, and the engine wraps long tokens at their "." / "-" seams, so the
+        // pill would break onto two lines.
+        String pillVersion = VERSION;
         DocumentNode pill = new ShapeContainerBuilder().name("VerPill")
                 .roundedRect(96, 30, 8).fillColor(VIOLET_DEEP)
                 .center(new ParagraphBuilder().text("v" + pillVersion)

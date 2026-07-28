@@ -45,6 +45,22 @@ public final class ExampleVersion {
     }
 
     /**
+     * {@link #current()} without any pre-release qualifier: {@code "2.1.1"} for
+     * {@code "2.1.1-SNAPSHOT"}.
+     *
+     * <p>Example documents are regenerated whenever their content changes, not
+     * only at a release, so between cuts the reactor version carries a
+     * {@code -SNAPSHOT} suffix. Rendering that suffix publishes a coordinate
+     * nobody can resolve, and the committed decks did exactly that after an
+     * off-cycle refresh. Anything a reader sees goes through here.</p>
+     *
+     * @return the version up to the first {@code -}
+     */
+    public static String withoutQualifier() {
+        return CURRENT.replaceFirst("-.*$", "");
+    }
+
+    /**
      * Reduces a version to its {@code major.minor} prefix.
      *
      * @param version version string to reduce

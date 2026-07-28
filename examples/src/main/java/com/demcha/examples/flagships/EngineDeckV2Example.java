@@ -113,7 +113,7 @@ public final class EngineDeckV2Example {
     private static final DocumentColor PALE_BLUE = DocumentColor.rgb(232, 243, 255);
     private static final DocumentColor PALE_MINT = DocumentColor.rgb(230, 249, 242);
 
-    private static final String VERSION = ExampleVersion.current();
+    private static final String VERSION = ExampleVersion.withoutQualifier();
 
     /**
      * The {@code major.minor} of {@link #VERSION}, for the banner's prose labels.

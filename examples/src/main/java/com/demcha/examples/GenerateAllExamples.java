@@ -52,6 +52,7 @@ import com.demcha.examples.flagships.FinancialReportExample;
 import com.demcha.examples.flagships.FinancialReportPptxExample;
 import com.demcha.examples.flagships.MasterShowcaseExample;
 import com.demcha.examples.flagships.MasterShowcasePptxExample;
+import com.demcha.examples.flagships.LinkedInCarouselExample;
 import com.demcha.examples.flagships.SocialCardExample;
 import com.demcha.examples.flagships.MavenBannerPptxExample;
 import com.demcha.examples.flagships.ModuleFirstFileExample;
@@ -225,6 +226,8 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + MavenBannerPptxExample.generate());
         System.out.println("Generated: " + SocialCardExample.generate());
         System.out.println("Generated: " + SocialCardExample.generatePptx());
+        System.out.println("Generated: " + LinkedInCarouselExample.generate());
+        System.out.println("Generated: " + LinkedInCarouselExample.generatePptx());
         System.out.println("Generated: " + TwinOutputExample.generate());
         System.out.println("Generated: " + FinancialReportExample.generate());
         System.out.println("Generated: " + FinancialReportPptxExample.generate());

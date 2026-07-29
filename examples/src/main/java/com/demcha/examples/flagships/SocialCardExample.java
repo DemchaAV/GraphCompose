@@ -212,7 +212,16 @@ public final class SocialCardExample {
                 .build();
     }
 
-    private static DocumentNode scene() {
+    /**
+     * The card artwork as a single node.
+     *
+     * <p>Package-private so {@link LinkedInCarouselExample} can open with the
+     * same picture instead of redrawing it. It is a canvas of {@link #CARD_WIDTH}
+     * by {@link #CARD_HEIGHT}, so a host page has to be at least that wide.</p>
+     *
+     * @return the composed card
+     */
+    static DocumentNode scene() {
         List<CanvasChild> layers = new ArrayList<>();
         layers.addAll(grid());
 

@@ -947,6 +947,16 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
             {
+              "id": "maven-banner",
+              "title": "Maven Central Banner",
+              "description": "A single-slide brand banner emitted through the PPTX backend — gradient, rounded panels, native paths and text frames arriving in PowerPoint as an editable copy of the rendered page.",
+              "tags": ["flagship", "showcase", "pptx"],
+              "pdf": "showcase/pdf/flagships/default/maven-banner.pdf",
+              "pptx": "showcase/pptx/flagships/default/maven-banner.pptx",
+              "screenshot": "showcase/screenshots/flagships/default/maven-banner.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"
+            },
+            {
               "id": "module-first-profile",
               "title": "Module-First Authoring",
               "description": "Authoring style focused on declaring data modules first, layout second.",

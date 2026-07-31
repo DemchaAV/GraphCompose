@@ -225,6 +225,10 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + EngineDeckExample.generate());
         System.out.println("Generated: " + EngineDeckV2Example.generate());
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
+        // The PDF first: ShowcaseSync builds a card per PDF and publishes a PPTX only
+        // as the same-named companion beside one, so a deck without its PDF twin never
+        // reaches the site at all.
+        System.out.println("Generated: " + MavenBannerPptxExample.generatePdf());
         System.out.println("Generated: " + MavenBannerPptxExample.generate());
         System.out.println("Generated: " + SocialCardExample.generate());
         System.out.println("Generated: " + SocialCardExample.generatePptx());

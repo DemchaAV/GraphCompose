@@ -18,6 +18,7 @@ A shortcode resolves to an inline vector glyph inside a rich run, which the flow
 any other content. Rendering still needs a backend — `graph-compose-render-pdf`, or the
 `graph-compose` wrapper that brings it:
 
+<!-- doc-example: id=readme-emoji-inline mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.dsl.RichText,java.nio.file.Path -->
 ```java
 Path out = Path.of("rated.pdf");
 try (DocumentSession doc = GraphCompose.document(out).create()) {

@@ -22,6 +22,7 @@ depend on `graph-compose`.
 One session, both gates — the layout assertion needs no render, the visual one takes the
 rendered bytes:
 
+<!-- doc-example: id=readme-testing-assertions mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.testing.layout.LayoutSnapshotAssertions,com.demcha.compose.testing.visual.PdfVisualRegression -->
 ```java
 try (DocumentSession doc = GraphCompose.document().create()) {
     doc.pageFlow().addParagraph("Hello").build();

@@ -28,7 +28,9 @@ which is core + render-pdf already:
 
 ## Usage
 
+<!-- doc-example: id=readme-render-docx-export mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend,java.nio.file.Path -->
 ```java
+Path docxFile = Path.of("hello.docx");
 try (var doc = GraphCompose.document().create()) {
     doc.pageFlow().addParagraph("Hello, DOCX").build();
     doc.export(new DocxSemanticBackend(), docxFile);

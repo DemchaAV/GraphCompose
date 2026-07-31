@@ -18,9 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -28,9 +30,14 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Compiles the Java snippets published in {@code docs/} so that an API change
- * which breaks a documented snippet fails the build instead of silently rotting
- * the public docs.
+ * Compiles the Java snippets published in {@code docs/} and in the READMEs so that
+ * an API change which breaks a documented snippet fails the build instead of
+ * silently rotting the public docs.
+ *
+ * <p>The READMEs are in scope because they are what a reader compiles first: the
+ * root page is the landing copy-paste, and each module page is the answer to "how do
+ * I use this artefact". A snippet there that no longer compiles is read by more
+ * people than any page under {@code docs/}.</p>
  *
  * <p>Complements {@code DocumentationExamplesTest} (which renders hand-kept Java
  * copies of representative examples): this guard reads the literal markdown
@@ -63,6 +70,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   that {@code throws Exception}.</dd>
  *   <dt>{@code mode=members}</dt><dd>field/method declarations; inserted as class
  *   members.</dd>
+ *   <dt>{@code imports=a.b.C,d.e.F}</dt><dd>optional; imports added to the
+ *   compilation unit without appearing on the page. A short module-README taste
+ *   block is three lines of API and would be doubled in length by the imports it
+ *   needs, so the guard would in practice only ever cover the long snippets. The
+ *   attribute is verified by the compile itself: a name that does not resolve is a
+ *   failure like any other.</dd>
  * </dl>
  *
  * <p>The guard self-tests both directions: {@link #compilerReportsErrorForBrokenSnippet()}
@@ -83,6 +96,7 @@ class DocumentationSnippetCompileTest {
     private static final Pattern JAVA_FENCE =
             Pattern.compile("^```java\\s*$");
     private static final Set<String> SUPPORTED_MODES = Set.of("method", "members");
+    private static final Set<String> SUPPORTED_ATTRIBUTES = Set.of("id", "mode", "imports");
 
     @Test
     void publishedJavaSnippetsShouldCompile() throws IOException {
@@ -95,8 +109,40 @@ class DocumentationSnippetCompileTest {
                 .isNotEmpty();
 
         assertThat(compile(examples))
-                .describedAs("Every marked Java snippet under docs/ must compile against the current API")
+                .describedAs("Every marked Java snippet under docs/ and in the READMEs must "
+                        + "compile against the current API")
                 .isEmpty();
+    }
+
+    /**
+     * The READMEs are covered too, and stay covered.
+     *
+     * <p>They are a second root, reached differently from the {@code docs/} tree, and a
+     * change to how roots are resolved can drop them while every remaining assertion
+     * still passes on the docs snippets alone. Naming the files makes that regression a
+     * failure rather than a quiet loss of coverage.</p>
+     */
+    @Test
+    void theReadmesAreInsideTheCompiledSurface() throws IOException {
+        Set<String> readmes = new TreeSet<>();
+        for (Path readme : readmeFiles()) {
+            readmes.add(relative(readme));
+        }
+        Set<String> covered = new TreeSet<>();
+        for (Example example : collectExamples()) {
+            String rel = relative(example.file());
+            if (readmes.contains(rel)) {
+                covered.add(rel);
+            }
+        }
+
+        assertThat(covered)
+                .describedAs("the README snippets are the ones a reader compiles first; losing "
+                        + "them from the scan is invisible while docs/ still supplies examples")
+                .contains("README.md")
+                .anySatisfy(path -> assertThat(path)
+                        .describedAs("at least one module README must be covered, not only the root")
+                        .contains("/"));
     }
 
     @Test
@@ -171,6 +217,24 @@ class DocumentationSnippetCompileTest {
                 if (mode == null || !SUPPORTED_MODES.contains(mode)) {
                     problems.add("%s:%d — doc-example '%s' has unsupported mode '%s' (use %s)"
                             .formatted(rel, i + 1, id, mode, SUPPORTED_MODES));
+                }
+
+                // Whatever the attribute parser cannot read, it drops without a word.
+                // A misspelled `import=` takes its whole import list with it, and a
+                // space after a comma splits one list into a value and a stray token —
+                // both surface far away, as an unresolved symbol inside the snippet.
+                for (String token : marker.group(1).trim().split("\\s+")) {
+                    if (token.indexOf('=') <= 0) {
+                        problems.add(("%s:%d — doc-example '%s' has a stray token '%s'; an "
+                                + "attribute is name=value and its value may not contain a space")
+                                .formatted(rel, i + 1, id, token));
+                    }
+                }
+                for (String attribute : attributes.keySet()) {
+                    if (!SUPPORTED_ATTRIBUTES.contains(attribute)) {
+                        problems.add("%s:%d — doc-example '%s' has unknown attribute '%s' (use %s)"
+                                .formatted(rel, i + 1, id, attribute, SUPPORTED_ATTRIBUTES));
+                    }
                 }
 
                 if (fenceAfter(lines, i) == null) {
@@ -250,23 +314,57 @@ class DocumentationSnippetCompileTest {
                 }
                 String fence = fenceAfter(lines, i);
                 if (fence != null) {
-                    examples.add(new Example(id, mode, fence, doc));
+                    examples.add(new Example(id, mode, fence, doc, hiddenImports(attributes)));
                 }
             }
         }
         return examples;
     }
 
+    /**
+     * The published markdown: everything under {@code docs/}, the root README, and each
+     * module's README.
+     *
+     * <p>Module READMEs are found by their {@code pom.xml} rather than listed, so a new
+     * module is covered the day it is added instead of the day someone remembers this
+     * file. {@code docs/private/} is skipped — it is gitignored planning material that
+     * never reaches a reader, and a snippet there would fail a local gate that CI could
+     * not reproduce.</p>
+     */
     private List<Path> markdownFiles() throws IOException {
-        if (!Files.isDirectory(DOCS_ROOT)) {
-            return List.of();
+        // A set, because the two roots would overlap if a module ever sat inside the
+        // docs tree — and a file scanned twice reports its own ids as duplicates.
+        Set<Path> files = new LinkedHashSet<>();
+        if (Files.isDirectory(DOCS_ROOT)) {
+            Path privateDocs = DOCS_ROOT.resolve("private");
+            try (Stream<Path> paths = Files.walk(DOCS_ROOT)) {
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".md"))
+                        .filter(path -> !path.startsWith(privateDocs))
+                        .sorted()
+                        .forEach(files::add);
+            }
         }
-        try (Stream<Path> paths = Files.walk(DOCS_ROOT)) {
-            return paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".md"))
+        files.addAll(readmeFiles());
+        return List.copyOf(files);
+    }
+
+    /** The root README plus one per Maven module, in a stable order. */
+    private List<Path> readmeFiles() throws IOException {
+        List<Path> readmes = new ArrayList<>();
+        Path rootReadme = PROJECT_ROOT.resolve("README.md");
+        if (Files.isRegularFile(rootReadme)) {
+            readmes.add(rootReadme);
+        }
+        try (Stream<Path> children = Files.list(PROJECT_ROOT)) {
+            children.filter(Files::isDirectory)
+                    .filter(module -> Files.isRegularFile(module.resolve("pom.xml")))
+                    .map(module -> module.resolve("README.md"))
+                    .filter(Files::isRegularFile)
                     .sorted()
-                    .toList();
+                    .forEach(readmes::add);
         }
+        return readmes;
     }
 
     /** Returns the body of the next {@code java} fence after {@code markerIndex}, or null. */
@@ -286,6 +384,18 @@ class DocumentationSnippetCompileTest {
             body.append(lines.get(j)).append('\n');
         }
         return null; // unterminated fence
+    }
+
+    /** The comma-separated {@code imports=} attribute, or an empty list when absent. */
+    private static List<String> hiddenImports(Map<String, String> attributes) {
+        String raw = attributes.get("imports");
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        return Stream.of(raw.split(","))
+                .map(String::trim)
+                .filter(type -> !type.isEmpty())
+                .toList();
     }
 
     private static Map<String, String> parseAttributes(String raw) {
@@ -317,7 +427,11 @@ class DocumentationSnippetCompileTest {
         }
     }
 
-    private record Example(String id, String mode, String fence, Path file) {
+    private record Example(String id, String mode, String fence, Path file, List<String> hiddenImports) {
+
+        Example(String id, String mode, String fence, Path file) {
+            this(id, mode, fence, file, List.of());
+        }
 
         static String unitNameFor(String id) {
             return "DocExample_" + id.replaceAll("[^A-Za-z0-9]", "_");
@@ -331,6 +445,9 @@ class DocumentationSnippetCompileTest {
             // Lift only the leading run of import lines; an import-shaped line that
             // appears after real code (e.g. inside a text block) stays in the body.
             List<String> imports = new ArrayList<>();
+            for (String type : hiddenImports) {
+                imports.add("import " + type + ";");
+            }
             StringBuilder body = new StringBuilder();
             boolean inBody = false;
             for (String line : fence.split("\\n", -1)) {

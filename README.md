@@ -50,6 +50,7 @@ The same `DocumentSession` emits both. The PDF backend prints the resolved layou
 
 PowerPoint output needs `graph-compose-render-pptx` on the classpath in addition to `graph-compose`; without it `buildPptx` fails with a `MissingBackendException` naming the artifact. See [Which artifact?](#installation) below.
 
+<!-- doc-example: id=readme-root-one-model-two-outputs mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.api.DocumentPageSize,java.nio.file.Path -->
 ```java
 Path deck = Path.of("twin-output.pptx");
 try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
@@ -158,6 +159,7 @@ pinned to v1.6.5 and earlier but is no longer the documented install option.
 
 ## Hello world
 
+<!-- doc-example: id=readme-root-hello-world mode=members -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;

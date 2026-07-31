@@ -26,6 +26,7 @@ resolves a `FontMetricsProvider` through `ServiceLoader`, so a core-only classpa
 `MissingBackendException` there — before any render call — and the message names the
 artifact to add. With `graph-compose-render-pdf` present the whole path works:
 
+<!-- doc-example: id=readme-core-hello mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,java.nio.file.Path -->
 ```java
 Path out = Path.of("hello.pdf");
 try (DocumentSession doc = GraphCompose.document(out).create()) {

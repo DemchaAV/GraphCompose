@@ -150,6 +150,18 @@ final class ShowcaseMetadata {
         flagship("financial-report", "FinancialReportExample", "Financial Report", "A polished financial-report flagship — clipped-photo masthead, KPI tables, and vector charts combining the engine's data-viz and shape primitives.", "showcase", "flagship");
     }
 
+    /**
+     * The registered entries, keyed by the basename of the PDF they describe.
+     *
+     * <p>Exposed so a guard can check the register against the documents the runner
+     * actually writes: {@link #lookup} falls back to a filename-derived card, so an
+     * entry whose PDF is never generated costs nothing at runtime and shows up nowhere
+     * — it is simply never read.</p>
+     */
+    static Map<String, Entry> registeredEntries() {
+        return Map.copyOf(ENTRIES);
+    }
+
     static Entry lookup(String basename, String category, String group) {
         Entry e = ENTRIES.get(basename);
         if (e != null) {

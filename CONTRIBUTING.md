@@ -377,6 +377,7 @@ The repository uses these normalized package roots:
 - `com.demcha.compose.document.node` — semantic node records
 - `com.demcha.compose.document.style`, `document.table`, `document.image`, `document.output` — public value types
 - `com.demcha.compose.document.layout` — canonical functional layout pipeline
+- `com.demcha.compose.document.backend.fixed` — the backend-neutral fixed-layout SPI (`FixedLayoutBackend`, `FixedLayoutBackendProvider`); implement it to add an output format
 - `com.demcha.compose.document.backend.fixed.pdf` — PDF fixed-layout backend
 - `com.demcha.compose.document.backend.fixed.pptx` — PPTX fixed-layout backend (`@Beta`)
 - `com.demcha.compose.document.backend.semantic` — semantic export SPI, the DOCX exporter, and the legacy PPTX manifest

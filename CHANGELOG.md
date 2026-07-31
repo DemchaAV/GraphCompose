@@ -5,6 +5,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.1.1 — Planned
 
+### Build
+
+- **The CI guard job runs every guard it names.** It selected eight test classes
+  while scoping the reactor to `graph-compose-core`: two had been deleted months
+  earlier and two live in `graph-compose-qa` and `graph-compose-render-pdf`, so
+  four never ran. Surefire aborts only when a selection is entirely empty, so the
+  four that did match kept the job green. The list is now the five guards that
+  live in the engine module, and `CiGuardListGuardTest` fails the job if a name in
+  it stops resolving.
+- **A documentation-only pull request is compiled.** Markdown was not a
+  change-detection input, so a PR touching only `.md` skipped the reactor build
+  and merged without `DocumentationSnippetCompileTest` ever compiling the java
+  fences it publishes. Markdown now routes to the reactor slice that carries those
+  guards, on the baseline JDK, and still skips example generation.
+- **`graph-compose-render-pptx` declares PDFBox.** It compiles against
+  `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
+  transitively; the resolved version is unchanged.
+
 ### Fixed
 
 - **A heading no longer strands above a block that was asked to stay whole.**

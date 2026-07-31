@@ -97,6 +97,16 @@
             <artifactId>fontbox</artifactId>
             <version>${pdfbox.version}</version>
         </dependency>
+        <!-- Declared explicitly rather than taken transitively through the PDF
+             measurement library below: this module compiles against PDFBox types
+             directly, so a change in dependency mediation would otherwise break
+             the build with no local cause, and a dependency scan would read the
+             module's footprint as smaller than it is. -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
 
         <!-- The fixed PPTX backend deliberately reuses the PDF measurement font
              library so glyph sanitization stays byte-for-byte aligned with the

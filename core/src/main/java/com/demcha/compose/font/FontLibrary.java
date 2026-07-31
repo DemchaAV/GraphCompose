@@ -27,8 +27,12 @@ public class FontLibrary {
 
     private static final Logger LOG = LoggerFactory.getLogger(FontLibrary.class);
 
-    /** Face aliases already reported, so the warning costs one line per name, not per lookup. */
-    private static final Set<FontName> WARNED_FACE_ALIASES = ConcurrentHashMap.newKeySet();
+    /**
+     * Face aliases already reported, so the warning costs one line per name, not per
+     * lookup. Package-private so the guard covering the warning can start from a known
+     * state — a static cache is otherwise order-dependent across a test class.
+     */
+    static final Set<FontName> WARNED_FACE_ALIASES = ConcurrentHashMap.newKeySet();
 
     private static final Map<FontName, FontName> FONT_ALIASES = Map.ofEntries(
             Map.entry(FontName.HELVETICA_BOLD, FontName.HELVETICA),

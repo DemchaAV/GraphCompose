@@ -72,8 +72,9 @@ follow semantic versioning; release dates are ISO 8601.
   metrics, in every donut chart that did not override the centre style. Nothing
   announced it: the text laid out and drew. `FontLibrary` now logs one warning per
   face constant it rewrites, the sixteen places in the library that named a face
-  redundantly name their family instead, and `FontFaceResolutionTest` pins the rule
-  against the resolved glyph program. Three rendered documents change — the engine
+  redundantly name their family instead, and the resolved glyph program is pinned by
+  test — both the rule and the donut default itself, since the rule alone would not
+  catch the site going back. Three rendered documents change — the engine
   deck, the feature catalogue and the chart showcase. ([#451](https://github.com/DemchaAV/GraphCompose/issues/451))
 
 

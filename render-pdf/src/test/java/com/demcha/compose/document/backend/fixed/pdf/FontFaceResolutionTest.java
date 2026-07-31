@@ -1,5 +1,6 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.chart.ChartDefaults;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.font.FontLibrary;
@@ -57,6 +58,25 @@ class FontFaceResolutionTest {
                 .describedAs("the alias and the family resolve identically once a decoration "
                         + "is set, which is why naming the family is the clearer form")
                 .isEqualTo(face(FontName.HELVETICA, TextDecoration.BOLD));
+    }
+
+    /**
+     * The defect this rule was traced from, pinned at its own site.
+     *
+     * <p>Asserting the rule alone would not catch the regression: a style that goes back
+     * to naming the bold face and dropping the decoration still satisfies every general
+     * assertion above. The chart layout tests do not catch it either — they measure
+     * through fake metrics whose width depends on the character count and ignores the
+     * face — so without this the donut KPI could quietly return to regular.</p>
+     */
+    @Test
+    void theDonutCentreDefaultResolvesToABoldFace() {
+        assertThat(face(ChartDefaults.DONUT_CENTER_TEXT_STYLE.fontName(),
+                        TextDecoration.valueOf(ChartDefaults.DONUT_CENTER_TEXT_STYLE.decoration().name())))
+                .describedAs("the donut-centre KPI must resolve to a bold glyph program. Naming "
+                        + "the bold face and setting no decoration renders regular — that is the "
+                        + "defect, and it is invisible to the chart layout tests")
+                .isEqualTo("Helvetica-Bold");
     }
 
     @Test

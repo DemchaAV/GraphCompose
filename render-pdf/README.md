@@ -12,20 +12,25 @@ The PDFBox-backed PDF render backend for GraphCompose. It carries the whole
 - You are **not** already using **`graph-compose`** (the wrapper) or **`graph-compose-bundle`** —
   both of those include this backend transitively, so add it only for a lean, explicit setup.
 
-A bare `graph-compose-core` renders nothing until this artifact is on the classpath; asking
-it to build a PDF throws `MissingBackendException`, whose message names this coordinate.
+A bare `graph-compose-core` renders nothing until this artifact is on the classpath;
+opening a session (`create()`) throws `MissingBackendException`, whose message names this
+coordinate.
 
-## Usage
+## Smallest complete example
 
 You don't call the backend directly. It registers a `FixedLayoutBackendProvider` and a
-`FontMetricsProvider` via `META-INF/services`, so the core discovers it at runtime and the
-normal path just works:
+`FontMetricsProvider` via `META-INF/services`, so the core discovers it as the session opens
+and the normal path just works:
 
 ```java
-try (var doc = GraphCompose.document(out).create()) {
+Path out = Path.of("hello.pdf");
+try (DocumentSession doc = GraphCompose.document(out).create()) {
     doc.pageFlow().addParagraph("Hello, PDF").build();
-} // buildPdf() / toPdfBytes() / toImages() now resolve the PDF backend
+    doc.buildPdf();                 // -> hello.pdf
+}
 ```
+
+`toPdfBytes()` and `toImages(int dpi)` are the in-memory counterparts.
 
 `PdfFixedLayoutBackend` is available if you need the backend explicitly (custom fragment
 handlers, options).

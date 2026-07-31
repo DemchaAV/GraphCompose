@@ -73,12 +73,18 @@ numbered discs crowd a narrow timeline.
 Timeline-wide defaults and per-entry overrides:
 
 ```java
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
 section.addTimeline(timeline -> timeline
         .titleStyle(DocumentTextStyle.builder()
+                // The font name picks the family, the decoration picks the
+                // face — the built-in title default sets BOLD, so a style
+                // that overrides it must set it too or the title turns
+                // regular while only the size was meant to change.
                 .fontName(FontName.HELVETICA_BOLD)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .build())
         .metaStyle(DocumentTextStyle.builder()
@@ -88,6 +94,7 @@ section.addTimeline(timeline -> timeline
         .entry(TimelineMarker.dot(8, accent), e -> e
                 .title("Launch", DocumentTextStyle.builder()  // per-entry override
                         .fontName(FontName.HELVETICA_BOLD)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(13)
                         .build())
                 .meta("June 2026")

@@ -26,7 +26,7 @@ Then run all 63 examples in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
-    -Dexec.mainClass=com.demcha.examples.MasterShowcaseExample
+    -Dexec.mainClass=com.demcha.examples.flagships.MasterShowcaseExample
 ```
 
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
@@ -211,7 +211,7 @@ Generates the v2 CV presets in one orchestrated run, covering
 single-column, two-column-sidebar, and three-column-magazine layouts. Use this as the side-by-side catalogue when picking a base
 preset for your own CV product. Each preset is a one-liner factory
 (`ModernProfessional.create()`, `NordicClean.create()`,
-…); see `cv/v2/presets/` for the full list.
+…); see `templates/src/main/java/com/demcha/compose/document/templates/cv/presets/` for the full list.
 
 | Variant | PDF |
 |---|---|
@@ -555,28 +555,6 @@ DocumentTableCell.node(document.dsl().paragraph()
 
 [📄 View PDF](../assets/readme/examples/inline-code-column-wrap.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java)
-
-### Custom Business Theme
-
-Build a `BusinessTheme` from raw `DocumentPalette` / `SpacingScale` /
-`TextScale` / `TablePreset` records — no factory shortcut. Plug it
-straight into `InvoiceTemplateV2` to retheme the whole template
-without touching any code that uses it.
-
-```java
-BusinessTheme studioEmerald = new BusinessTheme(
-        new DocumentPalette(/* page, surface, surfaceMuted, ink, accent, … */),
-        SpacingScale.cinematic(),
-        new TextScale(/* h1, h2, body, caption fonts … */),
-        TablePreset.cinematic());
-
-new InvoiceTemplateV2(studioEmerald).compose(document, invoice);
-```
-
-[📄 View PDF](../assets/readme/examples/invoice-custom-theme.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/features/themes/CustomBusinessThemeExample.java)
-
----
 
 ## Public-API surface
 
@@ -1188,4 +1166,4 @@ once before writing your own.
 | `examples/target/generated-pdfs/` | Output of running the examples (gitignored) |
 | `assets/readme/examples/` | Committed PDF previews linked from this gallery |
 | `docs/templates/v2-layered/authoring-presets.md` | Template authoring cheatsheet |
-| `CHANGELOG.md` | Per-version surface changes (every example link is current to v1.6) |
+| `CHANGELOG.md` | Per-version surface changes |

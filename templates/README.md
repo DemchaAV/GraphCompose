@@ -12,14 +12,23 @@ Add it when you want the ready-made presets. It is **opt-in**: neither the `grap
 wrapper nor `graph-compose-core` bundles it (`graph-compose-bundle` does). A 1.x caller that
 reached a preset through the single jar must add this artifact — the packages are unchanged.
 
-## Usage
+**Not sufficient on its own.** This artifact depends only on `graph-compose-core`, and
+opening a `DocumentSession` resolves a `FontMetricsProvider` — which only
+`graph-compose-render-pdf` publishes. Without it `create()` fails with
+`MissingBackendException` before a preset ever composes. Add
+`graph-compose-render-pdf`, or depend on `graph-compose`.
+
+## Smallest complete example
 
 Each preset is a final class with a `create(BrandTheme)` factory returning a
-`DocumentTemplate<S>` you compose into an open session:
+`DocumentTemplate<S>`. A preset composes into an open session; it never renders — the
+caller does:
 
 ```java
-try (var doc = GraphCompose.document(out).create()) {
-    ModernInvoice.create(theme).compose(doc, invoiceSpec);   // needs graph-compose-templates
+Path out = Path.of("invoice.pdf");
+try (DocumentSession doc = GraphCompose.document(out).create()) {
+    ModernInvoice.create(theme).compose(doc, invoiceSpec);
+    doc.buildPdf();                 // -> invoice.pdf
 }
 ```
 

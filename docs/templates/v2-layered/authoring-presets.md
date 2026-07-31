@@ -294,6 +294,7 @@ widget takes a colour parameter).
 private void renderHeader(SectionBuilder section, CvIdentity identity) {
     DocumentTextStyle nameStyle = DocumentTextStyle.builder()
         .fontName(FontName.HELVETICA_BOLD)
+        .decoration(DocumentTextDecoration.BOLD)   // the name picks the family, this picks the face
         .size(theme.typography().sizeHeadline())
         .color(NAME_COLOR)
         .build();

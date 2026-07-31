@@ -11,14 +11,27 @@ documents you generate.
 Add it (test scope) when you want to catch layout/visual regressions in your own documents.
 Not needed at runtime; not bundled by any published artifact.
 
-## Usage
+**Not sufficient on its own.** Opening a `DocumentSession` resolves a
+`FontMetricsProvider`, and `graph-compose-render-pdf` is the only artifact that publishes
+one — so a classpath without it fails at `create()` with `MissingBackendException`, PDFBox
+on the classpath notwithstanding. Add `graph-compose-render-pdf` at test scope too, or
+depend on `graph-compose`.
+
+## Smallest complete example
+
+One session, both gates — the layout assertion needs no render, the visual one takes the
+rendered bytes:
 
 ```java
-// Layout snapshot — asserts the renderer-neutral layout graph is unchanged.
-LayoutSnapshotAssertions.assertMatches(session.layoutSnapshot(), "invoice-basic");
+try (DocumentSession doc = GraphCompose.document().create()) {
+    doc.pageFlow().addParagraph("Hello").build();
 
-// Visual regression — pixel-diffs the rendered pages against a committed baseline.
-PdfVisualRegression.standard().assertMatchesBaseline("invoice-basic", pdfBytes);
+    // Layout snapshot — asserts the renderer-neutral layout graph is unchanged.
+    LayoutSnapshotAssertions.assertMatches(doc.layoutSnapshot(), "invoice-basic");
+
+    // Visual regression — pixel-diffs the rendered pages against a committed baseline.
+    PdfVisualRegression.standard().assertMatchesBaseline("invoice-basic", doc.toPdfBytes());
+}
 ```
 
 Update baselines deliberately with the documented system properties

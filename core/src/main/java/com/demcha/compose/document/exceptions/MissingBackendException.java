@@ -9,7 +9,7 @@ package com.demcha.compose.document.exceptions;
  * (for example {@code io.github.demchaav:graph-compose-render-pdf} or
  * {@code io.github.demchaav:graph-compose-render-pptx}) discovered at
  * runtime through {@link java.util.ServiceLoader}. Calling a convenience output
- * method — {@code toPdfBytes()}, {@code buildPdf()}, {@code toImages()},
+ * method — {@code toPdfBytes()}, {@code buildPdf()}, {@code toImages(int)},
  * {@code toPptxBytes()}, {@code buildPptx(Path)} — or requesting
  * {@code layoutSnapshot()} without the matching artifact on the classpath
  * fails with this exception. The message names the artifact to add.</p>

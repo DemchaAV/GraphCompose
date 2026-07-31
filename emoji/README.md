@@ -12,10 +12,20 @@ Add it only to render colour emoji. Text without emoji needs nothing, and an unk
 falls back to its literal text — so a document renders unchanged with or without this artifact.
 `graph-compose-bundle` includes it.
 
-## Usage
+## Smallest complete example
+
+A shortcode resolves to an inline vector glyph inside a rich run, which the flow places like
+any other content. Rendering still needs a backend — `graph-compose-render-pdf`, or the
+`graph-compose` wrapper that brings it:
 
 ```java
-RichText.text("").emoji(":star:", size)   // resolves the shortcode to an inline vector glyph
+Path out = Path.of("rated.pdf");
+try (DocumentSession doc = GraphCompose.document(out).create()) {
+    doc.pageFlow()
+       .addRich(RichText.text("Rated ").emoji(":star:", 12))
+       .build();
+    doc.buildPdf();                 // -> rated.pdf
+}
 ```
 
 It is a resource-only jar (glyphs + `emoji-index.properties`); the shortcode resolver in the

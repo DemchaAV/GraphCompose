@@ -131,7 +131,7 @@ public final class ModernProfessional {
                 // unique to this preset (no other preset uses slate-blue
                 // for the name or royal-blue for links).
                 DocumentTextStyle nameStyle = DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
                         .size(theme.typography().sizeHeadline())
                         .decoration(DocumentTextDecoration.BOLD)
                         .color(NAME_COLOR)

@@ -10,7 +10,11 @@ import java.util.Objects;
  * <p>The DSL adapts this value into the internal engine text style during
  * composition. Instances are immutable and thread-safe.</p>
  *
- * @param fontName   font family name
+ * @param fontName   font <em>family</em> name. The standard-14 face constants
+ *                   ({@code HELVETICA_BOLD}, {@code TIMES_ITALIC}, …) are aliases of
+ *                   their family and carry no weight or slant of their own — the face
+ *                   comes from {@code decoration}. Naming a face and leaving the
+ *                   decoration unset renders the regular face.
  * @param size       font size in points
  * @param decoration text decoration
  * @param color      text color

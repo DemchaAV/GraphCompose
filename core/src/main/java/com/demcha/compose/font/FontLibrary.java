@@ -1,5 +1,8 @@
 package com.demcha.compose.font;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -21,6 +24,15 @@ import java.util.function.Supplier;
  * fonts through factories.</p>
  */
 public class FontLibrary {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FontLibrary.class);
+
+    /**
+     * Face aliases already reported, so the warning costs one line per name, not per
+     * lookup. Package-private so the guard covering the warning can start from a known
+     * state — a static cache is otherwise order-dependent across a test class.
+     */
+    static final Set<FontName> WARNED_FACE_ALIASES = ConcurrentHashMap.newKeySet();
 
     private static final Map<FontName, FontName> FONT_ALIASES = Map.ofEntries(
             Map.entry(FontName.HELVETICA_BOLD, FontName.HELVETICA),
@@ -147,6 +159,30 @@ public class FontLibrary {
         if (fontName == null || FontName.DEFAULT.equals(fontName)) {
             return FontName.HELVETICA;
         }
-        return FONT_ALIASES.getOrDefault(fontName, fontName);
+        FontName base = FONT_ALIASES.get(fontName);
+        if (base == null) {
+            return fontName;
+        }
+        warnOnceAboutFaceAlias(fontName, base);
+        return base;
+    }
+
+    /**
+     * Warns the first time a style selects a standard-14 face by name.
+     *
+     * <p>A name like {@code HELVETICA_BOLD} is an alias of its family: it is rewritten
+     * to {@code HELVETICA} here, and the face is chosen later from the style's
+     * decoration. Naming the face therefore contributes nothing, and a style that names
+     * it and sets no decoration renders regular — silently, since the text still lays
+     * out and still draws. One line per distinct alias, so a document that uses the form
+     * a thousand times says so once.</p>
+     */
+    private static void warnOnceAboutFaceAlias(FontName requested, FontName base) {
+        if (WARNED_FACE_ALIASES.add(requested)) {
+            LOG.warn("fontName({}) selects the {} family, not a face — the face comes from the "
+                            + "style's decoration. Name the family and set decoration(...) instead; "
+                            + "as written this renders {} unless a decoration says otherwise.",
+                    requested.name(), base.name(), base.name());
+        }
     }
 }

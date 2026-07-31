@@ -25,7 +25,7 @@ Delete any heading you have nothing real to put under — never ship an empty pl
      - command run + result, e.g.  `./mvnw -B -ntp clean verify` → BUILD SUCCESS, <N> tests, 0 failures
      - the new tests and what each asserts; regenerate renders if the change is visual -->
 
-**Lane:** <!-- canonical | shared-engine | legacy | test --> — <one-line scope note>
+**Lane:** <!-- canonical | shared-engine | templates | build | docs | test --> — <one-line scope note>
 
 Closes #<!-- issue number; delete this line if none -->
 
@@ -38,6 +38,6 @@ Closes #<!-- issue number; delete this line if none -->
 - [ ] `./mvnw -B -ntp clean verify` passes locally — this is the **Verification** proof above.
 - [ ] **Java 17 compatible** — no `getFirst()`/`getLast()`, `Thread.threadId()`, type/deconstruction `switch`, `case null, default`. (CI runs Temurin 17 / 21 / 25.)
 - [ ] **Public API changed** → `CHANGELOG.md` entry under the next `## v<X.Y.Z> — Planned` heading.
-- [ ] **README / examples touched** → `DocumentationCoverageTest` stays green; a new example is wired into `GenerateAllExamples` + the `examples/README.md` gallery count.
+- [ ] **README / examples touched** → `DocumentationCoverageTest` stays green; a new example is wired into `GenerateAllExamples` and given a gallery row in `examples/README.md`.
 
 </details>

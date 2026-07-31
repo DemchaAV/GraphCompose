@@ -6,7 +6,7 @@ GraphCompose is a solo-maintained open-source library. This file describes where
 
 | Need | Where |
 |------|-------|
-| Usage question | [GitHub Issues](https://github.com/DemchaAV/GraphCompose/issues/new?labels=question&title=Question%3A+) — apply the `question` label |
+| Usage question | [GitHub Discussions](https://github.com/DemchaAV/GraphCompose/discussions) — not the issue tracker |
 | Bug report | [Bug report template](https://github.com/DemchaAV/GraphCompose/issues/new?template=bug_report.md) |
 | Feature request | [Feature request template](https://github.com/DemchaAV/GraphCompose/issues/new?template=feature_request.md) |
 | Security vulnerability | [SECURITY.md](SECURITY.md) — do **not** use public issues |
@@ -16,12 +16,14 @@ GraphCompose is a solo-maintained open-source library. This file describes where
 
 Self-serve, ordered by likelihood of containing the answer:
 
-1. [README.md](README.md) — installation, hello-world, v1.6 primitives.
-2. [docs/getting-started.md](docs/getting-started.md) — first runnable example.
-3. [examples/README.md](examples/README.md) — runnable examples with PDF previews.
-4. [docs/recipes.md](docs/recipes.md) — patterns for common layouts.
-5. [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/package-map.md](docs/architecture/package-map.md) — when extending the engine.
-6. [docs/roadmaps/migration-v1-5-to-v1-6.md](docs/roadmaps/migration-v1-5-to-v1-6.md) — upgrades from previous minor.
+1. [README.md](README.md) — installation, hello-world, which artifact to depend on.
+2. [docs/first-document.md](docs/first-document.md) — the five-minute path to a rendered PDF.
+3. [docs/getting-started.md](docs/getting-started.md) — DSL or templates, and the first-render walk-through.
+4. [examples/README.md](examples/README.md) — runnable examples with PDF previews.
+5. [docs/recipes.md](docs/recipes.md) — patterns for common layouts.
+6. [docs/troubleshooting.md](docs/troubleshooting.md) — symptom-first fixes for the common gotchas.
+7. [docs/architecture/overview.md](docs/architecture/overview.md) and [docs/architecture/package-map.md](docs/architecture/package-map.md) — when extending the engine.
+8. [docs/migration/v2.0.0-modules.md](docs/migration/v2.0.0-modules.md) — upgrading from the 1.x line; [CHANGELOG.md](CHANGELOG.md) for minor-to-minor steps.
 
 ## Response expectations
 

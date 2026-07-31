@@ -8,8 +8,13 @@ Read these files first:
 
 - [README.md](./README.md)
 - [docs/architecture/overview.md](./docs/architecture/overview.md)
-- [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
+- [docs/architecture/package-map.md](./docs/architecture/package-map.md) — what lives in which package, and which of them are internal
 - [docs/operations/benchmarks.md](./docs/operations/benchmarks.md) when you touch benchmark tooling, render hot paths, layout hot paths, or performance-facing docs
+
+[docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
+goes deeper on the engine, but parts of it still describe the execution layer that
+2.0 removed — read `overview.md` and `package-map.md` first and treat the guide as
+background until it is rewritten.
 
 They explain the current public surface, the engine/template split, and the recommended extension points.
 
@@ -29,8 +34,8 @@ When writing new code, avoid Java 21+ APIs and language constructs that don't ex
 ## Build and test
 
 - The blocking validation gate for repository work is `./mvnw -B -ntp clean verify` at the repository root — the root pom is the reactor aggregator, so this builds and verifies **every module**. For a fast inner loop while iterating on the engine, scope it to the core module: `./mvnw -B -ntp verify -pl :graph-compose-core`.
-- Run the guard-focused suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest" test`.
-- Run a focused documentation sanity check with `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest" test`.
+- Run the engine-resident guard suite with `./mvnw -B -ntp "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest" test -pl :graph-compose-core` — the same list CI runs. Every name must live in `graph-compose-core`: Surefire drops a name that matches nothing as long as a sibling matches, so a guard that lives elsewhere would silently not run (`CiGuardListGuardTest` fails the build if one creeps in).
+- The cross-module documentation guards — `DocumentationExamplesTest` and `DocumentationSnippetCompileTest`, which compiles the literal java fences published in `docs/` — live in `graph-compose-qa`: `./mvnw -B -ntp "-Dtest=DocumentationExamplesTest,DocumentationSnippetCompileTest" test -f qa/pom.xml`. A standalone `-f qa/pom.xml` run resolves its `graph-compose-*` dependencies from `~/.m2`, not from the reactor, so run `./mvnw -B -ntp -DskipTests install` once first — otherwise it quietly tests the artifacts you last installed instead of your working tree.
 - Run the local benchmark wrapper when you change performance-sensitive code or benchmark tooling: `powershell -ExecutionPolicy Bypass -File .\scripts\run-benchmarks.ps1` (Windows). To compare two branches fairly, use `scripts/ab-bench.ps1` (Windows) or the cross-platform `scripts/ab-bench.sh` (Linux/macOS/Git Bash). See [docs/operations/benchmarks.md](./docs/operations/benchmarks.md).
 
 ## How to propose changes
@@ -65,12 +70,12 @@ Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch ta
 6. **CI runs automatically.** Active jobs:
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
-   - `Examples Generation Smoke Test` &mdash; regenerates all 54 runnable examples and uploads the PDFs as a CI artifact
+   - `Examples Generation Smoke Test` &mdash; regenerates every runnable example and uploads the PDFs as a CI artifact
    - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` surface
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
    - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
 
-   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build &mdash; a **docs-only PR runs the guards only**; `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `develop` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
+   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build. Markdown counts as a build input, so a **docs-only PR still runs the reactor** &mdash; on the baseline JDK alone, and without example generation &mdash; because that is where the guards compiling the published snippets live. `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `develop` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
 
    The PR cannot merge into a protected branch until all required checks are green.
 7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.
@@ -111,8 +116,10 @@ The 2.0 GA shipped, so the branches now hold their long-term roles:
   Canonical functional layout pipeline: `LayoutCompiler`, `BuiltInNodeDefinitions`, `TableLayoutSupport`, `PreparedNode`, `PlacedFragment`
 - `render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf` — module **graph-compose-render-pdf**
   PDF backend: `PdfFixedLayoutBackend`, fragment handlers, and the option translators that bridge canonical types to PDFBox
-- `render-docx/` and `render-pptx/` — modules **graph-compose-render-docx** / **graph-compose-render-pptx**
-  Semantic exporters `DocxSemanticBackend` (Apache POI based) and `PptxSemanticBackend` (manifest skeleton), under `com.demcha.compose.document.backend.semantic.{docx,pptx}`
+- `render-pptx/src/main/java/com/demcha/compose/document/backend/fixed/pptx` — module **graph-compose-render-pptx**
+  PPTX fixed-layout backend: `PptxFixedLayoutBackend` and its handlers, consuming the same resolved `LayoutGraph` as the PDF backend. The module also carries the older `PptxSemanticBackend` manifest skeleton under `com.demcha.compose.document.backend.semantic.pptx`
+- `render-docx/` — module **graph-compose-render-docx**
+  Semantic exporter `DocxSemanticBackend` (Apache POI based), under `com.demcha.compose.document.backend.semantic.docx`
 - `templates/src/main/java/com/demcha/compose/document/templates/*` — module **graph-compose-templates**
   Built-in templates (CV, cover letter, invoice, proposal, weekly schedule), DTOs, themes, registries, and scene composition helpers
 - `core/src/main/java/com/demcha/compose/document/showcase`
@@ -202,20 +209,10 @@ not need any of them.
 - Keep `core/src/main/java/com/demcha/compose/engine/components/*` free of
   `org.apache.pdfbox` and `com.demcha.compose.engine.render.pdf`
   imports.
-- When you add a new fragment kind, register its handler with
-  `PdfFixedLayoutBackend` and add or update dispatch coverage.
-
-Keep the entity core thin:
-
-- `Entity` stays an identity-plus-components object with compatibility
-  delegates. It is not a home for new layout math or pagination
-  mutation rules.
-- Geometry reads live in `EntityBounds`. Parent-container size and
-  page-shift propagation live in `ParentContainerUpdater`.
-- `Entity.bounding*` and `Entity.updateParentContainer*` are
-  deprecated compatibility wrappers; do not copy them into new code.
-- Render-order optimizations live in the render layer (the PDF
-  fragment handlers), not in `Entity`.
+- When you add a new fragment kind, register its handler with **both**
+  fixed-layout backends — `PdfFixedLayoutBackend` and `PptxFixedLayoutBackend` —
+  and add or update dispatch coverage. A kind registered with only one renders
+  in one output and silently vanishes from the other.
 
 ### Guard rails
 
@@ -275,31 +272,25 @@ Reference templates to copy:
 
 ### New built-in template
 
-GraphCompose supports two template authoring patterns. Pick based
-on whether you're extending an existing template family or building
-a new one.
-
-**For a NEW template family from scratch** (invoice-v2,
-cover-letter-v2, report-v2, anything not yet in `cv/v2/`) — follow
-the canonical layered architecture documented in
+There is one template authoring pattern, whether you are adding a
+new family or a new preset inside an existing one: the layered
+architecture documented in
 [**docs/templates/v2-layered/contributor-guide.md**](./docs/templates/v2-layered/contributor-guide.md).
 Five sub-packages (`data/` / `theme/` / `components/` / `widgets/`
-/ `presets/`), each with a clear contract. CV v2
-(`com.demcha.compose.document.templates.cv`) is the reference
-implementation; read it before starting yours.
+/ `presets/`), each with a clear contract, over the shared
+`templates.core` layer.
 
-**For a new preset inside an existing v1-classic family** (a new CV
-variant alongside `ModernProfessional`, a new invoice preset
-alongside `InvoiceTemplateV2`):
-
-- Constructor takes a `BusinessTheme` (or `BrandTheme` for CV
-  templates). Provide a no-arg overload that picks a default theme.
+- Every preset is a `public final class` — no inheritance — with a
+  `create(BrandTheme)` factory returning `DocumentTemplate<S>`, plus a
+  no-arg overload that picks a default theme.
 - Compose against `DocumentDsl` — no PDF-specific imports.
 - Route every visible token through `theme.palette()` /
   `theme.text()` / `theme.spacing()` / `theme.table()`.
-- Reference: `InvoiceTemplateV2`, `ProposalTemplateV2`. Read
-  [docs/templates/v1-classic/authoring.md](./docs/templates/v1-classic/authoring.md) before
-  starting.
+- Reference implementations:
+  `templates.cv.presets.ModernProfessional`,
+  `templates.invoice.presets.ModernInvoice`,
+  `templates.proposal.presets.ModernProposal`. Read one before
+  starting yours.
 
 > 📚 **Map of template docs**:
 > [docs/README.md](./docs/README.md#templates) lists every template
@@ -313,16 +304,17 @@ marker, a new layout system, a new render-pass session):
 
 - Decide first whether the feature belongs on the public surface as
   a `DocumentNode` instead. If yes, see "New public node" above and
-  treat the engine work as plumbing, not as new public ECS surface.
-- For genuine engine primitives, add the engine content / style /
-  layout component plus a backend-neutral renderable marker plus a
-  backend-owned render handler.
-- Marker rule of thumb:
-  - add the container-growth marker only to parent-like boxes that
-    should grow because of child content
-  - add `Breakable` only to entities whose own content may continue
-    across pages
-  - do not treat the container-growth marker as a pagination flag
+  treat the engine work as plumbing, not as new public surface.
+- For genuine engine primitives, add the `NodeDefinition` that
+  prepares and measures the node, plus a backend-owned render handler
+  per fixed-layout backend.
+- Pagination is declared by the definition, not by a marker: state the
+  split behaviour on the `NodeDefinition` itself, and compile a node
+  that can continue across pages through `SplittableLeafCompiler` so
+  the continuation indices stay monotonic.
+- A container grows from the sizes its children report during
+  `prepare`; do not add growth as a separate signal, and do not read
+  it as a pagination flag.
 
 For text-heavy primitives, also read:
 
@@ -346,7 +338,7 @@ Choose the smallest tests that match the change:
 - For PDF fragment-handler dispatch changes:
   [PdfRenderInterfaceGuardTest.java](render-pdf/src/test/java/com/demcha/compose/engine/render/pdf/PdfRenderInterfaceGuardTest.java)
 - For layout/positioning behavior:
-  [ComputedPositionTest.java](./core/src/test/java/com/demcha/compose/engine/components/layout/ComputedPositionTest.java)
+  [LayoutInsetsTest.java](./core/src/test/java/com/demcha/compose/document/layout/LayoutInsetsTest.java)
 - For pagination and multi-page behavior:
   [PaginationEdgeCaseTest.java](qa/src/test/java/com/demcha/compose/document/api/PaginationEdgeCaseTest.java)
 - For Templates v2 CV / cover-letter presets:
@@ -387,7 +379,8 @@ The repository uses these normalized package roots:
 - `com.demcha.compose.document.style`, `document.table`, `document.image`, `document.output` — public value types
 - `com.demcha.compose.document.layout` — canonical functional layout pipeline
 - `com.demcha.compose.document.backend.fixed.pdf` — PDF fixed-layout backend
-- `com.demcha.compose.document.backend.semantic` — DOCX / PPTX semantic backends
+- `com.demcha.compose.document.backend.fixed.pptx` — PPTX fixed-layout backend (`@Beta`)
+- `com.demcha.compose.document.backend.semantic` — semantic export SPI, the DOCX exporter, and the legacy PPTX manifest
 - `com.demcha.compose.document.templates` — built-in templates and data
 - `com.demcha.compose.engine` — internal shared engine foundation under the canonical surface; not part of the recommended public API
 - `com.demcha.compose.font` — public font registry

@@ -234,13 +234,53 @@ function Get-NextSnapshotVersion($version) {
 }
 
 function Test-ReadmeLatestStable($version) {
-    # The README 'Latest stable' prose block (> ... **Latest stable**: [vX.Y.Z](...)) is a
-    # maintainer pre-cut edit that cut-release does NOT rewrite and no test guards. Returns
-    # $true when it names $version. Checked in Step 0 BEFORE any file mutation, so a stale
-    # line aborts the cut with a still-clean tree — a post-mutation check would leave a
-    # dirty tree that the next preflight run then refuses to work over.
+    # True when the README 'Latest stable' prose block names $version. Used to verify
+    # the block AFTER Step 1 rewrote it — see Update-ReadmeReleaseStatus.
     $readme = Get-Content (Join-Path $repoRoot 'README.md') -Raw
     return $readme -match "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]"
+}
+
+function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
+    # The README 'Release status' blockquote carries two halves:
+    #
+    #   > 🟢 **Latest stable**: [vX.Y.Z](…/releases/tag/vX.Y.Z) — …
+    #   >  · 🟡 **In development**: vX.Y.(Z+1) on `develop` — …
+    #
+    # It used to be a maintainer pre-cut hand-edit, gated in Step 0. That forced a
+    # false state: to leave `main` correct after the tag, `develop` had to advertise
+    # an unpublished version as "latest stable" for the whole cycle, with a release
+    # link that 404s. The script owns the block now — Step 1 promotes the in-development
+    # half to latest-stable and opens the next patch line — so `develop` stays truthful
+    # between releases and the release commit still carries the right text to `main`.
+    # Only the version tokens are rewritten; the maintainer's prose is left alone.
+    if (-not (Test-Path $readmePath)) {
+        Note "skip (no file): $readmePath"
+        return
+    }
+    $content = Get-Content $readmePath -Raw
+    $next = Get-NextSnapshotVersion $newVersion
+    $nextVersion = if ($next) { $next -replace '-SNAPSHOT$', '' } else { $null }
+
+    $stable = [regex]'(?<=\*\*Latest stable\*\*:\s*\[v)[\w\.\-]+(?=\])'
+    $stableUrl = [regex]'(?<=/releases/tag/v)[\w\.\-]+(?=\))'
+    $inDev = [regex]'(?<=\*\*In development\*\*:\s*v)[\w\.\-]+'
+
+    $updated = $stable.Replace($content, $newVersion, 1)
+    $updated = $stableUrl.Replace($updated, $newVersion, 1)
+    if ($nextVersion) {
+        $updated = $inDev.Replace($updated, $nextVersion, 1)
+    }
+
+    if ($updated -eq $content) {
+        Note "README release-status block already names v$newVersion"
+        return
+    }
+    if ($DryRun) {
+        Note "[DRY RUN] README release status -> latest stable v$newVersion, in development v$nextVersion"
+        return
+    }
+    [System.IO.File]::WriteAllText($readmePath, $updated)
+    Note "README release status -> latest stable v$newVersion, in development v$nextVersion"
 }
 
 function Assert-ReleaseMetadata($version, $isFinalRelease) {
@@ -270,6 +310,13 @@ function Assert-ReleaseMetadata($version, $isFinalRelease) {
             $problems += "README.md has no graph-compose Maven install snippet (<artifactId>graph-compose</artifactId> ... <version>...</version>)."
         } elseif ($snippet.Groups[1].Value -ne $version) {
             $problems += "README.md install snippet is $($snippet.Groups[1].Value), expected $version."
+        }
+
+        # 2b. README release-status block names this version as latest stable (Step 1
+        #     rewrites it; this is the post-mutation verification that replaced the old
+        #     pre-cut hand-edit gate).
+        if (-not (Test-ReadmeLatestStable $version)) {
+            $problems += "README.md release-status block does not name v$version as 'Latest stable'."
         }
     }
 
@@ -779,19 +826,17 @@ try {
     }
     Note ("tag {0}: available OK" -f $tag)
 
-    # README 'Latest stable' prose block must already name the target — FINAL releases
-    # only. Checked HERE, before Step 1 mutates any file, so a stale line aborts with a
-    # still-clean tree. (cut-release does not rewrite this block; it is a maintainer
-    # pre-cut edit.) A pre-release never becomes 'Latest stable', so there is nothing to
-    # check for it.
+    # The README release-status block is rewritten by Step 1 (Update-ReadmeReleaseStatus)
+    # and verified after the mutation by Assert-ReleaseMetadata, so there is nothing to
+    # demand of it here. What Step 0 still checks is that the block EXISTS in the shape
+    # the rewrite expects — a renamed or reflowed blockquote would otherwise be skipped
+    # in silence and ship `main` advertising the previous release, the v1.6.9 failure.
     if ($isFinalRelease) {
-        if (Test-ReadmeLatestStable $Version) {
-            Note "README 'Latest stable' = v$Version OK"
-        } elseif ($DryRun) {
-            Write-Host "    [DRY RUN] WARNING: README 'Latest stable' does not name v$Version - update it on $Branch before the real cut." -ForegroundColor Yellow
-        } else {
-            throw "README 'Latest stable' block does not name v$Version. Update it on $Branch before cutting (cut-release.ps1 does not rewrite this block)."
+        $readmeRaw = Get-Content (Join-Path $repoRoot 'README.md') -Raw
+        if ($readmeRaw -notmatch '\*\*Latest stable\*\*:\s*\[v[\w\.\-]+\]') {
+            throw "README has no '**Latest stable**: [vX.Y.Z](...)' release-status line for the cut to rewrite."
         }
+        Note "README release-status block present OK"
     }
 
     if ($isFinalRelease) {
@@ -849,6 +894,7 @@ try {
     # latest published release for a non-final (SNAPSHOT or pre-release) working version.
     if ($isFinalRelease) {
         Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
+        Update-ReadmeReleaseStatus (Join-Path $repoRoot 'README.md') $Version
         # Per-module README install snippets (train modules only — fonts/emoji pin
         # their own independent versions).
         foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',

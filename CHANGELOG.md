@@ -22,6 +22,12 @@ follow semantic versioning; release dates are ISO 8601.
 - **`graph-compose-render-pptx` declares PDFBox.** It compiles against
   `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
   transitively; the resolved version is unchanged.
+- **The release script owns the README release-status block.** It was a
+  hand-edit the script only validated, and the validation demanded the *target*
+  version — so between releases `develop` had to advertise an unpublished version
+  as "latest stable", behind a release link that 404s. `cut-release.ps1` now
+  promotes the in-development half to latest stable and opens the next patch line
+  as part of the release commit, and verifies the result after the mutation.
 
 ### Fixed
 
@@ -69,6 +75,40 @@ follow semantic versioning; release dates are ISO 8601.
   snippet produces, where it fails.
 - **Every published module README is reachable** from the module list in the root
   README; eight of the ten had no inbound link from anywhere.
+- **The release surface names the release that shipped.** `ROADMAP.md` described
+  2.1 as in development and 2.0 as the current stable line; 2.1 is now current,
+  2.0 is history, and `## Now` points at what follows. The README release-status
+  block, the changelog, the roadmap and the showcase metadata now agree on which
+  version is published and which is in development.
+- **`SECURITY.md` covers every 2.x line.** The supported-versions table jumped
+  from `2.1.x` to `1.9.x`, so a 2.0.x user could not tell whether their version
+  was supported.
+- **The documentation index carries the migration guide that applies.**
+  `docs/README.md` listed five superseded 1.x minor-to-minor upgrade guides on the
+  main path and omitted `migration/v2.0.0-modules.md` entirely. The current
+  guides are listed; the historical ones moved behind a fold.
+- **The PPTX backend is documented where it lives.** `CONTRIBUTING.md`,
+  `SECURITY.md` and the architecture overview described the pptx module as a
+  semantic exporter. Its primary backend is fixed-layout
+  (`document.backend.fixed.pptx`), alongside the older semantic manifest; a new
+  fragment kind must register a handler with both fixed-layout backends or it
+  renders in one output and vanishes from the other.
+- **Contributor instructions compile.** The "new built-in template" section
+  routed authors to `BusinessTheme`, `InvoiceTemplateV2` and `ProposalTemplateV2`
+  — none of which exist since 2.0 — and the engine-primitive section described
+  the entity/marker execution layer that 2.0 removed. Both now describe the
+  layered preset stack and the `NodeDefinition` pipeline. The bug-report template
+  asked for a 1.6-era version and carried a reproduction that never rendered; the
+  feature-request template pointed at a removed theme type; the pull-request
+  template offered a lane that no longer exists.
+- **Usage questions route to Discussions** through a new issue-template
+  `config.yml`, instead of being filed as labelled issues.
+- **Hand-maintained example counts are gone.** Four places stated four different
+  totals, none matching the catalogue.
+- **The release runbook checks things that exist.** One gate grepped the README
+  for a test-count claim the README does not make, so it always passed; another
+  compared the gallery row count against the example file count, two numbers that
+  had long diverged; three references pointed at a migration path that moved.
 - **A gallery entry for a deleted example is gone.** `examples/README.md`
   documented rethemeing through `InvoiceTemplateV2`, a type removed in 2.0, linked
   a source file that no longer exists, and carried a committed preview for it. The

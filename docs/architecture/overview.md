@@ -245,7 +245,9 @@ last:
 - `com.demcha.compose.document.*` — **public canonical surface**.
   Authoring API, layout graph, exceptions, snapshots. The render backends
   (`document.backend.fixed.pdf` in **graph-compose-render-pdf**,
-  `document.backend.semantic.*` in the docx / pptx modules) and the built-in
+  `document.backend.fixed.pptx` plus the legacy `document.backend.semantic.pptx`
+  in **graph-compose-render-pptx**, `document.backend.semantic.docx` in
+  **graph-compose-render-docx**) and the built-in
   templates (`document.templates.*` in **graph-compose-templates**) share this
   namespace but ship as separate, opt-in artifacts over `graph-compose-core`.
 - `com.demcha.compose.font.*` — public font names, backend-neutral

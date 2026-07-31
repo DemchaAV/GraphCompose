@@ -62,14 +62,21 @@ back here.
 - **[contributing/implementation-guide.md](contributing/implementation-guide.md)** — internal engine notes for contributors hacking on layout / measurement / pagination.
 - **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
 
-### Roadmaps & migrations
-- **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — forward-looking engineering roadmap: internal refactors, scale, and tooling deferred past the 2.0 line.
-- **[roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md)** — the v1.6 "expressive" roadmap (shipped).
-- **[roadmaps/migration-v1-8-to-v1-9.md](roadmaps/migration-v1-8-to-v1-9.md)** — upgrade guide for v1.8 → v1.9.
-- **[roadmaps/migration-v1-7-to-v1-8.md](roadmaps/migration-v1-7-to-v1-8.md)** — upgrade guide for v1.7 → v1.8.
-- **[roadmaps/migration-v1-6-to-v1-7.md](roadmaps/migration-v1-6-to-v1-7.md)** — upgrade guide for v1.6 → v1.7.
-- **[roadmaps/migration-v1-5-to-v1-6.md](roadmaps/migration-v1-5-to-v1-6.md)** — upgrade guide for v1.5 → v1.6.
-- **[roadmaps/migration-v1-4-to-v1-5.md](roadmaps/migration-v1-4-to-v1-5.md)** — upgrade guide for v1.4 → v1.5.
+### Migrations & roadmap
+- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the current upgrade guide: the 1.x → 2.x module split, the one dependency-level break, and every removed API with its replacement.
+- **[migration/v1.8.0-fonts.md](migration/v1.8.0-fonts.md)** — the fonts artifact split, still relevant to anyone adding `graph-compose-fonts`.
+- **[../ROADMAP.md](../ROADMAP.md)** — direction for the line after 2.1.
+- **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — internal refactors, scale, and tooling deferred past the 2.0 line.
+
+<details>
+<summary><b>Historical documentation</b> — shipped roadmaps and superseded minor-to-minor upgrade guides</summary>
+
+Kept for anyone stepping through the 1.x line one minor at a time. Nothing here describes the current API.
+
+- [roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md) — the v1.6 "expressive" roadmap (shipped).
+- [roadmaps/migration-v1-8-to-v1-9.md](roadmaps/migration-v1-8-to-v1-9.md) · [v1-7-to-v1-8](roadmaps/migration-v1-7-to-v1-8.md) · [v1-6-to-v1-7](roadmaps/migration-v1-6-to-v1-7.md) · [v1-5-to-v1-6](roadmaps/migration-v1-5-to-v1-6.md) · [v1-4-to-v1-5](roadmaps/migration-v1-4-to-v1-5.md)
+
+</details>
 
 ### Recipes (cookbook-style howtos)
 - **[recipes.md](recipes.md)** — index of all recipes (coverage map in [recipes/README.md](recipes/README.md)).

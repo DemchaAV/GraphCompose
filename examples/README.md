@@ -15,7 +15,7 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run all 63 examples in one shot:
+Then run every example in one shot:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
@@ -32,7 +32,7 @@ Then run all 63 examples in one shot:
 Generated PDFs land in `examples/target/generated-pdfs/`. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
 
-`GenerateAllExamples` runs **63** example programs — 16 CV + 15
+`GenerateAllExamples` renders the whole catalogue in one pass — the CV and
 cover-letter presets plus invoices, proposals, a schedule, the feature
 demos, and the flagships. The showcase site surfaces the full generated
 catalogue (~53 PDFs); a curated 39-PDF subset is committed under

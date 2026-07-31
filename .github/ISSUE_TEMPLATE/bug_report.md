@@ -11,25 +11,39 @@ labels: bug
 
 ## What actually happened
 
-<!-- Stack trace, rendered output, layout snapshot diff, mismatched pixel count, etc. Attach the produced PDF if relevant. -->
+<!-- Stack trace, layout snapshot diff, mismatched pixel count, or a description of the wrong render. -->
 
 ## How to reproduce
 
 ```java
-// Minimal, runnable Java code that triggers the issue.
-// Prefer the canonical `GraphCompose.document(...)` API.
-DocumentSession document = GraphCompose.document(Path.of("repro.pdf"))
+// Minimal, runnable Java that triggers the issue. Close the session and produce
+// the output — a repro that never renders shows nothing.
+try (DocumentSession document = GraphCompose.document(Path.of("repro.pdf"))
         .pageSize(DocumentPageSize.A4)
-        .create();
-// ...
+        .margin(24, 24, 24, 24)
+        .create()) {
+
+    document.pageFlow(page -> page
+            .module("Repro", module -> module.paragraph("...")));
+
+    document.buildPdf();   // or buildPptx(Path) / toPdfBytes()
+}
 ```
+
+## Generated artifact
+
+<!-- Attach the produced PDF / PPTX / DOCX, or paste document.layoutSnapshot().
+     The snapshot is renderer-neutral and usually pins a layout bug faster
+     than the file does. -->
 
 ## Environment
 
-- GraphCompose version: <!-- e.g. v1.6.1 -->
+- GraphCompose version: <!-- e.g. 2.1.0 -->
+- Output backend: <!-- PDF (render-pdf) / PPTX (render-pptx) / DOCX (render-docx) -->
+- Modules on the classpath: <!-- e.g. graph-compose; or core + render-pdf + templates. Note graph-compose-fonts / -emoji if present -->
 - Java: <!-- e.g. Temurin 17.0.10 -->
 - OS: <!-- e.g. Windows 11 / macOS 14 / Ubuntu 24.04 -->
-- PDFBox: <!-- 3.0.7 unless overridden -->
+- Font source: <!-- bundled graph-compose-fonts / registerFontFamily(...) / the PDF standard 14 -->
 
 ## Additional context
 

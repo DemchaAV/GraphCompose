@@ -9,7 +9,9 @@ Security fixes are issued for the latest minor release. Older minors do not rece
 | Version | Supported |
 |---------|-----------|
 | 2.1.x   | Yes — actively patched |
-| < 2.1   | No — upgrade required (see [CHANGELOG.md](CHANGELOG.md) for per-version migration notes, and the [2.0 modules migration guide](docs/migration/v2.0.0-modules.md) for the 1.x → 2.x step) |
+| 2.0.x   | No — upgrade to the latest 2.1.x; it is source-compatible, see [CHANGELOG.md](CHANGELOG.md) |
+| 1.9.x   | Critical fixes and security backports only, on the `1.x` branch — no features |
+| < 1.9   | No — upgrade required (see [CHANGELOG.md](CHANGELOG.md) for per-version migration notes, and the [2.0 modules migration guide](docs/migration/v2.0.0-modules.md) for the 1.x → 2.x step) |
 
 ## Reporting a vulnerability
 
@@ -44,7 +46,8 @@ In scope:
 
 - Layout engine (`com.demcha.compose.document.layout`).
 - PDF backend (`com.demcha.compose.document.backend.fixed.pdf`).
-- DOCX / PPTX semantic backends (`com.demcha.compose.document.backend.semantic`).
+- PPTX backend (`com.demcha.compose.document.backend.fixed.pptx`).
+- Semantic export backends (`com.demcha.compose.document.backend.semantic`) — DOCX, and the legacy PPTX manifest.
 - Templates shipped in `com.demcha.compose.document.templates`.
 - Public authoring API (`GraphCompose`, `DocumentSession`, DSL).
 - Build and release artifacts on Maven Central (`io.github.demchaav:graph-compose`). The legacy JitPack URL remains available for consumers pinned to v1.6.5 and earlier but is no longer the documented install channel.

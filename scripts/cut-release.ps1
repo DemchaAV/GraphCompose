@@ -560,6 +560,7 @@ function Run-ShowcaseSync {
     # lifecycle phase. Wrapping the whole token in quotes preserves it
     # as a single literal argument.
     $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
+    $generateProp = '"-Dexec.mainClass=com.demcha.examples.GenerateAllExamples"'
     # The examples module depends on these bumped SNAPSHOT siblings (not on
     # Central); each must be installed before exec:java can resolve them. Keep
     # this list in lockstep with examples/pom.xml — a module the examples depend
@@ -574,6 +575,7 @@ function Run-ShowcaseSync {
         foreach ($modulePom in $exampleSnapshotSiblings) {
             Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor Yellow
         }
+        Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests clean compile exec:java $generateProp" -ForegroundColor Yellow
         Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp" -ForegroundColor Yellow
         return
     }
@@ -607,6 +609,23 @@ function Run-ShowcaseSync {
             if ($LASTEXITCODE -ne 0) {
                 throw "Install $modulePom failed (exit $LASTEXITCODE)"
             }
+        }
+        # Regenerate the catalogue before syncing it. ShowcaseSync only COPIES what is
+        # already in examples/target/generated-pdfs, so without this the published site
+        # is whatever happens to be sitting in the maintainer's target directory from
+        # earlier commands — and on a clean checkout there is nothing there at all.
+        # `clean` is the point: it drops artifacts left by tests or by examples that
+        # have since been renamed or deleted, so the published tree is a function of
+        # the tag rather than of shell history. This runs after Step 1 bumped the poms
+        # and Step 3 rewrote GH_BASE, so version-stamped renders carry the new version.
+        Write-Host "    > $mvnw -B -ntp -f examples/pom.xml -DskipTests clean compile exec:java $generateProp" -ForegroundColor DarkGray
+        & $mvnw -B -ntp -f examples/pom.xml -DskipTests clean compile exec:java $generateProp 2>&1 | ForEach-Object {
+            if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR') {
+                Write-Host "    $_" -ForegroundColor DarkGray
+            }
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "GenerateAllExamples failed (exit $LASTEXITCODE)"
         }
         # `compile` before exec:java is REQUIRED: Step 3 rewrote ShowcaseMetadata.GH_BASE
         # to /blob/<tag>, and exec:java runs the COMPILED class. Without recompiling it here,

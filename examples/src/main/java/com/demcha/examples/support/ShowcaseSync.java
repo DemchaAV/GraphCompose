@@ -73,6 +73,15 @@ public final class ShowcaseSync {
                     + ". Run GenerateAllExamples first.");
         }
 
+        // The copy below replaces files but never removes them, so an example that was
+        // renamed or deleted kept its artifact published on GitHub Pages indefinitely —
+        // reachable by URL, absent from the manifest, and rendered from source that no
+        // longer exists. Clearing the three output trees first makes the published site
+        // a pure function of what GenerateAllExamples just produced.
+        for (String subtree : new String[] {"pdf", "pptx", "screenshots"}) {
+            deletePublishedFiles(showcaseRoot.resolve(subtree));
+        }
+
         // category → group → list of entries
         Map<String, Map<String, List<ManifestEntry>>> tree = new TreeMap<>();
         int copied = 0;
@@ -165,6 +174,26 @@ public final class ShowcaseSync {
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImage(0, PREVIEW_SCALE, ImageType.RGB);
             ImageIO.write(image, "PNG", pngTarget.toFile());
+        }
+    }
+
+    /**
+     * Removes every published file under a subtree, leaving the directories in place.
+     * Only files matter: git tracks no empty directory, and the copy below recreates
+     * whatever it needs. Deleting the directories too is what makes this fragile on
+     * Windows, where a just-closed handle can still fail the parent's removal with
+     * {@code AccessDeniedException}. A missing tree is a no-op — the normal case on a
+     * fresh checkout.
+     */
+    private static void deletePublishedFiles(Path root) throws IOException {
+        if (!Files.exists(root)) {
+            return;
+        }
+        try (Stream<Path> walk = Files.walk(root)) {
+            List<Path> files = walk.filter(Files::isRegularFile).toList();
+            for (Path file : files) {
+                Files.delete(file);
+            }
         }
     }
 

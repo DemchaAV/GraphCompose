@@ -45,14 +45,6 @@ render-pdf/logs/
 *.pdf
 # Allow PDF previews that are committed README assets.
 !assets/readme/**/*.pdf
-# Allow PDF previews that ship with the GitHub Pages showcase site.
-!docs/assets/**/*.pdf
-!docs/showcase/**/*.pdf
-# Same whitelist for the Next.js showcase site under site/ — 53 PDFs
-# mirrored from docs/showcase by Sync-SiteShowcase, plus 3 Playground
-# preview PDFs (hello/invoice/cv) bundled with site/public/previews/.
-!site/public/showcase/**/*.pdf
-!site/public/previews/*.pdf
 # Same whitelist for the live GitHub Pages showcase under web/. The showcase
 # moved out of docs/ into web/ but this list was not updated, so every newly
 # added example PDF was silently ignored and 404'd on the deployed site.

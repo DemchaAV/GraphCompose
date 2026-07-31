@@ -1,0 +1,14 @@
+# Routes everything that is not a bug or a feature request away from the
+# issue tracker, so Issues stay a list of actionable defects and requests.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Usage question
+    url: https://github.com/DemchaAV/GraphCompose/discussions
+    about: How do I render X, which artifact do I need, why does my layout do this — ask in Discussions.
+  - name: Where to go for what
+    url: https://github.com/DemchaAV/GraphCompose/blob/main/SUPPORT.md
+    about: Channels, what to read first, and what response to expect.
+  - name: Security vulnerability
+    url: https://github.com/DemchaAV/GraphCompose/security/advisories/new
+    about: Report privately through a GitHub security advisory. Never in a public issue.

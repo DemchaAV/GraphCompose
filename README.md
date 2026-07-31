@@ -20,7 +20,7 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
+> 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; a patch over the **PowerPoint** release: a heading no longer strands above a block that asked to stay whole, and the documented snippets were corrected against the shipped API. `graph-compose-render-pptx` (new in 2.1.0) turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes, `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
 
 > &nbsp;·&nbsp; ⬆️ **Upgrading from 1.x?** `graph-compose` stays a drop-in for PDF with no code change; see the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -212,71 +212,9 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 
 ## What's new in 2.0
 
-The **module-first** release &mdash; the single jar becomes a family of per-concern artifacts, so you install exactly what you render.
+The **module-first** release: the single jar became a family of per-concern artifacts, so you install exactly what you render, and `graph-compose` stayed a drop-in for PDF callers. Everything the 1.9 line added ships unchanged.
 
-- **Lean engine** &mdash; `graph-compose-core` is the document model, DSL, themes, and deterministic layout with **no PDFBox, POI, or template code** on its dependency tree. Backends plug in through a `ServiceLoader` seam; a core-only classpath asked to render throws `MissingBackendException` naming the artifact to add.
-- **Opt-in render backends** &mdash; `graph-compose-render-pdf` (PDFBox 3.0, full DSL coverage), `graph-compose-render-pptx` (Apache POI, geometry-identical PowerPoint decks from the same resolved layout — one page per editable slide; clipped regions land as pixel-exact pictures; ships as **beta** in its first release), `graph-compose-render-docx` (Apache POI, semantic export).
-- **`graph-compose` stays a drop-in** &mdash; the 1.x coordinate is now a thin wrapper over core + the PDF backend, so existing callers upgrade with **no code and no dependency change**. Reached the built-in templates through the single 1.x jar? Add `graph-compose-templates` (imports are unchanged) &mdash; the [migration guide](./docs/migration/v2.0.0-modules.md) walks every case, including the removed deprecated APIs and their replacements.
-- **Templates are their own artifact** &mdash; the CV / cover-letter / invoice / proposal preset families moved to `graph-compose-templates` (imports unchanged). This is the [one dependency-level break](./docs/migration/v2.0.0-modules.md#the-one-break-templates) of the split.
-- **`graph-compose-bundle`** &mdash; one batteries-included coordinate: PDF stack + templates + fonts + colour emoji.
-- **Retired surface** &mdash; the APIs deprecated across 1.6&ndash;1.9 are removed, the layered template packages dropped their `.v2` suffix, and `BusinessTheme` plus the classic pre-layered presets are gone &mdash; each removal has a named replacement in the [migration guide](./docs/migration/v2.0.0-modules.md).
-
-Everything the 1.9 line added &mdash; in-document navigation, native TOC and page references, bookmarks, multi-section documents, inline chips / SVG icons / colour emoji, render-to-image &mdash; ships unchanged in 2.0. Full history in [`CHANGELOG.md`](./CHANGELOG.md).
-
-## Scope and comparison
-
-### Output support
-
-| Format | Status | Notes |
-|---|---|---|
-| PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
-| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, lists, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped, one logged warning per kind. **Hyperlinks, bookmarks and headers/footers are not implemented**, table `colSpan`/`rowSpan` is not applied, and image fit modes are ignored &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
-| PPTX | Beta | Fixed-layout export via Apache POI from the same resolved layout &mdash; one page per editable slide with native shapes and text frames; clipped regions land as pixel-exact pictures. First shipped in 2.1, marked `@Beta` while the API shape settles. |
-
-### Text &amp; internationalization
-
-- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering. Full RTL / bidi support is tracked in [#140](https://github.com/DemchaAV/GraphCompose/issues/140).
-- A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
-
-### When to use GraphCompose
-
-- **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
-- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `ModernInvoice`, &hellip;) you parameterise instead of re-styling every time.
-- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
-- **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
-- **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
-
-### What GraphCompose is not
-
-- Not a hosted PDF rendering service &mdash; it is a library you embed.
-- Not a WYSIWYG editor &mdash; the DSL is code, not drag-and-drop.
-- Not a reporting engine like JasperReports &mdash; no datasource bindings, no XML templates, no compiled `.jasper` files.
-- Not a browser / HTML-to-PDF renderer &mdash; the engine has its own layout pipeline; HTML/CSS input is not supported.
-
-### Compared with similar Java libraries
-
-| Library | API style | Layout | License | Best for |
-|---|---|---|---|---|
-| **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
-| **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
-| **iText 7** | Object/layout API + low-level canvas | Automatic layout with direct-positioning options | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
-| **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
-| **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
-
-GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the comparison is about authoring surface, not the renderer.
-
-### Which API should I use?
-
-| You want to&hellip; | Surface | Entry point |
-|---|---|---|
-| Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) above |
-| Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
-| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
-| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
-| Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
-| See the live gallery | Static showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`web/`](./web), deployed to GitHub Pages via the [Pages workflow](./.github/workflows/deploy-web.yml) |
-
-> **Templates in 2.0** &mdash; there is one template surface: the layered preset families in `graph-compose-templates`, themed through `BrandTheme`. Arriving from a pre-2.0 surface (classic presets, the built-in `*Template` classes)? **[Which template system should I use?](./docs/templates/which-template-system.md)** maps every retired name to its layered replacement.
+Full detail in [`CHANGELOG.md`](./CHANGELOG.md); every removed API and its replacement in the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md).
 
 ## Vector primitives in 30 lines
 
@@ -345,24 +283,73 @@ The repository is a Maven multi-module reactor: the root `pom.xml` is the build 
 
 See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full build / verify flow.
 
+## Scope and comparison
+
+### Output support
+
+| Format | Status | Notes |
+|---|---|---|
+| PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
+| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, lists, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped, one logged warning per kind. **Hyperlinks, bookmarks and headers/footers are not implemented**, table `colSpan`/`rowSpan` is not applied, and image fit modes are ignored &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
+| PPTX | Beta | Fixed-layout export via Apache POI from the same resolved layout &mdash; one page per editable slide with native shapes and text frames; clipped regions land as pixel-exact pictures. First shipped in 2.1, marked `@Beta` while the API shape settles. |
+
+### Text &amp; internationalization
+
+- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering. Full RTL / bidi support is tracked in [#140](https://github.com/DemchaAV/GraphCompose/issues/140).
+- A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
+
+### When to use GraphCompose
+
+- **Server-side PDF generation in Java** &mdash; invoices, CVs, reports, proposals, statements, schedules.
+- **Templated documents from data** &mdash; themed presets (`ModernProfessional`, `ModernInvoice`, &hellip;) you parameterise instead of re-styling every time.
+- **Regression-tested layouts** &mdash; `DocumentSession#layoutSnapshot()` makes layout changes visible in PRs before any byte ships; `PdfVisualRegression` adds a pixel-level gate for font and colour fidelity.
+- **Streaming PDFs from web backends** &mdash; Spring Boot `@RestController` writing straight to the response ([`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java)).
+- **Higher-level than PDFBox, lighter than JasperReports** &mdash; Java DSL describes semantics; no XML templates, no manual coordinates.
+
+### What GraphCompose is not
+
+- Not a hosted PDF rendering service &mdash; it is a library you embed.
+- Not a WYSIWYG editor &mdash; the DSL is code, not drag-and-drop.
+- Not a reporting engine like JasperReports &mdash; no datasource bindings, no XML templates, no compiled `.jasper` files.
+- Not a browser / HTML-to-PDF renderer &mdash; the engine has its own layout pipeline; HTML/CSS input is not supported.
+
+### Compared with similar Java libraries
+
+| Library | API style | Layout | License | Best for |
+|---|---|---|---|---|
+| **GraphCompose** | Java DSL, semantic nodes | Two-pass, deterministic, snapshot-testable | MIT | Code-first business documents with layout regression tests |
+| **PDFBox** | Low-level text / path primitives | Manual coordinates | Apache 2.0 | Direct PDF manipulation, parsing, extraction |
+| **iText 7** | Object/layout API + low-level canvas | Automatic layout with direct-positioning options | AGPL / commercial | When AGPL is acceptable or you have a commercial licence |
+| **OpenPDF** | iText 4 fork | Manual + helpers | LGPL / MPL | Legacy iText 4 codebases |
+| **JasperReports** | XML templates compiled to `.jasper` | Template-driven | LGPL | Tabular reports with datasource bindings |
+
+GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the comparison is about authoring surface, not the renderer.
+
+### Which API should I use?
+
+| You want to&hellip; | Surface | Entry point |
+|---|---|---|
+| Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) above |
+| Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
+| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
+| Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
+| Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
+| See the live gallery | Static showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`web/`](./web), deployed to GitHub Pages via the [Pages workflow](./.github/workflows/deploy-web.yml) |
+
+> **Templates in 2.0** &mdash; there is one template surface: the layered preset families in `graph-compose-templates`, themed through `BrandTheme`. Arriving from a pre-2.0 surface (classic presets, the built-in `*Template` classes)? **[Which template system should I use?](./docs/templates/which-template-system.md)** maps every retired name to its layered replacement.
+
 ## Documentation
 
 📚 **[Full docs index](./docs/README.md)** &mdash; categorised map of every doc, ADR, and recipe. Start there to navigate the documentation.
 
-### Templates
-- [**Templates — layered architecture**](./docs/templates/v2-layered/README.md) &mdash; the template surface: CV, cover-letter, invoice, and proposal preset families on `BrandTheme`. Personas: [quickstart](./docs/templates/v2-layered/quickstart.md) · [using templates](./docs/templates/v2-layered/using-templates.md) · [authoring presets](./docs/templates/v2-layered/authoring-presets.md) · [contributing a new family](./docs/templates/v2-layered/contributor-guide.md).
-- [Which template system?](./docs/templates/which-template-system.md) &mdash; the template naming history and the migration map for callers arriving from a pre-2.0 surface (classic presets, built-in `*Template` classes, the legacy PDF API). The retired classic docs are archived at [v1-classic](./docs/templates/v1-classic/README.md).
+The index routes by what you are doing — first document, using or authoring a
+template, extending the engine, running in production. The entry points most
+people want directly:
 
-### Architecture & operations
-- [Architecture overview](./docs/architecture/overview.md) · [Lifecycle](./docs/architecture/lifecycle.md) · [Production rendering](./docs/operations/production-rendering.md) · [Benchmarks](./docs/operations/benchmarks.md) · [Layout snapshot testing](./docs/operations/layout-snapshot-testing.md) · [Troubleshooting](./docs/troubleshooting.md)
-
-### Recipes & examples
-- [Recipes index](./docs/recipes.md) &mdash; [shape-as-container](./docs/recipes/shape-as-container.md) · [shapes](./docs/recipes/shapes.md) · [transforms](./docs/recipes/transforms.md) · [page-backgrounds](./docs/recipes/page-backgrounds.md) · [layered-page-design](./docs/recipes/layered-page-design.md) · [absolute-placement](./docs/recipes/absolute-placement.md) · [tables](./docs/recipes/tables.md) · [themes](./docs/recipes/themes.md) · [streaming](./docs/recipes/streaming.md) · [extending](./docs/recipes/extending.md) · [font-coverage](./docs/font-coverage.md)
-- [Examples gallery](./examples/README.md) &mdash; every runnable example with PDF preview
-
-### Contributing & releases
-- [Contributing](./CONTRIBUTING.md) · [Code of conduct](./CODE_OF_CONDUCT.md) · [Security policy](./SECURITY.md) · [Release process](./docs/contributing/release-process.md)
-- [API stability policy](./docs/api-stability.md) · [Which template system?](./docs/templates/which-template-system.md) · [**Migration to 2.0 (modules)**](./docs/migration/v2.0.0-modules.md) · [older migration notes](./docs/README.md)
+- **Templates** — [layered architecture](./docs/templates/v2-layered/README.md) (CV, cover letter, invoice, proposal on `BrandTheme`) · [which template system?](./docs/templates/which-template-system.md) for callers arriving from a pre-2.0 surface
+- **Recipes** — [the cookbook](./docs/recipes.md): tables, themes, shapes, transforms, page backgrounds, streaming, extending
+- **Operations** — [production rendering](./docs/operations/production-rendering.md) · [layout snapshot testing](./docs/operations/layout-snapshot-testing.md) · [troubleshooting](./docs/troubleshooting.md)
+- **Project** — [Contributing](./CONTRIBUTING.md) · [Roadmap](./ROADMAP.md) · [Support](./SUPPORT.md) · [Security policy](./SECURITY.md) · [API stability](./docs/api-stability.md) · [Migration to 2.0](./docs/migration/v2.0.0-modules.md)
 
 ## Companion projects
 

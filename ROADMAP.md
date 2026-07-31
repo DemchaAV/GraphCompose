@@ -1,18 +1,22 @@
 # Roadmap
 
-GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md). For v1.6 phase-level detail, see [docs/roadmaps/v1.6-roadmap.md](docs/roadmaps/v1.6-roadmap.md).
+GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md).
 
-## Now — 2.1 line
+## Now — after 2.1
 
-In development on `develop`, building toward the **2.1.0** minor. The headline is the **fixed-layout PPTX render backend**: the same `DocumentSession` that prints a PDF now also emits an editable PowerPoint deck — one page per slide, identical geometry by construction, native shapes. It ships as `@Beta` (Experimental) while its API shape settles; the geometry identity with the PDF backend is a design invariant, not subject to change. See the [API stability policy](docs/api-stability.md) and the [backend capability matrix](docs/architecture/backend-capability-matrix.md).
+Consolidation ahead of the next patch: the documentation and contributor surfaces are being brought onto the 2.x vocabulary, the CI guards onto what they actually run, and the committed example assets onto a regeneration path. Open engineering threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) — vector clipping for the PPTX backend, backend-neutral font measurement, and font-face selection are the live ones.
 
-Alongside it, 2.1 hardens pagination: `keepWithNext()` for headings, orphaned-heading fixes ahead of paragraphs, tables and lists, and the layered CV presets wired to the keep-with-next policy.
+## Current stable — 2.1
 
-Full detail lands in [CHANGELOG.md](CHANGELOG.md) under `v2.1.0`.
+The **2.1.0** GA is the current stable line. Its headline is the **fixed-layout PPTX render backend**: the same `DocumentSession` that prints a PDF also emits an editable PowerPoint deck — one page per slide, identical geometry by construction, native shapes. It ships as `@Beta` (Experimental) while its API shape settles; the geometry identity with the PDF backend is a design invariant, not subject to change. See the [API stability policy](docs/api-stability.md) and the [backend capability matrix](docs/architecture/backend-capability-matrix.md).
 
-## Current stable — 2.0
+2.1 also hardened pagination: `keepWithNext()` for headings, orphaned-heading fixes ahead of paragraphs, tables and lists, and the layered CV presets wired to the keep-with-next policy.
 
-The **2.0.0** GA is the current stable line. 2.0 was about **packaging and internal hygiene**, not new authoring API — binary-breaking by design.
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.1.0`.
+
+## Previously — 2.0
+
+The **2.0.0** GA opened the 2.x line. 2.0 was about **packaging and internal hygiene**, not new authoring API — binary-breaking by design.
 
 - **Modular split** &mdash; the single jar is split into `graph-compose-core` plus `graph-compose-render-pdf` / `graph-compose-render-docx` / `graph-compose-render-pptx` / `graph-compose-templates` / `graph-compose-testing`, with render backends discovered through a `ServiceLoader` SPI. `graph-compose` stays a drop-in wrapper (core + render-pdf) so existing PDF callers upgrade unchanged. See the [2.0 modules migration guide](docs/migration/v2.0.0-modules.md) and [ADR 0016](docs/adr/0016-multi-module-packaging.md).
 - **Legacy removal** &mdash; the dead Entity-Component-System execution layer and the deprecated (`forRemoval`) public API are gone; the classic template presets are replaced by the layered `templates.*` stack on `BrandTheme`.

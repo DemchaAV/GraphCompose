@@ -1,8 +1,10 @@
 # Canonical Legacy-Parity Matrix
 
-This matrix tracks practical authoring parity for the canonical session-first API.
-It is a living planning document (last refreshed for v1.5), not a request to
-expose the old low-level authoring model.
+This matrix tracks practical authoring coverage of the canonical session-first
+API, feature by feature. It is a living document, last refreshed for the 2.1
+line. The low-level authoring model it was originally measured against was
+removed in 2.0; the matrix is kept because the per-feature coverage it records
+is what the recipes, capabilities catalogue and troubleshooting guide link to.
 
 Public application code should start with:
 
@@ -33,7 +35,7 @@ reaching into engine internals.
 | Child horizontal alignment | Done via `LayerStack` / `ShapeContainer` | Use `LayerStackBuilder.topLeft(...)` … `bottomRight(...)` (nine alignment shortcuts) or `ShapeContainerBuilder` with the same vocabulary; v1.5 also exposes `position(node, offsetX, offsetY, anchor)` for screen-space nudges from an anchor. |
 | Child vertical alignment | Done via `LayerStack` / `ShapeContainer` | Same nine alignment anchors cover top, centre, bottom edges. |
 | Absolute placement | Rejected for normal authoring | Keep coordinates inside layout and backend internals. Use `LayerStack.position(...)` if you need anchor-plus-offset placement. |
-| Controlled free canvas (`CanvasLayerNode`) | Planned for v1.6 (stretch) | New atomic semantic node accepting children at explicit `(x, y)` coordinates. Separate from `LayerStackNode` and `ShapeContainerNode` so absolute placement stays an opt-in primitive, not a global policy. See [v1.6 roadmap, Phase C](../roadmaps/v1.6-roadmap.md). |
+| Controlled free canvas (`CanvasLayerNode`) | Done | New atomic semantic node accepting children at explicit `(x, y)` coordinates. Separate from `LayerStackNode` and `ShapeContainerNode` so absolute placement stays an opt-in primitive, not a global policy. |
 
 ## Visual Primitives
 
@@ -56,7 +58,7 @@ reaching into engine internals.
 | Paragraph wrapping | Done | Keep wrapping in paragraph layout preparation. |
 | Inline text/link runs | Done | Keep as paragraph-level semantic content. |
 | Lists | Done | Existing marker and indentation APIs remain canonical. |
-| Nested list ergonomics | Planned for v1.6 (committed) | `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new `ListItem` value type and a `ListNode` record extension with back-compat constructor. See [v1.6 roadmap, Phase A](../roadmaps/v1.6-roadmap.md). |
+| Nested list ergonomics | Done | `ListBuilder.addItem(label, Consumer<ListBuilder>)` plus a new `ListItem` value type and a `ListNode` record extension with back-compat constructor. |
 | Auto-size text | Done | Use `ParagraphBuilder.autoSize(maxSize, minSize)` to fit single-line headlines into the resolved inner width. |
 
 ## Images
@@ -80,7 +82,7 @@ reaching into engine internals.
 | Zebra rows | Done | `TableBuilder.zebra(odd, even)` (style or colour overload) alternates row fills. Applied lazily at `build()`; explicit `rowStyle(idx, ...)` always wins. |
 | Totals row | Done | `TableBuilder.totalRow(values)` appends a row with a default bold + subtle-fill style. `totalRow(style, values)` for a custom look. |
 | Repeated header on page break | Done | `TableBuilder.repeatHeader()` repeats the first row at the top of every continuation page; `repeatHeader(int n)` for multi-row headers. |
-| Complex cell composition | Planned for v1.6 (committed) | New `TableCellContent.NodeContent(DocumentNode child)` variant + `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell measurement preserves row pagination behaviour. See [v1.6 roadmap, Phase B](../roadmaps/v1.6-roadmap.md). |
+| Complex cell composition | Done | New `TableCellContent.NodeContent(DocumentNode child)` variant + `DocumentTableCell.node(DocumentNode)` factory. Two-pass cell measurement preserves row pagination behaviour. |
 
 ## PDF Output
 

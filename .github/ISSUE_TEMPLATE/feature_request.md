@@ -16,9 +16,13 @@ labels: enhancement
 ## Proposed API
 
 ```java
-// Sketch the public-API shape you'd like to use.
-// Stick to the canonical surface: GraphCompose.document(...), DocumentSession,
-// document.pageFlow(...), DocumentNode + NodeDefinition, BusinessTheme.
+// Sketch the public-API shape you'd like to use. Stick to the canonical surface:
+//   authoring        GraphCompose.document(...) -> DocumentSession, document.pageFlow(...)
+//   new visual node  DocumentNode (com.demcha.compose.document.node)
+//                    + NodeDefinition (com.demcha.compose.document.layout)
+//   theming          BrandTheme (com.demcha.compose.document.templates.core.theme)
+//   new output kind  FixedLayoutBackendProvider (…document.backend.fixed)
+//                    or SemanticBackend (…document.backend.semantic)
 document.pageFlow().add???(...);
 ```
 
@@ -27,6 +31,9 @@ document.pageFlow().add???(...);
 <!-- Workarounds you've tried, related issues, prior art in iText / JasperReports / openhtmltopdf, etc. -->
 
 ## Would this be a breaking change?
+
+Classify the surface it touches against [docs/api-stability.md](../../docs/api-stability.md)
+(§1 defines the tiers, §4 maps each package onto one).
 
 - [ ] No — additive only (new node, new builder method, new template preset).
 - [ ] Possibly — affects public-record shape, deprecates an existing API, or changes default rendering behaviour.

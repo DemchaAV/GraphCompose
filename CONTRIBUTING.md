@@ -11,10 +11,9 @@ Read these files first:
 - [docs/architecture/package-map.md](./docs/architecture/package-map.md) — what lives in which package, and which of them are internal
 - [docs/operations/benchmarks.md](./docs/operations/benchmarks.md) when you touch benchmark tooling, render hot paths, layout hot paths, or performance-facing docs
 
-[docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
-goes deeper on the engine, but parts of it still describe the execution layer that
-2.0 removed — read `overview.md` and `package-map.md` first and treat the guide as
-background until it is rewritten.
+[docs/contributing/extension-guide.md](./docs/contributing/extension-guide.md)
+walks the extension points end to end — a new semantic node, a fluent setter, a
+render handler, a whole backend — and is the guide to follow when adding one.
 
 They explain the current public surface, the engine/template split, and the recommended extension points.
 
@@ -320,7 +319,7 @@ For text-heavy primitives, also read:
 
 - [TextMeasurementSystem.java](./core/src/main/java/com/demcha/compose/engine/measurement/TextMeasurementSystem.java)
 - [docs/architecture/overview.md](./docs/architecture/overview.md)
-- [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md)
+- [docs/contributing/extension-guide.md](./docs/contributing/extension-guide.md)
 
 If the primitive should be available to application developers,
 expose it through `DocumentDsl` and a public `DocumentNode`, not a
@@ -364,7 +363,7 @@ If a change affects resolved geometry, pagination, or ordering, prefer adding or
 - Keep [README.md](./README.md) aligned with the tested examples.
 - Keep benchmark values clearly dated when they are refreshed.
 - Keep `assets/readme/*` screenshots consistent with the current render outputs.
-- If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture/overview.md](./docs/architecture/overview.md), and [docs/contributing/implementation-guide.md](./docs/contributing/implementation-guide.md) as part of the same change.
+- If you add a new extension point or contribution pattern, update [README.md](./README.md), [docs/architecture/overview.md](./docs/architecture/overview.md), and [docs/contributing/extension-guide.md](./docs/contributing/extension-guide.md) as part of the same change.
 - If you change benchmark flow, benchmark artifact layout, or diff selection rules, update [README.md](./README.md) and [docs/operations/benchmarks.md](./docs/operations/benchmarks.md) in the same change.
 - Visual PDF artifacts are grouped under `target/visual-tests/clean/*` and `target/visual-tests/guides/*` so guide-line renders are easy to find separately from clean outputs.
 

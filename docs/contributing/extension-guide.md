@@ -236,9 +236,8 @@ Detailed ownership lives in
 
 - [`docs/architecture/overview.md`](../architecture/overview.md) — high-level architecture
   and the canonical-vs-engine boundary.
-- [`docs/contributing/implementation-guide.md`](implementation-guide.md) —
-  engine-side ECS extension patterns (component records, system
-  registration, low-level harness builders).
+- [`docs/architecture/package-map.md`](../architecture/package-map.md) —
+  what lives in which package, and which of them are internal.
 - [`docs/architecture/lifecycle.md`](../architecture/lifecycle.md) — the session, layout, and
   render flow end-to-end.
 - [ADR 0001 — Shape-as-container](../adr/0001-shape-as-container.md) —

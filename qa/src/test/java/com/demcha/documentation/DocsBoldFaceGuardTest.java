@@ -30,6 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * simply the wrong weight. Nothing else in the suite looks at it, which is why the
  * defect survived in the getting-started guide and four recipes.</p>
  *
+ * <p>So published snippets name the <em>family</em>, and the alias is refused outright
+ * rather than accepted when paired with a decoration. Requiring the pair would still
+ * admit {@code HELVETICA_BOLD} with {@code decoration(ITALIC)} — not bold, whatever the
+ * constant says — and would keep publishing a form that reads as the weight set twice.
+ * A rule with no exceptions is also a rule with nothing to get subtly wrong.</p>
+ *
  * <p>Scans published markdown only. Example sources are excluded deliberately: their
  * rendered output is pinned by layout snapshots and committed previews, so a weight
  * change there is caught by a different gate, and sweeping them would churn every
@@ -69,7 +75,7 @@ class DocsBoldFaceGuardTest {
             "docs/roadmaps/", "docs/templates/v1-classic/");
 
     @Test
-    void publishedSnippetsPairAFaceAliasWithADecoration() throws IOException {
+    void publishedSnippetsNameAFontFamilyRatherThanAFaceAlias() throws IOException {
         Set<String> violations = new TreeSet<>();
         int scannedSites = 0;
 
@@ -85,10 +91,8 @@ class DocsBoldFaceGuardTest {
             }
             Matcher alias = FACE_ALIAS.matcher(source);
             while (alias.find()) {
-                if (!hasDecorationInSameChain(source, alias.end())) {
-                    violations.add(relative + " uses FontName." + alias.group(1)
-                            + " with no decoration(...) — renders regular");
-                }
+                violations.add(relative + " selects FontName." + alias.group(1)
+                        + " — name the family and set the decoration");
             }
         }
 
@@ -98,28 +102,12 @@ class DocsBoldFaceGuardTest {
                         + "font selections of any kind means the scan is not reading the docs.")
                 .isPositive();
         assertThat(violations)
-                .describedAs("the font name selects the family and the decoration selects the face "
-                        + "within it, so a *_BOLD constant without decoration(...) renders regular. "
-                        + "Name the family and set the decoration.")
+                .describedAs("a *_BOLD / *_ITALIC / *_OBLIQUE constant is an alias of its base "
+                        + "family, not a face: FontLibrary resolves it back and the face comes "
+                        + "from decoration(...). Pairing the alias with a decoration works but "
+                        + "reads as the weight set twice, and pairing it with a different one "
+                        + "silently contradicts the name. Published snippets name the family.")
                 .isEmpty();
-    }
-
-    /**
-     * Whether a {@code decoration(...)} call belongs to the same builder chain as the
-     * {@code fontName(...)} at {@code from}. The chain ends at its {@code build()}; a
-     * decoration set after that belongs to a different style.
-     */
-    private static boolean hasDecorationInSameChain(String source, int from) {
-        int chainEnd = source.indexOf(".build()", from);
-        int windowEnd = chainEnd < 0 ? source.length() : chainEnd;
-        String chainTail = source.substring(from, windowEnd);
-        if (chainTail.contains("decoration(")) {
-            return true;
-        }
-        // The decoration may precede the font name in the same chain, so look back to
-        // where this builder started.
-        int chainStart = source.lastIndexOf("DocumentTextStyle.builder()", from);
-        return chainStart >= 0 && source.substring(chainStart, from).contains("decoration(");
     }
 
     private static List<Path> scannedDocuments() throws IOException {

@@ -45,8 +45,28 @@ class CanonicalSurfaceGuardTest {
             "WeeklyScheduleTemplateV1",
             "EntityBounds",
             "ParentContainerUpdater",
+            "ParentComponent",
+            "Breakable",
+            "hasRender(",
             "CvSpec",
             "CvBuilder");
+
+    /**
+     * Types a contributor must not be pointed at when told how to build against the
+     * library, <em>even though the name still resolves somewhere in this repository</em>.
+     *
+     * <p>{@code BusinessTheme} is the case that motivated the list: 2.0 removed it from
+     * the published surface, but the examples keep a local helper of the same name, so a
+     * repository-wide existence check cannot tell "this type is gone" from "this type is
+     * an example's private business". The distinction that matters to a reader is
+     * whether the type ships in a Maven artifact, and for API guidance it does not.</p>
+     *
+     * <p>Scanned over API guidance only — issue templates, the contributing guide, the
+     * template docs — and deliberately not over {@code examples/README.md}, which
+     * documents that local helper correctly.</p>
+     */
+    private static final List<String> FORBIDDEN_IN_API_GUIDANCE = List.of(
+            "BusinessTheme");
 
     /**
      * Documents whose job is to record history. A migration guide, an ADR, an archived
@@ -199,6 +219,47 @@ class CanonicalSurfaceGuardTest {
     }
 
     /**
+     * API guidance must not name a type that no longer ships, even when the name still
+     * resolves inside this repository.
+     *
+     * <p>Separate from the retired-token scan because the question is different: not
+     * "does this identifier exist anywhere" but "can a reader of a published artifact
+     * use it". {@code BusinessTheme} answers yes to the first and no to the second,
+     * which is exactly how an issue template came to offer it as the theming entry
+     * point months after 2.0 removed it.</p>
+     */
+    @Test
+    void apiGuidanceShouldNotOfferTypesThatNoLongerShip() throws IOException {
+        List<Path> roots = List.of(
+                PROJECT_ROOT.resolve("README.md"),
+                PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                PROJECT_ROOT.resolve("docs/templates"),
+                PROJECT_ROOT.resolve("docs/getting-started.md"),
+                PROJECT_ROOT.resolve("docs/first-document.md"),
+                PROJECT_ROOT.resolve(".github"));
+
+        Set<String> violations = new TreeSet<>();
+        for (Path root : roots) {
+            for (Path doc : markdownUnder(root)) {
+                String rel = relative(doc);
+                if (isHistoricalRecord(rel) || PUBLIC_MARKDOWN_ALLOWLIST.contains(rel)) {
+                    continue;
+                }
+                String source = Files.readString(doc);
+                FORBIDDEN_IN_API_GUIDANCE.stream()
+                        .filter(source::contains)
+                        .forEach(token -> violations.add(rel + " offers " + token));
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("these documents tell a reader to build against a type that no "
+                        + "longer ships in any published artifact. A name that survives as an "
+                        + "examples-local helper is still unusable by a consumer.")
+                .isEmpty();
+    }
+
+    /**
      * Every relative link in the public documentation resolves on disk.
      *
      * <p>Needs no token list and cannot go stale: it reads what the documents actually
@@ -214,7 +275,11 @@ class CanonicalSurfaceGuardTest {
                 PROJECT_ROOT.resolve("SUPPORT.md"),
                 PROJECT_ROOT.resolve("ROADMAP.md"),
                 PROJECT_ROOT.resolve("examples/README.md"),
-                PROJECT_ROOT.resolve("docs"));
+                PROJECT_ROOT.resolve("docs"),
+                // Issue and pull-request templates carry relative links out of
+                // .github/ISSUE_TEMPLATE/, two levels deep — the shape most likely
+                // to break silently when a target moves.
+                PROJECT_ROOT.resolve(".github"));
 
         Pattern link = Pattern.compile("\\]\\(([^)\\s]+)\\)");
         Set<String> broken = new TreeSet<>();

@@ -1,3 +1,17 @@
+> **Archived.** This guide describes the Entity-Component-System execution layer
+> that 2.0 removed. Its model — attaching components to an entity, render markers,
+> a container-growth marker, `Breakable`, `ParentComponent`, `entity.hasRender()` —
+> no longer exists in any published module, and following it produces code that does
+> not compile.
+>
+> For the pipeline that ships today — `DocumentNode` → `NodeDefinition` →
+> `PreparedNode` → `PlacedFragment` → a fragment handler per fixed-layout backend —
+> read [extension-guide.md](../contributing/extension-guide.md) and
+> [package-map.md](../architecture/package-map.md).
+>
+> Kept because the reasoning about pagination and measurement invariants still
+> explains why parts of the engine look the way they do.
+
 # Implementation Guide
 
 This guide explains how to add new objects and engine extensions in GraphCompose without fighting the current architecture.

@@ -19,7 +19,7 @@ back here.
 | **Designer / author** wanting a custom visual style for CVs | [Templates v2 (layered) — authoring presets](templates/v2-layered/authoring-presets.md) |
 | **Maintainer of a pre-2.0 caller** (classic `*Spec` + builder templates, removed in 2.0) | [Which template system? — migration map](templates/which-template-system.md) |
 | **Contributor adding a new template family** to the library | [Templates v2 (layered) — contributor guide](templates/v2-layered/contributor-guide.md) |
-| **Contributor extending the engine** (new node type, new backend handler) | [Extension guide](contributing/extension-guide.md) → [Implementation guide](contributing/implementation-guide.md) |
+| **Contributor extending the engine** (new node type, new backend handler) | [Extension guide](contributing/extension-guide.md) → [Package map](architecture/package-map.md) |
 | **Operator** running GraphCompose in production | [Production rendering](operations/production-rendering.md) → [Performance](operations/performance.md) → [Logging](operations/logging.md) |
 
 ---
@@ -59,7 +59,7 @@ back here.
 
 ### Contributing
 - **[contributing/extension-guide.md](contributing/extension-guide.md)** — add a new node type, backend handler, or theme primitive.
-- **[contributing/implementation-guide.md](contributing/implementation-guide.md)** — internal engine notes for contributors hacking on layout / measurement / pagination.
+- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered, for contributors working on layout / measurement.
 - **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
 
 ### Migrations & roadmap

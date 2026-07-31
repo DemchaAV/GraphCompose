@@ -22,6 +22,13 @@ follow semantic versioning; release dates are ISO 8601.
 - **`graph-compose-render-pptx` declares PDFBox.** It compiles against
   `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
   transitively; the resolved version is unchanged.
+- **The contributor guide stops teaching a removed architecture.** The engine
+  implementation guide still walked a new object through attaching components to an
+  entity, adding a render marker and a container-growth marker, and implementing
+  `Breakable` — a model 2.0 removed, and one the current contributing guide
+  contradicts. It is archived, with a banner naming what replaced it; the extension
+  guide and the package map are now the route for anyone adding a node, a handler or
+  a backend.
 - **Documentation drift fails the build.** Three checks now cover what four
   releases of hand-fixing kept re-breaking: a relative link in the public docs
   must resolve, a contributor-facing document must not name a type 2.0 removed,

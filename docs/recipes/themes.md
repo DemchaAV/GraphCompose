@@ -99,13 +99,16 @@ paper colour rather than pure white:
 
 ```java
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
 DocumentColor cream = DocumentColor.rgb(252, 248, 240);
 DocumentColor panel = DocumentColor.rgb(244, 238, 228);
 DocumentTextStyle h1 = DocumentTextStyle.builder()
-        .fontName(FontName.HELVETICA_BOLD).size(28)
+        // The name picks the family, the decoration picks the face within it.
+        .fontName(FontName.HELVETICA).size(28)
+        .decoration(DocumentTextDecoration.BOLD)
         .color(DocumentColor.rgb(20, 60, 75)).build();
 
 try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))

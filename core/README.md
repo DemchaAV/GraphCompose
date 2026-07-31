@@ -19,20 +19,22 @@ it, with **no PDFBox, POI, or template code** on its dependency tree.
 Most applications should depend on `graph-compose` (core + the PDF backend, the 1.x
 drop-in) or `graph-compose-bundle` (batteries included) instead.
 
-## Usage
+## Smallest complete example
 
-Author against the canonical surface; a render backend on the classpath is discovered
-through `ServiceLoader` at render time:
+Author against the canonical surface. Core cannot open a session on its own: `create()`
+resolves a `FontMetricsProvider` through `ServiceLoader`, so a core-only classpath throws
+`MissingBackendException` there — before any render call — and the message names the
+artifact to add. With `graph-compose-render-pdf` present the whole path works:
 
 ```java
-try (var doc = GraphCompose.document(out).create()) {
+Path out = Path.of("hello.pdf");
+try (DocumentSession doc = GraphCompose.document(out).create()) {
     doc.pageFlow().addParagraph("Hello").build();
-} // with graph-compose-render-pdf present, buildPdf() / toPdfBytes() / toImages() work
+    doc.buildPdf();                 // writes hello.pdf
+}
 ```
 
-A core-only classpath throws `MissingBackendException` at `create()` — before any render
-call, since the session resolves its font metrics as it opens — and the message names the
-artifact to add.
+`toPdfBytes()` and `toImages(int dpi)` are the in-memory counterparts.
 
 ## Install
 

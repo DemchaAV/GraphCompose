@@ -47,12 +47,14 @@
 
 The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides. Both consume the same resolved layout graph, so page and slide frames and every positioned element share the same geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 69 native shapes; only its clip-masked logo art is a picture). Glyphs are rasterised by the viewer, so the exact text rendering depends on the fonts installed on the viewing machine; see the [backend capability matrix](docs/architecture/backend-capability-matrix.md) for per-feature fidelity.
 
+PowerPoint output needs `graph-compose-render-pptx` on the classpath in addition to `graph-compose`; without it `buildPptx` fails with a `MissingBackendException` naming the artifact. See [Which artifact?](#installation) below.
+
 ```java
 Path deck = Path.of("twin-output.pptx");
 try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
         .pageSize(DocumentPageSize.SLIDE_16_9)
         .create()) {
-    compose(doc);        // one description
+    // … describe the page (see Hello world below)
     doc.buildPdf();      // print-ready PDF
     doc.buildPptx(deck); // editable PowerPoint
 }
@@ -119,8 +121,9 @@ engine plus the `graph-compose-render-pdf` backend, so existing 1.x callers upgr
 
 Every 2.0 coordinate shares the `graph-compose` version (the fonts and emoji companions
 keep their own lines). A bare `graph-compose-core` renders nothing until a backend is on
-the classpath — asking it to build a PDF throws `MissingBackendException`, which names the
-artifact to add (`graph-compose-render-pdf`, already included in `graph-compose`).
+the classpath — opening a session (`create()`) throws `MissingBackendException`, which
+names the artifact to add (`graph-compose-render-pdf`, already included in
+`graph-compose`).
 
 </details>
 
@@ -172,7 +175,7 @@ class Hello {
         DocumentColor panel = DocumentColor.rgb(244, 238, 228);
         DocumentColor accent = DocumentColor.rgb(196, 153, 76);
         DocumentTextStyle h1 = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD).size(28)
+                .fontName(FontName.HELVETICA).size(28)
                 .decoration(DocumentTextDecoration.BOLD)
                 .color(DocumentColor.rgb(20, 60, 75)).build();
         DocumentTextStyle body = DocumentTextStyle.builder()
@@ -200,6 +203,12 @@ class Hello {
 ```
 
 For a Spring Boot `@RestController` streaming the PDF straight to the response, see [`HttpStreamingExample`](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java).
+
+### Next steps
+
+- [**Your first document**](./docs/first-document.md) &mdash; the five-minute path from an empty project to a rendered PDF.
+- [**Getting started**](./docs/getting-started.md) &mdash; DSL or templates, and how to choose; the first-render walk-through.
+- [**Examples gallery**](./examples/README.md) &mdash; every runnable example, with a PDF you can preview without building anything.
 
 ## What's new in 2.0
 
@@ -325,13 +334,13 @@ Full detail: [architecture overview](./docs/architecture/overview.md) &middot; [
 
 The repository is a Maven multi-module reactor: the root `pom.xml` is the build aggregator, so `./mvnw clean verify` at the root builds and tests **every** module (scope to one with `-pl :<artifactId>`; the lean engine lives in `core/`).
 
-- **Published to Maven Central**
-  - `graph-compose-core` (`core/`) &mdash; the lean document engine
-  - `graph-compose-render-pdf` · `-render-docx` · `-render-pptx` &mdash; render backends
-  - `graph-compose-templates` &mdash; built-in CV / cover-letter / invoice / proposal presets
-  - `graph-compose-testing` &mdash; snapshot &amp; visual-regression test helpers
-  - `graph-compose` &mdash; the drop-in wrapper (core + PDF); `graph-compose-bundle` &mdash; batteries-included (adds templates + fonts + emoji)
-- **Companion artifacts** (independent version lines) &mdash; `graph-compose-fonts`, `graph-compose-emoji`
+- **Published to Maven Central** &mdash; each links to its own README (what it is, when to depend on it, smallest complete example)
+  - [`graph-compose-core`](./core/README.md) (`core/`) &mdash; the lean document engine
+  - [`graph-compose-render-pdf`](./render-pdf/README.md) · [`-render-docx`](./render-docx/README.md) · [`-render-pptx`](./render-pptx/README.md) &mdash; render backends
+  - [`graph-compose-templates`](./templates/README.md) &mdash; built-in CV / cover-letter / invoice / proposal presets
+  - [`graph-compose-testing`](./testing/README.md) &mdash; snapshot &amp; visual-regression test helpers
+  - [`graph-compose`](./wrapper/README.md) (`wrapper/`) &mdash; the drop-in wrapper (core + PDF); [`graph-compose-bundle`](./bundle/README.md) &mdash; batteries-included (adds templates + fonts + emoji)
+- **Companion artifacts** (independent version lines) &mdash; [`graph-compose-fonts`](./fonts/README.md), [`graph-compose-emoji`](./emoji/README.md)
 - **Development only** (never published) &mdash; `qa` (architecture guards + visual regression), `coverage` (aggregate JaCoCo), `examples`, `benchmarks`
 
 See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full build / verify flow.

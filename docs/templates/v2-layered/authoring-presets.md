@@ -293,7 +293,8 @@ widget takes a colour parameter).
 ```java
 private void renderHeader(SectionBuilder section, CvIdentity identity) {
     DocumentTextStyle nameStyle = DocumentTextStyle.builder()
-        .fontName(FontName.HELVETICA_BOLD)
+        .fontName(FontName.HELVETICA)
+        .decoration(DocumentTextDecoration.BOLD)   // the name picks the family, this picks the face
         .size(theme.typography().sizeHeadline())
         .color(NAME_COLOR)
         .build();

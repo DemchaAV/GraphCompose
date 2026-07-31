@@ -28,13 +28,17 @@ pattern for status keywords ("Paid", "Overdue"). For anything beyond
 those, `style(text, DocumentTextStyle)` takes a fully explicit style:
 
 ```java
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
 section.addRich(rich -> rich
         .plain("Code: ")
         .style("RT-2026-04", DocumentTextStyle.builder()
-                .fontName(FontName.COURIER_BOLD)
+                // Fully explicit means both halves: the name selects the
+                // family, the decoration selects the face within it.
+                .fontName(FontName.COURIER)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(10)
                 .build()));
 ```

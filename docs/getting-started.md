@@ -40,6 +40,7 @@ values.
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
@@ -49,7 +50,10 @@ DocumentColor cream = DocumentColor.rgb(252, 248, 240);   // paper
 DocumentColor panel = DocumentColor.rgb(244, 238, 228);   // soft panel
 DocumentColor accent = DocumentColor.rgb(196, 153, 76);   // gold accent
 DocumentTextStyle h1 = DocumentTextStyle.builder()
-        .fontName(FontName.HELVETICA_BOLD).size(28)
+        // The name picks the family, the decoration picks the face within
+        // it. Without the decoration this heading renders regular Helvetica.
+        .fontName(FontName.HELVETICA).size(28)
+        .decoration(DocumentTextDecoration.BOLD)
         .color(DocumentColor.rgb(20, 60, 75)).build();
 
 try (DocumentSession document = GraphCompose.document(Path.of("output.pdf"))

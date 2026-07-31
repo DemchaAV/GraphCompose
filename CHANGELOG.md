@@ -36,6 +36,45 @@ follow semantic versioning; release dates are ISO 8601.
   taller than a page still anchors by its first line, because its keep-together
   request is ignored anyway.
 
+### Documentation
+
+- **Documented headings render bold, and say why.** Six snippets across the
+  getting-started guide, the root README and the theme, timeline, rich-text and
+  preset-authoring recipes set `fontName(FontName.HELVETICA_BOLD)` without a
+  decoration. The name selects the family and the decoration selects the face
+  within it, so each of those headings rendered regular. The timeline snippet was
+  the sharpest: it presents itself as the default title style, while
+  `TimelineBuilder` does set `BOLD` — a reader copying it to change only the size
+  lost a working default. The snippets now name the family they mean
+  (`FontName.HELVETICA`, `FontName.COURIER`) rather than a `*_BOLD` constant that
+  `FontLibrary` resolves to that same family, so the pair reads as one choice
+  each instead of `BOLD` twice.
+- **Module usage examples reach an artifact.** The `core`, `render-pdf`,
+  `templates`, `testing` and `emoji` READMEs opened a session, built a document
+  graph and closed it without rendering anything. Each now shows the smallest
+  complete path, and the `templates` and `testing` READMEs state that neither
+  artifact can open a session without `graph-compose-render-pdf`.
+- **`MissingBackendException` is located where it fires.** `core/README.md`,
+  `render-pdf/README.md` and the root README said a missing backend surfaces when
+  you ask for a PDF; it surfaces at `create()`, because opening a session resolves
+  the font metrics. `core/README.md` said both things eight lines apart. The
+  exception's own Javadoc described a single lookup at the output call; it now
+  separates the two that exist — the measurement provider resolved when the
+  session opens, and the format backend resolved at the output call — and records
+  that the explicit `render` / `export` paths skip only the second.
+- **`toImages()` takes a dpi.** Three places advertised a no-argument overload
+  that does not exist; the signature is `toImages(int dpi)`.
+- **The PowerPoint snippet names the artifact it needs.** The first code block in
+  the root README calls `buildPptx` on the classpath the README's own install
+  snippet produces, where it fails.
+- **Every published module README is reachable** from the module list in the root
+  README; eight of the ten had no inbound link from anywhere.
+- **A gallery entry for a deleted example is gone.** `examples/README.md`
+  documented rethemeing through `InvoiceTemplateV2`, a type removed in 2.0, linked
+  a source file that no longer exists, and carried a committed preview for it. The
+  single-example run command also named the wrong class, so it could not be
+  copy-pasted.
+
 ## v2.1.0 — 2026-07-26
 
 ### Highlights

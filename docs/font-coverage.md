@@ -4,6 +4,28 @@ Not every character can be drawn by every font. This page explains what the
 built-in PDF fonts can encode, why an unexpected `?` sometimes appears, and the
 three ways to render the symbol you actually wanted.
 
+## The name picks the family, the decoration picks the face
+
+A style names a family and a decoration, and those are two different choices:
+
+```java
+DocumentTextStyle.builder()
+        .fontName(FontName.HELVETICA)                    // family
+        .decoration(DocumentTextDecoration.BOLD)         // face within it
+        .size(28)
+        .build();
+```
+
+The standard-14 face constants — `HELVETICA_BOLD`, `TIMES_ITALIC`,
+`COURIER_BOLD_OBLIQUE` and the rest — are **aliases of their family**, not faces.
+`FontLibrary` rewrites each one to its base family before any lookup, so naming a
+face contributes nothing and the decoration alone decides the glyph program. A
+style that names `HELVETICA_BOLD` and sets no decoration renders regular
+Helvetica, measured with regular metrics; the text lays out and draws, so nothing
+announces it. The library logs one warning per such name to make it visible.
+
+Name the family, set the decoration.
+
 ## WinAnsi and the base-14 fonts
 
 The built-in fonts — `HELVETICA`, `TIMES`, `COURIER` and their bold / italic

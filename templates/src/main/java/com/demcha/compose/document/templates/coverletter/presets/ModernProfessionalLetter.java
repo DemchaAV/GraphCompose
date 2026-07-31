@@ -102,7 +102,7 @@ public final class ModernProfessionalLetter {
                 Objects.requireNonNull(document, "document");
                 Objects.requireNonNull(doc, "doc");
 
-                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
                 DocumentTextStyle contactBodyStyle = TextStyles.of(FontName.HELVETICA,

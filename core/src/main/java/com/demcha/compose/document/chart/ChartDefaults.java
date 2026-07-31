@@ -3,6 +3,7 @@ package com.demcha.compose.document.chart;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
@@ -98,7 +99,8 @@ public final class ChartDefaults {
      * Default donut-centre KPI text style.
      */
     public static final DocumentTextStyle DONUT_CENTER_TEXT_STYLE = DocumentTextStyle.builder()
-            .fontName(FontName.HELVETICA_BOLD)
+            .fontName(FontName.HELVETICA)
+            .decoration(DocumentTextDecoration.BOLD)
             .size(13)
             .color(DocumentColor.rgb(45, 45, 45))
             .build();

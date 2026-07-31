@@ -110,7 +110,7 @@ public final class EditorialBlueLetter {
             }
 
             private Masthead.Style mastheadStyle() {
-                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
                 DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,

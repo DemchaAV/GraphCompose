@@ -166,9 +166,9 @@ public final class EditorialBlue {
             }
 
             private void renderExperienceEntry(SectionBuilder section, CvEntry entry) {
-                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,
                         11.0, DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA,
                         11.0, DocumentTextDecoration.BOLD, theme.palette().rule());
                 DocumentTextStyle subtitleStyle = TextStyles.of(FontName.HELVETICA,
                         9.4, DocumentTextDecoration.ITALIC, theme.palette().ink());
@@ -180,9 +180,9 @@ public final class EditorialBlue {
             }
 
             private void renderEducationEntry(SectionBuilder section, CvEntry entry) {
-                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,
                         10.6, DocumentTextDecoration.BOLD, NAME_COLOR);
-                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle dateStyle = TextStyles.of(FontName.HELVETICA,
                         10.0, DocumentTextDecoration.BOLD, theme.palette().rule());
                 DocumentTextStyle subtitleStyle = TextStyles.of(FontName.HELVETICA,
                         9.2, DocumentTextDecoration.ITALIC, theme.palette().ink());
@@ -210,7 +210,7 @@ public final class EditorialBlue {
             }
 
             private void renderProject(SectionBuilder section, CvRow row) {
-                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,
                         10.6, DocumentTextDecoration.BOLD, NAME_COLOR);
                 DocumentTextStyle stackStyle = TextStyles.of(FontName.HELVETICA,
                         9.3, DocumentTextDecoration.ITALIC, theme.palette().rule());
@@ -220,7 +220,7 @@ public final class EditorialBlue {
             }
 
             private void renderKeyValue(SectionBuilder section, CvRow row) {
-                DocumentTextStyle keyStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle keyStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
                 LabelValueRenderer.render(section, row.label(), row.body(),
@@ -300,14 +300,14 @@ public final class EditorialBlue {
             }
 
             private DocumentTextStyle sectionTitleStyle() {
-                return TextStyles.of(FontName.HELVETICA_BOLD,
+                return TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
                         theme.palette().rule());
             }
 
             private Masthead.Style mastheadStyle() {
-                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA_BOLD,
+                DocumentTextStyle nameStyle = TextStyles.of(FontName.HELVETICA,
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.BOLD, NAME_COLOR);
                 DocumentTextStyle titleStyle = TextStyles.of(FontName.HELVETICA,

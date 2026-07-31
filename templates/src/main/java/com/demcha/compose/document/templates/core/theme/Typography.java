@@ -75,7 +75,7 @@ public record Typography(
      */
     public static Typography modernProfessional() {
         return new Typography(
-                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                FontName.HELVETICA, FontName.HELVETICA,
                 28.0,    // headline (display name)
                 9.0,     // contact
                 17.4,    // banner (used as section title here)
@@ -199,7 +199,7 @@ public record Typography(
      */
     public static Typography editorialBlue() {
         return new Typography(
-                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                FontName.HELVETICA, FontName.HELVETICA,
                 22.0,    // headline
                 9.0,     // contact
                 11.0,    // section title
@@ -372,7 +372,7 @@ public record Typography(
      */
     public static Typography invoiceModern() {
         return new Typography(
-                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                FontName.HELVETICA, FontName.HELVETICA,
                 28.0,    // headline (invoice title — modern h1)
                 10.0,    // contact (unused by invoice; kept for the record shape)
                 11.0,    // banner (FROM / BILL TO / table header labels — modern body-bold)
@@ -394,7 +394,7 @@ public record Typography(
      */
     public static Typography proposalModern() {
         return new Typography(
-                FontName.HELVETICA_BOLD, FontName.HELVETICA,
+                FontName.HELVETICA, FontName.HELVETICA,
                 28.0,    // headline (proposal title — modern h1)
                 10.0,    // contact (unused by proposal)
                 17.0,    // banner (section headings — modern h2)

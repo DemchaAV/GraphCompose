@@ -71,7 +71,7 @@ public final class TimelineMarker {
     public static TimelineMarker numbered(int number, double size,
                                           DocumentColor fill, DocumentColor textColor) {
         DocumentTextStyle label = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .decoration(DocumentTextDecoration.BOLD)
                 .size(Math.max(6.0, size * 0.5))
                 .color(textColor == null ? DocumentColor.WHITE : textColor)

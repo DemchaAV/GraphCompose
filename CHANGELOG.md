@@ -64,6 +64,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **The donut-centre KPI renders the weight it declares.** A style names a font
+  *family* and a *decoration*, and the decoration is what picks the face within the
+  family — the standard-14 face constants (`HELVETICA_BOLD`, `TIMES_ITALIC`, …) are
+  aliases of their family and carry no weight of their own. The chart default named
+  the bold face and set no decoration, so it rendered regular, measured with regular
+  metrics, in every donut chart that did not override the centre style. Nothing
+  announced it: the text laid out and drew. `FontLibrary` now logs one warning per
+  face constant it rewrites, the sixteen places in the library that named a face
+  redundantly name their family instead, and `FontFaceResolutionTest` pins the rule
+  against the resolved glyph program. Three rendered documents change — the engine
+  deck, the feature catalogue and the chart showcase. ([#451](https://github.com/DemchaAV/GraphCompose/issues/451))
+
+
 - **A heading no longer strands above a block that was asked to stay whole.**
   `keepWithNext()` decides by asking whether the heading plus the *first line* of
   the next block fits, but a `keepTogether()` block has no first line to break

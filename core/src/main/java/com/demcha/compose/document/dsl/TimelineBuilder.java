@@ -66,7 +66,7 @@ public final class TimelineBuilder {
 
     private static DocumentTextStyle defaultTitleStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(DEFAULT_INK)

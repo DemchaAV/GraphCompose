@@ -18,7 +18,7 @@ import com.demcha.compose.font.FontName;
 public final class HeadingBarStyle {
 
     private static final DocumentTextStyle DEFAULT_TEXT = DocumentTextStyle.builder()
-            .fontName(FontName.HELVETICA_BOLD)
+            .fontName(FontName.HELVETICA)
             .decoration(DocumentTextDecoration.BOLD)
             .size(11)
             .build();

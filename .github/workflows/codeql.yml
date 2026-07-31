@@ -50,10 +50,14 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-and-quality
 
-      - name: Build (library module only)
-        # `-pl :graph-compose-core` scopes the analysis to the published artifact and matches
-        # the canonical verify gate. Examples/benchmarks are intentionally
-        # excluded — they ship no production code.
+      - name: Build (engine module)
+        # Scoped to the engine module alone: no `-am`, so nothing but core is built
+        # and nothing but core reaches the extractor. Since the 2.0 split
+        # graph-compose-core is one of several artifacts published to Maven Central,
+        # which makes this narrower than both the publish train and the canonical
+        # verify gate in ci.yml — the render backends and templates ship unscanned.
+        # Widening it to the code-bearing published modules is tracked for 2.2,
+        # together with a triage pass on the standing alert set.
         run: ./mvnw -B -ntp -DskipTests -pl :graph-compose-core package
 
       - name: Perform CodeQL analysis

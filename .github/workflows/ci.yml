@@ -45,16 +45,24 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Run guards
+      - name: Run core architecture and documentation guards
+        # Every name here must live in graph-compose-core: the run is scoped to
+        # that module, and Surefire only fails on an empty selection — a name
+        # that matches nothing while its siblings match is dropped in silence.
+        # CiGuardListGuardTest asserts each name resolves under core/src/test.
+        # Guards owned by other modules (PdfRenderInterfaceGuardTest in
+        # render-pdf, DocumentationExamplesTest and DocumentationSnippetCompileTest
+        # in qa) run in build-and-test below, which now also covers docs-only PRs.
         run: |
           ./mvnw -B -ntp clean \
-            "-Dtest=EnginePdfBoundaryTest,CanonicalTemplateComposerPdfBoundaryTest,PdfRenderInterfaceGuardTest,DocumentationCoverageTest,DocumentationExamplesTest,CanonicalSurfaceGuardTest,TemplateComposeApiTest,VersionConsistencyGuardTest" \
+            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest" \
             test -pl :graph-compose-core
 
   changes:
     # Path-based change detection for selective CI on pull requests. Emits the
     # reverse-dependency flags the heavy jobs gate on: `code` (any build input),
-    # `core` (the root graph-compose-core module — drives japicmp), `perf`
+    # `docs` (markdown the guard suites read and compile), `core` (the root
+    # graph-compose-core module — drives japicmp), `perf`
     # (modules the smoke benchmark exercises), and `jvm` (published library modules
     # + toolchain — drives the JDK matrix width). Pushes/dispatch bypass these gates.
     name: Detect changed paths
@@ -62,6 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
       core: ${{ steps.filter.outputs.core }}
       perf: ${{ steps.filter.outputs.perf }}
       jvm: ${{ steps.filter.outputs.jvm }}
@@ -86,6 +95,16 @@ jobs:
               - 'mvnw'
               - 'mvnw.cmd'
               - '.github/workflows/ci.yml'
+            # Markdown is a build input even though it compiles nothing:
+            # DocumentationSnippetCompileTest compiles the literal java fences in
+            # docs/, and the guard suites read README / CONTRIBUTING / docs. Kept
+            # separate from `code` so a docs-only change runs the reactor (which
+            # carries those guards) without also running examples-generation,
+            # which installs eight modules and renders the full example catalogue
+            # to prove nothing about prose. Deliberately absent from `jvm` too, so
+            # a docs-only PR uses the baseline JDK alone rather than the matrix.
+            docs:
+              - '**/*.md'
             core:
               - 'core/src/**'
               - 'core/pom.xml'
@@ -119,9 +138,12 @@ jobs:
   build-and-test:
     name: Build and run tests (JDK ${{ matrix.java }})
     # Selective CI: on a pull request, skip the heavy reactor build + JDK matrix
-    # when only docs / non-build files changed (`code` is false). Pushes to the
-    # integration branches and manual dispatch always run the full gate.
-    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true')
+    # when nothing this reactor slice can check has changed. Markdown counts —
+    # this slice carries the qa guards that compile the published snippets, so a
+    # docs-only PR runs here (on the baseline JDK alone, since `jvm` stays false)
+    # rather than merging without any compiler having read the change. Pushes to
+    # the integration branches and manual dispatch always run the full gate.
+    if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true')
     needs: [architecture-and-documentation-guards, changes]
     runs-on: ubuntu-latest
     strategy:
@@ -158,7 +180,9 @@ jobs:
         # only via the examples job), the extracted graph-compose-testing module, the
         # graph-compose-qa cross-module suites (which need the testing module + the
         # engine test-jar on the classpath and so cannot live in the engine's own test
-        # scope), and the graph-compose-coverage aggregator (JaCoCo over core +
+        # scope — this is where DocumentationSnippetCompileTest, the guard that
+        # compiles the literal markdown fences in docs/, and DocumentationExamplesTest
+        # actually run), and the graph-compose-coverage aggregator (JaCoCo over core +
         # render-pdf + templates, counting the qa exec, now with a NON-REGRESSION
         # RATCHET — this step fails if aggregate INSTRUCTION or BRANCH coverage drops
         # below the floor in coverage/pom.xml). -am pulls the fonts / emoji upstreams;
@@ -189,7 +213,9 @@ jobs:
 
   examples-generation:
     name: Examples Generation Smoke Test
-    # Follows build-and-test: skipped for a docs-only PR, runs otherwise.
+    # Gated on `code` alone, deliberately narrower than build-and-test above:
+    # rendering the example catalogue costs eight module installs and proves
+    # nothing about a markdown change, so a docs-only PR skips it.
     if: github.event_name != 'schedule' && (github.event_name != 'pull_request' || needs.changes.outputs.code == 'true')
     needs: [build-and-test, changes]
     runs-on: ubuntu-latest
@@ -214,9 +240,10 @@ jobs:
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
 
       - name: Install graph-compose-emoji (consumed by the examples module)
-        # The emoji example renders colour emoji from the bundled Noto SVG set;
-        # like graph-compose-fonts it is a standalone artifact not on Maven
-        # Central, so install it into the local repo before building examples.
+        # The emoji example renders colour emoji from the bundled Noto SVG set.
+        # Like graph-compose-fonts it carries its own version line, so the reactor
+        # slice never builds it; installing from source pins the examples to this
+        # tree's asset set rather than the cached jar at the same coordinate.
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
       - name: Install root artifact (graph-compose-core)
@@ -235,22 +262,23 @@ jobs:
         run: ./mvnw -B -ntp -f wrapper/pom.xml -DskipTests install
 
       - name: Install graph-compose-render-docx (consumed by the examples module)
-        # The DOCX export example depends on the render-docx backend module, which
-        # is not on Central. Install it after the engine (its graph-compose
-        # dependency) so the examples build resolves it.
+        # The DOCX export example depends on the render-docx backend module at
+        # ${graphcompose.version} — the reactor's -SNAPSHOT, which no repository
+        # can supply. Install it after the engine (its graph-compose dependency)
+        # so the examples build resolves it.
         run: ./mvnw -B -ntp -f render-docx/pom.xml -DskipTests install
 
       - name: Install graph-compose-testing (consumed by the examples module)
         # LayoutSnapshotRegressionExample uses LayoutSnapshotJson and EngineDeckData
-        # reads benchmark JSON through the jackson it brings; the testing module is
-        # not on Central, so install it after the engine (its graph-compose
-        # dependency) before the examples build resolves it.
+        # reads benchmark JSON through the jackson it brings; the examples pin the
+        # testing module to the reactor's -SNAPSHOT, so install it after the engine
+        # (its graph-compose dependency) before the examples build resolves it.
         run: ./mvnw -B -ntp -f testing/pom.xml -DskipTests install
 
       - name: Install graph-compose-render-pptx (consumed by the examples module)
         # The Engine Deck PPTX example renders the flagship deck through the
-        # fixed-layout PPTX backend, which is not on Central. Install it after
-        # the wrapper (its core + render-pdf compile dependencies) AND the
+        # fixed-layout PPTX backend, pinned to the reactor's -SNAPSHOT version.
+        # Install it after the wrapper (its core + render-pdf compile dependencies) AND the
         # testing module — -DskipTests skips execution but Maven still
         # resolves render-pptx's test-scope graph-compose-testing dependency.
         run: ./mvnw -B -ntp -f render-pptx/pom.xml -DskipTests install

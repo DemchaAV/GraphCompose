@@ -175,7 +175,7 @@ class Hello {
         DocumentColor panel = DocumentColor.rgb(244, 238, 228);
         DocumentColor accent = DocumentColor.rgb(196, 153, 76);
         DocumentTextStyle h1 = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD).size(28)
+                .fontName(FontName.HELVETICA).size(28)
                 .decoration(DocumentTextDecoration.BOLD)
                 .color(DocumentColor.rgb(20, 60, 75)).build();
         DocumentTextStyle body = DocumentTextStyle.builder()

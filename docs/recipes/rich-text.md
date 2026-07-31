@@ -37,7 +37,7 @@ section.addRich(rich -> rich
         .style("RT-2026-04", DocumentTextStyle.builder()
                 // Fully explicit means both halves: the name selects the
                 // family, the decoration selects the face within it.
-                .fontName(FontName.COURIER_BOLD)
+                .fontName(FontName.COURIER)
                 .decoration(DocumentTextDecoration.BOLD)
                 .size(10)
                 .build()));

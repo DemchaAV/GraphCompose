@@ -79,11 +79,11 @@ import com.demcha.compose.font.FontName;
 
 section.addTimeline(timeline -> timeline
         .titleStyle(DocumentTextStyle.builder()
-                // The font name picks the family, the decoration picks the
-                // face — the built-in title default sets BOLD, so a style
-                // that overrides it must set it too or the title turns
-                // regular while only the size was meant to change.
-                .fontName(FontName.HELVETICA_BOLD)
+                // The name picks the family, the decoration picks the face
+                // within it — the built-in title default sets BOLD, so a style
+                // that overrides it must set it too or the title turns regular
+                // while only the size was meant to change.
+                .fontName(FontName.HELVETICA)
                 .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .build())
@@ -93,7 +93,7 @@ section.addTimeline(timeline -> timeline
                 .build())
         .entry(TimelineMarker.dot(8, accent), e -> e
                 .title("Launch", DocumentTextStyle.builder()  // per-entry override
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
                         .decoration(DocumentTextDecoration.BOLD)
                         .size(13)
                         .build())

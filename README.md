@@ -20,7 +20,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; a patch over the **PowerPoint** release: a heading no longer strands above a block that asked to stay whole, and the documented snippets were corrected against the shipped API. `graph-compose-render-pptx` (new in 2.1.0) turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes, `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
+> 🟢 **Latest stable**: [v2.1.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.0) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
+> &nbsp;·&nbsp; 🟡 **In development**: v2.1.1 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
 
 > &nbsp;·&nbsp; ⬆️ **Upgrading from 1.x?** `graph-compose` stays a drop-in for PDF with no code change; see the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md)
 > &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
@@ -331,7 +332,7 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 |---|---|---|
 | Generate a one-off PDF programmatically | DSL | `GraphCompose.document(...).pageFlow(...)` &mdash; see [Hello world](#hello-world) above |
 | Generate a CV / cover letter from data | Layered templates | `ModernProfessional.create().compose(session, cvDocument)` &mdash; see [layered templates](./docs/templates/v2-layered/README.md) |
-| Add a custom visual primitive | Engine extension | `NodeDefinition` + `PdfFragmentRenderHandler` &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
+| Add a custom visual primitive | Engine extension | `NodeDefinition` + a fragment handler per fixed-layout backend (`PdfFragmentRenderHandler`, `PptxFragmentRenderHandler`) &mdash; see [extension guide](./docs/contributing/extension-guide.md) |
 | Regression-test generated layouts | Layout snapshots | `DocumentSession#layoutSnapshot()` &mdash; quickstart at [Testing your document](./docs/operations/test-your-document.md); full reference at [snapshot testing](./docs/operations/layout-snapshot-testing.md) |
 | Pixel-test the rendered PDF (fonts, colours, anti-aliasing) | Visual regression | `PdfVisualRegression.standard()&hellip;assertMatchesBaseline(...)` &mdash; see [visual regression testing](./docs/operations/visual-regression-testing.md) |
 | See the live gallery | Static showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`web/`](./web), deployed to GitHub Pages via the [Pages workflow](./.github/workflows/deploy-web.yml) |

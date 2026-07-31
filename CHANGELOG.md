@@ -22,6 +22,12 @@ follow semantic versioning; release dates are ISO 8601.
 - **`graph-compose-render-pptx` declares PDFBox.** It compiles against
   `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
   transitively; the resolved version is unchanged.
+- **The release script owns the README release-status block.** It was a
+  hand-edit the script only validated, and the validation demanded the *target*
+  version — so between releases `develop` had to advertise an unpublished version
+  as "latest stable", behind a release link that 404s. `cut-release.ps1` now
+  promotes the in-development half to latest stable and opens the next patch line
+  as part of the release commit, and verifies the result after the mutation.
 
 ### Fixed
 
@@ -72,7 +78,11 @@ follow semantic versioning; release dates are ISO 8601.
 - **The release surface names the release that shipped.** `ROADMAP.md` described
   2.1 as in development and 2.0 as the current stable line; 2.1 is now current,
   2.0 is history, and `## Now` points at what follows. The README release-status
-  block described 2.1.1 with 2.1.0's headline.
+  block, the changelog, the roadmap and the showcase metadata now agree on which
+  version is published and which is in development.
+- **`SECURITY.md` covers every 2.x line.** The supported-versions table jumped
+  from `2.1.x` to `1.9.x`, so a 2.0.x user could not tell whether their version
+  was supported.
 - **The documentation index carries the migration guide that applies.**
   `docs/README.md` listed five superseded 1.x minor-to-minor upgrade guides on the
   main path and omitted `migration/v2.0.0-modules.md` entirely. The current

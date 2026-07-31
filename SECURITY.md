@@ -9,6 +9,7 @@ Security fixes are issued for the latest minor release. Older minors do not rece
 | Version | Supported |
 |---------|-----------|
 | 2.1.x   | Yes — actively patched |
+| 2.0.x   | No — upgrade to the latest 2.1.x; it is source-compatible, see [CHANGELOG.md](CHANGELOG.md) |
 | 1.9.x   | Critical fixes and security backports only, on the `1.x` branch — no features |
 | < 1.9   | No — upgrade required (see [CHANGELOG.md](CHANGELOG.md) for per-version migration notes, and the [2.0 modules migration guide](docs/migration/v2.0.0-modules.md) for the 1.x → 2.x step) |
 

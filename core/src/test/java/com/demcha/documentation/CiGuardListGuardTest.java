@@ -54,8 +54,16 @@ class CiGuardListGuardTest {
     private static final Pattern CORE_SCOPE =
             Pattern.compile("-pl :graph-compose-core(?![\\w:,-])");
 
-    /** A {@code -Dtest=} value, quoted or bare, up to the end of the shell word. */
-    private static final Pattern TEST_SELECTION = Pattern.compile("-Dtest=\"?([A-Za-z0-9_$.,*#\\[\\]-]+)\"?");
+    /**
+     * A {@code -Dtest=} value, quoted or bare, up to the end of the shell word.
+     * The character class must admit every character Surefire accepts in a
+     * selector — including the {@code ?} and {@code /} of a path-shaped wildcard
+     * and the leading {@code !} of an exclusion. A character missing here does not
+     * fail: it truncates the selector, and the guard then checks a name nobody
+     * wrote.
+     */
+    private static final Pattern TEST_SELECTION =
+            Pattern.compile("-Dtest=\"?([A-Za-z0-9_$.,*?/!+#\\[\\]-]+)\"?");
 
     /** Workflow steps start at a {@code - name:} key at any indentation. */
     private static final Pattern STEP_BOUNDARY = Pattern.compile("(?m)^\\s*- name:");
@@ -105,6 +113,10 @@ class CiGuardListGuardTest {
                 Arrays.stream(selection.group(1).split(","))
                         .map(String::trim)
                         .filter(name -> !name.isEmpty())
+                        // An exclusion subtracts from the selection instead of
+                        // claiming coverage, so requiring it to resolve would
+                        // fail a legitimate `!StaleName` left behind on purpose.
+                        .filter(name -> !name.startsWith("!"))
                         .forEach(names::add);
             }
         }
@@ -112,23 +124,66 @@ class CiGuardListGuardTest {
     }
 
     /**
-     * Whether a Surefire selector names a test source in the engine module. The
-     * {@code #method} suffix is stripped and a package-qualified name is resolved
-     * as a path, so neither form can smuggle a class name past the check. Only a
-     * wildcard selector is accepted unchecked — it matches by shape, not by name,
-     * and has nothing to resolve.
+     * Whether a Surefire selector selects at least one test source in the engine
+     * module. Every accepted form is resolved against the tree — a plain class
+     * name, a package-qualified name, a {@code #method} suffix, and a wildcard
+     * pattern alike. A wildcard that matches nothing is the same silent skip as a
+     * deleted class name, so it is checked rather than waved through.
      */
     private static boolean resolvesUnderCoreTests(String selector) throws IOException {
-        String className = selector.split("#", 2)[0];
-        if (className.contains("*")) {
-            return true;
-        }
-        if (className.contains(".")) {
-            return Files.isRegularFile(CORE_TESTS.resolve(className.replace('.', '/') + ".java"));
-        }
+        Pattern pattern = selectorPattern(selector.split("#", 2)[0]);
         try (Stream<Path> sources = Files.walk(CORE_TESTS)) {
-            return sources.anyMatch(path -> path.getFileName().toString().equals(className + ".java"));
+            return sources
+                    .filter(path -> path.getFileName().toString().endsWith(".java"))
+                    .anyMatch(path -> selects(pattern, path));
         }
+    }
+
+    /**
+     * Translates a Surefire class selector into a regex. Package separators are
+     * normalised to {@code /} so a dotted name and a path form compare alike;
+     * {@code **} spans packages, {@code *} and {@code ?} stay inside one segment.
+     */
+    private static Pattern selectorPattern(String selector) {
+        String normalized = selector.endsWith(".java")
+                ? selector.substring(0, selector.length() - ".java".length())
+                : selector;
+        normalized = normalized.replace('.', '/');
+
+        StringBuilder regex = new StringBuilder();
+        StringBuilder literal = new StringBuilder();
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
+            if (c != '*' && c != '?') {
+                literal.append(c);
+                continue;
+            }
+            if (literal.length() > 0) {
+                regex.append(Pattern.quote(literal.toString()));
+                literal.setLength(0);
+            }
+            if (c == '?') {
+                regex.append("[^/]");
+            } else if (i + 1 < normalized.length() && normalized.charAt(i + 1) == '*') {
+                regex.append(".*");
+                i++;
+            } else {
+                regex.append("[^/]*");
+            }
+        }
+        if (literal.length() > 0) {
+            regex.append(Pattern.quote(literal.toString()));
+        }
+        return Pattern.compile(regex.toString());
+    }
+
+    /** Whether the selector matches this source by simple name or by package path. */
+    private static boolean selects(Pattern pattern, Path source) {
+        String fileName = source.getFileName().toString();
+        String simpleName = fileName.substring(0, fileName.length() - ".java".length());
+        String relative = CORE_TESTS.relativize(source).toString().replace('\\', '/');
+        String qualified = relative.substring(0, relative.length() - ".java".length());
+        return pattern.matcher(simpleName).matches() || pattern.matcher(qualified).matches();
     }
 
     private static String relative(Path path) {

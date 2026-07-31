@@ -38,28 +38,33 @@ follow semantic versioning; release dates are ISO 8601.
   version and link the tag it names. `SECURITY.md`, `SUPPORT.md`, `ROADMAP.md` and
   `.github/` are scanned for the first time; historical records are skipped by path,
   so a new archived page is covered the day it lands.
-- **The package map is derived from the source tree.** A backend was findable only
-  if someone remembered to list it, and the fixed-layout PPTX backend shipped a whole
-  release with neither the contributing guide nor the package map naming it — a
-  contributor adding a fragment kind registers it with the backend they can find, and
-  a kind registered with only one fixed-layout backend renders in one output and
-  vanishes from the other. The packages are now discovered by scanning for `*Backend`
-  types, and each must be named in its own right: naming a parent package covers no
-  child, or the entry that was missing would be covered for free. The backend-neutral
-  fixed-layout SPI is named in the contributing guide for the first time.
+- **The package map is derived from the source tree.** A backend was findable only if
+  someone remembered to list it, and the backend-neutral fixed-layout SPI was missing
+  from the contributing guide — the one document a reader consults before adding an
+  output format, where a contributor registers a fragment kind with the backend they
+  can find, and a kind registered with only one fixed-layout backend renders in one
+  output and vanishes from the other. Packages are now discovered by scanning every
+  reactor module for `*Backend` types, so a backend arriving in a new module is covered
+  the day it lands. Each must be named in the contributing guide and the package map in
+  its own right: naming a parent covers no child, or adding the missing parent would
+  have made every package beneath it uncheckable.
 - **The READMEs are compiled.** The snippet guard read only `docs/`, leaving the pages
   a reader copies from first — the root one and each module's — free to name a method
-  the library no longer has. Seven snippets across six READMEs now compile against the
-  current API on every build. A module README opens with a three-line taste of the API,
-  which the imports it needs would double in length, so a snippet can take them from
-  the invisible marker instead; the compile verifies those too. `docs/private/` is out
-  of the scan, matching the other documentation guards.
-- **The showcase register is checked against the catalogue.** `ShowcaseSync` falls back
-  to a filename-derived card, so an entry keyed on a document the runner never writes
-  is never read: no card, no warning, no failure — which is how the Maven banner kept a
-  full entry while publishing nothing. Every entry must now match a generated document,
-  and its source link must resolve to a file in the tree, so a renamed example fails the
-  build instead of leaving a 404 behind the card.
+  the library no longer has. Every Java fence in a README now either compiles or carries
+  the reason it cannot, so an unmarked block no longer reads as a covered one: seven
+  compile against the current API on every build and forty-five are exempt on the
+  record. A module README opens with a three-line taste of the API, which the imports it
+  needs would double in length, so a snippet can take them from the invisible marker
+  instead; the compile verifies those too. `docs/private/` is out of the scan, and the
+  two guards that read the published documentation resolve the same set of pages rather
+  than each keeping its own list.
+- **The showcase register is checked against the catalogue.** The register falls back to
+  a filename-derived card, so an entry keyed on a document the runner never writes is
+  never read: no card, no warning, no failure. Every entry must now match a generated
+  document, and its source link must resolve to a file in the tree, so a renamed example
+  fails the build instead of leaving a 404 behind the card. The example tree is emptied
+  before it is rebuilt — the runner only writes, and a leftover from an earlier build
+  would answer for an entry that has nothing left to describe.
 - **The release publishes the showcase it just built.** `cut-release.ps1` never
   ran `GenerateAllExamples`, so the site was synced from whatever happened to be
   in `examples/target/generated-pdfs` — nothing at all on a clean checkout, which

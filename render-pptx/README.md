@@ -37,6 +37,7 @@ The stability policy is [docs/api-stability.md](../docs/api-stability.md).
 Put `graph-compose-core` and this artifact on the classpath; the backend
 registers itself through `ServiceLoader`, so no wiring is needed.
 
+<!-- doc-example-ignore: compose(...) and the font family are the reader's own code, named here as placeholders -->
 ```java
 try (DocumentSession document = GraphCompose.document()
         .pageSize(DocumentPageSize.SLIDE_16_9)
@@ -112,6 +113,7 @@ So for a deck that matches the PDF glyph for glyph, use a real font program
 rather than a PDF built-in — either a bundled family from `graph-compose-fonts`,
 or your own file registered on the session:
 
+<!-- doc-example-ignore: compose(...) and the font family are the reader's own code, named here as placeholders -->
 ```java
 try (DocumentSession document = GraphCompose.document()
         .pageSize(DocumentPageSize.SLIDE_16_9)

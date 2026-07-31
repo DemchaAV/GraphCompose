@@ -24,6 +24,7 @@ Each preset is a final class with a `create(BrandTheme)` factory returning a
 `DocumentTemplate<S>`. A preset composes into an open session; it never renders — the
 caller does:
 
+<!-- doc-example-ignore: the theme and the invoice data are built by the caller; the docs recipe shows the full construction -->
 ```java
 Path out = Path.of("invoice.pdf");
 try (DocumentSession doc = GraphCompose.document(out).create()) {

@@ -143,6 +143,7 @@ colour and font choice; section presets (`softPanel`, `accentLeft`,
 `accentTop`) carry the visual hierarchy; opening rich-text strip
 highlights the candidate's headline.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 try (DocumentSession document = GraphCompose.document(outputFile)
         .pageSize(DocumentPageSize.A4)
@@ -183,6 +184,7 @@ Authoring against `DocumentSession.pageFlow().module(...)` — no
 template, no theme, just the canonical DSL. Smallest possible footprint
 for "I just need a one-page PDF from data".
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 document.pageFlow()
         .module("Profile", module -> module
@@ -248,6 +250,7 @@ invoice. Hero panel with invoice number / dates / status, two-column
 parties row, themed line-items table with header + totals, footer
 notes and payment terms.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 BrandTheme theme = BrandTheme.invoiceModern();
 DocumentTemplate<InvoiceDocumentSpec> template = ModernInvoice.create(theme);
@@ -301,6 +304,7 @@ built-in template.
 vocabulary as `LayerStackBuilder` plus `position(node, dx, dy, anchor)`
 for screen-space nudges.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addContainer(
         ShapeOutline.RoundedRectangle.of(220, 140, 14),
@@ -326,6 +330,7 @@ v1.4. Per-layer `zIndex` lets a layer declared earlier draw on top of
 layers declared later — `LayerStackNode.Layer` and shape-container
 layers both gain `int zIndex` (default `0`).
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addCircle(60, ROYAL_BLUE, container -> container
         .rotate(15)
@@ -351,6 +356,7 @@ through `SvgPath.parse(d, viewBox...)` + `.svg(...)`, or whole files via
 `SvgIcon.read(file)` + `addSvgIcon(icon, width)` — multi-layer icons with
 group transforms and per-layer paints, all as native curves.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addPath(path -> path
         .size(320, 60)
@@ -371,6 +377,7 @@ flow.addPath(path -> path
 leader / separator. The `BUTT` default emits no cap operator, so existing line
 output stays byte-identical.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addLine(l -> l.horizontal(w).stroke(stroke)
     .dashed(0.1, 4).lineCap(DocumentLineCap.ROUND));   // round dots
@@ -387,6 +394,7 @@ authored fixed width. Paired with a dotted stroke it is the flex leader behind a
 table-of-contents row, drawn without measuring the gap by hand. A non-fill line
 keeps its fixed width, so existing line output stays byte-identical.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addRow(r -> r.weights(5, 1)
     .addLine(l -> l.fill().stroke(s).dashed(0.1, 4).lineCap(DocumentLineCap.ROUND))  // leader fills its column
@@ -404,6 +412,7 @@ grid — each icon centred on a rounded card with a label plaque across
 the bottom, every layer a native vector path. The entire icon set weighs
 156 KB of `.svg` sources; the rendered page is a 70 KB PDF.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addSvgIcon(SvgIcon.parse(readResource("/icons/apple.svg")), 50);
 ```
@@ -419,6 +428,7 @@ the general `addAligned(align, node)` seat it left, centre, or right across
 the content width — the `margin: auto` the flow does not give fixed nodes on
 its own, with no manual width maths.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addSvgIcon(icon, 44, HorizontalAlign.CENTER);
 flow.addAligned(HorizontalAlign.RIGHT, anyFixedNode);
@@ -437,6 +447,7 @@ content margin, so a heading never runs off the page. It is the content-side twi
 of `pageBackground(...)` and the intent-revealing replacement for the
 hand-computed negative-margin idiom.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 page.addSection(band -> band
     .fillColor(ink)
@@ -455,6 +466,7 @@ addresses pages by 1-based number; the content is laid out at the width of the p
 it begins on. Page 1 below uses a zero margin (the band spans the sheet); pages 2+
 use wide book margins (the body sits in a narrow column).
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 document.pageMargins(List.of(
     PageMarginRule.page(1, DocumentInsets.zero()),                // full-bleed cover
@@ -472,6 +484,7 @@ as sugar for the even / weighted split. Combined with `line().fill()` it builds 
 table-of-contents row without measuring the gap: the label and page number size
 to their content while the dotted leader fills between them.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addRow(r -> r.columns(auto(), weight(1), auto())
     .addParagraph(label)
@@ -490,6 +503,7 @@ large price moves from the top to the middle to the bottom of the band as the
 alignment changes — the `align-items` analogue for a horizontal row, no manual
 coordinates. `TOP` is the default, so existing rows are unchanged.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addRow(r -> r.verticalAlign(RowVerticalAlign.BOTTOM)
     .addParagraph(bigPrice)      // tallest child sets the band height
@@ -508,6 +522,7 @@ right. `arrangement(...)` instead justifies content-sized children across the ro
 `justify-content` analogue, no manual coordinates. `START` is the default, so
 existing rows are unchanged.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addRow(r -> r.addParagraph(title).pushRight().addParagraph(status)); // title left, status right
 flow.addRow(r -> r.arrangement(RowArrangement.SPACE_BETWEEN)
@@ -525,6 +540,7 @@ flow.addRow(r -> r.arrangement(RowArrangement.SPACE_BETWEEN)
 `repeatHeader()` re-emits the leading rows on every continuation page
 when the table paginates.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 table.columns(...)
         .headerRow("Item", "Description", "Qty", "Unit", "Amount")
@@ -547,6 +563,7 @@ when a segment is still too wide), with the rounded fill intact on every
 fragment; in an **auto** column the column grows to fit the coordinate on one
 line instead of collapsing.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 DocumentTableCell.node(document.dsl().paragraph()
         .inlineCode("org.junit.jupiter:junit-jupiter:5.10.2").build())
@@ -565,6 +582,7 @@ Every `RichText` method laid out as labelled rows on a single A4 page:
 `color`, `accent`, `size`, `style`, `link`, `append`. Use this as the
 visual reference when picking which call to make for inline text.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(rich -> rich
         .plain("Customer ")
@@ -588,6 +606,7 @@ todo markers) and any other `ShapeOutline` work between text and as list
 bullets, at any size and colour. The tick and arrow designs are swappable
 via `CheckmarkStyle` / `ArrowStyle`.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(rich -> rich
         .plain("Draft ")
@@ -613,6 +632,7 @@ badge, and `highlight` is the full primitive. A multi-word highlight wraps
 across lines, painting one continuous rounded fill per visual fragment. On
 `ParagraphBuilder` the calls are `inlineCode` / `inlineChip` / `inlineHighlight`.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(rich -> rich
         .plain("Run ").code("./mvnw verify").plain(" — status ")
@@ -632,6 +652,7 @@ colours, with no dependence on the active font's glyph coverage. `size` is the
 glyph height in points; width follows the icon's aspect ratio. This is the
 engine path behind vector colour emoji.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(rich -> rich
         .svgIcon(check, 10).plain(" Deploy succeeded   ")
@@ -650,6 +671,7 @@ from the `graph-compose-emoji` companion artifact on the classpath. Resolution
 is lenient: an unknown shortcode falls back to its literal text, exactly the way
 GitHub renders an unrecognised `:code:`.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(rich -> rich
         .plain("Ship it ").emoji(":rocket:", 11).plain(" ")
@@ -666,6 +688,7 @@ GitHub renders an unrecognised `:code:`.
 per-corner `DocumentCornerRadius` (`top`, `bottom`, `left`, `right`,
 `only(...)`) rendered side-by-side as recipe cards.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addSection("Hero", section -> section
         .softPanel(theme.palette().surfaceMuted(), 10, 18)
@@ -684,6 +707,7 @@ per-corner `DocumentCornerRadius` (`top`, `bottom`, `left`, `right`,
 theme's foreground / background colours. ZXing is the encoder; the
 PDF backend rasterises and embeds.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addBarcode(b -> b
         .symbology(BarcodeSymbology.QR_CODE)
@@ -705,6 +729,7 @@ snapshot-testable, no raster dependency. Data, structure, and style are
 independent layers: the same `ChartData` feeds bar and line specs, and a
 `ChartStyle` cascade recolours a chart without touching its data.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 ChartData revenue = ChartData.builder()
     .categories("Q1", "Q2", "Q3", "Q4")
@@ -743,6 +768,7 @@ Backend-neutral `DocumentMetadata`, `DocumentWatermark`,
 {date}` tokens), and paragraph-level `DocumentBookmarkOptions`
 materialising as PDF outline entries.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 GraphCompose.document(outputFile)
         .metadata(DocumentMetadata.builder()
@@ -766,6 +792,7 @@ GraphCompose.document(outputFile)
 (`showOnFirstPage`). Under an offset, `{pages}` reports the counted total, not the
 physical page count. Here a cover is left uncounted and the body is lower-roman.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 session.chrome().footer(DocumentHeaderFooter.builder()
     .centerText("{page} / {pages}")
@@ -787,6 +814,7 @@ it opens — the page mode (`USE_OUTLINES` opens the bookmark panel, pairing wit
 flags (`displayDocTitle`, `hideToolbar`, `fitWindow`, …). Written to the PDF
 catalog; readers honour the subset they support. PDF-only — other backends ignore it.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 document.chrome().viewerPreferences(DocumentViewerPreferences.builder()
     .pageMode(DocumentPageMode.USE_OUTLINES)  // open with the bookmark panel
@@ -807,6 +835,7 @@ and bidirectional footnotes. Anchors resolve in a deferred pass, so a link may
 target an anchor that appears later in the document (a forward reference).
 External `link(label, new DocumentLinkOptions(url))` is unchanged.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 .addRich(RichText.text("See the ").linkTo("overview", linkStyle, "overview"))
 // …further down…
@@ -826,6 +855,7 @@ backend-neutral (read from the layout graph, not rendered bytes) and consistent
 with where a `linkTo(anchor)` jumps; `pageIndex()` remains for programmatic
 access.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addRow(r -> r.columns(auto(), weight(1), auto())
     .addParagraph("Appendix")
@@ -844,6 +874,7 @@ links to the chapter, a dotted (or dashed) leader fills the gap, and the page
 number is resolved automatically from the laid-out document — no manual two-pass.
 The rows are added to the flow, so a long contents paginates naturally.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addTableOfContents(toc -> toc.title("Contents")
     .leader(DocumentLeader.DOTS)
@@ -862,6 +893,7 @@ reader's bookmark panel — pointing at that container's start page, making a
 structured document navigable. It works on any container, even an unstyled one
 (no fill or border), and is independent of the page content.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 flow.addSection(s -> s.bookmark(new DocumentBookmarkOptions("2. Methodology"))
     .addParagraph(heading)
@@ -880,6 +912,7 @@ and the bookmark outline resolve across section boundaries, and each section is
 numbered from its own first page, so a full-bleed landscape cover can precede a
 portrait, page-numbered body in a single document.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 DocumentSession cover = GraphCompose.document().pageSize(440, 300).margin(DocumentInsets.of(0)).create();
 DocumentSession body  = GraphCompose.document().pageSize(300, 440).margin(DocumentInsets.of(40)).create();
@@ -904,6 +937,7 @@ stream is **not** closed by GraphCompose — pinned by
 `HttpStreamingDemoTest`. A Spring Boot `@RestController` snippet in the
 example javadoc shows the canonical wiring.
 
+<!-- doc-example-ignore: needs a web framework that is not on the documentation build's classpath -->
 ```java
 @GetMapping(value = "/invoice/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
 public ResponseEntity<StreamingResponseBody> invoice(@PathVariable Long id) {
@@ -934,6 +968,7 @@ The semantic backend walks the document graph and writes **editable
 Word content** — no layout pass, no PDF chrome. One session, two
 outputs:
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 try (DocumentSession document = GraphCompose.document(pdfFile)
         .pageSize(595, 842)
@@ -977,6 +1012,7 @@ pointer to the production
 `LayoutSnapshotAssertions.assertMatches(document, "...")` helper for
 in-test usage.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 DocumentSession document = GraphCompose.document(outputFile)…create();
 ModernInvoice.create().compose(document, spec);
@@ -1001,6 +1037,7 @@ with each node's stable semantic path — the same path
 `layoutSnapshot()` reports. Spot a misplaced block on paper, read its
 label, then search that name in your builder code.
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 try (DocumentSession document = GraphCompose.document(outputFile)
         .debug(DocumentDebugOptions.guidesAndNodeLabels())
@@ -1031,6 +1068,7 @@ DSL via a reusable `WeeklyScheduleRenderer`. The renderer's typed API
 lets you express any combination of full-day status fills, half-day
 shifts (lunch / dinner), and cross-meal shifts without parsing strings:
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 import com.demcha.examples.support.WeeklyScheduleRenderer;
 import com.demcha.examples.support.WeeklyScheduleRenderer.*;
@@ -1110,6 +1148,7 @@ The same composition also emits an editable PowerPoint deck (`MasterShowcasePptx
 
 Every example file follows the same shape:
 
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
 public final class FooExample {
 

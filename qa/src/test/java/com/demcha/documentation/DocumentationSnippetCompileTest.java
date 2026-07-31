@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,8 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * copies of representative examples): this guard reads the literal markdown
  * fences, so the published page itself cannot drift from the API.
  *
- * <p>The guard is <strong>opt-in</strong>: only a fenced {@code java} block
- * immediately preceded by an invisible marker comment is compiled —
+ * <p>Only a fenced {@code java} block immediately preceded by an invisible marker
+ * comment is compiled —
  *
  * <pre>{@code
  * <!-- doc-example: id=first-document-smallest mode=method -->
@@ -54,10 +53,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * }</pre>
  *
  * The marker is an HTML comment, so it renders to nothing on GitHub and keeps
- * the published page clean. Teaching fragments that intentionally reference
- * symbols defined only in prose (a bare {@code invoice} variable, pseudo-code)
- * carry no marker and are left untouched, which keeps the guard free of false
- * positives.
+ * the published page clean.
+ *
+ * <p>Under {@code docs/} that is <strong>opt-in</strong>: those pages teach with
+ * deliberate fragments referencing symbols defined only in prose (a bare
+ * {@code invoice} variable, pseudo-code), and marking them would be all false
+ * positives. In a README it is <strong>mandatory</strong> — every Java fence carries
+ * either a {@code doc-example} marker or {@code <!-- doc-example-ignore: reason -->},
+ * because an unmarked fence there is indistinguishable from a covered one and the
+ * blocks a reader copies first would rot behind a green build.
  *
  * <p>Each marked block is wrapped into a compilation unit according to its
  * {@code mode} and compiled in-memory against the test runtime classpath (the
@@ -95,6 +99,12 @@ class DocumentationSnippetCompileTest {
             Pattern.compile("^\\s*import\\s+(?:static\\s+)?[\\w.]+(?:\\.\\*)?\\s*;\\s*$");
     private static final Pattern JAVA_FENCE =
             Pattern.compile("^```java\\s*$");
+    /** Exempts the fence below it, and says why in the same breath. */
+    private static final Pattern IGNORE_MARKER =
+            Pattern.compile("^<!--\\s*doc-example-ignore:\\s*(\\S.*?)\\s*-->\\s*$");
+    /** The same marker with the reason left out — recognised only to reject it by name. */
+    private static final Pattern REASONLESS_IGNORE_MARKER =
+            Pattern.compile("^<!--\\s*doc-example-ignore:\\s*-->\\s*$");
     private static final Set<String> SUPPORTED_MODES = Set.of("method", "members");
     private static final Set<String> SUPPORTED_ATTRIBUTES = Set.of("id", "mode", "imports");
 
@@ -115,34 +125,72 @@ class DocumentationSnippetCompileTest {
     }
 
     /**
-     * The READMEs are covered too, and stay covered.
+     * Every Java fence in a README is either compiled or exempt with a stated reason.
      *
-     * <p>They are a second root, reached differently from the {@code docs/} tree, and a
-     * change to how roots are resolved can drop them while every remaining assertion
-     * still passes on the docs snippets alone. Naming the files makes that regression a
-     * failure rather than a quiet loss of coverage.</p>
+     * <p>Opt-in is the right default for {@code docs/}, where a page teaches with
+     * deliberate fragments. It is the wrong one for a README: the pages are short, the
+     * snippets are the install-and-use path, and an unmarked fence is indistinguishable
+     * from a covered one — the guard reports green while the block a reader is most
+     * likely to copy rots untouched. So a README fence must carry either
+     * {@code <!-- doc-example: … -->} or {@code <!-- doc-example-ignore: <reason> -->},
+     * and the reason is mandatory: an exemption nobody had to justify is opt-in again
+     * with extra steps.</p>
      */
     @Test
-    void theReadmesAreInsideTheCompiledSurface() throws IOException {
+    void everyJavaFenceInAReadmeIsCompiledOrExemptWithAReason() throws IOException {
+        List<String> unaccounted = new ArrayList<>();
+        for (Path readme : readmeFiles()) {
+            List<String> lines = Files.readAllLines(readme, StandardCharsets.UTF_8);
+            String rel = relative(readme);
+            for (int i = 0; i < lines.size(); i++) {
+                if (!JAVA_FENCE.matcher(lines.get(i).trim()).matches()) {
+                    continue;
+                }
+                if (markerAbove(lines, i) == null) {
+                    unaccounted.add("%s:%d".formatted(rel, i + 1));
+                }
+            }
+        }
+
+        assertThat(unaccounted)
+                .describedAs("a java fence in a README must be compiled (doc-example) or carry "
+                        + "doc-example-ignore with the reason it cannot be — silence reads as "
+                        + "coverage and is how a rotting snippet stays published")
+                .isEmpty();
+    }
+
+    /**
+     * Both roots keep contributing compiled snippets.
+     *
+     * <p>The two are reached differently and can be lost independently, and the overall
+     * non-empty check cannot see it: one root's snippets satisfy it on their own while
+     * the other falls to zero.</p>
+     */
+    @Test
+    void bothDocumentationRootsContributeCompiledSnippets() throws IOException {
         Set<String> readmes = new TreeSet<>();
         for (Path readme : readmeFiles()) {
             readmes.add(relative(readme));
         }
-        Set<String> covered = new TreeSet<>();
+
+        Set<String> coveredReadmes = new TreeSet<>();
+        Set<String> coveredDocs = new TreeSet<>();
         for (Example example : collectExamples()) {
             String rel = relative(example.file());
-            if (readmes.contains(rel)) {
-                covered.add(rel);
-            }
+            (readmes.contains(rel) ? coveredReadmes : coveredDocs).add(rel);
         }
 
-        assertThat(covered)
-                .describedAs("the README snippets are the ones a reader compiles first; losing "
-                        + "them from the scan is invisible while docs/ still supplies examples")
+        assertThat(coveredReadmes)
+                .describedAs("the README snippets are the ones a reader compiles first")
                 .contains("README.md")
                 .anySatisfy(path -> assertThat(path)
-                        .describedAs("at least one module README must be covered, not only the root")
+                        .describedAs("a module README must be covered, not only the root")
                         .contains("/"));
+        assertThat(coveredDocs)
+                .describedAs("the docs tree must still contribute compiled snippets; the READMEs "
+                        + "alone satisfy the overall non-empty check, so docs/ can fall to zero "
+                        + "behind a green build")
+                .isNotEmpty();
     }
 
     @Test
@@ -242,6 +290,21 @@ class DocumentationSnippetCompileTest {
                             .formatted(rel, i + 1, id));
                 }
             }
+
+            for (int i = 0; i < lines.size(); i++) {
+                String line = lines.get(i).trim();
+                // An exemption that introduces nothing is a leftover: the fence it excused
+                // has moved or gone, and the next one to land under it inherits the excuse.
+                if (IGNORE_MARKER.matcher(line).matches() && fenceAfter(lines, i) == null) {
+                    problems.add("%s:%d — doc-example-ignore is not followed by a java fence"
+                            .formatted(rel, i + 1));
+                }
+                if (REASONLESS_IGNORE_MARKER.matcher(line).matches()) {
+                    problems.add(("%s:%d — doc-example-ignore carries no reason; the reason is "
+                            + "what separates a considered exemption from opt-in with extra steps")
+                            .formatted(rel, i + 1));
+                }
+            }
         }
 
         assertThat(problems)
@@ -321,50 +384,34 @@ class DocumentationSnippetCompileTest {
         return examples;
     }
 
-    /**
-     * The published markdown: everything under {@code docs/}, the root README, and each
-     * module's README.
-     *
-     * <p>Module READMEs are found by their {@code pom.xml} rather than listed, so a new
-     * module is covered the day it is added instead of the day someone remembers this
-     * file. {@code docs/private/} is skipped — it is gitignored planning material that
-     * never reaches a reader, and a snippet there would fail a local gate that CI could
-     * not reproduce.</p>
-     */
+    /** Every page a reader lands on: the docs tree plus the root and module READMEs. */
     private List<Path> markdownFiles() throws IOException {
-        // A set, because the two roots would overlap if a module ever sat inside the
-        // docs tree — and a file scanned twice reports its own ids as duplicates.
-        Set<Path> files = new LinkedHashSet<>();
-        if (Files.isDirectory(DOCS_ROOT)) {
-            Path privateDocs = DOCS_ROOT.resolve("private");
-            try (Stream<Path> paths = Files.walk(DOCS_ROOT)) {
-                paths.filter(Files::isRegularFile)
-                        .filter(path -> path.toString().endsWith(".md"))
-                        .filter(path -> !path.startsWith(privateDocs))
-                        .sorted()
-                        .forEach(files::add);
-            }
-        }
-        files.addAll(readmeFiles());
-        return List.copyOf(files);
+        return PublishedDocs.all(PROJECT_ROOT);
     }
 
-    /** The root README plus one per Maven module, in a stable order. */
+    /** The root README plus one per Maven module. */
     private List<Path> readmeFiles() throws IOException {
-        List<Path> readmes = new ArrayList<>();
-        Path rootReadme = PROJECT_ROOT.resolve("README.md");
-        if (Files.isRegularFile(rootReadme)) {
-            readmes.add(rootReadme);
+        return PublishedDocs.readmes(PROJECT_ROOT);
+    }
+
+    /**
+     * The {@code doc-example} or {@code doc-example-ignore} marker introducing the fence
+     * at {@code fenceIndex}, or null when the fence carries neither. Blank lines between
+     * the two are allowed; anything else ends the search, so a marker further up the
+     * page cannot be mistaken for this fence's.
+     */
+    private static String markerAbove(List<String> lines, int fenceIndex) {
+        for (int i = fenceIndex - 1; i >= 0; i--) {
+            String line = lines.get(i).trim();
+            if (line.isEmpty()) {
+                continue;
+            }
+            if (MARKER.matcher(line).matches() || IGNORE_MARKER.matcher(line).matches()) {
+                return line;
+            }
+            return null;
         }
-        try (Stream<Path> children = Files.list(PROJECT_ROOT)) {
-            children.filter(Files::isDirectory)
-                    .filter(module -> Files.isRegularFile(module.resolve("pom.xml")))
-                    .map(module -> module.resolve("README.md"))
-                    .filter(Files::isRegularFile)
-                    .sorted()
-                    .forEach(readmes::add);
-        }
-        return readmes;
+        return null;
     }
 
     /** Returns the body of the next {@code java} fence after {@code markerIndex}, or null. */

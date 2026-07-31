@@ -225,6 +225,7 @@ Three snippets from the vector surfaces. Full runnable versions live in the [exa
 
 **Native chart** &mdash; categories + series in, native vector bars out (no rasterization).
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 ChartData revenue = ChartData.builder()
     .categories("Q1", "Q2", "Q3", "Q4")
@@ -239,6 +240,7 @@ section.chart(ChartSpec.bar().data(revenue)
 
 **Overshoot-free line** &mdash; a smooth curve constrained to never overshoot the data range.
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 section.chart(ChartSpec.line().data(series)
     .interpolation(LineInterpolation.MONOTONE)
@@ -247,6 +249,7 @@ section.chart(ChartSpec.line().data(series)
 
 **SVG import + alignment** &mdash; parse SVG to native geometry, seat any fixed node across the width.
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 SvgIcon globe = SvgIcon.parse(svgMarkup);
 flow.addSvgIcon(globe, 48, HorizontalAlign.CENTER);

@@ -46,6 +46,7 @@ import com.demcha.examples.features.transforms.TransformsExample;
 import com.demcha.examples.flagships.BusinessReportExample;
 import com.demcha.examples.flagships.BusinessReportPptxExample;
 import com.demcha.examples.flagships.EngineDeckExample;
+import com.demcha.examples.flagships.EngineDeckV2Example;
 import com.demcha.examples.flagships.EngineDeckPptxExample;
 import com.demcha.examples.flagships.FeatureCatalogExample;
 import com.demcha.examples.flagships.FinancialReportExample;
@@ -222,7 +223,12 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BusinessReportExample.generate());
         System.out.println("Generated: " + BusinessReportPptxExample.generate());
         System.out.println("Generated: " + EngineDeckExample.generate());
+        System.out.println("Generated: " + EngineDeckV2Example.generate());
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
+        // The PDF first: ShowcaseSync builds a card per PDF and publishes a PPTX only
+        // as the same-named companion beside one, so a deck without its PDF twin never
+        // reaches the site at all.
+        System.out.println("Generated: " + MavenBannerPptxExample.generatePdf());
         System.out.println("Generated: " + MavenBannerPptxExample.generate());
         System.out.println("Generated: " + SocialCardExample.generate());
         System.out.println("Generated: " + SocialCardExample.generatePptx());

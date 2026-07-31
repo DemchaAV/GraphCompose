@@ -73,77 +73,97 @@ public final class ShowcaseSync {
                     + ". Run GenerateAllExamples first.");
         }
 
+        // Collect BEFORE clearing. The directory existing is not evidence that anything
+        // was produced: a generation run that succeeds while writing nothing would
+        // otherwise delete the whole published site and replace the manifest with an
+        // empty one, and the failure would only be visible once the site was live.
+        List<Path> pdfs;
+        try (Stream<Path> walk = Files.walk(generatedPdfs)) {
+            pdfs = walk
+                    .filter(p -> p.toString().endsWith(".pdf"))
+                    .sorted()
+                    .toList();
+        }
+        if (pdfs.isEmpty()) {
+            throw new IllegalStateException("No PDFs under " + generatedPdfs
+                    + ". Run GenerateAllExamples first — refusing to clear the published"
+                    + " showcase and write an empty manifest.");
+        }
+
+        // The copy below replaces files but never removes them, so an example that was
+        // renamed or deleted kept its artifact published on GitHub Pages indefinitely —
+        // reachable by URL, absent from the manifest, and rendered from source that no
+        // longer exists. Clearing the three output trees first makes the published site
+        // a pure function of what GenerateAllExamples just produced.
+        for (String subtree : new String[] {"pdf", "pptx", "screenshots"}) {
+            deletePublishedFiles(showcaseRoot.resolve(subtree));
+        }
+
         // category → group → list of entries
         Map<String, Map<String, List<ManifestEntry>>> tree = new TreeMap<>();
         int copied = 0;
         int rendered = 0;
         int decks = 0;
 
-        try (Stream<Path> walk = Files.walk(generatedPdfs)) {
-            List<Path> pdfs = walk
-                    .filter(p -> p.toString().endsWith(".pdf"))
-                    .sorted()
-                    .toList();
-            for (Path pdf : pdfs) {
-                Path rel = generatedPdfs.relativize(pdf);
-                String[] parts = rel.toString().replace('\\', '/').split("/");
-                if (parts.length < 2) {
-                    continue;
-                }
-                String category;
-                String group;
-                String fileName = parts[parts.length - 1];
-                String basename = fileName.substring(0, fileName.length() - 4);
-                if (parts.length == 2) {
-                    category = parts[0];
-                    group = "default";
-                } else {
-                    category = parts[0];
-                    group = parts[1];
-                }
-
-                Path pdfTarget = showcaseRoot.resolve("pdf").resolve(category).resolve(group).resolve(fileName);
-                Path pngTarget = showcaseRoot.resolve("screenshots").resolve(category).resolve(group)
-                        .resolve(basename + ".png");
-                Files.createDirectories(pdfTarget.getParent());
-                Files.createDirectories(pngTarget.getParent());
-
-                Files.copy(pdf, pdfTarget, StandardCopyOption.REPLACE_EXISTING);
-                copied++;
-                renderPreview(pdf, pngTarget);
-                rendered++;
-
-                // A twin flagship renders the same composition to a deck beside its
-                // PDF. The deck is published as a second download on the same card:
-                // it shares the PDF's preview by construction — both backends draw
-                // the same resolved layout — and POI has no page rasterizer to make
-                // a separate one with.
-                String pptxUrl = null;
-                Path pptxSource = pdf.resolveSibling(basename + ".pptx");
-                if (Files.isRegularFile(pptxSource)) {
-                    Path pptxTarget = showcaseRoot.resolve("pptx").resolve(category).resolve(group)
-                            .resolve(basename + ".pptx");
-                    Files.createDirectories(pptxTarget.getParent());
-                    Files.copy(pptxSource, pptxTarget, StandardCopyOption.REPLACE_EXISTING);
-                    copied++;
-                    decks++;
-                    pptxUrl = relativeUrl(showcaseRoot, pptxTarget, siteRoot);
-                }
-
-                ShowcaseMetadata.Entry meta = ShowcaseMetadata.lookup(basename, category, group);
-                ManifestEntry entry = new ManifestEntry(
-                        basename,
-                        meta.title(),
-                        meta.description(),
-                        meta.tags(),
-                        relativeUrl(showcaseRoot, pdfTarget, siteRoot),
-                        pptxUrl,
-                        relativeUrl(showcaseRoot, pngTarget, siteRoot),
-                        meta.codeUrl());
-                tree.computeIfAbsent(category, c -> new TreeMap<>())
-                        .computeIfAbsent(group, g -> new ArrayList<>())
-                        .add(entry);
+        for (Path pdf : pdfs) {
+            Path rel = generatedPdfs.relativize(pdf);
+            String[] parts = rel.toString().replace('\\', '/').split("/");
+            if (parts.length < 2) {
+                continue;
             }
+            String category;
+            String group;
+            String fileName = parts[parts.length - 1];
+            String basename = fileName.substring(0, fileName.length() - 4);
+            if (parts.length == 2) {
+                category = parts[0];
+                group = "default";
+            } else {
+                category = parts[0];
+                group = parts[1];
+            }
+
+            Path pdfTarget = showcaseRoot.resolve("pdf").resolve(category).resolve(group).resolve(fileName);
+            Path pngTarget = showcaseRoot.resolve("screenshots").resolve(category).resolve(group)
+                    .resolve(basename + ".png");
+            Files.createDirectories(pdfTarget.getParent());
+            Files.createDirectories(pngTarget.getParent());
+
+            Files.copy(pdf, pdfTarget, StandardCopyOption.REPLACE_EXISTING);
+            copied++;
+            renderPreview(pdf, pngTarget);
+            rendered++;
+
+            // A twin flagship renders the same composition to a deck beside its
+            // PDF. The deck is published as a second download on the same card:
+            // it shares the PDF's preview by construction — both backends draw
+            // the same resolved layout — and POI has no page rasterizer to make
+            // a separate one with.
+            String pptxUrl = null;
+            Path pptxSource = pdf.resolveSibling(basename + ".pptx");
+            if (Files.isRegularFile(pptxSource)) {
+                Path pptxTarget = showcaseRoot.resolve("pptx").resolve(category).resolve(group)
+                        .resolve(basename + ".pptx");
+                Files.createDirectories(pptxTarget.getParent());
+                Files.copy(pptxSource, pptxTarget, StandardCopyOption.REPLACE_EXISTING);
+                copied++;
+                decks++;
+                pptxUrl = relativeUrl(showcaseRoot, pptxTarget, siteRoot);
+            }
+
+            ShowcaseMetadata.Entry meta = ShowcaseMetadata.lookup(basename, category, group);
+            ManifestEntry entry = new ManifestEntry(
+                    basename,
+                    meta.title(),
+                    meta.description(),
+                    meta.tags(),
+                    relativeUrl(showcaseRoot, pdfTarget, siteRoot),
+                    pptxUrl,
+                    relativeUrl(showcaseRoot, pngTarget, siteRoot),
+                    meta.codeUrl());
+            tree.computeIfAbsent(category, c -> new TreeMap<>())
+                    .computeIfAbsent(group, g -> new ArrayList<>())
+                    .add(entry);
         }
 
         for (Map<String, List<ManifestEntry>> groups : tree.values()) {
@@ -165,6 +185,26 @@ public final class ShowcaseSync {
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImage(0, PREVIEW_SCALE, ImageType.RGB);
             ImageIO.write(image, "PNG", pngTarget.toFile());
+        }
+    }
+
+    /**
+     * Removes every published file under a subtree, leaving the directories in place.
+     * Only files matter: git tracks no empty directory, and the copy below recreates
+     * whatever it needs. Deleting the directories too is what makes this fragile on
+     * Windows, where a just-closed handle can still fail the parent's removal with
+     * {@code AccessDeniedException}. A missing tree is a no-op — the normal case on a
+     * fresh checkout.
+     */
+    private static void deletePublishedFiles(Path root) throws IOException {
+        if (!Files.exists(root)) {
+            return;
+        }
+        try (Stream<Path> walk = Files.walk(root)) {
+            List<Path> files = walk.filter(Files::isRegularFile).toList();
+            for (Path file : files) {
+                Files.delete(file);
+            }
         }
     }
 

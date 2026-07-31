@@ -178,12 +178,12 @@
             },
             {
               "id": "proposal-modern-v2",
-              "title": "Proposal Modern V2",
-              "description": "Generated showcase for templates / proposal.",
-              "tags": ["templates", "proposal"],
+              "title": "Modern Proposal",
+              "description": "The ModernProposal preset composed straight from its document spec — cover, scope sections and pricing table themed through BrandTheme.",
+              "tags": ["proposal"],
               "pdf": "showcase/pdf/templates/proposal/proposal-modern-v2.pdf",
               "screenshot": "showcase/screenshots/templates/proposal/proposal-modern-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/proposal/v2/ModernProposalV2Example.java"
             }
           ]
         },
@@ -202,12 +202,12 @@
             },
             {
               "id": "invoice-modern-v2",
-              "title": "Invoice Modern V2",
-              "description": "Generated showcase for templates / invoice.",
-              "tags": ["templates", "invoice"],
+              "title": "Modern Invoice",
+              "description": "The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.",
+              "tags": ["invoice"],
               "pdf": "showcase/pdf/templates/invoice/invoice-modern-v2.pdf",
               "screenshot": "showcase/screenshots/templates/invoice/invoice-modern-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/templates/invoice/v2/ModernInvoiceV2Example.java"
             }
           ]
         },
@@ -403,12 +403,12 @@
             },
             {
               "id": "inline-code-column-wrap",
-              "title": "Inline Code Column Wrap",
-              "description": "Generated showcase for features / tables.",
-              "tags": ["features", "tables"],
+              "title": "Inline Code in Narrow Columns",
+              "description": "Inline-code chips inside a fixed-width column — how a token too wide for its cell wraps instead of overflowing the column edge.",
+              "tags": ["tables", "text"],
               "pdf": "showcase/pdf/features/tables/inline-code-column-wrap.pdf",
               "screenshot": "showcase/screenshots/features/tables/inline-code-column-wrap.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/tables/InlineCodeColumnWrapExample.java"
             },
             {
               "id": "table-advanced",
@@ -859,12 +859,12 @@
             },
             {
               "id": "poetry-title",
-              "title": "Poetry Title",
-              "description": "Generated showcase for features / title.",
-              "tags": ["features", "title"],
+              "title": "Poetry Title Page",
+              "description": "A centred title page with generous vertical rhythm — margins, alignment and spacing carrying the composition instead of decoration.",
+              "tags": ["title"],
               "pdf": "showcase/pdf/features/title/poetry-title.pdf",
               "screenshot": "showcase/screenshots/features/title/poetry-title.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/title/PoetryTitlePageExample.java"
             }
           ]
         }
@@ -900,12 +900,12 @@
             },
             {
               "id": "engine-deck-v2",
-              "title": "Engine Deck V2",
-              "description": "Generated showcase for flagships / default.",
-              "tags": ["flagships", "default"],
+              "title": "Engine Deck — Module First",
+              "description": "The landscape deck the README banner is cut from: the 2.0 module graph, native vector charts, and comparative benchmark figures read from the committed snapshot at render time.",
+              "tags": ["flagship", "showcase"],
               "pdf": "showcase/pdf/flagships/default/engine-deck-v2.pdf",
               "screenshot": "showcase/screenshots/flagships/default/engine-deck-v2.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"
             },
             {
               "id": "feature-catalog",
@@ -927,6 +927,16 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/FinancialReportExample.java"
             },
             {
+              "id": "linkedin-carousel",
+              "title": "LinkedIn Carousel",
+              "description": "A six-slide 4:5 carousel sized for a LinkedIn document post, typeset for a phone. Every figure is read at render time — the version from the filtered properties, the timings from the committed benchmark snapshot.",
+              "tags": ["flagship", "showcase"],
+              "pdf": "showcase/pdf/flagships/default/linkedin-carousel.pdf",
+              "pptx": "showcase/pptx/flagships/default/linkedin-carousel.pptx",
+              "screenshot": "showcase/screenshots/flagships/default/linkedin-carousel.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/LinkedInCarouselExample.java"
+            },
+            {
               "id": "master-showcase",
               "title": "Master Showcase",
               "description": "Kitchen-sink demo combining every primitive into a single document — the full GraphCompose surface.",
@@ -937,6 +947,16 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java"
             },
             {
+              "id": "maven-banner",
+              "title": "Maven Central Banner",
+              "description": "A single-slide brand banner emitted through the PPTX backend — gradient, rounded panels, native paths and text frames arriving in PowerPoint as an editable copy of the rendered page.",
+              "tags": ["flagship", "showcase", "pptx"],
+              "pdf": "showcase/pdf/flagships/default/maven-banner.pdf",
+              "pptx": "showcase/pptx/flagships/default/maven-banner.pptx",
+              "screenshot": "showcase/screenshots/flagships/default/maven-banner.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"
+            },
+            {
               "id": "module-first-profile",
               "title": "Module-First Authoring",
               "description": "Authoring style focused on declaring data modules first, layout second.",
@@ -944,6 +964,16 @@
               "pdf": "showcase/pdf/flagships/default/module-first-profile.pdf",
               "screenshot": "showcase/screenshots/flagships/default/module-first-profile.png",
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java"
+            },
+            {
+              "id": "social-card",
+              "title": "Social Preview Card",
+              "description": "The repository's 1280x640 social preview, itself a GraphCompose document — one sheet resolving into a portrait page and a 16:9 slide from the same content, so the card cannot drift from the palette and wordmark it is drawn with.",
+              "tags": ["flagship", "showcase"],
+              "pdf": "showcase/pdf/flagships/default/social-card.pdf",
+              "pptx": "showcase/pptx/flagships/default/social-card.pptx",
+              "screenshot": "showcase/screenshots/flagships/default/social-card.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/flagships/SocialCardExample.java"
             },
             {
               "id": "twin-output",

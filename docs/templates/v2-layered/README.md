@@ -6,7 +6,7 @@
 > `com.demcha.compose.document.templates.cv`.
 >
 > **Naming note:** through 1.x an older surface also called
-> "Templates v2" (`CvSpec`, `CvBuilder`, presets with `BusinessTheme`)
+> "Templates v2" (the pre-2.0 spec/builder surface, since removed)
 > shipped alongside this one; it was removed in 2.0 and its docs are
 > archived at [templates/v1-classic/](../v1-classic/README.md).
 

@@ -226,8 +226,10 @@ jobs:
 
       - name: Publish render-pptx to Maven Central
         if: steps.plan.outputs.run_render_pptx == 'true'
-        # The semantic PPTX backend, lockstep-versioned with the engine (ships on
-        # the same v* tag). graph-compose-core resolves from the local repo installed
+        # The PPTX render backend — a fixed-layout POI XSLF backend consuming the
+        # same resolved LayoutGraph as the PDF one, alongside the older semantic
+        # manifest skeleton. Lockstep-versioned with the engine (ships on the same
+        # v* tag). graph-compose-core resolves from the local repo installed
         # by the engine deploy above.
         run: ./mvnw -B -ntp -f render-pptx/pom.xml -P release -DskipTests -Dgpg.skip=false deploy
         env:

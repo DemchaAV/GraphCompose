@@ -114,6 +114,14 @@ class PackageMapGuardTest {
         return relative.startsWith(".git/")
                 || relative.startsWith(".claude/")
                 || relative.startsWith(".idea/")
+                // docs/private/ is gitignored — local-only planning notes and
+                // audits, not part of the public docs surface. They routinely
+                // name a retired package in order to record that it is retired,
+                // which reads as a violation here. Because the directory never
+                // reaches the remote, a hit fails the release runbook's local
+                // verify gate for a reason CI can never reproduce or clear.
+                // CanonicalSurfaceGuardTest excludes it for the same reason.
+                || relative.startsWith("docs/private/")
                 || relative.contains("/target/")
                 || relative.startsWith("target/")
                 || relative.startsWith("logs/");

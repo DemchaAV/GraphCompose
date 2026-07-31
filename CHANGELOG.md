@@ -22,6 +22,23 @@ follow semantic versioning; release dates are ISO 8601.
 - **`graph-compose-render-pptx` declares PDFBox.** It compiles against
   `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
   transitively; the resolved version is unchanged.
+- **The release publishes the showcase it just built.** `cut-release.ps1` never
+  ran `GenerateAllExamples`, so the site was synced from whatever happened to be
+  in `examples/target/generated-pdfs` — nothing at all on a clean checkout, which
+  aborted the cut. Step 4 regenerates the catalogue first.
+- **A removed example stops being published.** `ShowcaseSync` copied but never
+  deleted, so an artifact whose example was renamed or removed stayed live on the
+  site indefinitely, reachable by URL and absent from the manifest. Three such
+  documents are gone.
+- **Every generated document has a showcase card.** Eight artifacts had no
+  metadata entry and published as filename-derived placeholders linking the
+  examples root — among them both flagships the 2.1 line exists to show.
+  `EngineDeckV2Example`, which renders the deck the README banner is cut from,
+  was never wired into the example runner at all.
+- **Five committed previews were re-rendered.** The largest, the PDF-chrome
+  preview, was drawn at low alpha throughout with the watermark bleeding through
+  every panel. Eleven committed binaries that nothing references, 9 MiB of them,
+  are removed.
 - **The release script owns the README release-status block.** It was a
   hand-edit the script only validated, and the validation demanded the *target*
   version — so between releases `develop` had to advertise an unpublished version

@@ -21,34 +21,14 @@ That means a new object usually needs the right answer in four areas:
 - whether it participates in parent/child layout
 - how it gets rendered
 
-## Keep `Entity` thin
-
-`Entity` is the ECS core object, not the preferred home for new layout helpers.
-
-Use these ownership rules when adding or refactoring engine code:
-
-- put geometry reads in `EntityBounds`
-- put parent container size propagation and page-shift updates in `ParentContainerUpdater`
-- keep render-order policy in the render layer (the `engine.render` contracts and the PDF fragment handlers)
-- treat `Entity.bounding*` and `Entity.updateParentContainer*` as deprecated compatibility wrappers
-
-Rule of thumb:
-
-- if the logic needs `Placement`, `ContentSize`, `Margin`, or parent traversal semantics, it probably belongs in a helper or system utility
-- if the logic only needs identity, component access, or canonical child order, it may belong on `Entity`
-
 ## Minimum components a new object usually needs
 
 ### Render marker
 
 If the object should render something visible, the entity needs a renderable marker component.
 
-Examples:
-
-- [TextComponent.java](../../core/src/main/java/com/demcha/compose/engine/components/renderable/TextComponent.java)
-- [BlockText.java](../../core/src/main/java/com/demcha/compose/engine/components/renderable/BlockText.java)
-
-Those renderable components are render markers. Prefer keeping them backend-neutral and let renderer-owned handlers perform format-specific drawing.
+Keep the marker backend-neutral and let renderer-owned handlers perform the
+format-specific drawing.
 
 ### Engine markers with different jobs
 
@@ -244,35 +224,31 @@ Preferred extension pattern for new backends:
 > **Canonical PDF renderer.** Canonical PDF output is produced by
 > `com.demcha.compose.document.backend.fixed.pdf`: `PdfFixedLayoutBackend`
 > dispatches each layout fragment to a `PdfFragmentRenderHandler` implementation
-> under `document.backend.fixed.pdf.handlers`. The backend-neutral `engine.render`
-> *contracts* (`Render`, `RenderPassSession`, `RenderStream`)
-> remain the shared render seam — extend PDF drawing by adding or updating a
-> fragment handler, not by touching those contracts.
+> under `document.backend.fixed.pdf.handlers`. Extend PDF drawing by adding or
+> updating a fragment handler, not by widening the backend itself. The PPTX
+> backend consumes the same resolved layout through its own handlers, so a new
+> fragment kind needs one on each side.
 
 Important files:
 
-- [Render.java](../../core/src/main/java/com/demcha/compose/engine/render/Render.java)
-- [RenderPassSession.java](../../core/src/main/java/com/demcha/compose/engine/render/RenderPassSession.java)
-- [RenderStream.java](../../core/src/main/java/com/demcha/compose/engine/render/RenderStream.java)
 - [PdfFixedLayoutBackend.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFixedLayoutBackend.java)
 - [PdfFragmentRenderHandler.java](../../render-pdf/src/main/java/com/demcha/compose/document/backend/fixed/pdf/PdfFragmentRenderHandler.java)
 
 Migration rule for new engine components:
 
-- implement backend-neutral `Render`, not backend-specific render interfaces
 - move PDF drawing into a `PdfFragmentRenderHandler` under `...document.backend.fixed.pdf.handlers`
 - use `TextMeasurementSystem` for text width and line metrics instead of reaching through the active renderer
 - place PDF-only helper objects alongside the backend in `...document.backend.fixed.pdf`
-- keep page-surface lifetime in a backend-specific `RenderPassSession`, not in engine builders or render markers
 - keep resolved draw ordering in the render layer (the PDF fragment handlers), not in pagination utilities
 - register a render handler for every engine render marker because the PDF entity path no longer supports a backend-specific render fallback
 
-### Render-pass session rules
+### Render-pass rules
 
-The current render seam is deliberately narrower than a full backend abstraction. Use these rules when extending it:
+The render seam is deliberately narrower than a full backend abstraction. Use
+these rules when extending it:
 
-- `RenderStream<T>` should create one render-pass session, not one stream per entity
-- renderer orchestrators such as `PdfFixedLayoutBackend` should open one session for the whole pass
+- renderer orchestrators such as `PdfFixedLayoutBackend` should open one page
+  pass for the whole render, not one per entity
 - single-page handlers should use the session-managed page surface directly
 - multi-page handlers should request page surfaces explicitly per fragment or page
 - page creation or annotation-only work should use the session's page-availability helper instead of opening a dummy drawing surface
@@ -301,35 +277,6 @@ Prefer pairing a snapshot assertion with an existing render test when the docume
 See [layout-snapshot-testing.md](../operations/layout-snapshot-testing.md) for the baseline locations, update flow, and concrete examples.
 
 So if your new object needs custom drawing, it is not enough to add a builder. You also need a renderable component with the correct renderer implementation.
-
-## Where layout hooks in
-
-The layout side uses entity components, not builder classes directly.
-
-Important files:
-
-- [LayoutTraversalContext.java](../../core/src/main/java/com/demcha/compose/engine/core/LayoutTraversalContext.java)
-- [ComputedPosition.java](../../core/src/main/java/com/demcha/compose/engine/components/layout/coordinator/ComputedPosition.java)
-- [EntityBounds.java](../../core/src/main/java/com/demcha/compose/engine/components/geometry/EntityBounds.java)
-- [ParentContainerUpdater.java](../../core/src/main/java/com/demcha/compose/engine/pagination/ParentContainerUpdater.java)
-
-In practice:
-
-- `Anchor`, `Margin`, `Padding`, `ContentSize`, and parent/child links are what matter to layout
-- the builder is just the place where you attach those components
-- `LayoutTraversalContext` should build one deterministic hierarchy snapshot per pass instead of letting each subsystem rediscover roots and children independently
-- `ParentComponent` is the authoritative parent relation, while `Entity.children` is the canonical sibling order
-- if those two sources disagree, traversal code should warn loudly and use a deterministic fallback rather than silently hiding the inconsistency
-- during pagination, descendants should be resolved before parent containers so parent size updates caused by child page shifts are reflected before parent placement is finalized
-
-Use the helpers directly when that intent is what you need:
-
-- read bounds and edges through `EntityBounds` instead of adding more bound helpers to `Entity`
-- update parent container size or shifted positions through `ParentContainerUpdater` instead of growing the `Entity` API further
-
-See [pagination-ordering.md](../architecture/pagination-ordering.md) for a focused explanation of this rule, including why one leaf type can fail while another appears to work.
-
-If those components are missing or inconsistent, the renderer cannot save you later.
 
 ## Practical checklist for a new object
 

@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,42 @@ class CanonicalSurfaceGuardTest {
             "MainPageCvDTO",
             "ModuleYml",
             "ModuleSummary");
+
+    /**
+     * Types the 2.0 line removed. Every one is absent from every {@code src/main}
+     * tree, so a contributor-facing document naming one is teaching code that cannot
+     * compile — which is how the template-authoring and engine-primitive sections of
+     * CONTRIBUTING went stale for a full release cycle.
+     *
+     * <p>Deliberately absent: {@code BusinessTheme} survives as an examples-local
+     * theme helper used by twenty-one example sources, and {@code PptxSemanticBackend}
+     * still ships beside the fixed-layout PPTX backend. Forbidding either would fail
+     * the build on text that is correct.</p>
+     */
+    private static final List<String> RETIRED_IN_2_0_TOKENS = List.of(
+            "InvoiceTemplateV2",
+            "ProposalTemplateV2",
+            "WeeklyScheduleTemplateV1",
+            "EntityBounds",
+            "ParentContainerUpdater",
+            "CvSpec",
+            "CvBuilder");
+
+    /**
+     * Documents whose job is to record history. A migration guide, an ADR, an archived
+     * page or the changelog names retired surface on purpose, so the retired-token scan
+     * skips them by path rather than by a file list — a new historical page is then
+     * covered the day it is added, instead of failing the build until someone
+     * remembers to allowlist it.
+     */
+    private static final List<String> HISTORICAL_RECORD_PREFIXES = List.of(
+            "CHANGELOG.md",
+            "docs/adr/",
+            "docs/archive/",
+            "docs/migration/",
+            "docs/private/",
+            "docs/roadmaps/",
+            "docs/templates/v1-classic/");
 
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
@@ -117,6 +155,97 @@ class CanonicalSurfaceGuardTest {
                 PUBLIC_MARKDOWN_ALLOWLIST);
     }
 
+    /**
+     * The contributor-facing surface must not teach types 2.0 removed.
+     *
+     * <p>Scans wider than the legacy check above: {@code SECURITY.md},
+     * {@code SUPPORT.md}, {@code ROADMAP.md} and {@code .github/} sit outside every
+     * existing guard, which is why an issue template could route reporters to a theme
+     * class that no longer exists and a pull-request template could offer a lane the
+     * repository dropped.</p>
+     */
+    @Test
+    void contributorFacingDocsShouldNotNameSurfaceRetiredIn2_0() throws IOException {
+        List<Path> roots = List.of(
+                PROJECT_ROOT.resolve("README.md"),
+                PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                PROJECT_ROOT.resolve("SECURITY.md"),
+                PROJECT_ROOT.resolve("SUPPORT.md"),
+                PROJECT_ROOT.resolve("ROADMAP.md"),
+                PROJECT_ROOT.resolve("examples/README.md"),
+                PROJECT_ROOT.resolve("docs"),
+                PROJECT_ROOT.resolve(".github"));
+
+        Set<String> violations = new TreeSet<>();
+        for (Path root : roots) {
+            for (Path doc : markdownUnder(root)) {
+                String rel = relative(doc);
+                if (isHistoricalRecord(rel) || PUBLIC_MARKDOWN_ALLOWLIST.contains(rel)) {
+                    continue;
+                }
+                String source = Files.readString(doc);
+                RETIRED_IN_2_0_TOKENS.stream()
+                        .filter(source::contains)
+                        .forEach(token -> violations.add(rel + " names " + token));
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("these documents name a type 2.0 removed, so anyone following "
+                        + "them writes code that does not compile. A document whose purpose "
+                        + "is to record the removal belongs under one of %s.",
+                        HISTORICAL_RECORD_PREFIXES)
+                .isEmpty();
+    }
+
+    /**
+     * Every relative link in the public documentation resolves on disk.
+     *
+     * <p>Needs no token list and cannot go stale: it reads what the documents actually
+     * point at. Renaming a test, archiving a page or deleting an example breaks the
+     * links to it here rather than for a reader.</p>
+     */
+    @Test
+    void publicMarkdownLinksShouldResolve() throws IOException {
+        List<Path> roots = List.of(
+                PROJECT_ROOT.resolve("README.md"),
+                PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                PROJECT_ROOT.resolve("SECURITY.md"),
+                PROJECT_ROOT.resolve("SUPPORT.md"),
+                PROJECT_ROOT.resolve("ROADMAP.md"),
+                PROJECT_ROOT.resolve("examples/README.md"),
+                PROJECT_ROOT.resolve("docs"));
+
+        Pattern link = Pattern.compile("\\]\\(([^)\\s]+)\\)");
+        Set<String> broken = new TreeSet<>();
+        for (Path root : roots) {
+            for (Path doc : markdownUnder(root)) {
+                if (isHistoricalRecord(relative(doc))) {
+                    continue;
+                }
+                Matcher matcher = link.matcher(Files.readString(doc));
+                while (matcher.find()) {
+                    String target = matcher.group(1);
+                    if (target.startsWith("http") || target.startsWith("mailto:") || target.startsWith("#")) {
+                        continue;
+                    }
+                    String file = target.split("#", 2)[0];
+                    if (file.isEmpty()) {
+                        continue;
+                    }
+                    if (!Files.exists(doc.getParent().resolve(file).normalize())) {
+                        broken.add(relative(doc) + " -> " + target);
+                    }
+                }
+            }
+        }
+
+        assertThat(broken)
+                .describedAs("a relative link in the public docs points at a file that does "
+                        + "not exist; the reader gets a 404 on GitHub")
+                .isEmpty();
+    }
+
     @Test
     void publicAuthoringDocsAndExamplesShouldNotImportEngineInternals() throws IOException {
         assertNoForbiddenAuthoringImports(
@@ -138,6 +267,26 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/style"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/table"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/image")));
+    }
+
+    /** Markdown files under a root, or the root itself when it is one. */
+    private static List<Path> markdownUnder(Path root) throws IOException {
+        if (Files.isRegularFile(root)) {
+            return root.toString().endsWith(".md") ? List.of(root) : List.of();
+        }
+        if (!Files.isDirectory(root)) {
+            return List.of();
+        }
+        try (var paths = Files.walk(root)) {
+            return paths.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".md"))
+                    .sorted()
+                    .toList();
+        }
+    }
+
+    private static boolean isHistoricalRecord(String relativePath) {
+        return HISTORICAL_RECORD_PREFIXES.stream().anyMatch(relativePath::startsWith);
     }
 
     private void assertNoForbiddenReferences(Path root, Set<String> allowlist) throws IOException {

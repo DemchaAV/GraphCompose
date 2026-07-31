@@ -22,6 +22,15 @@ follow semantic versioning; release dates are ISO 8601.
 - **`graph-compose-render-pptx` declares PDFBox.** It compiles against
   `org.apache.pdfbox` types while declaring only `fontbox`, taking the rest
   transitively; the resolved version is unchanged.
+- **Documentation drift fails the build.** Three checks now cover what four
+  releases of hand-fixing kept re-breaking: a relative link in the public docs
+  must resolve, a contributor-facing document must not name a type 2.0 removed,
+  and a published snippet that names a `*_BOLD` font constant must pair it with a
+  decoration — the constant resolves to its base family, so without the decoration
+  the text renders regular. The README release-status block must name a published
+  version and link the tag it names. `SECURITY.md`, `SUPPORT.md`, `ROADMAP.md` and
+  `.github/` are scanned for the first time; historical records are skipped by path,
+  so a new archived page is covered the day it lands.
 - **The release publishes the showcase it just built.** `cut-release.ps1` never
   ran `GenerateAllExamples`, so the site was synced from whatever happened to be
   in `examples/target/generated-pdfs` — nothing at all on a clean checkout, which

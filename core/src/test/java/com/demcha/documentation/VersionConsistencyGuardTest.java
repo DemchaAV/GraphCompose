@@ -216,6 +216,38 @@ class VersionConsistencyGuardTest {
                 .isFalse();
     }
 
+    /**
+     * The README release-status block advertises a version that exists.
+     *
+     * <p>It used to be a hand-edit no test covered, and the release script demanded it
+     * already name the version being cut — so between releases {@code develop} carried
+     * an unpublished version as "latest stable" behind a tag URL that 404s. The script
+     * rewrites the block now; this pins the result, and pins the link to the text so a
+     * half-updated block cannot pass.</p>
+     */
+    @Test
+    void readmeReleaseStatusNamesAPublishedVersion() throws Exception {
+        Set<String> targets = acceptableTargets();
+        String readme = Files.readString(PROJECT_ROOT.resolve("README.md"));
+
+        Matcher stable = Pattern.compile(
+                        "\\*\\*Latest stable\\*\\*:\\s*\\[v(\\d+\\.\\d+\\.\\d+)]\\(([^)]+)\\)")
+                .matcher(readme);
+        assertThat(stable.find())
+                .describedAs("README must carry a '**Latest stable**: [vX.Y.Z](…)' release-status "
+                        + "line — cut-release.ps1 rewrites it during the cut and aborts without it")
+                .isTrue();
+
+        assertThat(stable.group(1))
+                .describedAs("README 'Latest stable' must name a published release, not the one "
+                        + "in development: its tag page does not exist until the cut (one of %s)", targets)
+                .isIn(targets);
+        assertThat(stable.group(2))
+                .describedAs("the 'Latest stable' link must point at the tag it names, or the badge "
+                        + "sends readers to a different release than the text claims")
+                .endsWith("/releases/tag/v" + stable.group(1));
+    }
+
     @Test
     void readmeInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();

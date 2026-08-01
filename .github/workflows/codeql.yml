@@ -50,15 +50,25 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-and-quality
 
-      - name: Build (engine module)
-        # Scoped to the engine module alone: no `-am`, so nothing but core is built
-        # and nothing but core reaches the extractor. Since the 2.0 split
-        # graph-compose-core is one of several artifacts published to Maven Central,
-        # which makes this narrower than both the publish train and the canonical
-        # verify gate in ci.yml — the render backends and templates ship unscanned.
-        # Widening it to the code-bearing published modules is tracked for 2.2,
-        # together with a triage pass on the standing alert set.
-        run: ./mvnw -B -ntp -DskipTests -pl :graph-compose-core package
+      - name: Build (published code-bearing modules)
+        # The extractor sees what the build compiles, so the module list is the
+        # analysis scope. It covers every published module that carries code, which
+        # is where the untrusted input actually lands: PDFBox and POI parsing, the
+        # SVG and image paths, font loading, and the ZIP/OPC writers all live in the
+        # backends rather than in core.
+        #
+        # Every deployed module is named outright, including fonts and emoji, which no
+        # other `-pl` list mentions. They would arrive through `-am` as somebody's
+        # dependency, and that is precisely the arrangement that ends quietly the day
+        # the dependency is dropped. `-am` stays for a future module whose upstream is
+        # not itself deployed.
+        #
+        # CodeQlScopeGuardTest holds this list against two inventories — what CI
+        # compiles and what the publish workflows deploy — so a module that ships and
+        # is not named here fails the build rather than shipping unscanned.
+        run: |
+          ./mvnw -B -ntp -DskipTests package -am \
+            -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-fonts,:graph-compose-emoji
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

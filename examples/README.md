@@ -29,8 +29,23 @@ Then run every example in one shot:
     -Dexec.mainClass=com.demcha.examples.flagships.MasterShowcaseExample
 ```
 
-Generated PDFs land in `examples/target/generated-pdfs/`. The same
+Generated PDFs land in `examples/target/generated-pdfs/`. The runner empties that
+directory first, so what is left is exactly what this run produced. The same
 `mvnw.cmd` form works on Windows PowerShell with backslash paths.
+
+The documents that print a version take it from the reactor, which between releases
+sits on the next patch. To reproduce a published document from a development branch,
+name the published version:
+
+```bash
+./mvnw -f examples/pom.xml exec:java \
+    -Dexec.mainClass=com.demcha.examples.GenerateAllExamples \
+    -Dgraphcompose.examples.displayVersion=2.1.0
+```
+
+That is how the committed previews under `assets/readme/examples/` are produced — the
+version they show is the one on Maven Central, not the one the branch is building
+towards.
 
 `GenerateAllExamples` renders the whole catalogue in one pass — the CV and
 cover-letter presets plus invoices, proposals, a schedule, the feature

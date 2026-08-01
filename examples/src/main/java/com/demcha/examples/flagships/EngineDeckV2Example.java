@@ -115,14 +115,6 @@ public final class EngineDeckV2Example {
 
     private static final String VERSION = ExampleVersion.withoutQualifier();
 
-    /**
-     * The {@code major.minor} of {@link #VERSION}, for the banner's prose labels.
-     *
-     * <p>Derived rather than written out: the banner is regenerated on every release,
-     * so a literal would keep announcing whichever line it was typed on — the hero
-     * still read "2.0" while the pill beside it read v2.1.0.</p>
-     */
-
     private EngineDeckV2Example() {
     }
 

@@ -35,4 +35,35 @@ class ExampleVersionTest {
         assertThat(ExampleVersion.majorMinor("2.1.1-SNAPSHOT")).isEqualTo("2.1");
         assertThat(ExampleVersion.majorMinor("dev")).isEqualTo("dev");
     }
+
+    /**
+     * The override decides what a committed document says, so what it accepts is worth
+     * pinning. Driven through {@code resolve} rather than the system property: the answer
+     * is cached in a static field, so a test that sets the property proves only that some
+     * earlier test had not touched the class yet.
+     */
+    @Test
+    void aDisplayVersionOverridesTheReactorsAndIsNormalised() {
+        assertThat(ExampleVersion.resolve("2.1.0", "2.1.1-SNAPSHOT")).isEqualTo("2.1.0");
+        assertThat(ExampleVersion.resolve("  2.1.0  ", "2.1.1-SNAPSHOT")).isEqualTo("2.1.0");
+        assertThat(ExampleVersion.resolve("v2.1.0", "2.1.1-SNAPSHOT"))
+                .describedAs("a leading v is how a version is written in prose, and one render "
+                        + "site prepends its own — accepting both spellings here is what keeps "
+                        + "vv2.1.0 off the page")
+                .isEqualTo("2.1.0");
+    }
+
+    @Test
+    void withoutAnOverrideTheReactorAnswers() {
+        assertThat(ExampleVersion.resolve(null, "2.1.1-SNAPSHOT")).isEqualTo("2.1.1-SNAPSHOT");
+        assertThat(ExampleVersion.resolve("   ", "2.1.1-SNAPSHOT"))
+                .describedAs("a blank override is an unset one, not an instruction to render "
+                        + "nothing")
+                .isEqualTo("2.1.1-SNAPSHOT");
+        assertThat(ExampleVersion.resolve(null, "@project.version@"))
+                .describedAs("an unfiltered resource means the module was run straight from "
+                        + "sources")
+                .isEqualTo("dev");
+        assertThat(ExampleVersion.resolve(null, null)).isEqualTo("dev");
+    }
 }

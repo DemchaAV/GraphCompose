@@ -23,7 +23,6 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
-import com.demcha.examples.support.ExampleVersion;
 import com.demcha.examples.support.PerfBaseline;
 
 import java.nio.file.Path;
@@ -42,12 +41,13 @@ import java.util.Locale;
  * generate, not a feature checklist. Use it as a reference when
  * composing your own multi-page documents.</p>
  *
- * <p>The narrative is deliberately undated. This file is regenerated and
- * re-committed on every release, so anything that names a version, a date or a
- * measurement would go stale between one release and the next — as it did. What
- * survives is either sample copy that cannot age or a figure read at render time
- * from {@link com.demcha.examples.support.PerfBaseline} and
- * {@link com.demcha.examples.support.ExampleVersion}.</p>
+ * <p>Nothing here is read from the clock or from the reactor. This file is
+ * regenerated and re-committed on every release, and a version, a wall-clock date
+ * or a re-measured figure would make the committed copy differ from a fresh render
+ * for reasons no reader cares about — as they did. The header names the report's
+ * own quarter, the footer names no version, and the one live figure comes from
+ * {@link com.demcha.examples.support.PerfBaseline}, which is a committed
+ * measurement rather than a fresh one.</p>
  */
 public final class MasterShowcaseExample {
     private static final BusinessTheme THEME = BusinessTheme.modern();
@@ -299,7 +299,7 @@ public final class MasterShowcaseExample {
                                 "Initiative " + (i + 1) + " — quarterly delivery slice",
                                 String.format("%d h", 40 + i * 3),
                                 i % 3 == 0 ? "Studio" : i % 3 == 1 ? "Audit" : "Build",
-                                String.format("£ %,d", 1_800 + i * 215));
+                                String.format(Locale.ROOT, "£ %,d", 1_800 + i * 215));
                     }
                     table.totalRow(DocumentTableStyle.builder()
                                     .padding(new DocumentInsets(8, 9, 8, 9))

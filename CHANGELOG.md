@@ -127,6 +127,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **A committed preview can be reproduced from a branch that has moved past it.** The
+  documents that print a version took it from the reactor, which between releases sits on
+  the next patch — so a render from `develop` named a version nobody could depend on yet,
+  and stripping the `-SNAPSHOT` never helped because the number itself had moved. The
+  version to display can now be passed in; `banner.properties` still sources
+  `@project.version@`, so the reactor remains the answer when nobody says otherwise. Two
+  headers stopped carrying the `{date}` token, which the engine resolves against the wall
+  clock and which made the same document differ by the day it was rendered — the token
+  stays in the example whose subject is the token. The number also left the places that
+  merely decorated with it, a hero kicker and two footers among them, and stays where it
+  informs: the version pill and the Maven coordinate card, which now reads the same input
+  as everything else instead of a string literal.
 - **The example catalogue is built one way, and it starts empty.** The runner only ever
   wrote, so a renamed or deleted example left its old document behind — published to the
   site, counted by the guards that read the tree, and indistinguishable from a current

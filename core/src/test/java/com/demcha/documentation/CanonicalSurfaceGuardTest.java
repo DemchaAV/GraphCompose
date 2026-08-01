@@ -29,13 +29,14 @@ class CanonicalSurfaceGuardTest {
             "ModuleSummary");
 
     /**
-     * Types the 2.0 line removed. Every one is absent from every {@code src/main}
-     * tree, so a contributor-facing document naming one is teaching code that cannot
-     * compile — which is how the template-authoring and engine-primitive sections of
-     * CONTRIBUTING went stale for a full release cycle.
+     * Names the 2.0 line removed — types, and the packages that held them. Every one is
+     * absent from every {@code src/main} tree, so a contributor-facing document naming
+     * one is teaching code that cannot compile — which is how the template-authoring
+     * and engine-primitive sections of CONTRIBUTING went stale for a full release
+     * cycle, and how two dead package names outlived the types that lived in them.
      *
      * <p>Deliberately absent: {@code BusinessTheme} survives as an examples-local
-     * theme helper used by twenty-one example sources, and {@code PptxSemanticBackend}
+     * theme helper the example catalogue still uses, and {@code PptxSemanticBackend}
      * still ships beside the fixed-layout PPTX backend. Forbidding either would fail
      * the build on text that is correct.</p>
      */
@@ -49,7 +50,19 @@ class CanonicalSurfaceGuardTest {
             "Breakable",
             "hasRender(",
             "CvSpec",
-            "CvBuilder");
+            "CvBuilder",
+            // Package names, not types. The retired-type list could not catch a
+            // contributing guide that routed new template code into
+            // `templates.builtins` and `templates.support` — two packages the 2.0
+            // split left behind and nothing has occupied since, so the instruction
+            // read as current and produced code that does not compile. Both spellings
+            // are listed: a doc names a package either as a dotted coordinate or as the
+            // path it lives at, and the sentence that carried this one for a release
+            // used the path.
+            "templates.builtins",
+            "templates.support",
+            "templates/builtins/",
+            "templates/support/");
 
     /**
      * Types a contributor must not be pointed at when told how to build against the
@@ -211,9 +224,9 @@ class CanonicalSurfaceGuardTest {
         }
 
         assertThat(violations)
-                .describedAs("these documents name a type 2.0 removed, so anyone following "
-                        + "them writes code that does not compile. A document whose purpose "
-                        + "is to record the removal belongs under one of %s.",
+                .describedAs("these documents name a type or package 2.0 removed, so anyone "
+                        + "following them writes code that does not compile. A document whose "
+                        + "purpose is to record the removal belongs under one of %s.",
                         HISTORICAL_RECORD_PREFIXES)
                 .isEmpty();
     }

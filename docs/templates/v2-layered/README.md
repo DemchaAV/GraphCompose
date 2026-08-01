@@ -52,20 +52,19 @@ inline DSL, and how to ship a new preset as ~150 lines that anyone can
 read end-to-end.
 
 ### 🛠 You're adding a new template family to the library
-You're a GraphCompose maintainer or contributor. You want to bring
-invoice-v2, cover-letter-v2, or a new document type onto the same
-5-layer pattern that CV uses.
+You're a GraphCompose maintainer or contributor. You want to bring a
+new document type onto the same layering the shipped families use.
 
 → **[contributor-guide.md](contributor-guide.md)**
 
-You'll get the package convention (`<name>/v2/data` /
-`theme` / `components` / `widgets` / `presets`), naming rules, test
-expectations, doc expectations, and a worked checklist for a new
-template family from empty folder to merged PR.
+You'll get the package convention (`<family>/data` / `components` /
+`widgets` / `presets` over the shared `templates.core.theme`), naming
+rules, test expectations, doc expectations, and a worked checklist for a
+new template family from empty folder to merged PR.
 
 ---
 
-## The 5-layer pattern at a glance
+## The layering at a glance
 
 ```
 presets/      composition: data + theme + widgets → DocumentTemplate
@@ -74,10 +73,11 @@ presets/      composition: data + theme + widgets → DocumentTemplate
 widgets/      LEGO bricks: Headline, Subheadline, ContactLine, SectionHeader, …
    │ delegate to                                  read tokens from
    ▼                                              ▼
-components/   internal renderers + primitives    theme/    palette
-                                                            typography
-                                                            spacing
-                                                            decoration
+components/   internal renderers + primitives    templates.core.theme
+                                                   BrandTheme: palette
+                                                              typography
+                                                              spacing
+                                                              decoration
    │ render
    ▼
 data/         records describing what to render (no styling)
@@ -95,16 +95,17 @@ The detailed contract for each layer is in
 
 ## What this pattern is *not*
 
-- ❌ **Not a migration mandate.** Existing v1 templates
-  (`cv/spec`, `cv/builder`, `cv/presets`) continue to work and
-  ship. The layered pattern is for **new** templates and major
-  rewrites.
+- ❌ **Not one shape for every family.** `presets/` is the only
+  package a family always has. CV carries all four; cover letter has no
+  `widgets/`; invoice and proposal are presets alone, reading data
+  records from the shared `templates.data.<family>`. Add a layer when
+  the family needs one.
 - ❌ **Not a framework with magic.** Every file is plain
   Java records + static helpers. No reflection, no annotations,
   no codegen.
 - ❌ **Not coupled to CV.** The pattern is domain-agnostic; CV is
-  just the first family migrated. Invoice or cover-letter would
-  use the same five folders with their own data shapes inside.
+  just the family that uses every layer, which is why it is the
+  reference implementation.
 - ❌ **Not a UI framework.** No state, no events, no lifecycle.
   Templates render static PDFs from immutable data.
 

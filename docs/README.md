@@ -34,8 +34,8 @@ back here.
 - **[troubleshooting.md](troubleshooting.md)** — symptom-first fixes for common gotchas: stray `?` glyphs, silent DOCX drops, optional-dependency `NoClassDefFoundError`, running the bundled examples.
 
 ### Templates
-- **[templates/business-templates.md](templates/business-templates.md)** — invoice & proposal templates: the compose-first contract, end to end. ⚠️ Being reworked for the layered `ModernInvoice` / `ModernProposal` surface.
-- **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `theme` / `components` / `widgets` / `presets`.
+- **[templates/business-templates.md](templates/business-templates.md)** — invoice & proposal templates: the compose-first contract, end to end, on the layered `ModernInvoice` / `ModernProposal` surface.
+- **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `components` / `widgets` / `presets` per family, over the shared `templates.core.theme`.
 - **[templates/v1-classic/](templates/v1-classic/)** — 🗄️ archived: the classic spec/builder/presets surface removed in 2.0; kept for pre-2.0 callers.
 
 ### Output backends
@@ -107,7 +107,7 @@ it does.
 - **[adr/0012-nested-list-evolution.md](adr/0012-nested-list-evolution.md)** — nested list rendering evolution.
 - **[adr/0013-composed-table-cell.md](adr/0013-composed-table-cell.md)** — composed table cell model.
 - **[adr/0014-controlled-absolute-placement.md](adr/0014-controlled-absolute-placement.md)** — controlled absolute placement strategy.
-- **[adr/0015-layered-template-architecture.md](adr/0015-layered-template-architecture.md)** — the layered `cv.v2` / `coverletter.v2` authoring model (current standard); supersedes the preset/builder portion of 0011.
+- **[adr/0015-layered-template-architecture.md](adr/0015-layered-template-architecture.md)** — the layered `templates.cv` / `templates.coverletter` authoring model (current standard); supersedes the preset/builder portion of 0011.
 
 > **ADR numbering gap (0005–0010)** is intentional — those numbers
 > were reserved during a v1.5 restructure that landed under ADR 0011

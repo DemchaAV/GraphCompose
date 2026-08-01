@@ -127,6 +127,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The template-authoring guide describes the packages that exist.** It told a
+  contributor to put a new family under `templates.<family>.v2` in exactly five
+  sub-packages, one of them a per-family `theme/` — a layout 2.0 replaced. A family has
+  `data` / `components` / `widgets` / `presets`, the cosmetic tokens are the shared
+  `BrandTheme`, and the rule about not editing the v1 surface outlived that surface. The
+  contributing guide had the same problem in one paragraph, routing new template code
+  into `templates.builtins` and `templates.support`; both are gone, so the instruction
+  produced code that does not compile. Package names join the retired-surface guard,
+  which until now could only see types.
+- **Three documents stop pointing at things that are not there.** The extension guide
+  sent a reader to a snapshot-test directory that does not exist, the layout-snapshot
+  page listed two tests among six that are not in the repository, and the docs index
+  still carried a rework warning for a page reworked a major release ago. The roadmap
+  asked for a warning on dropped DOCX content that the backend already logs; what it is
+  really asking for — a mode that refuses instead of dropping — now says so.
 - **The example catalogue stops offering a type that ships nowhere.** Its entry-point
   table introduced the cover letter as a `BusinessTheme.modern()` document, and
   `BusinessTheme` is a record local to the examples module — a reader adding the

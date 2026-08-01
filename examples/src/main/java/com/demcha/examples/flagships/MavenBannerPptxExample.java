@@ -24,6 +24,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -286,7 +287,7 @@ public final class MavenBannerPptxExample {
                         .margin(DocumentInsets.zero())
                         .build(), 22, -12, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder()
-                        .text("v2.1.0")
+                        .text("v" + ExampleVersion.withoutQualifier())
                         .textStyle(monoBold(12.5, ORANGE))
                         .margin(DocumentInsets.zero())
                         .build(), 22, 13, LayerAlign.CENTER_LEFT)

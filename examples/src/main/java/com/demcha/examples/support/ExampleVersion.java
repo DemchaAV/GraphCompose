@@ -72,7 +72,26 @@ public final class ExampleVersion {
         return matcher.find() ? matcher.group(1) + "." + matcher.group(2) : version;
     }
 
+    /**
+     * The version a render should display, when it is not the reactor's.
+     *
+     * <p>Between cuts the reactor sits on the next patch — {@code 2.1.1-SNAPSHOT} while
+     * {@code 2.1.0} is what people can depend on — so a render taken from {@code develop}
+     * names a version that does not exist yet. Stripping the qualifier is not enough:
+     * the patch number itself has moved. Anything that needs to reproduce a published
+     * document passes the published version here.</p>
+     */
+    public static final String DISPLAY_VERSION_PROPERTY = "graphcompose.examples.displayVersion";
+
     private static String load() {
+        // The override wins, and it is the only way to render a version other than the
+        // one the build carries. banner.properties keeps sourcing @project.version@ —
+        // a guard requires that — so the reactor stays the default answer.
+        String override = System.getProperty(DISPLAY_VERSION_PROPERTY);
+        if (override != null && !override.isBlank()) {
+            return override.trim();
+        }
+
         Properties banner = new Properties();
         try (InputStream in = ExampleVersion.class.getResourceAsStream("/banner.properties")) {
             if (in != null) {

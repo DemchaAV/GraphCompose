@@ -109,7 +109,11 @@ public final class MasterShowcaseExample {
         document.header(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.HEADER)
                 .leftText("GraphCompose · Master showcase")
-                .rightText("{date}")
+                // A fixed period rather than {date}: this document is committed as a
+                // README preview, and a header that re-dates itself on every render
+                // makes the committed copy differ from a fresh one for no reason a
+                // reader would care about. The report is a Q2 fiction anyway.
+                .rightText("Q2 2026")
                 .fontSize(9f)
                 .textColor(MUTED)
                 .showSeparator(true)
@@ -119,7 +123,7 @@ public final class MasterShowcaseExample {
 
         document.footer(DocumentHeaderFooter.builder()
                 .zone(DocumentHeaderFooterZone.FOOTER)
-                .leftText("GraphCompose " + ExampleVersion.currentLine() + " — sample report")
+                .leftText("GraphCompose — sample report")
                 .rightText("Page {page} of {pages}")
                 .fontSize(9f)
                 .textColor(MUTED)

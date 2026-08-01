@@ -42,9 +42,11 @@ follow semantic versioning; release dates are ISO 8601.
   alone, and the Java extractor sees only what the build compiles — so the PDFBox and
   POI parsing paths, the SVG and image handling, font loading and the ZIP/OPC writers
   were not partially analysed, they were absent from the scan, with nothing in a green
-  result to say so. The build now covers every published module that carries code, and
-  a guard fails the build when a module the verify gate compiles is missing from the
-  scan, so the next module is covered the day it lands.
+  result to say so. Every deployed module that carries code is now named outright, and a
+  guard holds that list against two inventories that fail differently: what CI compiles,
+  and what a release deploys. The second is what catches an artifact added to the publish
+  train and forgotten everywhere else — the first cannot, because a module missing from
+  both lists leaves them in perfect agreement.
 - **The package map is derived from the source tree.** A backend was findable only if
   someone remembered to list it, and the backend-neutral fixed-layout SPI was missing
   from the contributing guide — the one document a reader consults before adding an

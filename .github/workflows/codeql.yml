@@ -55,17 +55,20 @@ jobs:
         # analysis scope. It covers every published module that carries code, which
         # is where the untrusted input actually lands: PDFBox and POI parsing, the
         # SVG and image paths, font loading, and the ZIP/OPC writers all live in the
-        # backends rather than in core. `-am` is required — the backends need core
-        # built from source, and without it Maven resolves the reactor siblings from
-        # the repository and compiles nothing. It also pulls the fonts and emoji
-        # modules in as dependencies, so the scanned set is the closure of this list,
-        # not the list itself.
+        # backends rather than in core.
         #
-        # Keep this list in step with the verify gate in ci.yml. A module that ships
-        # and is not named here ships unscanned.
+        # Every deployed module is named outright, including fonts and emoji, which no
+        # other `-pl` list mentions. They would arrive through `-am` as somebody's
+        # dependency, and that is precisely the arrangement that ends quietly the day
+        # the dependency is dropped. `-am` stays for a future module whose upstream is
+        # not itself deployed.
+        #
+        # CodeQlScopeGuardTest holds this list against two inventories — what CI
+        # compiles and what the publish workflows deploy — so a module that ships and
+        # is not named here fails the build rather than shipping unscanned.
         run: |
           ./mvnw -B -ntp -DskipTests package -am \
-            -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing
+            -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose-fonts,:graph-compose-emoji
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

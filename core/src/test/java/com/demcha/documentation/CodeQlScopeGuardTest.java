@@ -7,9 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,10 +24,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * for a full release, with the PDFBox, POI, SVG, font and ZIP/OPC paths — the code most
  * exposed to untrusted input — outside the scan while core was analysed.
  *
- * <p>The expectation is derived rather than listed: every module the verify gate builds
- * that carries production sources must also be built for the scan. A module added to
- * the reactor and to CI is therefore covered on the day it lands, and a module dropped
- * from the scan fails here rather than going quiet.
+ * <p>The expectation is derived rather than listed, from two sources that fail
+ * differently. Against the verify gate, a module CI compiles must also be scanned — that
+ * catches the scan falling behind the build. Against the publish workflows, a module a
+ * release deploys must be scanned — that catches what the first comparison cannot, since
+ * a new artifact forgotten in both CI and the scan is missing from both sides of it and
+ * the sets agree perfectly.
  */
 class CodeQlScopeGuardTest {
 
@@ -35,8 +37,12 @@ class CodeQlScopeGuardTest {
     private static final Path CI_WORKFLOW = PROJECT_ROOT.resolve(".github/workflows/ci.yml");
     private static final Path CODEQL_WORKFLOW = PROJECT_ROOT.resolve(".github/workflows/codeql.yml");
 
-    /** A {@code -pl} value: the comma-separated run of module selectors that follows it. */
-    private static final Pattern MODULE_LIST = Pattern.compile("-pl\\s+(:[^\\s\\\\]+)");
+    /**
+     * A {@code -pl} value. Selectors are collected token by token rather than by one
+     * regex: a wrapped command joins into {@code -pl :a,:b, :c -am}, and a pattern that
+     * stopped at the first space would silently shrink the very set it compares against.
+     */
+    private static final Pattern OPTION = Pattern.compile("^-{1,2}\\w.*");
 
     @Test
     void everyCodeBearingModuleTheVerifyGateBuildsIsAlsoScanned() throws IOException {
@@ -61,31 +67,60 @@ class CodeQlScopeGuardTest {
     }
 
     /**
-     * The scan has to build its dependencies from source.
+     * Everything a release deploys, and that carries code, is scanned.
      *
-     * <p>Without {@code -am} Maven resolves the reactor siblings from the repository and
-     * compiles only the named modules — which, for a list whose first entry everything
-     * else depends on, means the build fails or silently narrows. It is one token, and
-     * losing it would look like a formatting change.
+     * <p>The independent half. Comparing the scan against CI answers the narrower
+     * question of whether the two lists agree, and two lists agree perfectly when a
+     * module is missing from both — which is the shape a new artifact takes when it is
+     * added to the publish train and forgotten everywhere else. The inventory here comes
+     * from the publish workflows, so the question becomes the one the promise makes:
+     * does the scan cover what users can actually depend on.</p>
      */
     @Test
-    void theScanBuildsItsDependenciesFromSource() throws IOException {
-        String step = buildStep(CODEQL_WORKFLOW, "package");
+    void everyDeployedModuleWithSourcesIsScanned() throws IOException {
+        Set<String> deployed = withSources(PublishedModules.deployed(PROJECT_ROOT));
+        Set<String> scanned = modulesWithSources(selectorsFrom(CODEQL_WORKFLOW, "package"));
 
-        assertThat(step)
-                .describedAs("the CodeQL build must pass -am, or the modules it names are "
-                        + "resolved as jars instead of compiled — and a jar is not extracted")
-                .contains("-am");
+        assertThat(deployed)
+                .describedAs("no deployed module with sources was found — the publish workflows' "
+                        + "deploy steps moved, and this guard is comparing against nothing")
+                .isNotEmpty();
+
+        Set<String> unscanned = new TreeSet<>(deployed);
+        unscanned.removeAll(scanned);
+
+        assertThat(unscanned)
+                .describedAs("a module a release deploys, and whose code a consumer therefore "
+                        + "runs, is outside the scan. Naming it in the scan's -pl list is the fix; "
+                        + "relying on it arriving as somebody's dependency is not, because that "
+                        + "stops the day the dependency does")
+                .isEmpty();
     }
 
-    /** The {@code -pl} selectors of the first {@code mvnw} invocation containing {@code goal}. */
+    /**
+     * The {@code -pl} selectors of the {@code mvnw} invocation carrying {@code goal}, or
+     * every reactor module when the command carries no {@code -pl} at all — a build
+     * without one compiles the whole reactor, which is more coverage, not less.
+     */
     private static List<String> selectorsFrom(Path workflow, String goal) throws IOException {
-        Matcher matcher = MODULE_LIST.matcher(buildStep(workflow, goal));
-        assertThat(matcher.find())
-                .describedAs("no -pl module list found in the %s invocation of %s",
+        List<String> tokens = List.of(buildStep(workflow, goal).strip().split("\\s+"));
+        int at = tokens.indexOf("-pl");
+        if (at < 0) {
+            return PublishedModules.of(PROJECT_ROOT).stream().map(module -> ":" + module).toList();
+        }
+
+        StringBuilder selectors = new StringBuilder();
+        for (String token : tokens.subList(at + 1, tokens.size())) {
+            if (OPTION.matcher(token).matches()) {
+                break;
+            }
+            selectors.append(token);
+        }
+        assertThat(selectors.length())
+                .describedAs("the -pl in the %s invocation of %s is followed by no selectors",
                         goal, PROJECT_ROOT.relativize(workflow))
-                .isTrue();
-        return List.of(matcher.group(1).split(","));
+                .isPositive();
+        return List.of(selectors.toString().split(","));
     }
 
     /**
@@ -94,6 +129,7 @@ class CodeQlScopeGuardTest {
      */
     private static String buildStep(Path workflow, String goal) throws IOException {
         List<String> lines = Files.readAllLines(workflow);
+        List<String> matches = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             if (!lines.get(i).contains("mvnw")) {
                 continue;
@@ -103,42 +139,57 @@ class CodeQlScopeGuardTest {
                 command.append(' ').append(lines.get(j));
             }
             String joined = command.toString().replace("\\", " ");
-            if (joined.contains(goal) && joined.contains("-pl")) {
-                return joined;
+            if (joined.contains(goal)) {
+                matches.add(joined);
             }
         }
-        throw new AssertionError("no mvnw invocation with '" + goal + "' and -pl in "
-                + PROJECT_ROOT.relativize(workflow));
+
+        assertThat(matches)
+                .describedAs("no mvnw invocation carrying '%s' in %s — the step this guard reads "
+                        + "was renamed or its goal changed", goal, PROJECT_ROOT.relativize(workflow))
+                .isNotEmpty();
+
+        // A module selection is what this guard is after, so prefer the invocation that
+        // carries one. Falling back to the first match keeps a command that drops `-pl`
+        // entirely readable rather than throwing — building the whole reactor scans more,
+        // not less, and a guard that fails on the stricter setup would push toward the
+        // looser one.
+        return matches.stream().filter(command -> command.contains("-pl")).findFirst()
+                .orElse(matches.get(0));
+    }
+
+    /** Of the given module directories, the artifact ids of those carrying main sources. */
+    private static Set<String> withSources(java.util.List<String> moduleDirectories) throws IOException {
+        Map<String, Path> byArtifactId = PublishedModules.byArtifactId(PROJECT_ROOT);
+        Set<String> withSources = new TreeSet<>();
+        byArtifactId.forEach((artifactId, directory) -> {
+            String name = directory.getFileName().toString();
+            if (moduleDirectories.contains(name)
+                    && Files.isDirectory(directory.resolve("src/main/java"))) {
+                withSources.add(artifactId);
+            }
+        });
+        return withSources;
     }
 
     /** Of the given {@code :artifact-id} selectors, those whose module carries main sources. */
     private static Set<String> modulesWithSources(List<String> selectors) throws IOException {
+        Map<String, Path> byArtifactId = PublishedModules.byArtifactId(PROJECT_ROOT);
+
+        assertThat(byArtifactId)
+                .describedAs("no module resolved to a directory — the root pom's module list or "
+                        + "the poms' own coordinates moved, and every selector below would be "
+                        + "dropped as unknown")
+                .isNotEmpty();
+
         Set<String> withSources = new TreeSet<>();
         for (String selector : selectors) {
             String artifactId = selector.strip().replaceFirst("^:", "");
-            Path module = moduleDirectoryOf(artifactId);
+            Path module = byArtifactId.get(artifactId);
             if (module != null && Files.isDirectory(module.resolve("src/main/java"))) {
                 withSources.add(artifactId);
             }
         }
         return withSources;
-    }
-
-    /** The reactor module directory declaring {@code artifactId}, or null when none does. */
-    private static Path moduleDirectoryOf(String artifactId) throws IOException {
-        String rootPom = Files.readString(PROJECT_ROOT.resolve("pom.xml"));
-        Matcher modules = Pattern.compile("<module>\\s*([^<]+?)\\s*</module>").matcher(rootPom);
-        List<String> candidates = new ArrayList<>();
-        while (modules.find()) {
-            candidates.add(modules.group(1));
-        }
-        for (String module : candidates) {
-            Path pom = PROJECT_ROOT.resolve(module).resolve("pom.xml");
-            if (Files.isRegularFile(pom)
-                    && Files.readString(pom).contains("<artifactId>" + artifactId + "</artifactId>")) {
-                return PROJECT_ROOT.resolve(module);
-            }
-        }
-        return null;
     }
 }

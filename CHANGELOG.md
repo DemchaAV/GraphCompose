@@ -127,6 +127,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The example catalogue is built one way, and it starts empty.** The runner only ever
+  wrote, so a renamed or deleted example left its old document behind — published to the
+  site, counted by the guards that read the tree, and indistinguishable from a current
+  one. Generation now clears the output tree first, inside the runner itself, so the
+  release script, CI and the tests all get the same guarantee instead of the one path
+  that happened to remember. `ShowcaseSync` removes the directories as well as the files
+  it replaces, which makes the published tree a function of the catalogue rather than a
+  record of everything ever generated.
+- **Nine committed previews are gone and two examples now run.** Seven were pre-2.0
+  renders of CV presets whose current versions the runner already produced, so the
+  gallery linked the older snapshot of each; those links follow the current render and
+  the stale files are removed. Two more, an invoice and a proposal, were left by a rename
+  and nothing linked them at all. The cover-letter example and a custom-theme CV were
+  never wired into the runner, so one of them backed a link with a file no code produced
+  — both are generated now, and both have a showcase entry.
 - **The template-authoring guide describes the packages that exist.** It told a
   contributor to put a new family under `templates.<family>.v2` in exactly five
   sub-packages, one of them a per-family `theme/` — a layout 2.0 replaced. A family has

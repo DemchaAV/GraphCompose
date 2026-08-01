@@ -43,6 +43,7 @@ import com.demcha.examples.features.text.SectionPresetsExample;
 import com.demcha.examples.features.title.BookTemplateExample;
 import com.demcha.examples.features.title.PoetryTitlePageExample;
 import com.demcha.examples.features.transforms.TransformsExample;
+import com.demcha.examples.support.ExampleOutputPaths;
 import com.demcha.examples.flagships.BusinessReportExample;
 import com.demcha.examples.flagships.BusinessReportPptxExample;
 import com.demcha.examples.flagships.EngineDeckExample;
@@ -58,6 +59,7 @@ import com.demcha.examples.flagships.SocialCardExample;
 import com.demcha.examples.flagships.MavenBannerPptxExample;
 import com.demcha.examples.flagships.ModuleFirstFileExample;
 import com.demcha.examples.flagships.TwinOutputExample;
+import com.demcha.examples.templates.coverletter.CoverLetterFileExample;
 import com.demcha.examples.templates.coverletter.CvBlueBannerLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvBoxedSectionsLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvCenteredHeadlineLetterV2Example;
@@ -82,6 +84,7 @@ import com.demcha.examples.templates.cv.v2.CvEditorialBlueExample;
 import com.demcha.examples.templates.cv.v2.CvEngineeringResumeExample;
 import com.demcha.examples.templates.cv.v2.CvExecutiveExample;
 import com.demcha.examples.templates.cv.v2.CvMinimalUnderlinedExample;
+import com.demcha.examples.templates.cv.v2.CvMintEditorialCustomExample;
 import com.demcha.examples.templates.cv.v2.CvMintEditorialExample;
 import com.demcha.examples.templates.cv.v2.CvModernV2Example;
 import com.demcha.examples.templates.cv.v2.CvMonogramSidebarExample;
@@ -109,6 +112,11 @@ public final class GenerateAllExamples {
     }
 
     public static void main(String[] args) throws Exception {
+        // The catalogue is a statement about the code, so it starts empty: an
+        // example renamed or deleted must not leave its old document behind for
+        // the showcase to publish and the guards to count.
+        ExampleOutputPaths.clean();
+
         // === Templates ===
         // CV / Resume (v2 layered — 16 presets, one example per preset)
         System.out.println("Generated: " + CvBlueBannerExample.generate());
@@ -121,6 +129,8 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvExecutiveExample.generate());
         System.out.println("Generated: " + CvMinimalUnderlinedExample.generate());
         System.out.println("Generated: " + CvMintEditorialExample.generate());
+        System.out.println("Generated: " + CvMintEditorialCustomExample.generate());
+        System.out.println("Generated: " + CoverLetterFileExample.generate());
         System.out.println("Generated: " + CvModernV2Example.generate());
         System.out.println("Generated: " + CvMonogramSidebarExample.generate());
         System.out.println("Generated: " + CvNordicCleanExample.generate());

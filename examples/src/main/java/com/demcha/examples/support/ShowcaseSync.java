@@ -196,14 +196,24 @@ public final class ShowcaseSync {
      * {@code AccessDeniedException}. A missing tree is a no-op — the normal case on a
      * fresh checkout.
      */
+    /**
+     * Empties a published subtree, directories included.
+     *
+     * <p>Deepest entry first, so a directory is empty by the time it is removed. A
+     * category or group that no longer produces anything should leave nothing behind
+     * — an empty folder is invisible to git but not to anyone reading the deployed
+     * site's tree, and it makes the published surface a record of what used to be
+     * generated rather than of what is.
+     */
     private static void deletePublishedFiles(Path root) throws IOException {
         if (!Files.exists(root)) {
             return;
         }
         try (Stream<Path> walk = Files.walk(root)) {
-            List<Path> files = walk.filter(Files::isRegularFile).toList();
-            for (Path file : files) {
-                Files.delete(file);
+            for (Path path : walk.sorted(Comparator.reverseOrder()).toList()) {
+                if (!path.equals(root)) {
+                    Files.delete(path);
+                }
             }
         }
     }

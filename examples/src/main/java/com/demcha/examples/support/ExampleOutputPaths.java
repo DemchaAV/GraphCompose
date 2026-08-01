@@ -1,15 +1,50 @@
 package com.demcha.examples.support;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 public final class ExampleOutputPaths {
     private ExampleOutputPaths() {
     }
 
+    /** The tree every example writes into. */
+    public static Path root() {
+        return baseDirectory().resolve("target").resolve("generated-pdfs")
+                .toAbsolutePath().normalize();
+    }
+
+    /**
+     * Empties the output tree so what remains is exactly what this run produced.
+     *
+     * <p>The examples only write. Rename an example's output or delete the example and
+     * its old file stays behind, indistinguishable from a current one — the showcase
+     * then publishes a document nothing produces, and the guards that read the tree
+     * count it as evidence. Clearing first is what makes the tree a statement about the
+     * code rather than about the order in which commands were run.</p>
+     *
+     * @return the emptied root
+     */
+    public static Path clean() throws IOException {
+        Path root = root();
+        if (Files.isDirectory(root)) {
+            try (Stream<Path> paths = Files.walk(root)) {
+                for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                    if (!path.equals(root)) {
+                        Files.delete(path);
+                    }
+                }
+            }
+        }
+        Files.createDirectories(root);
+        return root;
+    }
+
     public static Path prepare(String fileName) throws Exception {
-        Path root = baseDirectory().resolve("target").resolve("generated-pdfs");
+        Path root = root();
         Files.createDirectories(root);
         return root.resolve(fileName).toAbsolutePath().normalize();
     }
@@ -26,7 +61,7 @@ public final class ExampleOutputPaths {
      * @return absolute path under the categorised generated-pdfs tree
      */
     public static Path prepare(String category, String fileName) throws Exception {
-        Path root = baseDirectory().resolve("target").resolve("generated-pdfs").resolve(category);
+        Path root = root().resolve(category);
         Files.createDirectories(root);
         return root.resolve(fileName).toAbsolutePath().normalize();
     }

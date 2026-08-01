@@ -59,8 +59,16 @@ final class ShowcaseMetadata {
         cv("cv-monogram-sidebar-v2", "CvMonogramSidebarExample", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
         cv("cv-minimal-underlined-v2", "CvMinimalUnderlinedExample", "Minimal Underlined", "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.", "minimal");
         cv("cv-mint-editorial-v2", "CvMintEditorialExample", "Mint Editorial", "Magazine-style editorial CV with mint accent palette and two-column body.", "editorial", "mint");
+        cv("cv-mint-editorial-v2-custom", "CvMintEditorialCustomExample", "Mint Editorial (custom theme)", "The Mint Editorial preset rendered through a hand-built BrandTheme, showing where a caller takes over the palette.", "editorial", "mint");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
+        // Registered directly: letter() points at the layered preset examples under
+        // coverletter/v2, and this one sits a level up because it composes without a
+        // preset at all.
+        ENTRIES.put("cover-letter", entry("Cover Letter",
+                "One page composed straight in the canonical DSL — section presets carry the hierarchy, no template involved.",
+                withCategory("letter"),
+                EX_BASE + "/templates/coverletter/CoverLetterFileExample.java"));
         letter("cover-letter-modern-professional-v2", "CvModernProfessionalLetterV2Example", "Modern Professional letter", "Letter paired with the Modern Professional CV palette.");
         letter("cover-letter-nordic-clean-v2", "CvNordicCleanLetterV2Example", "Nordic Clean letter", "Letter paired with the Nordic Clean CV palette.");
         letter("cover-letter-classic-serif-v2", "CvClassicSerifLetterV2Example", "Classic Serif letter", "Letter with Times-style serif typography.");

@@ -384,7 +384,7 @@ When you do add a new widget:
 
 A new preset needs at least:
 
-1. **Smoke test** in `core/src/test/.../cv/presets/MyPresetSmokeTest.java`:
+1. **Smoke test** in `qa/src/test/.../cv/presets/MyPresetSmokeTest.java`:
    - `exposes_stable_identity` — checks `id()` and `displayName()`
    - `default_factory_renders` — calls `create().compose(...)` with
      a full sample document, asserts `session.roots()` is non-empty

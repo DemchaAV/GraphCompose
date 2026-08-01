@@ -276,9 +276,9 @@ There is one template authoring pattern, whether you are adding a
 new family or a new preset inside an existing one: the layered
 architecture documented in
 [**docs/templates/v2-layered/contributor-guide.md**](./docs/templates/v2-layered/contributor-guide.md).
-Five sub-packages (`data/` / `theme/` / `components/` / `widgets/`
-/ `presets/`), each with a clear contract, over the shared
-`templates.core` layer.
+A family has `presets/` and adds `data/`, `components/` and `widgets/`
+as it needs them, each with a clear contract, over the shared
+`templates.core` layer that owns the theme.
 
 - Every preset is a `public final class` — no inheritance — with a
   `create(BrandTheme)` factory returning `DocumentTemplate<S>`, plus a

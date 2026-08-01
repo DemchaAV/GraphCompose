@@ -66,10 +66,14 @@ data differs; the *layering* is identical.
 <a id="package-map-for-a-new-family"></a>
 ## Package map for a new family
 
-Mirror the CV layout. Concrete example for invoice:
+The fullest shape, which is CV's. A family takes the layers it needs and
+no more: cover letter has no `widgets/`, and the shipped invoice and
+proposal families are `presets/` alone, reading their records from the
+shared `templates.data.<family>`. The tree below is an invoice-shaped
+domain drawn at full size, so every layer has something in it:
 
 ```
-templates/src/main/java/com/demcha/compose/document/templates/invoice/
+templates/src/main/java/com/demcha/compose/document/templates/<family>/
 ├── package-info.java                   ← ASCII diagram + 4-step walkthrough
 ├── AUTHORS.md                          ← recipe cookbook
 ├── data/
@@ -104,8 +108,8 @@ templates/src/main/java/com/demcha/compose/document/templates/invoice/
     └── (more as added)
 ```
 
-The structure is **identical** to cv — only the records inside
-differ.
+That is cv's structure with invoice records inside. A smaller family
+keeps `presets/` and drops the rest.
 
 ---
 
@@ -261,7 +265,6 @@ Minimum test coverage matching CV v2:
 | Test class | What it asserts |
 |---|---|
 | `<Family>DocumentTest` | Builder rejects null / blank required fields; valid build succeeds |
-| `<Family>ThemeTest` | All factories produce valid themes; deprecated constructors (if any) wrap correctly |
 | `<Preset>SmokeTest` | `id()`, `displayName()`, default-factory render, custom-theme render |
 | `SectionDispatcherTest` *(optional)* | Each sealed subtype routes correctly |
 | `WidgetSmokeTest` | Each public widget variant renders without throwing |
@@ -292,7 +295,7 @@ git commit -m "test: refresh visual baselines after <reason>"
 ```
 
 **Where baselines live:**
-`core/src/test/resources/visual-baselines/<family>-v2-layered/<slug>-page-N.png`
+`qa/src/test/resources/visual-baselines/<family>-v2-layered/<slug>-page-N.png`
 
 One PNG per page per preset. Pages overflow naturally — a 2-page
 preset gets `<slug>-page-0.png` and `<slug>-page-1.png`.
@@ -322,7 +325,7 @@ baseline so a reviewer can see exactly what changed before deciding
 to re-bless or fix.
 
 **Reference**: see
-`core/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java`
+`qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java`
 — a 200-line drop-in template you can copy for a new family.
 
 ---
@@ -380,7 +383,7 @@ A new template family PR is reviewed against:
 1. **Layer discipline** — do data / theme / components / widgets /
    presets each obey their contract?
 2. **Test coverage** — smoke tests for every public surface;
-   builder validation tests; theme factory tests.
+   builder validation tests.
 3. **Doc completeness** — `package-info.java` everywhere,
    `AUTHORS.md` with at least 4 recipes, root README updated.
 4. **Visual signature** — render the reference preset, attach the

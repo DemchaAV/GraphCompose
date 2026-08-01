@@ -1,6 +1,7 @@
 package com.demcha.examples.support;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,13 +35,32 @@ public final class ExampleOutputPaths {
             try (Stream<Path> paths = Files.walk(root)) {
                 for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
                     if (!path.equals(root)) {
-                        Files.delete(path);
+                        delete(path);
                     }
                 }
             }
         }
         Files.createDirectories(root);
         return root;
+    }
+
+    /**
+     * Deletes one entry, translating the failure a reader can actually act on.
+     *
+     * <p>A document held open in a viewer is the way this fails on Windows, and it is
+     * common enough that the runbook lists it. The raw {@code AccessDeniedException}
+     * arrives with a path and nothing else, at the very start of a run that has produced
+     * nothing yet, which reads like the generator is broken rather than like a window
+     * needs closing.</p>
+     */
+    private static void delete(Path path) throws IOException {
+        try {
+            Files.delete(path);
+        } catch (AccessDeniedException blocked) {
+            throw new IOException("Cannot clear " + path + " before regenerating the examples."
+                    + " Something is holding the file open — a PDF viewer is the usual answer on"
+                    + " Windows. Close it and run again.", blocked);
+        }
     }
 
     public static Path prepare(String fileName) throws Exception {

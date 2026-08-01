@@ -59,7 +59,7 @@ final class ShowcaseMetadata {
         cv("cv-monogram-sidebar-v2", "CvMonogramSidebarExample", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
         cv("cv-minimal-underlined-v2", "CvMinimalUnderlinedExample", "Minimal Underlined", "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.", "minimal");
         cv("cv-mint-editorial-v2", "CvMintEditorialExample", "Mint Editorial", "Magazine-style editorial CV with mint accent palette and two-column body.", "editorial", "mint");
-        cv("cv-mint-editorial-v2-custom", "CvMintEditorialCustomExample", "Mint Editorial (custom theme)", "The Mint Editorial preset rendered through a hand-built BrandTheme, showing where a caller takes over the palette.", "editorial", "mint");
+        cv("cv-mint-editorial-v2-custom", "CvMintEditorialCustomExample", "Mint Editorial (custom band)", "The same preset with one colour changed through its Options — a kraft-paper masthead band, everything else left at the preset's defaults.", "editorial", "mint");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
         // Registered directly: letter() points at the layered preset examples under

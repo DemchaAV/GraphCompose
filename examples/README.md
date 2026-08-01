@@ -56,7 +56,7 @@ are with the canonical DSL, then jump to its detailed section below.
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create()` on a `CvDocument` | [PDF](../assets/readme/examples/cv-modern-professional-v2.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java) |
+| [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create()` on a `CvDocument` | [PDF](../assets/readme/examples/cv-modern-professional-v2.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java) |
 | [Invoice — cinematic V2](#invoice-cinematic-v2) | `ModernInvoice + BrandTheme.invoiceModern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
 | [Cover Letter](#cover-letter) | One-page cover letter composed in the canonical DSL, section presets carrying the hierarchy | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
@@ -206,7 +206,7 @@ The preset is one final class with `create()` / `create(BrandTheme)`
 factories — copy-and-tweak rather than fork-a-monolith.
 
 [📄 View PDF](../assets/readme/examples/cv-modern-professional-v2.pdf) ·
-[📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java)
+[📜 Full source](src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java)
 
 ### CV — template gallery
 
@@ -227,6 +227,10 @@ preset for your own CV product. Each preset is a one-liner factory
 | Panel | [PDF](../assets/readme/examples/cv-panel-v2.pdf) |
 | Executive · BoxedSections · CenteredHeadline · BlueBanner · EditorialBlue · SidebarPortrait · MonogramSidebar · MintEditorial · MinimalUnderlined | run the gallery to render |
 
+The previews above come from the per-preset examples under
+[`templates/cv/v2/`](src/main/java/com/demcha/examples/templates/cv/v2), which the
+catalogue runner generates. The gallery below renders every preset from one entry point
+instead, and is not part of that run — use it to produce the whole set locally:
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/CvTemplateGalleryFileExample.java)
 
 ### Cover letter — template gallery

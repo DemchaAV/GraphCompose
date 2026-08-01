@@ -16,7 +16,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -89,6 +92,7 @@ public final class ShowcaseSync {
                     + ". Run GenerateAllExamples first — refusing to clear the published"
                     + " showcase and write an empty manifest.");
         }
+        requireCompleteCatalogue(pdfs, generatedPdfs);
 
         // The copy below replaces files but never removes them, so an example that was
         // renamed or deleted kept its artifact published on GitHub Pages indefinitely —
@@ -189,21 +193,54 @@ public final class ShowcaseSync {
     }
 
     /**
-     * Removes every published file under a subtree, leaving the directories in place.
-     * Only files matter: git tracks no empty directory, and the copy below recreates
-     * whatever it needs. Deleting the directories too is what makes this fragile on
-     * Windows, where a just-closed handle can still fail the parent's removal with
-     * {@code AccessDeniedException}. A missing tree is a no-op — the normal case on a
-     * fresh checkout.
-     */
-    /**
-     * Empties a published subtree, directories included.
+     * Refuses to publish a catalogue that is missing documents the register describes.
      *
-     * <p>Deepest entry first, so a directory is empty by the time it is removed. A
-     * category or group that no longer produces anything should leave nothing behind
-     * — an empty folder is invisible to git but not to anyone reading the deployed
-     * site's tree, and it makes the published surface a record of what used to be
-     * generated rather than of what is.
+     * <p>"Not empty" stopped being enough the moment generation began by clearing the
+     * tree. A run that dies partway now leaves exactly the documents written before the
+     * throw, and that passes an emptiness check — so the sync would mirror the remains,
+     * delete every published file the run never got to, and rewrite the manifest to
+     * match. The site ends up internally consistent and quietly missing half its
+     * examples, which is worse than an obvious failure.</p>
+     *
+     * <p>The register is the yardstick because it is the one list that says what the
+     * catalogue is meant to contain. Deleting an example legitimately shrinks the
+     * catalogue, and that stays possible — the entry goes with it, which the coverage
+     * guard requires anyway.</p>
+     */
+    private static void requireCompleteCatalogue(List<Path> pdfs, Path generatedPdfs) {
+        Set<String> produced = pdfs.stream()
+                .map(pdf -> pdf.getFileName().toString())
+                .map(name -> name.substring(0, name.length() - ".pdf".length()))
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        Set<String> missing = new TreeSet<>(ShowcaseMetadata.registeredEntries().keySet());
+        missing.removeAll(produced);
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException(
+                    "The generated catalogue is missing " + missing.size() + " document(s) the"
+                    + " showcase register describes: " + missing + ". Generation starts by"
+                    + " emptying " + generatedPdfs + ", so a run that failed partway leaves"
+                    + " exactly what it managed to write. Re-run GenerateAllExamples and let it"
+                    + " finish — publishing now would delete the missing documents from the site"
+                    + " and rewrite the manifest without them. If an example was removed on"
+                    + " purpose, remove its register entry too.");
+        }
+    }
+
+    /**
+     * Empties a published subtree. A missing tree is a no-op — the normal case on a
+     * fresh checkout.
+     *
+     * <p>Every file goes, and a failure there stops the sync: a published file that
+     * survives is a document the site still serves and the manifest no longer lists.</p>
+     *
+     * <p>Directories are removed too, deepest first, but only where the filesystem
+     * allows. On Windows a just-closed handle can still fail the parent's removal with
+     * {@code AccessDeniedException} — observed here on
+     * {@code web/showcase/pdf/templates/schedule} — and an empty folder left behind is
+     * a cosmetic blemish on the deployed tree, invisible to git and to every reader who
+     * arrives through the manifest. Failing the whole publish over one would trade a
+     * real problem for a tidiness preference.</p>
      */
     private static void deletePublishedFiles(Path root) throws IOException {
         if (!Files.exists(root)) {
@@ -211,7 +248,17 @@ public final class ShowcaseSync {
         }
         try (Stream<Path> walk = Files.walk(root)) {
             for (Path path : walk.sorted(Comparator.reverseOrder()).toList()) {
-                if (!path.equals(root)) {
+                if (path.equals(root)) {
+                    continue;
+                }
+                if (Files.isDirectory(path)) {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException locked) {
+                        System.out.println("Left in place (the filesystem would not remove it): "
+                                + path + " — " + locked.getClass().getSimpleName());
+                    }
+                } else {
                     Files.delete(path);
                 }
             }

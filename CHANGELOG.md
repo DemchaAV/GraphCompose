@@ -118,6 +118,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The example catalogue stops offering a type that ships nowhere.** Its entry-point
+  table introduced the cover letter as a `BusinessTheme.modern()` document, and
+  `BusinessTheme` is a record local to the examples module — a reader adding the
+  dependency and reaching for it finds nothing to import. The rows and prose now say
+  what the examples demonstrate, the advanced section that quotes the helper says
+  plainly that it is examples-local and names `BrandTheme` as the shipping equivalent,
+  and a guard rejects the factory-call form on any README while leaving the quotation
+  of an example's own source alone.
+- **The last hardcoded counts are gone.** The catalogue was described as "~53 PDFs"
+  with a "curated 39-PDF subset"; it generates 91 and commits 62, and 39 is how many
+  are *not* committed. The banner caption stated a line count for the example it links,
+  and named the module graph by a version the image itself no longer shows. All four
+  numbers are removed rather than corrected — each had been reconciled before and
+  drifted again within two months.
+- **The contributing guide's commit examples match the convention it asks for.** It
+  pointed at two subjects from the 1.5 line as the shape to copy, while 26 of the last
+  30 commits are Conventional Commits and the pull-request template requires that shape
+  in a title. The four that are not are merges and the release commit — machine-made,
+  never a contributor's.
 - **Documented headings render bold, and say why.** Six snippets across the
   getting-started guide, the root README and the theme, timeline, rich-text and
   preset-authoring recipes set `fontName(FontName.HELVETICA_BOLD)` without a

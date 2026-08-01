@@ -41,7 +41,7 @@
 </p>
 
 <p align="center">
-  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the 2.0 module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
+  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
 </p>
 
 ## One source → a PDF <i>and</i> an editable PowerPoint deck
@@ -77,7 +77,7 @@ try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
   <img src="./assets/readme/twin-output-editing.png" alt="The generated deck open in PowerPoint with the headline text frame selected for editing" width="820"/>
 </p>
 <p align="center">
-  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, ~370 lines, page included).</sub>
+  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, one page, source included).</sub>
 </p>
 
 ## Why GraphCompose

@@ -34,10 +34,10 @@ Generated PDFs land in `examples/target/generated-pdfs/`. The same
 
 `GenerateAllExamples` renders the whole catalogue in one pass — the CV and
 cover-letter presets plus invoices, proposals, a schedule, the feature
-demos, and the flagships. The showcase site surfaces the full generated
-catalogue (~53 PDFs); a curated 39-PDF subset is committed under
-[`assets/readme/examples/`](../assets/readme/examples/) for the previews
-linked below.
+demos, and the flagships. The showcase site publishes the whole generated
+catalogue; a curated subset is committed under
+[`assets/readme/examples/`](../assets/readme/examples/) so the previews
+linked below open straight from GitHub.
 
 ## Gallery — pick by your goal
 
@@ -58,7 +58,7 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [CV — single template](#cv-single-template) | One CV via `ModernProfessional.create()` on a `CvDocument` | [PDF](../assets/readme/examples/cv-modern-professional.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/CvFileExample.java) |
 | [Invoice — cinematic V2](#invoice-cinematic-v2) | `ModernInvoice + BrandTheme.invoiceModern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
-| [Cover Letter](#cover-letter) | One-page `BusinessTheme.modern()` cover letter with section presets | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
+| [Cover Letter](#cover-letter) | One-page cover letter composed in the canonical DSL, section presets carrying the hierarchy | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
 | **Engine Showcase** | Single-page cinematic brand promo — semantic-graph → polished-PDFs visual metaphor with rounded clip frame, magazine headline lockup, KPI cards, capability columns; source of the README hero image | [Source](src/main/java/com/demcha/examples/flagships/EngineShowcase.java) |
 | **Engine Deck** | Multi-page **landscape** capability deck — page 1 is a banner infographic (DSL code → engine → backends → **real rendered-document thumbnails**), then an authoring-pipeline walkthrough, and two pages of **real benchmark data** (GraphCompose vs iText 9 vs JasperReports) loaded from a bundled result file and drawn as tables + native charts; the landscape companion to Engine Showcase. The same composition also renders as a **geometry-identical PowerPoint deck** (one page = one editable slide) through `buildPptx(Path)` | [PDF](../assets/readme/examples/engine-deck.pdf) · [Source](src/main/java/com/demcha/examples/flagships/EngineDeckExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/EngineDeckPptxExample.java) |
@@ -138,10 +138,11 @@ are with the canonical DSL, then jump to its detailed section below.
 
 ### Cover letter
 
-A one-page modern cover letter — `BusinessTheme.modern()` drives every
-colour and font choice; section presets (`softPanel`, `accentLeft`,
-`accentTop`) carry the visual hierarchy; opening rich-text strip
-highlights the candidate's headline.
+A one-page modern cover letter composed straight in the canonical DSL.
+Section presets (`softPanel`, `accentLeft`, `accentTop`) carry the visual
+hierarchy and an opening rich-text strip highlights the candidate's
+headline; the palette and fonts come from a theme record the example
+declares for itself.
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
@@ -1130,10 +1131,14 @@ The same composition also emits an editable PowerPoint deck (`BusinessReportPptx
 ### Master showcase
 
 Fictional "Q2 sample report" combining the canonical surface
-end-to-end: `BusinessTheme` + page background + hero with rotated
+end-to-end: a theme record + page background + hero with rotated
 shape container + branded QR + executive summary + zebra-striped
 totals table + accent-bordered highlight cards + Code 128 footer
 barcode. Reference it when composing your own multi-page documents.
+
+The `BusinessTheme` record it uses is a helper local to this module, not
+library API — the shipping equivalent is `BrandTheme` and the layered
+presets. Declare your own record the same way, or start from `BrandTheme`.
 
 The same composition also emits an editable PowerPoint deck (`MasterShowcasePptxExample` — each page becomes one slide; rich text, the advanced table, and chrome stay native shapes, and only the rotated clip-masked seal and the barcodes rasterise).
 

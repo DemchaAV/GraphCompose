@@ -141,8 +141,8 @@ are with the canonical DSL, then jump to its detailed section below.
 A one-page modern cover letter composed straight in the canonical DSL.
 Section presets (`softPanel`, `accentLeft`, `accentTop`) carry the visual
 hierarchy and an opening rich-text strip highlights the candidate's
-headline; the palette and fonts come from a theme record the example
-declares for itself.
+headline. Its colours come from a theme helper local to this module, not
+from library API — the shipping equivalent is `BrandTheme`.
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java

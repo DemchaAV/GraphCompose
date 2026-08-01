@@ -127,11 +127,13 @@ follow semantic versioning; release dates are ISO 8601.
   and a guard rejects the factory-call form on any README while leaving the quotation
   of an example's own source alone.
 - **The last hardcoded counts are gone.** The catalogue was described as "~53 PDFs"
-  with a "curated 39-PDF subset"; it generates 91 and commits 62, and 39 is how many
-  are *not* committed. The banner caption stated a line count for the example it links,
-  and named the module graph by a version the image itself no longer shows. All four
-  numbers are removed rather than corrected — each had been reconciled before and
-  drifted again within two months.
+  with a "curated 39-PDF subset". It generates 91; 62 are committed as previews, and 39
+  of the generated ones are not — the two figures do not subtract, because ten committed
+  previews come from examples the runner no longer produces. Both had been reconciled by
+  hand in June and were wrong again by August. The banner caption stated a line count for
+  the example it links, and named the module graph by a version the image itself no
+  longer shows; those two were written once and were simply never revisited. All four are
+  removed rather than corrected.
 - **The contributing guide's commit examples match the convention it asks for.** It
   pointed at two subjects from the 1.5 line as the shape to copy, while 26 of the last
   30 commits are Conventional Commits and the pull-request template requires that shape

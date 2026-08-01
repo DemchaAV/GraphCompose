@@ -55,7 +55,7 @@ jobs:
         # in qa) run in build-and-test below, which now also covers docs-only PRs.
         run: |
           ./mvnw -B -ntp clean \
-            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest" \
+            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest,CodeQlScopeGuardTest" \
             test -pl :graph-compose-core
 
   changes:

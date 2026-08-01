@@ -120,7 +120,7 @@ The 2.0 GA shipped, so the branches now hold their long-term roles:
 - `render-docx/` — module **graph-compose-render-docx**
   Semantic exporter `DocxSemanticBackend` (Apache POI based), under `com.demcha.compose.document.backend.semantic.docx`
 - `templates/src/main/java/com/demcha/compose/document/templates/*` — module **graph-compose-templates**
-  Built-in templates (CV, cover letter, invoice, proposal, weekly schedule), DTOs, themes, registries, and scene composition helpers
+  Template families (CV, cover letter, invoice, proposal), their data records, the shared `BrandTheme`, and the widgets they compose from. Schedule data records live here too; the schedule document is composed by an example rather than by a template.
 - `core/src/main/java/com/demcha/compose/document/showcase`
   `FontShowcase` (bundled-font preview renderer) — stays in the core engine
 - `core/src/main/java/com/demcha/compose/engine/*`
@@ -176,12 +176,13 @@ template feature. The rules:
 - Layout integration for a new node is a `NodeDefinition<MyNode>`
   registered with `NodeRegistry`. See `BuiltInNodeDefinitions` for
   the established pattern.
-- Built-in templates in `...document.templates.builtins` stay thin
-  public facades over reusable scene composers in
-  `...document.templates.support`. Keep PDF-only setup in the document
-  session/backend layer rather than inside template composers, and do
-  not import `PDDocument`, `PDPage`, `PDRectangle`, or low-level PDF
-  composer types into scene composer classes.
+- A template family lives under `...document.templates.<family>` with
+  `data` / `components` / `widgets` / `presets`; cosmetic tokens are the
+  shared `BrandTheme` in `...document.templates.core.theme`, never a
+  package of the family's own. Keep PDF-only setup in the document
+  session/backend layer rather than inside a preset, and do not import
+  `PDDocument`, `PDPage`, `PDRectangle` or other low-level PDF types into
+  template code.
 - Public template contracts are compose-first: prefer
   `compose(DocumentSession, ...)`. New README snippets, runnable
   examples, and integration docs must show `compose(...)` rather than

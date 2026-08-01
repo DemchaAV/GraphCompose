@@ -49,7 +49,14 @@ class CanonicalSurfaceGuardTest {
             "Breakable",
             "hasRender(",
             "CvSpec",
-            "CvBuilder");
+            "CvBuilder",
+            // Package names, not types. The retired-type list could not catch a
+            // contributing guide that routed new template code into
+            // `templates.builtins` and `templates.support` — two packages the 2.0
+            // split left behind and nothing has occupied since, so the instruction
+            // read as current and produced code that does not compile.
+            "templates.builtins",
+            "templates.support");
 
     /**
      * Types a contributor must not be pointed at when told how to build against the

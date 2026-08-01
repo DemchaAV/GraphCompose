@@ -45,7 +45,7 @@ import java.nio.file.Path;
  * GraphCompose source tree calls.</p>
  *
  * <p>See {@code docs/recipes/streaming.md} and the existing
- * {@code BuiltInTemplateLayoutSnapshotTest} for the production
+ * {@code ChartLayoutSnapshotTest} for the production
  * pattern.</p>
  *
  * @author Artem Demchyshyn

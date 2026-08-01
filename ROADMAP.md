@@ -37,7 +37,7 @@ Committed internal direction for the post-2.0 line: refactors, scale work, and t
 Not committed. Reflects current thinking; priorities may shift based on user feedback and adoption signals.
 
 - **PPTX beyond beta.** Graduate the fixed-layout PPTX backend from `@Beta` to stable and close the remaining fidelity gaps &mdash; true vector clipping instead of the raster fallback ([#413](https://github.com/DemchaAV/GraphCompose/issues/413)), exact numeric dash arrays, and distinct per-corner radii.
-- **DOCX visibility for unsupported nodes.** Make currently-silent skips (`shape`, `line`, `ellipse`, `barcode`) loud &mdash; minimum a warn log, ideally a strict-mode flag that fails instead of dropping content silently.
+- **A strict mode for DOCX.** Dropping a node the format cannot carry (`shape`, `line`, `ellipse`, `barcode`) now warns, so the loss is at least visible in the log. What is missing is the option to refuse: a flag that fails the export instead of silently producing a document with content gone.
 - **Block-level alignment for fixed-size flow children.** Paths, images, layer stacks, shape containers and barcodes currently left-align in a flow; centring one means wrapping it in a full-width `ShapeContainer` just to use its CENTER anchor. Add a per-node horizontal align (left / centre / right &mdash; the `margin: auto` / `align(center)` analogue) so a fixed box can place itself in the flow directly. Surfaced by the v1.8 SVG icon-gallery and feature-catalog work.
 - **Backend-neutral layout measurement.** Decouple measurement from PDFBox-specific resources so non-PDF backends do not pull PDFBox into the dependency graph.
 - **DOCX maturity.** Either expand DOCX coverage toward PDF parity, or move DOCX behind an explicitly experimental flag.

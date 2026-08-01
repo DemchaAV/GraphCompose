@@ -1,9 +1,9 @@
 # Contributor Guide — add a new template family
 
 You're a GraphCompose contributor and you want to bring a brand-new
-document type onto the layered architecture — invoice-v2,
-cover-letter-v2, report-v2, anything that isn't CV. This doc is
-your checklist + convention reference.
+document type onto the layered architecture — a report, a
+statement, anything the shipped families do not already cover. This
+doc is your checklist + convention reference.
 
 It assumes you've read [quickstart.md](quickstart.md) and
 [authoring-presets.md](authoring-presets.md) — those explain *why*
@@ -13,7 +13,7 @@ the layered pattern looks the way it does.
 
 ## Table of contents
 
-1. [The 5-layer convention](#the-5-layer-convention)
+1. [The layer convention](#the-5-layer-convention)
 2. [Package map for a new family](#package-map-for-a-new-family)
 3. [Naming rules](#naming-rules)
 4. [Worked walkthrough — `invoice`](#worked-walkthrough)
@@ -26,30 +26,35 @@ the layered pattern looks the way it does.
 ---
 
 <a id="the-5-layer-convention"></a>
-## The 5-layer convention
+## The layer convention
 
 Every new template family lives under
-`com.demcha.compose.document.templates.<family>.v2` with **exactly
-five sub-packages**:
+`com.demcha.compose.document.templates.<family>` with these
+sub-packages:
 
 ```
-<family>/v2/
+<family>/
 ├── data/         records describing what's on the page
-├── theme/        cosmetic tokens (palette, typography, spacing, decoration)
 ├── components/   internal renderers + low-level primitives
-├── widgets/      reusable visual LEGO bricks
+├── widgets/      reusable visual LEGO bricks — omit if the family has none
 └── presets/      composition: data + theme + widgets → DocumentTemplate
 ```
+
+Cosmetic tokens are **not** per-family. `templates.core.theme` holds
+`BrandTheme` and its parts (`Palette`, `Typography`, `Spacing`,
+`Decoration`), and every family reads from it — that is what keeps two
+presets from two families looking like one product. A family that needs
+a token nobody else has adds it there, not to a package of its own.
 
 Each layer's contract:
 
 | Layer | Contract |
 |---|---|
 | `data/` | Pure records. Zero dependencies on rendering, theming, or DSL. Sealed hierarchy for section / block subtypes. |
-| `theme/` | Records + factories. No rendering logic. Aggregate root is `<Family>Theme(palette, typography, spacing, decoration)`. |
+| `templates.core.theme` | Shared, not per-family. `BrandTheme(palette, typography, spacing, decoration)` plus its parts. Records + factories, no rendering logic. |
 | `components/` | Static helpers. Take `(host, data, theme)`. No statics holding state. No magic numbers — read tokens from theme. |
-| `widgets/` | Static helpers. Named factory methods per visual variant. Compose internally from `components/`. |
-| `presets/` | One `public final class` per visual style. Two factories: `create()` and `create(<Family>Theme)`. Inner `Template` implements `DocumentTemplate<<Family>Document>`. |
+| `widgets/` | Static helpers. Named factory methods per visual variant. Compose internally from `components/`. Optional — the cover-letter family has none. |
+| `presets/` | One `public final class` per visual style. Two factories: `create()` and `create(BrandTheme)`. Inner `Template` implements `DocumentTemplate<<Family>Document>`. |
 
 **The convention is the same regardless of domain.** A cv has
 identity + sections; an invoice has parties + line items + totals; a
@@ -61,7 +66,7 @@ data differs; the *layering* is identical.
 <a id="package-map-for-a-new-family"></a>
 ## Package map for a new family
 
-Mirror the CV v2 layout. Concrete example for invoice:
+Mirror the CV layout. Concrete example for invoice:
 
 ```
 templates/src/main/java/com/demcha/compose/document/templates/invoice/
@@ -79,13 +84,6 @@ templates/src/main/java/com/demcha/compose/document/templates/invoice/
 │   ├── TotalsSection.java              ← concrete subtype
 │   ├── NotesSection.java               ← concrete subtype
 │   └── Slot.java                       ← if multi-column variants needed
-├── theme/
-│   ├── package-info.java
-│   ├── InvoicePalette.java             ← ink / muted / rule / accent
-│   ├── InvoiceTypography.java          ← scale
-│   ├── InvoiceSpacing.java             ← margins, gaps
-│   ├── InvoiceDecoration.java          ← row separators, totals divider
-│   └── InvoiceTheme.java               ← aggregate + factories
 ├── components/
 │   ├── package-info.java
 │   ├── ParagraphPrimitive.java         ← internal — package-private
@@ -116,13 +114,13 @@ differ.
 
 - **Family prefix** on top-level records to avoid name collisions.
   CV uses `CvName`, `CvIdentity`, `CvSection`. Invoice should use
-  `InvoiceParty`, `InvoiceLine`, `InvoiceTheme`. Cover letter:
-  `CoverLetterRecipient`, `CoverLetterTheme`. Etc.
+  `InvoiceParty`, `InvoiceLine`. Cover letter:
+  `CoverLetterRecipient`, `CoverLetterBody`. Etc.
 - **`<Family>Document`** for the root record. (`CvDocument`,
   `InvoiceDocument`, `CoverLetterDocument`.)
 - **`<Family>Section` (sealed)** for the body content hierarchy.
-- **`<Family>Theme(palette, typography, spacing, decoration)`** for
-  the aggregate theme record.
+- **No `<Family>Theme`.** The aggregate theme record is the shared
+  `BrandTheme`; a family names a factory on it, not a type of its own.
 - **Widgets** are domain-specific verbs / nouns describing the
   visual: `Headline`, `ContactLine`, `SectionHeader` (CV);
   `Letterhead`, `LineTable`, `TotalsCard` (invoice). Don't try to
@@ -162,23 +160,16 @@ Sealed `InvoiceSection` lists every body shape an invoice can have.
 Concrete subtypes (`LineItemsSection`, `TotalsSection`, …) are
 records carrying the section data.
 
-### 2. `theme/` second (no rendering, just tokens)
+### 2. the theme second (there is nothing to write)
+
+Pick the `BrandTheme` factory the family should default to, or add
+one beside the others in `templates.core.theme` if none fits. The
+record is shared, so a token added for an invoice is available to a
+CV — which is the point, and also the reason to think before adding
+one.
 
 ```java
-public record InvoiceTheme(
-    InvoicePalette palette,
-    InvoiceTypography typography,
-    InvoiceSpacing spacing,
-    InvoiceDecoration decoration) {
-
-    public static InvoiceTheme classic() {
-        return new InvoiceTheme(
-            InvoicePalette.classic(),
-            InvoiceTypography.classic(),
-            InvoiceSpacing.classic(),
-            InvoiceDecoration.classic());
-    }
-}
+BrandTheme theme = BrandTheme.invoiceModern();
 ```
 
 ### 3. `components/` third (low-level renderers consume data + theme)
@@ -188,7 +179,7 @@ public final class LineRowRenderer {
     private LineRowRenderer() {}
 
     public static void render(SectionBuilder host, InvoiceLine line,
-                              InvoiceTheme theme) {
+                              BrandTheme theme) {
         // … DSL calls reading theme tokens …
     }
 }
@@ -205,7 +196,7 @@ public final class LineTable {
     private LineTable() {}
 
     public static void render(SectionBuilder host,
-                              List<InvoiceLine> lines, InvoiceTheme theme) {
+                              List<InvoiceLine> lines, BrandTheme theme) {
         for (InvoiceLine line : lines) {
             LineRowRenderer.render(host, line, theme);
         }
@@ -227,10 +218,10 @@ public final class ClassicInvoice {
     private ClassicInvoice() {}
 
     public static DocumentTemplate<InvoiceDocument> create() {
-        return create(InvoiceTheme.classic());
+        return create(BrandTheme.invoiceModern());
     }
 
-    public static DocumentTemplate<InvoiceDocument> create(InvoiceTheme theme) {
+    public static DocumentTemplate<InvoiceDocument> create(BrandTheme theme) {
         return new Template(theme);
     }
 
@@ -250,15 +241,15 @@ Mirror the CV preset shape exactly.
 
 A new template family PR ships with:
 
-- [ ] **5 packages** under `<family>/v2/` populated per convention
+- [ ] **The sub-packages** under `<family>/` populated per convention
 - [ ] **At least 1 reference preset** that renders a sample document
 - [ ] **`AUTHORS.md`** in the family root (recipe cookbook — copy
       the cv one as starting structure)
 - [ ] **`package-info.java`** at family root + each sub-package
 - [ ] **Sample fixture** in `ExampleDataFactory.sample<Family>DocumentV2()`
-- [ ] **Example runner** in `examples/.../templates/<family>/v2/`
+- [ ] **Example runner** under `examples/.../templates/<family>/`
 - [ ] **Smoke tests** per the checklist below
-- [ ] **No edits** to `engine/`, `dsl/`, or v1 `<family>/` surface
+- [ ] **No edits** to `engine/` or `dsl/`
 
 ---
 
@@ -339,13 +330,13 @@ to re-bless or fix.
 <a id="doc-checklist"></a>
 ## Doc checklist
 
-- [ ] `<family>/v2/package-info.java` — ASCII diagram of the 5
-      layers, plus a 4-step "how to author a document" walkthrough
-      (copy the cv one's structure).
-- [ ] `<family>/v2/AUTHORS.md` — recipe cookbook. At least:
+- [ ] `<family>/package-info.java` — ASCII diagram of the layers,
+      plus a 4-step "how to author a document" walkthrough (copy the
+      cv one's structure).
+- [ ] `<family>/AUTHORS.md` — recipe cookbook. At least:
       change a glyph, change colours, add a new section subtype,
       conditional sections.
-- [ ] `<family>/v2/<sub-package>/package-info.java` — each
+- [ ] `<family>/<sub-package>/package-info.java` — each
       sub-package gets a paragraph explaining its role.
 - [ ] **Update [`docs/templates/v2-layered/README.md`](README.md)** to
       list the new family in the "implementations" section.
@@ -359,9 +350,9 @@ to re-bless or fix.
   `document/engine`, `document/node`, `document/style`). If your
   family needs an engine feature that doesn't exist, that's a
   separate prerequisite PR.
-- ❌ **Don't edit v1 surface** for the same family. They coexist.
-  Mark v1 `@Deprecated` only after the v2 surface is feature-complete
-  and shipped — that's a follow-up PR.
+- ❌ **Don't add a theme package to your family.** Tokens live in
+  `templates.core.theme` so families stay visually consistent; a
+  private palette is how that consistency is lost one family at a time.
 - ❌ **Don't fork widgets across families.** If invoice needs a
   `Headline`, write `templates/invoice/widgets/Letterhead.java`
   — an invoice letterhead has different needs from a CV name
@@ -395,7 +386,7 @@ A new template family PR is reviewed against:
 4. **Visual signature** — render the reference preset, attach the
    PDF to the PR description, eyeball-validate it matches the
    intent.
-5. **No engine / v1 edits** — additive only.
+5. **No engine edits** — additive only.
 
 Expected size: ~1500-2500 lines of new code for a fresh family.
 Compare to cv baseline (PR #45) which was 2082 lines including

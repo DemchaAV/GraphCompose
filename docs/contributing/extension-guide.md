@@ -212,9 +212,9 @@ Set-up per node:
 
 The
 [`LayoutSnapshotAssertions`](../../testing/src/main/java/com/demcha/compose/testing/layout/LayoutSnapshotAssertions.java)
-helper class wraps the diff machinery; existing snapshot tests under
-`core/src/test/java/com/demcha/compose/document/templates/builtins/`
-(e.g. `BuiltInTemplateLayoutSnapshotTest`) show the call site shape.
+helper class wraps the diff machinery; the snapshot tests in the `qa`
+module (`ChartLayoutSnapshotTest`, `ShapeContainerLayoutSnapshotTest`)
+show the call site shape.
 
 ## Reading the source by responsibility
 

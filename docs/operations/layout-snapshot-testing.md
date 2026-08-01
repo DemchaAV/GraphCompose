@@ -340,8 +340,6 @@ Prioritize documents that are most sensitive to layout regressions:
 
 ## Examples in this repository
 
-- `RepositoryShowcaseRenderTest`
-- `TablePaginationIntegrationTest`
 - `FontShowcaseLayoutSnapshotTest`
 - `ChartLayoutSnapshotTest`
 - `ShapeContainerLayoutSnapshotTest`

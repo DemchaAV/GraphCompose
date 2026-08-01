@@ -59,7 +59,7 @@ Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch ta
    git checkout -b feature/short-description
    ```
    Use `feature/...` for new functionality, `fix/...` for bug fixes, and `docs/...` for documentation-only changes. Issue-prefixed names (`42/fix/short-description`) are also welcome &mdash; convenient when the branch closes a specific issue.
-3. **Commit small, focused changes.** Each commit message should describe the *why*, not just the *what*. Recent commits on `develop` (`Prepare v1.5.0 release`, `Align public docs with the canonical surface`) are reasonable length and structure templates.
+3. **Commit small, focused changes.** Subjects follow Conventional Commits — `type(scope): the concrete effect` — the same shape the [pull request template](.github/pull_request_template.md) asks of a PR title. Say the *why*, not only the *what*. `git log --oneline -20` on `develop` is the reference; `fix(font): the donut-centre KPI renders the weight it declares` and `ci(guards): run every guard the job names, and compile docs-only pull requests` are the shape.
 4. **Run the validation gate locally** before opening a PR:
    ```bash
    ./mvnw -B -ntp clean verify

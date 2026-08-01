@@ -7,13 +7,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,18 +43,14 @@ class DocsBoldFaceGuardTest {
 
     private static final Path PROJECT_ROOT = RepoPaths.repoRoot();
 
-    /** Documents a reader copies from. */
-    private static final List<String> SCANNED = List.of(
-            "README.md",
-            "docs",
-            "core/README.md",
-            "render-pdf/README.md",
-            "render-docx/README.md",
-            "render-pptx/README.md",
-            "templates/README.md",
-            "testing/README.md",
-            "fonts/README.md",
-            "emoji/README.md");
+    /**
+     * Documents a reader copies from — the docs tree and every README, resolved by
+     * {@link PublishedDocs} so this guard and the snippet-compile guard cover the same
+     * set. They were two hand-kept lists and had already drifted apart.
+     */
+    private static List<Path> scannedDocuments() throws IOException {
+        return PublishedDocs.all(PROJECT_ROOT);
+    }
 
     /**
      * A face alias: any {@code FontName} constant naming a weight or slant rather than
@@ -108,24 +102,6 @@ class DocsBoldFaceGuardTest {
                         + "reads as the weight set twice, and pairing it with a different one "
                         + "silently contradicts the name. Published snippets name the family.")
                 .isEmpty();
-    }
-
-    private static List<Path> scannedDocuments() throws IOException {
-        List<Path> documents = new ArrayList<>();
-        for (String entry : SCANNED) {
-            Path root = PROJECT_ROOT.resolve(entry);
-            if (Files.isRegularFile(root)) {
-                documents.add(root);
-            } else if (Files.isDirectory(root)) {
-                try (Stream<Path> walk = Files.walk(root)) {
-                    walk.filter(Files::isRegularFile)
-                            .filter(path -> path.toString().endsWith(".md"))
-                            .sorted()
-                            .forEach(documents::add);
-                }
-            }
-        }
-        return documents;
     }
 
     private static String relative(Path path) {

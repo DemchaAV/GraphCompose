@@ -5,9 +5,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,6 +28,131 @@ class PackageMapGuardTest {
             "implemented_" + "systems",
             "components_" + "builders",
             "abstract_" + "builders");
+
+    /** Documents a contributor consults to find where a backend lives. */
+    private static final List<String> PACKAGE_ROOT_DOCUMENTS = List.of(
+            "CONTRIBUTING.md", "docs/architecture/package-map.md");
+
+    private static final Pattern REACTOR_MODULE =
+            Pattern.compile("<module>\\s*([^<]+?)\\s*</module>");
+
+    /**
+     * Every package holding a backend implementation is findable from the documents
+     * that claim to map the packages.
+     *
+     * <p>Derived from the source tree rather than a list: a package qualifies by
+     * containing a {@code *Backend} type, in any module the reactor builds. That is what
+     * a contributor is looking for when they ask where a format is implemented, and it is
+     * how the next backend gets covered without anyone remembering this file. The
+     * backend-neutral fixed-layout SPI was missing from the contributing guide — the one
+     * document a reader consults before adding an output format.</p>
+     *
+     * <p>Each package must be named in its own right. Accepting an ancestor instead
+     * looks reasonable and guts the guard: once {@code backend.fixed} appears, every
+     * {@code backend.fixed.*} is covered for free, including the one that shipped
+     * undocumented. Matching is boundary-aware and accepts either the fully-qualified
+     * name or the {@code document.backend.…} tail the docs also use, so
+     * {@code backend.fixed.pdf} never counts as {@code backend.fixed}.</p>
+     */
+    @Test
+    void everyBackendPackageIsFindableFromThePackageDocumentation() throws IOException {
+        Set<String> backendPackages = backendPackages();
+
+        assertThat(backendPackages)
+                .describedAs("no package with a *Backend type was found under document/backend in "
+                        + "any reactor module — the module list in the root pom or the layout of "
+                        + "the source roots moved, and this guard is passing vacuously")
+                .isNotEmpty();
+
+        Set<String> missing = new TreeSet<>();
+        for (String document : PACKAGE_ROOT_DOCUMENTS) {
+            String text = Files.readString(PROJECT_ROOT.resolve(document));
+            for (String backendPackage : backendPackages) {
+                if (!namesPackage(text, backendPackage)
+                        && !namesPackage(text, shortForm(backendPackage))) {
+                    missing.add(document + " does not name " + backendPackage);
+                }
+            }
+        }
+
+        assertThat(missing)
+                .describedAs("a backend a contributor cannot find in the package map is a backend "
+                        + "they will not register a handler with — and a fragment kind registered "
+                        + "with only one fixed-layout backend renders in one output and silently "
+                        + "vanishes from the other")
+                .isEmpty();
+    }
+
+    /** Packages under {@code document/backend} that declare a {@code *Backend} type. */
+    private static Set<String> backendPackages() throws IOException {
+        Set<String> packages = new TreeSet<>();
+        for (String moduleRoot : reactorSourceRoots()) {
+            Path root = PROJECT_ROOT.resolve(moduleRoot);
+            if (!Files.isDirectory(root)) {
+                continue;
+            }
+            try (var paths = Files.walk(root)) {
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().endsWith("Backend.java"))
+                        .map(path -> relativeTo(root, path))
+                        .filter(name -> name.contains("com/demcha/compose/document/backend/"))
+                        .map(name -> name.substring(0, name.lastIndexOf('/')).replace('/', '.'))
+                        .forEach(packages::add);
+            }
+        }
+        return packages;
+    }
+
+    /**
+     * The main-source root of every module the reactor builds.
+     *
+     * <p>Taken from the root {@code pom.xml} rather than listed here, so "a module" means
+     * what it means to Maven. A list would move the staleness rather than remove it: a
+     * backend that arrives in a new module is the case this guard exists for, and a
+     * module missing from a hand-kept list is scanned by nobody and reported by nobody.</p>
+     */
+    private static List<String> reactorSourceRoots() throws IOException {
+        String pom = Files.readString(PROJECT_ROOT.resolve("pom.xml"));
+        List<String> roots = new ArrayList<>();
+        Matcher matcher = REACTOR_MODULE.matcher(pom);
+        while (matcher.find()) {
+            roots.add(matcher.group(1) + "/src/main/java");
+        }
+        return roots;
+    }
+
+    /** The {@code document.backend.…} tail, which the docs use as often as the full name. */
+    private static String shortForm(String packageName) {
+        return packageName.replace("com.demcha.compose.", "");
+    }
+
+    /**
+     * Whether the text names exactly this package. A trailing identifier character or a
+     * dot followed by one means the match is really a longer package, so naming
+     * {@code backend.fixed.pdf} must not count as naming {@code backend.fixed}.
+     */
+    private static boolean namesPackage(String documentText, String packageName) {
+        int from = 0;
+        while (true) {
+            int at = documentText.indexOf(packageName, from);
+            if (at < 0) {
+                return false;
+            }
+            int after = at + packageName.length();
+            char next = after < documentText.length() ? documentText.charAt(after) : ' ';
+            boolean extendsFurther = Character.isJavaIdentifierPart(next)
+                    || (next == '.' && after + 1 < documentText.length()
+                        && Character.isJavaIdentifierPart(documentText.charAt(after + 1)));
+            if (!extendsFurther) {
+                return true;
+            }
+            from = at + 1;
+        }
+    }
+
+    private static String relativeTo(Path root, Path path) {
+        return root.relativize(path).toString().replace('\\', '/');
+    }
 
     @Test
     void productionPackagesShouldHavePackageInfo() throws IOException {

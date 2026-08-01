@@ -50,6 +50,7 @@ The same `DocumentSession` emits both. The PDF backend prints the resolved layou
 
 PowerPoint output needs `graph-compose-render-pptx` on the classpath in addition to `graph-compose`; without it `buildPptx` fails with a `MissingBackendException` naming the artifact. See [Which artifact?](#installation) below.
 
+<!-- doc-example: id=readme-root-one-model-two-outputs mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.api.DocumentPageSize,java.nio.file.Path -->
 ```java
 Path deck = Path.of("twin-output.pptx");
 try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
@@ -158,6 +159,7 @@ pinned to v1.6.5 and earlier but is no longer the documented install option.
 
 ## Hello world
 
+<!-- doc-example: id=readme-root-hello-world mode=members -->
 ```java
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
@@ -223,6 +225,7 @@ Three snippets from the vector surfaces. Full runnable versions live in the [exa
 
 **Native chart** &mdash; categories + series in, native vector bars out (no rasterization).
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 ChartData revenue = ChartData.builder()
     .categories("Q1", "Q2", "Q3", "Q4")
@@ -237,6 +240,7 @@ section.chart(ChartSpec.bar().data(revenue)
 
 **Overshoot-free line** &mdash; a smooth curve constrained to never overshoot the data range.
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 section.chart(ChartSpec.line().data(series)
     .interpolation(LineInterpolation.MONOTONE)
@@ -245,6 +249,7 @@ section.chart(ChartSpec.line().data(series)
 
 **SVG import + alignment** &mdash; parse SVG to native geometry, seat any fixed node across the width.
 
+<!-- doc-example-ignore: the surrounding session and its variables are described in the prose above -->
 ```java
 SvgIcon globe = SvgIcon.parse(svgMarkup);
 flow.addSvgIcon(globe, 48, HorizontalAlign.CENTER);

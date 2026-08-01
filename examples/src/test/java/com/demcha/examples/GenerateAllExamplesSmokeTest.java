@@ -34,11 +34,11 @@ import java.util.stream.Stream;
  */
 class GenerateAllExamplesSmokeTest {
 
-    private static final Path GENERATED_ROOT = Path.of("target", "generated-pdfs");
+    private static final Path GENERATED_ROOT = GeneratedCatalogue.ROOT;
 
     @BeforeAll
     static void generateEveryExample() throws Exception {
-        GenerateAllExamples.main(new String[0]);
+        GeneratedCatalogue.generateOnce();
     }
 
     @Test

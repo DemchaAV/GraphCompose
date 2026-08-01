@@ -22,6 +22,7 @@ You don't call the backend directly. It registers a `FixedLayoutBackendProvider`
 `FontMetricsProvider` via `META-INF/services`, so the core discovers it as the session opens
 and the normal path just works:
 
+<!-- doc-example: id=readme-render-pdf-hello mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,java.nio.file.Path -->
 ```java
 Path out = Path.of("hello.pdf");
 try (DocumentSession doc = GraphCompose.document(out).create()) {

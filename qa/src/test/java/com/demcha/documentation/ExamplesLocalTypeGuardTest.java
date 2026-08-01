@@ -18,25 +18,27 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Keeps a helper that lives only in the examples module out of the reader's path.
+ * Keeps helpers that live only in the examples module out of the reader's path.
  *
  * <p>{@code BusinessTheme} and its neighbours are declared in
  * {@code com.demcha.examples.support.theme} and ship in none of the published artifacts.
- * Eighteen examples use them, and quoting one while explaining those examples is honest —
- * a reader who opens the source will find it. Writing {@code BusinessTheme.modern()} in
- * an entry-point table is not: the call form reads as the way to theme a document, and
- * the reader discovers otherwise only after adding the dependency and failing to import
- * it. That is how the cover-letter row presented an examples-local record as the theming
- * API.</p>
+ * Explaining an example that uses one is honest — a reader who opens the source will find
+ * it. Writing {@code BusinessTheme.modern()} in an entry-point table is not: it reads as
+ * the way to theme a document, and the reader discovers otherwise only after adding the
+ * dependency and failing to import it. That is how the cover-letter row presented an
+ * examples-local record as the theming API.</p>
  *
- * <p>Two forms are rejected, for different reasons. A <em>call</em> anywhere in prose
- * offers the type as something to invoke. The bare <em>name</em> in a table row offers it
- * as what that row's document is made of — the same claim in fewer words, and exactly how
- * the defect was written. Everywhere else in prose the bare name is allowed, because
- * these pages have to be able to describe the examples they document.</p>
+ * <p>What is rejected is <em>using</em> the type: a call, a constructor, a method
+ * reference, a member access. The bare name in prose stays legal, because these pages
+ * have to be able to name the thing they are describing — except in a table row, where a
+ * bare name is a claim about what that row's document is made of, which is the same
+ * offer in fewer words and is how the defect was written.</p>
  *
- * <p>Inside a {@code java} fence both forms are fine: a fence quotes an example's own
- * source, and editing the type out of a quotation would make the quotation false.</p>
+ * <p>Code blocks are scanned like everything else. A fenced snippet is the most
+ * copy-pasted thing on the page, so exempting fences wholesale would leave the rule
+ * policing only the form nobody copies. The single exemption is a fence introduced by a
+ * {@code doc-example-ignore} marker, which already has to carry a written reason and is
+ * how a page quotes an example's own source verbatim.</p>
  */
 class ExamplesLocalTypeGuardTest {
 
@@ -44,26 +46,45 @@ class ExamplesLocalTypeGuardTest {
 
     /**
      * The helper package whose types a reader cannot import. Read from the source tree
-     * rather than listed: it holds five public types today, two of them with static
-     * factories, and a list would have covered whichever one was noticed first.
+     * rather than listed: it holds five public types today, and a list would have covered
+     * whichever one was noticed first.
      */
     private static final Path EXAMPLES_LOCAL_PACKAGE =
             PROJECT_ROOT.resolve("examples/src/main/java/com/demcha/examples/support/theme");
 
+    /** Pages whose subject is what a past release contained. Mirrors the canonical guard. */
+    private static final List<String> HISTORICAL_RECORD_PREFIXES = List.of(
+            "CHANGELOG.md", "docs/adr/", "docs/archive/", "docs/migration/",
+            "docs/private/", "docs/roadmaps/", "docs/templates/v1-classic/");
+
+    /**
+     * The decision guide between the removed template surfaces and the layered ones. It
+     * names {@code BusinessTheme.X()} beside its replacement {@code BrandTheme.X()} on
+     * purpose — and the type it means is the canonical record 2.0 removed, which happens
+     * to share a name with the examples-local helper. Naming the old surface is the
+     * document's whole job; the canonical guard allows it here for the same reason.
+     */
+    private static final Set<String> MIGRATION_INVENTORY =
+            Set.of("docs/templates/which-template-system.md");
+
+    /** A marker that exempts the fence below it, with a reason, on a published page. */
+    private static final Pattern QUOTED_SOURCE_MARKER =
+            Pattern.compile("^<!--\\s*doc-example-ignore:\\s*\\S.*-->\\s*$");
+
     @Test
-    void noReadmeOffersATypeThatShipsNowhereAsTheWayToDoSomething() throws IOException {
+    void noPublishedPageOffersATypeThatShipsNowhere() throws IOException {
         List<String> types = examplesLocalTypes();
         Set<String> violations = new TreeSet<>();
 
-        for (Path readme : PublishedDocs.readmes(PROJECT_ROOT)) {
-            List<String> prose = prose(Files.readAllLines(readme, StandardCharsets.UTF_8));
-            String rel = relative(readme);
+        for (Path page : scannedPages()) {
+            Scan scan = scan(Files.readAllLines(page, StandardCharsets.UTF_8));
+            String rel = relative(page);
             for (String type : types) {
-                Pattern call = Pattern.compile("\\b" + Pattern.quote(type) + "\\s*\\.\\s*\\w+\\s*\\(");
+                Pattern used = usage(type);
                 Pattern bareName = Pattern.compile("\\b" + Pattern.quote(type) + "\\b");
-                for (String line : prose) {
-                    if (call.matcher(line).find()) {
-                        violations.add(rel + " calls " + type + " in prose");
+                for (String line : scan.scanned()) {
+                    if (used.matcher(line).find()) {
+                        violations.add(rel + " uses " + type);
                     } else if (line.stripLeading().startsWith("|") && bareName.matcher(line).find()) {
                         violations.add(rel + " names " + type + " in a table row");
                     }
@@ -72,53 +93,100 @@ class ExamplesLocalTypeGuardTest {
         }
 
         assertThat(violations)
-                .describedAs("a type that ships in no artifact — offered as something to call, or "
-                        + "as what a row's document is made of — reads as the supported way to do "
-                        + "it, and the reader finds out otherwise only after adding the dependency. "
-                        + "Describe what the example demonstrates, or name the shipping equivalent")
+                .describedAs("a type that ships in no artifact — called, constructed, referenced, "
+                        + "or offered as what a row's document is made of — reads as the supported "
+                        + "way to do it, and the reader finds out otherwise only after adding the "
+                        + "dependency. Describe what the example demonstrates, or name the shipping "
+                        + "equivalent. To quote an example's own source verbatim, introduce the "
+                        + "fence with a doc-example-ignore marker saying so")
                 .isEmpty();
     }
 
     /**
-     * Guard-the-guard: prose is what gets scanned, and it is the larger half.
+     * Every use of the type: a call, a constructor, a method reference, a member access.
      *
-     * <p>Comparing the two halves rather than checking a threshold is deliberate. A fixed
-     * floor is satisfied by the fenced content on its own — some 23k characters of it
-     * across these READMEs — so a stripper that kept the fences and dropped the prose
-     * would clear any floor low enough to be safe, and the rule would then be policing
-     * the one place it exists to leave alone.</p>
+     * <p>Restricting the rule to {@code Type.method(} would leave
+     * {@code new BusinessTheme(…)}, {@code BusinessTheme::modern} and
+     * {@code BusinessTheme.DEFAULT} as three unguarded ways to make the same offer. A
+     * member named {@code java} is the one exception — that is a link to the type's own
+     * source file, which is a reader following the trail, not an API being suggested.</p>
+     */
+    private static Pattern usage(String type) {
+        String name = Pattern.quote(type);
+        return Pattern.compile("\\b" + name + "\\s*\\.\\s*(?!java\\b)\\w+"
+                + "|new\\s+" + name + "\\s*[(<]"
+                + "|\\b" + name + "\\s*::");
+    }
+
+    /**
+     * A fence left open swallows the rest of its page.
+     *
+     * <p>Checked per file, because the totals cannot see it: one unbalanced marker turns
+     * everything below it into an exempt block, and the repository's remaining pages keep
+     * every aggregate comfortably in range.</p>
      */
     @Test
-    void theScanReadsProseAndNotFences() throws IOException {
-        int prose = 0;
-        int fenced = 0;
-        for (Path readme : PublishedDocs.readmes(PROJECT_ROOT)) {
-            List<String> lines = Files.readAllLines(readme, StandardCharsets.UTF_8);
-            prose += length(prose(lines));
-            fenced += length(fenced(lines));
+    void noPageLeavesAFenceOpen() throws IOException {
+        Set<String> unbalanced = new TreeSet<>();
+        int scanned = 0;
+        for (Path page : scannedPages()) {
+            Scan scan = scan(Files.readAllLines(page, StandardCharsets.UTF_8));
+            scanned += scan.scanned().size();
+            if (scan.fenceLeftOpen()) {
+                unbalanced.add(relative(page));
+            }
         }
 
-        assertThat(fenced)
-                .describedAs("no fenced content found across the READMEs — fence detection is not "
-                        + "detecting fences, nothing is being exempted, and the comparison below "
-                        + "proves nothing")
+        assertThat(unbalanced)
+                .describedAs("an unclosed code fence exempts every line after it, so the page "
+                        + "stops being checked from that point on and nothing says so")
+                .isEmpty();
+        assertThat(scanned)
+                .describedAs("almost nothing was scanned — the page set or the fence handling "
+                        + "moved and this guard is reading an empty corpus")
+                .isGreaterThan(1_000);
+    }
+
+    /**
+     * The exemption path is exercised. If no page quotes an example's own source any
+     * more, the fence handling is dead code and the next reader will not know it was ever
+     * needed — and a guard whose only escape hatch is untested tends to acquire a wider
+     * one the first time it fires inconveniently.
+     */
+    @Test
+    void quotingAnExamplesOwnSourceStaysPossible() throws IOException {
+        int exempt = 0;
+        for (Path page : scannedPages()) {
+            exempt += scan(Files.readAllLines(page, StandardCharsets.UTF_8)).exempted().size();
+        }
+
+        assertThat(exempt)
+                .describedAs("no fence is exempted anywhere — either the marker mechanism changed "
+                        + "or nothing quotes example source, and the exemption below is untested")
                 .isPositive();
-        assertThat(prose)
-                .describedAs("the scanned half must be the prose, which outweighs the code on "
-                        + "these pages by roughly five to one. A smaller number here means the "
-                        + "split is inverted: the rule would be reading the quotations it exists "
-                        + "to permit and skipping the sentences it exists to police")
-                .isGreaterThan(fenced);
     }
 
     @Test
     void theHelperPackageIsWhereTheGuardThinksItIs() throws IOException {
         assertThat(examplesLocalTypes())
                 .describedAs("no types found in %s — the examples-local helpers moved and this "
-                        + "guard is checking the READMEs against an empty list",
+                        + "guard is checking the documentation against an empty list",
                         relative(EXAMPLES_LOCAL_PACKAGE))
                 .isNotEmpty()
                 .contains("BusinessTheme");
+    }
+
+    /** The published pages this rule applies to. */
+    private static List<Path> scannedPages() throws IOException {
+        List<Path> pages = new ArrayList<>();
+        for (Path page : PublishedDocs.all(PROJECT_ROOT)) {
+            String rel = relative(page);
+            boolean historical = HISTORICAL_RECORD_PREFIXES.stream().anyMatch(rel::startsWith);
+            if (!historical && !MIGRATION_INVENTORY.contains(rel)) {
+                pages.add(page);
+            }
+        }
+        return pages;
     }
 
     /** The types declared in the examples module's theme helper package. */
@@ -136,32 +204,34 @@ class ExamplesLocalTypeGuardTest {
         }
     }
 
-    private static List<String> prose(List<String> lines) {
-        return partition(lines, false);
+    /** What a page contributes: the lines the rule reads, the lines a marker excused, and balance. */
+    private record Scan(List<String> scanned, List<String> exempted, boolean fenceLeftOpen) {
     }
 
-    private static List<String> fenced(List<String> lines) {
-        return partition(lines, true);
-    }
-
-    /** The lines inside fenced blocks, or the lines outside them. Fence markers are neither. */
-    private static List<String> partition(List<String> lines, boolean wantFenced) {
-        List<String> kept = new ArrayList<>();
+    private static Scan scan(List<String> lines) {
+        List<String> scanned = new ArrayList<>();
+        List<String> exempted = new ArrayList<>();
         boolean inFence = false;
+        boolean fenceIsExempt = false;
+        String previous = "";
         for (String line : lines) {
-            if (line.stripLeading().startsWith("```")) {
-                inFence = !inFence;
+            String trimmed = line.stripLeading();
+            if (trimmed.startsWith("```")) {
+                if (inFence) {
+                    inFence = false;
+                    fenceIsExempt = false;
+                } else {
+                    inFence = true;
+                    fenceIsExempt = QUOTED_SOURCE_MARKER.matcher(previous.strip()).matches();
+                }
                 continue;
             }
-            if (inFence == wantFenced) {
-                kept.add(line);
+            (inFence && fenceIsExempt ? exempted : scanned).add(line);
+            if (!trimmed.isEmpty()) {
+                previous = line;
             }
         }
-        return kept;
-    }
-
-    private static int length(List<String> lines) {
-        return lines.stream().mapToInt(line -> line.length() + 1).sum();
+        return new Scan(scanned, exempted, inFence);
     }
 
     private static String relative(Path path) {

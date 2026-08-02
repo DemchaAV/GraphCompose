@@ -215,13 +215,26 @@ class CommittedAssetDriftTest {
                 .isEqualTo(accountedFor);
     }
 
+    /**
+     * The preview folder's files, and it has to be flat to have only files.
+     *
+     * <p>Listing it and keeping the regular files would step over a folder in silence, and a
+     * preview one level down would be in none of the sets these tests compare: not held to the
+     * catalogue, not published, not unpublished, not named as something that cannot be compared.
+     * The site reads this folder flat, so a folder inside it is a mistake worth naming rather
+     * than passing over.</p>
+     */
     private static Set<String> committedPreviews() throws IOException {
         Set<String> names = new TreeSet<>();
+        Set<String> folders = new TreeSet<>();
         try (var files = Files.list(PREVIEWS)) {
-            files.filter(Files::isRegularFile)
-                    .map(path -> path.getFileName().toString())
-                    .forEach(names::add);
+            files.forEach(path -> (Files.isDirectory(path) ? folders : names)
+                    .add(path.getFileName().toString()));
         }
+        assertThat(folders)
+                .describedAs("%s is read flat, so a folder inside it holds previews nothing "
+                        + "compares: move them up beside the others", PREVIEWS)
+                .isEmpty();
         return names;
     }
 

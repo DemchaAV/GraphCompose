@@ -39,6 +39,7 @@ class AssetContentTest {
     private static final String WATERMARK_LINUX = "watermark-linux.png";
     private static final String WATERMARK_DECK = "master-showcase.pptx";
     private static final String WATERMARK_PART = "ppt/media/image1.png";
+    private static final String TWIN_SLIDE = "twin-output.pptx!ppt/slides/slide1.xml";
 
     @BeforeAll
     static void generateEveryExample() throws Exception {
@@ -88,48 +89,67 @@ class AssetContentTest {
     }
 
     /**
-     * The same path drawn in a different box is one shape; a path that moves is not.
+     * Two shapes drawn around different centres are two shapes.
      *
-     * <p>Dropping the box is the load-bearing half of the comparison, so it is checked in both
-     * directions: the shapes below are the same freeform normalised the two ways two machines
-     * normalised it, and then genuinely moved. Absorbing the third as well would leave the gate
-     * reporting success on a deck whose artwork had shifted.</p>
+     * <p>An earlier comparison read every freeform's path in slide coordinates and dropped the box
+     * those coordinates were measured against. The paths below land in the same place and turn by
+     * the same angle, and they are still different pictures: {@code rot} turns a shape around the
+     * centre of its box, so a 100-wide box and a 200-wide one spin the same line about different
+     * points. Nothing may collapse them.</p>
      */
     @Test
-    void theBoxIsAbsorbedButAMoveIsNot() {
-        String box = freeform("<a:off x=\"1000\" y=\"2000\"/><a:ext cx=\"600\" cy=\"400\"/>",
-                "<a:pt x=\"0\" y=\"0\"/>", "<a:pt x=\"600\" y=\"400\"/>");
-        String sameLineOtherBox = freeform(
-                "<a:off x=\"1050\" y=\"2050\"/><a:ext cx=\"600\" cy=\"400\"/>",
-                "<a:pt x=\"-50\" y=\"-50\"/>", "<a:pt x=\"550\" y=\"350\"/>");
-        String movedLine = freeform("<a:off x=\"1050\" y=\"2050\"/><a:ext cx=\"600\" cy=\"400\"/>",
-                "<a:pt x=\"0\" y=\"0\"/>", "<a:pt x=\"600\" y=\"400\"/>");
+    void rotatedFreeformsWithDifferentPivotsAreNotEqual() {
+        String narrow = rotatedFreeform("<a:off x=\"0\" y=\"0\"/><a:ext cx=\"100\" cy=\"100\"/>");
+        String wide = rotatedFreeform("<a:off x=\"0\" y=\"0\"/><a:ext cx=\"200\" cy=\"100\"/>");
 
-        assertThat(AssetContent.freeformsInSlideSpace(sameLineOtherBox))
-                .describedAs("the same line from (1000,2000) to (1600,2400), normalised against "
-                        + "an origin 50 EMU away — the difference two machines produce")
-                .isEqualTo(AssetContent.freeformsInSlideSpace(box));
-        assertThat(AssetContent.freeformsInSlideSpace(movedLine))
-                .describedAs("a line that actually moved by 50 EMU must not be absorbed")
-                .isNotEqualTo(AssetContent.freeformsInSlideSpace(box));
+        assertThat(AssetContent.knownShapesCollapsed(TWIN_SLIDE, wide))
+                .describedAs("the same line turned 90 degrees about a different centre is not the "
+                        + "same picture, however the points are written")
+                .isNotEqualTo(AssetContent.knownShapesCollapsed(TWIN_SLIDE, narrow));
     }
 
     /**
-     * The rewrite reaches the markup POI actually writes, not just the shape of it.
+     * The two shapes the allowlist names collapse; a shape it does not name is untouched.
      *
-     * <p>{@link #theBoxIsAbsorbedButAMoveIsNot} works on markup written here, so it would still
-     * pass if POI reordered an attribute and the rewrite quietly stopped matching — leaving a
-     * comparison that absorbs nothing and a red gate nobody can read. A deck the repository
-     * commits has to come out changed.</p>
+     * <p>What was measured is two freeforms in one deck, so two freeforms in one deck are what is
+     * exempted. A shape reaching this with any other name — or either of these two after somebody
+     * changed it — comes out of the comparison exactly as it went in.</p>
      */
     @Test
-    void theRewriteReachesRealMarkup() throws Exception {
+    void onlyTheNamedShapesCollapse() throws Exception {
         String slide = part(COMMITTED.resolve("twin-output.pptx"), "ppt/slides/slide1.xml");
+        String collapsed = AssetContent.knownShapesCollapsed(TWIN_SLIDE, slide);
 
-        assertThat(AssetContent.freeformsInSlideSpace(slide))
-                .describedAs("no freeform in a deck full of them was rewritten — the markup no "
-                        + "longer looks the way the patterns expect")
-                .isNotEqualTo(slide);
+        assertThat(collapsed)
+                .describedAs("the two measured shapes have to be recognised in the deck they were "
+                        + "measured in, or the exemption describes nothing")
+                .contains("Freeform 41/>", "Freeform 51/>");
+        assertThat(collapsed)
+                .describedAs("a shape the allowlist does not name is compared as it was written")
+                .contains("<p:cNvPr name=\"Freeform 42\"");
+        assertThat(AssetContent.knownShapesCollapsed("other.pptx!ppt/slides/slide1.xml", slide))
+                .describedAs("the exemption is keyed on the deck as well as the shape")
+                .isEqualTo(slide);
+    }
+
+    /**
+     * The shapes the allowlist exempts are the ones both decks still carry.
+     *
+     * <p>The digests are of what two machines wrote at the time they were measured. If the example
+     * moves either shape, both sides move together and the pair silently stops being exempt — the
+     * comparison would go back to reading them and fail on a runner for a reason the entry was
+     * added to explain.</p>
+     */
+    @Test
+    void theNamedShapesAreStillWhatBothDecksCarry() throws Exception {
+        for (Path deck : List.of(COMMITTED.resolve("twin-output.pptx"),
+                generated("twin-output.pptx"))) {
+            String slide = part(deck, "ppt/slides/slide1.xml");
+            assertThat(AssetContent.knownShapesCollapsed(TWIN_SLIDE, slide))
+                    .describedAs("%s no longer carries the shapes the allowlist was measured on",
+                            deck)
+                    .contains("Freeform 41/>", "Freeform 51/>");
+        }
     }
 
     /**
@@ -353,11 +373,13 @@ class AssetContentTest {
         return image;
     }
 
-    private static String freeform(String xfrm, String from, String to) {
+    /** One line, turned a quarter turn, inside whatever box the caller gives it. */
+    private static String rotatedFreeform(String xfrm) {
         return "<p:sp><p:nvSpPr><p:cNvPr name=\"Freeform 1\" id=\"1\"/></p:nvSpPr><p:spPr>"
-               + "<a:xfrm>" + xfrm + "</a:xfrm><a:custGeom><a:pathLst>"
-               + "<a:path h=\"400\" w=\"600\">"
-               + "<a:moveTo>" + from + "</a:moveTo><a:lnTo>" + to + "</a:lnTo>"
+               + "<a:xfrm rot=\"5400000\">" + xfrm + "</a:xfrm><a:custGeom><a:pathLst>"
+               + "<a:path h=\"100\" w=\"100\">"
+               + "<a:moveTo><a:pt x=\"0\" y=\"0\"/></a:moveTo>"
+               + "<a:lnTo><a:pt x=\"100\" y=\"100\"/></a:lnTo>"
                + "</a:path></a:pathLst></a:custGeom></p:spPr></p:sp>";
     }
 }

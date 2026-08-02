@@ -30,10 +30,11 @@ import javax.imageio.ImageIO;
  *
  * <p>Everything this drops was measured on this repository's own catalogue rather than assumed,
  * by rendering it on Windows and on the Linux runner at the same version: of 104 documents, 99
- * came out byte-identical under the reduction below. The five that did not are named in
- * {@link #UNSTABLE_PARTS} or are decks the repository does not commit — see there for what each
- * one was. So the comparison stays exact: no tolerance, no sampling, and every exemption is a
- * line somebody had to write.</p>
+ * came out byte-identical under the reduction below. The five that did not are accounted for by
+ * {@link #UNSTABLE_PARTS} and {@link #UNSTABLE_SHAPES} or are decks the repository does not
+ * commit. So the comparison stays exact: no tolerance, no sampling, and every exemption names the
+ * one thing it covers and the two renders it covers it between — never a rule applied to
+ * everything of that kind.</p>
  */
 public final class AssetContent {
 
@@ -58,6 +59,29 @@ public final class AssetContent {
             "master-showcase.pptx!ppt/media/image1.png",
             Set.of("1f629c6a16dd2d5c18ead1594788ce04e0341360f57af68421b428d56cfb03a8",
                     "9b4a3b3d0dcae564393372bccb71430b0367b6c189e36bfff664a4a67f515225"));
+
+    /**
+     * The shapes a machine is allowed to disagree about, as {@code document!part!shape}.
+     *
+     * <p>Two, and both in one deck: the box a freeform declares, and the origin its points are
+     * measured from, came out differently on the two machines — one icon with every point shifted
+     * by a constant 272 EMU across and 489 down and its extent smaller by exactly as much, so the
+     * path landed on the same place on the slide to the unit. Comparing all six committed decks
+     * shape by shape found these two and nothing else.</p>
+     *
+     * <p>Like {@link #UNSTABLE_PARTS}, the value is the digest of each machine's version, so the
+     * exemption is for the pair of renders rather than for the shape: change either one and it
+     * stops being absorbed. Every other shape in every deck is compared as it was written,
+     * including the box — which is not decoration, but the centre a {@code rot} turns a shape
+     * around and the axis a {@code flipH} mirrors it in.</p>
+     */
+    public static final Map<String, Set<String>> UNSTABLE_SHAPES = Map.of(
+            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 41",
+            Set.of("18dacede01e07a4408f19b8f2a6fc072887e6d3f5796064db4caf1b933a0f741",
+                    "4d126750bda49ababc68b4020984bc1295d7e94b02dd2629bc3d971d05346656"),
+            "twin-output.pptx!ppt/slides/slide1.xml!Freeform 51",
+            Set.of("c59aeb5cc0676a9dc35e01aff745d0b2d66500ab7dfca4afb24d4f4a60c15262",
+                    "33904bc4a82c84c86384832ca4b6c9cad738bcca558d756a43d25b9676e1b65e"));
 
     /** Extensions this can reduce; anything else is compared as the bytes it is. */
     private static final Set<String> PACKAGES = Set.of(".pptx", ".docx");
@@ -118,9 +142,9 @@ public final class AssetContent {
      *
      * <p>Three differences were measured between a package written on Windows and the same
      * package written on the runner, none of them a change to the document: the platform's line
-     * separator after each XML declaration, the creation stamp in {@code docProps}, and the box a
-     * freeform's path is normalised against. The first two are dropped; the third is why the
-     * points are read where they land — see {@link #freeformsInSlideSpace}.</p>
+     * separator after each XML declaration, the creation stamp in {@code docProps}, and two
+     * freeform shapes in one deck. The first two are dropped wherever they appear; the third is
+     * dropped only for those two shapes — see {@link #UNSTABLE_SHAPES}.</p>
      */
     static byte[] part(String document, String name, byte[] content) throws IOException {
         if (name.startsWith("ppt/media/") || name.startsWith("word/media/")) {
@@ -133,7 +157,8 @@ public final class AssetContent {
         if (name.equals("docProps/core.xml")) {
             text = CREATION_STAMP.matcher(text).replaceAll("$1$2");
         }
-        return freeformsInSlideSpace(text).getBytes(StandardCharsets.UTF_8);
+        return knownShapesCollapsed(document + "!" + name, text)
+                .getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -196,81 +221,46 @@ public final class AssetContent {
     }
 
     private static final Pattern SHAPE = Pattern.compile("<p:sp>.*?</p:sp>", Pattern.DOTALL);
-    private static final Pattern OFFSET =
-            Pattern.compile("<a:off x=\"(-?\\d+)\" y=\"(-?\\d+)\"/>");
-    private static final Pattern EXTENT = Pattern.compile("<a:ext cx=\"(\\d+)\" cy=\"(\\d+)\"/>");
-    private static final Pattern PATH_TAG = Pattern.compile("<a:path ([^>]*)>");
-    private static final Pattern POINT = Pattern.compile("<a:pt x=\"(-?\\d+)\" y=\"(-?\\d+)\"/>");
-    private static final Pattern BOX_ATTRIBUTE = Pattern.compile(" [wh]=\"\\d+\"");
-    private static final Pattern PATH_WIDTH = Pattern.compile("\\bw=\"(\\d+)\"");
-    private static final Pattern PATH_HEIGHT = Pattern.compile("\\bh=\"(\\d+)\"");
+    private static final Pattern SHAPE_NAME = Pattern.compile("<p:cNvPr name=\"([^\"]+)\"");
 
     /**
-     * Reads each freeform's path where it lands on the slide rather than inside its box.
+     * Replaces the shapes named in {@link #UNSTABLE_SHAPES} with a token, and nothing else.
      *
-     * <p>The box a freeform declares, and the origin its coordinates are measured from, are not
-     * stable: one icon came out with every point shifted by a constant 272 EMU across and 489
-     * down and its declared extent smaller by exactly as much, so that the path landed on the
-     * same place on the slide to the unit. Only the normalisation moved. A freeform that
-     * actually moves still moves its points.</p>
+     * <p>An earlier version of this rewrote every freeform: it read the path in slide
+     * coordinates and dropped the box those coordinates were measured against. That absorbed the
+     * measured difference and a good deal more — the box a shape declares is also the centre a
+     * {@code rot} turns it around and the axis a {@code flipH} mirrors it in, and five of the six
+     * committed decks carry one or the other. Two shapes drawn around different centres would
+     * have compared equal while PowerPoint drew them differently.</p>
+     *
+     * <p>What was actually measured is two shapes in one deck, so two shapes in one deck are what
+     * is exempted — by the digest of each machine's version of them, the way an unstable image
+     * is. Every other shape is compared as it was written.</p>
      */
-    static String freeformsInSlideSpace(String xml) {
+    static String knownShapesCollapsed(String part, String xml) {
+        if (UNSTABLE_SHAPES.keySet().stream().noneMatch(key -> key.startsWith(part + "!"))) {
+            return xml;
+        }
         Matcher shapes = SHAPE.matcher(xml);
         StringBuilder out = new StringBuilder();
         while (shapes.find()) {
-            shapes.appendReplacement(out, Matcher.quoteReplacement(inSlideSpace(shapes.group())));
+            shapes.appendReplacement(out, Matcher.quoteReplacement(collapse(part, shapes.group())));
         }
         shapes.appendTail(out);
         return out.toString();
     }
 
-    private static String inSlideSpace(String shape) {
-        Matcher offset = OFFSET.matcher(shape);
-        Matcher extent = EXTENT.matcher(shape);
-        Matcher pathTag = PATH_TAG.matcher(shape);
-        if (!offset.find() || !extent.find() || !pathTag.find()) {
+    private static String collapse(String part, String shape) {
+        Matcher name = SHAPE_NAME.matcher(shape);
+        if (!name.find()) {
             return shape;
         }
-        long pathWidth = attribute(PATH_WIDTH, pathTag.group(1));
-        long pathHeight = attribute(PATH_HEIGHT, pathTag.group(1));
-        if (pathWidth <= 0 || pathHeight <= 0) {
-            return shape;
-        }
-        long offsetX = Long.parseLong(offset.group(1));
-        long offsetY = Long.parseLong(offset.group(2));
-        double scaleX = Long.parseLong(extent.group(1)) / (double) pathWidth;
-        double scaleY = Long.parseLong(extent.group(2)) / (double) pathHeight;
-
-        Matcher points = POINT.matcher(shape);
-        StringBuilder out = new StringBuilder();
-        while (points.find()) {
-            long x = offsetX + Math.round(Long.parseLong(points.group(1)) * scaleX);
-            long y = offsetY + Math.round(Long.parseLong(points.group(2)) * scaleY);
-            points.appendReplacement(out,
-                    Matcher.quoteReplacement("<a:pt x=\"%d\" y=\"%d\"/>".formatted(x, y)));
-        }
-        points.appendTail(out);
-
-        String slideSpace = OFFSET.matcher(out.toString()).replaceFirst("<a:off/>");
-        slideSpace = EXTENT.matcher(slideSpace).replaceFirst("<a:ext/>");
-        return withoutPathBox(slideSpace);
-    }
-
-    private static String withoutPathBox(String shape) {
-        Matcher tags = PATH_TAG.matcher(shape);
-        StringBuilder out = new StringBuilder();
-        while (tags.find()) {
-            String rest = BOX_ATTRIBUTE.matcher(" " + tags.group(1)).replaceAll("").trim();
-            tags.appendReplacement(out, Matcher.quoteReplacement(
-                    rest.isEmpty() ? "<a:path>" : "<a:path " + rest + ">"));
-        }
-        tags.appendTail(out);
-        return out.toString();
-    }
-
-    private static long attribute(Pattern attribute, String attributes) {
-        Matcher value = attribute.matcher(attributes);
-        return value.find() ? Long.parseLong(value.group(1)) : -1;
+        String key = part + "!" + name.group(1);
+        String digest = HexFormat.of().formatHex(
+                sha256().digest(shape.getBytes(StandardCharsets.UTF_8)));
+        return UNSTABLE_SHAPES.getOrDefault(key, Set.of()).contains(digest)
+                ? "<a known render of " + key + "/>"
+                : shape;
     }
 
     private static MessageDigest sha256() {

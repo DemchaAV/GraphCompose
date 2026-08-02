@@ -115,15 +115,6 @@ public final class EngineDeckV2Example {
 
     private static final String VERSION = ExampleVersion.withoutQualifier();
 
-    /**
-     * The {@code major.minor} of {@link #VERSION}, for the banner's prose labels.
-     *
-     * <p>Derived rather than written out: the banner is regenerated on every release,
-     * so a literal would keep announcing whichever line it was typed on — the hero
-     * still read "2.0" while the pill beside it read v2.1.0.</p>
-     */
-    private static final String VERSION_LINE = ExampleVersion.majorMinor(VERSION);
-
     private EngineDeckV2Example() {
     }
 
@@ -261,7 +252,7 @@ public final class EngineDeckV2Example {
         layers.add(at(heroLogo(), 42, 24));
         layers.add(at(versionPill(), 742, 36));
 
-        layers.add(at(canvasText("HeroKicker", "GRAPHCOMPOSE " + VERSION_LINE + " / MODULE-FIRST",
+        layers.add(at(canvasText("HeroKicker", "GRAPHCOMPOSE / MODULE-FIRST",
                 darkEyebrow(), TextAlign.LEFT, 420), 52, 126));
         layers.add(at(canvasText("HeroLine1", "Compose once.", heroTitle(), TextAlign.LEFT, 410), 52, 156));
         layers.add(at(canvasText("HeroLine2", "Render through modules.", heroAccentTitle(), TextAlign.LEFT, 330), 52, 202));
@@ -271,7 +262,7 @@ public final class EngineDeckV2Example {
                 heroBody(), TextAlign.LEFT, 410), 54, 262));
         layers.add(at(heroCoordinate(), 52, 333));
 
-        layers.add(at(canvasText("GraphLabel", "THE " + VERSION_LINE + " MODULE GRAPH",
+        layers.add(at(canvasText("GraphLabel", "THE MODULE GRAPH",
                 darkEyebrow(), TextAlign.LEFT, 690), 622, 112));
         layers.addAll(heroModuleConnectors());
         layers.add(at(heroCoreCard(), 646, 152));
@@ -627,7 +618,7 @@ public final class EngineDeckV2Example {
         double h = 180;
         List<CanvasChild> nodes = new ArrayList<>();
         nodes.add(at(roundedRect(w, h, 15, DARK_CARD, DARK_LINE), 0, 0));
-        nodes.add(at(canvasText("MatrixKicker", "THE LOCKSTEP 2.0 TRAIN",
+        nodes.add(at(canvasText("MatrixKicker", "THE LOCKSTEP TRAIN",
                 darkEyebrow(), TextAlign.LEFT, 610), 20, 17));
         nodes.add(at(canvasText("MatrixBody",
                 "One version, smaller dependency trees, explicit format boundaries.",

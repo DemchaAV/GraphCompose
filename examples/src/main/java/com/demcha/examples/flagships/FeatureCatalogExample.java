@@ -105,7 +105,9 @@ public final class FeatureCatalogExample {
             document.header(DocumentHeaderFooter.builder()
                     .zone(DocumentHeaderFooterZone.HEADER)
                     .leftText("GraphCompose · Feature catalog")
-                    .rightText("{date}")
+                    // No {date} here: the catalogue is committed as a preview, and the
+                    // token would re-date it on every render. PdfChromeExample is where
+                    // the token itself is demonstrated.
                     .fontSize(8f).textColor(MUTED)
                     .showSeparator(true)
                     .separatorColor(THEME.palette().rule())
@@ -436,7 +438,7 @@ public final class FeatureCatalogExample {
             feature(flow, "Page chrome — this document's own header, footer, outline", """
                     document.metadata(DocumentMetadata.builder().title("…").author("…").build());
                     document.header(DocumentHeaderFooter.builder().zone(HEADER)
-                        .leftText("GraphCompose · Feature catalog").rightText("{date}")…);
+                        .leftText("GraphCompose · Feature catalog")…);
                     document.footer(…centerText("Page {page} of {pages}")…);
                     paragraph.bookmark(new DocumentBookmarkOptions("Feature catalog", 0))""",
                     demo -> demo.addParagraph(p -> p

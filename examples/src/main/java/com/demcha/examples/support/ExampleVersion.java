@@ -7,16 +7,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The reactor version, for examples that print it.
+ * The version examples print.
  *
  * <p>Read from the filtered {@code banner.properties} rather than written out,
  * because example documents are regenerated on every release: a literal keeps
  * announcing whichever line it was typed on. Shared so the value cannot drift
  * between the documents that show it.</p>
+ *
+ * <p>The reactor is the default, not the only answer:
+ * {@link #DISPLAY_VERSION_PROPERTY} overrides it. Between releases the reactor
+ * sits on the next patch, so a render taken from a development branch names a
+ * version nobody can depend on yet — the override is how a published document
+ * gets reproduced from a branch that has moved past it.</p>
  */
 public final class ExampleVersion {
 
     private static final Pattern MAJOR_MINOR = Pattern.compile("^(\\d+)\\.(\\d+)");
+
+    /**
+     * What the override accepts: a released version, nothing else.
+     *
+     * <p>Rejecting rather than rewriting, because every render site runs the value
+     * through {@link #withoutQualifier()} — so a pre-release passed here would reach the
+     * page as the final version of that line, which is not published and may never be.
+     * The committed previews show what is on Maven Central; a caller asking for anything
+     * else is asking for a document that misrepresents the project.</p>
+     */
+    private static final Pattern RELEASE_VERSION = Pattern.compile("\\d+\\.\\d+\\.\\d+");
 
     private static final String CURRENT = load();
 
@@ -24,8 +41,9 @@ public final class ExampleVersion {
     }
 
     /**
-     * The full reactor version, or {@code "dev"} when the resource is absent or
-     * unfiltered (running straight from sources).
+     * The full version to display — the override when one is set, otherwise the
+     * reactor's, or {@code "dev"} when the resource is absent or unfiltered
+     * (running straight from sources).
      *
      * @return version string
      */
@@ -72,6 +90,17 @@ public final class ExampleVersion {
         return matcher.find() ? matcher.group(1) + "." + matcher.group(2) : version;
     }
 
+    /**
+     * The version a render should display, when it is not the reactor's.
+     *
+     * <p>Between cuts the reactor sits on the next patch — {@code 2.1.1-SNAPSHOT} while
+     * {@code 2.1.0} is what people can depend on — so a render taken from {@code develop}
+     * names a version that does not exist yet. Stripping the qualifier is not enough:
+     * the patch number itself has moved. Anything that needs to reproduce a published
+     * document passes the published version here.</p>
+     */
+    public static final String DISPLAY_VERSION_PROPERTY = "graphcompose.examples.displayVersion";
+
     private static String load() {
         Properties banner = new Properties();
         try (InputStream in = ExampleVersion.class.getResourceAsStream("/banner.properties")) {
@@ -81,7 +110,44 @@ public final class ExampleVersion {
         } catch (IOException ignored) {
             // Fall through to the development label below.
         }
-        String value = banner.getProperty("version");
-        return value == null || value.isBlank() || value.startsWith("@") ? "dev" : value.trim();
+        return resolve(System.getProperty(DISPLAY_VERSION_PROPERTY), banner.getProperty("version"));
+    }
+
+    /**
+     * Chooses between the override and the filtered value.
+     *
+     * <p>Separate from {@link #load()} because the result is cached in a static
+     * field: once any code has touched this class the property can no longer change
+     * the answer, so a test that sets it proves nothing. The decision is testable;
+     * the caching is not, and does not need to be.</p>
+     *
+     * @param override the {@link #DISPLAY_VERSION_PROPERTY} value, may be null
+     * @param filtered the {@code version} entry from {@code banner.properties}
+     * @return the version to display
+     */
+    static String resolve(String override, String filtered) {
+        // The override wins, and it is the only way to render a version other than
+        // the one the build carries. banner.properties keeps sourcing
+        // @project.version@ — a guard requires that — so the reactor stays the
+        // default answer.
+        if (override != null && !override.isBlank()) {
+            // A leading "v" is how a version is written in prose and how half the
+            // render sites print it. Accepting it and stripping it once keeps the two
+            // spellings from reaching the page as "vv2.1.0".
+            String requested = override.trim().replaceFirst("^[vV]", "");
+            if (!RELEASE_VERSION.matcher(requested).matches()) {
+                throw new IllegalArgumentException(
+                        "-D" + DISPLAY_VERSION_PROPERTY + "=" + override + " is not a released"
+                        + " version. These documents are committed as previews of what is on"
+                        + " Maven Central, and every site that prints the value runs it through"
+                        + " withoutQualifier(), which would turn 2.2.0-rc.1 into 2.2.0 — a"
+                        + " version that does not exist. Pass the published one, or leave the"
+                        + " property unset to render the reactor's.");
+            }
+            return requested;
+        }
+        return filtered == null || filtered.isBlank() || filtered.startsWith("@")
+                ? "dev"
+                : filtered.trim();
     }
 }

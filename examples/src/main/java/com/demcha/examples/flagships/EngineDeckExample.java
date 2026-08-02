@@ -240,7 +240,7 @@ public final class EngineDeckExample {
 
             document.footer(DocumentHeaderFooter.builder()
                     .zone(DocumentHeaderFooterZone.FOOTER)
-                    .leftText("GraphCompose · v" + VERSION + " “" + CODENAME + "”")
+                    .leftText("GraphCompose · “" + CODENAME + "”")
                     .rightText("Page {page} of {pages}")
                     .fontSize(8.5f)
                     .textColor(MUTED)

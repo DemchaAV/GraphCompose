@@ -30,6 +30,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentPathSegment;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -268,7 +269,8 @@ public final class FinancialReportExample {
         ChartStyle style = ChartStyle.builder()
                 .palette(DocumentPaint.solid(ORANGE), DocumentPaint.solid(GAUGE_TRACK))
                 .donutCenterTextStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(22)
                         .color(INK)
                         .build())
@@ -496,7 +498,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle titleStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(19)
                 .color(INK)
                 .build();
@@ -512,7 +515,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle periodStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(15)
                 .color(INK)
                 .build();
@@ -520,7 +524,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle bandTitleStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(12.5)
                 .color(TEAL_DARK)
                 .build();
@@ -528,7 +533,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle cardTitleStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(TEAL_DARK)
                 .build();
@@ -552,7 +558,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle kpiTokenStyle(DocumentColor color, double size) {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(size)
                 .color(color)
                 .build();
@@ -560,7 +567,8 @@ public final class FinancialReportExample {
 
     private static DocumentTextStyle kpiValueStyle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(INK)
                 .build();

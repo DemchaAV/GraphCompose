@@ -18,6 +18,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
@@ -376,7 +377,7 @@ public final class TwinOutputExample {
     }
 
     private static DocumentTextStyle display(double size, DocumentColor color) {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(size).color(color).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(size).color(color).build();
     }
 
     private static DocumentTextStyle body(double size, DocumentColor color) {
@@ -385,7 +386,8 @@ public final class TwinOutputExample {
 
     private static DocumentTextStyle mono(double size, DocumentColor color, boolean bold) {
         return DocumentTextStyle.builder()
-                .fontName(bold ? FontName.COURIER_BOLD : FontName.COURIER)
+                .fontName(FontName.COURIER)
+                .decoration(bold ? DocumentTextDecoration.BOLD : DocumentTextDecoration.DEFAULT)
                 .size(size)
                 .color(color)
                 .build();

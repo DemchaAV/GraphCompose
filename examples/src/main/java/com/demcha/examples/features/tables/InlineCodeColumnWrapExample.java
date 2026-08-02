@@ -51,14 +51,15 @@ public final class InlineCodeColumnWrapExample {
         Path outputFile = ExampleOutputPaths.prepare("features/tables", "inline-code-column-wrap.pdf");
 
         DocumentTextStyle title = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD).size(20).color(INK)
+                .fontName(FontName.HELVETICA).size(20).color(INK)
                 .decoration(DocumentTextDecoration.BOLD).build();
         DocumentTextStyle caption = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_OBLIQUE).size(10).color(MUTED).build();
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.ITALIC).size(10).color(MUTED).build();
         DocumentTextStyle body = DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA).size(10.5).color(INK).build();
         DocumentTextStyle headerText = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD).size(11).color(DocumentColor.WHITE)
+                .fontName(FontName.HELVETICA).size(11).color(DocumentColor.WHITE)
                 .decoration(DocumentTextDecoration.BOLD).build();
 
         DocumentTableStyle headerStyle = DocumentTableStyle.builder()

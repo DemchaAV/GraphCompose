@@ -9,6 +9,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
@@ -176,7 +177,8 @@ public final class BarcodeShowcaseExample {
                 .addParagraph(p -> p
                         .text(title)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(11)
                                 .color(INK)
                                 .build())

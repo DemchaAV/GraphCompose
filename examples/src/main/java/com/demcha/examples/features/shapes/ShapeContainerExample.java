@@ -70,9 +70,9 @@ public final class ShapeContainerExample {
                                             .name("InitialCircle")
                                             .padding(12)
                                             .stroke(DocumentStroke.of(GOLD, 1.4))
-                                            .center(label("GC", style(FontName.HELVETICA_BOLD, 24,
+                                            .center(label("GC", style(FontName.HELVETICA, 24,
                                                     DocumentTextDecoration.BOLD, DocumentColor.WHITE)))
-                                            .position(label("CLIP", style(FontName.HELVETICA_BOLD, 8,
+                                            .position(label("CLIP", style(FontName.HELVETICA, 8,
                                                             DocumentTextDecoration.BOLD, SOFT_GOLD)),
                                                     0, -12, LayerAlign.BOTTOM_CENTER))
                                     .addParagraph(paragraph -> paragraph
@@ -86,10 +86,10 @@ public final class ShapeContainerExample {
                                             .name("OffsetEllipse")
                                             .padding(10)
                                             .stroke(DocumentStroke.of(DEEP_TEAL, 1.0))
-                                            .center(label("Overlay", style(FontName.HELVETICA_BOLD, 15,
+                                            .center(label("Overlay", style(FontName.HELVETICA, 15,
                                                     DocumentTextDecoration.BOLD, INK)))
                                             .topRight(pill(44, 18, DEEP_TEAL))
-                                            .position(label("TOP", style(FontName.HELVETICA_BOLD, 7,
+                                            .position(label("TOP", style(FontName.HELVETICA, 7,
                                                             DocumentTextDecoration.BOLD, DocumentColor.WHITE)),
                                                     -6, 5, LayerAlign.TOP_RIGHT))
                                     .addParagraph(paragraph -> paragraph
@@ -108,7 +108,7 @@ public final class ShapeContainerExample {
                                             .padding(12)
                                             .center(cardCopy())
                                             .topRight(pill(46, 18, DEEP_TEAL))
-                                            .position(label("NEW", style(FontName.HELVETICA_BOLD, 7,
+                                            .position(label("NEW", style(FontName.HELVETICA, 7,
                                                             DocumentTextDecoration.BOLD, DocumentColor.WHITE)),
                                                     -6, 5, LayerAlign.TOP_RIGHT))
                                     .addParagraph(paragraph -> paragraph
@@ -217,7 +217,7 @@ public final class ShapeContainerExample {
     private static DocumentNode valignLabel(String text, TextVerticalAlign verticalAlign) {
         return new ParagraphBuilder()
                 .text(text)
-                .textStyle(style(FontName.HELVETICA_BOLD, 34, DocumentTextDecoration.BOLD, DocumentColor.WHITE))
+                .textStyle(style(FontName.HELVETICA, 34, DocumentTextDecoration.BOLD, DocumentColor.WHITE))
                 .align(TextAlign.CENTER)
                 .verticalAlign(verticalAlign)
                 .margin(DocumentInsets.zero())
@@ -240,7 +240,7 @@ public final class ShapeContainerExample {
                         .roundedRect(96, 56, corners)
                         .fillColor(DEEP_TEAL)
                         .clipPolicy(ClipPolicy.CLIP_PATH)
-                        .center(label("Aa", style(FontName.HELVETICA_BOLD, 16,
+                        .center(label("Aa", style(FontName.HELVETICA, 16,
                                 DocumentTextDecoration.BOLD, DocumentColor.WHITE))))
                 .addParagraph(paragraph -> paragraph
                         .text(caption)

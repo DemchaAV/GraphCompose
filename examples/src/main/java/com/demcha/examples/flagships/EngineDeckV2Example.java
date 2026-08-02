@@ -33,6 +33,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
@@ -916,7 +917,8 @@ public final class EngineDeckV2Example {
 
     private static DocumentTextStyle display(double size, DocumentColor color) {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(size)
                 .color(color)
                 .build();
@@ -956,7 +958,8 @@ public final class EngineDeckV2Example {
 
     private static DocumentTextStyle body(double size, DocumentColor color, boolean bold) {
         DocumentTextStyle.Builder builder = DocumentTextStyle.builder()
-                .fontName(bold ? FontName.HELVETICA_BOLD : FontName.HELVETICA)
+                .fontName(FontName.HELVETICA)
+                .decoration(bold ? DocumentTextDecoration.BOLD : DocumentTextDecoration.DEFAULT)
                 .size(size)
                 .color(color);
         return builder.build();
@@ -964,7 +967,8 @@ public final class EngineDeckV2Example {
 
     private static DocumentTextStyle mono(double size, DocumentColor color, boolean bold) {
         DocumentTextStyle.Builder builder = DocumentTextStyle.builder()
-                .fontName(bold ? FontName.COURIER_BOLD : FontName.COURIER)
+                .fontName(FontName.COURIER)
+                .decoration(bold ? DocumentTextDecoration.BOLD : DocumentTextDecoration.DEFAULT)
                 .size(size)
                 .color(color);
         return builder.build();

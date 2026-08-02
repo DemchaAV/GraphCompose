@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -229,13 +230,15 @@ public final class BusinessReportExample {
                                         .margin(DocumentInsets.zero()))
                                 .addRich(rich -> rich
                                         .style("Revenue", DocumentTextStyle.builder()
-                                                .fontName(FontName.HELVETICA_BOLD)
+                                                .fontName(FontName.HELVETICA)
+                                                .decoration(DocumentTextDecoration.BOLD)
                                                 .size(9)
                                                 .color(NAVY)
                                                 .build())
                                         .style("    ", legendLabel())
                                         .style("Profit", DocumentTextStyle.builder()
-                                                .fontName(FontName.HELVETICA_BOLD)
+                                                .fontName(FontName.HELVETICA)
+                                                .decoration(DocumentTextDecoration.BOLD)
                                                 .size(9)
                                                 .color(GOLD)
                                                 .build()))
@@ -293,7 +296,8 @@ public final class BusinessReportExample {
                 .headerStyle(DocumentTableStyle.builder()
                         .padding(new DocumentInsets(8, 8, 8, 8))
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(9)
                                 .color(DocumentColor.WHITE)
                                 .build())
@@ -331,7 +335,8 @@ public final class BusinessReportExample {
                         .center(new ParagraphBuilder()
                                 .text(iconGlyph)
                                 .textStyle(DocumentTextStyle.builder()
-                                        .fontName(FontName.HELVETICA_BOLD)
+                                        .fontName(FontName.HELVETICA)
+                                        .decoration(DocumentTextDecoration.BOLD)
                                         .size(13)
                                         .color(NAVY)
                                         .build())
@@ -341,7 +346,8 @@ public final class BusinessReportExample {
                 .addParagraph(p -> p
                         .text(value)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.TIMES_BOLD)
+                                .fontName(FontName.TIMES_ROMAN)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(24)
                                 .color(INK)
                                 .build())
@@ -349,7 +355,8 @@ public final class BusinessReportExample {
                 .addParagraph(p -> p
                         .text(label)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(9.5)
                                 .color(MUTED)
                                 .build())
@@ -407,13 +414,15 @@ public final class BusinessReportExample {
                         .margin(DocumentInsets.zero()))
                 .addRich(rich -> rich
                         .style("Revenue", DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(9)
                                 .color(NAVY)
                                 .build())
                         .style("    ", legendLabel())
                         .style("Profit", DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(9)
                                 .color(GOLD)
                                 .build()))
@@ -513,7 +522,8 @@ public final class BusinessReportExample {
 
     private static DocumentTextStyle bandLeft() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(8)
                 .color(MUTED)
                 .build();
@@ -521,7 +531,8 @@ public final class BusinessReportExample {
 
     private static DocumentTextStyle bandRight() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(8)
                 .color(MUTED)
                 .build();
@@ -529,7 +540,8 @@ public final class BusinessReportExample {
 
     private static DocumentTextStyle heroTitle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_BOLD)
+                .fontName(FontName.TIMES_ROMAN)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(24)
                 .color(INK)
                 .build();
@@ -545,7 +557,8 @@ public final class BusinessReportExample {
 
     private static DocumentTextStyle sectionTitle() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(12)
                 .color(INK)
                 .build();

@@ -43,6 +43,7 @@ import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
@@ -418,12 +419,12 @@ public final class EngineDeckExample {
         DocumentNode pill = new ShapeContainerBuilder().name("VerPill")
                 .roundedRect(96, 30, 8).fillColor(VIOLET_DEEP)
                 .center(new ParagraphBuilder().text("v" + pillVersion)
-                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                                 .size(14).color(DocumentColor.WHITE).build())
                         .align(TextAlign.CENTER).margin(DocumentInsets.zero()).build())
                 .build();
         DocumentNode codename = new ParagraphBuilder().text(CODENAME)
-                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_OBLIQUE)
+                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.ITALIC)
                         .size(14).color(GREEN).build())
                 .margin(DocumentInsets.zero()).build();
         return new ShapeContainerBuilder().name("VersionBlock")
@@ -436,7 +437,7 @@ public final class EngineDeckExample {
     /** Column header: a violet step number inline with the title. */
     private static void colHeader(SectionBuilder s, String number, String title) {
         s.addRich(r -> r
-                .style(number, DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                .style(number, DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                         .size(16).color(VIOLET).build())
                 .style("   " + title, colTitle()));
     }
@@ -444,7 +445,7 @@ public final class EngineDeckExample {
     private static void arrowCell(SectionBuilder s) {
         s.padding(DocumentInsets.zero())
                 .addParagraph(p -> p.text(">")
-                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                                 .size(26).color(VIOLET).build())
                         .align(TextAlign.CENTER).margin(DocumentInsets.top(96)));
     }
@@ -530,7 +531,7 @@ public final class EngineDeckExample {
                 .position(new ParagraphBuilder().text(title).textStyle(backendTitle())
                         .margin(DocumentInsets.zero()).build(), 37, -7, LayerAlign.CENTER_LEFT)
                 .position(new ParagraphBuilder().text(sub)
-                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                                 .size(7.5).color(accent).build())
                         .margin(DocumentInsets.zero()).build(), 37, 8, LayerAlign.CENTER_LEFT)
                 .build();
@@ -596,7 +597,7 @@ public final class EngineDeckExample {
 
     // ── Banner text styles ───────────────────────────────────────────────────
     private static DocumentTextStyle colTitle() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(13).color(ON_DARK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(13).color(ON_DARK).build();
     }
 
     private static DocumentTextStyle colSub() {
@@ -604,15 +605,15 @@ public final class EngineDeckExample {
     }
 
     private static DocumentTextStyle gridLabel() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(8.5).color(ON_DARK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(8.5).color(ON_DARK).build();
     }
 
     private static DocumentTextStyle backendTitle() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(9.5).color(ON_DARK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(9.5).color(ON_DARK).build();
     }
 
     private static DocumentTextStyle chipLabelLight() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(9.5).color(ON_DARK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(9.5).color(ON_DARK).build();
     }
 
     private static DocumentTextStyle itemDesc() {
@@ -663,7 +664,8 @@ public final class EngineDeckExample {
     private static void pipeArrow(com.demcha.compose.document.dsl.RowBuilder row) {
         row.addSection(s -> s.padding(DocumentInsets.zero())
                 .addParagraph(p -> p.text(">").textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(20).color(VIOLET).build())
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD).size(20).color(VIOLET).build())
                         .align(TextAlign.CENTER).margin(DocumentInsets.top(46))));
     }
 
@@ -700,10 +702,12 @@ public final class EngineDeckExample {
                 .padding(DocumentInsets.zero())
                 .spacing(7)
                 .addParagraph(p -> p.text(kicker).textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(9).color(VIOLET_DEEP).build())
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD).size(9).color(VIOLET_DEEP).build())
                         .margin(DocumentInsets.zero()))
                 .addParagraph(p -> p.text(heading).textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(18).color(INK).build())
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD).size(18).color(INK).build())
                         .margin(DocumentInsets.zero()));
     }
 
@@ -712,7 +716,7 @@ public final class EngineDeckExample {
     }
 
     private static DocumentTextStyle h3() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(11).color(INK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(11).color(INK).build();
     }
 
     private static DocumentTextStyle body() {
@@ -724,11 +728,11 @@ public final class EngineDeckExample {
     }
 
     private static DocumentTextStyle chipLabel() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(9.5).color(INK).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(9.5).color(INK).build();
     }
 
     private static DocumentTextStyle stepNum() {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(16).color(VIOLET).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(16).color(VIOLET).build();
     }
 
     // ─────────────────────────────────────────────────────────────────────────

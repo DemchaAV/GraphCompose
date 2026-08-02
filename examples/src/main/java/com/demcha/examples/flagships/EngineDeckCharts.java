@@ -25,6 +25,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -65,7 +66,8 @@ final class EngineDeckCharts {
                 .headerStyle(DocumentTableStyle.builder()
                         .padding(DocumentInsets.symmetric(8, 10))
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(9).color(DocumentColor.WHITE).build())
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD).size(9).color(DocumentColor.WHITE).build())
                         .fillColor(VIOLET_DEEP)
                         .stroke(DocumentStroke.of(VIOLET_DEEP, 0.5))
                         .build())

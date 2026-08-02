@@ -20,6 +20,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -410,7 +411,8 @@ public final class LinkedInCarouselExample {
             card.addParagraph(p -> p
                     .text(title)
                     .textStyle(DocumentTextStyle.builder()
-                            .fontName(FontName.HELVETICA_BOLD)
+                            .fontName(FontName.HELVETICA)
+                            .decoration(DocumentTextDecoration.BOLD)
                             .size(40 * SCALE)
                             .color(ON_DARK)
                             .build())
@@ -432,7 +434,8 @@ public final class LinkedInCarouselExample {
             card.addParagraph(p -> p
                     .text(name)
                     .textStyle(DocumentTextStyle.builder()
-                            .fontName(FontName.HELVETICA_BOLD)
+                            .fontName(FontName.HELVETICA)
+                            .decoration(DocumentTextDecoration.BOLD)
                             .size(56 * SCALE)
                             .color(accent)
                             .build())
@@ -459,7 +462,8 @@ public final class LinkedInCarouselExample {
             card.addParagraph(p -> p
                     .text(value)
                     .textStyle(DocumentTextStyle.builder()
-                            .fontName(FontName.HELVETICA_BOLD)
+                            .fontName(FontName.HELVETICA)
+                            .decoration(DocumentTextDecoration.BOLD)
                             .size(64 * SCALE)
                             .color(accent)
                             .build())
@@ -517,7 +521,8 @@ public final class LinkedInCarouselExample {
 
     private static DocumentTextStyle headline(double size) {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(size * SCALE)
                 .color(ON_DARK)
                 .build();

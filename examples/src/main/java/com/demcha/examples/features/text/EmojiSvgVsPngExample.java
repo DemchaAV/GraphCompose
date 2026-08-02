@@ -11,6 +11,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.table.DocumentTableCell;
@@ -78,7 +79,7 @@ public final class EmojiSvgVsPngExample {
                 .fillColor(HEADER_FILL)
                 .stroke(DocumentStroke.of(RULE, 0.6))
                 .padding(DocumentInsets.of(9))
-                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                         .color(DocumentColor.WHITE).build())
                 .build();
         DocumentTableStyle codeStyle = DocumentTableStyle.builder()
@@ -96,7 +97,7 @@ public final class EmojiSvgVsPngExample {
                     .spacing(12)
                     .addSection("Hero", section -> section
                             .addParagraph(p -> p.text("Emoji rendering — SVG (vector) vs PNG (raster)")
-                                    .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                                    .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                                             .size(16).color(INK).build())
                                     .margin(DocumentInsets.zero()))
                             .addParagraph(p -> p.text("Both columns draw the same glyph at " + (int) GLYPH_PT

@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
@@ -45,7 +46,7 @@ public final class EmojiGalleryExample {
             var flow = document.pageFlow().name("EmojiGallery").spacing(6);
             flow.addParagraph(p -> p
                     .text("Noto Emoji — full set (" + glyphs.size() + " glyphs)")
-                    .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                    .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                             .size(15).color(INK).build())
                     .margin(DocumentInsets.zero()));
             flow.addParagraph(p -> p

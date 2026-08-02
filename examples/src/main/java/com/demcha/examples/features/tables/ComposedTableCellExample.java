@@ -53,19 +53,20 @@ public final class ComposedTableCellExample {
         Path outputFile = ExampleOutputPaths.prepare("features/tables", "composed-table-cell-showcase.pdf");
 
         DocumentTextStyle title = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(20)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle sectionHeading = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(13)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle caption = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_OBLIQUE)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.ITALIC)
                 .size(10)
                 .color(MUTED)
                 .build();
@@ -75,7 +76,7 @@ public final class ComposedTableCellExample {
                 .color(INK)
                 .build();
         DocumentTextStyle headerText = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(11)
                 .color(DocumentColor.WHITE)
                 .decoration(DocumentTextDecoration.BOLD)

@@ -6,6 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
@@ -55,7 +56,8 @@ public final class CoverLetterFileExample {
                                     .addParagraph(p -> p
                                             .text("Mariia Demchyshyn")
                                             .textStyle(DocumentTextStyle.builder()
-                                                    .fontName(FontName.HELVETICA_BOLD)
+                                                    .fontName(FontName.HELVETICA)
+                                                    .decoration(DocumentTextDecoration.BOLD)
                                                     .size(22)
                                                     .color(INK)
                                                     .build())
@@ -88,7 +90,8 @@ public final class CoverLetterFileExample {
                                     .addParagraph(p -> p
                                             .text("Re: Senior Engineer")
                                             .textStyle(DocumentTextStyle.builder()
-                                                    .fontName(FontName.HELVETICA_BOLD)
+                                                    .fontName(FontName.HELVETICA)
+                                                    .decoration(DocumentTextDecoration.BOLD)
                                                     .size(10)
                                                     .color(BRAND)
                                                     .build())
@@ -102,7 +105,8 @@ public final class CoverLetterFileExample {
                             .addParagraph(p -> p
                                     .text("Northwind Systems Ltd.")
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(11.5)
                                             .color(INK)
                                             .build())
@@ -124,7 +128,8 @@ public final class CoverLetterFileExample {
                             .addRich(rich -> rich
                                     .plain("I help teams ship ")
                                     .style("designed PDFs as code", DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(13)
                                             .color(BRAND)
                                             .build())
@@ -138,7 +143,8 @@ public final class CoverLetterFileExample {
                     .addParagraph(p -> p
                             .text("Dear Hiring Team,")
                             .textStyle(DocumentTextStyle.builder()
-                                    .fontName(FontName.HELVETICA_BOLD)
+                                    .fontName(FontName.HELVETICA)
+                                    .decoration(DocumentTextDecoration.BOLD)
                                     .size(11.5)
                                     .color(INK)
                                     .build())
@@ -192,7 +198,8 @@ public final class CoverLetterFileExample {
                             .addParagraph(p -> p
                                     .text("Mariia Demchyshyn")
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(13)
                                             .color(INK)
                                             .build())
@@ -237,7 +244,8 @@ public final class CoverLetterFileExample {
                 .addParagraph(p -> p
                         .text(title)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(10.5)
                                 .color(INK)
                                 .build())

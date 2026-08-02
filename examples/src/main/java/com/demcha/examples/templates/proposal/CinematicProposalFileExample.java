@@ -185,7 +185,7 @@ public final class CinematicProposalFileExample {
 
     private static DocumentTextStyle bold(double size, DocumentColor color) {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .decoration(DocumentTextDecoration.BOLD)
                 .size(size)
                 .color(color)

@@ -100,6 +100,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **The example catalogue renders the weights it declares.** The same defect the donut
+  KPI had, across 115 styles in the examples: a font *face* constant named with no
+  decoration, which the library rewrites to its base family before the lookup. The PPTX
+  backend began reading the face from the decoration in the 2.1 line, so decks that had
+  rendered bold went out regular — a live loss on `develop`, invisible because nothing
+  re-rendered the committed previews to show it. Restoring the weights changed three
+  decks back and gave a fourth the emphasis it had always asked for. Thirty-one committed
+  previews are re-rendered; the weekly schedule's columns are recomputed to fill the
+  printable width, because bold day notes no longer fit a span over fixed sub-columns and
+  a spanned cell cannot borrow width from them.
 - **The donut-centre KPI renders the weight it declares.** A style names a font
   *family* and a *decoration*, and the decoration is what picks the face within the
   family — the standard-14 face constants (`HELVETICA_BOLD`, `TIMES_ITALIC`, …) are

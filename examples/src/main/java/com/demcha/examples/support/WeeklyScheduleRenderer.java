@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -325,11 +326,17 @@ public final class WeeklyScheduleRenderer {
 
         /** Default landscape layout matching the AURORA demo board. */
         public static Layout landscape() {
+            // The seven day columns and the name column fill the printable width
+            // exactly: 841.88977 less the 8pt side margins is 825.89, and
+            // 73.39 + 7 x 107.5 lands on it. The board is meant to be printed, so
+            // leftover width is wasted paper — and the day headings are bold, which
+            // the previous 105pt column no longer fit once the face constants were
+            // corrected: a spanned cell over fixed sub-columns cannot borrow width.
             return new Layout(
                     DocumentPageSize.of(841.88977, 472),
                     new DocumentInsets(14, 8, 14, 8),
-                    90,
-                    105);
+                    87.38,
+                    105.5);
         }
 
         public double subColWidth() { return dayColWidth / 4.0; }
@@ -509,7 +516,8 @@ public final class WeeklyScheduleRenderer {
                                             .text("S")
                                             .align(TextAlign.CENTER)
                                             .textStyle(DocumentTextStyle.builder()
-                                                    .fontName(FontName.TIMES_BOLD)
+                                                    .fontName(FontName.TIMES_ROMAN)
+                                                    .decoration(DocumentTextDecoration.BOLD)
                                                     .size(13)
                                                     .color(theme.brandAccent())
                                                     .build())
@@ -717,7 +725,8 @@ public final class WeeklyScheduleRenderer {
                         .text(label)
                         .align(TextAlign.CENTER)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(8.5)
                                 .color(DocumentColor.WHITE)
                                 .build())
@@ -730,7 +739,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(8, 4, 8, 4))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.TIMES_BOLD)
+                        .fontName(FontName.TIMES_ROMAN)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(18)
                         .color(theme.brandAccent())
                         .build())
@@ -744,7 +754,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(6, 4, 4, 4))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.TIMES_BOLD)
+                        .fontName(FontName.TIMES_ROMAN)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(11.5)
                         .color(theme.ink())
                         .build())
@@ -758,8 +769,11 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(2, 5, 6, 5))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
-                        .size(5.9)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
+                        // 5.9 bold overflows the four fixed sub-columns a note spans,
+                        // and a spanned cell cannot borrow width from fixed neighbours.
+                        .size(5.75)
                         .color(theme.ink())
                         .build())
                 .stroke(DocumentStroke.of(theme.grid(), 0.3))
@@ -773,7 +787,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(8.5, 4, 8.5, 4))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(8.5)
                         .color(textOn(fill, theme))
                         .build())
@@ -814,7 +829,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(7, 6, 7, 6))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(9.1)
                         .color(theme.brandDark())
                         .build())
@@ -828,7 +844,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(5, 6, 5, 6))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(8.8)
                         .color(DocumentColor.WHITE)
                         .build())
@@ -843,7 +860,8 @@ public final class WeeklyScheduleRenderer {
         return DocumentTableStyle.builder()
                 .padding(new DocumentInsets(5, 4, 5, 4))
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.HELVETICA_BOLD)
+                        .fontName(FontName.HELVETICA)
+                        .decoration(DocumentTextDecoration.BOLD)
                         .size(8.8)
                         .color(theme.ink())
                         .build())

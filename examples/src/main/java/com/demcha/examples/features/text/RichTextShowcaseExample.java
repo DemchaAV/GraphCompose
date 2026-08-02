@@ -6,6 +6,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.examples.support.theme.BusinessTheme;
@@ -98,13 +99,15 @@ public final class RichTextShowcaseExample {
                             rich -> rich
                                     .plain("Project ")
                                     .style("GraphCompose", DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(11)
                                             .color(BRAND)
                                             .build())
                                     .plain(" — code: ")
                                     .style("RT-2026-04", DocumentTextStyle.builder()
-                                            .fontName(FontName.COURIER_BOLD)
+                                            .fontName(FontName.COURIER)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(10)
                                             .color(INK)
                                             .build())))
@@ -174,7 +177,8 @@ public final class RichTextShowcaseExample {
                 .addParagraph(p -> p
                         .text(label)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD)
                                 .size(8.5)
                                 .color(MUTED)
                                 .build())

@@ -3,6 +3,7 @@ package com.demcha.examples.support;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Guards the version string the published example documents render.
@@ -51,6 +52,26 @@ class ExampleVersionTest {
                         + "site prepends its own — accepting both spellings here is what keeps "
                         + "vv2.1.0 off the page")
                 .isEqualTo("2.1.0");
+    }
+
+    /**
+     * A pre-release passed to the override is refused, not quietly promoted.
+     *
+     * <p>Every site that prints the value calls {@code withoutQualifier()}, so
+     * {@code 2.2.0-rc.1} would render as {@code 2.2.0} — the final version of that line,
+     * which is not on Maven Central and may never be. The release tooling really does
+     * cut {@code -rc} versions, so this is reachable rather than theoretical.</p>
+     */
+    @Test
+    void aPreReleaseOverrideIsRefused() {
+        assertThatThrownBy(() -> ExampleVersion.resolve("2.2.0-rc.1", "2.1.1-SNAPSHOT"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("2.2.0-rc.1")
+                .hasMessageContaining("does not exist");
+        assertThatThrownBy(() -> ExampleVersion.resolve("2.1.1-SNAPSHOT", "2.1.1-SNAPSHOT"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> ExampleVersion.resolve("latest", "2.1.1-SNAPSHOT"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

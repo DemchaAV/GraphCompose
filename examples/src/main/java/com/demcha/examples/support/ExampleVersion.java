@@ -24,6 +24,17 @@ public final class ExampleVersion {
 
     private static final Pattern MAJOR_MINOR = Pattern.compile("^(\\d+)\\.(\\d+)");
 
+    /**
+     * What the override accepts: a released version, nothing else.
+     *
+     * <p>Rejecting rather than rewriting, because every render site runs the value
+     * through {@link #withoutQualifier()} — so a pre-release passed here would reach the
+     * page as the final version of that line, which is not published and may never be.
+     * The committed previews show what is on Maven Central; a caller asking for anything
+     * else is asking for a document that misrepresents the project.</p>
+     */
+    private static final Pattern RELEASE_VERSION = Pattern.compile("\\d+\\.\\d+\\.\\d+");
+
     private static final String CURRENT = load();
 
     private ExampleVersion() {
@@ -123,7 +134,17 @@ public final class ExampleVersion {
             // A leading "v" is how a version is written in prose and how half the
             // render sites print it. Accepting it and stripping it once keeps the two
             // spellings from reaching the page as "vv2.1.0".
-            return override.trim().replaceFirst("^[vV]", "");
+            String requested = override.trim().replaceFirst("^[vV]", "");
+            if (!RELEASE_VERSION.matcher(requested).matches()) {
+                throw new IllegalArgumentException(
+                        "-D" + DISPLAY_VERSION_PROPERTY + "=" + override + " is not a released"
+                        + " version. These documents are committed as previews of what is on"
+                        + " Maven Central, and every site that prints the value runs it through"
+                        + " withoutQualifier(), which would turn 2.2.0-rc.1 into 2.2.0 — a"
+                        + " version that does not exist. Pass the published one, or leave the"
+                        + " property unset to render the reactor's.");
+            }
+            return requested;
         }
         return filtered == null || filtered.isBlank() || filtered.startsWith("@")
                 ? "dev"

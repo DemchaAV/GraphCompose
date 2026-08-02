@@ -27,8 +27,14 @@
             its coordinate pill, so a working tree already on the next version
             renders a different document by definition; CommittedAssetDriftTest can
             only compare like with like because the surefire configuration below
-            pins the display version to this value. cut-release.ps1 moves it with
-            the tag, in the same step that re-renders the previews.
+            pins the display version to this value.
+
+            Nothing moves it yet. Until cut-release.ps1 re-renders the previews and
+            bumps this in the same commit as the tag, a release leaves the previews
+            at the version below while the showcase site goes out at the new one —
+            and the drift gate, comparing both sides at this value, stays green
+            through it. That step is the reason this property exists; it is not
+            written yet.
         -->
         <graphcompose.examples.assetVersion>2.1.0</graphcompose.examples.assetVersion>
 

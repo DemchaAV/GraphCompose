@@ -37,33 +37,71 @@ import static org.assertj.core.api.Assertions.assertThat;
  * already on the next one, so this compares like with like only because the examples module runs
  * its tests with {@code graphcompose.examples.displayVersion} pinned to
  * {@code graphcompose.examples.assetVersion} — the version the committed files were rendered at,
- * recorded in {@code examples/pom.xml} and moved by the release script. Without that the
- * coordinate pill alone would differ and this would fail on every preview that carries one.</p>
+ * recorded in {@code examples/pom.xml}. Without that the coordinate pill alone would differ and
+ * this would fail on every preview that carries one.</p>
+ *
+ * <p>Nothing moves that property yet, and this guard cannot notice: it compares both sides at
+ * whatever the property says, so a release that re-renders the showcase site at a new version
+ * while leaving the previews behind passes here. Closing that is the release step's job, and it
+ * is the reason to land it alongside rather than long after.</p>
  */
 class CommittedAssetDriftTest {
 
     private static final Path ASSETS = Path.of("..", "assets", "readme");
     private static final Path PREVIEWS = ASSETS.resolve("examples");
 
-    /** The decks whose preview the repository commits — see {@link #UNPUBLISHED_DECKS}. */
-    private static final Set<String> CURATED_DECKS = Set.of(
-            "business-report.pptx",
-            "financial-report.pptx",
-            "master-showcase.pptx",
-            "maven-banner.pptx",
-            "social-card.pptx",
-            "twin-output.pptx");
+    /** What counts as a document: the catalogue also writes a preview image and a data file. */
+    private static final Set<String> DOCUMENTS = Set.of(".pdf", ".pptx", ".docx");
 
     /**
-     * Decks the catalogue renders but the repository deliberately does not commit.
+     * The documents the catalogue renders and the repository deliberately does not commit.
      *
-     * <p>Which decks are published is a decision, and both lists exist so that no deck can arrive
-     * without somebody making it. A subset alone is not enough — asserting only that the curated
-     * decks are among the generated ones lets a new example ship a deck nobody decided about.</p>
+     * <p>Publishing a preview is a decision, and this is the half of it worth writing down: the
+     * other half is the folder itself, and the two together have to account for the catalogue
+     * exactly. Without that, comparing only the files that happen to be there means deleting one
+     * removes it from its own guard — README would lose a figure and every test would stay
+     * green.</p>
+     *
+     * <p>Listing what is <em>not</em> published rather than what is keeps the shorter list, and
+     * puts the decision where it is actually made: a new example ships unpublished unless somebody
+     * says otherwise, and saying so is adding a file to the folder and a name off this list.</p>
      */
-    private static final Set<String> UNPUBLISHED_DECKS = Set.of(
+    private static final Set<String> UNPUBLISHED_PREVIEWS = Set.of(
+            "cover-letter-blue-banner-v2.pdf",
+            "cover-letter-boxed-sections-v2.pdf",
+            "cover-letter-centered-headline-v2.pdf",
+            "cover-letter-classic-serif-v2.pdf",
+            "cover-letter-compact-mono-v2.pdf",
+            "cover-letter-editorial-blue-v2.pdf",
+            "cover-letter-engineering-resume-v2.pdf",
+            "cover-letter-executive-v2.pdf",
+            "cover-letter-mint-editorial-v2.pdf",
+            "cover-letter-modern-professional-v2.pdf",
+            "cover-letter-monogram-sidebar-v2.pdf",
+            "cover-letter-nordic-clean-v2.pdf",
+            "cover-letter-panel-v2.pdf",
+            "cover-letter-sidebar-portrait-v2.pdf",
+            "cover-letter-timeline-minimal-v2.pdf",
+            "cv-blue-banner-v2.pdf",
+            "cv-boxed-sections-v2.pdf",
+            "cv-centered-headline-v2.pdf",
+            "cv-editorial-blue-v2.pdf",
+            "cv-executive-v2.pdf",
+            "cv-minimal-underlined-v2.pdf",
+            "cv-mint-editorial-v2-custom.pdf",
+            "cv-mint-editorial-v2.pdf",
+            "cv-monogram-sidebar-v2.pdf",
+            "cv-sidebar-portrait-v2.pdf",
+            "emoji-clip-path.pdf",
+            "emoji-gallery.pdf",
+            "emoji-svg-vs-png.pdf",
             "engine-deck.pptx",
-            "linkedin-carousel.pptx");
+            "invoice-modern-v2.pdf",
+            "linkedin-carousel.pdf",
+            "linkedin-carousel.pptx",
+            "photo-clip.pdf",
+            "poetry-title.pdf",
+            "proposal-modern-v2.pdf");
 
     @BeforeAll
     static void generateEveryExample() throws Exception {
@@ -145,33 +183,35 @@ class CommittedAssetDriftTest {
                 .isEqualTo(new TreeSet<>(ASSET_FOLDERS));
     }
 
+    /**
+     * The catalogue is exactly the published previews plus the deliberately unpublished ones.
+     *
+     * <p>This is what makes a deletion visible. The comparison above only reads the files that
+     * are there, so removing one takes it out of its own guard: README loses a figure and nothing
+     * goes red. Pinning the whole catalogue against the folder plus the list catches that, and
+     * catches its opposites too — a new example nobody decided to publish, a preview added
+     * without a source, a rename that lands as one of each.</p>
+     */
     @Test
-    void theTwoDeckListsDoNotOverlap() {
-        assertThat(CURATED_DECKS)
-                .describedAs("a deck cannot be both published and deliberately unpublished")
-                .doesNotContainAnyElementsOf(UNPUBLISHED_DECKS);
-    }
+    void theCatalogueIsExactlyThePublishedPreviewsPlusTheUnpublishedOnes() throws Exception {
+        Set<String> committed = new TreeSet<>(committedPreviews());
+        assertThat(committed)
+                .describedAs("a preview cannot be published and deliberately unpublished at once")
+                .doesNotContainAnyElementsOf(UNPUBLISHED_PREVIEWS);
 
-    @Test
-    void everyRenderedDeckIsEitherPublishedOrDeliberatelyNot() throws Exception {
-        Set<String> committedDecks = new TreeSet<>(committedPreviews());
-        committedDecks.removeIf(name -> !name.endsWith(".pptx"));
-        Set<String> renderedDecks = new TreeSet<>(generatedByName().keySet());
-        renderedDecks.removeIf(name -> !name.endsWith(".pptx"));
+        Set<String> accountedFor = new TreeSet<>(committed);
+        accountedFor.addAll(UNPUBLISHED_PREVIEWS);
 
-        assertThat(committedDecks)
-                .describedAs("the committed decks and the curated list have to agree: a deck added "
-                        + "to the folder without a decision, or removed from it without one, is "
-                        + "exactly what this list exists to surface")
-                .isEqualTo(new TreeSet<>(CURATED_DECKS));
+        Set<String> rendered = new TreeSet<>(generatedByName().keySet());
+        rendered.removeIf(name -> DOCUMENTS.stream().noneMatch(name::endsWith));
 
-        Set<String> accountedFor = new TreeSet<>(CURATED_DECKS);
-        accountedFor.addAll(UNPUBLISHED_DECKS);
-        assertThat(renderedDecks)
-                .describedAs("the catalogue and the two lists have to cover each other exactly: a "
-                        + "deck listed but not rendered is a committed file nothing can refresh, "
-                        + "and a deck rendered but on neither list is one nobody has decided to "
-                        + "publish or to leave out")
+        assertThat(rendered)
+                .describedAs("the catalogue, the committed folder and the unpublished list have to "
+                        + "cover each other exactly. A document rendered but neither committed nor "
+                        + "listed is one nobody decided about; a preview committed but no longer "
+                        + "rendered is a file nothing can refresh; and a published preview deleted "
+                        + "is a figure README loses — the one this comparison cannot see on its "
+                        + "own, since a file that is gone is a file it never looks at")
                 .isEqualTo(accountedFor);
     }
 

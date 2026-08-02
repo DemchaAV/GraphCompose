@@ -41,25 +41,38 @@ public final class AssetContent {
     }
 
     /**
-     * The parts a machine is allowed to disagree about, as {@code document!part}.
+     * The parts a machine is allowed to disagree about, and the renders it may disagree between.
      *
      * <p>One entry, and it earns itself: the showcase deck embeds an image of a text watermark,
      * and the same glyphs in the same places came out with different antialiasing coverage along
      * their edges on the two machines. Averaging it away is not available — 4-pixel blocks still
-     * differ by 138 of 255 — so the part is read by its size and the rest of the deck is read by
-     * its content. Anything added here stops being compared, so it wants the same measurement
-     * behind it that put this entry here.</p>
+     * differ by 138 of 255.</p>
+     *
+     * <p>What is exempted is not the part but the pair of renders. Each value is the pixel digest
+     * of one machine's version of that part; those two collapse to one token, and anything else —
+     * a different watermark, a swapped logo, an empty image of the same size — keeps its own
+     * digest and fails the comparison. Adding a key here without its digests would exempt the
+     * part itself, which is the hole this shape exists to close.</p>
      */
-    public static final Set<String> UNSTABLE_PARTS =
-            Set.of("master-showcase.pptx!ppt/media/image1.png");
+    public static final Map<String, Set<String>> UNSTABLE_PARTS = Map.of(
+            "master-showcase.pptx!ppt/media/image1.png",
+            Set.of("1f629c6a16dd2d5c18ead1594788ce04e0341360f57af68421b428d56cfb03a8",
+                    "9b4a3b3d0dcae564393372bccb71430b0367b6c189e36bfff664a4a67f515225"));
 
     /** Extensions this can reduce; anything else is compared as the bytes it is. */
     private static final Set<String> PACKAGES = Set.of(".pptx", ".docx");
 
     private static final Pattern PDF_ID =
             Pattern.compile("/ID \\[<[0-9A-Fa-f]+> <[0-9A-Fa-f]+>\\]");
-    private static final Pattern XML_TIMESTAMP =
-            Pattern.compile(">\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z<");
+    /**
+     * The one element in a package's properties that records when it was written.
+     *
+     * <p>Named rather than matched by shape: a pattern for "any ISO instant under
+     * {@code docProps}" would also drop a date somebody meant, and a document whose custom
+     * property is a date has every right to be compared by it.</p>
+     */
+    private static final Pattern CREATION_STAMP =
+            Pattern.compile("(<dcterms:created[^>]*>)[^<]*(</dcterms:created>)");
 
     /**
      * A stable identity for a rendered document.
@@ -111,16 +124,35 @@ public final class AssetContent {
      */
     static byte[] part(String document, String name, byte[] content) throws IOException {
         if (name.startsWith("ppt/media/") || name.startsWith("word/media/")) {
-            return pixels(content, UNSTABLE_PARTS.contains(document + "!" + name));
+            return raster(document + "!" + name, content);
         }
         if (!name.endsWith(".xml") && !name.endsWith(".rels")) {
             return content;
         }
         String text = new String(content, StandardCharsets.UTF_8).replace("\r\n", "\n");
-        if (name.startsWith("docProps/")) {
-            text = XML_TIMESTAMP.matcher(text).replaceAll("><");
+        if (name.equals("docProps/core.xml")) {
+            text = CREATION_STAMP.matcher(text).replaceAll("$1$2");
         }
         return freeformsInSlideSpace(text).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * A raster part read by its pixels, unless it is one of a pair a machine writes differently.
+     *
+     * <p>An exempted part is not waved through: its pixels still decide, and only the two renders
+     * written down in {@link #UNSTABLE_PARTS} collapse onto one token. Anything else keeps the
+     * digest of what it actually is, so an image swapped for another of the same size differs
+     * from both the token and the other machine's render.</p>
+     */
+    private static byte[] raster(String key, byte[] content) throws IOException {
+        String pixels = pixelDigest(content);
+        if (pixels == null) {
+            return content;
+        }
+        if (UNSTABLE_PARTS.getOrDefault(key, Set.of()).contains(pixels)) {
+            return ("a known render of " + key).getBytes(StandardCharsets.UTF_8);
+        }
+        return pixels.getBytes(StandardCharsets.UTF_8);
     }
 
     /** A PDF with the one thing in it that the clock writes taken out. */
@@ -130,26 +162,24 @@ public final class AssetContent {
     }
 
     /**
-     * A digest of an image's pixels in one colour model — or, for a named unstable part, of its
-     * size alone.
+     * A digest of an image's size and pixels in one colour model, or {@code null} if it is vector.
      *
      * <p>{@code getRGB} converts whatever the decoder produced into sRGB, so an image is compared
      * by what it looks like rather than by how it was stored. The pixels are read a row at a time
      * and folded into the digest rather than buffered: an embedded screenshot runs to megapixels,
-     * and holding two of those as byte arrays to compare them is a waste of a test's heap. A part
-     * that decodes to nothing is vector, and its bytes are its content.</p>
+     * and holding two of those as byte arrays to compare them is a waste of a test's heap.</p>
+     *
+     * @param content the bytes of the part
+     * @return a hex SHA-256 over the image, or {@code null} when nothing decodes it
+     * @throws IOException if the bytes cannot be read
      */
-    static byte[] pixels(byte[] content, boolean sizeOnly) throws IOException {
+    public static String pixelDigest(byte[] content) throws IOException {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
         if (image == null) {
-            return content;
+            return null;
         }
         int width = image.getWidth();
         int height = image.getHeight();
-        if (sizeOnly) {
-            return "%dx%d antialiasing not compared".formatted(width, height)
-                    .getBytes(StandardCharsets.UTF_8);
-        }
         ByteBuffer row = ByteBuffer.allocate(4 * width);
         MessageDigest digest = sha256();
         digest.update("%dx%d".formatted(width, height).getBytes(StandardCharsets.UTF_8));
@@ -162,7 +192,7 @@ public final class AssetContent {
             }
             digest.update(row.array());
         }
-        return digest.digest();
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     private static final Pattern SHAPE = Pattern.compile("<p:sp>.*?</p:sp>", Pattern.DOTALL);

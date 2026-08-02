@@ -180,6 +180,66 @@ class AssetContentTest {
     }
 
     /**
+     * The exemption is for two known renders, not for whatever occupies that path.
+     *
+     * <p>Exempting the part itself would let the watermark be swapped for another image of the
+     * same size — a different word, a logo, a blank — and the comparison would report a deck
+     * unchanged. Only the two digests written down collapse; a third image keeps its own.</p>
+     */
+    @Test
+    void anUnknownImageOfTheSameSizeIsNotAbsorbed() throws Exception {
+        BufferedImage watermark = decode(WATERMARK_WINDOWS);
+        byte[] blank = blankPng(watermark.getWidth(), watermark.getHeight());
+        assertThat(AssetContent.pixelDigest(blank))
+                .describedAs("the substitute must decode, or this proves nothing")
+                .isNotNull();
+
+        assertThat(AssetContent.part(WATERMARK_DECK, WATERMARK_PART, blank))
+                .describedAs("an image the allowlist has never seen is compared by its pixels, "
+                        + "however well it matches the size of the one that is exempt")
+                .isNotEqualTo(AssetContent.part(WATERMARK_DECK, WATERMARK_PART,
+                        fixture(WATERMARK_WINDOWS)));
+    }
+
+    /**
+     * The part the allowlist exempts is still the watermark that was measured.
+     *
+     * <p>Naming a path and pinning two digests protects nothing if the deck stopped carrying
+     * either of them: the entry would silently become an exemption for an image nobody has
+     * looked at. Both the committed deck and the one the catalogue renders have to hold a
+     * version the fixtures account for.</p>
+     */
+    @Test
+    void theAllowlistedPartInBothDecksIsAKnownRender() throws Exception {
+        Set<String> known = AssetContent.UNSTABLE_PARTS.get(WATERMARK_DECK + "!" + WATERMARK_PART);
+        assertThat(known).describedAs("the allowlist entry has no digests").isNotEmpty();
+
+        for (Path deck : List.of(COMMITTED.resolve(WATERMARK_DECK), generated(WATERMARK_DECK))) {
+            assertThat(AssetContent.pixelDigest(bytesOfPart(deck, WATERMARK_PART)))
+                    .describedAs("%s carries a watermark neither fixture accounts for — the "
+                            + "exemption no longer describes what it exempts", deck)
+                    .isIn(known);
+        }
+    }
+
+    /** A date somebody wrote is not a date the machine wrote. */
+    @Test
+    void aCustomDatePropertyIsNotAbsorbed() throws Exception {
+        String properties = "<Properties><property name=\"reviewed\"><vt:filetime>%s"
+                            + "</vt:filetime></property></Properties>";
+        byte[] earlier = properties.formatted("2026-01-01T00:00:00Z")
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] later = properties.formatted("2026-08-02T00:00:00Z")
+                .getBytes(StandardCharsets.UTF_8);
+
+        assertThat(AssetContent.part("word-export-companion.docx", "docProps/custom.xml", earlier))
+                .describedAs("only the element that records when the package was written is "
+                        + "dropped; a date the document states is the document's")
+                .isNotEqualTo(AssetContent.part("word-export-companion.docx",
+                        "docProps/custom.xml", later));
+    }
+
+    /**
      * A part written with either line ending is one part.
      *
      * <p>This is the reduction that failed six decks on the runner, and the one whose absence
@@ -223,7 +283,7 @@ class AssetContentTest {
      */
     @Test
     void everyAllowlistedPartExists() throws Exception {
-        for (String entry : new TreeSet<>(AssetContent.UNSTABLE_PARTS)) {
+        for (String entry : new TreeSet<>(AssetContent.UNSTABLE_PARTS.keySet())) {
             String[] split = entry.split("!", 2);
             assertThat(split).describedAs("%s is not document!part", entry).hasSize(2);
             for (Path document : List.of(COMMITTED.resolve(split[0]), generated(split[0]))) {
@@ -257,16 +317,27 @@ class AssetContentTest {
     }
 
     private static String part(Path archive, String name) throws IOException {
+        return new String(bytesOfPart(archive, name), StandardCharsets.UTF_8).replace("\r\n", "\n");
+    }
+
+    private static byte[] bytesOfPart(Path archive, String name) throws IOException {
         try (ZipInputStream zip =
                      new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(archive)))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 if (entry.getName().equals(name)) {
-                    return new String(zip.readAllBytes(), StandardCharsets.UTF_8)
-                            .replace("\r\n", "\n");
+                    return zip.readAllBytes();
                 }
             }
         }
         throw new IllegalStateException(archive + " has no part " + name);
+    }
+
+    /** A blank image of a given size — a stand-in for whatever else could occupy that path. */
+    private static byte[] blankPng(int width, int height) throws IOException {
+        BufferedImage blank = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        var bytes = new java.io.ByteArrayOutputStream();
+        ImageIO.write(blank, "png", bytes);
+        return bytes.toByteArray();
     }
 
     private static byte[] fixture(String name) throws IOException {

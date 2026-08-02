@@ -7,6 +7,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **A committed preview cannot fall behind the code that renders it.** README and
+  the showcase site read files under `assets/readme/**` rather than rendering
+  anything, and nothing held those files to the catalogue: a change to an example,
+  a theme or the engine moved the render while the committed file stayed put, and
+  the first anybody knew was a release publishing it. Twenty-three of the
+  sixty-seven were behind and are re-rendered here; the twenty-two PDFs among
+  them rasterise to the same pixels as before, so nothing visible had been
+  carrying the drift, and the one DOCX now marks bold as `<w:b/>` rather than by
+  asking for a font named `Helvetica-Bold`. Every preview is now
+  compared against a fresh render on each build, exactly: the comparison drops
+  only what a machine writes rather than an author (a PDF's clock-seeded `/ID`, an
+  OOXML package's zip and creation stamps, the platform's line separator, and one
+  named watermark whose antialiasing differs between machines), all of it measured
+  by rendering the catalogue on both platforms rather than assumed. Editing a
+  preview by hand now runs the job that checks it.
 - **The CI guard job runs every guard it names.** It selected eight test classes
   while scoping the reactor to `graph-compose-core`: two had been deleted months
   earlier and two live in `graph-compose-qa` and `graph-compose-render-pdf`, so

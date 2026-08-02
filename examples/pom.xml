@@ -21,6 +21,17 @@
         <logback.version>1.6.0</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
+        <!--
+            The version the committed previews under assets/readme/** were rendered
+            at — the last release, not this tree. A preview carries the version in
+            its coordinate pill, so a working tree already on the next version
+            renders a different document by definition; CommittedAssetDriftTest can
+            only compare like with like because the surefire configuration below
+            pins the display version to this value. cut-release.ps1 moves it with
+            the tag, in the same step that re-renders the previews.
+        -->
+        <graphcompose.examples.assetVersion>2.1.0</graphcompose.examples.assetVersion>
+
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
     </properties>
@@ -175,6 +186,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.6</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!--
+                            Render at the version the committed previews carry, so a
+                            test comparing against them compares two renders of one
+                            document rather than this tree's version against the last
+                            release's. Everything a test renders goes through the same
+                            catalogue, so pinning it here pins all of it at once.
+                        -->
+                        <graphcompose.examples.displayVersion>
+                            ${graphcompose.examples.assetVersion}
+                        </graphcompose.examples.displayVersion>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
 
             <plugin>

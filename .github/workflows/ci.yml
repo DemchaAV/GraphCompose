@@ -91,6 +91,11 @@ jobs:
               # The examples module renders figures from the committed perf
               # baseline, so a baseline-only refresh changes generated output.
               - 'baselines/**'
+              # The committed previews are compared against a fresh render
+              # (CommittedAssetDriftTest), so editing one is a change the
+              # examples job has to check — otherwise a hand-edited or
+              # hand-reverted preview lands with nothing looking at it.
+              - 'assets/readme/**'
               - '.mvn/**'
               - 'mvnw'
               - 'mvnw.cmd'

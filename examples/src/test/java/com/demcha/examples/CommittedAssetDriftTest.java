@@ -108,9 +108,10 @@ class CommittedAssetDriftTest {
      * defend a year later.</p>
      *
      * <p>So they are written down instead. The list is what this guard can say about them: a
-     * ninth figure appearing here is a file nothing checks, and it should arrive as a decision
-     * rather than as a commit nobody read. {@code assets/readme/v1.5} is left out entirely — those
-     * are the figures of a released line, and re-rendering them would be the bug.</p>
+     * figure arriving here that is not on it is a file nothing checks, and it should arrive as a
+     * decision rather than as a commit nobody read. The same holds for a folder — {@code v1.5} is
+     * the figures of a released line, where re-rendering would itself be the bug, and a second
+     * folder wants that said out loud rather than assumed.</p>
      */
     private static final Set<String> RASTER_FIGURES = Set.of(
             "barcode-showcase.png",
@@ -122,19 +123,26 @@ class CommittedAssetDriftTest {
             "twin-output-pdf.png",
             "twin-output-pptx.png");
 
+    /** The folders under {@code assets/readme}: the previews this compares, and 1.5's figures. */
+    private static final Set<String> ASSET_FOLDERS = Set.of("examples", "v1.5");
+
     @Test
     void theOnlyAssetsThisCannotCompareAreTheOnesWrittenDown() throws Exception {
         Set<String> beside = new TreeSet<>();
+        Set<String> folders = new TreeSet<>();
         try (var files = Files.list(ASSETS)) {
-            files.filter(Files::isRegularFile)
-                    .map(path -> path.getFileName().toString())
-                    .forEach(beside::add);
+            files.forEach(path -> (Files.isDirectory(path) ? folders : beside)
+                    .add(path.getFileName().toString()));
         }
 
         assertThat(beside)
                 .describedAs("an asset beside %s is compared by nothing: either move it in with the "
                         + "previews so it is, or add it here with the reason it cannot be", PREVIEWS)
                 .isEqualTo(new TreeSet<>(RASTER_FIGURES));
+        assertThat(folders)
+                .describedAs("a folder of assets beside %s is compared by nothing either, and a "
+                        + "whole folder is easier to add without noticing than a file", PREVIEWS)
+                .isEqualTo(new TreeSet<>(ASSET_FOLDERS));
     }
 
     @Test

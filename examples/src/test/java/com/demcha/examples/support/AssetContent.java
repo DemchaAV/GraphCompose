@@ -82,9 +82,6 @@ public final class AssetContent {
         if (name.endsWith(".pdf")) {
             return digest(Map.of(name, withoutPdfId(bytes)));
         }
-        if (name.endsWith(".png")) {
-            return digest(Map.of(name, pixels(bytes, false)));
-        }
         return digest(Map.of(name, bytes));
     }
 
@@ -138,9 +135,9 @@ public final class AssetContent {
      *
      * <p>{@code getRGB} converts whatever the decoder produced into sRGB, so an image is compared
      * by what it looks like rather than by how it was stored. The pixels are read a row at a time
-     * and folded into the digest rather than buffered: the README hero is four megapixels, and
-     * holding two of those as byte arrays to compare them is a waste of a test's heap. A part that
-     * decodes to nothing is vector, and its bytes are its content.</p>
+     * and folded into the digest rather than buffered: an embedded screenshot runs to megapixels,
+     * and holding two of those as byte arrays to compare them is a waste of a test's heap. A part
+     * that decodes to nothing is vector, and its bytes are its content.</p>
      */
     static byte[] pixels(byte[] content, boolean sizeOnly) throws IOException {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));

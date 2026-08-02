@@ -68,9 +68,9 @@ class AssetContentTest {
                 .isEqualTo(first);
     }
 
-    /** A PDF differs between two renders only in the identifier the clock seeds. */
+    /** A PDF that differs only in the identifier the clock seeds is one document. */
     @Test
-    void theSamePdfRenderedTwiceIsOneDocument() throws Exception {
+    void aPdfCarryingADifferentIdentifierIsTheSameDocument() throws Exception {
         Path pdf = GeneratedCatalogue.ROOT.resolve("flagships").resolve("maven-banner.pdf");
         assertThat(pdf).exists();
         byte[] rendered = Files.readAllBytes(pdf);

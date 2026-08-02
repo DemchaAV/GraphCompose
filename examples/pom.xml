@@ -29,12 +29,10 @@
             only compare like with like because the surefire configuration below
             pins the display version to this value.
 
-            Nothing moves it yet. Until cut-release.ps1 re-renders the previews and
-            bumps this in the same commit as the tag, a release leaves the previews
-            at the version below while the showcase site goes out at the new one —
-            and the drift gate, comparing both sides at this value, stays green
-            through it. That step is the reason this property exists; it is not
-            written yet.
+            cut-release.ps1 moves it on a final cut, in the same commit as the tag and
+            next to the step that re-renders the previews at that version. A
+            pre-release cut leaves both alone: the version they would carry is this
+            one's qualifier stripped, which names a release that does not exist yet.
         -->
         <graphcompose.examples.assetVersion>2.1.0</graphcompose.examples.assetVersion>
 

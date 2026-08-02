@@ -42,7 +42,45 @@ class ReleaseAssetStepGuardTest {
                 .describedAs("cut-release.ps1 no longer moves the version the previews record; the "
                         + "drift gate would then compare a release's previews at the version before "
                         + "it, and pass")
-                .contains("graphcompose.examples.assetVersion");
+                .contains("function Update-AssetVersion");
+    }
+
+    /**
+     * The version the previews record moves on a final cut and on nothing else.
+     *
+     * <p>{@code ExampleVersion} accepts a released {@code X.Y.Z} and rejects everything else, so
+     * the property cannot ride along with the generic pom bump: the post-release step carries the
+     * train to {@code X.Y.(Z+1)-SNAPSHOT}, which would throw before a single preview was compared,
+     * and a pre-release cut carries {@code X.Y.Z-rc.N}, whose qualifier-stripped form names a
+     * release that does not exist yet — the previews would advertise it.</p>
+     *
+     * <p>The three modes are exercised for real in {@code release-script-check.yml}. What this
+     * pins is the wiring that makes those outcomes structural rather than incidental: the generic
+     * bump does not touch the property, and the step that does sits inside the final-release
+     * branch.</p>
+     */
+    @Test
+    void onlyAFinalCutMovesTheVersionThePreviewsRecord() throws IOException {
+        String script = Files.readString(SCRIPT);
+
+        int genericBump = script.indexOf("function Update-PomVersion");
+        int assetBump = script.indexOf("function Update-AssetVersion");
+        assertThat(genericBump).describedAs("Update-PomVersion is gone").isNotNegative();
+        assertThat(assetBump).describedAs("Update-AssetVersion is gone").isNotNegative();
+        assertThat(script.substring(genericBump, assetBump))
+                .describedAs("the generic pom bump touches the asset version again — it runs for "
+                        + "the post-release SNAPSHOT and for a pre-release, and both values are "
+                        + "ones the examples module refuses")
+                .doesNotContain("assetVersion");
+
+        int finalBranch = script.indexOf("if ($isFinalRelease) {", script.indexOf("Step 4 "));
+        int call = script.indexOf("Update-AssetVersion (Join-Path");
+        assertThat(finalBranch).describedAs("the final-release branch around Step 4 is gone")
+                .isNotNegative();
+        assertThat(call)
+                .describedAs("the asset version is moved outside the final-release branch, so a "
+                        + "pre-release cut would move it too")
+                .isGreaterThan(finalBranch);
     }
 
     @Test

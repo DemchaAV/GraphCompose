@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -47,32 +49,82 @@ class PptxCanonicalContentTest {
         GeneratedCatalogue.generateOnce();
     }
 
+    /**
+     * The committed decks are a curated subset, and which decks are in it is a decision.
+     *
+     * <p>Pairing generated files with committed ones and skipping the unpaired hides the
+     * two failures worth catching: a deck added to the catalogue and never committed, and
+     * a committed deck whose example is gone. Both leave every surviving pair matching, so
+     * a content comparison alone reports success. The subset is therefore written down —
+     * an unpaired file on either side is a decision somebody has to make, not something
+     * for a guard to pass over.</p>
+     */
+    private static final Set<String> CURATED_DECKS = Set.of(
+            "business-report.pptx",
+            "financial-report.pptx",
+            "master-showcase.pptx",
+            "maven-banner.pptx",
+            "social-card.pptx",
+            "twin-output.pptx");
+
+    @Test
+    void theCommittedDecksAreExactlyTheCuratedSubset() throws Exception {
+        Set<String> committed = new TreeSet<>();
+        try (var files = Files.list(COMMITTED)) {
+            files.map(path -> path.getFileName().toString())
+                    .filter(name -> name.endsWith(".pptx"))
+                    .forEach(committed::add);
+        }
+        Set<String> generated = new TreeSet<>();
+        try (var decks = Files.walk(GeneratedCatalogue.ROOT)) {
+            decks.filter(path -> path.toString().endsWith(".pptx"))
+                    .map(path -> path.getFileName().toString())
+                    .forEach(generated::add);
+        }
+
+        assertThat(committed)
+                .describedAs("the committed decks and the curated list have to agree: a deck "
+                        + "added to the folder without a decision, or removed from it without "
+                        + "one, is exactly what this list exists to surface")
+                .isEqualTo(new TreeSet<>(CURATED_DECKS));
+        assertThat(generated)
+                .describedAs("every curated deck must still be produced by an example — one that "
+                        + "is not is a committed file nothing can refresh")
+                .containsAll(CURATED_DECKS);
+    }
+
     @Test
     void everyCommittedDeckMatchesAFreshRenderPartForPart() throws Exception {
-        List<String> compared = new ArrayList<>();
-        List<String> differing = new ArrayList<>();
-
+        Map<String, Path> generated = new TreeMap<>();
         try (var decks = Files.walk(GeneratedCatalogue.ROOT)) {
-            for (Path fresh : decks.filter(path -> path.toString().endsWith(".pptx")).sorted().toList()) {
-                Path committed = COMMITTED.resolve(fresh.getFileName().toString());
-                if (!Files.isRegularFile(committed)) {
-                    continue;
-                }
-                compared.add(committed.getFileName().toString());
-                if (!canonicalDigest(committed).equals(canonicalDigest(fresh))) {
-                    differing.add(committed.getFileName().toString());
-                }
+            decks.filter(path -> path.toString().endsWith(".pptx"))
+                    .forEach(path -> {
+                        Path clash = generated.put(path.getFileName().toString(), path);
+                        if (clash != null) {
+                            throw new IllegalStateException(
+                                    "two generated decks share the name " + path.getFileName()
+                                    + " (" + clash + " and " + path + "); the committed gallery is "
+                                    + "flat, so one would silently stand in for the other");
+                        }
+                    });
+        }
+
+        List<String> differing = new ArrayList<>();
+        for (String deck : new TreeSet<>(CURATED_DECKS)) {
+            Path committed = COMMITTED.resolve(deck);
+            Path fresh = generated.get(deck);
+            assertThat(committed).describedAs("curated deck %s is not committed", deck).exists();
+            assertThat(fresh).describedAs("curated deck %s is not generated", deck).isNotNull();
+            if (!canonicalDigest(committed).equals(canonicalDigest(fresh))) {
+                differing.add(deck);
             }
         }
 
-        assertThat(compared)
-                .describedAs("no committed deck was found beside a generated one — the asset "
-                        + "folder or the catalogue moved, and this guard compared nothing")
-                .isNotEmpty();
         assertThat(differing)
                 .describedAs("a committed deck no longer matches what the example produces. The "
-                        + "comparison ignores zip timestamps, so this is a content change: "
-                        + "re-render the asset, or revert whatever changed the example")
+                        + "comparison ignores zip timestamps and the platform's line endings, so "
+                        + "this is a content change: re-render the asset, or revert whatever "
+                        + "changed the example")
                 .isEmpty();
     }
 
@@ -106,7 +158,7 @@ class PptxCanonicalContentTest {
                      new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(pptx)))) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 if (!entry.isDirectory()) {
-                    parts.put(entry.getName(), zip.readAllBytes());
+                    parts.put(entry.getName(), canonicalise(entry.getName(), zip.readAllBytes()));
                 }
             }
         }
@@ -119,5 +171,24 @@ class PptxCanonicalContentTest {
             digest.update((byte) 0);
         });
         return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /**
+     * Strips the one difference that is about the machine rather than the document.
+     *
+     * <p>POI ends the XML declaration with the platform's line separator, so every XML
+     * part of a deck written on Windows differs from the same deck written on Linux by a
+     * single byte. Sixteen parts of an untouched deck differed for that reason alone —
+     * enough to fail a comparison that is otherwise exact, and the sort of difference a
+     * gate must not report as a content change. Binary parts are left alone: a stray CR
+     * inside an embedded font or image is content.</p>
+     */
+    private static byte[] canonicalise(String name, byte[] content) {
+        if (!name.endsWith(".xml") && !name.endsWith(".rels")) {
+            return content;
+        }
+        return new String(content, StandardCharsets.UTF_8)
+                .replace("\r\n", "\n")
+                .getBytes(StandardCharsets.UTF_8);
     }
 }

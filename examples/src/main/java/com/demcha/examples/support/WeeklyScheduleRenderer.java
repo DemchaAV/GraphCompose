@@ -326,17 +326,19 @@ public final class WeeklyScheduleRenderer {
 
         /** Default landscape layout matching the AURORA demo board. */
         public static Layout landscape() {
-            // The seven day columns and the name column fill the printable width
-            // exactly: 841.88977 less the 8pt side margins is 825.89, and
-            // 73.39 + 7 x 107.5 lands on it. The board is meant to be printed, so
-            // leftover width is wasted paper — and the day headings are bold, which
-            // the previous 105pt column no longer fit once the face constants were
-            // corrected: a spanned cell over fixed sub-columns cannot borrow width.
+            // The name column and the seven day columns are sized to fill the printable
+            // width rather than picked: the page is 841.88977 wide, the side margins take
+            // 8 each, and the columns divide what is left. The board is printed, so
+            // leftover width is wasted paper — the previous 90 + 7 x 105 left 0.89pt of
+            // it. The day columns also have to be wide enough for a bold day note, which
+            // spans four fixed sub-columns and so cannot borrow width from a neighbour.
+            double printable = PAGE_WIDTH - 2 * SIDE_MARGIN;
+            double dayColumn = 105.5;
             return new Layout(
-                    DocumentPageSize.of(841.88977, 472),
-                    new DocumentInsets(14, 8, 14, 8),
-                    87.38,
-                    105.5);
+                    DocumentPageSize.of(PAGE_WIDTH, 472),
+                    new DocumentInsets(14, SIDE_MARGIN, 14, SIDE_MARGIN),
+                    Math.floor((printable - DAYS_IN_WEEK * dayColumn) * 100) / 100,
+                    dayColumn);
         }
 
         public double subColWidth() { return dayColWidth / 4.0; }
@@ -346,6 +348,12 @@ public final class WeeklyScheduleRenderer {
     // ───────────────────────── Constants ─────────────────────────────
 
     private static final int DAYS_IN_WEEK = 7;
+
+    /** Landscape A4, the sheet the board is printed on. */
+    private static final double PAGE_WIDTH = 841.88977;
+
+    /** Left and right margin; the columns divide what is left. */
+    private static final double SIDE_MARGIN = 8;
     private static final DayShift[] EMPTY_WEEK = {
             DayShift.NONE, DayShift.NONE, DayShift.NONE, DayShift.NONE,
             DayShift.NONE, DayShift.NONE, DayShift.NONE

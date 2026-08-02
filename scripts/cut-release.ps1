@@ -741,11 +741,18 @@ function Refresh-CommittedPreviews {
         return
     }
 
+    # The committed folder is flat, so a name is the whole address. Two rendered
+    # documents sharing one would leave whichever the walk reached first deciding what
+    # a preview gets refreshed from — the same silence CommittedAssetDriftTest refuses,
+    # and the reason to refuse it here too: with -SkipVerify that gate never runs, and
+    # the wrong document would be committed under the right name.
     $rendered = @{}
     foreach ($file in Get-ChildItem -Path $generated -File -Recurse) {
-        if (-not $rendered.ContainsKey($file.Name)) {
-            $rendered[$file.Name] = $file.FullName
+        if ($rendered.ContainsKey($file.Name)) {
+            throw ("Refresh-CommittedPreviews: two rendered documents share the name " +
+                   "$($file.Name) ($($rendered[$file.Name]) and $($file.FullName)).")
         }
+        $rendered[$file.Name] = $file.FullName
     }
 
     $missing = @()

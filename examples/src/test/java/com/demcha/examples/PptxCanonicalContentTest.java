@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -42,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * than assumed. See {@link #canonicalise(String, String, byte[])}. So the comparison is
  * defined here as the sorted package parts reduced to what the document decides — every
  * shape, relationship and run of text, with each freeform's path read where it lands on the
- * slide and every image read pixel for pixel.</p>
+ * slide and every image read pixel for pixel bar the one part {@link #UNSTABLE_RASTERS}
+ * names.</p>
  *
  * <p>What this class does not do is hold a committed asset against a fresh render. A
  * committed asset is rendered at the released version while a working tree renders the
@@ -62,9 +64,9 @@ class PptxCanonicalContentTest {
     }
 
     /**
-     * Every deck the catalogue produces, split by whether its preview is published.
+     * The decks whose preview the repository commits.
      *
-     * <p>Which decks the repository commits a preview of is a decision, and both lists
+     * <p>Which decks those are is a decision, and this list plus {@link #UNPUBLISHED_DECKS}
      * exist so that no deck can arrive without somebody making it. A subset alone is not
      * enough: asserting that the curated decks are among the generated ones lets a new
      * example ship a deck nobody has decided about, which is the same silence the pairing
@@ -213,9 +215,11 @@ class PptxCanonicalContentTest {
         assertThat(windows.getWidth()).isEqualTo(linux.getWidth());
         assertThat(windows.getHeight()).isEqualTo(linux.getHeight());
 
-        assertThat(image(fixture(WATERMARK_WINDOWS), false))
-                .describedAs("two images of one size are not one image")
-                .isNotEqualTo(image(fixture(WATERMARK_LINUX), false));
+        assertThat(canonicalise("business-report.pptx", WATERMARK_PART, fixture(WATERMARK_WINDOWS)))
+                .describedAs("two images of one size are not one image — and the deck this part "
+                        + "sits in is not the one the allowlist names")
+                .isNotEqualTo(canonicalise("business-report.pptx", WATERMARK_PART,
+                        fixture(WATERMARK_LINUX)));
     }
 
     /**
@@ -235,10 +239,30 @@ class PptxCanonicalContentTest {
                 .describedAs("the fixtures have to be two renders, not one file twice")
                 .isNotEqualTo(linux);
 
-        assertThat(image(windows, true))
+        assertThat(canonicalise(WATERMARK_DECK, WATERMARK_PART, windows))
                 .describedAs("the watermark named in the allowlist is the one difference the "
                         + "comparison is allowed to pass over")
-                .isEqualTo(image(linux, true));
+                .isEqualTo(canonicalise(WATERMARK_DECK, WATERMARK_PART, linux));
+    }
+
+    /**
+     * A part written with either line ending is one part.
+     *
+     * <p>The normalisation this pins is the difference that failed six decks on the runner,
+     * and it is the one canonicalisation whose absence shows up nowhere else: every test
+     * here runs on one machine, where both sides carry the same line ending and the bug
+     * hides.</p>
+     */
+    @Test
+    void theSamePartWithEitherLineEndingIsOnePart() throws Exception {
+        String declaration = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>";
+        byte[] unix = (declaration + "\n<p:sld/>").getBytes(StandardCharsets.UTF_8);
+        byte[] windows = (declaration + "\r\n<p:sld/>").getBytes(StandardCharsets.UTF_8);
+
+        assertThat(canonicalise(WATERMARK_DECK, "ppt/slides/slide1.xml", windows))
+                .describedAs("POI ends the XML declaration with the platform's line separator; "
+                        + "that is the machine writing, not the document")
+                .isEqualTo(canonicalise(WATERMARK_DECK, "ppt/slides/slide1.xml", unix));
     }
 
     /**
@@ -253,11 +277,21 @@ class PptxCanonicalContentTest {
         for (String entry : new TreeSet<>(UNSTABLE_RASTERS)) {
             String[] split = entry.split("!", 2);
             assertThat(split).describedAs("%s is not deck!part", entry).hasSize(2);
-            Path deck = COMMITTED.resolve(split[0]);
-            assertThat(deck).describedAs("allowlisted deck %s is not committed", split[0]).exists();
-            assertThat(partNames(deck))
-                    .describedAs("allowlisted part %s is not in %s", split[1], split[0])
-                    .contains(split[1]);
+            for (Path deck : List.of(COMMITTED.resolve(split[0]), generatedDeck(split[0]))) {
+                assertThat(deck).describedAs("allowlisted deck %s is missing", split[0]).exists();
+                assertThat(partNames(deck))
+                        .describedAs("allowlisted part %s is not in %s", split[1], deck)
+                        .contains(split[1]);
+            }
+        }
+    }
+
+    private static Path generatedDeck(String name) throws IOException {
+        try (var decks = Files.walk(GeneratedCatalogue.ROOT)) {
+            return decks.filter(path -> path.getFileName().toString().equals(name))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "the catalogue no longer renders " + name));
         }
     }
 
@@ -274,6 +308,8 @@ class PptxCanonicalContentTest {
 
     private static final String WATERMARK_WINDOWS = "watermark-windows.png";
     private static final String WATERMARK_LINUX = "watermark-linux.png";
+    private static final String WATERMARK_DECK = "master-showcase.pptx";
+    private static final String WATERMARK_PART = "ppt/media/image1.png";
 
     private static byte[] fixture(String name) throws IOException {
         try (var in = PptxCanonicalContentTest.class.getResourceAsStream("/pptx-media/" + name)) {
@@ -283,7 +319,9 @@ class PptxCanonicalContentTest {
     }
 
     private static BufferedImage decode(String name) throws IOException {
-        return ImageIO.read(new ByteArrayInputStream(fixture(name)));
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(fixture(name)));
+        assertThat(image).describedAs("fixture %s does not decode as an image", name).isNotNull();
+        return image;
     }
 
     private static String part(Path pptx, String name) throws Exception {
@@ -376,7 +414,7 @@ class PptxCanonicalContentTest {
      * put this entry here.</p>
      */
     private static final Set<String> UNSTABLE_RASTERS =
-            Set.of("master-showcase.pptx!ppt/media/image1.png");
+            Set.of(WATERMARK_DECK + "!" + WATERMARK_PART);
 
     /**
      * An image's pixels in one colour model, or — for a named unstable part — its size.
@@ -410,6 +448,8 @@ class PptxCanonicalContentTest {
     private static final Pattern PATH_TAG = Pattern.compile("<a:path ([^>]*)>");
     private static final Pattern POINT = Pattern.compile("<a:pt x=\"(-?\\d+)\" y=\"(-?\\d+)\"/>");
     private static final Pattern BOX_ATTRIBUTE = Pattern.compile(" [wh]=\"\\d+\"");
+    private static final Pattern PATH_WIDTH = Pattern.compile("\\bw=\"(\\d+)\"");
+    private static final Pattern PATH_HEIGHT = Pattern.compile("\\bh=\"(\\d+)\"");
 
     /** Reads each freeform's path where it lands on the slide rather than inside its box. */
     private static String freeformsInSlideSpace(String xml) {
@@ -429,8 +469,8 @@ class PptxCanonicalContentTest {
         if (!offset.find() || !extent.find() || !pathTag.find()) {
             return shape;
         }
-        long pathWidth = attribute(pathTag.group(1), 'w');
-        long pathHeight = attribute(pathTag.group(1), 'h');
+        long pathWidth = attribute(PATH_WIDTH, pathTag.group(1));
+        long pathHeight = attribute(PATH_HEIGHT, pathTag.group(1));
         if (pathWidth <= 0 || pathHeight <= 0) {
             return shape;
         }
@@ -466,8 +506,8 @@ class PptxCanonicalContentTest {
         return out.toString();
     }
 
-    private static long attribute(String attributes, char name) {
-        Matcher value = Pattern.compile(name + "=\"(\\d+)\"").matcher(attributes);
+    private static long attribute(Pattern attribute, String attributes) {
+        Matcher value = attribute.matcher(attributes);
         return value.find() ? Long.parseLong(value.group(1)) : -1;
     }
 }

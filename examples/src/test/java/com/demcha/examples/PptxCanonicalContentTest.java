@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,8 +28,7 @@ import javax.imageio.ImageIO;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Pins what a PPTX can be compared by, and proves the committed decks match a fresh
- * render under that comparison.
+ * Pins the canonical PPTX comparison the asset gate will be built on.
  *
  * <p>A deck cannot be compared byte for byte. Every entry in the package carries the zip
  * timestamp of the run that wrote it, so two renders of an unchanged document differ. The
@@ -39,10 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Nor can it be compared part for part: three things about a package are decided by the
  * machine rather than by the document, and all three were measured on these decks rather
- * than assumed. See {@link #canonicalise(String, byte[])}. So the comparison is defined
- * here as the sorted package parts reduced to what the document decides — every shape,
- * relationship and run of text, with each freeform's path read where it lands on the slide
- * and each image read by its dimensions.</p>
+ * than assumed. See {@link #canonicalise(String, String, byte[])}. So the comparison is
+ * defined here as the sorted package parts reduced to what the document decides — every
+ * shape, relationship and run of text, with each freeform's path read where it lands on the
+ * slide and every image read pixel for pixel.</p>
  *
  * <p>What this class does not do is hold a committed asset against a fresh render. A
  * committed asset is rendered at the released version while a working tree renders the
@@ -62,14 +62,14 @@ class PptxCanonicalContentTest {
     }
 
     /**
-     * The committed decks are a curated subset, and which decks are in it is a decision.
+     * Every deck the catalogue produces, split by whether its preview is published.
      *
-     * <p>Pairing generated files with committed ones and skipping the unpaired hides the
-     * two failures worth catching: a deck added to the catalogue and never committed, and
-     * a committed deck whose example is gone. Both leave every surviving pair matching, so
-     * a content comparison alone reports success. The subset is therefore written down —
-     * an unpaired file on either side is a decision somebody has to make, not something
-     * for a guard to pass over.</p>
+     * <p>Which decks the repository commits a preview of is a decision, and both lists
+     * exist so that no deck can arrive without somebody making it. A subset alone is not
+     * enough: asserting that the curated decks are among the generated ones lets a new
+     * example ship a deck nobody has decided about, which is the same silence the pairing
+     * this replaced used to keep. Together the two lists cover the catalogue exactly, so a
+     * deck added, removed or renamed lands here first.</p>
      */
     private static final Set<String> CURATED_DECKS = Set.of(
             "business-report.pptx",
@@ -78,6 +78,18 @@ class PptxCanonicalContentTest {
             "maven-banner.pptx",
             "social-card.pptx",
             "twin-output.pptx");
+
+    /** Decks the catalogue renders but the repository deliberately does not commit. */
+    private static final Set<String> UNPUBLISHED_DECKS = Set.of(
+            "engine-deck.pptx",
+            "linkedin-carousel.pptx");
+
+    @Test
+    void theTwoDeckListsDoNotOverlap() {
+        assertThat(CURATED_DECKS)
+                .describedAs("a deck cannot be both published and deliberately unpublished")
+                .doesNotContainAnyElementsOf(UNPUBLISHED_DECKS);
+    }
 
     @Test
     void theCommittedDecksAreExactlyTheCuratedSubset() throws Exception {
@@ -106,10 +118,14 @@ class PptxCanonicalContentTest {
                         + "added to the folder without a decision, or removed from it without "
                         + "one, is exactly what this list exists to surface")
                 .isEqualTo(new TreeSet<>(CURATED_DECKS));
+        Set<String> accountedFor = new TreeSet<>(CURATED_DECKS);
+        accountedFor.addAll(UNPUBLISHED_DECKS);
         assertThat(generated.keySet())
-                .describedAs("every curated deck must still be produced by an example — one that "
-                        + "is not is a committed file nothing can refresh")
-                .containsAll(CURATED_DECKS);
+                .describedAs("the catalogue and the two lists have to cover each other exactly: a "
+                        + "deck listed but not generated is a committed file nothing can refresh, "
+                        + "and a deck generated but on neither list is one nobody has decided to "
+                        + "publish or to leave out")
+                .isEqualTo(accountedFor);
     }
 
     /**
@@ -180,6 +196,96 @@ class PptxCanonicalContentTest {
                 .isNotEqualTo(slide);
     }
 
+    /**
+     * An image of the same size is not the same image.
+     *
+     * <p>Reading a raster part by its dimensions would let a logo be swapped, a screenshot
+     * be replaced or a watermark be retyped without the comparison noticing, which is a
+     * quiet way for a gate to report that nothing changed. Only the one part measured as
+     * machine-dependent is read that way; the fixtures below are the same watermark from
+     * two machines, so they are the closest two images this repository has, and even they
+     * must come out different when compared as images.</p>
+     */
+    @Test
+    void sameDimensionsButDifferentPixelsAreNotEqual() throws Exception {
+        BufferedImage windows = decode(WATERMARK_WINDOWS);
+        BufferedImage linux = decode(WATERMARK_LINUX);
+        assertThat(windows.getWidth()).isEqualTo(linux.getWidth());
+        assertThat(windows.getHeight()).isEqualTo(linux.getHeight());
+
+        assertThat(image(fixture(WATERMARK_WINDOWS), false))
+                .describedAs("two images of one size are not one image")
+                .isNotEqualTo(image(fixture(WATERMARK_LINUX), false));
+    }
+
+    /**
+     * The named part absorbs the difference that was measured, and the fixtures carry it.
+     *
+     * <p>The two files are {@code ppt/media/image1.png} of the showcase deck rendered on
+     * Windows and on the runner: same glyphs in the same places, different coverage along
+     * their edges. Pinning them here keeps the allowlist honest — if the difference ever
+     * stops being antialiasing the entry stops being justified, and this is where that
+     * shows.</p>
+     */
+    @Test
+    void theNamedUnstableRasterAbsorbsTheMeasuredDifference() throws Exception {
+        byte[] windows = fixture(WATERMARK_WINDOWS);
+        byte[] linux = fixture(WATERMARK_LINUX);
+        assertThat(windows)
+                .describedAs("the fixtures have to be two renders, not one file twice")
+                .isNotEqualTo(linux);
+
+        assertThat(image(windows, true))
+                .describedAs("the watermark named in the allowlist is the one difference the "
+                        + "comparison is allowed to pass over")
+                .isEqualTo(image(linux, true));
+    }
+
+    /**
+     * Every allowlisted part names a part that is really there.
+     *
+     * <p>A misspelled deck or part would match nothing, and an entry that matches nothing
+     * exempts nothing — the comparison would quietly go back to reading the watermark by
+     * its pixels and fail on a runner for a reason the entry was added to explain.</p>
+     */
+    @Test
+    void everyAllowlistedRasterExists() throws Exception {
+        for (String entry : new TreeSet<>(UNSTABLE_RASTERS)) {
+            String[] split = entry.split("!", 2);
+            assertThat(split).describedAs("%s is not deck!part", entry).hasSize(2);
+            Path deck = COMMITTED.resolve(split[0]);
+            assertThat(deck).describedAs("allowlisted deck %s is not committed", split[0]).exists();
+            assertThat(partNames(deck))
+                    .describedAs("allowlisted part %s is not in %s", split[1], split[0])
+                    .contains(split[1]);
+        }
+    }
+
+    private static Set<String> partNames(Path pptx) throws IOException {
+        Set<String> names = new TreeSet<>();
+        try (ZipInputStream zip =
+                     new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(pptx)))) {
+            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+                names.add(entry.getName());
+            }
+        }
+        return names;
+    }
+
+    private static final String WATERMARK_WINDOWS = "watermark-windows.png";
+    private static final String WATERMARK_LINUX = "watermark-linux.png";
+
+    private static byte[] fixture(String name) throws IOException {
+        try (var in = PptxCanonicalContentTest.class.getResourceAsStream("/pptx-media/" + name)) {
+            assertThat(in).describedAs("missing test fixture %s", name).isNotNull();
+            return in.readAllBytes();
+        }
+    }
+
+    private static BufferedImage decode(String name) throws IOException {
+        return ImageIO.read(new ByteArrayInputStream(fixture(name)));
+    }
+
     private static String part(Path pptx, String name) throws Exception {
         try (ZipInputStream zip =
                      new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(pptx)))) {
@@ -206,9 +312,11 @@ class PptxCanonicalContentTest {
         Map<String, byte[]> parts = new TreeMap<>();
         try (ZipInputStream zip =
                      new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(pptx)))) {
+            String deck = pptx.getFileName().toString();
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 if (!entry.isDirectory()) {
-                    parts.put(entry.getName(), canonicalise(entry.getName(), zip.readAllBytes()));
+                    parts.put(entry.getName(),
+                            canonicalise(deck, entry.getName(), zip.readAllBytes()));
                 }
             }
         }
@@ -240,16 +348,17 @@ class PptxCanonicalContentTest {
      *       place on the slide. The points are therefore compared where they land, and the
      *       box that only says how they were normalised is dropped. A freeform that
      *       actually moves still moves its points.</li>
-     *   <li><b>Rasterised text.</b> An embedded image of a text watermark differed along
-     *       the glyph edges alone — same glyphs, same positions, different antialiasing
-     *       coverage. Nothing canonicalises that, so an image is compared by its
-     *       dimensions and pixel layout instead of its pixels; an image that goes missing,
-     *       changes size or changes format still fails.</li>
+     *   <li><b>Rasterised text.</b> One embedded image — a text watermark — differed along
+     *       the glyph edges alone: same glyphs, same positions, different antialiasing
+     *       coverage. Nothing canonicalises that, so {@link #UNSTABLE_RASTERS} names the
+     *       part and it alone is read by its dimensions. Every other image is compared
+     *       pixel for pixel.</li>
      * </ul>
      */
-    private static byte[] canonicalise(String name, byte[] content) throws IOException {
+    private static byte[] canonicalise(String deck, String name, byte[] content)
+            throws IOException {
         if (name.startsWith("ppt/media/")) {
-            return imageShape(content);
+            return image(content, UNSTABLE_RASTERS.contains(deck + "!" + name));
         }
         if (!name.endsWith(".xml") && !name.endsWith(".rels")) {
             return content;
@@ -258,14 +367,41 @@ class PptxCanonicalContentTest {
         return freeformsInSlideSpace(text).getBytes(StandardCharsets.UTF_8);
     }
 
-    /** An image's dimensions and pixel layout — a vector part is left as it is. */
-    private static byte[] imageShape(byte[] content) throws IOException {
+    /**
+     * The one raster part a machine is allowed to disagree about, as {@code deck!part}.
+     *
+     * <p>Naming it costs a line and buys the difference between a comparison that tolerates
+     * one measured artefact and one that stops reading images altogether. Anything added
+     * here stops being compared by content, so it wants the same measurement behind it that
+     * put this entry here.</p>
+     */
+    private static final Set<String> UNSTABLE_RASTERS =
+            Set.of("master-showcase.pptx!ppt/media/image1.png");
+
+    /**
+     * An image's pixels in one colour model, or — for a named unstable part — its size.
+     *
+     * <p>{@code getRGB} converts whatever the decoder produced into sRGB, so a part is
+     * compared by what it looks like rather than by how it was stored. A part that decodes
+     * to nothing is vector, and its bytes are its content.</p>
+     */
+    private static byte[] image(byte[] content, boolean sizeOnly) throws IOException {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
         if (image == null) {
             return content;
         }
-        return "%dx%d type=%d".formatted(image.getWidth(), image.getHeight(), image.getType())
-                .getBytes(StandardCharsets.UTF_8);
+        int width = image.getWidth();
+        int height = image.getHeight();
+        if (sizeOnly) {
+            return "%dx%d antialiasing not compared".formatted(width, height)
+                    .getBytes(StandardCharsets.UTF_8);
+        }
+        ByteBuffer pixels = ByteBuffer.allocate(8 + 4 * width * height);
+        pixels.putInt(width).putInt(height);
+        for (int argb : image.getRGB(0, 0, width, height, null, 0, width)) {
+            pixels.putInt(argb);
+        }
+        return pixels.array();
     }
 
     private static final Pattern SHAPE = Pattern.compile("<p:sp>.*?</p:sp>", Pattern.DOTALL);

@@ -12,9 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -44,9 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * than assumed. See {@link #canonicalise(String, byte[])}. So the comparison is defined
  * here as the sorted package parts reduced to what the document decides — every shape,
  * relationship and run of text, with each freeform's path read where it lands on the slide
- * and each image read by its dimensions. This is the comparator the asset gate will use,
- * exercised now on the decks the repository commits, so the gate arrives with its
- * comparison already proven instead of discovering the problem when it first runs red.</p>
+ * and each image read by its dimensions.</p>
+ *
+ * <p>What this class does not do is hold a committed asset against a fresh render. A
+ * committed asset is rendered at the released version while a working tree renders the
+ * next one, so the two are different documents by construction; and a committed asset is
+ * not otherwise guaranteed to be level with the code that produces it. Comparing them
+ * needs the display version as an input and a way to refresh whatever has drifted — one
+ * job, belonging to the asset gate rather than to a unit test. The comparator is proven
+ * here so that the gate arrives with it already working.</p>
  */
 class PptxCanonicalContentTest {
 
@@ -83,26 +87,6 @@ class PptxCanonicalContentTest {
                     .filter(name -> name.endsWith(".pptx"))
                     .forEach(committed::add);
         }
-        Set<String> generated = new TreeSet<>();
-        try (var decks = Files.walk(GeneratedCatalogue.ROOT)) {
-            decks.filter(path -> path.toString().endsWith(".pptx"))
-                    .map(path -> path.getFileName().toString())
-                    .forEach(generated::add);
-        }
-
-        assertThat(committed)
-                .describedAs("the committed decks and the curated list have to agree: a deck "
-                        + "added to the folder without a decision, or removed from it without "
-                        + "one, is exactly what this list exists to surface")
-                .isEqualTo(new TreeSet<>(CURATED_DECKS));
-        assertThat(generated)
-                .describedAs("every curated deck must still be produced by an example — one that "
-                        + "is not is a committed file nothing can refresh")
-                .containsAll(CURATED_DECKS);
-    }
-
-    @Test
-    void everyCommittedDeckMatchesAFreshRenderPartForPart() throws Exception {
         Map<String, Path> generated = new TreeMap<>();
         try (var decks = Files.walk(GeneratedCatalogue.ROOT)) {
             decks.filter(path -> path.toString().endsWith(".pptx"))
@@ -117,22 +101,15 @@ class PptxCanonicalContentTest {
                     });
         }
 
-        List<String> differing = new ArrayList<>();
-        for (String deck : new TreeSet<>(CURATED_DECKS)) {
-            Path committed = COMMITTED.resolve(deck);
-            Path fresh = generated.get(deck);
-            assertThat(committed).describedAs("curated deck %s is not committed", deck).exists();
-            assertThat(fresh).describedAs("curated deck %s is not generated", deck).isNotNull();
-            if (!canonicalDigest(committed).equals(canonicalDigest(fresh))) {
-                differing.add(deck);
-            }
-        }
-
-        assertThat(differing)
-                .describedAs("a committed deck no longer matches what the example produces. The "
-                        + "comparison ignores everything the machine decides, so this is a content "
-                        + "change: re-render the asset, or revert whatever changed the example")
-                .isEmpty();
+        assertThat(committed)
+                .describedAs("the committed decks and the curated list have to agree: a deck "
+                        + "added to the folder without a decision, or removed from it without "
+                        + "one, is exactly what this list exists to surface")
+                .isEqualTo(new TreeSet<>(CURATED_DECKS));
+        assertThat(generated.keySet())
+                .describedAs("every curated deck must still be produced by an example — one that "
+                        + "is not is a committed file nothing can refresh")
+                .containsAll(CURATED_DECKS);
     }
 
     /**

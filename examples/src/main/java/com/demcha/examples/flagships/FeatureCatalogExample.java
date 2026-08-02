@@ -25,6 +25,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.style.DocumentTransform;
 import com.demcha.compose.document.style.ShapePoint;
@@ -199,7 +200,8 @@ public final class FeatureCatalogExample {
                             .zebra(DocumentColor.WHITE, DocumentColor.rgb(248, 246, 240))
                             .totalRow(com.demcha.compose.document.table.DocumentTableStyle.builder()
                                             .textStyle(DocumentTextStyle.builder()
-                                                    .fontName(FontName.HELVETICA_BOLD).size(9.5).color(INK).build())
+                                                    .fontName(FontName.HELVETICA)
+                                                    .decoration(DocumentTextDecoration.BOLD).size(9.5).color(INK).build())
                                             .fillColor(DocumentColor.rgb(240, 237, 228))
                                             .padding(DocumentInsets.of(6)).build(),
                                     "Total", "60", "66")));
@@ -385,7 +387,8 @@ public final class FeatureCatalogExample {
                             .center(new com.demcha.compose.document.dsl.ParagraphBuilder()
                                     .text("GC")
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD).size(20)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD).size(20)
                                             .color(DocumentColor.WHITE).build())
                                     .align(com.demcha.compose.document.node.TextAlign.CENTER)
                                     .build())));
@@ -475,7 +478,8 @@ public final class FeatureCatalogExample {
                     .addParagraph(p -> p
                             .text(title)
                             .textStyle(DocumentTextStyle.builder()
-                                    .fontName(FontName.HELVETICA_BOLD).size(11).color(INK).build())
+                                    .fontName(FontName.HELVETICA)
+                                    .decoration(DocumentTextDecoration.BOLD).size(11).color(INK).build())
                             .bookmark(new DocumentBookmarkOptions(title, 1))
                             .margin(DocumentInsets.zero()))
                     .addSection("Code", c -> c
@@ -540,7 +544,8 @@ public final class FeatureCatalogExample {
                         .center(new com.demcha.compose.document.dsl.ParagraphBuilder()
                                 .text(label)
                                 .textStyle(DocumentTextStyle.builder()
-                                        .fontName(FontName.HELVETICA_BOLD).size(6.2)
+                                        .fontName(FontName.HELVETICA)
+                                        .decoration(DocumentTextDecoration.BOLD).size(6.2)
                                         .color(DocumentColor.rgb(82, 90, 102)).build())
                                 .align(com.demcha.compose.document.node.TextAlign.CENTER)
                                 .build())
@@ -555,7 +560,8 @@ public final class FeatureCatalogExample {
                 .center(new com.demcha.compose.document.dsl.ParagraphBuilder()
                         .text(text)
                         .textStyle(DocumentTextStyle.builder()
-                                .fontName(FontName.HELVETICA_BOLD).size(9)
+                                .fontName(FontName.HELVETICA)
+                                .decoration(DocumentTextDecoration.BOLD).size(9)
                                 .color(DocumentColor.WHITE).build())
                         .align(com.demcha.compose.document.node.TextAlign.CENTER)
                         .build())

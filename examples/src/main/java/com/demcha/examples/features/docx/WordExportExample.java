@@ -59,13 +59,13 @@ public final class WordExportExample {
         Path docxFile = ExampleOutputPaths.prepare("features/docx", "word-export-companion.docx");
 
         DocumentTextStyle title = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(20)
                 .color(NAVY)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle heading = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(13)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
@@ -76,7 +76,8 @@ public final class WordExportExample {
                 .color(INK)
                 .build();
         DocumentTextStyle caption = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_OBLIQUE)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.ITALIC)
                 .size(10)
                 .color(MUTED)
                 .build();
@@ -170,7 +171,8 @@ public final class WordExportExample {
                             .center(new com.demcha.compose.document.dsl.ParagraphBuilder()
                                     .text("GC")
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD).size(20)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD).size(20)
                                             .color(DocumentColor.WHITE).build())
                                     .align(com.demcha.compose.document.node.TextAlign.CENTER)
                                     .build()))

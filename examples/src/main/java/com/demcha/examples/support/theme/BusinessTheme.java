@@ -68,7 +68,7 @@ public record BusinessTheme(
                 .rule(new Color(210, 218, 230))
                 .build();
         SpacingScale spacing = SpacingScale.defaultScale();
-        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA,
                 26, 16, 13, 11, 9);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("classic", palette, spacing, text, table, null);
@@ -91,7 +91,7 @@ public record BusinessTheme(
                 .rule(new Color(212, 200, 178))
                 .build();
         SpacingScale spacing = new SpacingScale(4.0, 8.0, 14.0, 22.0, 36.0);
-        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA,
                 28, 17, 13, 11, 10);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("modern", palette, spacing, text, table, palette.surface());
@@ -140,7 +140,7 @@ public record BusinessTheme(
                 .rule(new Color(220, 226, 232))      // very subtle cool line
                 .build();
         SpacingScale spacing = new SpacingScale(6.0, 12.0, 18.0, 28.0, 44.0);
-        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA,
                 26, 16, 12, 10, 9);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("nordic", palette, spacing, text, table, null);
@@ -192,7 +192,7 @@ public record BusinessTheme(
                 .rule(new Color(54, 64, 78))         // subtle on-dark rule
                 .build();
         SpacingScale spacing = new SpacingScale(4.0, 8.0, 14.0, 24.0, 40.0);
-        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA,
                 30, 18, 14, 11, 9);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("cinematic", palette, spacing, text, table, palette.surface());
@@ -218,7 +218,7 @@ public record BusinessTheme(
                 .rule(new Color(0, 0, 0))            // bold rules
                 .build();
         SpacingScale spacing = new SpacingScale(4.0, 8.0, 12.0, 20.0, 36.0);
-        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA_BOLD,
+        TextScale text = textScale(palette, FontName.HELVETICA, FontName.HELVETICA,
                 32, 20, 14, 11, 9);
         TablePreset table = tablePreset(palette, spacing);
         return new BusinessTheme("monochrome", palette, spacing, text, table, null);

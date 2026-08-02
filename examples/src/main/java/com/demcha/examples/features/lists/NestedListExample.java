@@ -35,19 +35,20 @@ public final class NestedListExample {
         Path outputFile = ExampleOutputPaths.prepare("features/lists", "nested-list-showcase.pdf");
 
         DocumentTextStyle title = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(20)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle sectionHeading = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(13)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle caption = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_OBLIQUE)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.ITALIC)
                 .size(10)
                 .color(MUTED)
                 .build();

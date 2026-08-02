@@ -7,6 +7,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
@@ -181,7 +182,8 @@ public final class SectionPresetsExample {
 
     private static DocumentTextStyle panelHeadline() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(INK)
                 .build();
@@ -189,7 +191,8 @@ public final class SectionPresetsExample {
 
     private static DocumentTextStyle headlineOnDark() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(DocumentColor.WHITE)
                 .build();

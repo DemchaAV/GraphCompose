@@ -20,6 +20,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.font.FontName;
@@ -488,7 +489,7 @@ public final class MavenBannerPptxExample {
     }
 
     private static DocumentTextStyle sansBold(double size, DocumentColor color) {
-        return DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(size).color(color).build();
+        return DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD).size(size).color(color).build();
     }
 
     private static DocumentTextStyle mono(double size, DocumentColor color) {
@@ -496,7 +497,7 @@ public final class MavenBannerPptxExample {
     }
 
     private static DocumentTextStyle monoBold(double size, DocumentColor color) {
-        return DocumentTextStyle.builder().fontName(FontName.COURIER_BOLD).size(size).color(color).build();
+        return DocumentTextStyle.builder().fontName(FontName.COURIER).decoration(DocumentTextDecoration.BOLD).size(size).color(color).build();
     }
 
     /**

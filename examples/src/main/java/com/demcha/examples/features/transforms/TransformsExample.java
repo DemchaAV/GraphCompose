@@ -78,7 +78,7 @@ public final class TransformsExample {
                                                     .padding(10)
                                                     .stroke(DocumentStroke.of(GOLD, 1.4))
                                                     .rotate(15)
-                                                    .center(label("M&A", style(FontName.HELVETICA_BOLD, 22,
+                                                    .center(label("M&A", style(FontName.HELVETICA, 22,
                                                             DocumentTextDecoration.BOLD, DocumentColor.WHITE)))))
                                     .addSection("RotateSlot2", col -> col
                                             .addCircle(110, DEEP_TEAL, circle -> circle
@@ -86,14 +86,14 @@ public final class TransformsExample {
                                                     .padding(10)
                                                     .stroke(DocumentStroke.of(GOLD, 1.4))
                                                     .rotate(-15)
-                                                    .center(label("M&A", style(FontName.HELVETICA_BOLD, 22,
+                                                    .center(label("M&A", style(FontName.HELVETICA, 22,
                                                             DocumentTextDecoration.BOLD, DocumentColor.WHITE)))))
                                     .addSection("RotateSlot3", col -> col
                                             .addCircle(110, DEEP_TEAL, circle -> circle
                                                     .name("PlainSeal")
                                                     .padding(10)
                                                     .stroke(DocumentStroke.of(GOLD, 1.4))
-                                                    .center(label("M&A", style(FontName.HELVETICA_BOLD, 22,
+                                                    .center(label("M&A", style(FontName.HELVETICA, 22,
                                                             DocumentTextDecoration.BOLD, DocumentColor.WHITE))))))
                             .addParagraph(p -> p
                                     .text("Tilt left, tilt right, no tilt — outline plus label rotate together.")
@@ -117,7 +117,7 @@ public final class TransformsExample {
                                                     .stroke(DocumentStroke.of(DEEP_TEAL, 0.8))
                                                     .padding(12)
                                                     .scale(0.7)
-                                                    .center(label("scale(0.7)", style(FontName.HELVETICA_BOLD, 14,
+                                                    .center(label("scale(0.7)", style(FontName.HELVETICA, 14,
                                                             DocumentTextDecoration.BOLD, INK)))))
                                     .addSection("ScaleSlot2", col -> col
                                             .addContainer(card -> card
@@ -127,7 +127,7 @@ public final class TransformsExample {
                                                     .stroke(DocumentStroke.of(DEEP_TEAL, 0.8))
                                                     .padding(12)
                                                     .scale(1.1, 0.85)
-                                                    .center(label("1.1 x 0.85", style(FontName.HELVETICA_BOLD, 14,
+                                                    .center(label("1.1 x 0.85", style(FontName.HELVETICA, 14,
                                                             DocumentTextDecoration.BOLD, INK)))))
                                     .addSection("ScaleSlot3", col -> col
                                             .addContainer(card -> card
@@ -136,7 +136,7 @@ public final class TransformsExample {
                                                     .fillColor(DocumentColor.WHITE)
                                                     .stroke(DocumentStroke.of(DEEP_TEAL, 0.8))
                                                     .padding(12)
-                                                    .center(label("1.0", style(FontName.HELVETICA_BOLD, 14,
+                                                    .center(label("1.0", style(FontName.HELVETICA, 14,
                                                             DocumentTextDecoration.BOLD, INK))))))
                             .addParagraph(p -> p
                                     .text("Scaling pivots around the outline centre and composes with rotate().")

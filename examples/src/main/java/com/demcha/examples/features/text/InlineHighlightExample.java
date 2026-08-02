@@ -7,6 +7,7 @@ import com.demcha.compose.document.dsl.RichText;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.examples.support.theme.BusinessTheme;
 import com.demcha.compose.font.FontName;
@@ -138,7 +139,8 @@ public final class InlineHighlightExample {
 
     private static DocumentTextStyle chipText() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(9)
                 .color(DocumentColor.rgb(55, 48, 163))
                 .build();
@@ -146,7 +148,8 @@ public final class InlineHighlightExample {
 
     private static DocumentTextStyle caption() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(8.5)
                 .color(MUTED)
                 .build();

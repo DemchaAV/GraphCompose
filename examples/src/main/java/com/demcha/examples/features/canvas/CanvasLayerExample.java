@@ -49,13 +49,13 @@ public final class CanvasLayerExample {
         Path outputFile = ExampleOutputPaths.prepare("features/canvas", "canvas-layer-showcase.pdf");
 
         DocumentTextStyle eyebrow = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(10)
                 .color(ACCENT)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle headline = DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_BOLD)
+                .fontName(FontName.TIMES_ROMAN)
                 .size(34)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
@@ -66,7 +66,8 @@ public final class CanvasLayerExample {
                 .color(MUTED)
                 .build();
         DocumentTextStyle name = DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_ITALIC)
+                .fontName(FontName.TIMES_ROMAN)
+                .decoration(DocumentTextDecoration.ITALIC)
                 .size(24)
                 .color(INK)
                 .build();
@@ -76,7 +77,7 @@ public final class CanvasLayerExample {
                 .color(INK)
                 .build();
         DocumentTextStyle sealLabel = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(9)
                 .color(ACCENT)
                 .decoration(DocumentTextDecoration.BOLD)
@@ -87,13 +88,14 @@ public final class CanvasLayerExample {
                 .color(MUTED)
                 .build();
         DocumentTextStyle title = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
                 .size(15)
                 .color(INK)
                 .decoration(DocumentTextDecoration.BOLD)
                 .build();
         DocumentTextStyle caption = DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_OBLIQUE)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.ITALIC)
                 .size(10)
                 .color(MUTED)
                 .build();

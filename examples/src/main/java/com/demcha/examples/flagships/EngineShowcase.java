@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -258,7 +259,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle bandLeft() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(10)
                 .color(NAVY)
                 .build();
@@ -274,7 +276,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle headline() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_BOLD)
+                .fontName(FontName.TIMES_ROMAN)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(38)
                 .color(INK)
                 .build();
@@ -282,7 +285,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle headlineAccent() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_BOLD_ITALIC)
+                .fontName(FontName.TIMES_ROMAN)
+                .decoration(DocumentTextDecoration.BOLD_ITALIC)
                 .size(38)
                 .color(ACCENT)
                 .build();
@@ -298,7 +302,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle kpiValue() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.TIMES_BOLD)
+                .fontName(FontName.TIMES_ROMAN)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(26)
                 .color(NAVY)
                 .build();
@@ -306,7 +311,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle kpiLabel() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(9)
                 .color(ACCENT)
                 .build();
@@ -322,7 +328,8 @@ public final class EngineShowcase {
 
     private static DocumentTextStyle capLabel() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(9)
                 .color(NAVY)
                 .build();

@@ -84,7 +84,7 @@ public final class SvgIconGalleryExample {
     private static final DocumentColor MUTED = DocumentColor.rgb(90, 96, 105);
 
     private static final DocumentTextStyle LABEL_STYLE = DocumentTextStyle.builder()
-            .fontName(FontName.HELVETICA_BOLD)
+            .fontName(FontName.HELVETICA)
             .size(6.4)
             .decoration(DocumentTextDecoration.BOLD)
             .color(LABEL_INK)

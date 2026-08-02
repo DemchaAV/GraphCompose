@@ -90,7 +90,7 @@ public final class EmojiClipPathReportExample {
                 .fillColor(HEADER_FILL)
                 .stroke(DocumentStroke.of(RULE, 0.5))
                 .padding(DocumentInsets.of(6))
-                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA)
                         .decoration(DocumentTextDecoration.BOLD).color(DocumentColor.WHITE).build())
                 .build();
 
@@ -103,7 +103,7 @@ public final class EmojiClipPathReportExample {
                     .spacing(8)
                     .addParagraph(p -> p
                             .text("Emoji using SVG clip-path (" + entries.size() + " glyphs)")
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD)
+                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).decoration(DocumentTextDecoration.BOLD)
                                     .size(14).color(INK).build())
                             .margin(DocumentInsets.zero()))
                     .addParagraph(p -> p

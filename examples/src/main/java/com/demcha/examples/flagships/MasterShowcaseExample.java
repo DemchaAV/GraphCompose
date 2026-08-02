@@ -199,11 +199,11 @@ public final class MasterShowcaseExample {
                                         .rotate(-12)
                                         .clipPolicy(ClipPolicy.CLIP_PATH)
                                         .center(label("APPROVED",
-                                                style(FontName.HELVETICA_BOLD, 13,
+                                                style(FontName.HELVETICA, 13,
                                                         DocumentTextDecoration.BOLD,
                                                         DocumentColor.WHITE)))
                                         .position(label("SAMPLE",
-                                                        style(FontName.HELVETICA_BOLD, 7.5,
+                                                        style(FontName.HELVETICA, 7.5,
                                                                 DocumentTextDecoration.BOLD,
                                                                 SOFT_GOLD)),
                                                 0, -16, LayerAlign.BOTTOM_CENTER)))
@@ -283,7 +283,8 @@ public final class MasterShowcaseExample {
                             .headerStyle(DocumentTableStyle.builder()
                                     .padding(new DocumentInsets(8, 9, 8, 9))
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(9.5)
                                             .color(DocumentColor.WHITE)
                                             .build())
@@ -304,7 +305,8 @@ public final class MasterShowcaseExample {
                     table.totalRow(DocumentTableStyle.builder()
                                     .padding(new DocumentInsets(8, 9, 8, 9))
                                     .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.HELVETICA_BOLD)
+                                            .fontName(FontName.HELVETICA)
+                                            .decoration(DocumentTextDecoration.BOLD)
                                             .size(10)
                                             .color(DocumentColor.WHITE)
                                             .build())
@@ -437,7 +439,8 @@ public final class MasterShowcaseExample {
 
     private static DocumentTextStyle label() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(8.5)
                 .color(MUTED)
                 .build();
@@ -445,7 +448,8 @@ public final class MasterShowcaseExample {
 
     private static DocumentTextStyle panelHeadline() {
         return DocumentTextStyle.builder()
-                .fontName(FontName.HELVETICA_BOLD)
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
                 .size(11)
                 .color(INK)
                 .build();

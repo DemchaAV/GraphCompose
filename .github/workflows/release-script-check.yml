@@ -42,6 +42,29 @@ jobs:
           ./scripts/cut-release.ps1 -PostReleaseOnly -Branch develop -DryRun
           if ($LASTEXITCODE -ne 0) { throw "PostReleaseOnly dry-run exited $LASTEXITCODE" }
 
+      - name: The asset version follows the tag, and only a final tag
+        shell: pwsh
+        run: |
+          # <graphcompose.examples.assetVersion> records the version the committed previews
+          # were rendered at, and ExampleVersion accepts a released X.Y.Z and nothing else.
+          # So it must move on a final cut and stay put everywhere else: carried into a
+          # -SNAPSHOT by the post-release bump it would throw before a single preview was
+          # compared, and carried into an -rc it would have the previews advertise a release
+          # that does not exist. Assert the branch that ran, not the file it would write:
+          # -DryRun mutates nothing, so the notice is the only evidence either way.
+          $final = ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "final dry-run exited $LASTEXITCODE" }
+          if ($final -notmatch 'asset version -> 9\.9\.9') { throw 'a final cut must move the asset version' }
+          if ($final -notmatch 'Re-render the README assets') { throw 'a final cut must re-render the previews' }
+
+          $rc = ./scripts/cut-release.ps1 -Version 2.1.0-rc.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          if ($rc -match 'asset version ->') { throw 'a pre-release cut must NOT move the asset version' }
+          if ($rc -notmatch 'Skipped the README assets') { throw 'a pre-release cut must leave the previews alone' }
+
+          $post = ./scripts/cut-release.ps1 -PostReleaseOnly -Branch develop -DryRun *>&1 | Out-String
+          if ($post -match 'asset version ->') { throw 'the post-release bump must NOT move the asset version' }
+          Write-Host 'asset version: moves on a final cut, stays put on a pre-release and post-release.'
+
       - name: Dry-run a pre-release (RC) cut
         shell: pwsh
         run: |

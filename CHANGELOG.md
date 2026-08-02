@@ -7,6 +7,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **A release re-renders the previews it publishes.** The committed previews record
+  the version they were rendered at, and until now nothing moved it: a cut bumped
+  every pom, regenerated the showcase site at the new version, and left
+  `assets/readme/**` on the release before — with the drift gate comparing both
+  sides at the old version and staying green through it. The cut now bumps that
+  property with the tag and re-renders the previews from the same catalogue the
+  site is built from, before the verify step that checks them. `-SkipShowcase`
+  skips the published site under `web/` and no longer skips these, since they ship
+  in the repository; `-PostReleaseOnly` leaves them alone, because they belong to
+  the tag rather than to the branch it opens.
 - **A committed preview cannot fall behind the code that renders it.** README and
   the showcase site read files under `assets/readme/**` rather than rendering
   anything, and nothing held those files to the catalogue: a change to an example,

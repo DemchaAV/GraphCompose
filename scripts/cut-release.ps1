@@ -223,6 +223,46 @@ function Update-PomVersion($pomPath, $newVersion) {
     }
 }
 
+function Update-AssetVersion($pomPath, $newVersion) {
+    # Moves <graphcompose.examples.assetVersion> — the version the committed previews
+    # under assets/readme were rendered at. CommittedAssetDriftTest renders at it to
+    # compare like with like, and ExampleVersion accepts a released X.Y.Z and nothing
+    # else, so this is deliberately NOT part of Update-PomVersion:
+    #
+    #   * -PostReleaseOnly bumps the train to X.Y.(Z+1)-SNAPSHOT. Carrying the property
+    #     along would hand surefire a -SNAPSHOT display version, and the examples module
+    #     would throw before comparing a single preview.
+    #   * a pre-release cut sets X.Y.Z-rc.N, which the same check rejects — and whose
+    #     qualifier-stripped form names a final version that does not exist yet, so the
+    #     previews would advertise an unpublished release.
+    #
+    # Only a final cut moves it, in the same commit as the tag, next to the step that
+    # re-renders the previews at that version.
+    #
+    # Independent of Update-PomVersion's early return as well: a cut interrupted after
+    # the version bump leaves the poms on the new version and this property behind, and
+    # re-running has to be able to finish the job rather than report nothing to do.
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $assetRegex = [regex]'<graphcompose\.examples\.assetVersion>[\w\.\-]+</graphcompose\.examples\.assetVersion>'
+    $match = $assetRegex.Match($content)
+    if (-not $match.Success) {
+        Note "no <graphcompose.examples.assetVersion> in $pomPath — nothing to move"
+        return
+    }
+    if ($match.Value -eq "<graphcompose.examples.assetVersion>$newVersion</graphcompose.examples.assetVersion>") {
+        Note "asset version already $newVersion"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] asset version -> $newVersion" -ForegroundColor Yellow
+        return
+    }
+    $content = $assetRegex.Replace($content,
+        "<graphcompose.examples.assetVersion>$newVersion</graphcompose.examples.assetVersion>", 1)
+    [System.IO.File]::WriteAllText($pomPath, $content)
+    Note "asset version -> $newVersion"
+}
+
 function Get-NextSnapshotVersion($version) {
     # A final release X.Y.Z opens the next patch development line X.Y.(Z+1)-SNAPSHOT.
     # Pre-release versions (rc / beta / alpha) stay on their own cycle, so return
@@ -554,7 +594,10 @@ function Update-ShowcaseGhBase($newRef) {
     return $true
 }
 
-function Run-ShowcaseSync {
+function Build-ExampleCatalogue {
+    # Renders the whole example catalogue into examples/target/generated-pdfs at the
+    # version the poms now carry. Both the published site and the committed previews
+    # are copied out of that tree, so it is built once and read twice.
     # Quote the -D argument: PowerShell's call operator drops the leading
     # '-D' on the way to mvnw.cmd, so Maven sees ".mainClass=..." as a
     # lifecycle phase. Wrapping the whole token in quotes preserves it
@@ -576,7 +619,6 @@ function Run-ShowcaseSync {
             Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -f $modulePom" -ForegroundColor Yellow
         }
         Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests clean compile exec:java $generateProp" -ForegroundColor Yellow
-        Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp" -ForegroundColor Yellow
         return
     }
     Push-Location $repoRoot
@@ -627,6 +669,21 @@ function Run-ShowcaseSync {
         if ($LASTEXITCODE -ne 0) {
             throw "GenerateAllExamples failed (exit $LASTEXITCODE)"
         }
+    } finally {
+        Pop-Location
+    }
+}
+
+function Sync-ShowcaseSite {
+    # Copies the generated catalogue into web/showcase and writes web/examples.json.
+    # Reads the tree Build-ExampleCatalogue leaves behind — call it first.
+    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ShowcaseSync"'
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] $mvnw -B -ntp -f examples/pom.xml -DskipTests compile exec:java $execProp" -ForegroundColor Yellow
+        return
+    }
+    Push-Location $repoRoot
+    try {
         # `compile` before exec:java is REQUIRED: Step 3 rewrote ShowcaseMetadata.GH_BASE
         # to /blob/<tag>, and exec:java runs the COMPILED class. Without recompiling it here,
         # ShowcaseSync would emit examples.json with the previous release's "View Code" links
@@ -645,6 +702,75 @@ function Run-ShowcaseSync {
     }
 }
 
+function Run-ShowcaseSync {
+    # The pair, for the post-release pass: it regenerates the site with branch links
+    # and deliberately leaves the committed previews alone — those belong to the tag.
+    Build-ExampleCatalogue
+    Sync-ShowcaseSite
+}
+
+function Refresh-CommittedPreviews {
+    # Copies the freshly generated catalogue over the previews the repository
+    # commits under assets/readme/examples. README and the showcase site read
+    # those files rather than rendering anything, and until CommittedAssetDriftTest
+    # arrived nothing held them to the code: they drifted release by release, and
+    # a deck went two of them without the bold weights its styles asked for.
+    #
+    # Which previews are published is the folder itself — every file already there
+    # gets its counterpart, and nothing new is added. That is the same set the
+    # drift gate compares, so the refresh and the check cannot disagree about what
+    # is published.
+    #
+    # Runs on every cut, -SkipShowcase or not: that flag is about the published
+    # site under web/, while these files ship in the repository. It must also run
+    # BEFORE Step 5, since `mvnw verify` is where the drift gate would otherwise
+    # fail the release on previews this step exists to refresh.
+    $previews = Join-Path $repoRoot 'assets/readme/examples'
+    $generated = Join-Path $repoRoot 'examples/target/generated-pdfs'
+    if (-not (Test-Path $previews)) {
+        Note "no committed previews at $previews — nothing to refresh"
+        return
+    }
+    if (-not $DryRun -and -not (Test-Path $generated)) {
+        throw "Refresh-CommittedPreviews: $generated is missing — the catalogue must be generated first."
+    }
+
+    $committed = Get-ChildItem -Path $previews -File
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] refresh $($committed.Count) committed previews from $generated" -ForegroundColor Yellow
+        return
+    }
+
+    # The committed folder is flat, so a name is the whole address. Two rendered
+    # documents sharing one would leave whichever the walk reached first deciding what
+    # a preview gets refreshed from — the same silence CommittedAssetDriftTest refuses,
+    # and the reason to refuse it here too: with -SkipVerify that gate never runs, and
+    # the wrong document would be committed under the right name.
+    $rendered = @{}
+    foreach ($file in Get-ChildItem -Path $generated -File -Recurse) {
+        if ($rendered.ContainsKey($file.Name)) {
+            throw ("Refresh-CommittedPreviews: two rendered documents share the name " +
+                   "$($file.Name) ($($rendered[$file.Name]) and $($file.FullName)).")
+        }
+        $rendered[$file.Name] = $file.FullName
+    }
+
+    $missing = @()
+    foreach ($file in $committed) {
+        if ($rendered.ContainsKey($file.Name)) {
+            Copy-Item -Path $rendered[$file.Name] -Destination $file.FullName -Force
+        } else {
+            $missing += $file.Name
+        }
+    }
+    if ($missing.Count -gt 0) {
+        # A committed preview no example renders cannot be refreshed, and the drift
+        # gate fails on it a step later. Say so here, where the name is still known.
+        throw "Refresh-CommittedPreviews: nothing renders $($missing -join ', ')."
+    }
+    Note "previews: $($committed.Count) refreshed from the catalogue"
+}
+
 function Render-ReadmeBanner {
     # Re-renders assets/readme/repository_showcase_render.png — the 2.0 module-first
     # hero (EngineDeckV2Example.renderBannerImage) — so the hero's version pill
@@ -652,7 +778,7 @@ function Render-ReadmeBanner {
     # banner.properties). The `compile` is REQUIRED: banner.properties is filtered
     # at examples-compile time, so the examples module must be recompiled AFTER the
     # Step-1 version bump — otherwise the banner would carry the previous release
-    # version. Runs after Run-ShowcaseSync, which already installed the bumped root
+    # version. Runs after Build-ExampleCatalogue, which already installed the bumped root
     # artifact into the local m2 cache so the examples module resolves it.
     Write-Host "  > Re-render the version-stamped README hero banner" -ForegroundColor Cyan
     $banner = Join-Path $repoRoot 'assets/readme/repository_showcase_render.png'
@@ -968,12 +1094,37 @@ try {
     if (-not $SkipShowcase) {
         Step 3 "Switch ShowcaseMetadata GH_BASE to /blob/$tag"
         Update-ShowcaseGhBase $tag | Out-Null
+    } else {
+        Step 3 "Skipped showcase GH_BASE flip (-SkipShowcase)"
+    }
 
-        Step 4 "Regenerate web/examples.json with $tag links"
-        Run-ShowcaseSync
+    # The catalogue is built either way: the site is copied out of it, and so are the
+    # previews. -SkipShowcase is about the published tree under web/, not about this.
+    Step 4 "Build the example catalogue at $Version"
+    Build-ExampleCatalogue
+
+    # The README assets follow the tag, so only a final cut moves them. On a
+    # pre-release the version they would carry is the qualifier-stripped one — a
+    # release that does not exist yet — so they stay on the last published version
+    # along with the property that records it.
+    #
+    # -SkipShowcase does not skip this: these files ship in the repository, and a
+    # preview left at the previous release is what CommittedAssetDriftTest fails the
+    # next build on. It has to happen before Step 5, which is where that gate runs.
+    if ($isFinalRelease) {
+        Step "4b" "Re-render the README assets at $Version"
+        Update-AssetVersion (Join-Path $repoRoot 'examples/pom.xml') $Version
+        Refresh-CommittedPreviews
         Render-ReadmeBanner
     } else {
-        Step 3 "Skipped showcase GH_BASE flip + regen + banner (-SkipShowcase)"
+        Step "4b" "Skipped the README assets (pre-release cut: they stay on the last published version)"
+    }
+
+    if (-not $SkipShowcase) {
+        Step "4c" "Regenerate web/examples.json with $tag links"
+        Sync-ShowcaseSite
+    } else {
+        Step "4c" "Skipped web/showcase sync (-SkipShowcase)"
     }
 
     if (-not $SkipVerify) {
@@ -1076,12 +1227,20 @@ try {
             $commitFiles += $moduleReadme
         }
     }
+    # The README assets ride along whenever they were re-rendered — every final cut,
+    # -SkipShowcase or not, since that flag is about the published site and these ship
+    # in the repository. A pre-release leaves them alone, so it stages nothing here.
+    if ($isFinalRelease) {
+        $commitFiles += @(
+            'assets/readme/examples',
+            'assets/readme/repository_showcase_render.png'
+        )
+    }
     if (-not $SkipShowcase) {
         $commitFiles += @(
             'examples/src/main/java/com/demcha/examples/support/ShowcaseMetadata.java',
             'web/examples.json',
-            'web/showcase',
-            'assets/readme/repository_showcase_render.png'
+            'web/showcase'
         )
     }
     if ($DryRun) {

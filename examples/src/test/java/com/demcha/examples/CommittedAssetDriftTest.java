@@ -1,11 +1,9 @@
 package com.demcha.examples;
 
 import com.demcha.examples.support.AssetContent;
-import com.demcha.examples.support.ReadmeBannerV2Renderer;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,15 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * already on the next one, so this compares like with like only because the examples module runs
  * its tests with {@code graphcompose.examples.displayVersion} pinned to
  * {@code graphcompose.examples.assetVersion} — the version the committed files were rendered at,
- * recorded in {@code examples/pom.xml} and moved by the release script. Without that the pill in
- * every hero would differ and this would fail on every asset that carries one.</p>
+ * recorded in {@code examples/pom.xml} and moved by the release script. Without that the
+ * coordinate pill alone would differ and this would fail on every preview that carries one.</p>
  */
 class CommittedAssetDriftTest {
 
     private static final Path ASSETS = Path.of("..", "assets", "readme");
     private static final Path PREVIEWS = ASSETS.resolve("examples");
-    private static final String HERO = "repository_showcase_render.png";
-    private static final int HERO_DPI = 200;
 
     /** The decks whose preview the repository commits — see {@link #UNPUBLISHED_DECKS}. */
     private static final Set<String> CURATED_DECKS = Set.of(
@@ -102,22 +98,43 @@ class CommittedAssetDriftTest {
     }
 
     /**
-     * The README hero is committed too, and nothing else regenerates it.
+     * The figures beside the preview folder are rasters, and this cannot compare a raster.
      *
-     * <p>It is not part of the catalogue — the release script renders it on its own — which is
-     * exactly why it drifts unnoticed between releases. Rendering it here costs one page and
-     * closes the one committed asset the catalogue comparison cannot see.</p>
+     * <p>Everything under {@link #PREVIEWS} is a document, and two machines write one document the
+     * same way once the reduction is applied. These are not: each is a page rasterised to a PNG for
+     * README, and rasterising text is where two machines disagree — the same measurement that put
+     * the showcase watermark in {@link AssetContent#UNSTABLE_PARTS}, over a whole page rather than
+     * one band of it. Comparing them would mean a pixel budget, and a budget is a number nobody can
+     * defend a year later.</p>
+     *
+     * <p>So they are written down instead. The list is what this guard can say about them: a
+     * ninth figure appearing here is a file nothing checks, and it should arrive as a decision
+     * rather than as a commit nobody read. {@code assets/readme/v1.5} is left out entirely — those
+     * are the figures of a released line, and re-rendering them would be the bug.</p>
      */
-    @Test
-    void theCommittedHeroMatchesWhatTheBannerRendererRenders(@TempDir Path directory)
-            throws Exception {
-        Path fresh = ReadmeBannerV2Renderer.render(directory.resolve(HERO), HERO_DPI);
+    private static final Set<String> RASTER_FIGURES = Set.of(
+            "barcode-showcase.png",
+            "chart-showcase.png",
+            "feature-catalog.png",
+            "repository_showcase_render.png",
+            "social-card.png",
+            "twin-output-editing.png",
+            "twin-output-pdf.png",
+            "twin-output-pptx.png");
 
-        assertThat(AssetContent.digestOf(fresh))
-                .describedAs("the committed README hero no longer matches what the banner "
-                        + "renderer produces at %d DPI: re-render it, or revert what moved it",
-                        HERO_DPI)
-                .isEqualTo(AssetContent.digestOf(ASSETS.resolve(HERO)));
+    @Test
+    void theOnlyAssetsThisCannotCompareAreTheOnesWrittenDown() throws Exception {
+        Set<String> beside = new TreeSet<>();
+        try (var files = Files.list(ASSETS)) {
+            files.filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .forEach(beside::add);
+        }
+
+        assertThat(beside)
+                .describedAs("an asset beside %s is compared by nothing: either move it in with the "
+                        + "previews so it is, or add it here with the reason it cannot be", PREVIEWS)
+                .isEqualTo(new TreeSet<>(RASTER_FIGURES));
     }
 
     @Test

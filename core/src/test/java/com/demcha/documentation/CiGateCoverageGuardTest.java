@@ -1,0 +1,159 @@
+package com.demcha.documentation;
+
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Guards that the aggregate CI status check watches every job that can run on a
+ * pull request.
+ *
+ * <p>{@code CI Gate} exists so branch protection has one stable check to require
+ * instead of matrix legs the path filter sometimes skips. It fails when a job it
+ * {@code needs} reports {@code failure} or {@code cancelled}; a job the filter
+ * legitimately skipped counts as success, which is the whole point.</p>
+ *
+ * <p>That design has one hole, and it is not hypothetical. {@code changes} — the
+ * path-detection job every heavy job gates on — was absent from the gate's
+ * {@code needs}. When its {@code git fetch} returned HTTP 503 the job failed, the
+ * four reactor jobs downstream resolved to {@code skipped} rather than
+ * {@code failure}, and the gate reported success over a run that compiled nothing.
+ * Both checks branch protection is pointed at were green with zero tests
+ * executed.</p>
+ *
+ * <p>So the rule is: every job in the workflow is either aggregated by the gate or
+ * demonstrably cannot run on a pull request. The second case is derived from the
+ * job's own {@code if:} condition rather than a list somebody maintains, so a new
+ * job joins the gate or fails this test — it cannot slip through by being
+ * forgotten.</p>
+ */
+class CiGateCoverageGuardTest {
+
+    private static final Path PROJECT_ROOT = RepoRoot.get();
+    private static final Path WORKFLOW = PROJECT_ROOT.resolve(".github/workflows/ci.yml");
+
+    /** The aggregate check. It cannot depend on itself. */
+    private static final String GATE = "ci-gate";
+
+    /** A job key: two-space indent under {@code jobs:}, nothing else on the line. */
+    private static final Pattern JOB_KEY = Pattern.compile("(?m)^  ([a-z][a-z0-9-]*):$");
+
+    /** A job-level {@code if:} — four-space indent, first line only. */
+    private static final Pattern JOB_IF = Pattern.compile("(?m)^    if: (.*)$");
+
+    /** An inline {@code needs: [a, b, c]} flow sequence. */
+    private static final Pattern JOB_NEEDS = Pattern.compile("(?m)^    needs: \\[([^]]*)]");
+
+    /**
+     * A job that only runs on a schedule or a manual dispatch never appears on a
+     * pull request, so the gate has nothing to aggregate from it.
+     */
+    private static final Pattern SCHEDULE_ONLY = Pattern.compile("github\\.event_name == 'schedule'");
+
+    @Test
+    void ciGateAggregatesEveryJobThatCanRunOnAPullRequest() throws IOException {
+        Map<String, String> jobs = jobBlocks();
+
+        assertThat(jobs)
+                .describedAs("no jobs parsed out of %s — this guard is reading a workflow shape "
+                        + "that moved, so it is no longer guarding anything", relative(WORKFLOW))
+                .isNotEmpty()
+                .containsKey(GATE);
+
+        Set<String> aggregated = needsOf(jobs.get(GATE));
+        assertThat(aggregated)
+                .describedAs("the '%s' job must declare an inline 'needs: [...]' list", GATE)
+                .isNotEmpty();
+
+        List<String> unwatched = new ArrayList<>();
+        for (Map.Entry<String, String> job : jobs.entrySet()) {
+            String id = job.getKey();
+            if (id.equals(GATE) || runsOnlyOnASchedule(job.getValue()) || aggregated.contains(id)) {
+                continue;
+            }
+            unwatched.add(id);
+        }
+
+        assertThat(unwatched)
+                .describedAs("every job that can run on a pull request must be in the '%s' needs "
+                        + "list, or a failure there leaves the aggregate check green over a run "
+                        + "that built nothing", GATE)
+                .isEmpty();
+    }
+
+    @Test
+    void ciGateDoesNotDependOnAJobThatIsGone() throws IOException {
+        Map<String, String> jobs = jobBlocks();
+        Set<String> aggregated = needsOf(jobs.get(GATE));
+
+        assertThat(jobs.keySet())
+                .describedAs("'%s' aggregates a job id that no longer exists: the workflow would "
+                        + "fail to load, and the rename that caused it is the finding", GATE)
+                .containsAll(aggregated);
+    }
+
+    /** Job id to the source block that declares it, in workflow order. */
+    private static Map<String, String> jobBlocks() throws IOException {
+        // The workflow is checked out with CRLF on Windows. Normalise once, so the
+        // line-anchored patterns below capture ids and conditions without a trailing
+        // carriage return riding along into every comparison.
+        String workflow = Files.readString(WORKFLOW).replace("\r\n", "\n");
+        // `on:` carries keys at the same indentation as a job (`push:`, `schedule:`),
+        // so parsing starts after the `jobs:` key rather than at the top of the file.
+        int jobsAt = workflow.indexOf("\njobs:\n");
+        assertThat(jobsAt)
+                .describedAs("no top-level 'jobs:' key in %s", relative(WORKFLOW))
+                .isNotNegative();
+        String body = workflow.substring(jobsAt);
+
+        Map<String, String> blocks = new LinkedHashMap<>();
+        Matcher key = JOB_KEY.matcher(body);
+        List<String> ids = new ArrayList<>();
+        List<Integer> starts = new ArrayList<>();
+        while (key.find()) {
+            ids.add(key.group(1));
+            starts.add(key.end());
+        }
+        for (int i = 0; i < ids.size(); i++) {
+            int end = i + 1 < ids.size() ? starts.get(i + 1) : body.length();
+            blocks.put(ids.get(i), body.substring(starts.get(i), end));
+        }
+        return blocks;
+    }
+
+    private static Set<String> needsOf(String jobBlock) {
+        Matcher needs = JOB_NEEDS.matcher(jobBlock);
+        if (!needs.find()) {
+            return Set.of();
+        }
+        Set<String> ids = new LinkedHashSet<>();
+        for (String id : needs.group(1).split(",")) {
+            String trimmed = id.trim();
+            if (!trimmed.isEmpty()) {
+                ids.add(trimmed);
+            }
+        }
+        return ids;
+    }
+
+    private static boolean runsOnlyOnASchedule(String jobBlock) {
+        Matcher condition = JOB_IF.matcher(jobBlock);
+        return condition.find() && SCHEDULE_ONLY.matcher(condition.group(1)).find();
+    }
+
+    private static String relative(Path path) {
+        return PROJECT_ROOT.relativize(path).toString().replace('\\', '/');
+    }
+}

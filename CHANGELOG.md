@@ -39,6 +39,17 @@ follow semantic versioning; release dates are ISO 8601.
   four that did match kept the job green. The list is now the five guards that
   live in the engine module, and `CiGuardListGuardTest` fails the job if a name in
   it stops resolving.
+- **The aggregate status check notices when nothing was built.** `CI Gate` is one of
+  the two checks `develop` and `main` require, and it watched the four heavy jobs
+  without watching the path-detection job they all gate on. When that job's
+  `git fetch` returned HTTP 503 the four resolved to `skipped` rather than `failure`,
+  so the gate found nothing to report and went green over a run that compiled
+  nothing — leaving both required checks green and, on a pull request, the branch
+  protection satisfied by a build that never happened. The gate now aggregates the
+  detection job too, and `CiGateCoverageGuardTest` reads the workflow and fails if
+  any job that can run on a pull request is left out of it. Schedule-only jobs are
+  recognised from their own `if:` condition rather than an exclusion list, so a new
+  job either joins the gate or fails the guard.
 - **A documentation-only pull request is compiled.** Markdown was not a
   change-detection input, so a PR touching only `.md` skipped the reactor build
   and merged without `DocumentationSnippetCompileTest` ever compiling the java

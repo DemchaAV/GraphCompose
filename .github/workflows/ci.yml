@@ -55,7 +55,7 @@ jobs:
         # in qa) run in build-and-test below, which now also covers docs-only PRs.
         run: |
           ./mvnw -B -ntp clean \
-            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest,CodeQlScopeGuardTest" \
+            "-Dtest=EnginePdfBoundaryTest,DocumentationCoverageTest,CanonicalSurfaceGuardTest,PackageMapGuardTest,VersionConsistencyGuardTest,CiGuardListGuardTest,CiGateCoverageGuardTest,CodeQlScopeGuardTest" \
             test -pl :graph-compose-core
 
   changes:
@@ -435,8 +435,14 @@ jobs:
     # "Architecture and Documentation Guards") instead of the individual, sometimes
     # -skipped matrix legs so a docs-only PR is never left waiting on a check that
     # never reports.
+    #
+    # `changes` is in the list even though it decides rather than builds. When its
+    # fetch fails the heavy jobs downstream resolve to `skipped`, not `failure`, so
+    # a gate that watched only them stayed green over a run where nothing was built.
+    # Every job that can run on a pull request belongs here; only the schedule-only
+    # benchmark job is outside, and CiGateCoverageGuardTest holds that line.
     if: always() && github.event_name != 'schedule'
-    needs: [architecture-and-documentation-guards, build-and-test, examples-generation, binary-compat, perf-smoke]
+    needs: [architecture-and-documentation-guards, changes, build-and-test, examples-generation, binary-compat, perf-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job failed

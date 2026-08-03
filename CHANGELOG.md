@@ -162,6 +162,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The examples stop describing the releases they were written for.** Eight committed
+  previews read as documents about 1.x: three framed a current feature as "v1.6 Phase
+  A/B/C" — a plan for a release that shipped — one told the reader to tag v1.9.0 to
+  publish a module that has been on Central since, two signed off "Composed with
+  GraphCompose v1.5", one badged a canvas demo "v1.8", and the certificate on the
+  free-canvas page was awarded for shipping v1.6. They describe what they demonstrate
+  now, so nothing in them dates again. The hyperlink example was worse than dated: both
+  URLs it rendered — a template-authoring page and a v1.6 roadmap — had been deleted, so
+  the example that demonstrates links shipped two of them broken. They point at the
+  preset cheatsheet and the extension guide.
+- **The drift gate stops going red on a tree nobody touched.** `pdf-chrome.pdf`
+  demonstrates the `{date}` header token, which resolves from the clock, so its committed
+  copy differed from a fresh render every day but the one it was committed on. It is
+  named as exempt with the reason rather than tolerated, and the entry stays until that
+  date can be pinned the way both fixed backends already accept a `deterministic(...)`
+  instant.
 - **A committed preview can be reproduced from a branch that has moved past it.** The
   documents that print a version took it from the reactor, which between releases sits on
   the next patch — so a render from `develop` named a version nobody could depend on yet,

@@ -115,11 +115,11 @@ public final class RichTextShowcaseExample {
                             "link",
                             rich -> rich
                                     .plain("Read the ")
-                                    .link("template authoring cheatsheet",
-                                            "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/template-authoring.md")
+                                    .link("preset authoring cheatsheet",
+                                            "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/templates/v2-layered/authoring-presets.md")
                                     .plain(" or the ")
-                                    .link("v1.6 roadmap",
-                                            "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/v1.6-roadmap.md")
+                                    .link("extension guide",
+                                            "https://github.com/DemchaAV/GraphCompose/blob/develop/docs/contributing/extension-guide.md")
                                     .plain(" for the next steps.")))
                     .addSection("Composing runs", section -> labelledRow(section,
                             "append",

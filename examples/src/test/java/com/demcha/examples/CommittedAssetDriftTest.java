@@ -108,6 +108,22 @@ class CommittedAssetDriftTest {
         GeneratedCatalogue.generateOnce();
     }
 
+    /**
+     * Previews whose subject is the moment they were rendered.
+     *
+     * <p>{@code pdf-chrome.pdf} demonstrates the {@code {date}} header token, which
+     * {@code HeaderFooterConfig} resolves from the clock. Its committed copy therefore differs
+     * from a fresh render on every day but the one it was committed on — this guard would have
+     * gone red each morning on a tree nobody had touched, which is the fastest way to teach a
+     * team to ignore it.</p>
+     *
+     * <p>Named rather than tolerated: the whole document is left out, and the entry stays until
+     * the date behind that token can be pinned the way both fixed backends already accept a
+     * {@code deterministic(...)} instant. Everything else about the file — that it exists, and
+     * that an example still renders it — is still checked below.</p>
+     */
+    private static final Set<String> CLOCK_DEPENDENT_PREVIEWS = Set.of("pdf-chrome.pdf");
+
     @Test
     void everyCommittedPreviewMatchesWhatTheCatalogueRenders() throws Exception {
         Map<String, Path> generated = generatedByName();
@@ -118,7 +134,8 @@ class CommittedAssetDriftTest {
             Path fresh = generated.get(name);
             if (fresh == null) {
                 missing.add(name);
-            } else if (!AssetContent.digestOf(PREVIEWS.resolve(name))
+            } else if (!CLOCK_DEPENDENT_PREVIEWS.contains(name)
+                    && !AssetContent.digestOf(PREVIEWS.resolve(name))
                     .equals(AssetContent.digestOf(fresh))) {
                 drifted.add(name);
             }
@@ -192,6 +209,27 @@ class CommittedAssetDriftTest {
      * catches its opposites too — a new example nobody decided to publish, a preview added
      * without a source, a rename that lands as one of each.</p>
      */
+    /**
+     * A preview left out of the comparison is still a preview somebody has to keep.
+     *
+     * <p>An entry in {@link #CLOCK_DEPENDENT_PREVIEWS} turns the content check off for a whole
+     * file, so the two things that remain knowable about it are asserted here: it is committed,
+     * and an example still renders it. A name that stops matching either is an exemption for
+     * nothing — the same hole a mistyped part or shape key would open.</p>
+     */
+    @Test
+    void everyPreviewLeftOutOfTheComparisonStillExists() throws Exception {
+        Map<String, Path> generated = generatedByName();
+        for (String name : new TreeSet<>(CLOCK_DEPENDENT_PREVIEWS)) {
+            assertThat(PREVIEWS.resolve(name))
+                    .describedAs("%s is exempt from the comparison but is not committed", name)
+                    .exists();
+            assertThat(generated.get(name))
+                    .describedAs("%s is exempt from the comparison but nothing renders it", name)
+                    .isNotNull();
+        }
+    }
+
     @Test
     void theCatalogueIsExactlyThePublishedPreviewsPlusTheUnpublishedOnes() throws Exception {
         Set<String> committed = new TreeSet<>(committedPreviews());

@@ -75,8 +75,8 @@ public final class InlineHighlightExample {
                     .addSection("Code", section -> labelledRow(section,
                             "code(text) — monospace on a light chip, engine defaults",
                             rich -> rich
-                                    .plain("Run ").code("./mvnw verify").plain(" then tag ")
-                                    .code("v1.9.0").plain(" to publish ").code("graph-compose-emoji")))
+                                    .plain("Run ").code("./mvnw verify").plain(" before pushing, and ")
+                                    .code("-Dtest=Name").plain(" to narrow it to one class")))
                     .addSection("Badges", section -> labelledRow(section,
                             "chip(text, fg, bg) — a coloured status badge between words",
                             rich -> rich

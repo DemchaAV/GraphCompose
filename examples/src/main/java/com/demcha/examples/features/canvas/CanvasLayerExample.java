@@ -18,7 +18,7 @@ import com.demcha.examples.support.ExampleOutputPaths;
 import java.nio.file.Path;
 
 /**
- * Runnable showcase for the v1.6 Phase C
+ * Runnable showcase for the
  * {@link com.demcha.compose.document.node.CanvasLayerNode} —
  * places child nodes at explicit {@code (x, y)} coordinates
  * inside a fixed-size bounding box. The generated PDF is a
@@ -108,7 +108,7 @@ public final class CanvasLayerExample {
             document.pageFlow()
                     .name("CanvasShowcase")
                     .spacing(8)
-                    .addParagraph("v1.6 Phase C — CanvasLayerNode (controlled free-canvas)", title)
+                    .addParagraph("CanvasLayerNode — controlled free-canvas", title)
                     .addParagraph(
                             "Every element below is placed at an explicit (x, y) inside the canvas's "
                                     + "523 x 360 bounding box. Coordinates use the screen convention: "
@@ -138,7 +138,7 @@ public final class CanvasLayerExample {
                                     DocumentInsets.zero(), DocumentInsets.zero()),
                                     0, 60)
                             .position(new ParagraphNode(
-                                    "Headline", "GraphCompose v1.6",
+                                    "Headline", "GraphCompose",
                                     headline, TextAlign.CENTER, 0.0,
                                     DocumentInsets.zero(), DocumentInsets.zero()),
                                     0, 95)
@@ -158,10 +158,10 @@ public final class CanvasLayerExample {
                             // each side.
                             .position(new ParagraphNode(
                                     "Citation",
-                                    "Issued for shipping the v1.6 expressive release "
-                                            + "with Templates v2, nested lists, composed "
-                                            + "table cells, and pixel-precise free-canvas "
-                                            + "layout in a single iteration.",
+                                    "Issued for a page composed on a free canvas: "
+                                            + "every line placed at an exact point, wrapped "
+                                            + "to a width the layout was told rather than "
+                                            + "left to infer.",
                                     bodyText, TextAlign.CENTER, 2.0,
                                     DocumentInsets.zero(),
                                     new DocumentInsets(0, 80, 0, 0)),

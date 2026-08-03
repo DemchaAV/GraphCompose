@@ -1,6 +1,7 @@
 package com.demcha.compose.engine.components.content.header_footer;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -20,9 +21,27 @@ class HeaderFooterRenderDateTest {
 
     private static final String PROPERTY = "graphcompose.renderDate";
 
+    private String pinnedByTheBuild;
+
+    /**
+     * The property is global, so this puts back whatever it found rather than clearing it.
+     *
+     * <p>A build that pins the date — the examples module does, so its previews are reproducible —
+     * would otherwise have it removed by whichever test ran first, and the failure would land
+     * somewhere else entirely.</p>
+     */
+    @BeforeEach
+    void rememberWhatTheBuildSet() {
+        pinnedByTheBuild = System.getProperty(PROPERTY);
+    }
+
     @AfterEach
-    void releaseTheProperty() {
-        System.clearProperty(PROPERTY);
+    void putItBack() {
+        if (pinnedByTheBuild == null) {
+            System.clearProperty(PROPERTY);
+        } else {
+            System.setProperty(PROPERTY, pinnedByTheBuild);
+        }
     }
 
     @Test

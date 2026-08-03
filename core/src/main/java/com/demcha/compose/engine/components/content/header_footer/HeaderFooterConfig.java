@@ -98,7 +98,34 @@ public final class HeaderFooterConfig {
         return text
                 .replace("{page}", numberStyle.format(counted))
                 .replace("{pages}", numberStyle.format(countedTotal))
-                .replace("{date}", java.time.LocalDate.now().toString());
+                .replace("{date}", renderDate().toString());
+    }
+
+    /**
+     * The date the {@code {date}} token resolves to.
+     *
+     * <p>The clock by default. A build that has to produce the same bytes twice can pin it with
+     * {@code -Dgraphcompose.renderDate=YYYY-MM-DD} — the same need {@code SOURCE_DATE_EPOCH}
+     * answers for archives, and the reason this repository can hold its committed example
+     * previews to a byte comparison: a document that prints today re-renders differently every
+     * morning, and a guard that reports that is a guard people learn to ignore.</p>
+     *
+     * <p>An unparseable value is the clock again rather than a failed render: a mistyped property
+     * should not stop a document being produced, and the drift it causes surfaces where drift is
+     * checked.</p>
+     *
+     * @return the pinned date, or today
+     */
+    static java.time.LocalDate renderDate() {
+        String pinned = System.getProperty("graphcompose.renderDate");
+        if (pinned == null || pinned.isBlank()) {
+            return java.time.LocalDate.now();
+        }
+        try {
+            return java.time.LocalDate.parse(pinned.trim());
+        } catch (java.time.format.DateTimeParseException notADate) {
+            return java.time.LocalDate.now();
+        }
     }
 
     /**
@@ -129,6 +156,6 @@ public final class HeaderFooterConfig {
         return text
                 .replace("{page}", String.valueOf(currentPage))
                 .replace("{pages}", String.valueOf(totalPages))
-                .replace("{date}", java.time.LocalDate.now().toString());
+                .replace("{date}", renderDate().toString());
     }
 }

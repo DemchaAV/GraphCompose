@@ -108,25 +108,6 @@ class CommittedAssetDriftTest {
         GeneratedCatalogue.generateOnce();
     }
 
-    /**
-     * Previews whose subject is the moment they were rendered.
-     *
-     * <p>{@code pdf-chrome.pdf} demonstrates the {@code {date}} header token, which
-     * {@code HeaderFooterConfig} resolves from the clock. Its committed copy therefore differs
-     * from a fresh render on every day but the one it was committed on — this guard would have
-     * gone red each morning on a tree nobody had touched, which is the fastest way to teach a
-     * team to ignore it.</p>
-     *
-     * <p>Named rather than tolerated, and still compared: the date is replaced and the document
-     * is read by what it draws and declares — see
-     * {@link AssetContent#clockIndependentPdfDigest(Path)}. Dropping the file instead would have
-     * left a page that demonstrates a watermark, an information dictionary, a header, a footer
-     * and bookmarks checked by nothing, to absorb eight characters. The entry stays until the
-     * date behind that token can be pinned the way both fixed backends already accept a
-     * {@code deterministic(...)} instant; with that, this list and its comparison go away.</p>
-     */
-    private static final Set<String> CLOCK_DEPENDENT_PREVIEWS = Set.of("pdf-chrome.pdf");
-
     @Test
     void everyCommittedPreviewMatchesWhatTheCatalogueRenders() throws Exception {
         Map<String, Path> generated = generatedByName();
@@ -137,7 +118,8 @@ class CommittedAssetDriftTest {
             Path fresh = generated.get(name);
             if (fresh == null) {
                 missing.add(name);
-            } else if (!sameDocument(PREVIEWS.resolve(name), fresh, name)) {
+            } else if (!AssetContent.digestOf(PREVIEWS.resolve(name))
+                    .equals(AssetContent.digestOf(fresh))) {
                 drifted.add(name);
             }
         }
@@ -210,27 +192,6 @@ class CommittedAssetDriftTest {
      * catches its opposites too — a new example nobody decided to publish, a preview added
      * without a source, a rename that lands as one of each.</p>
      */
-    /**
-     * A preview left out of the comparison is still a preview somebody has to keep.
-     *
-     * <p>An entry in {@link #CLOCK_DEPENDENT_PREVIEWS} turns the content check off for a whole
-     * file, so the two things that remain knowable about it are asserted here: it is committed,
-     * and an example still renders it. A name that stops matching either is an exemption for
-     * nothing — the same hole a mistyped part or shape key would open.</p>
-     */
-    @Test
-    void everyPreviewLeftOutOfTheComparisonStillExists() throws Exception {
-        Map<String, Path> generated = generatedByName();
-        for (String name : new TreeSet<>(CLOCK_DEPENDENT_PREVIEWS)) {
-            assertThat(PREVIEWS.resolve(name))
-                    .describedAs("%s is exempt from the comparison but is not committed", name)
-                    .exists();
-            assertThat(generated.get(name))
-                    .describedAs("%s is exempt from the comparison but nothing renders it", name)
-                    .isNotNull();
-        }
-    }
-
     @Test
     void theCatalogueIsExactlyThePublishedPreviewsPlusTheUnpublishedOnes() throws Exception {
         Set<String> committed = new TreeSet<>(committedPreviews());
@@ -263,23 +224,6 @@ class CommittedAssetDriftTest {
      * The site reads this folder flat, so a folder inside it is a mistake worth naming rather
      * than passing over.</p>
      */
-    /**
-     * Compares two renders of one preview, by content unless the content carries a clock.
-     *
-     * <p>A preview in {@link #CLOCK_DEPENDENT_PREVIEWS} is still compared — by what it draws and
-     * declares, with the date it prints replaced. Skipping it instead would have left a document
-     * that demonstrates a watermark, an information dictionary, a header, a footer and bookmarks
-     * checked by nothing at all, to absorb eight characters.</p>
-     */
-    private static boolean sameDocument(Path committed, Path fresh, String name)
-            throws IOException {
-        if (CLOCK_DEPENDENT_PREVIEWS.contains(name)) {
-            return AssetContent.clockIndependentPdfDigest(committed)
-                    .equals(AssetContent.clockIndependentPdfDigest(fresh));
-        }
-        return AssetContent.digestOf(committed).equals(AssetContent.digestOf(fresh));
-    }
-
     private static Set<String> committedPreviews() throws IOException {
         Set<String> names = new TreeSet<>();
         Set<String> folders = new TreeSet<>();

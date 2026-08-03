@@ -172,15 +172,13 @@ follow semantic versioning; release dates are ISO 8601.
   URLs it rendered — a template-authoring page and a v1.6 roadmap — had been deleted, so
   the example that demonstrates links shipped two of them broken. They point at the
   preset cheatsheet and the extension guide.
-- **The drift gate stops going red on a tree nobody touched.** `pdf-chrome.pdf`
-  demonstrates the `{date}` header token, which resolves from the clock, so its committed
-  copy differed from a fresh render every day but the one it was committed on. The date
-  lives inside a compressed stream, so it is decompressed and replaced: that one file is
-  compared by what it draws and declares — page content, information dictionary,
-  bookmarks — rather than by its bytes. Dropping it from the comparison instead would
-  have left the page that demonstrates a watermark, metadata, a header, a footer and
-  bookmarks checked by nothing. The workaround goes away when that date can be pinned the
-  way both fixed backends already accept a `deterministic(...)` instant.
+- **A document that prints the date can be rendered twice and come out the same.** The
+  `{date}` header token resolved from the clock with no way to pin it, so any document
+  using it was a different file every morning — and the example demonstrating it could
+  not be held to its committed preview at all. `-Dgraphcompose.renderDate=YYYY-MM-DD`
+  fixes what the token resolves to, the way `SOURCE_DATE_EPOCH` does for archives; unset,
+  it is the clock as before. The examples module pins it, so that preview is now compared
+  like every other one instead of being trusted.
 - **Two things the previews used to be read for are now checked.** A preview naming a
   release the project has moved past, and an example rendering a link to a repository
   path that no longer exists — both render perfectly, so only reading caught them, and

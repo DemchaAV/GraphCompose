@@ -1,12 +1,16 @@
 package com.demcha.examples;
 
+import com.demcha.examples.support.ExampleVersion;
+
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -15,6 +19,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,28 +40,35 @@ class ExampleContentGuardTest {
     private static final Path SOURCES = Path.of("src", "main", "java");
 
     /**
-     * A release the project has left behind, named in a rendered page.
+     * A release named in a rendered page, whatever line it belongs to.
      *
      * <p>Matches the {@code v}-prefixed form, which is how prose names a release — "v1.6 Phase A",
      * "Composed with GraphCompose v1.5", "tag v1.9.0". A bare {@code 1.9.0} is deliberately not
      * matched: a Maven coordinate is the subject of the inline-code demo, not a stamp on it.</p>
+     *
+     * <p>Which majors are stale is read from the version being built rather than written down, so
+     * this keeps working when the project is on 3.x and today's previews become the dated ones.
+     * The current major is allowed — a hero's coordinate pill names it on purpose.</p>
      */
-    private static final Pattern PAST_RELEASE = Pattern.compile("\\bv[01]\\.\\d+(\\.\\d+)?\\b");
+    private static final Pattern RELEASE = Pattern.compile("\\bv(\\d+)\\.\\d+(\\.\\d+)?\\b");
+
+    private static final int CURRENT_MAJOR =
+            Integer.parseInt(ExampleVersion.current().split("[.\\-]")[0]);
 
     @Test
     void noCommittedPreviewNamesAReleaseTheProjectHasLeftBehind() throws IOException {
         List<String> dated = new ArrayList<>();
         try (var files = Files.list(PREVIEWS)) {
-            for (Path pdf : files.filter(p -> p.toString().endsWith(".pdf")).sorted().toList()) {
-                Set<String> found = new TreeSet<>();
-                try (PDDocument document = Loader.loadPDF(pdf.toFile())) {
-                    Matcher match = PAST_RELEASE.matcher(new PDFTextStripper().getText(document));
-                    while (match.find()) {
-                        found.add(match.group());
+            for (Path preview : files.filter(Files::isRegularFile).sorted().toList()) {
+                Set<String> stale = new TreeSet<>();
+                Matcher match = RELEASE.matcher(readableText(preview));
+                while (match.find()) {
+                    if (Integer.parseInt(match.group(1)) < CURRENT_MAJOR) {
+                        stale.add(match.group());
                     }
                 }
-                if (!found.isEmpty()) {
-                    dated.add(pdf.getFileName() + " " + found);
+                if (!stale.isEmpty()) {
+                    dated.add(preview.getFileName() + " " + stale);
                 }
             }
         }
@@ -67,6 +80,43 @@ class ExampleContentGuardTest {
                         + "re-reads these once they are committed")
                 .isEmpty();
     }
+
+    /**
+     * The words a reader sees, whichever of the three formats the preview is.
+     *
+     * <p>A deck and a Word document keep their text in XML inside the package, so they are read as
+     * the package rather than through a PDF stripper. Checking only the PDFs would have left the
+     * six committed decks outside a guard whose name says every preview — and they are the ones a
+     * reader is most likely to open.</p>
+     */
+    private static String readableText(Path preview) throws IOException {
+        String name = preview.getFileName().toString();
+        if (name.endsWith(".pdf")) {
+            try (PDDocument document = Loader.loadPDF(preview.toFile())) {
+                return new PDFTextStripper().getText(document);
+            }
+        }
+        if (!name.endsWith(".pptx") && !name.endsWith(".docx")) {
+            return "";
+        }
+        StringBuilder text = new StringBuilder();
+        try (ZipInputStream zip =
+                     new ZipInputStream(new ByteArrayInputStream(Files.readAllBytes(preview)))) {
+            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
+                if (entry.getName().endsWith(".xml")) {
+                    Matcher run = TEXT_RUN.matcher(
+                            new String(zip.readAllBytes(), StandardCharsets.UTF_8));
+                    while (run.find()) {
+                        text.append(run.group(1)).append(' ');
+                    }
+                }
+            }
+        }
+        return text.toString();
+    }
+
+    /** A run of text in a deck ({@code <a:t>}) or a Word document ({@code <w:t>}). */
+    private static final Pattern TEXT_RUN = Pattern.compile("<[aw]:t[^>]*>([^<]*)</[aw]:t>");
 
     private static final Pattern REPOSITORY_LINK = Pattern.compile(
             "https://github\\.com/DemchaAV/GraphCompose/blob/[^/\"]+/([^\"\\s)]+)");

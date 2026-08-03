@@ -201,6 +201,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The example catalogue stops calling current code legacy.** Two examples sat under
+  a heading reading "🗄️ Legacy — pre-rebuild examples kept for downstream callers still
+  on V1; do not start new code here", pointing at a V1 → V2 migration guide. There is no
+  V1: that surface was removed in 2.0, both examples compile against the current DSL,
+  and three hundred lines further down the same file called one of them a "useful
+  starting point". They are what they always were — documents assembled from primitives
+  with no template behind them — and the category now says that.
+- **Reading one example no longer starts by rendering a hundred.** The run
+  instructions led with `GenerateAllExamples`, which empties the output directory and
+  regenerates the whole catalogue, and only afterwards mentioned running a single class.
+  A newcomer following the page in order paid for the catalogue before seeing one
+  document. Single-example first now, with the rule for deriving any other example's
+  main class from its source path, and the batch entry point below it — described as
+  what it actually is, the source both `cut-release.ps1` and `ShowcaseSync` read from
+  rather than something that publishes anything itself.
 - **The landing page lets you run it before it finishes selling it.** Ninety-one lines
   and twelve images stood between the title and `## Installation`, most of them a second
   showcase: thirty-five lines demonstrating the PowerPoint backend, with two renders and

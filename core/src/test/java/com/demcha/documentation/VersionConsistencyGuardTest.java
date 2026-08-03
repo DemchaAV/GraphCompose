@@ -167,6 +167,23 @@ class VersionConsistencyGuardTest {
                 .isEqualTo(core);
     }
 
+    /**
+     * The wrapper builds its javadoc jar from the engine's sources, which are
+     * Lombok-annotated, so it feeds Lombok to the javadoc plugin as an additional
+     * dependency. That pins a second literal of a version the engine already owns —
+     * and a javadoc classpath one release behind fails with "package lombok does not
+     * exist" only during a release build, which is the worst place to find out.
+     */
+    @Test
+    void wrapperJavadocLombokVersionTracksTheEngine() throws Exception {
+        String engine = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "lombok.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("wrapper/pom.xml"), "lombok.version"))
+                .describedAs("wrapper lombok.version feeds the javadoc plugin that documents the "
+                        + "engine's sources; it must match the engine pom's (%s)", engine)
+                .isEqualTo(engine);
+    }
+
     @Test
     void graphComposeWrapperStaysAJarOverCore() throws Exception {
         Element project = parse(PROJECT_ROOT.resolve("wrapper/pom.xml")).getDocumentElement();

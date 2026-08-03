@@ -1,7 +1,7 @@
 # GraphCompose Examples
 
 A runnable, single-file Java example for every public surface in
-GraphCompose — built-in templates, v1.5 cinematic features, public-API
+GraphCompose — built-in templates, cinematic layout features, public-API
 showcases, and a kitchen-sink master demo. Each example writes a PDF
 to `examples/target/generated-pdfs/`; the same PDFs are committed to
 [`assets/readme/examples/`](../assets/readme/examples/) so you can
@@ -15,23 +15,32 @@ Install the library artifact once from the repository root:
 ./mvnw -DskipTests install
 ```
 
-Then run every example in one shot:
+Then run one example by passing its main class:
+
+```bash
+./mvnw -f examples/pom.xml exec:java \
+    -Dexec.mainClass=com.demcha.examples.flagships.ModuleFirstFileExample
+```
+
+For a different one, take a row from [🚀 Start here](#-start-here) below and turn its
+Source path into a class name: drop `src/main/java/` and `.java`, then swap `/` for `.`.
+So `src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java` becomes
+`com.demcha.examples.flagships.ModuleFirstFileExample`.
+
+Generated PDFs land in `examples/target/generated-pdfs/`. The same `mvnw.cmd` form
+works on Windows PowerShell with backslash paths.
+
+To regenerate the **whole catalogue** — roughly a hundred documents, and the output
+directory is emptied first — run the batch entry point. You do not need it to read one
+example; it exists because two other things consume its output. `cut-release.ps1`
+re-copies the committed subset under `assets/readme/examples/` from it, and
+`ShowcaseSync` mirrors the full catalogue into the static site under `web/showcase/`,
+rendering the PNG thumbnails and rewriting `web/examples.json`:
 
 ```bash
 ./mvnw -f examples/pom.xml exec:java \
     -Dexec.mainClass=com.demcha.examples.GenerateAllExamples
 ```
-
-…or run a single example by passing its main class:
-
-```bash
-./mvnw -f examples/pom.xml exec:java \
-    -Dexec.mainClass=com.demcha.examples.flagships.MasterShowcaseExample
-```
-
-Generated PDFs land in `examples/target/generated-pdfs/`. The runner empties that
-directory first, so what is left is exactly what this run produced. The same
-`mvnw.cmd` form works on Windows PowerShell with backslash paths.
 
 The documents that print a version take it from the reactor, which between releases
 sits on the next patch. To reproduce a published document from a development branch,
@@ -65,7 +74,7 @@ are with the canonical DSL, then jump to its detailed section below.
 > 🧱 **Core DSL** — features you'll author against every day once the basics click.
 > 📋 **Templates recommended** — the v2 / layered template surfaces and how to drive them; pick when you want a one-line CV / invoice / proposal / cover-letter.
 > 🔧 **Advanced SPI** — production-deployment patterns, specialty SPIs (shapes, transforms, barcodes), engine-level tools (snapshots).
-> 🗄️ **Legacy** — pre-rebuild examples kept for downstream callers still on V1; do not start new code here. See [`docs/templates/which-template-system.md`](../docs/templates/which-template-system.md) for the V1 → V2 migration path.
+> ✍️ **Hand-composed** — no template involved: the same primitives assembled directly, for when your document is not one of the built-in families.
 
 ### 🚀 Start here
 
@@ -135,16 +144,16 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Layout snapshot regression](#layout-snapshot-regression) | Deterministic `layoutSnapshot()` workflow with baseline + drift report — production regression-testing pattern | [PDF](../assets/readme/examples/invoice-snapshot-regression.pdf) · [Source](src/main/java/com/demcha/examples/features/snapshots/LayoutSnapshotRegressionExample.java) |
 | [Debug overlay](#debug-overlay) | `DocumentDebugOptions` — guide lines + semantic node-path labels on the sheet; trace any misplaced block back to the builder call that authored it | [PDF](../assets/readme/examples/debug-overlay.pdf) · [Source](src/main/java/com/demcha/examples/features/debug/DebugOverlayExample.java) |
 | [Business report cover](#business-report-cover) | Single-page Q1 investor brief — hero image, KPI cards, bar chart, metrics table; the same composition also renders as an editable PowerPoint deck (KPI cards, chart, and table stay native shapes) via `buildPptx()` | [PDF](../assets/readme/examples/business-report.pdf) · [PPTX](../assets/readme/examples/business-report.pptx) · [Source](src/main/java/com/demcha/examples/flagships/BusinessReportExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/BusinessReportPptxExample.java) |
-| Financial report one-pager | Single-page monthly financial dashboard — three margin gauges, cash & stacked-OPEX charts, a revenue donut, and forecast bars; all v1.8 native vector charts plus inline sparklines and a path-clipped photo masthead; the same composition also renders as an editable PowerPoint deck via `buildPptx()` | [PDF](../assets/readme/examples/financial-report.pdf) · [PPTX](../assets/readme/examples/financial-report.pptx) · [Source](src/main/java/com/demcha/examples/flagships/FinancialReportExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/FinancialReportPptxExample.java) |
+| Financial report one-pager | Single-page monthly financial dashboard — three margin gauges, cash & stacked-OPEX charts, a revenue donut, and forecast bars; native vector charts plus inline sparklines and a path-clipped photo masthead; the same composition also renders as an editable PowerPoint deck via `buildPptx()` | [PDF](../assets/readme/examples/financial-report.pdf) · [PPTX](../assets/readme/examples/financial-report.pptx) · [Source](src/main/java/com/demcha/examples/flagships/FinancialReportExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/FinancialReportPptxExample.java) |
 | [Master showcase](#master-showcase) | Kitchen-sink "Q2 sample report" combining the canonical surface end-to-end; the same composition also renders as a multi-slide editable PowerPoint deck via `buildPptx()` | [PDF](../assets/readme/examples/master-showcase.pdf) · [PPTX](../assets/readme/examples/master-showcase.pptx) · [Source](src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) · [PPTX source](src/main/java/com/demcha/examples/flagships/MasterShowcasePptxExample.java) |
 | Feature catalog | Browsable reference PDF: every shipped capability as a block — outline-clickable heading, the exact API call, the rendered result right under it | [PDF](../assets/readme/examples/feature-catalog.pdf) · [Source](src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java) |
-| Book template | A full novel front: full-bleed wave cover, a clickable dotted-leader table of contents with live page numbers, and chapters — the v1.9 book primitives (`pageMargins`, `addTableOfContents`, `DocumentPageNumbering`, container `bookmark`, `viewerPreferences`) in **one session**, no external PDF merge | [PDF](../assets/readme/examples/book-template.pdf) · [Source](src/main/java/com/demcha/examples/features/title/BookTemplateExample.java) |
+| Book template | A full novel front: full-bleed wave cover, a clickable dotted-leader table of contents with live page numbers, and chapters — the book primitives (`pageMargins`, `addTableOfContents`, `DocumentPageNumbering`, container `bookmark`, `viewerPreferences`) in **one session**, no external PDF merge | [PDF](../assets/readme/examples/book-template.pdf) · [Source](src/main/java/com/demcha/examples/features/title/BookTemplateExample.java) |
 
-### 🗄️ Legacy
+### ✍️ Hand-composed
 
 | Example | What it shows | Preview · Source |
 |---|---|---|
-| [Handcrafted Proposal](#handcrafted-proposal) | v1.4-style cinematic proposal composed by hand — pre-template authoring; kept for parity reference | [PDF](../assets/readme/examples/project-proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) |
+| [Handcrafted Proposal](#handcrafted-proposal) | A cinematic proposal assembled from primitives, with no template behind it — the shape to copy when your document is not one of the built-in families | [PDF](../assets/readme/examples/project-proposal-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java) |
 | [Weekly schedule](#weekly-schedule) | Bar / restaurant shift schedule via `WeeklyScheduleRenderer` | [PDF](../assets/readme/examples/weekly-schedule.pdf) · [Source](src/main/java/com/demcha/examples/templates/schedule/WeeklyScheduleFileExample.java) |
 
 ---
@@ -302,17 +311,16 @@ themed headings, timeline + pricing tables with
 
 ### Handcrafted proposal
 
-A v1.4-style cinematic proposal composed by hand — no template — to
-show how the same primitives compose without a `XxxTemplateV2`
-wrapper. Useful starting point when your domain doesn't fit any
-built-in template.
+A cinematic proposal composed by hand — no template — to show how the
+same primitives compose without a preset wrapping them. Useful starting
+point when your domain doesn't fit any built-in template.
 
 [📄 View PDF](../assets/readme/examples/project-proposal-cinematic.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/templates/proposal/CinematicProposalFileExample.java)
 
 ---
 
-## v1.5 feature showcases
+## Feature showcases
 
 ### Shape containers
 
@@ -345,10 +353,10 @@ for screen-space nudges.
 attached to any `Transformable<T>` builder
 (`ShapeContainerBuilder`, `ShapeBuilder`, `LineBuilder`,
 `EllipseBuilder`, `ImageBuilder`, `BarcodeBuilder`). Identity
-transforms emit no markers, so layout snapshots stay byte-identical to
-v1.4. Per-layer `zIndex` lets a layer declared earlier draw on top of
-layers declared later — `LayerStackNode.Layer` and shape-container
-layers both gain `int zIndex` (default `0`).
+transforms emit no markers, so adding one leaves a layout snapshot
+byte-identical. Per-layer `zIndex` lets a layer declared earlier draw on
+top of layers declared later — `LayerStackNode.Layer` and shape-container
+layers both carry an `int zIndex` (default `0`).
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java

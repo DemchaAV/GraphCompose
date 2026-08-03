@@ -230,7 +230,10 @@ public final class LinkedInCarouselExample {
         slide.addParagraph(p -> p
                 .text("One composition.\nTwo formats.")
                 .textStyle(headline(132))
-                .lineSpacing(1.03)
+                // lineSpacing is EXTRA space in points, not a multiplier: the layout
+                // adds it between wrapped lines on top of the font's own line height.
+                // Display type needs proportionally less of it than body copy.
+                .lineSpacing(8 * SCALE)
                 .margin(DocumentInsets.zero()));
         slide.addShape(shape -> shape.size(160 * SCALE, 7 * SCALE).fillColor(VIOLET)
                 .margin(DocumentInsets.symmetric(14, 0)));
@@ -240,7 +243,7 @@ public final class LinkedInCarouselExample {
                       + "backend — so PDF and PowerPoint are the same geometry, "
                       + "not two hand-kept designs.")
                 .textStyle(body(40, ON_DARK_MUTED))
-                .lineSpacing(1.45)
+                .lineSpacing(5 * SCALE)
                 .margin(DocumentInsets.zero()));
         slide.addRow("Formats", row -> {
             row.spacing(14 * SCALE).evenWeights();
@@ -258,7 +261,7 @@ public final class LinkedInCarouselExample {
         slide.addParagraph(p -> p
                 .text("PowerPoint is a\nfirst-class backend.")
                 .textStyle(headline(82))
-                .lineSpacing(1.06)
+                .lineSpacing(6 * SCALE)
                 .margin(DocumentInsets.zero()));
         point(slide, "Fixed layout, not export", MINT,
                 "PptxFixedLayoutBackend implements the same FixedLayoutRenderer "
@@ -318,7 +321,7 @@ public final class LinkedInCarouselExample {
         slide.addParagraph(p -> p
                 .text("Guarantees you\ncan run.")
                 .textStyle(headline(82))
-                .lineSpacing(1.06)
+                .lineSpacing(6 * SCALE)
                 .margin(DocumentInsets.zero()));
         point(slide, "Deterministic layout snapshots", VIOLET_LIGHT,
                 "Every flagship document has its geometry recorded as JSON. A layout "
@@ -420,7 +423,7 @@ public final class LinkedInCarouselExample {
             card.addParagraph(p -> p
                     .text(body)
                     .textStyle(body(28, ON_DARK_MUTED))
-                    .lineSpacing(1.4)
+                    .lineSpacing(4 * SCALE)
                     .margin(DocumentInsets.zero()));
         });
     }
@@ -471,7 +474,7 @@ public final class LinkedInCarouselExample {
             card.addParagraph(p -> p
                     .text(label)
                     .textStyle(body(24, ON_DARK_MUTED))
-                    .lineSpacing(1.25)
+                    .lineSpacing(3 * SCALE)
                     .margin(DocumentInsets.zero()));
         });
     }
@@ -506,7 +509,7 @@ public final class LinkedInCarouselExample {
     private static ParagraphBuilder footnote(ParagraphBuilder p, String text) {
         return p.text(text)
                 .textStyle(body(22, DocumentColor.rgb(130, 139, 170)))
-                .lineSpacing(1.4)
+                .lineSpacing(3 * SCALE)
                 .margin(DocumentInsets.top(6 * SCALE));
     }
 

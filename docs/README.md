@@ -48,7 +48,7 @@ back here.
 - **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.
 - **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered.
 - **[architecture/package-map.md](architecture/package-map.md)** — what's in which package.
-- **[architecture/canonical-legacy-parity.md](architecture/canonical-legacy-parity.md)** — canonical (v1.5+) vs legacy compatibility matrix.
+- **[architecture/canonical-legacy-parity.md](architecture/canonical-legacy-parity.md)** — per-feature authoring coverage of the canonical API, refreshed for the 2.1 line. The recipes, the capabilities catalogue and the troubleshooting guide all link into it.
 
 ### Operations
 - **[operations/production-rendering.md](operations/production-rendering.md)** — server-side rendering, streaming, thread safety.

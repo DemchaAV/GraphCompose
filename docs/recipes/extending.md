@@ -8,9 +8,10 @@ which uses the v1.5 `ShapeContainerNode` work as a worked example.
 | You want to... | Touch | Read |
 | --- | --- | --- |
 | Add a new semantic node | `DocumentNode` record + `NodeDefinition` + render handler | [Extension guide § 1](../contributing/extension-guide.md#1-add-a-semantic-node) |
-| Add a fluent setter | One `*Builder` only | [Extension guide § 2](../contributing/extension-guide.md#2-add-a-fluent-setter-to-a-builder) |
-| Add a render backend | Implement `FixedLayoutBackend` or `SemanticBackend` | [Extension guide § 3](../contributing/extension-guide.md#3-add-a-render-backend) |
-| Pin layout in a snapshot test | Use `LayoutSnapshotAssertions.assertMatches` | [Extension guide § 4](../contributing/extension-guide.md#4-validate-a-custom-nodes-layout-via-snapshots) |
+| Add a fluent setter | One `*Builder` only | [Extension guide § 2](../contributing/extension-guide.md#2-add-a-fluent-setter-to-an-existing-builder) |
+| Add a render handler for an existing backend | One `*FragmentRenderHandler` | [Extension guide § 3](../contributing/extension-guide.md#3-add-a-render-handler-for-an-existing-backend) |
+| Add a render backend | Implement `FixedLayoutBackend` or `SemanticBackend` | [Extension guide § 4](../contributing/extension-guide.md#4-add-a-new-backend) |
+| Pin layout in a snapshot test | Use `LayoutSnapshotAssertions.assertMatches` | [Extension guide § 5](../contributing/extension-guide.md#5-layout-snapshot-tests-for-your-own-nodes) |
 
 ## 1. Add a semantic node — five-step skeleton
 

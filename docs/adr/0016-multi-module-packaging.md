@@ -39,8 +39,8 @@ render backends discovered at runtime through a `ServiceLoader` SPI.
   the canonical DSL / nodes / style / layout, chart / svg / markdown / barcode, and
   the `FixedLayoutBackendProvider` / `FontMetricsProvider` SPI seams. Depends only on
   `slf4j-api` + `flexmark`. Rendering nothing until a backend is on the classpath —
-  it throws `MissingBackendException` (naming the artifact to add) if asked to build a
-  PDF without one.
+  `create()` throws `MissingBackendException` (naming the artifact to add) without one,
+  since opening a session resolves the font-metrics provider that ships with the backend.
 - **`graph-compose-render-pdf`** — the entire PDFBox backend (`document.backend.fixed.pdf.**`
   and the `engine.render.pdf.**` tree), PDFBox, and zxing. Registers the PDF
   `FixedLayoutBackendProvider` / `FontMetricsProvider` via `META-INF/services`.

@@ -117,10 +117,13 @@ class CommittedAssetDriftTest {
      * gone red each morning on a tree nobody had touched, which is the fastest way to teach a
      * team to ignore it.</p>
      *
-     * <p>Named rather than tolerated: the whole document is left out, and the entry stays until
-     * the date behind that token can be pinned the way both fixed backends already accept a
-     * {@code deterministic(...)} instant. Everything else about the file — that it exists, and
-     * that an example still renders it — is still checked below.</p>
+     * <p>Named rather than tolerated, and still compared: the date is replaced and the document
+     * is read by what it draws and declares — see
+     * {@link AssetContent#clockIndependentPdfDigest(Path)}. Dropping the file instead would have
+     * left a page that demonstrates a watermark, an information dictionary, a header, a footer
+     * and bookmarks checked by nothing, to absorb eight characters. The entry stays until the
+     * date behind that token can be pinned the way both fixed backends already accept a
+     * {@code deterministic(...)} instant; with that, this list and its comparison go away.</p>
      */
     private static final Set<String> CLOCK_DEPENDENT_PREVIEWS = Set.of("pdf-chrome.pdf");
 
@@ -134,9 +137,7 @@ class CommittedAssetDriftTest {
             Path fresh = generated.get(name);
             if (fresh == null) {
                 missing.add(name);
-            } else if (!CLOCK_DEPENDENT_PREVIEWS.contains(name)
-                    && !AssetContent.digestOf(PREVIEWS.resolve(name))
-                    .equals(AssetContent.digestOf(fresh))) {
+            } else if (!sameDocument(PREVIEWS.resolve(name), fresh, name)) {
                 drifted.add(name);
             }
         }
@@ -262,6 +263,23 @@ class CommittedAssetDriftTest {
      * The site reads this folder flat, so a folder inside it is a mistake worth naming rather
      * than passing over.</p>
      */
+    /**
+     * Compares two renders of one preview, by content unless the content carries a clock.
+     *
+     * <p>A preview in {@link #CLOCK_DEPENDENT_PREVIEWS} is still compared — by what it draws and
+     * declares, with the date it prints replaced. Skipping it instead would have left a document
+     * that demonstrates a watermark, an information dictionary, a header, a footer and bookmarks
+     * checked by nothing at all, to absorb eight characters.</p>
+     */
+    private static boolean sameDocument(Path committed, Path fresh, String name)
+            throws IOException {
+        if (CLOCK_DEPENDENT_PREVIEWS.contains(name)) {
+            return AssetContent.clockIndependentPdfDigest(committed)
+                    .equals(AssetContent.clockIndependentPdfDigest(fresh));
+        }
+        return AssetContent.digestOf(committed).equals(AssetContent.digestOf(fresh));
+    }
+
     private static Set<String> committedPreviews() throws IOException {
         Set<String> names = new TreeSet<>();
         Set<String> folders = new TreeSet<>();

@@ -174,10 +174,17 @@ follow semantic versioning; release dates are ISO 8601.
   preset cheatsheet and the extension guide.
 - **The drift gate stops going red on a tree nobody touched.** `pdf-chrome.pdf`
   demonstrates the `{date}` header token, which resolves from the clock, so its committed
-  copy differed from a fresh render every day but the one it was committed on. It is
-  named as exempt with the reason rather than tolerated, and the entry stays until that
-  date can be pinned the way both fixed backends already accept a `deterministic(...)`
-  instant.
+  copy differed from a fresh render every day but the one it was committed on. The date
+  lives inside a compressed stream, so it is decompressed and replaced: that one file is
+  compared by what it draws and declares — page content, information dictionary,
+  bookmarks — rather than by its bytes. Dropping it from the comparison instead would
+  have left the page that demonstrates a watermark, metadata, a header, a footer and
+  bookmarks checked by nothing. The workaround goes away when that date can be pinned the
+  way both fixed backends already accept a `deterministic(...)` instant.
+- **Two things the previews used to be read for are now checked.** A preview naming a
+  release the project has moved past, and an example rendering a link to a repository
+  path that no longer exists — both render perfectly, so only reading caught them, and
+  both had been true for six releases.
 - **A committed preview can be reproduced from a branch that has moved past it.** The
   documents that print a version took it from the reactor, which between releases sits on
   the next patch — so a render from `develop` named a version nobody could depend on yet,

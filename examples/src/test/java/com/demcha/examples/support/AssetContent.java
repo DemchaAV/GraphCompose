@@ -1,5 +1,12 @@
 package com.demcha.examples.support;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline;
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,6 +20,7 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -179,6 +187,72 @@ public final class AssetContent {
         }
         return pixels.getBytes(StandardCharsets.UTF_8);
     }
+
+    /**
+     * A PDF read as the document it draws rather than as the bytes it was written to.
+     *
+     * <p>For a PDF whose content carries a clock — {@code pdf-chrome.pdf} prints the
+     * {@code {date}} header token, which the engine resolves from {@code LocalDate.now()} — the
+     * byte comparison is red on every day but the one the file was committed on. The date is
+     * inside a compressed stream, so nothing can be masked without decompressing first.</p>
+     *
+     * <p>So it is decompressed: page count, then each page's operators with any ISO date
+     * replaced, then the metadata the document declares and the outline it builds. That covers
+     * what {@code pdf-chrome.pdf} exists to demonstrate — a watermark drawn behind the content,
+     * a header and footer, an information dictionary, bookmarks — and it stops covering only the
+     * eight characters that change by themselves. Excluding the file instead would have left all
+     * of that unchecked, which is a larger hole than the one being closed.</p>
+     *
+     * <p>This is the second-best fix. The first is a render date the caller can pin, the way both
+     * fixed backends already accept a {@code deterministic(...)} instant; with that, this method
+     * and its caller go away and the file rejoins the ordinary comparison.</p>
+     *
+     * @param pdf the file to read
+     * @return a hex SHA-256 over what the document draws and declares
+     * @throws IOException if the file cannot be read or parsed
+     */
+    public static String clockIndependentPdfDigest(Path pdf) throws IOException {
+        MessageDigest digest = sha256();
+        try (PDDocument document = Loader.loadPDF(pdf.toFile())) {
+            digest.update("pages=%d".formatted(document.getNumberOfPages())
+                    .getBytes(StandardCharsets.UTF_8));
+            for (PDPage page : document.getPages()) {
+                digest.update(withoutDates(page.getContents().readAllBytes()));
+            }
+            PDDocumentInformation information = document.getDocumentInformation();
+            for (String key : new TreeSet<>(information.getMetadataKeys())) {
+                digest.update(key.getBytes(StandardCharsets.UTF_8));
+                digest.update(withoutDates(
+                        String.valueOf(information.getCustomMetadataValue(key))
+                                .getBytes(StandardCharsets.UTF_8)));
+            }
+            digest.update(outline(document).getBytes(StandardCharsets.UTF_8));
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /** Every bookmark title, in order, with the page each one lands on. */
+    private static String outline(PDDocument document) throws IOException {
+        PDDocumentOutline root = document.getDocumentCatalog().getDocumentOutline();
+        if (root == null) {
+            return "no outline";
+        }
+        StringBuilder bookmarks = new StringBuilder();
+        for (PDOutlineItem item : root.children()) {
+            bookmarks.append(item.getTitle()).append('@')
+                    .append(document.getPages().indexOf(item.findDestinationPage(document)))
+                    .append(';');
+        }
+        return bookmarks.toString();
+    }
+
+    private static byte[] withoutDates(byte[] content) {
+        return ISO_DATE.matcher(new String(content, StandardCharsets.ISO_8859_1))
+                .replaceAll("<date>")
+                .getBytes(StandardCharsets.ISO_8859_1);
+    }
+
+    private static final Pattern ISO_DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     /** A PDF with the one thing in it that the clock writes taken out. */
     static byte[] withoutPdfId(byte[] content) {

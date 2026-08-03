@@ -395,12 +395,12 @@ public final class FeatureCatalogExample {
 
             feature(flow, "Canvas — absolute (x, y) placement", """
                     section.addCanvas(220, 70, canvas -> canvas
-                        .position(badge("v1.8"), 8, 8)
+                        .position(badge("layout"), 8, 8)
                         .position(badge("charts"), 84, 26)
                         .position(badge("paint"), 160, 8))""",
                     demo -> demo.addCanvas(220, 70, canvas -> canvas
                             .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
-                            .position(badge("v1.8"), 8, 8)
+                            .position(badge("layout"), 8, 8)
                             .position(badge("charts"), 84, 26)
                             .position(badge("paint"), 160, 8)));
 

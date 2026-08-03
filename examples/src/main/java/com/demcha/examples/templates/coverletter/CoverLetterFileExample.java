@@ -17,7 +17,7 @@ import java.nio.file.Path;
 /**
  * Modern cinematic cover letter rendered directly through the canonical
  * DSL — `BusinessTheme.modern()` drives colour and type, sections use
- * v1.5 presets ({@code softPanel}, {@code accentLeft}, {@code accentTop})
+ * presets ({@code softPanel}, {@code accentLeft}, {@code accentTop})
  * for the visual hierarchy, and an opening rich-text strip highlights
  * the candidate's headline value proposition.
  */
@@ -214,7 +214,7 @@ public final class CoverLetterFileExample {
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))
                             .addRich(rich -> rich
-                                    .plain("Composed with GraphCompose v1.5 — ")
+                                    .plain("Composed with GraphCompose — ")
                                     .style("examples/.../CoverLetterFileExample.java", DocumentTextStyle.builder()
                                             .fontName(FontName.COURIER)
                                             .size(8)

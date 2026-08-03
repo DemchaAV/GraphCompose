@@ -537,7 +537,7 @@ public final class WeeklyScheduleRenderer {
                     .addSection("BuildFooter", section -> section
                             .padding(new DocumentInsets(6, 0, 0, 0))
                             .addParagraph(p -> p
-                                    .text("Composed with GraphCompose v1.5 — examples/.../WeeklyScheduleRenderer.java")
+                                    .text("Composed with GraphCompose — examples/.../WeeklyScheduleRenderer.java")
                                     .textStyle(DocumentTextStyle.builder()
                                             .fontName(FontName.COURIER)
                                             .size(7.5)

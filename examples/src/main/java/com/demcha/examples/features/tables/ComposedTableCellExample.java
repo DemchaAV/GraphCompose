@@ -24,7 +24,7 @@ import java.util.Map;
 import java.nio.file.Path;
 
 /**
- * Runnable showcase for the v1.6 Phase B composed table cell content:
+ * Runnable showcase for composed table cell content:
  * {@code DocumentTableCell.node(DocumentNode)} accepts any composable
  * canonical node and the table layout pipeline prepares the child
  * sub-tree against the cell's resolved inner width, sizes the row from
@@ -33,8 +33,8 @@ import java.nio.file.Path;
  *
  * <p>The generated PDF puts paragraphs (with markdown rich text) and a
  * nested list inside table cells, alongside plain-text cells, so the
- * difference between the v1.5 line-only shape and the v1.6 composed
- * shape is visible at a glance.</p>
+ * difference between a line-only cell and a composed one is visible
+ * at a glance.</p>
  *
  * @author Artem Demchyshyn
  */
@@ -109,7 +109,7 @@ public final class ComposedTableCellExample {
             document.pageFlow()
                     .name("ComposedCellShowcase")
                     .spacing(8)
-                    .addParagraph("v1.6 Phase B — Composed table cell content", title)
+                    .addParagraph("Composed table cell content", title)
                     .addParagraph(
                             "DocumentTableCell.node(DocumentNode) accepts any registered "
                                     + "canonical node — paragraphs (with markdown), nested lists, "
@@ -223,7 +223,7 @@ public final class ComposedTableCellExample {
                     .addParagraph("3. Mixed composed and plain-text cells in the same row", sectionHeading)
                     .addParagraph(
                             "Plain-text cells continue to use the existing DocumentTableCell.text(...) "
-                                    + "factory and render through the v1.5 line-iteration code path. "
+                                    + "factory and render through the line-iteration code path. "
                                     + "Composed cells render via NodeDefinition recursion alongside.", caption)
                     .build();
 

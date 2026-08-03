@@ -36,6 +36,15 @@
         -->
         <graphcompose.examples.assetVersion>2.1.0</graphcompose.examples.assetVersion>
 
+        <!--
+            The date the committed previews print where an example demonstrates the
+            {date} token. Pinned rather than "today" so a preview is a function of the
+            code that renders it; the token itself still resolves from the clock for
+            everybody else. GenerateAllExamples passes it below, so the release renders
+            the same date the drift gate compares against.
+        -->
+        <graphcompose.examples.renderDate>2026-01-15</graphcompose.examples.renderDate>
+
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
     </properties>
@@ -202,6 +211,14 @@
                         <graphcompose.examples.displayVersion>
                             ${graphcompose.examples.assetVersion}
                         </graphcompose.examples.displayVersion>
+                        <!--
+                            And render at the date the previews carry. The chrome example
+                            prints the {date} token, which the engine resolves from the clock,
+                            so without this its committed preview differs from a fresh render
+                            every day but the one it was committed on — a guard going red each
+                            morning on a tree nobody touched.
+                        -->
+                        <graphcompose.renderDate>${graphcompose.examples.renderDate}</graphcompose.renderDate>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -210,6 +227,20 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
+                <configuration>
+                    <!--
+                        GenerateAllExamples renders the committed previews, so it has to
+                        pin the same date the tests compare them at. Set here rather than
+                        on the command line: the release script invokes exec:java, and a
+                        flag it forgets is a preview that drifts by a day.
+                    -->
+                    <systemProperties>
+                        <systemProperty>
+                            <key>graphcompose.renderDate</key>
+                            <value>${graphcompose.examples.renderDate}</value>
+                        </systemProperty>
+                    </systemProperties>
+                </configuration>
             </plugin>
         </plugins>
     </build>

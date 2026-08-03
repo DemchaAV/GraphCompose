@@ -14,7 +14,7 @@ import com.demcha.examples.support.ExampleOutputPaths;
 import java.nio.file.Path;
 
 /**
- * Runnable showcase for the v1.6 Phase A nested-list ergonomics:
+ * Runnable showcase for the nested-list ergonomics:
  * {@code ListBuilder.addItem(label, Consumer)}, {@code markerFor(depth)}
  * overrides, mixed flat / nested authoring, and the built-in marker
  * cascade ({@code •} → {@code ◦} → {@code ▪} → {@code ·}). Each section
@@ -66,7 +66,7 @@ public final class NestedListExample {
             document.pageFlow()
                     .name("NestedListShowcase")
                     .spacing(8)
-                    .addParagraph("v1.6 Phase A — Nested list ergonomics", title)
+                    .addParagraph("Nested list ergonomics", title)
                     .addParagraph(
                             "ListBuilder.addItem(label, body) appends a list item with a builder "
                                     + "callback that scopes children. Per-depth markers, source-order "
@@ -83,15 +83,15 @@ public final class NestedListExample {
                             .markerFor(2, ListMarker.custom("*"))
                             .addItem("Engineering Roadmap", q1 -> q1
                                     .addItem("Document Engine", phaseA -> phaseA
-                                            .addItem("Nested lists landed in v1.6")
-                                            .addItem("Composed table cells landed in v1.6")
+                                            .addItem("Nested lists with a per-depth marker cascade")
+                                            .addItem("Table cells that compose a whole flow")
                                             .addItem("Templates v2 with visual parity gate"))
                                     .addItem("Backend SPI", phaseB -> phaseB
                                             .addItem("PdfFragmentRenderHandler is now public")
                                             .addItem("DOCX semantic backend skeleton")))
                             .addItem("Documentation",
                                     docs -> docs
-                                            .addItem("Migration guide v1.5 to v1.6")
+                                            .addItem("Migration guide for the layered presets")
                                             .addItem("ADRs 0011-0013 published")))
 
                     // 2) markerFor() per-depth override + per-item marker.
@@ -130,7 +130,7 @@ public final class NestedListExample {
                                     .addItem("Ran mvnw verify locally"))
                             .addItem("Closed bug: marker double-space rendering")
                             .addItem("Triaged backlog", triage -> triage
-                                    .addItem("Phase E.4 deferred to v1.7")
+                                    .addItem("Deferred: hanging indent on wrapped items")
                                     .addItem("CanvasLayerNode parked")))
 
                     // 4) Deep nesting (depth 4+) falls back to the · cascade.

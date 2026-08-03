@@ -201,6 +201,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The last three documents that put `MissingBackendException` at the render call.**
+  An earlier pass moved the module READMEs and the exception's own Javadoc onto
+  `create()` and stopped at the repository root, so the troubleshooting entry, the 2.0
+  migration guide and ADR 0016 kept telling a reader to look at `buildPdf()` — and the
+  migration guide links straight into the troubleshooting entry, so the two reinforced
+  each other. All three now name the call that actually fails, and the troubleshooting
+  entry adds the one case that really does surface at the output call: `buildPptx()`
+  when the PPTX backend is missing but the PDF one is not. The contract test carried
+  the same confusion: it wrapped `create()`, `pageFlow(...)` and `toPdfBytes()` in one
+  assertion, so only the first line ever ran while its name promised the third. It is
+  split, and a second case pins the other side of the boundary — configuring a document
+  needs no backend, opening the session does. The output-call half is covered where it
+  is actually reachable: a test in `render-pdf`, whose classpath has one backend and not
+  the other, calls `buildPptx(...)` through the public API rather than the resolver
+  underneath it. The old heading keeps working as an anchor, so links already published
+  against it still land on the entry.
 - **The examples stop describing the releases they were written for.** Eight committed
   previews read as documents about 1.x: three framed a current feature as "v1.6 Phase
   A/B/C" — a plan for a release that shipped — one told the reader to tag v1.9.0 to

@@ -37,13 +37,22 @@ fall back to inline content with a one-time capability warning.
 Use DOCX only for paragraph / list / table / image / section content.
 Per-feature mapping: [canonical ↔ legacy parity matrix](architecture/canonical-legacy-parity.md).
 
-## `MissingBackendException` when rendering
+<a id="missingbackendexception-when-rendering"></a>
 
-**Cause.** You depend on `graph-compose-core` (the lean 2.0 engine) but no render
+## `MissingBackendException` when opening a session
+
+**Cause.** You depend on `graph-compose-core` (the lean engine artifact) but no render
 backend is on the classpath. The core carries the `DocumentSession` authoring API and a
-`ServiceLoader` seam, but the actual renderer ships separately — so `document.buildPdf()`
-/ `toPdfBytes()` / `toImages()` throws `MissingBackendException` until a backend is
-discoverable.
+`ServiceLoader` seam; the renderer ships separately.
+
+The throw comes **earlier than the name suggests**: `create()` resolves the font-metrics
+provider immediately, because laying text out needs measurement before anything is drawn.
+So **opening the session** fails — you never reach `buildPdf()` / `toPdfBytes()` /
+`toImages()`, and the stack trace points at your `create()` call, not at a render call.
+
+The one case that does surface at the output call is asking for a format whose backend is
+missing while another is present: `buildPptx()` without `graph-compose-render-pptx` on a
+classpath that has the PDF backend. The message names that artifact instead.
 
 **Fix.** Add the PDF backend, or depend on `graph-compose` (which already bundles it):
 

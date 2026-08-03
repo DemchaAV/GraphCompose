@@ -32,6 +32,11 @@ try (DocumentSession document = GraphCompose.document(Path.of("hello.pdf"))
 }
 ```
 
+Those are statements, not a file: they go inside a method — the
+[README's Hello world](../README.md#hello-world) shows the same program as a complete
+`Hello.java`. Every snippet on this page is written the same way, so the shape you are
+reading is the GraphCompose part and nothing else.
+
 `GraphCompose.document(path)` configures the output; `create()` returns the
 `DocumentSession`. Use try-with-resources so the session is always released, even
 if rendering fails. Inside the session, `pageFlow(...)` is the document body:

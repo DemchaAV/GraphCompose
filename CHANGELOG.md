@@ -201,6 +201,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The landing page lets you run it before it finishes selling it.** Ninety-one lines
+  and twelve images stood between the title and `## Installation`, most of them a second
+  showcase: thirty-five lines demonstrating the PowerPoint backend, with two renders and
+  a screenshot, before the reader had seen one line of the authoring API. That section
+  now sits after "Next steps", where a reader who has already written a document can
+  appreciate that the same session emits a deck; install is reached in fifty-two lines
+  and nine images, seven of which are badges. The "Upgrading from 1.x" note moves into
+  Installation, where an upgrader is already headed.
+- **The first snippet a reader copies is a file they can run.** "Hello world" opened
+  with eight imports and eight public types — colours, text styles, a font, a page
+  background, a soft panel, an accent strip — before the reader had rendered anything.
+  It now opens with four types and a complete `Hello.java`: paste, run, get a PDF. The
+  styled version keeps its place directly beneath as "Make it cinematic", which is what
+  it was always demonstrating, and points at the committed preview of the example that
+  renders the whole family. The first-document guide keeps its snippets as statements —
+  three `main` wrappers would bury what it is teaching — and now says so, pointing at
+  the README for the complete file rather than leaving the reader to discover that its
+  code does not compile on its own. Also: the feature map, `docs/capabilities.md`, is
+  now reachable from the landing page rather than only through the documentation index.
 - **The last three documents that put `MissingBackendException` at the render call.**
   An earlier pass moved the module READMEs and the exception's own Javadoc onto
   `create()` and stopped at the repository root, so the troubleshooting entry, the 2.0

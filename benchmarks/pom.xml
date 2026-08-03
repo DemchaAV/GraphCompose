@@ -27,7 +27,7 @@
         <jmh.version>1.37</jmh.version>
         <junit.bom.version>6.1.2</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.6.0</logback.version>
+        <logback.version>1.6.1</logback.version>
 
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
         <itext.version>9.7.1</itext.version>

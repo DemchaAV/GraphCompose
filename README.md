@@ -23,9 +23,6 @@
 > 🟢 **Latest stable**: [v2.1.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.0) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
 > &nbsp;·&nbsp; 🟡 **In development**: v2.1.1 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
 
-> &nbsp;·&nbsp; ⬆️ **Upgrading from 1.x?** `graph-compose` stays a drop-in for PDF with no code change; see the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md)
-> &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
-
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>
   &nbsp;·&nbsp;
@@ -42,42 +39,6 @@
 
 <p align="center">
   <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
-</p>
-
-## One source → a PDF <i>and</i> an editable PowerPoint deck
-
-The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides. Both consume the same resolved layout graph, so page and slide frames and every positioned element share the same geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 69 native shapes; only its clip-masked logo art is a picture). Glyphs are rasterised by the viewer, so the exact text rendering depends on the fonts installed on the viewing machine; see the [backend capability matrix](docs/architecture/backend-capability-matrix.md) for per-feature fidelity.
-
-PowerPoint output needs `graph-compose-render-pptx` on the classpath in addition to `graph-compose`; without it `buildPptx` fails with a `MissingBackendException` naming the artifact. See [Which artifact?](#installation) below.
-
-<!-- doc-example: id=readme-root-one-model-two-outputs mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.api.DocumentPageSize,java.nio.file.Path -->
-```java
-Path deck = Path.of("twin-output.pptx");
-try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
-        .pageSize(DocumentPageSize.SLIDE_16_9)
-        .create()) {
-    // … describe the page (see Hello world below)
-    doc.buildPdf();      // print-ready PDF
-    doc.buildPptx(deck); // editable PowerPoint
-}
-```
-
-<table>
-<tr>
-<td width="50%" align="center"><sub><b>twin-output.pdf</b> — rendered by the PDF backend</sub></td>
-<td width="50%" align="center"><sub><b>twin-output.pptx</b> — the same page, as <b>PowerPoint itself</b> renders it</sub></td>
-</tr>
-<tr>
-<td><img src="./assets/readme/twin-output-pdf.png" alt="The twin-output page rendered from the PDF"/></td>
-<td><img src="./assets/readme/twin-output-pptx.png" alt="The same page exported as a PNG by PowerPoint from the generated .pptx"/></td>
-</tr>
-</table>
-
-<p align="center">
-  <img src="./assets/readme/twin-output-editing.png" alt="The generated deck open in PowerPoint with the headline text frame selected for editing" width="820"/>
-</p>
-<p align="center">
-  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, one page, source included).</sub>
 </p>
 
 ## Why GraphCompose
@@ -108,6 +69,9 @@ dependencies { implementation("io.github.demchaav:graph-compose:2.1.0") }
 That coordinate renders PDF out of the box: it aggregates the lean `graph-compose-core`
 engine plus the `graph-compose-render-pdf` backend, so existing 1.x callers upgrade with
 **no code change**.
+
+> ⬆️ **Upgrading from 1.x?** `graph-compose` stays a drop-in for PDF with no code change; see the [2.0 modules migration guide](./docs/migration/v2.0.0-modules.md).
+> &nbsp;·&nbsp; See [API stability policy](./docs/api-stability.md) for tier definitions.
 
 <details>
 <summary><b>Which artifact?</b> &mdash; the 2.0 module split, when you want to take less or more</summary>
@@ -162,6 +126,42 @@ pinned to v1.6.5 and earlier but is no longer the documented install option.
 
 ## Hello world
 
+<!-- doc-example: id=readme-root-minimal mode=members -->
+```java
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentPageSize;
+import com.demcha.compose.document.api.DocumentSession;
+
+import java.nio.file.Path;
+
+class Hello {
+    public static void main(String[] args) throws Exception {
+        try (DocumentSession document = GraphCompose.document(Path.of("hello.pdf"))
+                .pageSize(DocumentPageSize.A4)
+                .margin(24, 24, 24, 24)
+                .create()) {
+
+            document.pageFlow(page -> page
+                    .module("Summary", module -> module.paragraph("Hello GraphCompose")));
+
+            document.buildPdf();
+        }
+    }
+}
+```
+
+Save it as `Hello.java` and run it — that is the whole file. `create()` opens the session,
+`pageFlow` describes the page, `buildPdf()` writes it: no coordinates, no page-break
+arithmetic.
+
+### Make it cinematic
+
+The same page with the engine's visual primitives: a page background, a soft panel, an
+accent strip and two text styles. Nothing here is a workaround — panels and accents are
+nodes, and the engine places them. [`SectionPresetsExample`](./examples/src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java)
+renders the whole family; its output is committed as
+[section-presets.pdf](./assets/readme/examples/section-presets.pdf).
+
 <!-- doc-example: id=readme-root-hello-world mode=members -->
 ```java
 import com.demcha.compose.GraphCompose;
@@ -215,6 +215,42 @@ For a Spring Boot `@RestController` streaming the PDF straight to the response, 
 - [**Your first document**](./docs/first-document.md) &mdash; the five-minute path from an empty project to a rendered PDF.
 - [**Getting started**](./docs/getting-started.md) &mdash; DSL or templates, and how to choose; the first-render walk-through.
 - [**Examples gallery**](./examples/README.md) &mdash; every runnable example, with a PDF you can preview without building anything.
+
+## One source → a PDF <i>and</i> an editable PowerPoint deck
+
+The same `DocumentSession` emits both. The PDF backend prints the resolved layout; the PPTX backend (**beta**) rebuilds it as slides. Both consume the same resolved layout graph, so page and slide frames and every positioned element share the same geometry — text, panels, tables, and vectors arrive in PowerPoint as **native, editable shapes**, not screenshots (the page below lands as 69 native shapes; only its clip-masked logo art is a picture). Glyphs are rasterised by the viewer, so the exact text rendering depends on the fonts installed on the viewing machine; see the [backend capability matrix](docs/architecture/backend-capability-matrix.md) for per-feature fidelity.
+
+PowerPoint output needs `graph-compose-render-pptx` on the classpath in addition to `graph-compose`; without it `buildPptx` fails with a `MissingBackendException` naming the artifact. See [Which artifact?](#installation) above.
+
+<!-- doc-example: id=readme-root-one-model-two-outputs mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.api.DocumentPageSize,java.nio.file.Path -->
+```java
+Path deck = Path.of("twin-output.pptx");
+try (DocumentSession doc = GraphCompose.document(Path.of("twin-output.pdf"))
+        .pageSize(DocumentPageSize.SLIDE_16_9)
+        .create()) {
+    // … describe the page (see Hello world above)
+    doc.buildPdf();      // print-ready PDF
+    doc.buildPptx(deck); // editable PowerPoint
+}
+```
+
+<table>
+<tr>
+<td width="50%" align="center"><sub><b>twin-output.pdf</b> — rendered by the PDF backend</sub></td>
+<td width="50%" align="center"><sub><b>twin-output.pptx</b> — the same page, as <b>PowerPoint itself</b> renders it</sub></td>
+</tr>
+<tr>
+<td><img src="./assets/readme/twin-output-pdf.png" alt="The twin-output page rendered from the PDF"/></td>
+<td><img src="./assets/readme/twin-output-pptx.png" alt="The same page exported as a PNG by PowerPoint from the generated .pptx"/></td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="./assets/readme/twin-output-editing.png" alt="The generated deck open in PowerPoint with the headline text frame selected for editing" width="820"/>
+</p>
+<p align="center">
+  <sub>☝ The generated deck open in PowerPoint — the headline is a selected, editable text frame, and the ribbon is live because the slide is built from native shapes. Artifacts: <a href="./assets/readme/examples/twin-output.pdf"><b>PDF</b></a> · <a href="./assets/readme/examples/twin-output.pptx"><b>PPTX</b></a> · <a href="./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java"><b>source</b></a> (<code>TwinOutputExample</code>, one page, source included).</sub>
+</p>
 
 ## What's new in 2.0
 
@@ -355,6 +391,7 @@ The index routes by what you are doing — first document, using or authoring a
 template, extending the engine, running in production. The entry points most
 people want directly:
 
+- **Capabilities** — [the feature map](./docs/capabilities.md): every capability with its stability tier and the guide that covers it
 - **Templates** — [layered architecture](./docs/templates/v2-layered/README.md) (CV, cover letter, invoice, proposal on `BrandTheme`) · [which template system?](./docs/templates/which-template-system.md) for callers arriving from a pre-2.0 surface
 - **Recipes** — [the cookbook](./docs/recipes.md): tables, themes, shapes, transforms, page backgrounds, streaming, extending
 - **Operations** — [production rendering](./docs/operations/production-rendering.md) · [layout snapshot testing](./docs/operations/layout-snapshot-testing.md) · [troubleshooting](./docs/troubleshooting.md)

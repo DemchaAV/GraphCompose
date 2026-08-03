@@ -16,7 +16,7 @@ import com.demcha.examples.support.ExampleOutputPaths;
 import java.nio.file.Path;
 
 /**
- * Runnable showcase for the v1.4 / v1.5 section preset shortcuts.
+ * Runnable showcase for the section preset shortcuts.
  *
  * <p>Demonstrates {@code pageBackground}, {@code band(color)},
  * {@code softPanel(...)}, {@code headingBar(...)}, {@code accentLeft /

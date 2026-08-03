@@ -201,6 +201,26 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **One recipe catalogue instead of two.** The cookbook page and the folder index each
+  carried a hand-maintained table of all twenty-two recipe pages. They happened to agree
+  on which pages exist and disagreed on ten of the descriptions — the folder index named
+  PDF417 and DataMatrix among the barcode symbologies, the cookbook did not; the cookbook
+  was fuller on themes, transforms and page backgrounds. Merged into the page both the
+  README and the documentation index point at, taking the better description of each
+  pair, so nothing is lost. The folder file keeps the one job GitHub gives it — being
+  what you see when you open the directory — and now says where the catalogue is instead
+  of holding a copy that drifts.
+- **Documents nobody could reach are reachable.** The archive index named its three
+  files in code spans rather than links, so the folder's own table of contents did not
+  actually lead anywhere, and one of the three was not listed at all. The two benchmark
+  notes sitting beside the committed baseline had no inbound link from anywhere; the
+  benchmark guide names them now, and says what they are — an April 2026 capture and the
+  before/after of the optimization round it belonged to, six weeks older than the
+  baseline file and unrelated to it.
+- **The starting-point table has an answer for the ordinary document.** Its three rows
+  each asked a "yes" question — a known template family, pixel-level control, a re-usable
+  new type — and a reader generating an ordinary report from data matched none of them
+  and fell off the end. The DSL is the default, not the fallback, and the table says so.
 - **The example catalogue stops calling current code legacy.** Two examples sat under
   a heading reading "🗄️ Legacy — pre-rebuild examples kept for downstream callers still
   on V1; do not start new code here", pointing at a V1 → V2 migration guide. There is no

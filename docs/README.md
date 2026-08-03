@@ -79,7 +79,7 @@ Kept for anyone stepping through the 1.x line one minor at a time. Nothing here 
 </details>
 
 ### Recipes (cookbook-style howtos)
-- **[recipes.md](recipes.md)** — index of all recipes (coverage map in [recipes/README.md](recipes/README.md)).
+- **[recipes.md](recipes.md)** — the catalogue: every recipe page and what it covers.
 - **[recipes/charts.md](recipes/charts.md)** — native vector bar/line/area/pie charts.
 - **[recipes/keep-together.md](recipes/keep-together.md)** — blocks that never split at a page break.
 - **[recipes/shapes.md](recipes/shapes.md)** — cards, dividers, lines, ellipses, images.

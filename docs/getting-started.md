@@ -19,6 +19,7 @@ tree to choose the right one for the document you're rendering.
 | Is your document one of the template families (CV, cover letter, invoice, proposal)? | Yes | **Layered template preset.** Skip ahead to "Templates". |
 | Do you need pixel-level control over a one-off PDF? | Yes | **Raw DSL** (`DocumentSession.pageFlow(...)`). |
 | Do you need a re-usable scene for a *new* business document type? | Yes | **Custom template that wraps the DSL.** Implement `DocumentTemplate<S>` and take a `BrandTheme` for visual coherence. |
+| Anything else — a report, a statement, a brochure, one-off or generated from data | — | **Raw DSL.** This is the default answer, not a fallback: the DSL is the authoring surface, and templates are presets built on it. Continue with "Quick start" below. |
 
 The DSL and the templates compose against the SAME `DocumentSession`
 — a template can also live alongside hand-written DSL inside one

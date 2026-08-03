@@ -65,6 +65,11 @@
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <!-- Only ever fed to the javadoc plugin below: the engine's sources are
+             annotated with Lombok, which is provided-scope there and so never
+             reaches this module transitively. Kept in lockstep with the engine pom
+             by VersionConsistencyGuardTest. -->
+        <lombok.version>1.18.46</lombok.version>
         <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
 
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
@@ -107,9 +112,23 @@
 
     <profiles>
         <!-- Maven Central release artefacts — mirrors the engine pom's `release`
-             profile. This module carries no sources, so the source/javadoc jars
-             are empty (failOnError=false keeps javadoc from aborting on the empty
-             source set); Central only requires the jars to be present. -->
+             profile.
+
+             This module carries no sources of its own, so `jar-no-fork` and the
+             javadoc `jar` goal both find nothing to archive and attach NOTHING —
+             they do not produce empty jars, they produce no artifact at all. Every
+             2.x release of this coordinate therefore shipped without a -javadoc.jar
+             or a -sources.jar, and javadoc.io, which serves the newest version that
+             carries one, kept rendering 1.9.1 for the coordinate the README sends
+             readers to.
+
+             The javadoc jar is built from the engine's sources instead. That is the
+             surface a `graph-compose` consumer authors against, and it means the
+             hosted API reference advances with each release on its own rather than
+             waiting for anyone to notice. render-pdf is deliberately left out: it is
+             the backend the wrapper carries, not the API the caller writes.
+             The sources jar stays absent — there are none to publish, and Central
+             accepts the coordinate without it. -->
         <profile>
             <id>release</id>
             <build>
@@ -140,7 +159,32 @@
                                     <goal>jar</goal>
                                 </goals>
                                 <configuration>
-                                    <failOnError>false</failOnError>
+                                    <!-- The wrapper has no sources; without this the
+                                         goal archives nothing and the release ships
+                                         no javadoc artifact at all. -->
+                                    <includeDependencySources>true</includeDependencySources>
+                                    <dependencySourceIncludes>
+                                        <dependencySourceInclude>io.github.demchaav:graph-compose-core</dependencySourceInclude>
+                                    </dependencySourceIncludes>
+                                    <!-- The engine's sources are Lombok-annotated and
+                                         Lombok is provided-scope there, so it never
+                                         arrives here transitively. Without it javadoc
+                                         stops at "package lombok does not exist". -->
+                                    <additionalDependencies>
+                                        <additionalDependency>
+                                            <groupId>org.projectlombok</groupId>
+                                            <artifactId>lombok</artifactId>
+                                            <version>${lombok.version}</version>
+                                        </additionalDependency>
+                                    </additionalDependencies>
+                                    <!-- Doc-style lint is the engine's own business —
+                                         its release profile turns it off for the same
+                                         reason. failOnError is left at its default of
+                                         true on purpose, unlike the engine's: a hard
+                                         failure here means the aggregation broke, and
+                                         swallowing it is what shipped a coordinate
+                                         with no javadoc for two releases running. -->
+                                    <doclint>none</doclint>
                                     <quiet>true</quiet>
                                 </configuration>
                             </execution>

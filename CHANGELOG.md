@@ -50,6 +50,19 @@ follow semantic versioning; release dates are ISO 8601.
   any job that can run on a pull request is left out of it. Schedule-only jobs are
   recognised from their own `if:` condition rather than an exclusion list, so a new
   job either joins the gate or fails the guard.
+- **`graph-compose` publishes an API reference again.** The coordinate the README
+  sends readers to for Javadoc carries no sources of its own, so the javadoc goal
+  found nothing to archive and attached no artifact — not an empty one, none. Every
+  2.x release shipped without it, and javadoc.io, which serves the newest version
+  that carries one, kept rendering the **1.9.1** API: complete, convincing, and two
+  majors stale, beside prose promising documentation fresh after each release. The
+  wrapper now builds that jar from the engine's sources, which is the surface a
+  caller of this coordinate authors against — 903 pages where there were none. Doc
+  lint stays off, as it is for the engine's own release jar, but a hard failure is
+  no longer swallowed: the `failOnError=false` that hid the empty state is gone.
+  `PublishedJavadocCoordinateGuardTest` fails if a coordinate the documentation
+  advertises as an API reference cannot produce a javadoc jar, and the release
+  checklist builds the wrapper's before a cut.
 - **A documentation-only pull request is compiled.** Markdown was not a
   change-detection input, so a PR touching only `.md` skipped the reactor build
   and merged without `DocumentationSnippetCompileTest` ever compiling the java

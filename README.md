@@ -149,9 +149,12 @@ Both are already included in `graph-compose-bundle`.
 <summary><b>Distribution</b> &mdash; Maven Central, hosted Javadocs, legacy JitPack</summary>
 
 Maven Central is the canonical channel from **v1.6.6** onwards
-(`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs auto-publish to
+(`io.github.demchaav:graph-compose:<version>`). Hosted Javadocs for the engine API
+publish to
 [javadoc.io/doc/io.github.demchaav/graph-compose](https://javadoc.io/doc/io.github.demchaav/graph-compose)
-shortly after each Central release. The legacy JitPack URL
+shortly after each Central release, from **v2.1.1** onwards — the 2.0 and 2.1.0
+releases of that coordinate shipped no javadoc artifact, so the page there still
+renders the 1.9.1 API until the next release lands. The legacy JitPack URL
 (`com.github.DemchaAV:GraphCompose:v<version>`) remains resolvable for callers
 pinned to v1.6.5 and earlier but is no longer the documented install option.
 

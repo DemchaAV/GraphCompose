@@ -452,10 +452,13 @@ function Update-ReadmeInstallVersion($readmePath, $newVersion) {
 function Update-ModuleReadmeInstallVersion($readmePath, $newVersion) {
     # Per-module READMEs carry copy-paste install snippets for THEIR OWN train
     # artifact (Maven + Gradle). Bump every occurrence — unlike the root README
-    # there is no legacy-format fallback, and each file only ever references its
-    # own coordinate, so a blanket replace within the file is safe. Called for
-    # the train modules only; fonts/emoji READMEs pin their own independent
-    # versions and must never be touched by an engine cut.
+    # there is no legacy-format fallback. Also used for documentation pages that
+    # carry a train install snippet; a page names more than one coordinate, so the
+    # match cannot lean on "one file, one coordinate" the way a module README can.
+    # graph-compose-fonts and graph-compose-emoji ship on their own fonts-v* /
+    # emoji-v* tags, so they are excluded explicitly here rather than by the
+    # caller's choice of file — an engine cut must never rewrite their version,
+    # wherever their snippet turns up.
     if (-not (Test-Path $readmePath)) {
         Note "skip (no file): $readmePath"
         return
@@ -463,7 +466,7 @@ function Update-ModuleReadmeInstallVersion($readmePath, $newVersion) {
     $content = Get-Content $readmePath -Raw
     $changed = $false
 
-    $mavenRegex = [regex]'(?<=<artifactId>graph-compose[\w\-]*</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
+    $mavenRegex = [regex]'(?<=<artifactId>graph-compose(?!-fonts|-emoji)[\w\-]*</artifactId>\s*<version>)v?[\w\.\-]+(?=</version>)'
     $afterMaven = $mavenRegex.Replace($content, $newVersion)
     if ($content -ne $afterMaven) {
         $content = $afterMaven
@@ -471,7 +474,7 @@ function Update-ModuleReadmeInstallVersion($readmePath, $newVersion) {
         Note "bumped module README Maven snippet: $readmePath -> $newVersion"
     }
 
-    $gradleRegex = [regex]'(?<=io\.github\.demchaav:graph-compose[\w\-]*:)v?[\w\.\-]+(?=")'
+    $gradleRegex = [regex]'(?<=io\.github\.demchaav:graph-compose(?!-fonts|-emoji)[\w\-]*:)v?[\w\.\-]+(?=")'
     $afterGradle = $gradleRegex.Replace($content, $newVersion)
     if ($content -ne $afterGradle) {
         $content = $afterGradle
@@ -1047,6 +1050,16 @@ try {
                 'wrapper/README.md', 'bundle/README.md')) {
             Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $moduleReadme) $Version
         }
+        # Documentation pages that carry a copy-paste install snippet for a train
+        # artifact. Same bumper as the module READMEs — the snippet names a train
+        # coordinate, so it moves with the release or a reader who opened the page
+        # because something already broke is handed the previous minor. Historical
+        # pages (docs/migration, docs/roadmaps, docs/archive) pin an old version on
+        # purpose and are never listed here; VersionConsistencyGuardTest excludes
+        # them by the same rule.
+        foreach ($docPage in @('docs/troubleshooting.md')) {
+            Update-ModuleReadmeInstallVersion (Join-Path $repoRoot $docPage) $Version
+        }
         Update-IndexHtmlVersion (Join-Path $repoRoot 'web/index.html') $Version
         # The smoke harness's default version must follow the release, or the
         # post-release run silently re-verifies the previous one.
@@ -1225,6 +1238,13 @@ try {
             'wrapper/README.md', 'bundle/README.md')) {
         if (Test-Path (Join-Path $repoRoot $moduleReadme)) {
             $commitFiles += $moduleReadme
+        }
+    }
+    # Documentation pages carrying a train install snippet, bumped alongside the
+    # module READMEs in Step 1.
+    foreach ($docPage in @('docs/troubleshooting.md')) {
+        if (Test-Path (Join-Path $repoRoot $docPage)) {
+            $commitFiles += $docPage
         }
     }
     # The README assets ride along whenever they were re-rendered — every final cut,

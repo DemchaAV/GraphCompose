@@ -122,6 +122,21 @@ follow semantic versioning; release dates are ISO 8601.
   as "latest stable", behind a release link that 404s. `cut-release.ps1` now
   promotes the in-development half to latest stable and opens the next patch line
   as part of the release commit, and verifies the result after the mutation.
+- **An install snippet in the documentation moves with the release.** The version
+  guard covered the README, the module READMEs and the showcase site, and stopped
+  there. The troubleshooting page carries the two snippets a reader copies at the
+  worst possible moment — when a session already refuses to start — and both had
+  sat on the previous minor since 2.0, handing out a render backend one minor
+  behind the engine that reader was running. The guard now walks `docs/`, skipping
+  the trees that pin an old version on purpose — migration guides, archived pages,
+  shipped roadmaps and the like — by path prefix rather than by a list someone has
+  to remember to extend. A second check closes the same gap one step earlier: a page
+  that carries such a snippet must be named in both of the release script's lists —
+  the one that rewrites the version and the one that stages the file — so a new page
+  cannot quietly keep the old version through every future cut. The bumper itself no
+  longer relies on a file naming a single coordinate: it now skips
+  `graph-compose-fonts` and `graph-compose-emoji` wherever they appear, since those
+  ship on their own release lines.
 
 ### Fixed
 

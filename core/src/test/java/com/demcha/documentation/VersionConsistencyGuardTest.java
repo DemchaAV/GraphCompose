@@ -11,11 +11,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -342,6 +346,178 @@ class VersionConsistencyGuardTest {
                     .describedAs("%s/README.md Gradle install snippet must equal the module's own pom version (%s)", module, own)
                     .isEqualTo(own);
         }
+    }
+
+    /**
+     * Install snippets published under {@code docs/} advertise a version a reader
+     * can resolve.
+     *
+     * <p>The root README, the module READMEs and the showcase site were already
+     * pinned; the docs tree was not, and that is where a backend coordinate sat a
+     * minor behind everything else — a reader who opened the troubleshooting page
+     * because a session would not start was handed a {@code graph-compose-render-pdf}
+     * one minor older than the engine they were running.</p>
+     *
+     * <p>Historical trees are excluded by <em>path prefix</em> rather than by a
+     * file allowlist: migration guides, archived pages and shipped roadmaps pin an
+     * old version on purpose, and a new one of those is covered the day it is
+     * written instead of the day someone remembers to extend a list.</p>
+     */
+    @Test
+    void documentationInstallSnippetsMatchTheProjectVersion() throws Exception {
+        Set<String> trainTargets = acceptableTargets();
+        List<DocCoordinate> coordinates = documentationCoordinates();
+        List<String> drift = new ArrayList<>();
+
+        for (DocCoordinate coordinate : coordinates) {
+            Set<String> expected = expectedVersionsFor(coordinate.artifact(), trainTargets);
+            if (!expected.contains(coordinate.version())) {
+                drift.add("%s:%d %s advertises %s, expected one of %s".formatted(
+                        coordinate.page(), coordinate.line(), coordinate.artifact(), coordinate.version(), expected));
+            }
+        }
+
+        assertThat(coordinates)
+                .describedAs("no versioned install coordinate found under docs/ — this guard would cover nothing")
+                .isNotEmpty();
+        assertThat(drift)
+                .describedAs("every versioned install snippet under docs/ must advertise the version a reader can resolve today")
+                .isEmpty();
+    }
+
+    /**
+     * Every documentation page carrying a train install snippet is both bumped and
+     * staged by {@code cut-release.ps1}.
+     *
+     * <p>{@link #documentationInstallSnippetsMatchTheProjectVersion()} catches a stale
+     * snippet, but only once it is already stale — one release after the page was
+     * added. This closes the gap at the source: the script rewrites a hand-maintained
+     * list of pages, and a page that carries a snippet without being on that list
+     * silently keeps the previous version through every future cut. Both halves are
+     * required, because bumping a file the commit never stages leaves the release tag
+     * carrying the old text and the working tree carrying the new.</p>
+     */
+    @Test
+    void documentationPagesWithInstallSnippetsAreBumpedByTheReleaseScript() throws Exception {
+        Set<String> pagesWithSnippets = new LinkedHashSet<>();
+        for (DocCoordinate coordinate : documentationCoordinates()) {
+            // A companion snippet rides its own release line, so an engine cut must
+            // never touch the page on its account.
+            if (!isCompanionArtifact(coordinate.artifact())) {
+                pagesWithSnippets.add(coordinate.page());
+            }
+        }
+        String script = Files.readString(PROJECT_ROOT.resolve("scripts/cut-release.ps1"));
+
+        List<Set<String>> lists = docPageLists(script);
+        assertThat(lists)
+                .describedAs("cut-release.ps1 must declare a `foreach ($docPage in @(...))` list where it "
+                        + "bumps the pages and another where it stages them")
+                .hasSize(2);
+
+        for (String page : pagesWithSnippets) {
+            assertThat(lists.get(0))
+                    .describedAs("%s carries a train install snippet, so cut-release.ps1 must bump it", page)
+                    .contains(page);
+            assertThat(lists.get(1))
+                    .describedAs("%s is bumped by cut-release.ps1, so the release commit must stage it", page)
+                    .contains(page);
+        }
+    }
+
+    /** One versioned GraphCompose coordinate found in a documentation page. */
+    private record DocCoordinate(String page, int line, String artifact, String version) {
+    }
+
+    /**
+     * Every versioned GraphCompose coordinate under {@code docs/}, skipping the trees
+     * that pin an old version on purpose. Both documentation guards read this.
+     */
+    private static List<DocCoordinate> documentationCoordinates() throws IOException {
+        Path docs = PROJECT_ROOT.resolve("docs");
+        List<DocCoordinate> found = new ArrayList<>();
+        List<Path> pages;
+        try (Stream<Path> tree = Files.walk(docs)) {
+            pages = tree.filter(Files::isRegularFile)
+                    .filter(page -> page.getFileName().toString().endsWith(".md"))
+                    .filter(page -> !pinsAnOldVersionOnPurpose(docs.relativize(page)))
+                    .sorted()
+                    .toList();
+        }
+        for (Path page : pages) {
+            String text = Files.readString(page);
+            String name = PROJECT_ROOT.relativize(page).toString().replace('\\', '/');
+            for (Pattern pattern : List.of(DOCS_MAVEN_COORDINATE, DOCS_GRADLE_COORDINATE)) {
+                Matcher coordinate = pattern.matcher(text);
+                while (coordinate.find()) {
+                    found.add(new DocCoordinate(name, lineOf(text, coordinate.start()),
+                            coordinate.group(1), coordinate.group(2).trim()));
+                }
+            }
+        }
+        return found;
+    }
+
+    /** The {@code $docPage} lists in {@code cut-release.ps1}, in source order: bump first, staging second. */
+    private static List<Set<String>> docPageLists(String script) {
+        List<Set<String>> lists = new ArrayList<>();
+        Matcher loop = Pattern.compile("foreach \\(\\$docPage in @\\(([^)]*)\\)\\)").matcher(script);
+        while (loop.find()) {
+            Set<String> paths = new LinkedHashSet<>();
+            Matcher quoted = Pattern.compile("'([^']+)'").matcher(loop.group(1));
+            while (quoted.find()) {
+                paths.add(quoted.group(1));
+            }
+            lists.add(paths);
+        }
+        return lists;
+    }
+
+    /** Historical doc trees, which pin an old version deliberately. Relative to {@code docs/}. */
+    private static final String[] DOCS_PINNED_ON_PURPOSE = {
+            "archive/", "roadmaps/", "migration/", "private/", "templates/v1-classic/"
+    };
+
+    private static final Pattern DOCS_MAVEN_COORDINATE = Pattern.compile(
+            "<artifactId>(graph-compose[\\w-]*)</artifactId>\\s*<version>v?([0-9][^<]*)</version>");
+    private static final Pattern DOCS_GRADLE_COORDINATE = Pattern.compile(
+            "io\\.github\\.demchaav:(graph-compose[\\w-]*):v?([0-9][\\w.\\-]*)");
+
+    private static boolean pinsAnOldVersionOnPurpose(Path relativeToDocs) {
+        String path = relativeToDocs.toString().replace('\\', '/');
+        for (String prefix : DOCS_PINNED_ON_PURPOSE) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * fonts and emoji carry independent version lines (their own {@code fonts-v*} /
+     * {@code emoji-v*} tags), so a docs snippet naming one of them is checked
+     * against that module's own pom — never the engine train's target set.
+     */
+    private Set<String> expectedVersionsFor(String artifact, Set<String> trainTargets) throws Exception {
+        if (isCompanionArtifact(artifact)) {
+            String module = artifact.substring("graph-compose-".length());
+            return Set.of(effectiveVersion(PROJECT_ROOT.resolve(module + "/pom.xml")));
+        }
+        return trainTargets;
+    }
+
+    private static boolean isCompanionArtifact(String artifact) {
+        return artifact.equals("graph-compose-fonts") || artifact.equals("graph-compose-emoji");
+    }
+
+    private static int lineOf(String text, int offset) {
+        int line = 1;
+        for (int i = 0; i < offset; i++) {
+            if (text.charAt(i) == '\n') {
+                line++;
+            }
+        }
+        return line;
     }
 
     // ── Install-snippet patterns ────────────────────────────────────

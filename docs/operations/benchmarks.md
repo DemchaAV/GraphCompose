@@ -284,7 +284,9 @@ cleanest numbers.
 
 `baselines/current-speed-full.json` is a committed median `current-speed` report
 that `11-verdict-current-speed` judges new runs against (hard gate: average
-latency ±10%; peak heap is advisory, GC-timing noisy). Refresh it **only** for an
+latency ±10%; peak heap is advisory, GC-timing noisy).
+
+Refresh it **only** for an
 intended, verified improvement so the gate ratchets down — never to turn a red
 gate green. Capture a median of **≥5** runs on the branch that defines the new
 reference, with the IDE closed:
@@ -312,8 +314,17 @@ java -cp "$cp" com.demcha.compose.BenchmarkMedianTool current-speed $runs
 cp -f target/benchmarks/aggregates/current-speed/full/latest.json baselines/current-speed-full.json
 ```
 
-The baseline is machine-class-specific; the JSON records provenance
-(`timestamp`, `profile`, `sourceRuns`). Validate the refresh against a *fresh*
+The baseline is machine-class-specific; the JSON records its own provenance
+(`timestamp`, `profile`, `sourceRuns`) — read those rather than inferring where the
+numbers came from. Two older notes share the folder and are **historical context
+only**: [`baselines/BASELINE_SUMMARY.md`](../../baselines/BASELINE_SUMMARY.md) is a
+smoke-profile capture from April 2026, taken before a round of engine optimization,
+and [`baselines/COMPARISON.md`](../../baselines/COMPARISON.md) is that round's
+before/after. Neither produced this baseline and neither tracks it: the JSON was first
+cut six weeks later as a separate full-profile median when the verdict gate landed, and
+has been re-measured independently since.
+
+Validate the refresh against a *fresh*
 run — not one of the five that built the median — on that branch; it should
 score NEUTRAL and exit `0`:
 

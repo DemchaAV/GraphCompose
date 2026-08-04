@@ -47,8 +47,24 @@ class CiGateCoverageGuardTest {
     /** The aggregate check. It cannot depend on itself. */
     private static final String GATE = "ci-gate";
 
-    /** A job key: two-space indent under {@code jobs:}, nothing else on the line. */
-    private static final Pattern JOB_KEY = Pattern.compile("(?m)^  ([a-z][a-z0-9-]*):$");
+    /**
+     * A job key: two-space indent under {@code jobs:}, then nothing that changes
+     * what the key is — trailing spaces or a {@code #} comment are allowed.
+     *
+     * <p>The name is matched structurally rather than against GitHub's identifier
+     * grammar. A character class admitting only what today's job names happen to
+     * use — lower case and hyphens — drops a job called {@code build_and_test} or
+     * {@code CodeQL} on the floor, and requiring the line to end at the colon drops
+     * {@code security_scan: # nightly}. Either way the guard reports on the jobs it
+     * parsed, and one it never saw is one it cannot report missing from the gate:
+     * the job is absent from {@code needs}, the test is green, and the aggregate
+     * check is blind to it. That is the silence this guard exists to break, so the
+     * pattern takes every key the YAML puts at that level and lets the assertions
+     * decide. {@link #jobBlocks(String)} is package-private for exactly this
+     * reason — {@code CiGateCoverageGuardParsingTest} feeds it the shapes the real
+     * workflow does not currently contain.</p>
+     */
+    private static final Pattern JOB_KEY = Pattern.compile("(?m)^  ([^\\s:#]+):[ \\t]*(?:#.*)?$");
 
     /** A job-level {@code if:} — four-space indent, first line only. */
     private static final Pattern JOB_IF = Pattern.compile("(?m)^    if: (.*)$");
@@ -104,12 +120,28 @@ class CiGateCoverageGuardTest {
                 .containsAll(aggregated);
     }
 
-    /** Job id to the source block that declares it, in workflow order. */
+    /** Job id to the source block that declares it, for the workflow on disk. */
     private static Map<String, String> jobBlocks() throws IOException {
+        return jobBlocks(Files.readString(WORKFLOW));
+    }
+
+    /**
+     * Job id to the source block that declares it, in workflow order.
+     *
+     * <p>Package-private, and taking the workflow as text rather than reading it,
+     * so the parser can be driven with job shapes the repository's own workflow
+     * does not happen to contain. A parser that only ever sees valid input it
+     * already handles is one whose blind spots stay theoretical until a new job
+     * lands on one.</p>
+     *
+     * @param workflowText the workflow source
+     * @return each job id mapped to the block that declares it
+     */
+    static Map<String, String> jobBlocks(String workflowText) {
         // The workflow is checked out with CRLF on Windows. Normalise once, so the
         // line-anchored patterns below capture ids and conditions without a trailing
         // carriage return riding along into every comparison.
-        String workflow = Files.readString(WORKFLOW).replace("\r\n", "\n");
+        String workflow = workflowText.replace("\r\n", "\n");
         // `on:` carries keys at the same indentation as a job (`push:`, `schedule:`),
         // so parsing starts after the `jobs:` key rather than at the top of the file.
         int jobsAt = workflow.indexOf("\njobs:\n");

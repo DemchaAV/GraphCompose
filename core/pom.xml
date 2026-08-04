@@ -460,7 +460,24 @@
                 </executions>
             </plugin>
 
-            <!-- Public API Javadoc validation: canonical document API + public testing-support helpers (testing.layout / testing.visual) -->
+            <!--
+                Javadoc validation for the module.
+
+                The scope is the whole of `com.demcha.compose`, root package
+                included. It was `com.demcha.compose.document`, which left
+                `GraphCompose` — the entry point every README snippet starts
+                from — as the one public class nothing linted; it had carried a
+                doclint error since the layout move without anything reporting
+                it, because the published Javadoc jar is built with
+                `doclint=none` and cannot report one either.
+
+                This also pulls in `com.demcha.compose.engine`, the `@Internal`
+                surface. That is a consequence rather than a goal: with
+                `subpackages` set, `excludePackageNames` does not take effect
+                here (tried both `a.b.engine:a.b.engine.*` and `a.b.engine*` —
+                the package is emitted either way). It costs warnings, not
+                failures, since `failOnError` fails on errors only.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -470,7 +487,7 @@
                     <failOnError>true</failOnError>
                     <show>public</show>
                     <quiet>true</quiet>
-                    <subpackages>com.demcha.compose.document</subpackages>
+                    <subpackages>com.demcha.compose</subpackages>
                 </configuration>
             </plugin>
         </plugins>

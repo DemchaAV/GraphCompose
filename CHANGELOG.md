@@ -7,6 +7,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **The Javadoc gate lints the class readers open first.** It ran with
+  `subpackages` set to `com.demcha.compose.document`, so `GraphCompose` — the entry
+  point every snippet in the README starts from — sat in the root package outside it,
+  and had done since the module layout moved. It carried a real doclint error the
+  whole time: two `<h3>` headings under an implicit `<h1>`, which is the sequence
+  break `doclint` exists to catch. Nothing else caught it either, because the
+  published Javadoc jar is built with `doclint=none` so a broken tag never blocks a
+  release. The gate now covers the whole of `com.demcha.compose`, root package
+  included, and the two headings are `<h2>`. Widening it also pulls in the
+  `@Internal` engine package: `excludePackageNames` does not take effect alongside
+  `subpackages`, and that costs warnings rather than failures, since `failOnError`
+  fails on errors only.
+- **A CI job the gate guard cannot name is a job it cannot report.** The guard that
+  checks every pull-request job is aggregated by `CI Gate` found those jobs with a
+  pattern admitting lower case and hyphens — everything today's names happen to use.
+  A job added as `build_and_test` or `CodeQL` was not matched, and neither was
+  `security_scan: # nightly` or a name with a space after the colon, because the
+  pattern also required the line to end there. A job the guard never sees is one it
+  cannot report missing: it sits outside the gate's `needs`, the test stays green, and
+  the aggregate check branch protection requires is blind to it. Job names are now
+  taken structurally, from the YAML's own indentation, rather than from a guess at
+  GitHub's identifier grammar, and the parser takes the workflow as text so
+  `CiGateCoverageGuardParsingTest` can drive it with the job spellings this
+  repository's own workflow does not happen to contain.
+- **A recipe nobody links is a recipe nobody reaches.** `docs/recipes.md` is the page
+  the README and the documentation index both point at, and nothing held it to the
+  folder it indexes: a new page under `docs/recipes/` left every gate green while
+  having no inbound link from anywhere. `RecipeCatalogueGuardTest` now fails the build
+  in both directions — a page the catalogue omits, and a catalogue row pointing at a
+  file that was renamed or removed.
 - **A release re-renders the previews it publishes.** The committed previews record
   the version they were rendered at, and until now nothing moved it: a cut bumped
   every pom, regenerated the showcase site at the new version, and left

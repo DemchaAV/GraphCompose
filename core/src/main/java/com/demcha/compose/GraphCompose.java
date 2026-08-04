@@ -36,7 +36,7 @@ import java.util.Objects;
  *   <li>Call {@link DocumentSession#buildPdf()} or {@link DocumentSession#toPdfBytes()}.</li>
  * </ol>
  *
- * <h3>Build a PDF file with the canonical DSL</h3>
+ * <h2>Build a PDF file with the canonical DSL</h2>
  *
  * <pre>{@code
  * try (DocumentSession document = GraphCompose.document(outputFile)
@@ -51,7 +51,7 @@ import java.util.Objects;
  * }
  * }</pre>
  *
- * <h3>Get bytes instead of writing to disk</h3>
+ * <h2>Get bytes instead of writing to disk</h2>
  *
  * <pre>{@code
  * try (DocumentSession document = GraphCompose.document()

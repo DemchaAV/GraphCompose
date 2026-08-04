@@ -113,8 +113,8 @@ final class EngineDeckData {
     static List<Backend> backends() {
         return List.of(
                 new Backend("pdf-file", "PDFBox 3.0", "Production backend", true),
-                new Backend("docx", "DOCX export", "Semantic export", false),
-                new Backend("ppt-file", "PPTX", "Planned", false));
+                new Backend("ppt-file", "PPTX", "Editable deck · Beta", true),
+                new Backend("docx", "DOCX export", "Semantic export", false));
     }
 
     // ── "How it works" content (page 2) ───────────────────────────────────────
@@ -128,7 +128,7 @@ final class EngineDeckData {
                 new PipelineStep("1", "dsl", "AUTHOR", "Fluent DSL describes intent."),
                 new PipelineStep("2", "layout", "MEASURE", "Two-pass geometry, every node."),
                 new PipelineStep("3", "page-break", "PAGINATE", "Split the flow across pages."),
-                new PipelineStep("4", "pdf-file", "RENDER", "PDFBox writes the bytes."));
+                new PipelineStep("4", "pdf-file", "RENDER", "A backend writes the bytes."));
     }
 
     /** A "why it's solid" proof card: bold title + a sentence. */

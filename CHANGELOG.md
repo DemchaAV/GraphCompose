@@ -211,6 +211,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The chart recipe documents the styling surface it has.** Five settings were named
+  nowhere on the page — the three text styles, the donut centre style and the bar width
+  ratio — four of them already load-bearing in the flagship examples that put a chart on
+  a dark card, and discoverable only by reading the builder's source. The
+  value-label halo was filed under line charts, the one place its default white chip is
+  least likely to be wrong, rather than described as what it is: the backing behind
+  value and slice labels alike, and the first thing that must move when a chart leaves a
+  white page. And `ChartTheme` was presented as a layer an author styles through, though
+  no authoring API accepts one — a chart resolves its geometry after the document's theme
+  is out of reach, so `ChartStyle` is the author-facing whole of it. The low-level
+  `ChartLayoutResolver.resolve(...)` does take a `ChartTheme`, and the page now says so
+  rather than leaving it out. The page carries every setting
+  with its default and what it affects, worked examples for typography and for the halo,
+  and `ChartStyleDocumentationGuardTest` fails the build when a setter reaches the builder
+  without reaching the page.
 - **One recipe catalogue instead of two.** The cookbook page and the folder index each
   carried a hand-maintained table of all twenty-two recipe pages. They happened to agree
   on which pages exist and disagreed on ten of the descriptions — the folder index named

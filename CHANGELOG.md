@@ -7,6 +7,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **The cut installs a module after the things it needs.** Step 4 installs each train
+  sibling on its own, so everything it depends on has to be in the local repository at
+  the version the bump just wrote — a version that exists in no reactor and not yet on
+  Central. `render-pptx` was listed before `testing` while depending on it, and had been
+  since PPTX gained its text-fidelity suite. That stayed invisible: the cut only fails on
+  it when the local repository does not already hold `graph-compose-testing` at the new
+  version, which is the normal state of a clean machine and not of one that has been
+  building all week. The 2.1.1 cut hit it and stopped at Step 4 — after the version bump
+  had rewritten thirty files, before any commit, tag or push. `testing` now installs
+  second, and `ReleaseScriptInstallListGuardTest` derives the required order from the
+  poms rather than restating it, so a new edge cannot be added without failing the build.
+
 - **CI opens the Javadoc jar it is about to publish.** The existing step lints the
   engine's sources, which says nothing about whether the artefact Maven Central serves
   has anything in it — and that was the failure: `graph-compose` carries no sources of

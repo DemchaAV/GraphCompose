@@ -613,9 +613,20 @@ function Build-ExampleCatalogue {
     # on but that is missing here fails Step 4 with "Could not find artifact
     # …:<new version>", because the just-bumped version exists nowhere yet.
     # ReleaseScriptInstallListGuardTest fails the build if the two drift apart.
-    # render-pptx must follow render-pdf: it depends on it at compile scope.
-    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'wrapper/pom.xml', 'render-docx/pom.xml',
-                                 'render-pptx/pom.xml', 'templates/pom.xml', 'testing/pom.xml')
+    #
+    # ORDER IS PART OF THE CONTRACT, not presentation. Each module is installed on
+    # its own, so anything it needs must already be in the local repository at the
+    # just-bumped version — and that version exists nowhere else, not in the
+    # reactor and not on Central. Two edges matter:
+    #   render-pdf  before render-pptx and wrapper  (compile scope)
+    #   testing     before render-pptx              (test scope, since #407)
+    # The second was wrong from the moment render-pptx took that dependency, and
+    # stayed invisible: a cut only fails on it when the local repository does not
+    # already hold graph-compose-testing at the new version, which is the normal
+    # state of a clean machine. The 2.1.1 cut hit it and stopped at Step 4 —
+    # before any commit, tag or push, which is the one thing that went right.
+    $exampleSnapshotSiblings = @('render-pdf/pom.xml', 'testing/pom.xml', 'wrapper/pom.xml',
+                                 'render-docx/pom.xml', 'render-pptx/pom.xml', 'templates/pom.xml')
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -B -ntp -DskipTests install -pl :graph-compose-core" -ForegroundColor Yellow
         foreach ($modulePom in $exampleSnapshotSiblings) {

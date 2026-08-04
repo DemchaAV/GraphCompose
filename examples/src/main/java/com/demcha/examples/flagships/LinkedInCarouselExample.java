@@ -502,7 +502,9 @@ public final class LinkedInCarouselExample {
                 .barCornerRadius(DocumentCornerRadius.of(4 * SCALE))
                 .barWidthRatio(0.5)
                 .axisTextStyle(mono(22, ON_DARK_MUTED))
-                .valueLabelTextStyle(mono(25, ON_DARK))
+                // Amber lifts the numbers off the violet bars without a second fill
+                // behind them; on this surface it clears 7.6:1.
+                .valueLabelTextStyle(mono(25, AMBER))
                 // The labels sit over the gridlines, which on this surface read as
                 // strikethroughs across the digits. The halo punches a chip of the
                 // card's own fill out from under each one.

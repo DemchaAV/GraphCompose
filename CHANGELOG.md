@@ -241,6 +241,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The engine deck stopped calling a shipped backend planned.** Its first page listed
+  PPTX as *Planned* beside a version badge reading v2.1.0 — the release that shipped it,
+  and the release whose own copy of that deck is published as a `.pptx`. The page
+  described the library as generating "structured business PDF documents" and its
+  pipeline as ending in "PDFBox writes the bytes", both written when PDF was the only
+  output. PPTX is now listed as the live, `@Beta` backend it is, and the prose covers
+  both. The benchmark pages are redrawn from a fresh five-run median: at 1000 rows
+  GraphCompose renders in 40.0 ms against iText's 170.1 ms and JasperReports' 38.5 ms,
+  on 19.3 MB of peak heap against 68.0 MB and 52.4 MB — the same shape the previous
+  snapshot showed, with Jasper at parity on time and GraphCompose far lighter on memory.
+- **README leads with the banner, and gathers the documents that explain the engine.**
+  The hero is the engine deck's opening page on a page cropped to wrap it, rendered
+  straight to a raster through the image backend — no intermediate PDF, no external
+  rasteriser. `GenerateAllExamples` now renders that banner as a document too, so
+  `engine-banner.pdf` is a published preview the drift gate refreshes and compares like
+  any other rather than a file only one entry point could produce. A new section
+  collects the five documents that describe the engine by being its output: the deck,
+  the twin PDF/PPTX pair, the feature catalogue, the master showcase and the Maven
+  Central banner, each with what it shows and the example that renders it.
 - **The PowerShell commands run as written.** Two pages handed Windows readers a
   command that fails. PowerShell splits a `-D` flag whose property name contains a dot,
   passing the native command `-Dexec` and `.mainClass=…` as separate arguments, and

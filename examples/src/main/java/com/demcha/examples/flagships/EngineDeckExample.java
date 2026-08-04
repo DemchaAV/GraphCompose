@@ -158,9 +158,13 @@ public final class EngineDeckExample {
     /**
      * Renders the standalone hero banner to a raster image straight from the
      * engine via {@link DocumentSession#toImage(int, int)} ({@code @since 1.9.0})
-     * — no intermediate PDF and no external rasterizer. This is the source of the
-     * repository README hero ({@code assets/readme/repository_showcase_render.png},
-     * written by {@link com.demcha.examples.support.ReadmeBannerRenderer}). The
+     * — no intermediate PDF and no external rasterizer. It is written to
+     * {@code assets/readme/engine-banner.png} by
+     * {@link com.demcha.examples.support.ReadmeBannerRenderer} and is README's
+     * opening hero. (The module-first hero further down that page,
+     * {@code repository_showcase_render.png}, is a different composition and comes
+     * from {@code EngineDeckV2Example} through {@code ReadmeBannerV2Renderer} —
+     * that is the one {@code cut-release.ps1} re-renders on a tag.) The
      * dark violet field is the canonical {@code pageBackground} on a page cropped
      * to wrap the content, so the image is all banner and no white frame. The
      * version pill reads {@link #VERSION} / {@link #CODENAME} from the filtered
@@ -260,7 +264,7 @@ public final class EngineDeckExample {
                     // ═════════ PAGE 2 — how it works ═════════
                     .addPageBreak(b -> b.name("ToHowItWorks"))
                     .addSection("HowKicker", s -> kicker(s, "HOW IT WORKS",
-                            "From one Java file to a designed PDF"))
+                            "From one Java file to a designed document"))
                     .addSection("HowBody", s -> s
                             .padding(DocumentInsets.zero())
                             .addParagraph(p -> p
@@ -273,7 +277,8 @@ public final class EngineDeckExample {
                                             .accent("paginates", VIOLET_DEEP)
                                             .plain(" the flow row-by-row, and ")
                                             .accent("renders", VIOLET_DEEP)
-                                            .plain(" through an isolated PDFBox backend. No manual coordinates, no XML templates."))
+                                            .plain(" the resolved layout through an isolated backend — PDFBox for PDF, "
+                                                    + "Apache POI for the deck. No manual coordinates, no XML templates."))
                                     .lineSpacing(1.55)))
                     .addRow("Pipeline", row -> {
                         row.spacing(8).weights(1, 0.14, 1, 0.14, 1, 0.14, 1);
@@ -375,7 +380,8 @@ public final class EngineDeckExample {
                 .add(brandLine())
                 .addParagraph(p -> p
                         .text("Open-source Java library for generating structured business "
-                                + "PDF documents with a declarative DSL.")
+                                + "documents with a declarative DSL — print-ready PDF and an "
+                                + "editable PowerPoint deck from one composition.")
                         .textStyle(tagline()).lineSpacing(1.3).margin(DocumentInsets.top(4)))
                 .addShape(sh -> sh.size(749, 1.2).fillColor(RULE_DARK).margin(DocumentInsets.top(8)))
                 .addRow("Flow", row -> {

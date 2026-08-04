@@ -154,6 +154,13 @@ class CommittedAssetDriftTest {
     private static final Set<String> RASTER_FIGURES = Set.of(
             "barcode-showcase.png",
             "chart-showcase.png",
+            // README's opening hero: EngineDeckExample#renderBannerImage through
+            // ReadmeBannerRenderer, the deck's first page on a page cropped to wrap it.
+            // Beside the engine-banner.pdf this guard does compare — same composition,
+            // same session settings — so the figure moves only when that PDF does. It is
+            // not in the compared set because GenerateAllExamples writes documents, not
+            // rasters; nothing in the catalogue produces a PNG.
+            "engine-banner.png",
             "feature-catalog.png",
             "repository_showcase_render.png",
             "social-card.png",

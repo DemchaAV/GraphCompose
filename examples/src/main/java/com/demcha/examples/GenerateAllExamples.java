@@ -233,6 +233,10 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + BusinessReportExample.generate());
         System.out.println("Generated: " + BusinessReportPptxExample.generate());
         System.out.println("Generated: " + EngineDeckExample.generate());
+        // The deck's opening page again, on a page cropped to wrap it: README's hero,
+        // and the only banner the catalogue renders. Without it here the committed
+        // preview would be a file nothing can refresh, which the drift gate refuses.
+        System.out.println("Generated: " + EngineDeckExample.generateBanner());
         System.out.println("Generated: " + EngineDeckV2Example.generate());
         System.out.println("Generated: " + EngineDeckPptxExample.generate());
         // The PDF first: ShowcaseSync builds a card per PDF and publishes a PPTX only

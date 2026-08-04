@@ -1,7 +1,12 @@
 # GraphCompose
 
 <p align="center">
-  <img src="./assets/GraphComposeLogo.png" alt="GraphCompose logo" width="300"/>
+  <a href="./assets/readme/examples/engine-banner.pdf"><img src="./assets/readme/engine-banner.png" alt="GraphCompose — a declarative Java DSL: authored code, resolved layout, PDF and PPTX output" width="900"/></a>
+</p>
+
+<p align="center">
+  <sub>This banner is a GraphCompose document, and the image above is the engine rendering it &mdash; straight to a raster, no intermediate PDF.<br/>
+  It is the opening page of the <a href="./assets/readme/examples/engine-deck.pdf">engine deck</a> &middot; <a href="./assets/readme/examples/engine-banner.pdf">as a PDF</a> &middot; <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java">the source that renders both</a></sub>
 </p>
 
 <p align="center">
@@ -382,6 +387,26 @@ GraphCompose uses PDFBox under the hood as the rendering backend &mdash; the com
 | See the live gallery | Static showcase site | [Showcase](https://DemchaAV.github.io/GraphCompose/) &mdash; source under [`web/`](./web), deployed to GitHub Pages via the [Pages workflow](./.github/workflows/deploy-web.yml) |
 
 > **Templates in 2.0** &mdash; there is one template surface: the layered preset families in `graph-compose-templates`, themed through `BrandTheme`. Arriving from a pre-2.0 surface (classic presets, the built-in `*Template` classes)? **[Which template system should I use?](./docs/templates/which-template-system.md)** maps every retired name to its layered replacement.
+
+## The engine, explained by the engine
+
+Every document below is rendered by GraphCompose from a runnable example in this
+repository, and re-rendered on every release. They are the fastest way to see what the
+engine does without cloning anything &mdash; and each one is the engine's own output, so
+what it shows is what it can do.
+
+| Document | What it shows | Source |
+|---|---|---|
+| **[Engine deck](./assets/readme/examples/engine-deck.pdf)** (4 pages) | The pipeline end to end &mdash; DSL &rarr; measure &rarr; paginate &rarr; render &mdash; then the measured comparison against iText 9 and JasperReports, and how all three scale from 40 to 1000 rows. Pages 3&ndash;4 are drawn from the benchmark result file, not typed in. | [EngineDeckExample](./examples/src/main/java/com/demcha/examples/flagships/EngineDeckExample.java) |
+| **[Twin output](./assets/readme/examples/twin-output.pdf)** &middot; [PPTX](./assets/readme/examples/twin-output.pptx) | One composition, two files. Open them side by side: same geometry, one print-ready, one editable in PowerPoint. | [TwinOutputExample](./examples/src/main/java/com/demcha/examples/flagships/TwinOutputExample.java) |
+| **[Feature catalogue](./assets/readme/examples/feature-catalog.pdf)** (7 pages) | Self-documenting blocks: each shows the exact API call in a grey panel and renders the result directly beneath it. Headings land in the PDF outline, so your viewer's bookmark panel is the index. | [FeatureCatalogExample](./examples/src/main/java/com/demcha/examples/flagships/FeatureCatalogExample.java) |
+| **[Master showcase](./assets/readme/examples/master-showcase.pdf)** &middot; [PPTX](./assets/readme/examples/master-showcase.pptx) | A realistic report &mdash; modules, sections, rows, tables, shapes, layers in one document, from a single source file. | [MasterShowcaseExample](./examples/src/main/java/com/demcha/examples/flagships/MasterShowcaseExample.java) |
+| **[Maven Central banner](./assets/readme/examples/maven-banner.pdf)** &middot; [PPTX](./assets/readme/examples/maven-banner.pptx) | The release announcement card &mdash; coordinate, capability chips, and the code &rarr; layout &rarr; document pipeline in one 16:9 frame. | [MavenBannerPptxExample](./examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java) |
+
+The benchmark numbers in the deck come from this repository's own harness &mdash;
+[how to run it yourself](./docs/operations/benchmarks.md). Read the ratios rather than
+the milliseconds: all three engines are measured in the same run on the same machine, so
+their proportions survive a change of hardware while the timings do not.
 
 ## Documentation
 

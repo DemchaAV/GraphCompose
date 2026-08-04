@@ -503,6 +503,10 @@ public final class LinkedInCarouselExample {
                 .barWidthRatio(0.5)
                 .axisTextStyle(mono(22, ON_DARK_MUTED))
                 .valueLabelTextStyle(mono(25, ON_DARK))
+                // The labels sit over the gridlines, which on this surface read as
+                // strikethroughs across the digits. The halo punches a chip of the
+                // card's own fill out from under each one.
+                .valueLabelHalo(DocumentPaint.solid(SURFACE))
                 .build();
     }
 

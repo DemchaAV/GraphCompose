@@ -3,6 +3,7 @@ package com.demcha.compose.document.chart;
 import com.demcha.compose.document.node.LineNode;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.ShapeNode;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentPaint;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
@@ -134,13 +135,78 @@ class ChartLayoutResolverTest {
         assertThat(count(out, LineNode.class)).isZero();
         assertThat(out.stream().anyMatch(p -> p.node().name().startsWith("tick_"))).isFalse();
         assertThat(out.stream().anyMatch(p -> p.node().name().startsWith("cat_"))).isFalse();
-        // Only the bars and their value labels remain.
-        assertThat(count(out, ShapeNode.class)).isEqualTo(2);
-        assertThat(out.stream().filter(p -> p.node().name().startsWith("value_")).count())
+        // Only the bars and their value labels remain — each label carrying the
+        // halo chip the theme defines, which is a ShapeNode of its own.
+        assertThat(count(out, ShapeNode.class)).isEqualTo(4);
+        assertThat(out.stream().filter(p -> p.node().name().startsWith("value_")
+                && !p.node().name().endsWith("_halo")).count())
                 .isEqualTo(2);
         // With no tick labels the value axis reserves no left gutter: bars start at x≈0.
         ChartPrimitive barA = byName(out, "bar_c0_s0");
         assertThat(barA.x()).isLessThan(20.0);
+    }
+
+    /**
+     * A bar's value label sits on the grid line as readily as a line chart's does,
+     * and the halo exists to punch the line out from behind the digits. The bar
+     * layout resolved the colour and then passed {@code null} for every label
+     * except a stacked total, so the chip the style asked for was dropped on the
+     * floor for the commonest chart in the library.
+     */
+    @Test
+    void barValueLabelsCarryTheHaloTheStyleAsksFor() {
+        DocumentColor haloColour = DocumentColor.rgb(20, 27, 51);
+        ChartData data = ChartData.builder()
+                .categories("A", "B")
+                .series("S", 10.0, 20.0)
+                .build();
+        ChartSpec.Bar bar = ChartSpec.bar()
+                .data(data)
+                .valueLabels(ValueLabelMode.OUTSIDE)
+                .build();
+        ChartStyle style = baseStyle().mergedUnder(ChartStyle.builder()
+                .valueLabelHalo(DocumentPaint.solid(haloColour))
+                .build());
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, style, ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        // One chip per label, each filled with the colour the style named — not the
+        // theme's, which is what a dropped argument would silently fall back to.
+        List<ChartPrimitive> halos = out.stream()
+                .filter(p -> p.node().name().endsWith("_halo"))
+                .toList();
+        assertThat(halos).hasSize(2);
+        assertThat(halos).allSatisfy(halo ->
+                assertThat(((ShapeNode) halo.node()).fillColor()).isEqualTo(haloColour));
+
+        // The chip is painted before its label, or it would cover the digits.
+        int chip = indexOfName(out, "value_c0_s0_halo");
+        int label = indexOfName(out, "value_c0_s0");
+        assertThat(chip).isLessThan(label);
+
+        // And it is wider than the text box it backs, so the digits sit inside it.
+        assertThat(out.get(chip).width()).isGreaterThan(out.get(label).width());
+    }
+
+    /**
+     * The horizontal branch dropped the same argument, so it is pinned separately —
+     * a fix applied to one orientation would otherwise look complete.
+     */
+    @Test
+    void horizontalBarValueLabelsCarryTheHaloToo() {
+        ChartData data = ChartData.builder().categories("A").series("S", 10.0).build();
+        ChartSpec.Bar bar = ChartSpec.bar()
+                .data(data)
+                .horizontal(true)
+                .valueLabels(ValueLabelMode.OUTSIDE)
+                .build();
+
+        List<ChartPrimitive> out = ChartLayoutResolver.resolve(
+                bar, baseStyle(), ChartDefaults.DEFAULT_THEME, 200.0, 100.0, METRICS);
+
+        assertThat(out.stream().filter(p -> p.node().name().endsWith("_halo")).count())
+                .isEqualTo(1);
     }
 
     @Test
@@ -941,5 +1007,15 @@ class ChartLayoutResolverTest {
 
     private static ChartPrimitive byName(List<ChartPrimitive> out, String name) {
         return out.stream().filter(p -> p.node().name().equals(name)).findFirst().orElseThrow();
+    }
+
+    /** Emission order matters for anything painted behind something else. */
+    private static int indexOfName(List<ChartPrimitive> out, String name) {
+        for (int i = 0; i < out.size(); i++) {
+            if (out.get(i).node().name().equals(name)) {
+                return i;
+            }
+        }
+        throw new AssertionError("no primitive named " + name);
     }
 }

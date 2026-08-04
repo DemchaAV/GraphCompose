@@ -27,8 +27,19 @@ Source path into a class name: drop `src/main/java/` and `.java`, then swap `/` 
 So `src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java` becomes
 `com.demcha.examples.flagships.ModuleFirstFileExample`.
 
-Generated PDFs land in `examples/target/generated-pdfs/`. The same `mvnw.cmd` form
-works on Windows PowerShell with backslash paths.
+Generated PDFs land in `examples/target/generated-pdfs/`.
+
+On Windows PowerShell the wrapper is `.\mvnw.cmd` and the command needs two changes,
+neither of them cosmetic. The trailing `\` above is a shell continuation PowerShell does
+not have, so the command must be one line. And `-Dexec.mainClass=…` has to be quoted:
+unquoted, PowerShell splits it and Maven receives `.mainClass=…` as a separate argument,
+failing with `Unknown lifecycle phase ".mainClass=…"`.
+
+```powershell
+.\mvnw.cmd -f examples/pom.xml exec:java "-Dexec.mainClass=com.demcha.examples.flagships.ModuleFirstFileExample"
+```
+
+Forward slashes are fine in the `-f` path; nothing needs converting to backslashes.
 
 To regenerate the **whole catalogue** — roughly a hundred documents, and the output
 directory is emptied first — run the batch entry point. You do not need it to read one

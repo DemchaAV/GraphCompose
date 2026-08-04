@@ -211,6 +211,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The PowerShell commands run as written.** Two pages handed Windows readers a
+  command that fails. PowerShell splits a `-D` flag whose property name contains a dot,
+  passing the native command `-Dexec` and `.mainClass=…` as separate arguments, and
+  Maven then rejects the fragment with `Unknown lifecycle phase ".mainClass=…"`; a flag
+  with no dot before the `=` survives, which is what makes it easy to miss. The
+  examples README compounded it by claiming the bash form works unchanged on
+  PowerShell — the block above it ends a line with `\`, a continuation PowerShell does
+  not have — while pointing at backslash paths, which were never the problem. Both
+  pages now carry the command that was run on PowerShell to check it.
 - **The authoring cheatsheet stops describing `lineSpacing` as a multiple.** Its
   address-block recipe passed `1.3` and explained it as overriding a default of `1.0` —
   the reading a CSS `line-height` invites, and the one the number itself suggests.

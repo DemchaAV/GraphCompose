@@ -202,6 +202,71 @@ jobs:
         if: matrix.java == '17'
         run: ./mvnw -B -ntp javadoc:javadoc -pl :graph-compose-core
 
+      - name: Published Javadoc artefact is not empty
+        # The step above lints the engine's sources. It cannot see whether the
+        # artefact Maven Central serves has anything in it — and that is the
+        # failure that actually happened: `graph-compose` carries no sources of
+        # its own, so the javadoc goal found nothing to archive and attached an
+        # artefact with no pages. Every 2.x release shipped that way, and
+        # javadoc.io kept rendering 1.9.1 because it was the newest version that
+        # carried an API reference at all. Nothing was red.
+        #
+        # Configuration is guarded by PublishedJavadocCoordinateGuardTest. This
+        # guards the output: build the jar the release profile builds and look
+        # inside it. Three pages stand in for the whole reference — the index the
+        # reader lands on, the entry point every snippet starts from, and the type
+        # they spend the rest of their time in.
+        #
+        # Three passes, mirroring the order publish.yml deploys in — and the order
+        # is the whole point, because getting it wrong is silent.
+        #
+        # The wrapper's javadoc jar is configured in its `release` profile with
+        # includeDependencySources, so it needs the ENGINE'S SOURCES JAR in the
+        # local repository. Without it the goal logs "No Javadoc in project.
+        # Archive not created", attaches nothing, and reports BUILD SUCCESS — the
+        # empty-artefact failure all over again, now wearing a green tick.
+        #
+        # That sources jar is itself release-profile-only, and `release` also sets
+        # core's attach-test-jar to phase `none` (the tests jar is deliberately not
+        # published), which render-pdf needs at test scope. So: build the reactor
+        # profile-free to get every module including that tests jar, re-install the
+        # engine under `release` to add its sources jar, then build the wrapper.
+        # publish.yml gets there by deploying the engine before the wrapper.
+        if: matrix.java == '17'
+        run: |
+          set -euo pipefail
+          ./mvnw -B -ntp install -DskipTests -pl :graph-compose -am
+          ./mvnw -B -ntp install -DskipTests -pl :graph-compose-core -Prelease -Dgpg.skip=true
+          ./mvnw -B -ntp package -DskipTests -pl :graph-compose -Prelease -Dgpg.skip=true
+          jar=$(ls wrapper/target/graph-compose-*-javadoc.jar 2>/dev/null || true)
+          if [ -z "$jar" ]; then
+            echo "::error::No Javadoc jar was attached at all. Maven reports success in" \
+                 "this case — 'No Javadoc in project. Archive not created' — which is how" \
+                 "the empty artefact reached Central unnoticed. The usual cause is the" \
+                 "engine's sources jar missing from the local repository, since" \
+                 "includeDependencySources has nothing to read without it."
+            exit 1
+          fi
+          echo "inspecting $jar"
+          missing=0
+          for page in index.html \
+                      com/demcha/compose/GraphCompose.html \
+                      com/demcha/compose/document/api/DocumentSession.html; do
+            if unzip -l "$jar" | grep -qF " $page"; then
+              echo "  ok      $page"
+            else
+              echo "  MISSING $page"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::The published Javadoc jar is missing pages a reader needs." \
+                 "This is what an empty API reference looks like before it reaches Central:" \
+                 "check wrapper/pom.xml still sets includeDependencySources and" \
+                 "dependencySourceInclude for the engine."
+            exit 1
+          fi
+
       - name: Upload aggregate coverage report
         # The cross-module JaCoCo report (core + render-pdf + templates coverage,
         # counting the qa suites) is published as an artifact for inspection. The

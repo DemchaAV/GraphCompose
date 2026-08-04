@@ -7,6 +7,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **CI opens the Javadoc jar it is about to publish.** The existing step lints the
+  engine's sources, which says nothing about whether the artefact Maven Central serves
+  has anything in it — and that was the failure: `graph-compose` carries no sources of
+  its own, the javadoc goal found nothing to archive, and every 2.x release shipped an
+  artefact with no pages while javadoc.io went on rendering **1.9.1**, the newest version
+  that carried a reference at all. Nothing was red for it. The configuration is guarded
+  by `PublishedJavadocCoordinateGuardTest`; CI now builds the jar the release profile
+  builds and looks inside, failing if the index, `GraphCompose` or `DocumentSession` is
+  missing — the three pages a reader arrives at, standing in for the reference.
 - **The Javadoc gate lints the class readers open first.** It ran with
   `subpackages` set to `com.demcha.compose.document`, so `GraphCompose` — the entry
   point every snippet in the README starts from — sat in the root package outside it,

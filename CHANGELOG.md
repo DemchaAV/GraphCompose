@@ -211,6 +211,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The authoring cheatsheet stops describing `lineSpacing` as a multiple.** Its
+  address-block recipe passed `1.3` and explained it as overriding a default of `1.0` —
+  the reading a CSS `line-height` invites, and the one the number itself suggests.
+  `lineSpacing` is extra space in **points**, defaulting to `0`: a paragraph grows by
+  `(lines - 1) × spacing`, so `1.3` bought a little over one point of air rather than
+  30% more leading, and there was no `1.0` default to override. The recipe now passes a
+  value that does what the prose beside it promises, and the page states the unit.
 - **The chart recipe documents the styling surface it has.** Five settings were named
   nowhere on the page — the three text styles, the donut centre style and the bar width
   ratio — four of them already load-bearing in the flagship examples that put a chart on

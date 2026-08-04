@@ -181,14 +181,21 @@ you cheap forks. To brand for your project, hand-build a
 The soft panel sits flush against the accent stripe — round only the
 **right** corners so the join is clean.
 
-### 6.2 Address blocks with `lineSpacing(1.3)`
+### 6.2 Address blocks with `lineSpacing(3)`
 
 ```java
 .addParagraph(p -> p.text(joinAddress(party))
     .textStyle(theme.text().body())
-    .lineSpacing(1.3)               // default 1.0 squashes \n-joined lines
+    .lineSpacing(3)                 // 3pt of air; the default 0 packs \n-joined lines
     .margin(DocumentInsets.zero()))
 ```
+
+`lineSpacing` is **extra space in points**, not a multiple of the font size:
+the paragraph's height grows by `(lines - 1) × spacing`. The default is `0`,
+so an address joined with `\n` renders on consecutive baselines with no extra
+gap between them — the font's own line height and nothing added. Two or three
+points is usually enough to separate the lines without opening a gap that
+reads as a paragraph break.
 
 ### 6.3 Two-column block via `addRow` with weights
 
@@ -337,7 +344,7 @@ public final class StatusReportTemplateV1 implements StatusReportTemplate {
                         .addParagraph(p -> p.text("Summary").textStyle(theme.text().h2()))
                         .addParagraph(p -> p.text(spec.summary())
                                 .textStyle(theme.text().body())
-                                .lineSpacing(1.3)))
+                                .lineSpacing(3)))
 
                 // Metrics table — themed header + zebra + total row + repeating header
                 .addTable(table -> {

@@ -1,54 +1,57 @@
 {
-  "timestamp" : "2026-07-26 23:00:56",
+  "timestamp" : "2026-08-04 22:16:04",
   "warmupIterations" : 50,
   "measurementIterations" : 100,
   "libraries" : [ {
-    "library" : "GraphCompose Canonical",
-    "avgTimeMs" : 2.84,
-    "avgHeapMb" : 0.17
-  }, {
-    "library" : "iText 9",
-    "avgTimeMs" : 2.75,
-    "avgHeapMb" : 0.16
-  }, {
-    "library" : "JasperReports",
-    "avgTimeMs" : 5.7,
-    "avgHeapMb" : 0.16
-  }, {
-    "library" : "GraphCompose (40 rows)",
-    "avgTimeMs" : 5.7,
-    "avgHeapMb" : 0.99
-  }, {
-    "library" : "iText 9 (40 rows)",
-    "avgTimeMs" : 14.54,
-    "avgHeapMb" : 3.05
-  }, {
-    "library" : "JasperReports (40 rows)",
-    "avgTimeMs" : 9.89,
-    "avgHeapMb" : 2.53
+    "library" : "GraphCompose (1000 rows)",
+    "avgTimeMs" : 42.76,
+    "avgHeapMb" : 19.31
   }, {
     "library" : "GraphCompose (200 rows)",
-    "avgTimeMs" : 15.26,
-    "avgHeapMb" : 3.93
+    "avgTimeMs" : 10.91,
+    "avgHeapMb" : 3.95
   }, {
-    "library" : "iText 9 (200 rows)",
-    "avgTimeMs" : 57.57,
-    "avgHeapMb" : 13.81
+    "library" : "GraphCompose (40 rows)",
+    "avgTimeMs" : 4.08,
+    "avgHeapMb" : 1.0
   }, {
-    "library" : "JasperReports (200 rows)",
-    "avgTimeMs" : 21.13,
-    "avgHeapMb" : 10.81
+    "library" : "GraphCompose Canonical",
+    "avgTimeMs" : 2.03,
+    "avgHeapMb" : 0.17
   }, {
-    "library" : "GraphCompose (1000 rows)",
-    "avgTimeMs" : 64.08,
-    "avgHeapMb" : 19.16
-  }, {
-    "library" : "iText 9 (1000 rows)",
-    "avgTimeMs" : 291.03,
-    "avgHeapMb" : 68.16
+    "library" : "JasperReports",
+    "avgTimeMs" : 4.22,
+    "avgHeapMb" : 0.15
   }, {
     "library" : "JasperReports (1000 rows)",
-    "avgTimeMs" : 64.77,
-    "avgHeapMb" : 52.53
-  } ]
+    "avgTimeMs" : 43.68,
+    "avgHeapMb" : 52.47
+  }, {
+    "library" : "JasperReports (200 rows)",
+    "avgTimeMs" : 13.46,
+    "avgHeapMb" : 10.81
+  }, {
+    "library" : "JasperReports (40 rows)",
+    "avgTimeMs" : 8.26,
+    "avgHeapMb" : 2.53
+  }, {
+    "library" : "iText 9",
+    "avgTimeMs" : 2.13,
+    "avgHeapMb" : 0.16
+  }, {
+    "library" : "iText 9 (1000 rows)",
+    "avgTimeMs" : 189.12,
+    "avgHeapMb" : 67.29
+  }, {
+    "library" : "iText 9 (200 rows)",
+    "avgTimeMs" : 36.57,
+    "avgHeapMb" : 13.64
+  }, {
+    "library" : "iText 9 (40 rows)",
+    "avgTimeMs" : 9.96,
+    "avgHeapMb" : 3.01
+  } ],
+  "aggregation" : "median",
+  "sourceCount" : 5,
+  "sourceRuns" : [ "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\comparative\\run-20260804-221258.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\comparative\\run-20260804-221344.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\comparative\\run-20260804-221431.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\comparative\\run-20260804-221517.json", "C:\\Dev\\Java\\GraphCompose\\target\\benchmarks\\comparative\\run-20260804-221603.json" ]
 }

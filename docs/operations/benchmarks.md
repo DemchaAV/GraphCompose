@@ -293,8 +293,13 @@ reference, with the IDE closed:
 
 **Windows (PowerShell):**
 
+A `-D` flag whose property name contains a dot has to be quoted here — unquoted,
+PowerShell hands the native command `-Dmdep` and `.outputFile=…` as two arguments and
+Maven rejects the second as a lifecycle phase. That is why the `java` lines below quote
+theirs too.
+
 ```powershell
-.\mvnw.cmd -B -ntp -f benchmarks\pom.xml test-compile dependency:build-classpath -DincludeScope=test -Dmdep.outputFile=target/benchmark.classpath
+.\mvnw.cmd -B -ntp -f benchmarks\pom.xml test-compile dependency:build-classpath -DincludeScope=test "-Dmdep.outputFile=target/benchmark.classpath"
 $cp = 'benchmarks\target\test-classes;benchmarks\target\classes;' + (Get-Content benchmarks\target\benchmark.classpath -Raw).Trim()
 1..5 | ForEach-Object { & java "-Dgraphcompose.benchmark.profile=full" -cp "$cp" com.demcha.compose.CurrentSpeedBenchmark }
 $runs = Get-ChildItem target\benchmarks\current-speed\run-*.json | Sort-Object Name | Select-Object -Last 5 | ForEach-Object { $_.FullName }

@@ -241,6 +241,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The Maven Central banner became a deck.** It was one 16:9 slide: wordmark,
+  coordinate, capability tags and a code → layout → document diagram. It now carries
+  three more pages in the same amber-on-navy language — the authoring pipeline and what
+  each step guarantees, the measured comparison against iText 9 and JasperReports, and
+  how all three behave as the report grows from 40 to 1000 rows. Every figure on the
+  last two pages is read from the committed benchmark file at render time rather than
+  typed into the layout. The `.pptx` gains the same three slides; the PNG preview stays
+  the banner alone, since that is what it is for. `MavenBannerNativeShapeTest` now walks
+  all four slides and holds the whole deck to one rasterised element — the SVG
+  checkmark — so the table and both charts have to arrive as native shapes rather than
+  as an embedded image, which is the claim the last page makes.
 - **The PowerShell commands run as written.** Two pages handed Windows readers a
   command that fails. PowerShell splits a `-D` flag whose property name contains a dot,
   passing the native command `-Dexec` and `.mainClass=…` as separate arguments, and

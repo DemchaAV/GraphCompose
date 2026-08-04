@@ -16,16 +16,24 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Guards the Maven-banner slide's editability promise at the PPTX structural
- * level: the panels, tags, code, diagram and connectors land as native shapes
- * and text, and the only rasterised element is the SVG checkmark in the "Maven
- * Central" badge. A clip-safety or SVG-handling regression that flattened the
- * panels into pictures would silently falsify that promise — this catches it.
+ * Guards the Maven deck's editability promise at the PPTX structural level: the
+ * panels, tags, code, diagram, connectors, table and charts land as native shapes
+ * and text, and the only rasterised element in the whole deck is the SVG checkmark
+ * in the "Maven Central" badge on slide 1. A clip-safety or SVG-handling regression
+ * that flattened any of it into pictures would silently falsify that promise.
+ *
+ * <p>The charts matter most here. They are compiled to the same primitives as
+ * everything else, so a deck claiming "native vector output" has to survive the
+ * round trip as shapes rather than as an embedded image — which is exactly what a
+ * chart-rendering shortcut would break, and nothing else would notice.</p>
  */
 class MavenBannerNativeShapeTest {
 
+    /** Banner, pipeline, measured, scaling. */
+    private static final int SLIDES = 4;
+
     @Test
-    void theSlideStaysNativeApartFromTheCheckIcon() throws Exception {
+    void everySlideStaysNativeApartFromTheCheckIcon() throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(DocumentPageSize.SLIDE_16_9)
                 .pageBackground(DocumentColor.rgb(13, 17, 33))
@@ -34,14 +42,25 @@ class MavenBannerNativeShapeTest {
             MavenBannerPptxExample.compose(document);
             byte[] deck = document.toPptxBytes();
             try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(deck))) {
-                assertThat(show.getSlides()).hasSize(1);
-                List<XSLFShape> shapes = show.getSlides().get(0).getShapes();
-                long pictures = shapes.stream().filter(XSLFPictureShape.class::isInstance).count();
+                assertThat(show.getSlides()).hasSize(SLIDES);
+
+                long pictures = 0;
+                for (int slide = 0; slide < SLIDES; slide++) {
+                    List<XSLFShape> shapes = show.getSlides().get(slide).getShapes();
+                    pictures += shapes.stream().filter(XSLFPictureShape.class::isInstance).count();
+                    assertThat(shapes)
+                            .as("slide %d carries native content", slide + 1)
+                            .isNotEmpty();
+                }
+
                 assertThat(pictures)
-                        .as("only the SVG checkmark rasterises")
+                        .as("across the whole deck only the SVG checkmark rasterises — the table "
+                                + "and both charts have to arrive as shapes, not as an image")
                         .isEqualTo(1);
-                assertThat(shapes.size() - pictures)
-                        .as("the rest of the banner lands as native shapes")
+
+                List<XSLFShape> banner = show.getSlides().get(0).getShapes();
+                assertThat(banner.size() - 1)
+                        .as("the banner itself lands as native shapes")
                         .isGreaterThan(100);
             }
         }

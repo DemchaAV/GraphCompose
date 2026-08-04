@@ -141,7 +141,7 @@ final class BarChartLayout {
                         double labelBottomY = v >= baseValue
                                 ? yBottom + h + labelGap
                                 : yBottom - labelGap - f.valueLineH();
-                        emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, null,
+                        emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, halo,
                                 bx + innerBarW / 2.0, labelBottomY,
                                 labelW, f.valueLineH());
                     }
@@ -338,7 +338,7 @@ final class BarChartLayout {
                         double centerX = v >= baseValue
                                 ? xLeft + w + labelGap + labelW / 2.0
                                 : xLeft - labelGap - labelW / 2.0;
-                        emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, null,
+                        emitChipLabel(out, "value_c" + c + "_s" + s, text, valueStyle, halo,
                                 centerX, barTop - innerBarH / 2.0 - valueInk, labelW, valueLineH);
                     }
                 }

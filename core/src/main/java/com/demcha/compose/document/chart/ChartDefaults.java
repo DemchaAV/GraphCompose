@@ -81,8 +81,8 @@ public final class ChartDefaults {
             .build();
 
     /**
-     * Default value-label halo — a white chip behind line-chart value labels so
-     * digits stay legible where line strokes cross them. Charts rendered on a
+     * Default value-label halo — a white chip behind chart value labels so the
+     * digits stay legible where a grid line or a stroke crosses them. Charts on a
      * non-white surface should override it with the surface colour via
      * {@code ChartStyle.valueLabelHalo(...)}.
      */

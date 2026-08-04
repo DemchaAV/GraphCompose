@@ -45,9 +45,10 @@ import java.util.Map;
  * @param axisTextStyle        tick / category label style
  * @param legendTextStyle      legend label style
  * @param valueLabelTextStyle  value-label style
- * @param valueLabelHalo       halo chip painted behind line-chart value labels so the
- *                             digits stay legible where line strokes cross them; match
- *                             it to the chart's surface colour on non-white backgrounds
+ * @param valueLabelHalo       halo chip painted behind chart value labels so the digits
+ *                             stay legible where a grid line or a stroke crosses them;
+ *                             match it to the chart's surface colour on non-white
+ *                             backgrounds
  * @param areaOpacity          opacity of the area fill under {@code ChartSpec.line().area(true)}
  *                             series, in (0..1], or {@code null} for the default (0.35)
  * @param sliceStroke          pie/donut slice separator stroke, or {@code null} for the
@@ -357,8 +358,9 @@ public record ChartStyle(
         }
 
         /**
-         * Sets the halo chip painted behind line-chart value labels. Match it to
-         * the chart's surface colour on non-white backgrounds.
+         * Sets the halo chip painted behind chart value labels — bar, line and
+         * pie alike. Match it to the chart's surface colour on non-white
+         * backgrounds.
          *
          * @param halo halo paint
          * @return this builder

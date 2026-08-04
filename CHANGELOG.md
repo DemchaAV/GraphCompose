@@ -164,6 +164,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A bar chart's value labels get the halo the style asks for.** The halo chip exists
+  so a grid line stops running through the digits. `BarChartLayout` resolved the colour
+  from the style and then passed `null` for every value label except a stacked total —
+  a hardcoded argument forty lines from a sibling call that passed the real one. The
+  result read as a feature that does nothing: the style accepted a halo, the layout
+  computed it, and the label was drawn without it. Line charts and donuts had it all
+  along, which is why the gap survived since 1.8.0 — where the release notes already
+  promised the chip for a label sitting at a "marker **or bar top**". Two arguments, and
+  the six committed previews that carry a bar chart with outside labels are re-rendered
+  with their grid lines cleanly interrupted.
 - **The example catalogue renders the weights it declares.** The same defect the donut
   KPI had, 138 times over in the examples: a font *face* constant named with no
   decoration, which the library rewrites to its base family before the lookup. The PPTX

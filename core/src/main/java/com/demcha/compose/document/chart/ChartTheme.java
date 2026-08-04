@@ -20,7 +20,7 @@ import java.util.Objects;
  * @param axisTextStyle       default tick / category label style
  * @param legendTextStyle     default legend label style
  * @param valueLabelTextStyle default value-label style
- * @param valueLabelHalo      default halo chip painted behind line-chart value labels
+ * @param valueLabelHalo      default halo chip painted behind chart value labels
  *                            so digits stay legible where line strokes cross them
  * @author Artem Demchyshyn
  * @since 1.8.0

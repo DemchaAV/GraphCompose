@@ -241,6 +241,14 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **The engine deck stopped calling a shipped backend planned.** Its first page listed
+  PPTX as *Planned* beside a version badge reading v2.1.0 — the release that shipped it,
+  and the release whose own copy of that deck is published as a `.pptx`. The page also
+  described the library as generating "structured business PDF documents" and ended its
+  pipeline at "PDFBox writes the bytes", and page two was headed "From one Java file to
+  a designed PDF"; all three were written when PDF was the only output. PPTX is now the
+  live `@Beta` backend it is, ordered ahead of the semantic-only DOCX export, and the
+  prose covers both formats.
 - **The Maven Central banner became a deck.** It was one 16:9 slide: wordmark,
   coordinate, capability tags and a code → layout → document diagram. It now carries
   three more pages in the same amber-on-navy language — the authoring pipeline and what

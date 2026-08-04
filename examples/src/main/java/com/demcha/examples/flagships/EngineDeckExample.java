@@ -260,7 +260,7 @@ public final class EngineDeckExample {
                     // ═════════ PAGE 2 — how it works ═════════
                     .addPageBreak(b -> b.name("ToHowItWorks"))
                     .addSection("HowKicker", s -> kicker(s, "HOW IT WORKS",
-                            "From one Java file to a designed PDF"))
+                            "From one Java file to a designed document"))
                     .addSection("HowBody", s -> s
                             .padding(DocumentInsets.zero())
                             .addParagraph(p -> p
@@ -273,7 +273,8 @@ public final class EngineDeckExample {
                                             .accent("paginates", VIOLET_DEEP)
                                             .plain(" the flow row-by-row, and ")
                                             .accent("renders", VIOLET_DEEP)
-                                            .plain(" through an isolated PDFBox backend. No manual coordinates, no XML templates."))
+                                            .plain(" the resolved layout through an isolated backend — PDFBox for PDF, "
+                                                    + "Apache POI for the deck. No manual coordinates, no XML templates."))
                                     .lineSpacing(1.55)))
                     .addRow("Pipeline", row -> {
                         row.spacing(8).weights(1, 0.14, 1, 0.14, 1, 0.14, 1);
@@ -375,7 +376,8 @@ public final class EngineDeckExample {
                 .add(brandLine())
                 .addParagraph(p -> p
                         .text("Open-source Java library for generating structured business "
-                                + "PDF documents with a declarative DSL.")
+                                + "documents with a declarative DSL — print-ready PDF and an "
+                                + "editable PowerPoint deck from one composition.")
                         .textStyle(tagline()).lineSpacing(1.3).margin(DocumentInsets.top(4)))
                 .addShape(sh -> sh.size(749, 1.2).fillColor(RULE_DARK).margin(DocumentInsets.top(8)))
                 .addRow("Flow", row -> {

@@ -12,8 +12,8 @@ The API is split into independent layers so nothing is baked in:
 |---|---|---|
 | Data | `ChartData` | *what numbers* — categories + series, knows nothing about type or colour |
 | Spec | `ChartSpec` (sealed: `bar()` / `line()` / `pie()`) | *what to show* — orientation, axes, legend, labels, sizing |
-| Style | `ChartStyle` over `ChartTheme` tokens | *how it looks* — cascading nullable fields, CSS-style merge |
-| Geometry | `ChartLayoutResolver` | internal pure function `(data, spec, style) → primitives` |
+| Style | `ChartStyle` | *how it looks* — nullable fields merged CSS-style over the built-in `ChartTheme` |
+| Geometry | `ChartLayoutResolver` | *where the shapes come from* — a pure `(spec, style, theme, size, metrics) → primitives` function |
 
 All chart types live in `com.demcha.compose.document.chart`.
 
@@ -57,6 +57,9 @@ section.chart(ChartSpec.bar()
   reading order, values grow right, labels sit at the bar ends.
 - `AxisSpec.min(...)` / `max(...)` pin the axis to explicit bounds; ticks
   still land on nice 1/2/5 values.
+- `ChartStyle.barWidthRatio(...)` sets how much of a category slot the bar
+  group fills (default `0.72`). Lower it for airy, editorial bars; raise it
+  toward `1.0` to close the gaps.
 
 ## Line, smooth, and area charts
 
@@ -90,11 +93,13 @@ section.chart(lineSpec, ChartStyle.builder()
 
 Markers are ellipses (`PointMarker.circle(d)` / `ellipse(w, h)`) drawn
 **above every stroke**, so joints where lines meet stay readable; the white
-ring is the classic separator. Per-point value labels draw above markers
-behind a halo chip (`ChartStyle.valueLabelHalo`, themed white — match it to
-your card colour on tinted surfaces, including translucent paints via
-`DocumentColor.rgba(...)`). When two series' labels would collide at the same
-category, the lower one automatically flips below its point.
+ring is the classic separator. Per-point value labels draw above their marker,
+each behind a halo chip — see [the value-label halo](#the-value-label-halo).
+When two series' labels would collide at the same category, the lower one
+automatically flips below its point.
+
+`valueLabelOffset` (default `2`) is the gap between a label and the thing it
+labels — the marker here, the bar end on a bar chart, the rim on a pie or donut.
 
 ## Pie and donut
 
@@ -111,9 +116,36 @@ section.chart(ChartSpec.pie()
         .build());
 ```
 
-Slices are arc-tessellated vector polygons. `sliceStroke` (themed white 1pt)
-separates adjacent slices; `startAngleDegrees` / `clockwise(false)` control
-layout. Negative values and multi-series data are rejected loudly.
+Slices are arc-tessellated vector polygons. `sliceStroke` (white 1pt by
+default) separates adjacent slices; `startAngleDegrees` / `clockwise(false)`
+control layout. Negative values and multi-series data are rejected loudly.
+
+`centerText` is the KPI in the hole, and `ChartStyle.donutCenterTextStyle(...)`
+is what sizes and colours it — 13pt bold dark grey unless you say otherwise.
+It is a plain `DocumentTextStyle`, so a bigger figure in the brand colour is
+one call:
+
+<!-- doc-example: id=charts-donut-center-style mode=members -->
+
+```java
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.FontName;
+
+ChartStyle kpiDonut = ChartStyle.builder()
+        .donutCenterTextStyle(DocumentTextStyle.builder()
+                .fontName(FontName.HELVETICA)
+                .decoration(DocumentTextDecoration.BOLD)
+                .size(22)
+                .color(DocumentColor.rgb(20, 80, 95))
+                .build())
+        .build();
+```
+
+Slice labels use `valueLabelTextStyle` and the same halo as every other value
+label.
 
 ## Hiding chrome: down to "just the bars"
 
@@ -133,8 +165,9 @@ ChartSpec.bar().data(revenue)
 
 ## Styling: the cascade
 
-`ChartTheme` tokens → document `ChartStyle` → per-series override, merged like
-CSS (every `ChartStyle` field is nullable = inherit):
+Every `ChartStyle` field is nullable, and null means *inherit*. The style you
+pass to `chart(spec, style)` is merged CSS-style over `ChartDefaults.DEFAULT_THEME`,
+so you set the handful of things you care about and the rest stays consistent:
 
 ```java
 ChartStyle.builder()
@@ -147,6 +180,107 @@ ChartStyle.builder()
 ```
 
 The palette cycles by modulo, so a chart never runs out of colours.
+
+`ChartTheme` is that base set of tokens, and the authoring API does not currently
+expose a way to swap it: a chart resolves its geometry during the layout pass,
+after the document's theme is out of reach, so every chart placed through the DSL
+starts from `ChartDefaults.DEFAULT_THEME` and `ChartStyle` is the author-facing
+override. Give charts that must match a brand a shared `ChartStyle` constant and
+pass it to each one.
+
+`ChartLayoutResolver.resolve(...)` does take an explicit `ChartTheme`, but it
+returns raw primitives rather than placing a chart in a document — that is the
+geometry seam, useful for tooling and tests, not a second way to author.
+
+### Typography
+
+Three text styles cover the chrome, all plain `DocumentTextStyle` (the fourth,
+[`donutCenterTextStyle`](#pie-and-donut), belongs to the donut hole):
+
+<!-- doc-example: id=charts-typography mode=members -->
+
+```java
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.font.FontName;
+
+ChartStyle onDark = ChartStyle.builder()
+        .axisTextStyle(label(7.5, DocumentColor.rgb(150, 160, 175)))    // ticks + categories
+        .legendTextStyle(label(8, DocumentColor.rgb(150, 160, 175)))    // series names
+        .valueLabelTextStyle(label(9, DocumentColor.WHITE))             // numbers on the data
+        .build();
+
+static DocumentTextStyle label(double size, DocumentColor color) {
+    return DocumentTextStyle.builder()
+            .fontName(FontName.HELVETICA)
+            .size(size)
+            .color(color)
+            .build();
+}
+```
+
+`axisTextStyle` covers both the numeric ticks and the category labels — they
+are the same chrome and read best when they match. Defaults are 8pt/9pt/8pt
+grey, tuned for a white page: on a dark card you will want to set all three,
+and the halo below along with them.
+
+### The value-label halo
+
+`valueLabelHalo` is the chip drawn *behind* a value or slice label so the digits
+stay legible where the chart's own graphics run under them — a grid line, a
+series stroke, a slice edge. It is a `DocumentPaint`, white by default, which is
+right on a white page and wrong everywhere else: on a tinted card an unset halo
+paints white rectangles across your background.
+
+Set it to the surface the chart sits on:
+
+<!-- doc-example: id=charts-halo mode=members -->
+
+```java
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentPaint;
+
+static final DocumentColor CARD = DocumentColor.rgb(18, 24, 38);
+
+ChartStyle onCard = ChartStyle.builder()
+        .valueLabelHalo(DocumentPaint.solid(CARD))                  // match the card
+        .build();
+
+ChartStyle softened = ChartStyle.builder()
+        .valueLabelHalo(DocumentPaint.solid(CARD.withOpacity(0.6)))  // let the grid show
+        .build();
+```
+
+`withOpacity(...)` makes the chip genuinely translucent — real graphics-state
+alpha, so the grid stays faintly visible through it instead of being punched
+out. Useful when a solid chip reads as a sticker. (`DocumentColor.rgba(r, g, b, a)`
+does the same with an integer 0–255 alpha.)
+
+### Every `ChartStyle` field
+
+| Setting | Default | Applies to |
+|---|---|---|
+| `palette(...)` / `seriesPaint(i, ...)` | 8-colour Tableau-inspired palette † | all |
+| `lineWidth(double)` | `1.5` | line |
+| `pointMarker(PointMarker)` | none | line |
+| `areaOpacity(double)` | `0.35` | line with `area(true)` |
+| `barCornerRadius(DocumentCornerRadius)` | square corners | bar |
+| `barWidthRatio(double)` | `0.72` | bar |
+| `grid(GridStyle)` | horizontal, 0.5pt `#E0E0E0` † | bar, line |
+| `axisTextStyle(DocumentTextStyle)` | 8pt `#5A5A5A` † | tick + category labels |
+| `legendTextStyle(DocumentTextStyle)` | 9pt `#3C3C3C` † | legend |
+| `valueLabelTextStyle(DocumentTextStyle)` | 8pt `#3C3C3C` † | value + slice labels |
+| `valueLabelHalo(DocumentPaint)` | white † | chip behind those labels |
+| `valueLabelOffset(double)` | `2` | gap from a line marker, bar end or pie edge |
+| `sliceStroke(DocumentStroke)` | white 1pt | pie, donut |
+| `sliceGapDegrees(double)` | `0` | pie, donut |
+| `donutCenterTextStyle(DocumentTextStyle)` | 13pt bold `#2D2D2D` | donut centre |
+
+† inherited from `ChartDefaults.DEFAULT_THEME`; unmarked rows are fixed engine
+defaults, some of them constants in `ChartDefaults` and some — `pointMarker`,
+square corners — simply the absence of an override.
 
 ## Inline sparklines
 

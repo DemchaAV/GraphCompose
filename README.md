@@ -20,8 +20,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v2.1.0](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.0) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
-> &nbsp;·&nbsp; 🟡 **In development**: v2.1.1 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
+> 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
+> &nbsp;·&nbsp; 🟡 **In development**: v2.1.2 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>
@@ -58,12 +58,12 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:2.1.0") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.1.1") }
 ```
 
 That coordinate renders PDF out of the box: it aggregates the lean `graph-compose-core`

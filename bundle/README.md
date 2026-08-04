@@ -25,12 +25,12 @@ to compatible independent versions:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-bundle</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose-bundle:2.1.0") }
+dependencies { implementation("io.github.demchaav:graph-compose-bundle:2.1.1") }
 ```
 
 The full "which artifact?" table: [root README → Installation](../README.md#installation).

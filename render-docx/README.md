@@ -21,7 +21,7 @@ which is core + render-pdf already:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-pdf</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <scope>runtime</scope>
 </dependency>
 ```
@@ -87,12 +87,12 @@ Same version as the rest of the GraphCompose train (lockstep):
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-render-docx</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose-render-docx:2.1.0") }
+dependencies { implementation("io.github.demchaav:graph-compose-render-docx:2.1.1") }
 ```
 
 The full "which artifact?" table: [root README → Installation](../README.md#installation).

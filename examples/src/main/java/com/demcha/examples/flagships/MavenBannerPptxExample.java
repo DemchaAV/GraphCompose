@@ -3,11 +3,22 @@ package com.demcha.examples.flagships;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.chart.AxisSpec;
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.ChartSize;
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.chart.ChartStyle;
+import com.demcha.compose.document.chart.LegendPosition;
+import com.demcha.compose.document.chart.ValueLabelMode;
 import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.PathBuilder;
+import com.demcha.compose.document.dsl.RowBuilder;
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.node.CanvasChild;
 import com.demcha.compose.document.node.CanvasLayerNode;
 import com.demcha.compose.document.node.DocumentNode;
@@ -64,6 +75,29 @@ public final class MavenBannerPptxExample {
     // Warm amber accent family.
     private static final DocumentColor ORANGE = DocumentColor.rgb(233, 151, 45);
     private static final DocumentColor ORANGE_HI = DocumentColor.rgb(242, 168, 68);
+
+    /**
+     * Chart series colours for the two rivals.
+     *
+     * <p>Three series on one chart need three hues, not three greys. Slate and a
+     * near-slate violet were close enough that the iText and JasperReports lines
+     * were unreadable where they crossed, so the third series is green — far from
+     * both the amber GraphCompose line and the slate one, on a navy field.</p>
+     */
+    private static final DocumentColor SERIES_SLATE = DocumentColor.rgb(122, 133, 168);
+    private static final DocumentColor SERIES_GREEN = DocumentColor.rgb(93, 200, 143);
+
+    /**
+     * Table banding.
+     *
+     * <p>Reusing the two card fills gave a stripe five units apart per channel —
+     * applied, measurable, and invisible. On a near-black field the eye needs a
+     * wider step than it does on paper, so these are set for the contrast rather
+     * than borrowed from the cards. The header sits above both.</p>
+     */
+    private static final DocumentColor HEADER_BG = DocumentColor.rgb(42, 53, 88);
+    private static final DocumentColor ROW_DARK = DocumentColor.rgb(19, 25, 45);
+    private static final DocumentColor ROW_LIGHT = DocumentColor.rgb(29, 38, 66);
 
     // Text.
     private static final DocumentColor WHITE_TX = DocumentColor.rgb(247, 248, 252);
@@ -163,8 +197,297 @@ public final class MavenBannerPptxExample {
                 .build());
         document.pageFlow()
                 .name("MavenBanner")
+                .spacing(0)
                 .add(banner())
+                .addPageBreak(b -> b.name("ToPipeline"))
+                .addSection("Pipeline", MavenBannerPptxExample::pipelinePage)
+                .addPageBreak(b -> b.name("ToMeasured"))
+                .addSection("Measured", MavenBannerPptxExample::measuredPage)
+                .addPageBreak(b -> b.name("ToScaling"))
+                .addSection("Scaling", MavenBannerPptxExample::scalingPage)
                 .build();
+    }
+
+    // ---------------------------------------------------------------------
+    // Pages 2–4.
+    //
+    // Page 1 is a canvas: every element is placed by hand because the banner is
+    // a poster. These are not. They carry a table and four charts, which want a
+    // flow that measures them — so they are ordinary sections on the same night
+    // field the page background already paints, styled from the same tokens.
+    // ---------------------------------------------------------------------
+
+    /** Page 2 — the authoring pipeline, four steps and what each one guarantees. */
+    private static void pipelinePage(SectionBuilder page) {
+        page.padding(DocumentInsets.symmetric(38, 52)).spacing(0);
+        kicker(page, "HOW IT WORKS", "From one Java file to a finished document");
+        lede(page, "You describe the document semantically — sections, rows, tables, charts, "
+                + "shapes, layers — and the engine resolves the rest. No manual coordinates, "
+                + "no XML templates, no per-format authoring.");
+
+        page.addRow("Steps", row -> {
+            row.spacing(14).evenWeights().margin(DocumentInsets.top(AFTER_LEDE));
+            stepCard(row, "1", "AUTHOR", "A fluent DSL describes intent, not geometry.");
+            stepCard(row, "2", "MEASURE", "Every node measured twice, deterministically.");
+            stepCard(row, "3", "PAGINATE", "The flow splits across pages row by row.");
+            stepCard(row, "4", "RENDER", "A backend writes the bytes — PDF or PPTX.");
+        });
+
+        page.addRow("Guarantees", row -> {
+            // Row to row, not lede to row: the card above brings its own bottom
+            // padding, so this reads as the same gap at a smaller number.
+            row.spacing(14).evenWeights().margin(DocumentInsets.top(22));
+            proofCard(row, "Deterministic",
+                    "The same input renders the same bytes on every machine. Layout is "
+                            + "reproducible, not best-effort.");
+            proofCard(row, "Regression-tested",
+                    "layoutSnapshot() captures the resolved geometry, so a layout change "
+                            + "fails a test instead of surfacing in a release.");
+            proofCard(row, "One model, two formats",
+                    "The same composition emits this PDF and an editable PPTX. Nothing is "
+                            + "authored twice, so the two cannot drift.");
+        });
+    }
+
+    /** Page 3 — the measured comparison, drawn from the committed benchmark file. */
+    private static void measuredPage(SectionBuilder page) {
+        EngineDeckData.BenchRun bench = EngineDeckData.loadBench();
+        page.padding(DocumentInsets.symmetric(38, 52)).spacing(0);
+        kicker(page, "MEASURED, NOT CLAIMED", "GraphCompose against the field");
+        lede(page, "The same documents through three engines — render time and peak heap, "
+                + "measured by this repository's own harness. Every figure on this page and the "
+                + "next is read from the result file at render time, not typed in.");
+
+        page.addTable(table -> {
+            table.name("Comparison")
+                    .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(),
+                            DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                    .headerStyle(cellStyle(sansBold(12, WHITE_TX), HEADER_BG))
+                    .defaultCellStyle(cellStyle(sans(12, SUBTLE_TX), CARD))
+                    // Full styles rather than the fill-only overload: a zebra style is
+                    // registered as the row's style, so anything it leaves out is
+                    // anything the row loses — including the text colour, which on this
+                    // field is the difference between readable and invisible.
+                    .zebra(cellStyle(sans(12, SUBTLE_TX), ROW_DARK),
+                            cellStyle(sans(12, SUBTLE_TX), ROW_LIGHT))
+                    .headerRow("Report size", "GraphCompose", "iText 9", "JasperReports")
+                    .row("1 page · 3 lines",
+                            cell(bench.timeMs("GraphCompose Canonical"), bench.heapMb("GraphCompose Canonical")),
+                            cell(bench.timeMs("iText 9"), bench.heapMb("iText 9")),
+                            cell(bench.timeMs("JasperReports"), bench.heapMb("JasperReports")));
+            for (int size : new int[]{40, 200, 1000}) {
+                table.row(size + " rows",
+                        cell(bench.timeMs("GraphCompose", size), bench.heapMb("GraphCompose", size)),
+                        cell(bench.timeMs("iText 9", size), bench.heapMb("iText 9", size)),
+                        cell(bench.timeMs("JasperReports", size), bench.heapMb("JasperReports", size)));
+            }
+            table.margin(DocumentInsets.top(AFTER_LEDE));
+        });
+
+        page.addRow("Headline", row -> {
+            row.spacing(14).evenWeights().margin(DocumentInsets.top(20));
+            ratioCard(row, times(bench.timeMs("iText 9", 1000) / bench.timeMs("GraphCompose", 1000)),
+                    "faster than iText 9 at 1000 rows", ORANGE);
+            ratioCard(row, times(bench.heapMb("iText 9", 1000) / bench.heapMb("GraphCompose", 1000)),
+                    "lighter than iText 9", SERIES_SLATE);
+            ratioCard(row, times(bench.heapMb("JasperReports", 1000) / bench.heapMb("GraphCompose", 1000)),
+                    "lighter than JasperReports", SERIES_GREEN);
+        });
+
+        page.addParagraph(p -> p
+                .text("Measured " + bench.timestamp() + " · " + bench.warmup() + " warmup / "
+                        + bench.measure() + " measurement iterations on one machine. Read the "
+                        + "ratios rather than the milliseconds: all three engines are measured "
+                        + "in the same run, so their proportions survive a change of hardware "
+                        + "while the timings do not.")
+                .textStyle(sans(9.5, FAINT_TX))
+                .lineSpacing(3)
+                .margin(DocumentInsets.top(18)));
+    }
+
+    /** Page 4 — how the three engines behave as the report grows. */
+    private static void scalingPage(SectionBuilder page) {
+        EngineDeckData.BenchRun bench = EngineDeckData.loadBench();
+        page.padding(DocumentInsets.symmetric(38, 52)).spacing(0);
+        kicker(page, "SCALING", "What changes as the report grows");
+        lede(page, "From 40 to 1000 rows the time lead over iText widens; JasperReports closes "
+                + "to roughly the same render time at the top size, while GraphCompose stays "
+                + "markedly lighter on memory than both throughout. Every series reads from the "
+                + "same file as the table on the previous page.");
+
+        page.addRow("ScalingCharts", row -> {
+            row.spacing(20).evenWeights().margin(DocumentInsets.top(AFTER_LEDE));
+            chartCard(row, "Render time vs. report size — ms", "lower is faster",
+                    seriesOf(bench, true));
+            chartCard(row, "Peak heap vs. report size — MB", "lower is lighter",
+                    seriesOf(bench, false));
+        });
+
+        page.addParagraph(p -> p
+                .text("Both charts are native vector output: the engine compiles them to the same "
+                        + "shapes, lines and text frames as everything else on the page — no "
+                        + "image is embedded, and the numbers come from the file, not the caption.")
+                .textStyle(sans(9.5, FAINT_TX))
+                .lineSpacing(3)
+                .margin(DocumentInsets.top(20)));
+    }
+
+    // ---------------------------------------------------------------------
+    // Page furniture for 2–4.
+    // ---------------------------------------------------------------------
+
+    /**
+     * Inner width of a card in a four-across / three-across row.
+     *
+     * <p>A section measures to its longest line, so a row of cards whose text
+     * happens to be shorter renders with ragged edges. A zero-height spacer of
+     * this width sets the floor and the row lines up.</p>
+     */
+    private static final double CONTENT_W = PAGE_W - 104;
+    private static final double STEP_INNER = (CONTENT_W - 3 * 14) / 4 - 32;
+    private static final double TRIPLE_INNER = (CONTENT_W - 2 * 14) / 3 - 32;
+
+    /**
+     * Space between the lede and the panels under it.
+     *
+     * <p>Larger than the gap between two rows of cards, and deliberately so. A card
+     * carries its own bottom padding, so between two rows the eye sees that padding
+     * plus the margin; between the lede and the first row it sees the margin alone.
+     * Equal margins therefore read as unequal, and the text looked stuck to the
+     * cards. This is the row gap plus a card's padding, so both gaps land the same.</p>
+     */
+    private static final double AFTER_LEDE = 37;
+
+    private static void kicker(SectionBuilder page, String eyebrow, String headline) {
+        page.addParagraph(p -> p.text(eyebrow).textStyle(monoBold(11, ORANGE)));
+        page.addParagraph(p -> p
+                .text(headline)
+                .textStyle(sansBold(30, WHITE_TX))
+                .margin(DocumentInsets.top(6)));
+        page.addShape(sh -> sh.size(96, 4).fillColor(ORANGE).margin(DocumentInsets.top(12)));
+    }
+
+    private static void lede(SectionBuilder page, String text) {
+        page.addParagraph(p -> p
+                .text(text)
+                .textStyle(sans(13, SUBTLE_TX))
+                .lineSpacing(4)
+                .margin(DocumentInsets.top(16)));
+    }
+
+    private static void stepCard(RowBuilder row, String number, String title, String desc) {
+        row.addSection("Step" + number, s -> s
+                .softPanel(CARD, 10, 16)
+                .stroke(DocumentStroke.of(BORDER, 1))
+                .spacing(0)
+                .addSpacer(sp -> sp.size(STEP_INNER, 0))
+                .addParagraph(p -> p.text(number).textStyle(monoBold(20, ORANGE)))
+                .addParagraph(p -> p.text(title)
+                        .textStyle(sansBold(13, WHITE_TX))
+                        .margin(DocumentInsets.top(8)))
+                .addParagraph(p -> p.text(desc)
+                        .textStyle(sans(11, MUTED_TX))
+                        .lineSpacing(3)
+                        .margin(DocumentInsets.top(6))));
+    }
+
+    private static void proofCard(RowBuilder row, String title, String desc) {
+        row.addSection("Proof" + title, s -> s
+                .softPanel(CARD_2, 10, 16)
+                .accentTop(ORANGE, 3)
+                .spacing(0)
+                .addSpacer(sp -> sp.size(TRIPLE_INNER, 0))
+                .addParagraph(p -> p.text(title).textStyle(sansBold(13, WHITE_TX)))
+                .addParagraph(p -> p.text(desc)
+                        .textStyle(sans(11, MUTED_TX))
+                        .lineSpacing(3)
+                        .margin(DocumentInsets.top(7))));
+    }
+
+    private static void ratioCard(RowBuilder row, String figure, String label,
+                                  DocumentColor accent) {
+        row.addSection("Ratio" + label, s -> s
+                .softPanel(CARD, 10, 16)
+                .stroke(DocumentStroke.of(BORDER, 1))
+                .spacing(0)
+                .addSpacer(sp -> sp.size(TRIPLE_INNER, 0))
+                .accentTop(accent, 3)
+                .addParagraph(p -> p.text(figure).textStyle(sansBold(28, accent)))
+                .addParagraph(p -> p.text(label)
+                        .textStyle(sans(11, MUTED_TX))
+                        .lineSpacing(3)
+                        .margin(DocumentInsets.top(4))));
+    }
+
+    private static void chartCard(RowBuilder row, String title, String note, ChartSpec spec) {
+        row.addSection("Chart" + title, s -> s
+                .softPanel(CARD, 10, 16)
+                .stroke(DocumentStroke.of(BORDER, 1))
+                .spacing(0)
+                .addParagraph(p -> p.text(title).textStyle(sansBold(12, WHITE_TX)))
+                .addParagraph(p -> p.text(note)
+                        .textStyle(sans(10, FAINT_TX))
+                        .margin(DocumentInsets.top(3)))
+                .chart(spec, chartStyle()));
+    }
+
+    /** Time or heap for all three engines across the row-count sweep. */
+    private static ChartSpec seriesOf(EngineDeckData.BenchRun bench, boolean time) {
+        ChartData.Builder data = ChartData.builder().categories("40", "200", "1000");
+        for (String lib : new String[]{"GraphCompose", "iText 9", "JasperReports"}) {
+            data.series(lib,
+                    time ? bench.timeMs(lib, 40) : bench.heapMb(lib, 40),
+                    time ? bench.timeMs(lib, 200) : bench.heapMb(lib, 200),
+                    time ? bench.timeMs(lib, 1000) : bench.heapMb(lib, 1000));
+        }
+        return ChartSpec.line()
+                .data(data.build())
+                .legend(LegendPosition.BOTTOM)
+                .size(ChartSize.aspectRatio(16, 7))
+                .build();
+    }
+
+    /**
+     * The chart palette, matched to the banner: GraphCompose in amber, the two
+     * rivals in the muted greys the cards already use, so the reader's eye lands
+     * on the series the document is about without the chart shouting.
+     */
+    private static ChartStyle chartStyle() {
+        return ChartStyle.builder()
+                .seriesPaint(0, DocumentPaint.solid(ORANGE))
+                .seriesPaint(1, DocumentPaint.solid(SERIES_SLATE))
+                .seriesPaint(2, DocumentPaint.solid(SERIES_GREEN))
+                .barCornerRadius(DocumentCornerRadius.top(3))
+                .barWidthRatio(0.5)
+                .lineWidth(2.0)
+                .axisTextStyle(mono(8.5, MUTED_TX))
+                .legendTextStyle(sans(9, MUTED_TX))
+                .valueLabelTextStyle(monoBold(10, ORANGE))
+                // The labels sit over the card, not a white page: match the halo to
+                // the card fill so a gridline stops behind the digits instead of a
+                // white chip appearing on the navy.
+                .valueLabelHalo(DocumentPaint.solid(CARD))
+                .grid(ChartStyle.GridStyle.horizontal(DocumentStroke.of(BORDER, 0.6)))
+                .build();
+    }
+
+    /** A table cell on the night field: the card fill behind the given text style. */
+    private static DocumentTableStyle cellStyle(DocumentTextStyle text, DocumentColor fill) {
+        return DocumentTableStyle.builder()
+                .textStyle(text)
+                .fillColor(fill)
+                .stroke(DocumentStroke.of(BORDER, 0.8))
+                .padding(DocumentInsets.symmetric(5, 10))
+                .build();
+    }
+
+    /** {@code 40.0 ms · 19.3 MB} — one cell carrying both measurements. */
+    private static String cell(double ms, double mb) {
+        return String.format(java.util.Locale.ROOT, "%.1f ms · %.1f MB", ms, mb);
+    }
+
+    private static String times(double ratio) {
+        return String.format(java.util.Locale.ROOT, "%.1fx", ratio);
     }
 
     // ---------------------------------------------------------------------

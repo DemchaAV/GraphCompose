@@ -48,23 +48,43 @@ class CiGateCoverageGuardTest {
     private static final String GATE = "ci-gate";
 
     /**
-     * A job key: two-space indent under {@code jobs:}, then nothing that changes
-     * what the key is — trailing spaces or a {@code #} comment are allowed.
+     * A job key: a two-space-indented mapping key under {@code jobs:}, whatever
+     * follows the colon.
      *
-     * <p>The name is matched structurally rather than against GitHub's identifier
-     * grammar. A character class admitting only what today's job names happen to
-     * use — lower case and hyphens — drops a job called {@code build_and_test} or
-     * {@code CodeQL} on the floor, and requiring the line to end at the colon drops
-     * {@code security_scan: # nightly}. Either way the guard reports on the jobs it
-     * parsed, and one it never saw is one it cannot report missing from the gate:
-     * the job is absent from {@code needs}, the test is green, and the aggregate
-     * check is blind to it. That is the silence this guard exists to break, so the
-     * pattern takes every key the YAML puts at that level and lets the assertions
-     * decide. {@link #jobBlocks(String)} is package-private for exactly this
-     * reason — {@code CiGateCoverageGuardParsingTest} feeds it the shapes the real
-     * workflow does not currently contain.</p>
+     * <p>The key is matched <em>structurally</em> — anything YAML puts at that
+     * level — rather than against GitHub's identifier grammar, and the difference
+     * is the whole point. A pattern that only admits legal job ids silently drops
+     * everything else, and a job this guard never sees is one it cannot report
+     * missing from the gate: absent from {@code needs}, test green, aggregate check
+     * blind to it. Matching everything and judging afterwards means an id the guard
+     * cannot interpret becomes a failure rather than an omission — see
+     * {@link #everyJobIdIsOneGitHubWouldAccept}.</p>
+     *
+     * <p>Accepting any tail after the colon is what admits a job written as an
+     * inline mapping ({@code deploy: {runs-on: ubuntu-latest}}). GitHub documents
+     * the value of {@code jobs.<job_id>} as "a map of the job's configuration
+     * data", and an inline mapping is a map; requiring the line to end at the colon
+     * excluded a legal spelling and hid any job using it. YAML only treats a colon
+     * as a key separator when a space or a line end follows it, which is what the
+     * lookahead encodes.</p>
+     *
+     * <p>Quotes around the key are YAML's, not part of the id, and
+     * {@link #unquoted(String)} strips them. Left on, {@code "build-and-test":}
+     * produced an id that could never match the bare name in {@code needs}, so a
+     * legal workflow was reported as having an unwatched job.</p>
+     *
+     * <p>{@link #jobBlocks(String)} is package-private so
+     * {@code CiGateCoverageGuardParsingTest} can drive it with the spellings this
+     * repository's own workflow does not contain.</p>
      */
-    private static final Pattern JOB_KEY = Pattern.compile("(?m)^  ([^\\s:#]+):[ \\t]*(?:#.*)?$");
+    private static final Pattern JOB_KEY =
+            Pattern.compile("(?m)^  (?!#)(\\S[^:]*?):(?=[ \\t]|$)[^\\r\\n]*$");
+
+    /**
+     * A job id GitHub accepts: "must start with a letter or {@code _} and contain
+     * only alphanumeric characters, {@code -}, or {@code _}".
+     */
+    private static final Pattern LEGAL_JOB_ID = Pattern.compile("[A-Za-z_][A-Za-z0-9_-]*");
 
     /** A job-level {@code if:} — four-space indent, first line only. */
     private static final Pattern JOB_IF = Pattern.compile("(?m)^    if: (.*)$");
@@ -106,6 +126,32 @@ class CiGateCoverageGuardTest {
                 .describedAs("every job that can run on a pull request must be in the '%s' needs "
                         + "list, or a failure there leaves the aggregate check green over a run "
                         + "that built nothing", GATE)
+                .isEmpty();
+    }
+
+    /**
+     * The parser takes every key at job level, so it can also pick up something that
+     * is not a job id at all — a malformed workflow, or a shape nobody anticipated.
+     *
+     * <p>That is deliberate, and this is the other half of it. Skipping such a key
+     * would put the guard back where it started: quietly reporting on a subset. Here
+     * it fails instead, and names what it could not interpret.</p>
+     */
+    @Test
+    void everyJobIdIsOneGitHubWouldAccept() throws IOException {
+        List<String> illegal = new ArrayList<>();
+        for (String id : jobBlocks().keySet()) {
+            if (!LEGAL_JOB_ID.matcher(id).matches()) {
+                illegal.add(id);
+            }
+        }
+
+        assertThat(illegal)
+                .describedAs("job-level keys in %s that GitHub would not accept as job ids — a "
+                        + "job id must start with a letter or '_' and hold only letters, digits, "
+                        + "'-' or '_'. Either the workflow is malformed, or it uses a shape this "
+                        + "guard parses wrongly; both are findings, and neither should be passed "
+                        + "over in silence", relative(WORKFLOW))
                 .isEmpty();
     }
 
@@ -155,7 +201,7 @@ class CiGateCoverageGuardTest {
         List<String> ids = new ArrayList<>();
         List<Integer> starts = new ArrayList<>();
         while (key.find()) {
-            ids.add(key.group(1));
+            ids.add(unquoted(key.group(1).trim()));
             starts.add(key.end());
         }
         for (int i = 0; i < ids.size(); i++) {
@@ -163,6 +209,27 @@ class CiGateCoverageGuardTest {
             blocks.put(ids.get(i), body.substring(starts.get(i), end));
         }
         return blocks;
+    }
+
+    /**
+     * Strips the quotes YAML may put around a mapping key.
+     *
+     * <p>{@code "build-and-test"} and {@code build-and-test} are the same key; the
+     * quotes are the encoding, not the name. Only a matched surrounding pair is
+     * removed, so a key that merely contains a quote is left alone.</p>
+     *
+     * @param key the key exactly as it appears in the source
+     * @return the key with one matched pair of surrounding quotes removed
+     */
+    static String unquoted(String key) {
+        if (key.length() < 2) {
+            return key;
+        }
+        char first = key.charAt(0);
+        if ((first == '"' || first == '\'') && key.charAt(key.length() - 1) == first) {
+            return key.substring(1, key.length() - 1);
+        }
+        return key;
     }
 
     private static Set<String> needsOf(String jobBlock) {

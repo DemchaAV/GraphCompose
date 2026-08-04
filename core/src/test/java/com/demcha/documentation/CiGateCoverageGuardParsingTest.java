@@ -85,6 +85,77 @@ class CiGateCoverageGuardParsingTest {
     }
 
     @Test
+    void aJobWrittenAsAnInlineMappingIsSeen() {
+        Map<String, String> jobs = CiGateCoverageGuardTest.jobBlocks("""
+                on: [push]
+
+                jobs:
+                  deploy: {runs-on: ubuntu-latest}
+                  build-and-test:
+                    runs-on: ubuntu-latest
+                """);
+
+        assertThat(jobs)
+                .describedAs("GitHub documents the value of jobs.<job_id> as a map, and an inline "
+                        + "mapping is one — a job spelled this way must not be invisible to the "
+                        + "guard, or it can sit outside the gate's needs with the build green")
+                .containsKeys("deploy", "build-and-test");
+    }
+
+    @Test
+    void quotesAroundAKeyAreNotPartOfTheJobId() {
+        Map<String, String> jobs = CiGateCoverageGuardTest.jobBlocks("""
+                on: [push]
+
+                jobs:
+                  "build-and-test":
+                    runs-on: ubuntu-latest
+                  'perf_smoke':
+                    runs-on: ubuntu-latest
+                """);
+
+        assertThat(jobs)
+                .describedAs("the quotes are YAML's encoding of the key, not the name — kept, the "
+                        + "id could never match the bare name in the gate's needs list and a legal "
+                        + "workflow would be reported as having an unwatched job")
+                .containsOnlyKeys("build-and-test", "perf_smoke");
+    }
+
+    /**
+     * A key GitHub would reject is still parsed, so the guard can report it.
+     *
+     * <p>{@code "security scan"} is not a legal job id — GitHub requires a leading
+     * letter or {@code _} and then only letters, digits, {@code -} or {@code _}. The
+     * parser does not filter on that grammar, because filtering is how a key becomes
+     * invisible; it hands the key over and
+     * {@code CiGateCoverageGuardTest#everyJobIdIsOneGitHubWouldAccept} fails on it.</p>
+     */
+    @Test
+    void aKeyThatIsNotALegalJobIdIsStillParsedRatherThanSkipped() {
+        Map<String, String> jobs = CiGateCoverageGuardTest.jobBlocks("""
+                on: [push]
+
+                jobs:
+                  "security scan":
+                    runs-on: ubuntu-latest
+                """);
+
+        assertThat(jobs)
+                .describedAs("an unparseable job-level key must reach the assertions rather than "
+                        + "vanish — a guard that filters its input reports on a subset and calls "
+                        + "it coverage")
+                .containsOnlyKeys("security scan");
+    }
+
+    @Test
+    void unquotingLeavesAnUnmatchedOrEmbeddedQuoteAlone() {
+        assertThat(CiGateCoverageGuardTest.unquoted("\"build")).isEqualTo("\"build");
+        assertThat(CiGateCoverageGuardTest.unquoted("bui\"ld")).isEqualTo("bui\"ld");
+        assertThat(CiGateCoverageGuardTest.unquoted("\"")).isEqualTo("\"");
+        assertThat(CiGateCoverageGuardTest.unquoted("'perf'")).isEqualTo("perf");
+    }
+
+    @Test
     void theBlockOfAJobStopsAtTheNextJob() {
         Map<String, String> jobs = CiGateCoverageGuardTest.jobBlocks("""
                 on: [push]

@@ -43,7 +43,7 @@
         <mockito.version>5.23.0</mockito.version>
         <logback.version>1.6.1</logback.version>
         <pdfbox.version>3.0.8</pdfbox.version>
-        <javafx.version>21.0.2</javafx.version>
+        <javafx.version>21.0.12</javafx.version>
         <!-- ArchUnit for the cross-module boundary guards below. Roughly in step
              with the engine pom's archunit.version; a drift is harmless (test-only,
              each module runs its own test JVM), so it is not version-guarded. -->

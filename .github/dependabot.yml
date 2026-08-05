@@ -7,11 +7,13 @@ updates:
       - "/"
       - "/examples"
       - "/benchmarks"
-      # The release-smoke consumer projects: eight deliberately identical
-      # setups, so a bump has to reach all of them and one grouped entry keeps
-      # them moving together. Until they were listed here they had no entry at
-      # all, which is why nothing but a security alert had ever opened a PR
-      # for them.
+      # The release-smoke consumer projects: eight deliberately *different*
+      # setups, one per published coordinate combination, so they must not be
+      # consolidated. What they share is the test scaffolding — junit, assertj
+      # and surefire pinned separately in each — which is why a bump has to be
+      # applied eight times and one grouped entry keeps them moving together.
+      # Until they were listed here they had no entry at all, which is why
+      # nothing but a security alert had ever opened a PR for them.
       - "/scripts/release-smoke/*"
     # Send Maven *version* updates to the integration branch, not the default
     # branch. Releases are cut from `develop` then merged to `main`; targeting

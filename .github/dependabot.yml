@@ -7,18 +7,30 @@ updates:
       - "/"
       - "/examples"
       - "/benchmarks"
-      # The release-smoke consumer projects. They were outside every directory
-      # listed here, so updates for them arrived through the default branch
-      # instead — #514 opened against `main`, which is the divergence this
-      # block's target-branch exists to prevent. They are eight deliberately
-      # identical projects, so a bump has to reach all of them: grouping them
-      # under one entry keeps them moving together.
+      # The release-smoke consumer projects: eight deliberately *different*
+      # setups, one per published coordinate combination, so they must not be
+      # consolidated. What they share is the test scaffolding — junit, assertj
+      # and surefire pinned separately in each — which is why a bump has to be
+      # applied eight times and one grouped entry keeps them moving together.
+      # Until they were listed here they had no entry at all, which is why
+      # nothing but a security alert had ever opened a PR for them.
       - "/scripts/release-smoke/*"
-    # Send Maven update PRs to the integration branch, not the
-    # default branch. Releases are cut from `develop` then merged
-    # to `main`; targeting `main` (the default) made every Dependabot
-    # PR land alongside the latest release and force-diverge from
-    # ongoing dev work — fixed in v1.6.8 after the #111 / #115 episodes.
+    # Send Maven *version* updates to the integration branch, not the default
+    # branch. Releases are cut from `develop` then merged to `main`; targeting
+    # `main` (the default) made every Dependabot PR land alongside the latest
+    # release and force-diverge from ongoing dev work — fixed in v1.6.8 after
+    # the #111 / #115 episodes.
+    #
+    # It does not redirect *security* updates. Those are raised against the
+    # default branch whatever this says, which is how #514 landed on `main`.
+    # Listing a directory above does not change that: the next advisory
+    # touching any of these manifests will open against `main` again. Close it
+    # and carry the bump to `develop` rather than merging it, so the branches
+    # stay in a fast-forward line — #517 is the worked example.
+    #
+    # Setting a non-default target-branch also exempts security updates from
+    # the `labels` and `commit-message` settings below, so those PRs arrive
+    # under Dependabot's defaults and will not match the house style.
     target-branch: develop
     schedule:
       interval: weekly

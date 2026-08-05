@@ -7,6 +7,13 @@ updates:
       - "/"
       - "/examples"
       - "/benchmarks"
+      # The release-smoke consumer projects. They were outside every directory
+      # listed here, so updates for them arrived through the default branch
+      # instead — #514 opened against `main`, which is the divergence this
+      # block's target-branch exists to prevent. They are eight deliberately
+      # identical projects, so a bump has to reach all of them: grouping them
+      # under one entry keeps them moving together.
+      - "/scripts/release-smoke/*"
     # Send Maven update PRs to the integration branch, not the
     # default branch. Releases are cut from `develop` then merged
     # to `main`; targeting `main` (the default) made every Dependabot

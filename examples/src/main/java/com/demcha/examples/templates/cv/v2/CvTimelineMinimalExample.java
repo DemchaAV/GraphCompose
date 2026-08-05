@@ -16,8 +16,13 @@ import java.nio.file.Path;
  * grouped skills sample data — spaced uppercase Barlow Condensed
  * name, right-aligned contact stack with PNG icons, and the central
  * vertical timeline axis (4 segments / 3 circles) separating the
- * sidebar (Education / Skills / Expertise / Languages) from the main
- * column (Professional Profile / Work Experience).
+ * sidebar from the main column.
+ *
+ * <p>Module headings come from the sample's own section titles, so the
+ * sidebar reads Education &amp; Certifications / Technical Skills /
+ * Projects and the main column Professional Summary / Professional
+ * Experience. The sample carries more than one page of content: the
+ * remainder continues on page two, where the axis shortens to match.</p>
  *
  * <p>Output:
  * {@code examples/target/generated-pdfs/templates/cv/cv-timeline-minimal-v2.pdf}.</p>

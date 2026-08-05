@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.templates.core.identity.Link;
 
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
@@ -16,6 +17,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.cv.components.SectionAllocation;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -38,9 +40,27 @@ import java.util.*;
  * <p>The preset stays a thin orchestrator. The 3-column body layout
  * (sidebar / axis / main) and the contact icon row are preset-local
  * because no other v2 preset uses this visual today. Section bodies
- * are flattened to a list of lines via a preset-local helper so the
- * sidebar can apply per-module truncation limits — the canonical
- * shared dispatchers do not enforce that shape.</p>
+ * are flattened to a list of lines via a preset-local helper, which is
+ * the shape the two narrow columns and the fixed-height axis need — the
+ * canonical shared dispatchers produce richly-styled multi-paragraph
+ * output instead.</p>
+ *
+ * <h2>Nothing the CV carries is dropped</h2>
+ *
+ * <p>Sections are matched to modules by title keyword, and a keyword match
+ * is a guess: a CV may hold a category this preset never heard of, or two
+ * that answer to the same keywords. Both are routed rather than discarded —
+ * {@link SectionAllocation} hands each section out once and returns the
+ * rest, which land in the main column under their own headings. A module's
+ * heading is the section's own title where it has one; the labels here are
+ * only a fallback.</p>
+ *
+ * <p>Content longer than a page continues on the next one. The body is a
+ * row, and a row is atomic — the paginator cannot break inside one — so the
+ * preset estimates its own columns' heights through {@link ColumnPagination}
+ * and emits one row per page, letting each finished row overflow naturally.
+ * What it holds back for the masthead is measured from the identity, because
+ * the contact stack grows a row per link.</p>
  */
 public final class TimelineMinimal {
 
@@ -101,6 +121,45 @@ public final class TimelineMinimal {
      */
     private static final DocumentColor ICON_COLOR = DocumentColor.rgb(58, 58, 58);
 
+    /**
+     * Shortest axis a continuation page may draw. Below this the four
+     * segments and three markers stop reading as a timeline.
+     */
+    private static final double MIN_CONTINUATION_AXIS_HEIGHT = 120.0;
+
+    /** Gap between the three body columns; also the row's own spacing. */
+    private static final double BODY_COLUMN_GAP = 16.0;
+
+    private static final double SIDEBAR_WEIGHT = 0.74;
+    private static final double AXIS_WEIGHT = 0.12;
+    private static final double MAIN_WEIGHT = 1.74;
+
+    /** Gap between the stacked contact rows. */
+    private static final double CONTACT_ROW_GAP = 3.0;
+
+    /** Gap between the name and the job title beneath it. */
+    private static final double NAME_BLOCK_GAP = 4.0;
+
+    /** Job-title size; read both by the style and by the masthead measurement. */
+    private static final double JOB_TITLE_SIZE = 9.5;
+
+    /**
+     * Slack added to the measured masthead height.
+     *
+     * <p>Covers what the arithmetic below does not model — a contact line long
+     * enough to wrap, the rule's own thickness. An over-estimate costs
+     * whitespace at the foot of a page; an under-estimate costs
+     * {@code AtomicNodeTooLargeException}, because a row cannot be broken by
+     * the paginator, so the error is deliberately taken on the safe side.</p>
+     */
+    private static final double MASTHEAD_SLACK = 18.0;
+
+    /** Heading gap plus the trailing rule each sidebar block carries. */
+    private static final double SIDEBAR_BLOCK_GAP = 22.0;
+
+    /** Heading gap plus the trailing rule each main-column block carries. */
+    private static final double MAIN_BLOCK_GAP = 24.0;
+
     private static final List<String> SUMMARY_KEYS =
             List.of("summary", "professional summary", "profile");
     private static final List<String> SKILL_KEYS =
@@ -155,9 +214,64 @@ public final class TimelineMinimal {
                 Objects.requireNonNull(doc, "doc");
 
                 double width = document.canvas().innerWidth();
-                List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+                SectionAllocation allocation =
+                        SectionAllocation.of(doc.sectionsIn(Slot.MAIN));
 
-                document.dsl()
+                // Claim order decides which module wins when two lists could
+                // match the same title, and every claim removes the section
+                // from what falls through to the main column below.
+                CvSection education = allocation.claim(EDUCATION_KEYS);
+                CvSection skills = allocation.claim(SKILL_KEYS);
+                CvSection projects = allocation.claim(PROJECT_KEYS);
+                CvSection additional = allocation.claim(ADDITIONAL_KEYS);
+                CvSection summary = allocation.claim(SUMMARY_KEYS);
+                CvSection experience = allocation.claim(EXPERIENCE_KEYS);
+
+                List<ColumnPagination.Block> sidebar = modules(
+                        module(education, "Education"),
+                        module(skills, "Skills"),
+                        module(projects, "Expertise"),
+                        module(additional, "Languages"));
+
+                List<ColumnPagination.Block> main = new ArrayList<>();
+                addModule(main, prose(summary, "Professional Profile"));
+                addModule(main, module(experience, "Work Experience"));
+                // Whatever no module claimed — a user's own "Awards", a second
+                // prose section — goes into the main column under its own
+                // title rather than off the page.
+                for (CvSection leftover : allocation.remaining()) {
+                    addModule(main, module(leftover, leftover.title()));
+                }
+
+                // Column inner widths: the row subtracts its gaps before the
+                // weighted split, so derive them the same way or the wrap
+                // estimate below is measuring a column that does not exist.
+                double usable = Math.max(1.0, width - 2 * BODY_COLUMN_GAP);
+                double weightSum = SIDEBAR_WEIGHT + AXIS_WEIGHT + MAIN_WEIGHT;
+                double bodyBudget = Math.max(1.0,
+                        document.availableHeight()
+                        - mastheadHeight(doc.identity())
+                        - theme.spacing().pageFlowSpacing() * 2);
+
+                ColumnPagination sidebarMetrics = ColumnPagination.forColumn(
+                        usable * SIDEBAR_WEIGHT / weightSum,
+                        theme.typography().sizeEntrySubtitle(), 1.0,
+                        theme.typography().sizeEntryTitle(),
+                        SIDEBAR_BLOCK_GAP);
+                ColumnPagination mainMetrics = ColumnPagination.forColumn(
+                        usable * MAIN_WEIGHT / weightSum,
+                        theme.typography().sizeBody(), 1.2,
+                        theme.typography().sizeBanner(),
+                        MAIN_BLOCK_GAP);
+
+                List<List<ColumnPagination.Block>> sidebarPages =
+                        sidebarMetrics.paginate(sidebar, bodyBudget);
+                List<List<ColumnPagination.Block>> mainPages =
+                        mainMetrics.paginate(main, bodyBudget);
+                int pages = Math.max(1,
+                        Math.max(sidebarPages.size(), mainPages.size()));
+
+                PageFlowBuilder flow = document.dsl()
                         .pageFlow()
                         .name("CvV2TimelineMinimalRoot")
                         .spacing(theme.spacing().pageFlowSpacing())
@@ -173,40 +287,33 @@ public final class TimelineMinimal {
                                 .horizontal(width)
                                 .color(theme.palette().rule())
                                 .thickness(theme.spacing().accentRuleWidth())
-                                .margin(DocumentInsets.zero()))
-                        .addRow("CvV2TimelineMinimalBody", row -> addBodyRow(row,
-                                List.of(
-                                        new ModulePlacement("Education",
-                                                SectionLookup.firstMatching(sections,
-                                                        EDUCATION_KEYS),
-                                                5),
-                                        new ModulePlacement("Skills",
-                                                SectionLookup.firstMatching(sections,
-                                                        SKILL_KEYS),
-                                                6),
-                                        new ModulePlacement("Expertise",
-                                                SectionLookup.firstMatching(sections,
-                                                        PROJECT_KEYS),
-                                                3),
-                                        new ModulePlacement("Languages",
-                                                SectionLookup.firstMatching(sections,
-                                                        ADDITIONAL_KEYS),
-                                                3)),
-                                List.of(
-                                        new ModulePlacement("Professional Profile",
-                                                SectionLookup.firstMatching(sections,
-                                                        SUMMARY_KEYS),
-                                                1),
-                                        new ModulePlacement("Work Experience",
-                                                SectionLookup.firstMatching(sections,
-                                                        EXPERIENCE_KEYS),
-                                                4)),
-                                TIMELINE_AXIS_HEIGHT))
-                        .build();
+                                .margin(DocumentInsets.zero()));
+
+                // One row per page. A row is atomic — the paginator cannot
+                // break inside it — so the preset decides the page boundary
+                // itself and lets each finished row overflow onto the next
+                // page of its own accord. An explicit page break would emit a
+                // blank page whenever page one happens to be exactly full.
+                for (int page = 0; page < pages; page++) {
+                    List<ColumnPagination.Block> sidebarPage = pageAt(sidebarPages, page);
+                    List<ColumnPagination.Block> mainPage = pageAt(mainPages, page);
+                    // The full-height axis is the preset's signature and stays
+                    // on the opening page. A continuation page carrying three
+                    // lines does not want 620pt of rule beside them, so there
+                    // the axis follows the content.
+                    double axisHeight = page == 0
+                            ? TIMELINE_AXIS_HEIGHT
+                            : continuationAxisHeight(sidebarPage, sidebarMetrics,
+                                    mainPage, mainMetrics);
+                    flow.addRow("CvV2TimelineMinimalBody" + page,
+                            row -> addBodyRow(row, sidebarPage, mainPage,
+                                    axisHeight));
+                }
+                flow.build();
             }
 
             private void addNameBlock(SectionBuilder section, CvIdentity identity) {
-                section.spacing(4)
+                section.spacing(NAME_BLOCK_GAP)
                         .addParagraph(paragraph -> paragraph
                                 .text(spacedUpper(identity.name().full()))
                                 .textStyle(nameStyle())
@@ -221,16 +328,15 @@ public final class TimelineMinimal {
             }
 
             private void addBodyRow(RowBuilder row,
-                                    List<ModulePlacement> sidebarModules,
-                                    List<ModulePlacement> mainModules,
+                                    List<ColumnPagination.Block> sidebarModules,
+                                    List<ColumnPagination.Block> mainModules,
                                     double axisHeight) {
-                row.spacing(16)
-                        .weights(0.74, 0.12, 1.74)
+                row.spacing(BODY_COLUMN_GAP)
+                        .weights(SIDEBAR_WEIGHT, AXIS_WEIGHT, MAIN_WEIGHT)
                         .addSection("CvV2TimelineMinimalSidebar", sidebar -> {
                             sidebar.spacing(10);
-                            for (ModulePlacement placement : sidebarModules) {
-                                addSidebarModule(sidebar, placement.title(),
-                                        placement.section(), placement.limit());
+                            for (ColumnPagination.Block module : sidebarModules) {
+                                addSidebarModule(sidebar, module);
                             }
                         })
                         .addSection("CvV2TimelineMinimalAxis", axis ->
@@ -238,16 +344,14 @@ public final class TimelineMinimal {
                                         timelineAxisStyle(), axisHeight))
                         .addSection("CvV2TimelineMinimalMain", main -> {
                             main.spacing(11);
-                            for (ModulePlacement placement : mainModules) {
-                                boolean bullets = placement.limit() > 1;
-                                addMainModule(main, placement.title(),
-                                        placement.section(), bullets, placement.limit());
+                            for (ColumnPagination.Block module : mainModules) {
+                                addMainModule(main, module);
                             }
                         });
             }
 
             private void addContact(SectionBuilder section, CvIdentity identity) {
-                section.spacing(3);
+                section.spacing(CONTACT_ROW_GAP);
                 DocumentTextStyle textStyle = contactTextStyle();
                 DocumentTextStyle fallbackIconStyle = fallbackIconStyle();
                 for (ContactItem item : contactItems(identity)) {
@@ -272,6 +376,38 @@ public final class TimelineMinimal {
                                 }
                             }));
                 }
+            }
+
+            /**
+             * Height the masthead takes off the page before the body row.
+             *
+             * <p>The header is a row, so its height is the taller of its two
+             * columns: the name block on the left, the contact stack on the
+             * right. The stack grows a row per link, which is why this is
+             * measured rather than assumed — a fixed reserve is wrong in both
+             * directions. Too small, and a CV with enough contact links pushes
+             * the body row past the page into
+             * {@code AtomicNodeTooLargeException}, since a row cannot be
+             * broken. Too large, and every ordinary CV loses page space it
+             * could have filled.</p>
+             *
+             * @param identity the header's data; {@code null} yields the rule alone
+             * @return height in points, including the rule and its slack
+             */
+            private double mastheadHeight(CvIdentity identity) {
+                double nameBlock = theme.typography().sizeHeadline()
+                                   * ColumnPagination.FONT_LEADING_RATIO;
+                if (identity != null && !identity.jobTitle().isBlank()) {
+                    nameBlock += NAME_BLOCK_GAP
+                                 + JOB_TITLE_SIZE * ColumnPagination.FONT_LEADING_RATIO;
+                }
+                int rows = contactItems(identity).size();
+                double contactStack = rows == 0 ? 0.0
+                        : rows * theme.typography().sizeContact()
+                          * ColumnPagination.FONT_LEADING_RATIO
+                          + (rows - 1) * CONTACT_ROW_GAP;
+                return Math.max(nameBlock, contactStack)
+                       + theme.spacing().accentRuleWidth() + MASTHEAD_SLACK;
             }
 
             private List<ContactItem> contactItems(CvIdentity identity) {
@@ -318,12 +454,12 @@ public final class TimelineMinimal {
                 return SvgGlyph.fromResource(CONTACT_ICON_ROOT + iconFile);
             }
 
-            private void addSidebarModule(SectionBuilder sidebar, String title,
-                                          CvSection section, int limit) {
-                List<String> lines = sectionLines(section);
+            private void addSidebarModule(SectionBuilder sidebar, ColumnPagination.Block module) {
+                List<String> lines = module.lines();
                 if (lines.isEmpty()) {
                     return;
                 }
+                String title = module.title();
                 sidebar.addSection("CvV2TimelineMinimalSidebar"
                                    + SectionLookup.normalize(title), block -> {
                     block.spacing(6)
@@ -331,9 +467,9 @@ public final class TimelineMinimal {
                                     .text(title.toUpperCase(Locale.ROOT))
                                     .textStyle(sidebarTitleStyle())
                                     .margin(DocumentInsets.zero()));
-                    for (String line : lines.stream().limit(limit).toList()) {
+                    for (String line : lines) {
                         block.addParagraph(paragraph -> paragraph
-                                .text(excerpt(line, 76))
+                                .text(line)
                                 .textStyle(sidebarBodyStyle())
                                 .lineSpacing(1)
                                 .margin(DocumentInsets.zero()));
@@ -365,13 +501,12 @@ public final class TimelineMinimal {
                         .build();
             }
 
-            private void addMainModule(SectionBuilder main, String title,
-                                       CvSection section, boolean bullets,
-                                       int limit) {
-                List<String> lines = sectionLines(section);
+            private void addMainModule(SectionBuilder main, ColumnPagination.Block module) {
+                List<String> lines = module.lines();
                 if (lines.isEmpty()) {
                     return;
                 }
+                String title = module.title();
                 main.addSection("CvV2TimelineMinimalMain"
                                 + SectionLookup.normalize(title), block -> {
                     block.spacing(5)
@@ -379,21 +514,23 @@ public final class TimelineMinimal {
                                     .text(title.toUpperCase(Locale.ROOT))
                                     .textStyle(mainTitleStyle())
                                     .margin(DocumentInsets.zero()));
-                    if (bullets) {
-                        for (String line : lines.stream().limit(limit).toList()) {
+                    if (module.prose()) {
+                        for (String line : lines) {
                             block.addParagraph(paragraph -> paragraph
-                                    .text(excerpt(line, 136))
+                                    .text(line)
+                                    .textStyle(mainBodyStyle())
+                                    .lineSpacing(1.4)
+                                    .margin(DocumentInsets.zero()));
+                        }
+                    } else {
+                        for (String line : lines) {
+                            block.addParagraph(paragraph -> paragraph
+                                    .text(line)
                                     .textStyle(mainBulletStyle())
                                     .lineSpacing(1.2)
                                     .bulletOffset("-")
                                     .margin(DocumentInsets.zero()));
                         }
-                    } else {
-                        block.addParagraph(paragraph -> paragraph
-                                .text(excerpt(lines.get(0), 245))
-                                .textStyle(mainBodyStyle())
-                                .lineSpacing(1.4)
-                                .margin(DocumentInsets.zero()));
                     }
                     block.addLine(line -> line
                             .horizontal(300)
@@ -414,7 +551,7 @@ public final class TimelineMinimal {
 
             private DocumentTextStyle jobTitleStyle() {
                 return TextStyles.of(theme.typography().headlineFont(),
-                        9.5,
+                        JOB_TITLE_SIZE,
                         DocumentTextDecoration.BOLD,
                         theme.palette().ink());
             }
@@ -472,13 +609,14 @@ public final class TimelineMinimal {
     // -- helpers -----------------------------------------------------------
 
     /**
-     * Flattens a {@link CvSection} into a list of single-line strings
-     * suitable for the truncation-driven sidebar / main rendering. v2
-     * {@code SectionDispatcher} would produce richly-styled multi-paragraph
-     * output, which is not what Timeline Minimal needs — its layout
-     * relies on knowing the exact line count so per-module
-     * {@code limit} can drop overflow without breaking the visual flow
-     * around the fixed-height timeline axis.
+     * Flattens a {@link CvSection} into a list of single-line strings.
+     *
+     * <p>The shared {@code SectionDispatcher} would produce richly-styled
+     * multi-paragraph output, which is not the shape this layout can work
+     * with: knowing the line count is what lets the preset choose its own
+     * page boundaries around the fixed-height axis. Counting lines is all it
+     * is for — every line produced here is rendered, on this page or the
+     * next.</p>
      */
     private static List<String> sectionLines(CvSection section) {
         if (!SectionLookup.hasContent(section)) {
@@ -607,23 +745,57 @@ public final class TimelineMinimal {
         return builder.toString();
     }
 
-    private static String excerpt(String value, int maxChars) {
-        String clean = MarkdownInline.plainText(value)
-                .replaceAll("\\s+", " ").trim();
-        if (clean.length() <= maxChars) {
-            return clean;
-        }
-        int boundary = clean.lastIndexOf(' ', maxChars - 1);
-        int end = boundary > maxChars / 2 ? boundary : maxChars - 1;
-        return clean.substring(0, end).trim() + "...";
-    }
-
     private static String safe(String value) {
         return value == null ? "" : value;
     }
 
-    private record ModulePlacement(String title, CvSection section, int limit) {
+    /** A bulleted module, titled from the section or the preset's label. */
+    private static ColumnPagination.Block module(CvSection section, String fallbackTitle) {
+        return new ColumnPagination.Block(SectionAllocation.titleOr(section, fallbackTitle),
+                sectionLines(section), false);
     }
+
+    /** A running-text module — a profile or any other prose section. */
+    private static ColumnPagination.Block prose(CvSection section, String fallbackTitle) {
+        return new ColumnPagination.Block(SectionAllocation.titleOr(section, fallbackTitle),
+                sectionLines(section), true);
+    }
+
+    private static List<ColumnPagination.Block> modules(ColumnPagination.Block... candidates) {
+        List<ColumnPagination.Block> kept = new ArrayList<>();
+        for (ColumnPagination.Block candidate : candidates) {
+            addModule(kept, candidate);
+        }
+        return kept;
+    }
+
+    private static void addModule(List<ColumnPagination.Block> target, ColumnPagination.Block module) {
+        if (!module.lines().isEmpty()) {
+            target.add(module);
+        }
+    }
+
+    private static List<ColumnPagination.Block> pageAt(List<List<ColumnPagination.Block>> pages, int index) {
+        return index < pages.size() ? pages.get(index) : List.of();
+    }
+
+    /**
+     * Axis height for a continuation page: as tall as the taller of the two
+     * columns is estimated to be, so the rule ends where the content does.
+     *
+     * @return a height in points, never above {@link #TIMELINE_AXIS_HEIGHT}
+     * and never so short the markers collide
+     */
+    private static double continuationAxisHeight(List<ColumnPagination.Block> sidebarPage,
+                                                 ColumnPagination sidebarMetrics,
+                                                 List<ColumnPagination.Block> mainPage,
+                                                 ColumnPagination mainMetrics) {
+        double tallest = Math.max(sidebarMetrics.pageHeight(sidebarPage),
+                mainMetrics.pageHeight(mainPage));
+        return Math.max(MIN_CONTINUATION_AXIS_HEIGHT,
+                Math.min(TIMELINE_AXIS_HEIGHT, tallest));
+    }
+
 
     private record ContactItem(String fallbackIcon, String iconFile,
                                String text, DocumentLinkOptions linkOptions) {

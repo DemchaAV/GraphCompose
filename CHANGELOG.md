@@ -262,6 +262,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Documentation
 
+- **Every relative link in the docs goes somewhere, and stays that way.** Nothing read a
+  link: no test followed one, no CI step checked one. Renaming a heading silently broke
+  every jump to it, moving a file broke every link into it, and both look harmless in a
+  diff. `DocumentationLinkGuardTest` now resolves all 1051 relative links across the 99
+  published pages — file targets and anchors, the latter computed with GitHub's own
+  heading rule. It found eight dead anchors in the examples catalogue: five missed their
+  heading by a single hyphen, because the em-dash in `CV — single template` collapses to
+  two, and three pointed at sections that no longer exist. The five are corrected; the
+  three keep their name and lose the link, since the row already carries working PDF and
+  Source links.
+
 - **The engine deck stopped calling a shipped backend planned.** Its first page listed
   PPTX as *Planned* beside a version badge reading v2.1.0 — the release that shipped it,
   and the release whose own copy of that deck is published as a `.pptx`. The page also

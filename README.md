@@ -402,6 +402,18 @@ people want directly:
 - [**graph-compose-markdown**](https://central.sonatype.com/artifact/io.github.demchaav/graph-compose-markdown) &mdash; a Markdown &rarr; PDF path built on the GraphCompose engine. Hand it a Markdown document and it renders through the same layout, theme, and PDFBox pipeline as the Java DSL &mdash; a companion **input surface** for teams who would rather author in Markdown than call the DSL directly. Published on Maven Central as `io.github.demchaav:graph-compose-markdown`; independent lifecycle, consumes the engine as a dependency.
 - [**graphcompose-ai-flow**](https://github.com/DemchaAV/graphcompose-ai-flow) &mdash; experimental sister project exploring an AI-assisted authoring flow on top of GraphCompose. Independent codebase, separate lifecycle &mdash; nothing in this repo depends on it. Track it if you are interested in agentic document composition driven by the same semantic node model.
 
+## Sponsorship
+
+GraphCompose is MIT-licensed and solo-maintained. If it saves your team work,
+[GitHub Sponsors](https://github.com/sponsors/DemchaAV) funds the unglamorous
+half of keeping it alive &mdash; release engineering, dependency upgrades, the
+visual-regression suite, and issue triage.
+
+Recurring or one-off. No tier gates a feature, nothing here is or will be
+paywalled, and sponsorship buys no queue position: issues stay best-effort for
+everyone alike &mdash; see [SUPPORT.md](./SUPPORT.md) for which channel fits
+which question.
+
 ## License
 
 MIT &mdash; see [`LICENSE`](./LICENSE).

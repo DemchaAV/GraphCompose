@@ -3,6 +3,37 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.1.2 — Planned
+
+### Templates
+
+- **Timeline Minimal renders the whole CV.** The preset used to drop content three
+  ways, none of them visible in the output. Per-module caps kept the first few lines
+  of each block and discarded the rest, so a fourth degree or a third employer simply
+  was not drawn — on a page that the fixed-height axis left looking only four-fifths
+  used. Prose was cut at a character count, ending a summary mid-sentence with an
+  ellipsis while the column still had room. And sections were matched to modules by
+  title keyword, taking the first hit for each category: a second prose section was
+  shadowed by the first, a section whose title matched nothing — a user's own
+  "Awards" or "Publications" — was never looked at, and the ones that did match were
+  relabelled, so "Projects" printed as EXPERTISE and "Additional Information"
+  printed as LANGUAGES.
+
+  Everything the document carries is now rendered. Headings come from the section's
+  own title, with the preset's label left only for a module that matched nothing.
+  An unmatched paragraph is still set as prose: reaching the main column that way
+  no longer sets a summary in the tighter face the bulleted modules use.
+  Content past one page continues on the next: the body is a row, and a row is
+  atomic — the paginator cannot break inside one — so the preset estimates its
+  columns' heights from the column width and font metrics, emits one row per page,
+  and lets each finished row overflow naturally. The axis keeps its full height on
+  the opening page and follows the content on a continuation page.
+
+- **New `SectionAllocation` for CV presets.** Hands each section out once and
+  returns what no module claimed, which is what `SectionLookup.firstMatching` alone
+  cannot express. The remaining CV presets still slot by keyword and still discard
+  what does not match; they are unchanged here.
+
 ## v2.1.1 — 2026-08-05
 
 ### Build

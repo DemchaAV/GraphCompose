@@ -34,6 +34,32 @@ follow semantic versioning; release dates are ISO 8601.
   cannot express. The remaining CV presets still slot by keyword and still discard
   what does not match; they are unchanged here.
 
+### Build
+
+- **The open changelog entry and the development version cannot name different
+  releases.** The post-release step opens the next line by incrementing the patch, so a
+  GA of `X.Y.Z` always leaves the poms on `X.Y.(Z+1)-SNAPSHOT` — right when the next
+  release is a patch, wrong from the first commit when it is a minor. What that costs is
+  not tidiness. While the poms and the changelog name different releases, an `@since`
+  tag written in between has two answers available, and `@since` is a contract with the
+  consumer that outlives the cycle: the last time the two disagreed, tags went out
+  against both, and the ones that followed the previous release had to be corrected when
+  the line was. `VersionConsistencyGuardTest` now holds the poms to the open entry, which
+  is where the next version gets recorded first, so there is one answer to take.
+
+  An entry counts as open because it carries no date, not because of the word after the
+  version — the 2.1.0 line was opened as `— in progress`, and a check that recognised
+  only one spelling would have watched that whole line go by. The wording is then held
+  to `Planned` separately, because `cut-release.ps1` dates an entry by matching that
+  literal and leaves anything else undated. Two open entries fail as well, being an
+  ambiguous answer rather than a wrong one.
+
+  Having no open entry passes: the post-release bump writes none and runs this guard as
+  its own gate, so demanding one would fail the commit that opens the window. The check
+  begins with the cycle's first entry. It compares the two recorded answers against each
+  other, so it catches one being corrected without the other — not a pair that was wrong
+  together from the start.
+
 ## v2.1.1 — 2026-08-05
 
 ### Build

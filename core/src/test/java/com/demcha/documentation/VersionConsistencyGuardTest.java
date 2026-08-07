@@ -269,6 +269,42 @@ class VersionConsistencyGuardTest {
                 .endsWith("/releases/tag/v" + stable.group(1));
     }
 
+    /**
+     * The open {@code CHANGELOG.md} entry and the in-development pom version name the
+     * same release line.
+     *
+     * <p>The post-release step opens the next line by incrementing the patch
+     * unconditionally, so a GA of {@code X.Y.Z} always leaves the train on
+     * {@code X.Y.(Z+1)-SNAPSHOT}. When the next release turns out to be a minor, the
+     * poms and the CHANGELOG name different releases for the rest of the cycle, and an
+     * {@code @since} tag written meanwhile has two answers to choose between. It is a
+     * public API contract, so whichever the author picks outlives the cycle: the last
+     * time these two disagreed, tags were written against both — most against the
+     * CHANGELOG heading, the rest against the previous release, and the latter had to
+     * be retagged when the line was corrected.</p>
+     *
+     * <p>What this pins is that correction. The real next version is recorded in the
+     * CHANGELOG heading first, because that is where the cycle's opening entry goes;
+     * from that commit on, the build stays red until the poms name the same line. What
+     * it cannot catch is a heading and a pom that are wrong <em>together</em> — both
+     * states are internally consistent, and nothing in the tree distinguishes them.</p>
+     *
+     * <p>Having no open entry at all passes. The post-release bump writes no heading and
+     * runs this test as its own gate before committing, so requiring one here would fail
+     * the very commit that opens the window. The entry arrives with the cycle's first
+     * CHANGELOG addition and is held from then on.</p>
+     */
+    @Test
+    void theOpenChangelogEntryNamesTheVersionUnderDevelopment() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
+        String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
+
+        assertThat(versionDriftProblem(changelog, pomVersion))
+                .describedAs("the CHANGELOG entry left open and the working pom version must name the "
+                        + "same release, or an @since written this cycle has two answers to pick from")
+                .isNull();
+    }
+
     @Test
     void readmeInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();
@@ -603,6 +639,94 @@ class VersionConsistencyGuardTest {
                 .describedAs("CHANGELOG.md must contain a dated final release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
                 .isTrue();
         return released.group(1);
+    }
+
+    /**
+     * One {@code ## vX.Y.Z — <marker>} entry: the release line it names, and whatever
+     * follows the version on that line — a date once shipped, anything else while open.
+     */
+    record ChangelogEntry(String version, String marker) {
+        boolean isDated() {
+            return marker.matches("\\d{4}-\\d{2}-\\d{2}\\b.*");
+        }
+    }
+
+    /**
+     * Every {@code ## vX.Y.Z} entry in {@code changelog}, in file order.
+     *
+     * <p>Deliberately drivable from a string rather than reading the file: an entry this
+     * stops recognising is one {@link #versionDriftProblem} cannot compare, and a guard
+     * that compares nothing is green forever without having failed once.
+     * {@code ChangelogVersionParsingTest} holds the shapes it must keep seeing.</p>
+     */
+    static List<ChangelogEntry> changelogEntriesIn(String changelog) {
+        Matcher heading = Pattern.compile(
+                        "^## v(\\d+\\.\\d+\\.\\d+)[ \\t]*(?:[\\u2014\\-][ \\t]*)?(.*)$", Pattern.MULTILINE)
+                .matcher(changelog);
+        List<ChangelogEntry> entries = new ArrayList<>();
+        while (heading.find()) {
+            entries.add(new ChangelogEntry(heading.group(1), heading.group(2).trim()));
+        }
+        return entries;
+    }
+
+    /**
+     * What is wrong between the open {@code CHANGELOG.md} entry and {@code pomVersion},
+     * or {@code null} when the two agree — pure, so the red paths can be driven from
+     * strings instead of only ever being observed on the repository's own files.
+     *
+     * <p>An entry counts as open because it carries no <em>date</em>, never because of
+     * the word after the version. Recognising one spelling and skipping the others is
+     * how this check would go quiet for a whole development line rather than fail: the
+     * 2.1.0 line was opened as {@code — in progress} and stayed that way for 31 commits
+     * while the poms named a different release, which is precisely the drift this
+     * exists to catch. The spelling is then held separately, because
+     * {@code cut-release.ps1} dates a heading by matching the literal
+     * {@code — Planned} and silently leaves any other wording undated.</p>
+     */
+    static String versionDriftProblem(String changelog, String pomVersion) {
+        List<ChangelogEntry> entries = changelogEntriesIn(changelog);
+        List<ChangelogEntry> open = entries.stream().filter(entry -> !entry.isDated()).toList();
+
+        if (open.isEmpty()) {
+            return null;
+        }
+        if (open.size() > 1) {
+            return "CHANGELOG.md leaves %d entries undated (%s) — two open entries leave the next release ambiguous"
+                    .formatted(open.size(), open.stream().map(ChangelogEntry::version).toList());
+        }
+
+        ChangelogEntry entry = open.get(0);
+        if (!entries.get(0).equals(entry)) {
+            return "the open CHANGELOG entry (v%s) sits below a shipped release — an undated entry under a dated one is a leftover, not the next line"
+                    .formatted(entry.version());
+        }
+        if (!"Planned".equals(entry.marker())) {
+            return ("the open CHANGELOG entry reads '## v%s — %s'; cut-release.ps1 dates a heading by matching "
+                    + "the literal '— Planned', so this one would go out undated")
+                    .formatted(entry.version(), entry.marker());
+        }
+
+        String pomLine = releaseLineOf(pomVersion);
+        if (!entry.version().equals(pomLine)) {
+            return ("the open CHANGELOG entry (v%s) and the working pom version (%s) name different releases — "
+                    + "whichever is right, the other was left behind")
+                    .formatted(entry.version(), pomVersion);
+        }
+        return null;
+    }
+
+    /**
+     * The {@code X.Y.Z} release line a working version belongs to. {@code 2.2.0-SNAPSHOT}
+     * and {@code 2.2.0-rc.1} both target {@code 2.2.0}, which is the version the open
+     * CHANGELOG heading names while either sits in the poms.
+     */
+    static String releaseLineOf(String version) {
+        Matcher line = Pattern.compile("^(\\d+\\.\\d+\\.\\d+)").matcher(version);
+        assertThat(line.find())
+                .describedAs("the working pom version (%s) must start with an X.Y.Z release line", version)
+                .isTrue();
+        return line.group(1);
     }
 
     /**

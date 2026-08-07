@@ -238,9 +238,14 @@ public final class TimelineMinimal {
                 addModule(main, module(experience, "Work Experience"));
                 // Whatever no module claimed — a user's own "Awards", a second
                 // prose section — goes into the main column under its own
-                // title rather than off the page.
+                // title rather than off the page. A paragraph keeps reading as
+                // a paragraph: bulleting one line of prose because it arrived
+                // through the leftover path would be a different kind of loss
+                // than dropping it, but a loss all the same.
                 for (CvSection leftover : allocation.remaining()) {
-                    addModule(main, module(leftover, leftover.title()));
+                    addModule(main, leftover instanceof ParagraphSection
+                            ? prose(leftover, leftover.title())
+                            : module(leftover, leftover.title()));
                 }
 
                 // Column inner widths: the row subtracts its gaps before the
@@ -292,8 +297,17 @@ public final class TimelineMinimal {
                 // One row per page. A row is atomic — the paginator cannot
                 // break inside it — so the preset decides the page boundary
                 // itself and lets each finished row overflow onto the next
-                // page of its own accord. An explicit page break would emit a
-                // blank page whenever page one happens to be exactly full.
+                // page of its own accord.
+                //
+                // Overflow is enough to keep them apart, and deliberately so.
+                // A slice closes early only when the next block will not fit
+                // what is left of it, and that block then opens the following
+                // slice — so two neighbours always add up to more than one
+                // page and can never settle onto the same sheet. An explicit
+                // page break would not improve on that and would cost a blank
+                // one: a filled page has no room for the flow's own spacing,
+                // so the cursor has already moved on by the time the break
+                // lands, and the break moves it again.
                 for (int page = 0; page < pages; page++) {
                     List<ColumnPagination.Block> sidebarPage = pageAt(sidebarPages, page);
                     List<ColumnPagination.Block> mainPage = pageAt(mainPages, page);

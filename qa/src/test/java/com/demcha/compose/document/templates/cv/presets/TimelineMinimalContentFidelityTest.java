@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.api.DocumentPageSize;
+import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
@@ -19,6 +20,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * A CV rendered through Timeline Minimal keeps every entry it was given.
@@ -91,6 +93,57 @@ class TimelineMinimalContentFidelityTest {
                         + "the summary keys, so the second prose section vanished")
                 .containsIgnoringCase("Open Source")
                 .contains("Maintains a document engine");
+    }
+
+    @Test
+    void aLeftoverParagraphIsStyledAsProseRatherThanAsABullet() throws Exception {
+        // Two prose sections carrying the same body. One title matches the
+        // summary keys and takes the prose path; the other matches nothing and
+        // arrives through the leftover path. Identical text through both paths
+        // has to occupy identical space — bullet styling is a smaller face on
+        // tighter leading, so the block shrinks the moment a paragraph is
+        // treated as a list.
+        String body = "Maintains a document engine used in production, "
+                      + "and the tooling that keeps its output reproducible.";
+        CvDocument doc = CvDocument.builder()
+                .identity(CvIdentity.builder()
+                        .name("Jane", "Doe")
+                        .jobTitle("Backend Engineer")
+                        .contact("+44 0", "j@d.com", "London")
+                        .build())
+                .sections(new ParagraphSection("Professional Summary", body),
+                        new ParagraphSection("Open Source", body))
+                .build();
+
+        LayoutSnapshot snapshot = layoutOf(doc);
+
+        assertThat(mainSectionHeight(snapshot, "opensource"))
+                .describedAs("the leftover path bulleted every section it "
+                        + "handled, so a paragraph arriving that way was set "
+                        + "as a list instead of as prose")
+                .isEqualTo(mainSectionHeight(snapshot, "professionalsummary"),
+                        within(0.01));
+    }
+
+    /** Placement height of one main-column module block, by normalised title. */
+    private static double mainSectionHeight(LayoutSnapshot snapshot, String key) {
+        String name = "CvV2TimelineMinimalMain" + key;
+        return snapshot.nodes().stream()
+                .filter(node -> name.equals(node.entityName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "no main-column block named " + name))
+                .placementHeight();
+    }
+
+    private static LayoutSnapshot layoutOf(CvDocument doc) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(DocumentInsets.of(TimelineMinimal.RECOMMENDED_MARGIN))
+                .create()) {
+            TimelineMinimal.create().compose(session, doc);
+            return session.layoutSnapshot();
+        }
     }
 
     @Test

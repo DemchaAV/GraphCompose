@@ -21,6 +21,8 @@ follow semantic versioning; release dates are ISO 8601.
 
   Everything the document carries is now rendered. Headings come from the section's
   own title, with the preset's label left only for a module that matched nothing.
+  An unmatched paragraph is still set as prose: reaching the main column that way
+  no longer sets a summary in the tighter face the bulleted modules use.
   Content past one page continues on the next: the body is a row, and a row is
   atomic — the paginator cannot break inside one — so the preset estimates its
   columns' heights from the column width and font metrics, emits one row per page,

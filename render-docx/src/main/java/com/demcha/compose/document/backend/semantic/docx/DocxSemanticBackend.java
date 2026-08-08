@@ -445,7 +445,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 case UNDERLINE ->
                         run.setUnderline(org.apache.poi.xwpf.usermodel.UnderlinePatterns.SINGLE);
-                case STRIKETHROUGH -> run.setStrike(true);
+                case STRIKETHROUGH -> run.setStrikeThrough(true);
                 // DEFAULT carries no face of its own and is the only one left.
                 default -> {
                 }

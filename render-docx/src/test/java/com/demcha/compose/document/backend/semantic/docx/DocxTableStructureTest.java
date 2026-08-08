@@ -81,6 +81,36 @@ class DocxTableStructureTest {
     }
 
     @Test
+    void aCellSpanningBothWaysCarriesTheMergeOnEveryRowItCovers() throws Exception {
+        // The hardest position for the cover matrix: one cell owning a 2x2 rectangle of a
+        // 3x3 grid. The row below authors one cell, not three, and the continuation needs
+        // the width as well as the merge marker — a w:vMerge without w:gridSpan would leave
+        // Word a row two grid columns short of the others.
+        XWPFTable table = firstTable(new TableBuilder()
+                .name("Both")
+                .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(), DocumentTableColumn.auto())
+                .rowCells(DocumentTableCell.text("A").colSpan(2).rowSpan(2), DocumentTableCell.text("B"))
+                .rowCells(DocumentTableCell.text("C"))
+                .row("D", "E", "F")
+                .build());
+
+        assertThat(table.getRow(0).getTableCells()).hasSize(2);
+        assertThat(gridSpan(table.getRow(0).getCell(0))).isEqualTo(2);
+        assertThat(vMerge(table.getRow(0).getCell(0))).isEqualTo(STMerge.RESTART);
+        assertThat(table.getRow(0).getCell(0).getText()).isEqualTo("A");
+        assertThat(table.getRow(0).getCell(1).getText()).isEqualTo("B");
+
+        assertThat(table.getRow(1).getTableCells()).hasSize(2);
+        assertThat(gridSpan(table.getRow(1).getCell(0))).isEqualTo(2);
+        assertThat(vMerge(table.getRow(1).getCell(0))).isEqualTo(STMerge.CONTINUE);
+        assertThat(table.getRow(1).getCell(1).getText()).isEqualTo("C");
+
+        // Every row still accounts for three grid columns.
+        assertThat(table.getRow(2).getTableCells()).hasSize(3);
+        assertThat(table.getRow(2).getCell(2).getText()).isEqualTo("F");
+    }
+
+    @Test
     void aComposedCellExportsItsContentInsteadOfNothing() throws Exception {
         XWPFTable table = firstTable(new TableBuilder()
                 .name("Composed")

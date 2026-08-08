@@ -722,6 +722,23 @@ class VersionConsistencyGuardTest {
      *
      * <p>The drift is reported before the wording, because the release the two sources
      * disagree about is the finding; the wording is a smaller, separate problem.</p>
+     *
+     * <p>Two limits are deliberate, and both look like weaknesses worth "fixing" until
+     * you know why they are there:</p>
+     *
+     * <ul>
+     *   <li>A heading whose level is mistyped ({@code ### v2.2.0 — Planned}) or which is
+     *       indented stays invisible. Neither has occurred here, and matching them means
+     *       recognising headings the format does not produce. If one ever does appear the
+     *       symptom is a silently green check, so the repair is to widen the
+     *       topmost-heading test above — not the entry pattern, which would start reading
+     *       subsection headings as releases.</li>
+     *   <li>An entry and a pom that were wrong <em>together</em> from the start cannot be
+     *       caught. That is the v2.0.1 shape: both internally consistent, nothing in the
+     *       tree to tell them apart, and no amount of cross-checking these two sources
+     *       recovers a third opinion neither of them holds. What is catchable is one of
+     *       them being corrected without the other, which is how the correction arrives.</li>
+     * </ul>
      */
     static String versionDriftProblem(String changelog, String pomVersion) {
         Matcher firstSection = SECTION_HEADING.matcher(changelog);

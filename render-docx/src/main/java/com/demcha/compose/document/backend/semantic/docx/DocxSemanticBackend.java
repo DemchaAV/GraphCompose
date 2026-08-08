@@ -15,6 +15,7 @@ import com.demcha.compose.document.output.DocumentOutputOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
+import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.SectionNode;
@@ -295,16 +296,35 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
         para.setAlignment(toAlignment(node.align()));
-        if (!node.inlineTextRuns().isEmpty()) {
-            node.inlineTextRuns().forEach(run -> {
-                XWPFRun docRun = para.createRun();
-                applyStyle(docRun, node.textStyle());
-                docRun.setText(run.text());
-            });
-        } else {
+        writeParagraphRuns(para, node);
+    }
+
+    /**
+     * Writes {@code node}'s text into {@code para}, one Word run per inline run.
+     *
+     * <p>A run's own style is used and the paragraph's is the fallback, which is the
+     * contract {@link InlineTextRun} states: its style
+     * "falls back to the paragraph style when null". Applying the fallback to every run
+     * regardless is what flattened a bold segment, an accent-coloured segment and plain
+     * text into one identical face.</p>
+     *
+     * <p>Runs win over {@code text} when both are present, matching how a paragraph is
+     * rendered elsewhere. Nothing is lost by preferring them: when {@code text} is left
+     * blank {@code ParagraphNode} fills it by concatenating exactly the runs
+     * {@code inlineTextRuns()} returns, highlight chips included.</p>
+     */
+    private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node) {
+        List<InlineTextRun> runs = node.inlineTextRuns();
+        if (runs.isEmpty()) {
             XWPFRun docRun = para.createRun();
             applyStyle(docRun, node.textStyle());
             docRun.setText(node.text() == null ? "" : node.text());
+            return;
+        }
+        for (InlineTextRun run : runs) {
+            XWPFRun docRun = para.createRun();
+            applyStyle(docRun, run.textStyle() == null ? node.textStyle() : run.textStyle());
+            docRun.setText(run.text() == null ? "" : run.text());
         }
     }
 
@@ -377,10 +397,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) {
         if (child instanceof ParagraphNode paragraph) {
-            XWPFParagraph para = cell.addParagraph();
-            XWPFRun run = para.createRun();
-            applyStyle(run, paragraph.textStyle());
-            run.setText(paragraph.text() == null ? "" : paragraph.text());
+            // Same walk as writeParagraph: a cell paragraph keeps per-run styling
+            // instead of being flattened into the concatenated text in one style.
+            writeParagraphRuns(cell.addParagraph(), paragraph);
         } else if (child instanceof SpacerNode) {
             cell.addParagraph();
         } else {
@@ -426,6 +445,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 }
                 case UNDERLINE ->
                         run.setUnderline(org.apache.poi.xwpf.usermodel.UnderlinePatterns.SINGLE);
+                case STRIKETHROUGH -> run.setStrike(true);
+                // DEFAULT carries no face of its own and is the only one left.
                 default -> {
                 }
             }

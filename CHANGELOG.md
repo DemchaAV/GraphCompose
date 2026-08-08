@@ -67,6 +67,20 @@ follow semantic versioning; release dates are ISO 8601.
   other, so it catches one being corrected without the other — not a pair that was wrong
   together from the start.
 
+### Fixed
+
+- **DOCX keeps the styling a mixed paragraph asks for.** A `RichText` paragraph exported
+  with every run in the paragraph's base style, so a bold segment, an accent-coloured
+  segment and plain text all came out identical — a valid `.docx`, no warning, and the
+  emphasis simply absent. `InlineTextRun` documents its style as falling back to the
+  paragraph's *when null*; the backend was applying that fallback unconditionally, with
+  the run in hand. Each run now carries its own style, in a paragraph and in a `row`
+  cell, which used to be written from its concatenated text in one style. (A `table`
+  cell is written from lines rather than runs and still carries no styling.)
+
+- **`STRIKETHROUGH` reaches Word.** It was the one `DocumentTextDecoration` with no
+  branch in the DOCX style mapping and fell through to no decoration at all.
+
 ## v2.1.1 — 2026-08-05
 
 ### Build

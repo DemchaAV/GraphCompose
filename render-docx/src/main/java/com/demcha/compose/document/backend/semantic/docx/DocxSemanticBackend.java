@@ -8,6 +8,7 @@ import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.layout.TableGrid;
 import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.output.DocumentMetadata;
@@ -25,6 +26,7 @@ import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.Document;
@@ -38,6 +40,8 @@ import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +51,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -358,27 +363,139 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    private void writeTable(XWPFDocument document, TableNode node) {
+    /**
+     * Writes a table on the grid its cells actually occupy.
+     *
+     * <p>An authored row is not a row of columns: a {@code rowSpan} covers positions in the
+     * rows below it and those rows do not repeat the covered cells, and a {@code colSpan}
+     * makes the number of authored records differ from the number of columns. Sizing the
+     * grid from the first row's record count therefore built a table too narrow whenever a
+     * span was involved, and the loop that filled it stopped at the last column that
+     * existed — so the cells past it were not written at all. {@link TableGrid} is the
+     * layout pipeline's own resolution of that grid, used here so the two cannot disagree.
+     * </p>
+     *
+     * <p>Word expresses the merges natively: {@code w:gridSpan} widens a cell, and
+     * {@code w:vMerge} restarts on the cell that owns a vertical span and continues on the
+     * ones it covers.</p>
+     */
+    private void writeTable(XWPFDocument document, TableNode node) throws Exception {
         if (node.rows().isEmpty()) {
             return;
         }
-        int columnCount = node.rows().get(0).size();
-        XWPFTable table = document.createTable(node.rows().size(), Math.max(1, columnCount));
-        for (int rowIdx = 0; rowIdx < node.rows().size(); rowIdx++) {
-            List<DocumentTableCell> rowCells = node.rows().get(rowIdx);
+        int rowCount = node.rows().size();
+        int columnCount = TableGrid.columnCount(node);
+        if (columnCount == 0) {
+            // Nothing declares a column and no cell claims one, so the grid has no positions
+            // to place anything in. Word still needs a cell in a table, so write the empty
+            // one this used to produce — widening the count instead would leave a position
+            // no placement covers, and reading it back is a crash rather than an empty cell.
+            document.createTable(rowCount, 1);
+            return;
+        }
+        TableGrid.Placement[][] cover = new TableGrid.Placement[rowCount][columnCount];
+        for (List<TableGrid.Placement> sourceRow : TableGrid.resolve(node)) {
+            for (TableGrid.Placement placement : sourceRow) {
+                for (int r = placement.row(); r < placement.row() + placement.rowSpan(); r++) {
+                    for (int c = placement.column(); c < placement.column() + placement.colSpan(); c++) {
+                        cover[r][c] = placement;
+                    }
+                }
+            }
+        }
+
+        // One cell per row to start with, then as many as that row actually needs: a merged
+        // cell is one cell carrying a span, not several, so a row's physical count is not
+        // the column count.
+        XWPFTable table = document.createTable(rowCount, 1);
+        for (int rowIdx = 0; rowIdx < rowCount; rowIdx++) {
             XWPFTableRow row = table.getRow(rowIdx);
-            for (int columnIdx = 0; columnIdx < rowCells.size() && columnIdx < row.getTableCells().size(); columnIdx++) {
-                XWPFTableCell cell = row.getCell(columnIdx);
+            List<TableGrid.Placement> physical = new ArrayList<>();
+            for (int col = 0; col < columnCount; ) {
+                TableGrid.Placement placement = cover[rowIdx][col];
+                physical.add(placement);
+                col += placement.colSpan();
+            }
+            while (row.getTableCells().size() < physical.size()) {
+                row.createCell();
+            }
+            for (int i = 0; i < physical.size(); i++) {
+                TableGrid.Placement placement = physical.get(i);
+                XWPFTableCell cell = row.getCell(i);
+                applySpans(cell, placement, rowIdx);
+                if (placement.row() != rowIdx) {
+                    // A covered position carries the merge marker and no content of its own.
+                    continue;
+                }
                 cell.removeParagraph(0);
-                XWPFParagraph para = cell.addParagraph();
-                XWPFRun run = para.createRun();
-                String text = String.join("\n", rowCells.get(columnIdx).lines());
-                run.setText(text);
+                writeCellContent(cell, placement, node);
             }
         }
     }
 
-    private void writeRow(XWPFDocument document, RowNode node) {
+    private void applySpans(XWPFTableCell cell, TableGrid.Placement placement, int rowIdx) {
+        if (placement.colSpan() == 1 && placement.rowSpan() == 1) {
+            return;
+        }
+        CTTcPr properties = cell.getCTTc().isSetTcPr()
+                ? cell.getCTTc().getTcPr()
+                : cell.getCTTc().addNewTcPr();
+        if (placement.colSpan() > 1) {
+            properties.addNewGridSpan().setVal(BigInteger.valueOf(placement.colSpan()));
+        }
+        if (placement.rowSpan() > 1) {
+            properties.addNewVMerge().setVal(
+                    placement.row() == rowIdx ? STMerge.RESTART : STMerge.CONTINUE);
+        }
+    }
+
+    private void writeCellContent(XWPFTableCell cell, TableGrid.Placement placement, TableNode node)
+            throws Exception {
+        DocumentTableCell source = placement.cell();
+        if (source.content() != null) {
+            // A composed cell keeps its node and leaves lines() empty, so reading lines()
+            // exported it as an empty cell.
+            writeCellBody(cell, source.content());
+            return;
+        }
+        XWPFParagraph para = cell.addParagraph();
+        XWPFRun run = para.createRun();
+        applyStyle(run, resolveCellTextStyle(node, placement));
+        List<String> lines = source.lines();
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0) {
+                // A joined "\n" is not a line break in Word; it renders as one line.
+                run.addBreak();
+            }
+            run.setText(lines.get(i) == null ? "" : lines.get(i), i);
+        }
+    }
+
+    /**
+     * The text style a cell resolves to, most specific wins.
+     *
+     * <p>The same order the layout pipeline merges in: the table's default, then the
+     * column's, then the row's, then the cell's own.</p>
+     */
+    private DocumentTextStyle resolveCellTextStyle(TableNode node, TableGrid.Placement placement) {
+        DocumentTextStyle resolved = null;
+        for (DocumentTableStyle candidate : List.of(
+                orEmpty(node.defaultCellStyle()),
+                orEmpty(node.columnStyles().get(placement.column())),
+                orEmpty(node.rowStyles().get(placement.row())),
+                orEmpty(placement.cell().style()))) {
+            if (candidate.textStyle() != null) {
+                resolved = candidate.textStyle();
+            }
+        }
+        return resolved;
+    }
+
+    private static DocumentTableStyle orEmpty(DocumentTableStyle style) {
+        return style == null ? DocumentTableStyle.empty() : style;
+    }
+
+    private void writeRow(XWPFDocument document, RowNode node) throws Exception {
         // Represent rows as a single one-row table so downstream editors get a
         // visual side-by-side layout. Cell content is restricted to atomic
         // children; richer composition is scheduled for a follow-up release.
@@ -395,14 +512,49 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
-    private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) {
+    private void writeRowCellChild(XWPFTableCell cell, DocumentNode child) throws Exception {
+        writeCellBody(cell, child);
+    }
+
+    /**
+     * Writes {@code child} into an emptied cell and leaves a paragraph behind either way.
+     *
+     * <p>A {@code w:tc} must hold at least one block-level element. POI puts a paragraph in
+     * every cell it creates and the callers here remove it before writing their own, so a
+     * node that contributes nothing — a wrapper that ended up with no children — would
+     * otherwise leave the cell with no block child at all. Word tolerates less of that than
+     * the schema validator notices.</p>
+     */
+    private void writeCellBody(XWPFTableCell cell, DocumentNode child) throws Exception {
+        writeCellNode(cell, child);
+        if (cell.getParagraphs().isEmpty()) {
+            cell.addParagraph();
+        }
+    }
+
+    /**
+     * Writes a node into a table cell.
+     *
+     * <p>A wrapper contributes nothing of its own to a Word cell, so its children are
+     * written in its place rather than the wrapper being dropped with them inside.</p>
+     */
+    private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
         if (child instanceof ParagraphNode paragraph) {
             // Same walk as writeParagraph: a cell paragraph keeps per-run styling
             // instead of being flattened into the concatenated text in one style.
             writeParagraphRuns(cell.addParagraph(), paragraph);
+        } else if (child instanceof ContainerNode container) {
+            for (DocumentNode grandChild : container.children()) {
+                writeCellNode(cell, grandChild);
+            }
+        } else if (child instanceof SectionNode section) {
+            for (DocumentNode grandChild : section.children()) {
+                writeCellNode(cell, grandChild);
+            }
         } else if (child instanceof SpacerNode) {
             cell.addParagraph();
         } else {
+            warnUnsupported(child);
             // Unsupported cell content gets an empty paragraph placeholder.
             cell.addParagraph();
         }

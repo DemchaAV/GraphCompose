@@ -81,6 +81,26 @@ follow semantic versioning; release dates are ISO 8601.
 - **`STRIKETHROUGH` reaches Word.** It was the one `DocumentTextDecoration` with no
   branch in the DOCX style mapping and fell through to no decoration at all.
 
+- **DOCX writes a table on the grid its cells occupy.** An authored row is not a row of
+  columns: a `rowSpan` covers positions in the rows below and those rows do not repeat the
+  covered cells, and a `colSpan` makes the record count differ from the column count. The
+  backend read a row's records as its columns and sized the grid from the first row's
+  record count, so a `rowSpan` shifted every row beneath it one column to the left, and a
+  `colSpan` did that *and* left the grid too narrow, dropping the cells past its end
+  without a word. `colSpan` and `rowSpan` now map to Word's `w:gridSpan` and `w:vMerge`, a
+  cell takes the most specific text style in the table / column / row / cell cascade, a
+  composed cell exports its node instead of the empty `lines()` it has by definition, and
+  a multi-line cell is separated by a real break rather than a newline Word reads as a
+  space.
+
+  A table whose authored rows cannot form a rectangle now fails the export with the
+  position at fault, where before it was drawn wrong. That is the rule the layout pipeline
+  already applied, so a document the PDF backend refuses is no longer one DOCX accepts.
+
+  The grid itself is resolved by `TableGrid`, extracted from the layout pipeline so both it
+  and the backend answer from one implementation. It is `@Internal`: a backend seam, not a
+  public promise.
+
 ## v2.1.1 — 2026-08-05
 
 ### Build

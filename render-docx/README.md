@@ -52,11 +52,12 @@ underline and strikethrough, per run rather than per paragraph.
 
 What maps only in part:
 
-- **Table cells keep their text, not their structure.** `colSpan` and `rowSpan` are not
-  applied, so a table with merged cells exports with its columns misaligned. Per-cell
-  style and fill/border paint are dropped, and a `table` cell's text carries no styling
-  at all — it is written from the cell's lines rather than from runs. (A `row` cell is
-  a paragraph and does keep per-run styling.)
+- **Table cells keep their structure, not their paint.** `colSpan` and `rowSpan` map to
+  Word's own `w:gridSpan` and `w:vMerge`, and a cell's text takes the most specific style
+  in the table / column / row / cell cascade. Still dropped: the fill and border paint of a
+  `DocumentTableStyle`, so a merged, styled table exports with the right shape on Word's
+  default rules. A composed cell writes the shapes a cell can hold — paragraphs, and the
+  wrappers around them — so one built from an image or a list still lands empty.
 - **Image fit is ignored.** The picture is embedded at the node's width and height;
   `CONTAIN` and `COVER` therefore behave as `STRETCH`, and an image sized only by `scale`
   falls back to 100 × 100 pt.

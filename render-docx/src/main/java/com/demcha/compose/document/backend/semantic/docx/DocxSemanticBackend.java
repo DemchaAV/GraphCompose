@@ -6,8 +6,11 @@ import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.dsl.TableBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.image.DocumentImageFitMode;
+import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.layout.NodeDefinitionSupport;
 import com.demcha.compose.document.layout.TableGrid;
 import com.demcha.compose.document.node.ChartNode;
 import com.demcha.compose.document.node.ContainerNode;
@@ -29,14 +32,16 @@ import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
-import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFPicture;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
@@ -74,6 +79,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private static final double POINT_TO_TWIP = 20.0;
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
+    // The page's content width, so an image is held to the same bound layout holds it to.
+    // Set per export; Double.MAX_VALUE means "no canvas, so nothing to clamp against".
+    private double contentWidth = Double.MAX_VALUE;
     // One capability warning per export pass keeps the log readable when a
     // template uses many shape containers. Reset on every export() call so
     // each session sees the warning at least once.
@@ -99,6 +107,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         shapeContainerWarned.set(false);
         chartWarned.set(false);
         warnedNodeKinds.clear();
+        contentWidth = context.canvas() == null ? Double.MAX_VALUE : context.canvas().innerWidth();
         try (XWPFDocument document = new XWPFDocument()) {
             applyPageGeometry(document, context.canvas());
             applyOutputOptions(document, context.outputOptions());
@@ -333,6 +342,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * Embeds an image at the size the node asks for, in the shape its fit mode asks for.
+     *
+     * <p>The box came from the node's literal {@code width} / {@code height} and fell back
+     * to a hardcoded 100 × 100 pt when either was absent — so an image sized only by
+     * {@code scale}, or by one dimension with the other implied by its aspect ratio, came
+     * out at a size nothing had asked for. {@link NodeDefinitionSupport#resolveImageDimensions}
+     * is the rule the layout pipeline applies for exactly this, including the clamp to the
+     * page's content width, and is used here so the two agree.</p>
+     *
+     * <p>{@code fitMode} then decides how the image sits in that box, matching the PDF
+     * handler: {@code CONTAIN} scales by the smaller ratio and is embedded at that size,
+     * which needs no clipping because it is inside the box already; {@code COVER} scales by
+     * the larger and crops the overflow away in source space through {@code a:srcRect},
+     * centred, the way the PPTX backend expresses the same geometry; {@code STRETCH} fills
+     * the box.</p>
+     */
     private void writeImage(XWPFDocument document, ImageNode node) throws Exception {
         DocumentImageData data = node.imageData();
         byte[] bytes = data.bytes()
@@ -342,17 +368,103 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (bytes.length == 0) {
             return;
         }
+        ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
+        double sourceWidth = Math.max(1, resolved.getMetadata().width());
+        double sourceHeight = Math.max(1, resolved.getMetadata().height());
+        NodeDefinitionSupport.ImageDimensions box =
+                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth);
+
+        DocumentImageFitMode fitMode =
+                node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
+        double drawWidth = box.width();
+        double drawHeight = box.height();
+        if (fitMode == DocumentImageFitMode.CONTAIN) {
+            double scale = Math.min(box.width() / sourceWidth, box.height() / sourceHeight);
+            drawWidth = sourceWidth * scale;
+            drawHeight = sourceHeight * scale;
+        }
+
         XWPFParagraph para = document.createParagraph();
         XWPFRun run = para.createRun();
         try (InputStream stream = new java.io.ByteArrayInputStream(bytes)) {
-            int width = node.width() == null ? 100 : (int) Math.round(node.width());
-            int height = node.height() == null ? 100 : (int) Math.round(node.height());
-            run.addPicture(stream,
-                    Document.PICTURE_TYPE_PNG,
+            XWPFPicture picture = run.addPicture(stream,
+                    pictureType(bytes),
                     "image",
-                    Units.toEMU(width),
-                    Units.toEMU(height));
+                    Units.toEMU(drawWidth),
+                    Units.toEMU(drawHeight));
+            if (fitMode == DocumentImageFitMode.COVER) {
+                applyCoverCrop(picture, sourceWidth, sourceHeight, box);
+            }
         }
+    }
+
+    /**
+     * Crops a {@code COVER} image to its box, centred, in source space.
+     *
+     * <p>Word has no clip for an inline picture, so the overflow the PDF backend clips away
+     * is removed from the source instead: the picture is placed at the box's size and
+     * {@code a:srcRect} names the fraction of each edge that is not shown.</p>
+     */
+    private void applyCoverCrop(XWPFPicture picture, double sourceWidth, double sourceHeight,
+                                NodeDefinitionSupport.ImageDimensions box) {
+        double scale = Math.max(box.width() / sourceWidth, box.height() / sourceHeight);
+        double horizontal = (sourceWidth * scale - box.width()) / (sourceWidth * scale) / 2.0;
+        double vertical = (sourceHeight * scale - box.height()) / (sourceHeight * scale) / 2.0;
+        CTRelativeRect srcRect = picture.getCTPicture().getBlipFill().addNewSrcRect();
+        srcRect.setL(toThousandthPercent(horizontal));
+        srcRect.setR(toThousandthPercent(horizontal));
+        srcRect.setT(toThousandthPercent(vertical));
+        srcRect.setB(toThousandthPercent(vertical));
+    }
+
+    /** A crop fraction as the per-100000 integer DrawingML stores. */
+    private static int toThousandthPercent(double fraction) {
+        if (Double.isNaN(fraction) || fraction <= 0.0) {
+            return 0;
+        }
+        return (int) Math.round(Math.min(fraction, 0.5) * 100_000);
+    }
+
+    /**
+     * The picture type the bytes actually are.
+     *
+     * <p>Every image was declared {@code PNG} regardless of its content, so a JPEG went into
+     * the package announced as something it is not. The signature is read instead; a format
+     * with no signature here keeps the old answer and says so once.</p>
+     */
+    private PictureType pictureType(byte[] bytes) {
+        if (startsWith(bytes, 0x89, 0x50, 0x4E, 0x47)) {
+            return PictureType.PNG;
+        }
+        if (startsWith(bytes, 0xFF, 0xD8, 0xFF)) {
+            return PictureType.JPEG;
+        }
+        if (startsWith(bytes, 0x47, 0x49, 0x46)) {
+            return PictureType.GIF;
+        }
+        if (startsWith(bytes, 0x42, 0x4D)) {
+            return PictureType.BMP;
+        }
+        if (startsWith(bytes, 0x49, 0x49, 0x2A, 0x00) || startsWith(bytes, 0x4D, 0x4D, 0x00, 0x2A)) {
+            return PictureType.TIFF;
+        }
+        if (warnedNodeKinds.add("image-signature")) {
+            LOG.warn("DocxSemanticBackend: image bytes carry no recognised signature — declaring PNG, "
+                     + "which is what Word will try to decode them as");
+        }
+        return PictureType.PNG;
+    }
+
+    private static boolean startsWith(byte[] bytes, int... signature) {
+        if (bytes.length < signature.length) {
+            return false;
+        }
+        for (int i = 0; i < signature.length; i++) {
+            if ((bytes[i] & 0xFF) != signature[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private byte[] readBytes(Path path) {

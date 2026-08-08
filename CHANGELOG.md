@@ -97,6 +97,20 @@ follow semantic versioning; release dates are ISO 8601.
   position at fault, where before it was drawn wrong. That is the rule the layout pipeline
   already applied, so a document the PDF backend refuses is no longer one DOCX accepts.
 
+- **A DOCX image is the size it asked for, in the shape it asked for.** The drawn box came
+  from the node's literal `width` and `height` and fell back to a hardcoded 100 × 100 pt
+  when either was absent, so an image sized only by `scale` — or by one dimension with the
+  other implied by its aspect ratio — came out at a size nothing had asked for. The box now
+  comes from `NodeDefinitionSupport.resolveImageDimensions`, the rule layout already applies,
+  clamp to the page's content width included.
+
+  `fitMode` was not read at all, which left `CONTAIN` and `COVER` behaving as `STRETCH`.
+  `CONTAIN` is embedded at its fitted size, which needs no clipping because it is inside the
+  box already; `COVER` fills the box and the overflow is cropped out of the picture source,
+  centred, since Word has no clip for an inline picture — the same geometry the PPTX backend
+  expresses. And the picture type is read from the image's signature instead of every picture
+  being declared PNG, which is what a JPEG was announced as.
+
   The grid itself is resolved by `TableGrid`, extracted from the layout pipeline so both it
   and the backend answer from one implementation. It is `@Internal`: a backend seam, not a
   public promise.

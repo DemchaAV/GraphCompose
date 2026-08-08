@@ -48,7 +48,12 @@ not its drawing.
 
 What maps: paragraphs, lists, block images, tables, and document metadata (title, author,
 subject, keywords). Run styling carries font family, size, colour, bold, italic,
-underline and strikethrough, per run rather than per paragraph.
+underline and strikethrough, per run rather than per paragraph. A block image is sized by
+the rule layout uses — `width` / `height` / `scale`, the aspect ratio filling in whichever
+is missing, and a clamp to the page's content width — and honours its fit mode: `CONTAIN`
+is embedded at its fitted size, `COVER` fills the box and the overflow is cropped out of
+the picture source rather than clipped, which Word has no way to express for an inline
+picture.
 
 What maps only in part:
 
@@ -58,9 +63,6 @@ What maps only in part:
   `DocumentTableStyle`, so a merged, styled table exports with the right shape on Word's
   default rules. A composed cell writes the shapes a cell can hold — paragraphs, and the
   wrappers around them — so one built from an image or a list still lands empty.
-- **Image fit is ignored.** The picture is embedded at the node's width and height;
-  `CONTAIN` and `COVER` therefore behave as `STRETCH`, and an image sized only by `scale`
-  falls back to 100 × 100 pt.
 
 These are **not implemented** even though Word itself can express them — check the list
 before you promise a `.docx` to a reader:

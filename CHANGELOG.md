@@ -49,10 +49,17 @@ follow semantic versioning; release dates are ISO 8601.
 
   An entry counts as open because it carries no date, not because of the word after the
   version — the 2.1.0 line was opened as `— in progress`, and a check that recognised
-  only one spelling would have watched that whole line go by. The wording is then held
-  to `Planned` separately, because `cut-release.ps1` dates an entry by matching that
-  literal and leaves anything else undated. Two open entries fail as well, being an
-  ambiguous answer rather than a wrong one.
+  only one spelling would have watched that whole line go by. For the same reason a `##`
+  heading that names no release is reported rather than skipped: leaving the check with
+  nothing to compare must not look like agreement. Two open entries fail as well, being
+  an ambiguous answer rather than a wrong one.
+
+  The wording is then held to the exact `— Planned` the cut replaces, em dash included,
+  since an ASCII hyphen is as invisible to that replacement as another word would be.
+  Getting it wrong does not ship an undated entry — the cut stops on the missing date —
+  but it stops the release rather than the commit that introduced it, and by then the
+  cause is a step away. A version keeps its pre-release qualifier throughout, so a dated
+  `-rc.N` entry reads as shipped instead of as a second open one.
 
   Having no open entry passes: the post-release bump writes none and runs this guard as
   its own gate, so demanding one would fail the commit that opens the window. The check

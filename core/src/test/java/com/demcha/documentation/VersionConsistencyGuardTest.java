@@ -645,9 +645,28 @@ class VersionConsistencyGuardTest {
      * One {@code ## vX.Y.Z — <marker>} entry: the release line it names, and whatever
      * follows the version on that line — a date once shipped, anything else while open.
      */
-    record ChangelogEntry(String version, String marker) {
+    record ChangelogEntry(String version, String remainder) {
+
+        /**
+         * Shipped. The shape the release script itself accepts as dated, separator
+         * included — a version is not read as released on the strength of a stray date
+         * further along the line.
+         */
         boolean isDated() {
-            return marker.matches("\\d{4}-\\d{2}-\\d{2}\\b.*");
+            return remainder.matches("[ \\t]*[\\u2014\\-][ \\t]*\\d{4}-\\d{2}-\\d{2}\\b.*");
+        }
+
+        /**
+         * Open <em>and</em> in the one form the cut can date: {@code cut-release.ps1}
+         * replaces the literal {@code "## vX.Y.Z — Planned"}, em dash and all, so an
+         * ASCII hyphen is as invisible to it as another word would be.
+         */
+        boolean isDatableByTheCut() {
+            return remainder.matches("[ \\t]*\\u2014[ \\t]*Planned\\b.*");
+        }
+
+        String heading() {
+            return "## v" + version + remainder;
         }
     }
 
@@ -660,15 +679,33 @@ class VersionConsistencyGuardTest {
      * {@code ChangelogVersionParsingTest} holds the shapes it must keep seeing.</p>
      */
     static List<ChangelogEntry> changelogEntriesIn(String changelog) {
-        Matcher heading = Pattern.compile(
-                        "^## v(\\d+\\.\\d+\\.\\d+)[ \\t]*(?:[\\u2014\\-][ \\t]*)?(.*)$", Pattern.MULTILINE)
-                .matcher(changelog);
+        Matcher heading = CHANGELOG_ENTRY.matcher(changelog);
         List<ChangelogEntry> entries = new ArrayList<>();
         while (heading.find()) {
-            entries.add(new ChangelogEntry(heading.group(1), heading.group(2).trim()));
+            // stripTrailing, not trim: the leading run carries the separator, which is
+            // the part the cut matches on — and it also drops the CR of a CRLF file,
+            // which would otherwise defeat every `.*` in the shape checks below.
+            entries.add(new ChangelogEntry(heading.group(1), heading.group(2).stripTrailing()));
         }
         return entries;
     }
+
+    /**
+     * A released-or-open entry: {@code ## v} then a version, then the rest of the line.
+     *
+     * <p>The version carries its pre-release qualifier. Stopping at {@code X.Y.Z} would
+     * read {@code ## v2.2.0-rc.1 — 2026-09-01} as version {@code 2.2.0} whose line
+     * begins {@code rc.1}, which is neither dated nor open in any useful sense — a
+     * shipped pre-release would be counted as a second open entry and hold the build
+     * red. Twenty-nine {@code ## v1.5.0-beta.N} headings exist in this repository's
+     * history.</p>
+     */
+    private static final Pattern CHANGELOG_ENTRY = Pattern.compile(
+            "^## v(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.]+)?)([^\\n]*)$", Pattern.MULTILINE);
+
+    /** Any {@code ##}-level heading — exactly two hashes, at the start of a line. */
+    private static final Pattern SECTION_HEADING =
+            Pattern.compile("^##(?!#)[^\\n]*$", Pattern.MULTILINE);
 
     /**
      * What is wrong between the open {@code CHANGELOG.md} entry and {@code pomVersion},
@@ -680,11 +717,24 @@ class VersionConsistencyGuardTest {
      * how this check would go quiet for a whole development line rather than fail: the
      * 2.1.0 line was opened as {@code — in progress} and stayed that way for 31 commits
      * while the poms named a different release, which is precisely the drift this
-     * exists to catch. The spelling is then held separately, because
-     * {@code cut-release.ps1} dates a heading by matching the literal
-     * {@code — Planned} and silently leaves any other wording undated.</p>
+     * exists to catch. For the same reason a {@code ##} heading it cannot read at all is
+     * reported rather than skipped — silence and success must not look alike.</p>
+     *
+     * <p>The drift is reported before the wording, because the release the two sources
+     * disagree about is the finding; the wording is a smaller, separate problem.</p>
      */
     static String versionDriftProblem(String changelog, String pomVersion) {
+        Matcher firstSection = SECTION_HEADING.matcher(changelog);
+        if (firstSection.find()) {
+            String heading = firstSection.group().stripTrailing();
+            if (!CHANGELOG_ENTRY.matcher(heading).matches()) {
+                return ("the topmost '##' heading in CHANGELOG.md reads '%s', which names no release. "
+                        + "Entries are read as '## vX.Y.Z — …'; anything else leaves this check with "
+                        + "nothing to compare, which would pass for the wrong reason")
+                        .formatted(heading);
+            }
+        }
+
         List<ChangelogEntry> entries = changelogEntriesIn(changelog);
         List<ChangelogEntry> open = entries.stream().filter(entry -> !entry.isDated()).toList();
 
@@ -701,17 +751,16 @@ class VersionConsistencyGuardTest {
             return "the open CHANGELOG entry (v%s) sits below a shipped release — an undated entry under a dated one is a leftover, not the next line"
                     .formatted(entry.version());
         }
-        if (!"Planned".equals(entry.marker())) {
-            return ("the open CHANGELOG entry reads '## v%s — %s'; cut-release.ps1 dates a heading by matching "
-                    + "the literal '— Planned', so this one would go out undated")
-                    .formatted(entry.version(), entry.marker());
-        }
-
-        String pomLine = releaseLineOf(pomVersion);
-        if (!entry.version().equals(pomLine)) {
+        if (!releaseLineOf(entry.version()).equals(releaseLineOf(pomVersion))) {
             return ("the open CHANGELOG entry (v%s) and the working pom version (%s) name different releases — "
                     + "whichever is right, the other was left behind")
                     .formatted(entry.version(), pomVersion);
+        }
+        if (!entry.isDatableByTheCut()) {
+            return ("the open CHANGELOG entry reads '%s'. The cut dates an entry by replacing the literal "
+                    + "'— Planned', em dash included, so this one matches nothing and the cut then stops on "
+                    + "the missing date — failing here names the cause, failing there does not")
+                    .formatted(entry.heading());
         }
         return null;
     }

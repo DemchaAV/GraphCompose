@@ -47,14 +47,16 @@ the boundary and without the transform. A document that draws exports its text a
 not its drawing.
 
 What maps: paragraphs, lists, block images, tables, and document metadata (title, author,
-subject, keywords). Run styling carries font family, size, colour, bold, italic and
-underline.
+subject, keywords). Run styling carries font family, size, colour, bold, italic,
+underline and strikethrough, per run rather than per paragraph.
 
 What maps only in part:
 
 - **Table cells keep their text, not their structure.** `colSpan` and `rowSpan` are not
   applied, so a table with merged cells exports with its columns misaligned. Per-cell
-  style and fill/border paint are dropped, and cell text carries no run styling.
+  style and fill/border paint are dropped, and a `table` cell's text carries no styling
+  at all — it is written from the cell's lines rather than from runs. (A `row` cell is
+  a paragraph and does keep per-run styling.)
 - **Image fit is ignored.** The picture is embedded at the node's width and height;
   `CONTAIN` and `COVER` therefore behave as `STRETCH`, and an image sized only by `scale`
   falls back to 100 × 100 pt.
@@ -65,11 +67,8 @@ before you promise a `.docx` to a reader:
 - **Hyperlinks are dropped**, external and internal alike; the link text survives as plain text.
 - **No bookmarks and no navigation outline.**
 - **No repeating headers or footers**, and no watermark layer.
-- **`STRIKETHROUGH` is dropped** — the other decorations map.
-- **No barcodes or QR codes**, and no inline images or code/badge chips inside a paragraph.
-- **Per-run styling in a mixed-style paragraph is flattened.** Every run in a `RichText`
-  paragraph is written with the paragraph's style, so a bold or accent-coloured segment
-  loses its own styling; the text itself is kept.
+- **No barcodes or QR codes**, and no inline images or code/badge chips inside a paragraph
+  — a chip's text is exported with its own styling, but not its background.
 - **Output is not byte-deterministic**: rendering twice does not produce identical files.
 
 Multi-section documents are a separate case: `renderSections` is declared on the

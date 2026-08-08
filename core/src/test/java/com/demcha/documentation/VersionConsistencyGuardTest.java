@@ -269,6 +269,42 @@ class VersionConsistencyGuardTest {
                 .endsWith("/releases/tag/v" + stable.group(1));
     }
 
+    /**
+     * The open {@code CHANGELOG.md} entry and the in-development pom version name the
+     * same release line.
+     *
+     * <p>The post-release step opens the next line by incrementing the patch
+     * unconditionally, so a GA of {@code X.Y.Z} always leaves the train on
+     * {@code X.Y.(Z+1)-SNAPSHOT}. When the next release turns out to be a minor, the
+     * poms and the CHANGELOG name different releases for the rest of the cycle, and an
+     * {@code @since} tag written meanwhile has two answers to choose between. It is a
+     * public API contract, so whichever the author picks outlives the cycle: the last
+     * time these two disagreed, tags were written against both — most against the
+     * CHANGELOG heading, the rest against the previous release, and the latter had to
+     * be retagged when the line was corrected.</p>
+     *
+     * <p>What this pins is that correction. The real next version is recorded in the
+     * CHANGELOG heading first, because that is where the cycle's opening entry goes;
+     * from that commit on, the build stays red until the poms name the same line. What
+     * it cannot catch is a heading and a pom that are wrong <em>together</em> — both
+     * states are internally consistent, and nothing in the tree distinguishes them.</p>
+     *
+     * <p>Having no open entry at all passes. The post-release bump writes no heading and
+     * runs this test as its own gate before committing, so requiring one here would fail
+     * the very commit that opens the window. The entry arrives with the cycle's first
+     * CHANGELOG addition and is held from then on.</p>
+     */
+    @Test
+    void theOpenChangelogEntryNamesTheVersionUnderDevelopment() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
+        String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
+
+        assertThat(versionDriftProblem(changelog, pomVersion))
+                .describedAs("the CHANGELOG entry left open and the working pom version must name the "
+                        + "same release, or an @since written this cycle has two answers to pick from")
+                .isNull();
+    }
+
     @Test
     void readmeInstallSnippetsMatchTheProjectVersion() throws Exception {
         Set<String> targets = acceptableTargets();
@@ -603,6 +639,160 @@ class VersionConsistencyGuardTest {
                 .describedAs("CHANGELOG.md must contain a dated final release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
                 .isTrue();
         return released.group(1);
+    }
+
+    /**
+     * One {@code ## vX.Y.Z — <marker>} entry: the release line it names, and whatever
+     * follows the version on that line — a date once shipped, anything else while open.
+     */
+    record ChangelogEntry(String version, String remainder) {
+
+        /**
+         * Shipped. The shape the release script itself accepts as dated, separator
+         * included — a version is not read as released on the strength of a stray date
+         * further along the line.
+         */
+        boolean isDated() {
+            return remainder.matches("[ \\t]*[\\u2014\\-][ \\t]*\\d{4}-\\d{2}-\\d{2}\\b.*");
+        }
+
+        /**
+         * Open <em>and</em> in the one form the cut can date: {@code cut-release.ps1}
+         * replaces the literal {@code "## vX.Y.Z — Planned"}, em dash and all, so an
+         * ASCII hyphen is as invisible to it as another word would be.
+         */
+        boolean isDatableByTheCut() {
+            return remainder.matches("[ \\t]*\\u2014[ \\t]*Planned\\b.*");
+        }
+
+        String heading() {
+            return "## v" + version + remainder;
+        }
+    }
+
+    /**
+     * Every {@code ## vX.Y.Z} entry in {@code changelog}, in file order.
+     *
+     * <p>Deliberately drivable from a string rather than reading the file: an entry this
+     * stops recognising is one {@link #versionDriftProblem} cannot compare, and a guard
+     * that compares nothing is green forever without having failed once.
+     * {@code ChangelogVersionParsingTest} holds the shapes it must keep seeing.</p>
+     */
+    static List<ChangelogEntry> changelogEntriesIn(String changelog) {
+        Matcher heading = CHANGELOG_ENTRY.matcher(changelog);
+        List<ChangelogEntry> entries = new ArrayList<>();
+        while (heading.find()) {
+            // stripTrailing, not trim: the leading run carries the separator, which is
+            // the part the cut matches on — and it also drops the CR of a CRLF file,
+            // which would otherwise defeat every `.*` in the shape checks below.
+            entries.add(new ChangelogEntry(heading.group(1), heading.group(2).stripTrailing()));
+        }
+        return entries;
+    }
+
+    /**
+     * A released-or-open entry: {@code ## v} then a version, then the rest of the line.
+     *
+     * <p>The version carries its pre-release qualifier. Stopping at {@code X.Y.Z} would
+     * read {@code ## v2.2.0-rc.1 — 2026-09-01} as version {@code 2.2.0} whose line
+     * begins {@code rc.1}, which is neither dated nor open in any useful sense — a
+     * shipped pre-release would be counted as a second open entry and hold the build
+     * red. Twenty-nine {@code ## v1.5.0-beta.N} headings exist in this repository's
+     * history.</p>
+     */
+    private static final Pattern CHANGELOG_ENTRY = Pattern.compile(
+            "^## v(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.]+)?)([^\\n]*)$", Pattern.MULTILINE);
+
+    /** Any {@code ##}-level heading — exactly two hashes, at the start of a line. */
+    private static final Pattern SECTION_HEADING =
+            Pattern.compile("^##(?!#)[^\\n]*$", Pattern.MULTILINE);
+
+    /**
+     * What is wrong between the open {@code CHANGELOG.md} entry and {@code pomVersion},
+     * or {@code null} when the two agree — pure, so the red paths can be driven from
+     * strings instead of only ever being observed on the repository's own files.
+     *
+     * <p>An entry counts as open because it carries no <em>date</em>, never because of
+     * the word after the version. Recognising one spelling and skipping the others is
+     * how this check would go quiet for a whole development line rather than fail: the
+     * 2.1.0 line was opened as {@code — in progress} and stayed that way for 31 commits
+     * while the poms named a different release, which is precisely the drift this
+     * exists to catch. For the same reason a {@code ##} heading it cannot read at all is
+     * reported rather than skipped — silence and success must not look alike.</p>
+     *
+     * <p>The drift is reported before the wording, because the release the two sources
+     * disagree about is the finding; the wording is a smaller, separate problem.</p>
+     *
+     * <p>Two limits are deliberate, and both look like weaknesses worth "fixing" until
+     * you know why they are there:</p>
+     *
+     * <ul>
+     *   <li>A heading whose level is mistyped ({@code ### v2.2.0 — Planned}) or which is
+     *       indented stays invisible. Neither has occurred here, and matching them means
+     *       recognising headings the format does not produce. If one ever does appear the
+     *       symptom is a silently green check, so the repair is to widen the
+     *       topmost-heading test above — not the entry pattern, which would start reading
+     *       subsection headings as releases.</li>
+     *   <li>An entry and a pom that were wrong <em>together</em> from the start cannot be
+     *       caught. That is the v2.0.1 shape: both internally consistent, nothing in the
+     *       tree to tell them apart, and no amount of cross-checking these two sources
+     *       recovers a third opinion neither of them holds. What is catchable is one of
+     *       them being corrected without the other, which is how the correction arrives.</li>
+     * </ul>
+     */
+    static String versionDriftProblem(String changelog, String pomVersion) {
+        Matcher firstSection = SECTION_HEADING.matcher(changelog);
+        if (firstSection.find()) {
+            String heading = firstSection.group().stripTrailing();
+            if (!CHANGELOG_ENTRY.matcher(heading).matches()) {
+                return ("the topmost '##' heading in CHANGELOG.md reads '%s', which names no release. "
+                        + "Entries are read as '## vX.Y.Z — …'; anything else leaves this check with "
+                        + "nothing to compare, which would pass for the wrong reason")
+                        .formatted(heading);
+            }
+        }
+
+        List<ChangelogEntry> entries = changelogEntriesIn(changelog);
+        List<ChangelogEntry> open = entries.stream().filter(entry -> !entry.isDated()).toList();
+
+        if (open.isEmpty()) {
+            return null;
+        }
+        if (open.size() > 1) {
+            return "CHANGELOG.md leaves %d entries undated (%s) — two open entries leave the next release ambiguous"
+                    .formatted(open.size(), open.stream().map(ChangelogEntry::version).toList());
+        }
+
+        ChangelogEntry entry = open.get(0);
+        if (!entries.get(0).equals(entry)) {
+            return "the open CHANGELOG entry (v%s) sits below a shipped release — an undated entry under a dated one is a leftover, not the next line"
+                    .formatted(entry.version());
+        }
+        if (!releaseLineOf(entry.version()).equals(releaseLineOf(pomVersion))) {
+            return ("the open CHANGELOG entry (v%s) and the working pom version (%s) name different releases — "
+                    + "whichever is right, the other was left behind")
+                    .formatted(entry.version(), pomVersion);
+        }
+        if (!entry.isDatableByTheCut()) {
+            return ("the open CHANGELOG entry reads '%s'. The cut dates an entry by replacing the literal "
+                    + "'— Planned', em dash included, so this one matches nothing and the cut then stops on "
+                    + "the missing date — failing here names the cause, failing there does not")
+                    .formatted(entry.heading());
+        }
+        return null;
+    }
+
+    /**
+     * The {@code X.Y.Z} release line a working version belongs to. {@code 2.2.0-SNAPSHOT}
+     * and {@code 2.2.0-rc.1} both target {@code 2.2.0}, which is the version the open
+     * CHANGELOG heading names while either sits in the poms.
+     */
+    static String releaseLineOf(String version) {
+        Matcher line = Pattern.compile("^(\\d+\\.\\d+\\.\\d+)").matcher(version);
+        assertThat(line.find())
+                .describedAs("the working pom version (%s) must start with an X.Y.Z release line", version)
+                .isTrue();
+        return line.group(1);
     }
 
     /**

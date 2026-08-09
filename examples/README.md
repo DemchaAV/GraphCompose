@@ -77,9 +77,10 @@ linked below open straight from GitHub.
 Committing them is what lets `CommittedAssetDriftTest` compare each one
 against a fresh render and fail on the difference, so a change to the engine
 that moves a document says so in the build rather than at the next release.
-A PDF is compared by its bytes; the one document held back is the emoji
-gallery, whose embedded glyph set makes it larger than the rest of the
-catalogue put together.
+A PDF is compared by its bytes. Three documents are held back and the guard
+records why for each: the emoji gallery on weight, and two whose pixels this
+repository rasterises at render time, which a CI runner antialiases differently
+from a developer's machine.
 
 ## Gallery — pick by your goal
 

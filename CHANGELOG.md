@@ -70,17 +70,20 @@ follow semantic versioning; release dates are ISO 8601.
 ### Tests
 
 - **Every rendered document is now held against a fresh render.** A third of the example
-  catalogue — thirty-four documents, the cover-letter presets and most of the CV gallery
+  catalogue — thirty-two documents, the cover-letter presets and most of the CV gallery
   among them — rendered on every run with nothing comparing the result, so a change to the
   engine moved those documents and no test said so. They are committed as previews now,
   which is what puts them under `CommittedAssetDriftTest`: a PDF is compared by its bytes,
   and a difference names the file that moved.
 
-  The list of deliberately unpublished documents shrinks from thirty-five entries to one.
-  The emoji gallery stays out on weight — its embedded glyph set renders to nearly 4 MB,
-  against 1.4 MB for the other thirty-four together, and committing it would put another
-  copy of that in history on every deliberate re-render. Its render is unguarded as a
-  result, which is the price of the exception rather than an oversight.
+  The list of deliberately unpublished documents shrinks from thirty-five entries to three,
+  each carrying its reason. The emoji gallery stays out on weight: its embedded glyph set
+  renders to nearly 4 MB against 1.4 MB for the thirty-two together, so committing it would
+  put another copy of that in history on every deliberate re-render. The other two hold
+  pixels rasterised at render time, which a CI runner antialiases differently from a
+  developer's machine — the measurement `AssetContent` already records — so committing them
+  would fail the build for a document nobody changed. Those three renders stay unguarded,
+  which is the price of the exceptions rather than an oversight.
 
 ### Fixed
 

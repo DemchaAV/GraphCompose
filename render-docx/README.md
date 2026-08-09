@@ -57,12 +57,17 @@ picture.
 
 What maps only in part:
 
-- **Table cells keep their structure, not their paint.** `colSpan` and `rowSpan` map to
-  Word's own `w:gridSpan` and `w:vMerge`, and a cell's text takes the most specific style
-  in the table / column / row / cell cascade. Still dropped: the fill and border paint of a
-  `DocumentTableStyle`, so a merged, styled table exports with the right shape on Word's
-  default rules. A composed cell writes the shapes a cell can hold — paragraphs, and the
-  wrappers around them — so one built from an image or a list still lands empty.
+- **Table cells keep their structure and their paint.** `colSpan` and `rowSpan` map to
+  Word's own `w:gridSpan` and `w:vMerge`; a cell's fill maps to `w:shd` and its stroke to
+  `w:tcBorders`; and text, fill and stroke each take the most specific value in the
+  table / column / row / cell cascade, resolved per field, so a table-wide rule survives a
+  row that only overrides the fill. A stroke of no width is read as "no border" and says so
+  in the file, so a deliberately borderless design does not inherit the grid Word puts on a
+  table; a table that says nothing about borders keeps that grid, Word owning the look it
+  was not given. What a fill loses is its opacity — `w:shd` is opaque,
+  and blending it would need a background Word owns rather than this backend. A composed
+  cell writes the shapes a cell can hold — paragraphs, and the wrappers around them — so
+  one built from an image or a list still lands empty.
 
 These are **not implemented** even though Word itself can express them — check the list
 before you promise a `.docx` to a reader:

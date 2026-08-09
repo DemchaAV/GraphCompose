@@ -115,6 +115,22 @@ follow semantic versioning; release dates are ISO 8601.
   position at fault, where before it was drawn wrong. That is the rule the layout pipeline
   already applied, so a document the PDF backend refuses is no longer one DOCX accepts.
 
+- **A DOCX table is painted the way it was styled.** `DocumentTableStyle` carries a fill and
+  a stroke, and neither reached the file: a zebra body, a header band and a ruled grid all
+  exported on Word's defaults. The fill maps to `w:shd` and the stroke to `w:tcBorders`, and
+  the cascade that already resolved a cell's text style now resolves every field on its own,
+  so a table-wide rule survives a row that only overrides the fill. A merged cell is painted
+  on every position it covers, since a `w:vMerge` continuation draws its own shading and
+  would otherwise stripe the region. A stroke of no width — how this codebase says "no
+  border", and what a shipped CV preset uses — writes that instruction rather than omitting
+  it, so a borderless design no longer inherits the grid Word puts on a table by default.
+  What a fill loses is its opacity: `w:shd` is opaque, and blending it needs a background
+  Word owns rather than the backend.
+
+  The Word companion example styles its table, so the feature ships with a render behind it
+  — and both of its committed previews move, the DOCX for the new markup and the PDF because
+  the fixed-layout backend paints the same style it was never given before.
+
 - **A DOCX image is the size it asked for, in the shape it asked for.** The drawn box came
   from the node's literal `width` and `height` and fell back to a hardcoded 100 × 100 pt
   when either was absent, so an image sized only by `scale` — or by one dimension with the

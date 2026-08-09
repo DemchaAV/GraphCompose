@@ -70,9 +70,17 @@ towards.
 `GenerateAllExamples` renders the whole catalogue in one pass — the CV and
 cover-letter presets plus invoices, proposals, a schedule, the feature
 demos, and the flagships. The showcase site publishes the whole generated
-catalogue; a curated subset is committed under
+catalogue, and the same catalogue is committed under
 [`assets/readme/examples/`](../assets/readme/examples/) so the previews
 linked below open straight from GitHub.
+
+Committing them is what lets `CommittedAssetDriftTest` compare each one
+against a fresh render and fail on the difference, so a change to the engine
+that moves a document says so in the build rather than at the next release.
+A PDF is compared by its bytes. Three documents are held back and the guard
+records why for each: the emoji gallery on weight, and two whose pixels this
+repository rasterises at render time, which a CI runner antialiases differently
+from a developer's machine.
 
 ## Gallery — pick by your goal
 

@@ -62,46 +62,33 @@ class CommittedAssetDriftTest {
      * removes it from its own guard — README would lose a figure and every test would stay
      * green.</p>
      *
-     * <p>Listing what is <em>not</em> published rather than what is keeps the shorter list, and
-     * puts the decision where it is actually made: a new example ships unpublished unless somebody
-     * says otherwise, and saying so is adding a file to the folder and a name off this list.</p>
+     * <p>The list used to carry a third of the catalogue, which meant a third of it rendered with
+     * nothing comparing the result. Those are committed now, so the default is published and this
+     * list is what has to earn an exception. Three do, for two different reasons.</p>
+     *
+     * <p><b>Weight.</b> The emoji gallery embeds a glyph set and renders to nearly 4 MB, against
+     * 1.4 MB for the thirty-two committed alongside it. Committing it would put another copy of
+     * that in history on every deliberate re-render.</p>
+     *
+     * <p><b>The machine, not the document.</b> The other two contain pixels this repository
+     * rasterises at render time, and the same glyphs come out with different antialiasing on
+     * Windows and on the Linux runner — the measurement {@link AssetContent} records, where five
+     * of 104 documents failed to match across the two. Three of those five are absorbed there, by
+     * naming the part and both machines' digests; these two are not, because a PDF is compared
+     * whole and has no part to name, and because the deck's difference is in content it renders
+     * rather than in a part it embeds. Committing them would fail the build on the runner for a
+     * document nobody changed.</p>
+     *
+     * <p>So their renders are unguarded, which is the price of the exception rather than an
+     * oversight — and the reason is recorded per file so a later reader does not re-run the
+     * experiment to find out.</p>
      */
     private static final Set<String> UNPUBLISHED_PREVIEWS = Set.of(
-            "cover-letter-blue-banner-v2.pdf",
-            "cover-letter-boxed-sections-v2.pdf",
-            "cover-letter-centered-headline-v2.pdf",
-            "cover-letter-classic-serif-v2.pdf",
-            "cover-letter-compact-mono-v2.pdf",
-            "cover-letter-editorial-blue-v2.pdf",
-            "cover-letter-engineering-resume-v2.pdf",
-            "cover-letter-executive-v2.pdf",
-            "cover-letter-mint-editorial-v2.pdf",
-            "cover-letter-modern-professional-v2.pdf",
-            "cover-letter-monogram-sidebar-v2.pdf",
-            "cover-letter-nordic-clean-v2.pdf",
-            "cover-letter-panel-v2.pdf",
-            "cover-letter-sidebar-portrait-v2.pdf",
-            "cover-letter-timeline-minimal-v2.pdf",
-            "cv-blue-banner-v2.pdf",
-            "cv-boxed-sections-v2.pdf",
-            "cv-centered-headline-v2.pdf",
-            "cv-editorial-blue-v2.pdf",
-            "cv-executive-v2.pdf",
-            "cv-minimal-underlined-v2.pdf",
-            "cv-mint-editorial-v2-custom.pdf",
-            "cv-mint-editorial-v2.pdf",
-            "cv-monogram-sidebar-v2.pdf",
-            "cv-sidebar-portrait-v2.pdf",
-            "emoji-clip-path.pdf",
+            // Weight: ~4 MB of embedded glyphs.
             "emoji-gallery.pdf",
+            // Rasterised at render time; antialiasing differs between Windows and the runner.
             "emoji-svg-vs-png.pdf",
-            "engine-deck.pptx",
-            "invoice-modern-v2.pdf",
-            "linkedin-carousel.pdf",
-            "linkedin-carousel.pptx",
-            "photo-clip.pdf",
-            "poetry-title.pdf",
-            "proposal-modern-v2.pdf");
+            "engine-deck.pptx");
 
     @BeforeAll
     static void generateEveryExample() throws Exception {

@@ -62,19 +62,33 @@ class CommittedAssetDriftTest {
      * removes it from its own guard — README would lose a figure and every test would stay
      * green.</p>
      *
-     * <p>The list used to carry a third of the catalogue, which meant a third of it rendered
-     * with nothing comparing the result: a change to the engine moved those documents and no
-     * test said so. They are committed now, so the default is published and this list is what
-     * has to earn an exception.</p>
+     * <p>The list used to carry a third of the catalogue, which meant a third of it rendered with
+     * nothing comparing the result. Those are committed now, so the default is published and this
+     * list is what has to earn an exception. Three do, for two different reasons.</p>
      *
-     * <p>One entry earns it, and on weight rather than on principle: the emoji gallery embeds a
-     * glyph set and renders to nearly 4 MB, against 1.4 MB for the other thirty-four together.
-     * Committing it would put another copy of that in history on every deliberate re-render.
-     * Its render is unguarded as a result, which is the price of the exception, not an
-     * oversight.</p>
+     * <p><b>Weight.</b> The emoji gallery embeds a glyph set and renders to nearly 4 MB, against
+     * 1.4 MB for the thirty-two committed alongside it. Committing it would put another copy of
+     * that in history on every deliberate re-render.</p>
+     *
+     * <p><b>The machine, not the document.</b> The other two contain pixels this repository
+     * rasterises at render time, and the same glyphs come out with different antialiasing on
+     * Windows and on the Linux runner — the measurement {@link AssetContent} records, where five
+     * of 104 documents failed to match across the two. Three of those five are absorbed there, by
+     * naming the part and both machines' digests; these two are not, because a PDF is compared
+     * whole and has no part to name, and because the deck's difference is in content it renders
+     * rather than in a part it embeds. Committing them would fail the build on the runner for a
+     * document nobody changed.</p>
+     *
+     * <p>So their renders are unguarded, which is the price of the exception rather than an
+     * oversight — and the reason is recorded per file so a later reader does not re-run the
+     * experiment to find out.</p>
      */
     private static final Set<String> UNPUBLISHED_PREVIEWS = Set.of(
-            "emoji-gallery.pdf");
+            // Weight: ~4 MB of embedded glyphs.
+            "emoji-gallery.pdf",
+            // Rasterised at render time; antialiasing differs between Windows and the runner.
+            "emoji-svg-vs-png.pdf",
+            "engine-deck.pptx");
 
     @BeforeAll
     static void generateEveryExample() throws Exception {

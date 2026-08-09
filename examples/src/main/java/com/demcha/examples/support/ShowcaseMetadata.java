@@ -94,6 +94,9 @@ final class ShowcaseMetadata {
         proposal("project-proposal-cinematic", "CinematicProposalFileExample", "Project Proposal (cinematic)", "End-to-end project proposal with mountain hero, scope panels, and pricing summary.", "proposal", "cinematic");
         proposal("proposal-modern-v2", "v2/ModernProposalV2Example", "Modern Proposal", "The ModernProposal preset composed straight from its document spec — cover, scope sections and pricing table themed through BrandTheme.", "proposal");
 
+        // ===== Templates / Receipt =====
+        receipt("receipt-modern", "ModernReceiptExample", "Modern Receipt", "A settled transfer confirmation on the layered receipt family — hero amount with a status chip, payer/beneficiary panel, dotted-leader detail rows, a status timeline, and a footer pinned to the page bottom with a verification QR code.", "receipt", "qr");
+
         // ===== Templates / Schedule =====
         schedule("weekly-schedule", "Weekly Schedule", "Multi-day weekly schedule with shift assignments, category fills, and repeated header.", "schedule", "table");
 
@@ -192,6 +195,7 @@ final class ShowcaseMetadata {
             case "templates/invoice" -> "Invoice";
             case "templates/proposal" -> "Proposal";
             case "templates/schedule" -> "Schedule";
+            case "templates/receipt" -> "Payment Receipt";
             case "features/lists" -> "Lists & Bullets";
             case "features/tables" -> "Tables";
             case "features/canvas" -> "Canvas / Free Placement";
@@ -252,6 +256,11 @@ final class ShowcaseMetadata {
     private static void proposal(String id, String exampleClass, String title, String desc, String... tags) {
         ENTRIES.put(id, entry(title, desc, withCategory("proposal", tags),
                 EX_BASE + "/templates/proposal/" + exampleClass + ".java"));
+    }
+
+    private static void receipt(String id, String exampleClass, String title, String desc, String... tags) {
+        ENTRIES.put(id, entry(title, desc, withCategory("receipt", tags),
+                EX_BASE + "/templates/receipt/" + exampleClass + ".java"));
     }
 
     private static void schedule(String id, String title, String desc, String... tags) {

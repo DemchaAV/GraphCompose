@@ -376,6 +376,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **New `receipt` family — payment confirmations.** The fifth family on the layered
+  architecture, for the document a bank sends after money moves: a transfer
+  confirmation, a direct debit advice, a card receipt. `ReceiptDocumentSpec` carries
+  the amount, the two parties, titled groups of label/value rows, the steps the
+  payment went through, and the footer small print; `ModernReceipt` sequences them
+  over `BrandTheme.receiptModern()`.
+
+  It is laid out as a receipt rather than as an invoice without line items. The
+  amount is set larger than the document title, because on a receipt the amount is
+  the headline; the status carries a chip coloured by tone — settled green, failed
+  red — in every theme, so a reader checking whether money arrived does not have to
+  learn a colour scheme per issuer; the two parties share one panel with a direction
+  arrow instead of sitting in two tables the reader has to relate; detail rows are
+  joined by a dotted leader, the same construction the table-of-contents builder
+  uses, because across a full page width a bare label and a bare value read as two
+  unrelated columns. The verification QR code and the small print are seated on the
+  bottom margin: the engine has no vertical flex, so the preset measures what the
+  body left on the last page and spends it — and only when the receipt owns the
+  session, since the measurement costs a second composition pass.
+
+  The theme carries no brand colour at all. An issuer's mark and accent arrive per
+  document through `ModernReceipt.Options`, so one preset and one theme render every
+  institution rather than one theme per institution.
+
+- **`SvgGlyph.fromFile(Path)`.** The classpath variant covers glyphs a template ships
+  with; this covers the glyph a template is given — a receipt's issuer mark, a
+  report's client logo — which arrives as a file beside the running application
+  rather than repackaged into its jar.
+
 - **Timeline Minimal renders the whole CV.** The preset used to drop content three
   ways, none of them visible in the output. Per-module caps kept the first few lines
   of each block and discarded the rest, so a fourth degree or a third employer simply

@@ -11,10 +11,10 @@
 > archived at [templates/v1-classic/](../v1-classic/README.md).
 
 The **template surface** for building business documents on
-GraphCompose. All four families ship on it — CV (the reference
+GraphCompose. All five families ship on it — CV (the reference
 implementation, `com.demcha.compose.document.templates.cv`),
-cover-letter, invoice, and proposal — and any new template family
-follows the same shape.
+cover-letter, invoice, proposal, and receipt — and any new template
+family follows the same shape.
 
 This is the entry point. Pick the doc that matches your goal.
 
@@ -97,7 +97,8 @@ The detailed contract for each layer is in
 
 - ❌ **Not one shape for every family.** `presets/` is the only
   package a family always has. CV carries all four; cover letter has no
-  `widgets/`; invoice and proposal are presets alone, reading data
+  `widgets/`; invoice and proposal are presets alone; receipt carries
+  `components/` + `widgets/` + `presets/`. All of them read their data
   records from the shared `templates.data.<family>`. Add a layer when
   the family needs one.
 - ❌ **Not a framework with magic.** Every file is plain
@@ -123,6 +124,14 @@ The detailed contract for each layer is in
 - **Examples**:
   [`examples/cv/v2/`](../../../examples/src/main/java/com/demcha/examples/templates/cv/v2)
   has runnable rendering examples for the shipped presets.
+- **Receipt family**: the newest family, and the smallest complete one
+  to read end-to-end —
+  [`receipt/package-info.java`](../../../templates/src/main/java/com/demcha/compose/document/templates/receipt/package-info.java)
+  for the layer map,
+  [`receipt/AUTHORS.md`](../../../templates/src/main/java/com/demcha/compose/document/templates/receipt/AUTHORS.md)
+  for its recipes, and
+  [`ModernReceiptExample`](../../../examples/src/main/java/com/demcha/examples/templates/receipt/ModernReceiptExample.java)
+  for a rendered transfer confirmation.
 - **Archived classic surface**:
   [`docs/templates/v1-classic/README.md`](../v1-classic/README.md) describes the older
   spec / preset / theme split that was removed in 2.0; kept for

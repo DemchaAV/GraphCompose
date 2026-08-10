@@ -59,6 +59,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **CI builds the companion asset artifacts instead of downloading them.** The engine
+  pulls `graph-compose-fonts` and `graph-compose-emoji` at test scope, and both carry
+  their own version lines, so the tree can legitimately pin a version before it is
+  published. Jobs scoped to a single module without `-am` resolved them from Maven
+  Central and failed on dependency resolution — before running anything — whenever the
+  pinned version was newer than the published one. The guards and binary-compatibility
+  jobs now install both from source first, and the three benchmark jobs that already
+  did so for fonts do it for emoji too. Whether a pinned version really exists on
+  Central is still checked, by the release smoke harness, which resolves every
+  coordinate through Central in an isolated repository.
+
 - **The open changelog entry and the development version cannot name different
   releases.** The post-release step opens the next line by incrementing the patch, so a
   GA of `X.Y.Z` always leaves the poms on `X.Y.(Z+1)-SNAPSHOT` — right when the next

@@ -45,6 +45,17 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install graph-compose-fonts (resolved at test scope by core)
+        # The guards run scoped to core alone, and without `-am` core's test-scope
+        # assets come from Maven Central. Both carry their own version lines, so the
+        # tree can legitimately pin a version that is not published yet — which fails
+        # this job at dependency resolution, before a single guard runs. Building
+        # them from source keeps the job independent of Central for them.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
+      - name: Install graph-compose-emoji (resolved at test scope by core)
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
+
       - name: Run core architecture and documentation guards
         # Every name here must live in graph-compose-core: the run is scoped to
         # that module, and Surefire only fails on an empty selection — a name
@@ -402,6 +413,15 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Install graph-compose-fonts (resolved at test scope by core)
+        # Same reason as in the guards job: scoped to core without `-am`, and
+        # `-DskipTests` still compiles the tests, so core's test-scope assets are
+        # resolved — from Central unless they are built here first.
+        run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
+      - name: Install graph-compose-emoji (resolved at test scope by core)
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
+
       - name: Compare public API against baseline
         # The `japicmp` profile resolves the baseline release pinned
         # by the `japicmp.baseline` property in core/pom.xml (the
@@ -440,11 +460,14 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Install graph-compose-fonts (consumed by the examples / benchmarks modules)
-        # The engine itself does not depend on the fonts artifact, but the
-        # examples and benchmarks modules render with the bundled families, so
-        # install graph-compose-fonts into the local repo before building them.
+      - name: Install graph-compose-fonts (the benchmarks render with the bundled families)
+        # The core install below also resolves both assets at test scope. They carry
+        # their own version lines, so the tree can pin a version that is not published
+        # yet — building them here keeps the job independent of Central for them.
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
+      - name: Install graph-compose-emoji (resolved at test scope by core)
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-core
@@ -543,11 +566,14 @@ jobs:
             benchmark-current-speed-${{ github.ref_name }}-
             benchmark-current-speed-
 
-      - name: Install graph-compose-fonts (consumed by the examples / benchmarks modules)
-        # The engine itself does not depend on the fonts artifact, but the
-        # examples and benchmarks modules render with the bundled families, so
-        # install graph-compose-fonts into the local repo before building them.
+      - name: Install graph-compose-fonts (the benchmarks render with the bundled families)
+        # The core install below also resolves both assets at test scope. They carry
+        # their own version lines, so the tree can pin a version that is not published
+        # yet — building them here keeps the job independent of Central for them.
         run: ./mvnw -B -ntp -f fonts/pom.xml -DskipTests install
+
+      - name: Install graph-compose-emoji (resolved at test scope by core)
+        run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
       - name: Install root artifact
         run: ./mvnw -B -ntp -DskipTests install -pl :graph-compose-core

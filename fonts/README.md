@@ -17,6 +17,14 @@ the curated font set.
 It is a resource-only jar (no public Java API); its families become available to the font
 catalog when it is on the classpath. `graph-compose-bundle` includes it.
 
+**1.1.0** adds the first families for right-to-left scripts: **Amiri** for Arabic and
+**David Libre** for Hebrew. Amiri also carries the Arabic presentation forms, which is what
+contextual letter joining needs — a PDF draws text through the font's `cmap` without
+executing OpenType `GSUB`, so a family that shapes only through `GSUB` can never join its
+letters here. Neither family covers the other's script, so a run mixing both needs a font
+of your own registered through `FontFamilyDefinition`. The engine constants that select
+them ship with the engine release that pins this version.
+
 ## Install
 
 Independent version line (`fonts-v*`) — pinned, not the engine version:
@@ -25,12 +33,12 @@ Independent version line (`fonts-v*`) — pinned, not the engine version:
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-fonts</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose-fonts:1.0.0") }
+dependencies { implementation("io.github.demchaav:graph-compose-fonts:1.1.0") }
 ```
 
 The full "which artifact?" table: [root README → Installation](../README.md#installation);

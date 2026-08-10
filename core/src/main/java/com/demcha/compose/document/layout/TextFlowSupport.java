@@ -8,7 +8,9 @@ import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
@@ -672,7 +674,8 @@ public final class TextFlowSupport {
                         measurement),
                 textStyle,
                 lineMetrics,
-                measurement);
+                measurement,
+                toBaseDirection(node.direction()));
         if (visualLines.isEmpty()) {
             visualLines = List.of(ParagraphWrapping.emptyParagraphLine(lineMetrics));
         }
@@ -770,12 +773,30 @@ public final class TextFlowSupport {
         return PreparedNode.leaf(fragmentNode, measure, fragmentLayout);
     }
 
+    /**
+     * Translates the public writing direction into the base direction the resolver
+     * takes. The engine names its own, so it stays independent of the document surface.
+     */
+    private static BidiParagraphResolver.BaseDirection toBaseDirection(TextDirection direction) {
+        if (direction == null) {
+            return BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+        }
+        return switch (direction) {
+            case LTR -> BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+            case RTL -> BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
+            case AUTO -> BidiParagraphResolver.BaseDirection.FIRST_STRONG_CHARACTER;
+        };
+    }
+
     private static List<String> sanitizeLogicalLines(String rawText) {
         String safeText = rawText == null ? "" : rawText.replace("\r\n", "\n").replace('\r', '\n');
         String[] logicalLines = safeText.split("\n", -1);
         List<String> sanitized = new ArrayList<>(logicalLines.length);
         for (String logicalLine : logicalLines) {
-            sanitized.add(TextControlSanitizer.remove(logicalLine));
+            // The bidirectional formatting characters survive this pass: they are the
+            // author's instruction to the layout, and they are dropped once it has
+            // been read — at the span, and at the glyph seam that measures and draws.
+            sanitized.add(TextControlSanitizer.removeExceptDirectionMarks(logicalLine));
         }
         return List.copyOf(sanitized);
     }

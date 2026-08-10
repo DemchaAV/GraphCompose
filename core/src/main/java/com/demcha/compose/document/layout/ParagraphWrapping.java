@@ -7,7 +7,9 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.engine.text.markdown.MarkDownParser;
 
@@ -159,10 +161,28 @@ final class ParagraphWrapping {
                                                         TextStyle style,
                                                         TextMeasurementSystem.LineMetrics metrics,
                                                         TextMeasurementSystem measurement) {
+        return toParagraphLines(wrappedLines, style, metrics, measurement,
+                BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT);
+    }
+
+    static List<ParagraphLine> toParagraphLines(List<String> wrappedLines,
+                                                        TextStyle style,
+                                                        TextMeasurementSystem.LineMetrics metrics,
+                                                        TextMeasurementSystem measurement,
+                                                        BidiParagraphResolver.BaseDirection baseDirection) {
         List<ParagraphLine> result = new ArrayList<>(wrappedLines.size());
         double textLineHeight = metrics.lineHeight();
         for (String line : wrappedLines) {
             String safeLine = line == null ? "" : line;
+            List<BidiParagraphResolver.DirectionalRun> runs =
+                    BidiParagraphResolver.resolve(safeLine, baseDirection);
+            if (runs.size() > 1 || (runs.size() == 1 && runs.get(0).isRightToLeft())) {
+                result.add(directionalLine(runs, style, metrics, measurement, textLineHeight));
+                continue;
+            }
+
+            // One left-to-right run: the line every document had before direction
+            // existed. Built exactly as it was, so its geometry cannot drift.
             double width = measurement.textWidth(style, safeLine);
             result.add(new ParagraphLine(
                     safeLine,
@@ -174,6 +194,50 @@ final class ParagraphWrapping {
                     List.of(new ParagraphTextSpan(safeLine, style, width, textLineHeight))));
         }
         return List.copyOf(result);
+    }
+
+    /**
+     * Builds a line whose text changes direction, as one span per directional run.
+     *
+     * <p>A single span is drawn with one show-text operation, so a mixed-direction line
+     * cannot be reordered by moving spans around unless each run is a span of its own.
+     * The spans stay in logical order and carry a permutation describing how they are
+     * drawn; the steering characters are dropped here, having been read.</p>
+     */
+    private static ParagraphLine directionalLine(List<BidiParagraphResolver.DirectionalRun> runs,
+                                                 TextStyle style,
+                                                 TextMeasurementSystem.LineMetrics metrics,
+                                                 TextMeasurementSystem measurement,
+                                                 double textLineHeight) {
+        List<ParagraphSpan> spans = new ArrayList<>(runs.size());
+        int[] levels = new int[runs.size()];
+        StringBuilder lineText = new StringBuilder();
+        double lineWidth = 0.0;
+
+        for (int index = 0; index < runs.size(); index++) {
+            BidiParagraphResolver.DirectionalRun run = runs.get(index);
+            String runText = TextControlSanitizer.removeDirectionMarks(run.text());
+            double runWidth = measurement.textWidth(style, runText);
+            spans.add(new ParagraphTextSpan(runText, style, runWidth, textLineHeight));
+            levels[index] = run.embeddingLevel();
+            lineText.append(runText);
+            lineWidth += runWidth;
+        }
+
+        List<Integer> visualOrder = new ArrayList<>();
+        for (int position : BidiParagraphResolver.visualOrder(levels)) {
+            visualOrder.add(position);
+        }
+
+        return new ParagraphLine(
+                lineText.toString(),
+                lineWidth,
+                textLineHeight,
+                textLineHeight,
+                metrics.ascent(),
+                metrics.baselineOffsetFromBottom(),
+                spans,
+                visualOrder);
     }
 
     static List<ParagraphLine> wrapInlineParagraph(List<InlineRun> runs,

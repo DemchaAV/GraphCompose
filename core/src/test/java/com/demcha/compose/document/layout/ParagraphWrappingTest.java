@@ -56,16 +56,4 @@ class ParagraphWrappingTest {
         assertThat(ParagraphWrapping.containsMarkdownSyntax(null)).isFalse();
     }
 
-    /** Each character is exactly {@code unit} wide, so a token's width equals its length. */
-    private record FixedWidthMeasurement(double unit) implements TextMeasurementSystem {
-        @Override
-        public ContentSize measure(TextStyle style, String text) {
-            return new ContentSize(text.length() * unit, unit);
-        }
-
-        @Override
-        public LineMetrics lineMetrics(TextStyle style) {
-            return new LineMetrics(unit, 0.0, 0.0);
-        }
-    }
 }

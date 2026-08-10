@@ -132,6 +132,25 @@ class BidiParagraphResolverTest {
     }
 
     @Test
+    void aSingleRunCarriesItsOwnDirectionNotTheParagraphs() {
+        // The paragraph direction decides what a run is embedded in, never which way the
+        // run itself goes. Reading the base level here instead of the run's would draw
+        // Hebrew forwards in a left-to-right paragraph and Latin backwards in a
+        // right-to-left one — in both cases the whole line, silently.
+        assertThat(BidiParagraphResolver.resolve(HEBREW, BaseDirection.LEFT_TO_RIGHT))
+                .singleElement()
+                .satisfies(run -> assertThat(run.isRightToLeft())
+                        .describedAs("Hebrew runs right to left inside a left-to-right paragraph")
+                        .isTrue());
+
+        assertThat(BidiParagraphResolver.resolve("Hello", BaseDirection.RIGHT_TO_LEFT))
+                .singleElement()
+                .satisfies(run -> assertThat(run.isRightToLeft())
+                        .describedAs("Latin runs left to right inside a right-to-left paragraph")
+                        .isFalse());
+    }
+
+    @Test
     void anExplicitRightToLeftParagraphIsRightToLeftEvenWithoutRightToLeftText() {
         assertThat(BidiParagraphResolver.baseLevel("Latin only", BaseDirection.RIGHT_TO_LEFT))
                 .describedAs("the author asked for it; content does not override the request")

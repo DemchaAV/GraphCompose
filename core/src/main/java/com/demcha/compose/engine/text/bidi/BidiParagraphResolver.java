@@ -79,7 +79,11 @@ public final class BidiParagraphResolver {
         Bidi bidi = new Bidi(logicalLine, flagsFor(baseDirection));
         int runCount = bidi.getRunCount();
         if (runCount <= 1) {
-            return List.of(new DirectionalRun(logicalLine, bidi.getBaseLevel()));
+            // The run's own level, not the paragraph's: a Hebrew-only line inside a
+            // left-to-right paragraph is a single run that still runs right to left,
+            // and Latin inside a right-to-left paragraph is a single run that does not.
+            int level = runCount == 1 ? bidi.getRunLevel(0) : bidi.getBaseLevel();
+            return List.of(new DirectionalRun(logicalLine, level));
         }
 
         DirectionalRun[] runs = new DirectionalRun[runCount];

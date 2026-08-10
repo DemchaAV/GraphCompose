@@ -218,7 +218,8 @@ final class ParagraphWrapping {
             BidiParagraphResolver.DirectionalRun run = runs.get(index);
             String runText = TextControlSanitizer.removeDirectionMarks(run.text());
             double runWidth = measurement.textWidth(style, runText);
-            spans.add(new ParagraphTextSpan(runText, style, runWidth, textLineHeight));
+            spans.add(new ParagraphTextSpan(runText, style, runWidth, textLineHeight,
+                    null, null, run.isRightToLeft()));
             levels[index] = run.embeddingLevel();
             lineText.append(runText);
             lineWidth += runWidth;

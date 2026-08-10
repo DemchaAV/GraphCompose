@@ -91,6 +91,10 @@ public final class ArabicShaper {
         letter(0x0646, DUAL_JOINING, 0xFEE5, 0xFEE6, 0xFEE7, 0xFEE8);
         letter(0x0647, DUAL_JOINING, 0xFEE9, 0xFEEA, 0xFEEB, 0xFEEC);
         letter(0x0648, RIGHT_JOINING, 0xFEED, 0xFEEE, 0, 0);
+        // Unicode classifies alef maksura as dual-joining (group YEH), but its
+        // initial/medial forms live in Presentation Forms-A, outside the block this
+        // table maps to — and the letter is word-final in standard Arabic. Kept
+        // right-joining deliberately; do not "fix" it against ArabicShaping.txt.
         letter(0x0649, RIGHT_JOINING, 0xFEEF, 0xFEF0, 0, 0);
         letter(0x064A, DUAL_JOINING, 0xFEF1, 0xFEF2, 0xFEF3, 0xFEF4);
     }
@@ -128,15 +132,17 @@ public final class ArabicShaper {
                 continue;
             }
 
-            if (character == LAM) {
-                int alefIndex = nextOpaqueIndex(text, index);
-                int[] ligature = alefIndex >= 0 ? lamAlefFor(text.charAt(alefIndex)) : null;
+            if (character == LAM && index + 1 < text.length()) {
+                // The ligature is formed only for an adjacent pair. A vowel point
+                // between lam and alef belongs to the lam; folding the pair into one
+                // glyph would strand the mark after it, and the inverse mapping the
+                // slide backend relies on could no longer put it back where the
+                // author wrote it. A vocalized lam-alef renders as two joined
+                // letters instead — unligated, and exactly restorable.
+                int[] ligature = lamAlefFor(text.charAt(index + 1));
                 if (ligature != null) {
-                    // The two letters become one glyph; the transparent characters
-                    // between them (vowel points, direction marks) are kept, after it.
                     shaped.append((char) (joinsPrevious(text, index) ? ligature[2] : ligature[1]));
-                    shaped.append(text, index + 1, alefIndex);
-                    index = alefIndex;
+                    index++;
                     continue;
                 }
             }

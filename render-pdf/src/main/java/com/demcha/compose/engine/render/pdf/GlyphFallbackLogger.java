@@ -1,6 +1,7 @@
 package com.demcha.compose.engine.render.pdf;
 
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
@@ -138,7 +139,7 @@ public final class GlyphFallbackLogger {
                                              Map<Integer, Boolean> coverage,
                                              int codePoint,
                                              StringBuilder sb) {
-        String base = com.demcha.compose.engine.text.bidi.ArabicShaper.baseLettersOf(codePoint);
+        String base = ArabicShaper.baseLettersOf(codePoint);
         if (base == null) {
             return false;
         }
@@ -148,6 +149,13 @@ public final class GlyphFallbackLogger {
             }
         }
         sb.append(base);
+        String fontName = fontKey(font);
+        long key = ((long) fontName.hashCode() << 32) | (codePoint & 0xFFFFFFFFL);
+        if (SEEN.add(key)) {
+            LOG.warn("glyph.degraded font={} codePoint=U+{} joined form unavailable, "
+                            + "drawing base letters — Arabic renders unjoined in this font",
+                    fontName, String.format("%04X", codePoint));
+        }
         return true;
     }
 

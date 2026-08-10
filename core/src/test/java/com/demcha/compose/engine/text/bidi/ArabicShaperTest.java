@@ -7,10 +7,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Pins the contextual forms the shaper produces, against hand-checked expectations.
  *
- * <p>The expected strings are presentation-form code points written as escapes, because
- * that is what the assertions are about: which exact code point each position maps to.
- * A wrong form still renders — as the wrong variant of the right letter — so nothing
- * but these comparisons would notice.</p>
+ * <p>The literals are the real Arabic characters — the repo's tests use readable
+ * script by convention, and unlike the invisible bidi controls a wrong letter is
+ * visible in review. A wrong form still renders, as the wrong variant of the right
+ * letter, so nothing but these comparisons would notice.</p>
  */
 class ArabicShaperTest {
 
@@ -37,10 +37,23 @@ class ArabicShaperTest {
         assertThat(ArabicShaper.shape("لآ")).isEqualTo("ﻵ");
         assertThat(ArabicShaper.shape("لأ")).isEqualTo("ﻷ");
         assertThat(ArabicShaper.shape("لإ")).isEqualTo("ﻹ");
-        // After a dual-joining letter the ligature takes its final form: الله ends
-        // in lam+heh, and the inner lam-alef of e.g. بلا joins to the beh before it.
+        // After a dual-joining letter the ligature takes its final form: the inner
+        // lam-alef of بلا joins to the beh before it.
         assertThat(ArabicShaper.shape("بلا"))
                 .isEqualTo("ﺑﻼ");
+    }
+
+    @Test
+    void aVocalizedLamAlefStaysTwoJoinedLettersSoTheMarkKeepsItsPlace() {
+        // A vowel point between lam and alef belongs to the lam. Folding the pair
+        // into one glyph would strand the mark after the ligature — and the inverse
+        // mapping the slide backend relies on could no longer restore the author's
+        // text. Two joined letters, exactly restorable, is the deliberate trade.
+        String vocalized = "لَا";
+
+        String shaped = ArabicShaper.shape(vocalized);
+        assertThat(shaped).isEqualTo("ﻟَﺎ");
+        assertThat(ArabicShaper.toBaseLetters(shaped)).isEqualTo(vocalized);
     }
 
     @Test
@@ -59,7 +72,7 @@ class ArabicShaperTest {
         String withMark = "م" + "‏" + "ر";
 
         assertThat(ArabicShaper.shape(withMark))
-                .isEqualTo("ﻣ‏ﺮ");
+                .isEqualTo("ﻣ" + "‏" + "ﺮ");
     }
 
     @Test

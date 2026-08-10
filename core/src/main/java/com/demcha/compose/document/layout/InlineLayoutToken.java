@@ -1,5 +1,6 @@
 package com.demcha.compose.document.layout;
 
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.document.layout.payloads.*;
 import com.demcha.compose.document.node.*;
 import com.demcha.compose.document.style.DocumentDashPattern;
@@ -67,7 +68,7 @@ record InlineTextToken(
                               TextMeasurementSystem measurement) {
         // Shaped at construction — the width stored here is what wrapping fits and
         // what the page draws, so the two must be the same text.
-        String safeText = com.demcha.compose.engine.text.bidi.ArabicShaper.shape(text == null ? "" : text);
+        String safeText = ArabicShaper.shape(text == null ? "" : text);
         TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
         double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
         return new InlineTextToken(safeText, safeStyle, linkTarget, width, null, null, 0.0, 0.0);
@@ -81,7 +82,7 @@ record InlineTextToken(
                                        double leadPad,
                                        double trailPad,
                                        TextMeasurementSystem measurement) {
-        String safeText = com.demcha.compose.engine.text.bidi.ArabicShaper.shape(text == null ? "" : text);
+        String safeText = ArabicShaper.shape(text == null ? "" : text);
         TextStyle safeStyle = style == null ? TextStyle.DEFAULT_STYLE : style;
         double width = safeText.isEmpty() ? 0.0 : measurement.textWidth(safeStyle, safeText);
         return new InlineTextToken(safeText, safeStyle, linkTarget, width,

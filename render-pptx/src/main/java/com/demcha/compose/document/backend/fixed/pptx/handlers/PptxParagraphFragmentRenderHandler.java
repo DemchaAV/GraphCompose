@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -379,9 +380,10 @@ public final class PptxParagraphFragmentRenderHandler
         // The span carries shaped Arabic because measurement measures what the PDF
         // draws. PowerPoint shapes Arabic itself, so it gets the base letters back —
         // handing it the forms would freeze this shaper's choices into a file a user
-        // may search or copy from.
+        // may search or copy from. Frame widths stay measured on the form advances,
+        // an approximation PowerPoint's own shaping may differ from by a hair.
         return font.sanitizeForRender(span.textStyle(),
-                com.demcha.compose.engine.text.bidi.ArabicShaper.toBaseLetters(span.text()));
+                ArabicShaper.toBaseLetters(span.text()));
     }
 
     private static PdfFont.VerticalMetrics verticalMetrics(FontLibrary fonts,

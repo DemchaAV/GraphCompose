@@ -87,7 +87,8 @@ a PDF never runs the font's own OpenType shaping, so the contextual forms are
 reached through the Arabic presentation forms the font carries. `FontName.AMIRI`
 carries them all. A font that covers the Arabic letters but not the forms
 renders unjoined base letters rather than `?`: the joining is lost, the text
-is not. Vowel points and direction marks sit between letters without breaking
+is not. Shaping covers the base Arabic block (U+0621–U+064A) — the Persian and
+Urdu extensions render unjoined for now. Vowel points and direction marks sit between letters without breaking
 the join.
 
 ## Where direction stops

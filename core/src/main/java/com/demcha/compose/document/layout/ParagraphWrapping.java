@@ -630,6 +630,7 @@ final class ParagraphWrapping {
             width += bodyWidth;
         }
 
+        ResolvedDirection direction = directionOf(spans, baseDirection, measurement);
         return new ParagraphLine(
                 text.toString(),
                 width,
@@ -637,8 +638,8 @@ final class ParagraphWrapping {
                 textLineHeight,
                 metrics.ascent(),
                 metrics.baselineOffsetFromBottom(),
-                spans,
-                directionOf(spans, baseDirection));
+                direction.spans(),
+                direction.visualOrder());
     }
 
     private static List<List<InlineLayoutToken>> tokenizeInlineRuns(List<InlineRun> runs,
@@ -656,7 +657,11 @@ final class ParagraphWrapping {
                     continue;
                 }
                 TextStyle style = textRun.textStyle() == null ? defaultStyle : toTextStyle(textRun.textStyle());
-                String normalized = TextControlSanitizer.remove(textRun.text().replace("\r\n", "\n").replace('\r', '\n'));
+                // Direction marks survive into the tokens so the directional pass can
+                // read them; they are zero-width and the glyph seam drops them, so
+                // they never reach a width or the page.
+                String normalized = TextControlSanitizer.removeExceptDirectionMarks(
+                        textRun.text().replace("\r\n", "\n").replace('\r', '\n'));
                 String[] parts = normalized.split("\n", -1);
                 for (int partIndex = 0; partIndex < parts.length; partIndex++) {
                     if (partIndex > 0) {
@@ -688,7 +693,7 @@ final class ParagraphWrapping {
                 // run's outer edges — lead pad on the first word, trail pad on the
                 // last — and toInlineParagraphLine coalesces the same-group tokens on
                 // each visual line back into one rounded fill.
-                String normalized = TextControlSanitizer.remove(
+                String normalized = TextControlSanitizer.removeExceptDirectionMarks(
                         highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' '));
                 if (normalized.isEmpty()) {
                     continue;
@@ -866,6 +871,7 @@ final class ParagraphWrapping {
             }
         }
 
+        ResolvedDirection direction = directionOf(spans, baseDirection, measurement);
         return new ParagraphLine(
                 text.toString(),
                 width,
@@ -873,8 +879,8 @@ final class ParagraphWrapping {
                 dominantTextLineHeight,
                 dominantAscent,
                 dominantBaselineFromBottom,
-                spans,
-                directionOf(spans, baseDirection));
+                direction.spans(),
+                direction.visualOrder());
     }
 
     /**
@@ -891,10 +897,11 @@ final class ParagraphWrapping {
      * <p>Returns an empty order for a line that is entirely left to right, leaving both
      * the spans and the drawing untouched.</p>
      */
-    private static List<Integer> directionOf(List<ParagraphSpan> spans,
-                                             BidiParagraphResolver.BaseDirection baseDirection) {
+    private static ResolvedDirection directionOf(List<ParagraphSpan> spans,
+                                                 BidiParagraphResolver.BaseDirection baseDirection,
+                                                 TextMeasurementSystem measurement) {
         if (spans.isEmpty() || !spansNeedDirectionalLayout(spans, baseDirection)) {
-            return List.of();
+            return new ResolvedDirection(spans, List.of());
         }
 
         StringBuilder probe = new StringBuilder();
@@ -910,32 +917,107 @@ final class ParagraphWrapping {
 
         int[] levels = BidiParagraphResolver.levelsFor(probe.toString(), baseDirection);
         if (levels.length == 0) {
-            return List.of();
+            return new ResolvedDirection(spans, List.of());
         }
 
-        int[] spanLevels = new int[spans.size()];
+        int paragraphLevel =
+                baseDirection == BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT ? 1 : 0;
+        List<ParagraphSpan> resolved = new ArrayList<>(spans.size());
+        List<Integer> resolvedLevels = new ArrayList<>(spans.size());
         for (int index = 0; index < spans.size(); index++) {
-            int offset = Math.min(offsets[index], levels.length - 1);
-            spanLevels[index] = levels[offset];
-            if (spans.get(index) instanceof ParagraphTextSpan textSpan
-                    && BidiParagraphResolver.isRightToLeftLevel(spanLevels[index])
-                    && !textSpan.rightToLeft()) {
-                spans.set(index, new ParagraphTextSpan(
-                        textSpan.text(),
-                        textSpan.textStyle(),
-                        textSpan.width(),
-                        textSpan.height(),
-                        textSpan.linkTarget(),
-                        textSpan.background(),
-                        true));
+            ParagraphSpan span = spans.get(index);
+            int start = offsets[index];
+            if (!(span instanceof ParagraphTextSpan textSpan)) {
+                resolved.add(span);
+                resolvedLevels.add(levels[start]);
+                continue;
             }
+            String spanText = textSpan.text();
+            if (spanText.isEmpty()) {
+                resolved.add(span);
+                resolvedLevels.add(paragraphLevel);
+                continue;
+            }
+            if (textSpan.background() != null) {
+                // A chip is one rounded fill, so it cannot be split; it takes its first
+                // character's level whole. A chip whose text changes direction inside
+                // itself keeps logical order within the chip — a known approximation.
+                resolved.add(withDirection(textSpan, levels[start]));
+                resolvedLevels.add(levels[start]);
+                continue;
+            }
+            splitAtLevelBoundaries(textSpan, levels, start, measurement, resolved, resolvedLevels);
         }
 
+        int[] spanLevels = new int[resolvedLevels.size()];
+        for (int index = 0; index < spanLevels.length; index++) {
+            spanLevels[index] = resolvedLevels.get(index);
+        }
         List<Integer> visualOrder = new ArrayList<>();
         for (int position : BidiParagraphResolver.visualOrder(spanLevels)) {
             visualOrder.add(position);
         }
-        return visualOrder;
+        return new ResolvedDirection(List.copyOf(resolved), visualOrder);
+    }
+
+    /**
+     * Splits one text span wherever its characters resolve to a different embedding
+     * level.
+     *
+     * <p>A span is reversed — and drawn — as one unit, so it must be single-level.
+     * Tokenization splits on whitespace, but a direction change does not need a space:
+     * {@code "ב-2026"}, the idiomatic Hebrew "in 2026", is one token whose digits run
+     * forwards inside a right-to-left word. Left as one span it would be reversed
+     * whole, putting the year backwards on the page.</p>
+     *
+     * <p>Sub-span widths are re-measured; glyph advances are additive (the same
+     * assumption the wrap loops build on), so their sum is the width the whole span
+     * had and the line's geometry does not move.</p>
+     */
+    private static void splitAtLevelBoundaries(ParagraphTextSpan span,
+                                               int[] levels,
+                                               int start,
+                                               TextMeasurementSystem measurement,
+                                               List<ParagraphSpan> resolved,
+                                               List<Integer> resolvedLevels) {
+        String text = span.text();
+        int from = 0;
+        while (from < text.length()) {
+            int level = levels[start + from];
+            int to = from + 1;
+            while (to < text.length() && levels[start + to] == level) {
+                to++;
+            }
+            if (from == 0 && to == text.length()) {
+                resolved.add(withDirection(span, level));
+            } else {
+                String part = text.substring(from, to);
+                resolved.add(new ParagraphTextSpan(
+                        part,
+                        span.textStyle(),
+                        measurement.textWidth(span.textStyle(), part),
+                        span.height(),
+                        span.linkTarget(),
+                        null,
+                        BidiParagraphResolver.isRightToLeftLevel(level)));
+            }
+            resolvedLevels.add(level);
+            from = to;
+        }
+    }
+
+    /** Returns the span flagged for the level's direction, reusing it when unchanged. */
+    private static ParagraphTextSpan withDirection(ParagraphTextSpan span, int level) {
+        boolean rightToLeft = BidiParagraphResolver.isRightToLeftLevel(level);
+        if (span.rightToLeft() == rightToLeft) {
+            return span;
+        }
+        return new ParagraphTextSpan(span.text(), span.textStyle(), span.width(),
+                span.height(), span.linkTarget(), span.background(), rightToLeft);
+    }
+
+    /** A line's spans and the order they are drawn in, after direction is resolved. */
+    record ResolvedDirection(List<ParagraphSpan> spans, List<Integer> visualOrder) {
     }
 
     /** Stands in for an inline graphic while a line's direction is resolved. */

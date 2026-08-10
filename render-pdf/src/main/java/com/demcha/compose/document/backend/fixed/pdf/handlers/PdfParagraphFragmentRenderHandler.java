@@ -136,7 +136,12 @@ public final class PdfParagraphFragmentRenderHandler
                                    ParagraphLine line,
                                    TextRenderState textState) throws IOException {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        String text = font.sanitizeForRender(span.textStyle(), span.text());
+        // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
+        // mixed-direction text inside a chip keeps logical order (a known approximation).
+        String chipText = span.rightToLeft()
+                ? BidiText.reverseForDisplay(span.text())
+                : span.text();
+        String text = font.sanitizeForRender(span.textStyle(), chipText);
         if (text.isEmpty()) {
             return false;                                       // nothing to paint — no glyph-less fill or mark
         }
@@ -366,8 +371,11 @@ public final class PdfParagraphFragmentRenderHandler
                     // arrows / bullets / emoji / unsupported unicode.
                     // A right-to-left run is stored in logical order, but showText emits
                     // characters in the order it is given them — so it is reversed here,
-                    // by grapheme cluster, and nowhere else. The span keeps its logical
-                    // text for the semantic backends and for text extraction.
+                    // by grapheme cluster. The span keeps its logical text for the
+                    // semantic backends; the PDF content stream, and therefore plain
+                    // text extraction and copy-paste, carries the visual order. Undoing
+                    // that would take ActualText marked content — a known trade-off,
+                    // recorded in the changelog rather than hidden here.
                     String spanText = textSpan.rightToLeft()
                             ? BidiText.reverseForDisplay(textSpan.text())
                             : textSpan.text();

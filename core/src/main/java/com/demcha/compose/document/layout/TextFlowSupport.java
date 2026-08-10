@@ -655,7 +655,7 @@ public final class TextFlowSupport {
                 node.bulletOffset(),
                 indentStrategy,
                 measurement,
-                toBaseDirection(node.direction()))
+                resolveBaseDirection(node))
                 : useMarkdownLayout
                   ? ParagraphWrapping.wrapMarkdownParagraph(
                 logicalLines,
@@ -665,7 +665,7 @@ public final class TextFlowSupport {
                 node.bulletOffset(),
                 indentStrategy,
                 measurement,
-                toBaseDirection(node.direction()))
+                resolveBaseDirection(node))
                   : ParagraphWrapping.toParagraphLines(
                 ParagraphWrapping.wrapParagraph(
                         logicalLines,
@@ -677,7 +677,7 @@ public final class TextFlowSupport {
                 textStyle,
                 lineMetrics,
                 measurement,
-                toBaseDirection(node.direction()));
+                resolveBaseDirection(node));
         if (visualLines.isEmpty()) {
             visualLines = List.of(ParagraphWrapping.emptyParagraphLine(lineMetrics));
         }
@@ -755,7 +755,8 @@ public final class TextFlowSupport {
                         source.margin().left()),
                 null,
                 source.verticalAlign(),
-                keepTopInsets ? source.anchor() : null);
+                keepTopInsets ? source.anchor() : null,
+                source.direction());
 
         PreparedParagraphLayout fragmentLayout = new PreparedParagraphLayout(
                 List.copyOf(sliceLogicalLines),
@@ -776,18 +777,32 @@ public final class TextFlowSupport {
     }
 
     /**
-     * Translates the public writing direction into the base direction the resolver
-     * takes. The engine names its own, so it stays independent of the document surface.
+     * Resolves the paragraph's base direction, once, from the whole paragraph.
+     *
+     * <p>UAX #9 fixes the base direction per paragraph (rules P2–P3); only the
+     * line-level reset (L1) is per line. {@link TextDirection#AUTO} is therefore
+     * decided here, from the paragraph's full text, and every wrapped line receives
+     * the same base. Resolving it per line instead would let a continuation line that
+     * happens to begin with Latin flip its base mid-paragraph — the same Hebrew prose
+     * laid out right-to-left on one line and left-to-right on the next.</p>
+     *
+     * <p>This is also the rule {@code ParagraphBuilder} applies when it derives the
+     * default alignment for {@code AUTO}, so what the page does agrees with where the
+     * builder put it.</p>
      */
-    private static BidiParagraphResolver.BaseDirection toBaseDirection(TextDirection direction) {
-        if (direction == null) {
-            return BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+    private static BidiParagraphResolver.BaseDirection resolveBaseDirection(ParagraphNode node) {
+        TextDirection direction = node.direction();
+        if (direction == TextDirection.RTL) {
+            return BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
         }
-        return switch (direction) {
-            case LTR -> BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
-            case RTL -> BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
-            case AUTO -> BidiParagraphResolver.BaseDirection.FIRST_STRONG_CHARACTER;
-        };
+        if (direction == TextDirection.AUTO) {
+            int baseLevel = BidiParagraphResolver.baseLevel(
+                    node.text(), BidiParagraphResolver.BaseDirection.FIRST_STRONG_CHARACTER);
+            return BidiParagraphResolver.isRightToLeftLevel(baseLevel)
+                    ? BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT
+                    : BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+        }
+        return BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
     }
 
     private static List<String> sanitizeLogicalLines(String rawText) {

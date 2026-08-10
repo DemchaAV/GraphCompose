@@ -139,6 +139,32 @@ class InlineParagraphRtlTest {
     }
 
     @Test
+    void aTokenThatChangesDirectionInsideItselfIsSplitAtTheBoundary() {
+        // "ב-2026" — idiomatic Hebrew for "in 2026" — is one whitespace token: a Hebrew
+        // letter, a hyphen, and digits that run forwards. Reversed as one span, the
+        // year comes out backwards on the page; split at the level boundary, the digits
+        // keep their order while the line still reads right to left.
+        ParagraphLine line = only(wrap(List.of(run("ב-2026")), BaseDirection.RIGHT_TO_LEFT));
+
+        List<ParagraphTextSpan> spans = textSpans(line);
+        assertThat(spans).hasSize(2);
+        assertThat(spans.get(0).text()).isEqualTo("ב-");
+        assertThat(spans.get(0).rightToLeft()).isTrue();
+        assertThat(spans.get(1).text()).isEqualTo("2026");
+        assertThat(spans.get(1).rightToLeft())
+                .describedAs("the digits are embedded left-to-right and must not be reversed")
+                .isFalse();
+        assertThat(line.spansInVisualOrder().stream()
+                .map(span -> ((ParagraphTextSpan) span).text())
+                .toList())
+                .describedAs("drawn left to right: the digits first, then the Hebrew part")
+                .containsExactly("2026", "ב-");
+        assertThat(spans.stream().mapToDouble(ParagraphTextSpan::width).sum())
+                .describedAs("advances are additive, so the split must not move the line's width")
+                .isEqualTo(line.width());
+    }
+
+    @Test
     void markdownWithoutRightToLeftTextIsUntouched() {
         ParagraphLine line = only(ParagraphWrapping.wrapMarkdownParagraph(
                 List.of("**Bold** and plain"),

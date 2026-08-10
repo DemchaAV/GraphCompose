@@ -115,13 +115,15 @@ class ParagraphWrappingRtlTest {
         for (BaseDirection direction : BaseDirection.values()) {
             ParagraphLine line = only(lines(List.of(HEBREW + " 12 Hello " + ARABIC), direction));
 
-            if (!line.visualOrder().isEmpty()) {
-                assertThat(line.visualOrder())
-                        .describedAs("direction %s", direction)
-                        .hasSize(line.spans().size())
-                        .doesNotHaveDuplicates()
-                        .allSatisfy(index -> assertThat(index).isBetween(0, line.spans().size() - 1));
-            }
+            // Mixed Hebrew and Arabic around Latin reorders under every base — an empty
+            // order here would mean reordering silently stopped happening, which is
+            // exactly what this test exists to catch.
+            assertThat(line.visualOrder())
+                    .describedAs("direction %s", direction)
+                    .isNotEmpty()
+                    .hasSize(line.spans().size())
+                    .doesNotHaveDuplicates()
+                    .allSatisfy(index -> assertThat(index).isBetween(0, line.spans().size() - 1));
             assertThat(line.spansInVisualOrder()).hasSize(line.spans().size());
         }
     }

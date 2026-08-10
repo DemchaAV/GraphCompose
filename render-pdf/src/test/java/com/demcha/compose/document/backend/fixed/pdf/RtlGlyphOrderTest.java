@@ -78,6 +78,85 @@ class RtlGlyphOrderTest {
                 .isLessThan(drawn.indexOf(HEBREW.charAt(HEBREW.length() - 1)));
     }
 
+    @Test
+    void aTokenMixingScriptAndDigitsKeepsTheDigitsForwards() throws Exception {
+        // "ב-2026" is one whitespace token: a Hebrew letter, a hyphen, and a year.
+        // Reversed as one unit the digits come out backwards; split at the direction
+        // boundary they read forwards inside the right-to-left line.
+        String drawn = glyphsInDrawingOrder(renderRich("ב-2026", TextDirection.RTL));
+
+        assertThat(drawn).contains("2026").doesNotContain("6202");
+    }
+
+    @Test
+    void autoFixesItsBaseDirectionOncePerParagraph() throws Exception {
+        // One paragraph, two logical lines; the first strong character is Hebrew, so
+        // the whole paragraph is right-to-left — including the second line, which
+        // happens to begin with Latin. Resolved per line instead, that line would take
+        // a left-to-right base and arrange itself backwards relative to its sibling.
+        byte[] pdf = render(HEBREW + "\nGraphCompose " + HEBREW, TextDirection.AUTO);
+
+        List<TextPosition> secondLine = lineContaining(pdf, 'G');
+        double hebrewX = secondLine.stream()
+                .filter(pos -> !pos.getUnicode().isEmpty()
+                        && pos.getUnicode().charAt(0) >= 'א'
+                        && pos.getUnicode().charAt(0) <= 'ת')
+                .mapToDouble(TextPosition::getXDirAdj)
+                .min()
+                .orElseThrow();
+        double latinX = secondLine.stream()
+                .filter(pos -> "G".equals(pos.getUnicode()))
+                .mapToDouble(TextPosition::getXDirAdj)
+                .min()
+                .orElseThrow();
+
+        assertThat(hebrewX)
+                .describedAs("under the paragraph's base direction the Hebrew sits left "
+                        + "of the Latin it follows in reading order")
+                .isLessThan(latinX);
+    }
+
+    private static byte[] renderRich(String text, TextDirection direction) {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            document.pageFlow(page -> page
+                    .addParagraph(p -> p
+                            .rich(com.demcha.compose.document.dsl.RichText.text(text))
+                            .direction(direction)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.DAVID_LIBRE)
+                                    .size(24)
+                                    .build())));
+
+            return document.toPdfBytes();
+        }
+    }
+
+    /** All glyphs sharing the vertical position of the first occurrence of {@code marker}. */
+    private static List<TextPosition> lineContaining(byte[] pdf, char marker) throws IOException {
+        List<TextPosition> positions = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            PDFTextStripper collector = new PDFTextStripper() {
+                @Override
+                protected void writeString(String text, List<TextPosition> textPositions) {
+                    positions.addAll(textPositions);
+                }
+            };
+            collector.getText(document);
+        }
+        double markerY = positions.stream()
+                .filter(pos -> !pos.getUnicode().isEmpty() && pos.getUnicode().charAt(0) == marker)
+                .mapToDouble(TextPosition::getYDirAdj)
+                .findFirst()
+                .orElseThrow();
+        return positions.stream()
+                .filter(pos -> Math.abs(pos.getYDirAdj() - markerY) < 1.0)
+                .toList();
+    }
+
     private static byte[] render(String text, TextDirection direction) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)

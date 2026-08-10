@@ -31,7 +31,7 @@
 
         <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
         <itext.version>9.7.1</itext.version>
-        <jasperreports.version>7.0.7</jasperreports.version>
+        <jasperreports.version>7.0.8</jasperreports.version>
     </properties>
 
     <dependencyManagement>

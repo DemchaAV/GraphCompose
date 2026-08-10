@@ -47,7 +47,7 @@
         <!-- ArchUnit for the cross-module boundary guards below. Roughly in step
              with the engine pom's archunit.version; a drift is harmless (test-only,
              each module runs its own test JVM), so it is not version-guarded. -->
-        <archunit.version>1.4.2</archunit.version>
+        <archunit.version>1.5.0</archunit.version>
         <!-- graphcompose.fonts.version / graphcompose.emoji.version and
              maven.deploy.skip=true are inherited from the aggregator parent. -->
     </properties>

@@ -895,7 +895,11 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     /**
      * Adds a paragraph composed by configuring a fresh {@link RichText} builder.
      *
-     * <p>Useful for label/value lines: {@code section.addRich(t -> t.text("Status: ").bold("Pending"))}.</p>
+     * <p>Useful for label/value lines:
+     * {@code section.addRich(t -> t.plain("Status: ").bold("Pending"))}. Seed
+     * the supplied builder with {@link RichText#plain(String)} — the static
+     * factory {@link RichText#text(String)} called through the lambda
+     * parameter would build a separate, discarded {@code RichText}.</p>
      *
      * @param spec rich-text configuration callback
      * @return this builder

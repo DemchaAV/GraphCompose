@@ -133,6 +133,18 @@ follow semantic versioning; release dates are ISO 8601.
   and the backend answer from one implementation. It is `@Internal`: a backend seam, not a
   public promise.
 
+### Documentation
+
+- **The `rich(...)` lambda examples seed the builder they are handed.** The Javadoc on
+  `ParagraphBuilder.rich(Consumer<RichText>)` and `AbstractFlowBuilder.addRich(Consumer<RichText>)`
+  opened the lambda with `t.text("Status: ")` — but `RichText.text(String)` is a static factory,
+  and Java resolves a static call made through an instance reference. The documented line
+  compiled, built a separate `RichText`, discarded it, and the paragraph rendered empty — no
+  warning, no exception. Both examples now seed with `plain(...)`, the factory's Javadoc spells
+  out the trap, and a regression test pins the documented lambda form to a non-empty paragraph.
+  The shape-as-container recipe's `RichText.of()` — a factory that never existed — is now
+  `RichText.text(...)`.
+
 ## v2.1.1 — 2026-08-05
 
 ### Build

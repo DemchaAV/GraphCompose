@@ -1083,14 +1083,52 @@ public final class ParagraphBuilder {
 
     /**
      * A right-to-left paragraph starts at the right edge, so that is where its lines sit
-     * unless the caller said otherwise. {@link TextDirection#AUTO} is resolved later, from
-     * the text itself, so it cannot decide an alignment here.
+     * unless the caller said otherwise.
+     *
+     * <p>{@link TextDirection#AUTO} is decided the same way the bidirectional algorithm
+     * decides it — by the first strong character — which {@link Character} answers
+     * without the engine. Resolving it here rather than during layout is what keeps
+     * "the caller did not choose an alignment" distinguishable from "the caller chose
+     * LEFT": the node carries a concrete alignment, and that distinction lives only in
+     * this builder.</p>
      */
     private TextAlign resolveAlign() {
-        if (alignChosenByCaller || direction != TextDirection.RTL) {
+        if (alignChosenByCaller || direction == TextDirection.LTR) {
             return align;
         }
-        return TextAlign.RIGHT;
+        return direction == TextDirection.RTL || startsRightToLeft()
+                ? TextAlign.RIGHT
+                : align;
+    }
+
+    /** Whether the paragraph's first strong character runs right to left. */
+    private boolean startsRightToLeft() {
+        String probe = text.isBlank() ? inlineRunText() : text;
+        for (int index = 0; index < probe.length(); ) {
+            int codePoint = probe.codePointAt(index);
+            index += Character.charCount(codePoint);
+            byte directionality = Character.getDirectionality(codePoint);
+            if (directionality == Character.DIRECTIONALITY_LEFT_TO_RIGHT) {
+                return false;
+            }
+            if (directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+                    || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String inlineRunText() {
+        StringBuilder concatenated = new StringBuilder();
+        for (InlineRun run : inlineRuns) {
+            if (run instanceof InlineTextRun textRun) {
+                concatenated.append(textRun.text());
+            } else if (run instanceof InlineHighlightRun highlight) {
+                concatenated.append(highlight.text());
+            }
+        }
+        return concatenated.toString();
     }
 }
 

@@ -69,16 +69,58 @@ class TextDirectionApiTest {
     }
 
     @Test
-    void autoDoesNotDecideAnAlignmentAtAuthoringTime() {
+    void autoAlignsRightWhenTheTextItselfRunsRightToLeft() {
         ParagraphNode node = new ParagraphBuilder()
-                .text("שלום")
+                .text("שלום עולם")
+                .direction(TextDirection.AUTO)
+                .build();
+
+        assertThat(node.align()).isEqualTo(TextAlign.RIGHT);
+    }
+
+    @Test
+    void autoLeavesLeftToRightTextAlone() {
+        assertThat(new ParagraphBuilder().text("Hello").direction(TextDirection.AUTO).build().align())
+                .isEqualTo(TextAlign.LEFT);
+        assertThat(new ParagraphBuilder().text("").direction(TextDirection.AUTO).build().align())
+                .describedAs("nothing strong to read means the left-to-right fallback")
+                .isEqualTo(TextAlign.LEFT);
+    }
+
+    @Test
+    void autoSkipsCharactersThatCarryNoDirectionOfTheirOwn() {
+        assertThat(new ParagraphBuilder().text("2026 — שלום").direction(TextDirection.AUTO)
+                .build().align())
+                .describedAs("digits and punctuation are not strong, so the Hebrew decides — "
+                        + "the same rule the algorithm applies to the text itself")
+                .isEqualTo(TextAlign.RIGHT);
+        assertThat(new ParagraphBuilder().text("2026 — Hello").direction(TextDirection.AUTO)
+                .build().align())
+                .isEqualTo(TextAlign.LEFT);
+    }
+
+    @Test
+    void autoReadsTheTextOfARichParagraphToo() {
+        ParagraphNode node = new ParagraphBuilder()
+                .rich(RichText.text("שלום"))
                 .direction(TextDirection.AUTO)
                 .build();
 
         assertThat(node.align())
-                .describedAs("AUTO is resolved from the text during layout, so the builder has "
-                        + "nothing to decide from yet")
-                .isEqualTo(TextAlign.LEFT);
+                .describedAs("a rich paragraph holds its text in inline runs, and AUTO has to "
+                        + "read those as well or it silently never fires for them")
+                .isEqualTo(TextAlign.RIGHT);
+    }
+
+    @Test
+    void anExplicitAlignmentSurvivesAutoToo() {
+        ParagraphNode node = new ParagraphBuilder()
+                .text("שלום")
+                .direction(TextDirection.AUTO)
+                .align(TextAlign.CENTER)
+                .build();
+
+        assertThat(node.align()).isEqualTo(TextAlign.CENTER);
     }
 
     @Test

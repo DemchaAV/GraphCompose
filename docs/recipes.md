@@ -19,6 +19,7 @@ authoring API; public application code should not import
 | [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
+| [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |
 | [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline SVG icons, emoji shortcodes, inline shapes and checkboxes |
 | [Lists](recipes/lists.md) | `addList`: quick bulleted lists, marker customisation, nested lists with per-depth markers, spacing and styled items |
 | [Timelines](recipes/timelines.md) | `addTimeline`: markers (dot / circle / numbered / square) on a connector rail, geometry and text-style controls, pagination opt-ins |

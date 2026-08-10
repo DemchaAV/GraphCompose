@@ -30,6 +30,7 @@ import java.util.Objects;
  * @param anchor          optional in-document navigation anchor name declared at the
  *                        paragraph's top-left, or {@code null} for none
  * @param direction       writing direction; {@link TextDirection#LTR} when omitted
+ *                        ({@code @since 2.2.0})
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(

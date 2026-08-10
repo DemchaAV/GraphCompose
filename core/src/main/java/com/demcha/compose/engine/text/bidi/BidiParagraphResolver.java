@@ -239,14 +239,15 @@ public final class BidiParagraphResolver {
      */
     private static boolean isBidirectional(char character) {
         // Written as escapes deliberately: raw bidirectional characters in source are
-        // the Trojan-Source shape (CVE-2021-42574) and trip scanners and renderers.
-        return (character >= '֐' && character <= 'ࣿ')
-                || (character >= 'יִ' && character <= '﷿')
-                || (character >= 'ﹰ' && character <= '﻿')
-                || character == '‏'
-                || (character >= '‪' && character <= '‮')
-                || (character >= '⁦' && character <= '⁩')
-                || character == '؜'
+        // the Trojan-Source shape (CVE-2021-42574), invisible in a diff and easy for
+        // a tool to mangle without anything looking changed.
+        return (character >= '\u0590' && character <= '\u08FF')
+                || (character >= '\uFB1D' && character <= '\uFDFF')
+                || (character >= '\uFE70' && character <= '\uFEFF')
+                || character == '\u200F'
+                || (character >= '\u202A' && character <= '\u202E')
+                || (character >= '\u2066' && character <= '\u2069')
+                || character == '\u061C'
                 || Character.isSurrogate(character);
     }
 

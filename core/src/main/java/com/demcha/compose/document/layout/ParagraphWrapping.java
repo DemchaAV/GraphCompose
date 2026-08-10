@@ -7,7 +7,6 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.components.content.text.TextDataBody;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
-import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.engine.text.TextControlSanitizer;
 import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;

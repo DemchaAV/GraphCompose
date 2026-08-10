@@ -85,6 +85,32 @@ public final class FontName {
      */
     public static final FontName DAVID_LIBRE = of("David Libre");
 
+    /**
+     * Georgian sans family covering Latin and the Georgian alphabet.
+     *
+     * <p>Ships upstream as a variable font, so the catalog carries its regular
+     * instance and bold styles resolve to it.</p>
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
+     * on the classpath.</p>
+     *
+     * @since 2.2.0
+     */
+    public static final FontName NOTO_SANS_GEORGIAN = of("Noto Sans Georgian");
+
+    /**
+     * Armenian sans family covering Latin and the Armenian alphabet.
+     *
+     * <p>Ships upstream as a variable font, so the catalog carries its regular
+     * instance and bold styles resolve to it.</p>
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
+     * on the classpath.</p>
+     *
+     * @since 2.2.0
+     */
+    public static final FontName NOTO_SANS_ARMENIAN = of("Noto Sans Armenian");
+
     private final String name;
     private final String normalizedName;
 

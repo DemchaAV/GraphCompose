@@ -25,6 +25,30 @@ letters here. Neither family covers the other's script, so a run mixing both nee
 of your own registered through `FontFamilyDefinition`. Select them with `FontName.AMIRI`
 and `FontName.DAVID_LIBRE`.
 
+The same release adds **Noto Sans Georgian** and **Noto Sans Armenian**
+(`FontName.NOTO_SANS_GEORGIAN`, `FontName.NOTO_SANS_ARMENIAN`), covering both cases of
+each script — including Georgian Mtavruli, the capitals headings are set in, which Unicode
+puts in a block of its own. Upstream ships them as variable fonts and there are no static
+weights to take, so the artifact carries the regular instance and bold or italic styles
+resolve to it: they render, unemboldened and upright.
+
+## Which script needs which family
+
+| Script | Family | Covered by the rest of the set? |
+| --- | --- | --- |
+| Latin, Latin Extended, Vietnamese | any bundled family | yes |
+| Cyrillic | `PT_SANS`, `PT_SERIF`, `FIRA_SANS`, `ARSENAL`, … | yes |
+| Greek | `GENTIUM_PLUS`, `TINOS`, `COUSINE`, … | yes |
+| Thai | `SARABUN`, `KANIT`, `PROMPT`, `TAVIRAJ`, `TRIRONG`, `BAI_JAMJUREE` | yes |
+| Arabic | `AMIRI` | no |
+| Hebrew | `DAVID_LIBRE` | no |
+| Georgian | `NOTO_SANS_GEORGIAN` | no |
+| Armenian | `NOTO_SANS_ARMENIAN` | no |
+
+Each of the last four carries its own script plus Latin, and nothing of the other three.
+One paragraph is drawn in one family — the engine does not fall back across families — so
+a run mixing two of these scripts needs a font of your own that covers both.
+
 ## Install
 
 Independent version line (`fonts-v*`) — pinned, not the engine version:

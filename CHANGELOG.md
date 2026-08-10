@@ -94,6 +94,20 @@ follow semantic versioning; release dates are ISO 8601.
   Arabic and Hebrew still needs a font registered through `FontFamilyDefinition`.
   Text is still laid out in logical order — this release makes the glyphs available,
   not the bidirectional ordering or Arabic joining that use them.
+- **Bundled families for Georgian and Armenian.** `FontName.NOTO_SANS_GEORGIAN` and
+  `FontName.NOTO_SANS_ARMENIAN` ship in the same **1.1.0** font artifact. Both scripts
+  rendered as `?` before, and both are covered in full: Armenian in both cases, Georgian
+  in Mkhedruli *and* Mtavruli — the capitals headings are set in, which Unicode encodes in
+  a block of its own, so a family carrying only the lowercase range sets body text and
+  loses every title. Upstream publishes them as variable fonts with no static weights to
+  take, so the artifact carries the regular instance and the other faces resolve to it:
+  bold Georgian renders unemboldened rather than failing, which is asserted rather than
+  left to be discovered.
+
+  With Arabic and Hebrew that makes four scripts, each with exactly one family that carries
+  it plus Latin and none of the other three. A paragraph is drawn in a single family, so a
+  run mixing two of them still needs a font registered through `FontFamilyDefinition`.
+  [`fonts/README.md`](fonts/README.md#which-script-needs-which-family) has the table.
 - **A stale font artifact is now distinguished from a missing one.** Asking for a
   family that a newer `graph-compose-fonts` introduced produced the same message as
   having no font artifact at all — an instruction to add a dependency that was already

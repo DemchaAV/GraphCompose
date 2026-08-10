@@ -60,7 +60,9 @@ public class DefaultFonts {
             google(FontName.BAI_JAMJUREE, "baijamjuree", "BaiJamjuree"),
             google(FontName.JETBRAINS_MONO, "jetbrainsmono", "JetBrainsMono"),
             google(FontName.AMIRI, "amiri", "Amiri"),
-            regularAndBold(FontName.DAVID_LIBRE, "davidlibre", "DavidLibre"));
+            regularAndBold(FontName.DAVID_LIBRE, "davidlibre", "DavidLibre"),
+            regularOnly(FontName.NOTO_SANS_GEORGIAN, "notosansgeorgian", "NotoSansGeorgian"),
+            regularOnly(FontName.NOTO_SANS_ARMENIAN, "notosansarmenian", "NotoSansArmenian"));
 
     private DefaultFonts() {
     }
@@ -111,6 +113,16 @@ public class DefaultFonts {
                 .boldResource(resource(folder, prefix + "-Bold.ttf"))
                 .italicResource(resource(folder, prefix + "-Italic.ttf"))
                 .boldItalicResource(resource(folder, prefix + "-BoldItalic.ttf"))
+                .build();
+    }
+
+    /**
+     * A family shipped upstream as a variable font, whose regular instance is the one
+     * the catalog carries. Every style resolves to it, so bold renders unemboldened —
+     * the alternative would be shipping a synthetic weight the designer never drew.
+     */
+    private static FontFamilyDefinition regularOnly(FontName fontName, String folder, String prefix) {
+        return FontFamilyDefinition.classpath(fontName, resource(folder, prefix + "-Regular.ttf"))
                 .build();
     }
 

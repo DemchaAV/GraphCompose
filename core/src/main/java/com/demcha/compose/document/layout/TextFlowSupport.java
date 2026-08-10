@@ -9,6 +9,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
@@ -610,7 +611,7 @@ public final class TextFlowSupport {
             double width = 0.0;
             for (InlineRun run : node.inlineRuns()) {
                 if (run instanceof InlineTextRun textRun) {
-                    width += measurement.textWidth(engineStyle, textRun.text());
+                    width += measurement.textWidth(engineStyle, ArabicShaper.shape(textRun.text()));
                 } else if (run instanceof InlineImageRun imageRun) {
                     width += imageRun.width();
                 } else if (run instanceof InlineShapeRun shapeRun) {
@@ -624,7 +625,7 @@ public final class TextFlowSupport {
             }
             return width <= innerWidth;
         }
-        List<String> lines = sanitizeLogicalLines(node.text());
+        List<String> lines = shapeAll(sanitizeLogicalLines(node.text()));
         if (lines.size() != 1) {
             return false;
         }
@@ -638,7 +639,11 @@ public final class TextFlowSupport {
                                                                   double innerWidth,
                                                                   TextMeasurementSystem measurement,
                                                                   boolean markdownEnabled) {
-        List<String> logicalLines = sanitizeLogicalLines(node.text());
+        // Shaped before wrapping, because the contextual forms have their own advance
+        // widths and everything downstream — the fit tests, the spans, the page — must
+        // measure the text that will be drawn. Text without an Arabic letter passes
+        // through as the same instances.
+        List<String> logicalLines = shapeAll(sanitizeLogicalLines(node.text()));
         boolean useMarkdownLayout = markdownEnabled && logicalLines.stream().anyMatch(ParagraphWrapping::containsMarkdownSyntax);
         TextStyle textStyle = node.autoSize() != null
                 ? toTextStyle(resolveAutoSizeTextStyle(node, innerWidth, measurement))
@@ -791,6 +796,21 @@ public final class TextFlowSupport {
      */
     private static BidiParagraphResolver.BaseDirection resolveBaseDirection(ParagraphNode node) {
         return ParagraphDirection.baseDirection(node);
+    }
+
+    private static List<String> shapeAll(List<String> logicalLines) {
+        List<String> shaped = null;
+        for (int index = 0; index < logicalLines.size(); index++) {
+            String line = logicalLines.get(index);
+            String shapedLine = ArabicShaper.shape(line);
+            if (shapedLine != line && shaped == null) {
+                shaped = new ArrayList<>(logicalLines);
+            }
+            if (shaped != null) {
+                shaped.set(index, shapedLine);
+            }
+        }
+        return shaped == null ? logicalLines : List.copyOf(shaped);
     }
 
     private static List<String> sanitizeLogicalLines(String rawText) {

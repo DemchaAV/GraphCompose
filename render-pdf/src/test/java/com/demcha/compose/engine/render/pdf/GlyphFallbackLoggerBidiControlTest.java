@@ -26,6 +26,31 @@ class GlyphFallbackLoggerBidiControlTest {
     }
 
     @Test
+    void aPresentationFormDegradesToItsBaseLetterWhenTheFontHasOnlyThat() throws Exception {
+        // The shape of a GSUB-only Arabic font: the base letters are in the cmap, the
+        // presentation forms are not. Losing the form must cost the joining, not the
+        // text — the base letter renders isolated but readable.
+        org.apache.pdfbox.pdmodel.font.PDFont gsubOnly =
+                org.mockito.Mockito.mock(org.apache.pdfbox.pdmodel.font.PDFont.class);
+        org.mockito.Mockito.when(gsubOnly.getName()).thenReturn("GsubOnlyProbe");
+        org.mockito.Mockito.when(gsubOnly.encode(org.mockito.Mockito.anyString()))
+                .thenAnswer(invocation -> {
+                    String value = invocation.getArgument(0);
+                    if (value.chars().anyMatch(cp -> cp >= 0xFE70 && cp <= 0xFEFC)) {
+                        throw new IllegalArgumentException("no glyph");
+                    }
+                    return new byte[]{0};
+                });
+
+        assertThat(GlyphFallbackLogger.sanitize(gsubOnly, "ﺍ"))
+                .describedAs("isolated-alef form falls back to the alef itself")
+                .isEqualTo("ا");
+        assertThat(GlyphFallbackLogger.sanitize(gsubOnly, "ﻻ"))
+                .describedAs("a lam-alef ligature decomposes back into its two letters")
+                .isEqualTo("لا");
+    }
+
+    @Test
     void ordinaryUnencodableCharactersStillBecomeQuestionMarks() {
         PDType1Font helvetica = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 

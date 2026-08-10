@@ -118,12 +118,37 @@ public final class GlyphFallbackLogger {
             }
             if (isEncodable(font, coverage, codePoint)) {
                 sb.appendCodePoint(codePoint);
-            } else {
+            } else if (!appendBaseLetters(font, coverage, codePoint, sb)) {
                 report(font, codePoint);
                 sb.append('?');
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Degrades an Arabic presentation form a font cannot encode to its base letters.
+     *
+     * <p>A font that shapes only through {@code GSUB} carries the letters but not the
+     * forms. Substituting {@code '?'} would lose the text; the base letters render
+     * unjoined but readable, which is the honest middle. Only fires when every base
+     * letter is itself encodable — otherwise the ordinary substitution reports it.</p>
+     */
+    private static boolean appendBaseLetters(PDFont font,
+                                             Map<Integer, Boolean> coverage,
+                                             int codePoint,
+                                             StringBuilder sb) {
+        String base = com.demcha.compose.engine.text.bidi.ArabicShaper.baseLettersOf(codePoint);
+        if (base == null) {
+            return false;
+        }
+        for (int index = 0; index < base.length(); index++) {
+            if (!isEncodable(font, coverage, base.charAt(index))) {
+                return false;
+            }
+        }
+        sb.append(base);
+        return true;
     }
 
     private static boolean isEncodable(PDFont font, Map<Integer, Boolean> coverage, int codePoint) {

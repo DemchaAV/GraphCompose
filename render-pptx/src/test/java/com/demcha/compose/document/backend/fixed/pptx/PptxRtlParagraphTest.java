@@ -108,6 +108,40 @@ class PptxRtlParagraphTest {
         }
     }
 
+    @Test
+    void arabicReachesPowerPointAsBaseLettersNotForms() throws Exception {
+        // The span carries shaped Arabic because measurement measures what the PDF
+        // draws; PowerPoint shapes Arabic itself, so it must get the base letters
+        // back. Handing it presentation forms would freeze this engine's shaping
+        // into a file a user searches and copies from.
+        byte[] pptx;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p
+                            .text("مرحبا")
+                            .direction(TextDirection.RTL)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.AMIRI)
+                                    .size(20)
+                                    .build())));
+
+            pptx = session.toPptxBytes();
+        }
+
+        try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+            String joined = String.join("",
+                    textShapesOf(show).stream().map(XSLFTextShape::getText).toList());
+            assertThat(joined).isEqualTo("مرحبا");
+            assertThat(joined.chars().anyMatch(cp -> cp >= 0xFE70 && cp <= 0xFEFC))
+                    .describedAs("no presentation form may leak into the slide text")
+                    .isFalse();
+        }
+    }
+
     private static List<XSLFTextShape> textShapesOf(XMLSlideShow show) {
         return show.getSlides().get(0).getShapes().stream()
                 .filter(XSLFTextShape.class::isInstance)

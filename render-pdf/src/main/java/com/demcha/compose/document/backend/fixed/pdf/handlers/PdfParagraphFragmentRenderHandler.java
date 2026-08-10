@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.engine.text.bidi.BidiMirroring;
 import com.demcha.compose.engine.text.bidi.BidiText;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
@@ -139,7 +140,7 @@ public final class PdfParagraphFragmentRenderHandler
         // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
         // mixed-direction text inside a chip keeps logical order (a known approximation).
         String chipText = span.rightToLeft()
-                ? BidiText.reverseForDisplay(span.text())
+                ? BidiText.reverseForDisplay(BidiMirroring.mirror(span.text()))
                 : span.text();
         String text = font.sanitizeForRender(span.textStyle(), chipText);
         if (text.isEmpty()) {
@@ -376,8 +377,11 @@ public final class PdfParagraphFragmentRenderHandler
                     // text extraction and copy-paste, carries the visual order. Undoing
                     // that would take ActualText marked content — a known trade-off,
                     // recorded in the changelog rather than hidden here.
+                    // Mirroring happens here and not in the span, for the same reason
+                    // reversal does: PowerPoint applies UAX #9 L4 itself, and a mirror
+                    // baked into the text would come out double-mirrored there.
                     String spanText = textSpan.rightToLeft()
-                            ? BidiText.reverseForDisplay(textSpan.text())
+                            ? BidiText.reverseForDisplay(BidiMirroring.mirror(textSpan.text()))
                             : textSpan.text();
                     String text = font.sanitizeForRender(textSpan.textStyle(), spanText);
                     if (text.isEmpty()) {

@@ -376,7 +376,12 @@ public final class PptxParagraphFragmentRenderHandler
 
     private static String sanitized(FontLibrary fonts, ParagraphTextSpan span) {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        return font.sanitizeForRender(span.textStyle(), span.text());
+        // The span carries shaped Arabic because measurement measures what the PDF
+        // draws. PowerPoint shapes Arabic itself, so it gets the base letters back —
+        // handing it the forms would freeze this shaper's choices into a file a user
+        // may search or copy from.
+        return font.sanitizeForRender(span.textStyle(),
+                com.demcha.compose.engine.text.bidi.ArabicShaper.toBaseLetters(span.text()));
     }
 
     private static PdfFont.VerticalMetrics verticalMetrics(FontLibrary fonts,

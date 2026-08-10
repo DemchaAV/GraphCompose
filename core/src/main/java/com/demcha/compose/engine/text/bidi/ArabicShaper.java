@@ -188,6 +188,42 @@ public final class ArabicShaper {
         return null;
     }
 
+    /**
+     * Maps every presentation form in the text back to its base letters.
+     *
+     * <p>For the backend whose display engine shapes Arabic itself: handing it the
+     * forms would freeze the letters into this shaper's choices and put compatibility
+     * code points into a file a user may search or copy from. Text without a form
+     * passes through as the same instance.</p>
+     *
+     * @param text shaped text
+     * @return the text with base letters restored
+     */
+    public static String toBaseLetters(String text) {
+        if (text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        StringBuilder restored = null;
+        for (int index = 0; index < text.length(); index++) {
+            char character = text.charAt(index);
+            String base = character >= 0xFE80 && character <= 0xFEFC
+                    ? baseLettersOf(character)
+                    : null;
+            if (base != null && restored == null) {
+                restored = new StringBuilder(text.length() + 4);
+                restored.append(text, 0, index);
+            }
+            if (restored != null) {
+                if (base != null) {
+                    restored.append(base);
+                } else {
+                    restored.append(character);
+                }
+            }
+        }
+        return restored == null ? text : restored.toString();
+    }
+
     private static boolean containsArabicLetter(String text) {
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);

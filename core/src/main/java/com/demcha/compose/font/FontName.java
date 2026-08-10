@@ -63,6 +63,28 @@ public final class FontName {
     public static final FontName BAI_JAMJUREE = of("Bai Jamjuree");
     public static final FontName JETBRAINS_MONO = of("JetBrains Mono");
 
+    /**
+     * Arabic naskh family covering Latin and Arabic, including the Arabic
+     * presentation forms contextual shaping relies on.
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
+     * on the classpath.</p>
+     *
+     * @since 2.2.0
+     */
+    public static final FontName AMIRI = of("Amiri");
+
+    /**
+     * Hebrew serif family covering Latin and Hebrew. Upstream ships no italic
+     * face, so italic styles resolve to the regular one.
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
+     * on the classpath.</p>
+     *
+     * @since 2.2.0
+     */
+    public static final FontName DAVID_LIBRE = of("David Libre");
+
     private final String name;
     private final String normalizedName;
 

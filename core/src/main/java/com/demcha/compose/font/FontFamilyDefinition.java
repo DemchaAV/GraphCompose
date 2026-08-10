@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -331,12 +332,38 @@ public final class FontFamilyDefinition {
         }
 
         /**
+         * Families that entered the bundled set after its initial release, mapped
+         * to the fonts-artifact version that first carries them. A resource under
+         * one of these folders is missing for a different reason than the rest:
+         * the artifact is present but predates the family.
+         */
+        private static final Map<String, String> FAMILY_MINIMUM_FONTS_VERSION = Map.of(
+                "amiri", "1.1.0",
+                "davidlibre", "1.1.0");
+
+        /**
+         * A face that has shipped in every release of the font artifact. Its presence
+         * separates "the artifact is missing" from "the artifact is older than the
+         * family being asked for" — two causes with different fixes.
+         */
+        private static final String LONG_STANDING_FACE = "/fonts/google/lato/Lato-Regular.ttf";
+
+        /**
          * Builds the not-found message. For a bundled Google-font resource the
          * likely cause is that the separately-versioned font artifact is not on
-         * the classpath (the fonts moved out of the core jar in v1.8.0), so the
-         * message points at the fix instead of a bare path.
+         * the classpath (the fonts moved out of the core jar in v1.8.0), or that
+         * it is older than the family being requested, so the message points at
+         * the fix instead of a bare path.
          */
         private static String missingResourceMessage(String normalizedPath) {
+            String requiredVersion = FAMILY_MINIMUM_FONTS_VERSION.get(familyFolder(normalizedPath));
+            if (requiredVersion != null && fontArtifactIsOnTheClasspath()) {
+                return "Bundled font resource not found: " + normalizedPath
+                        + ". This family ships in io.github.demchaav:graph-compose-fonts "
+                        + requiredVersion + " or newer — upgrade that dependency (or the "
+                        + "io.github.demchaav:graph-compose-bundle aggregate) to use it, "
+                        + "or register your own font with FontFamilyDefinition.";
+            }
             if (normalizedPath.startsWith("/fonts/google/")) {
                 return "Bundled font resource not found: " + normalizedPath
                         + ". The bundled Google fonts ship in a separate artifact since v1.8.0 — "
@@ -346,6 +373,20 @@ public final class FontFamilyDefinition {
                         + "See https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v1.8.0-fonts.md";
             }
             return "Classpath font resource not found: " + normalizedPath;
+        }
+
+        private static boolean fontArtifactIsOnTheClasspath() {
+            return FontFamilyDefinition.class.getResource(LONG_STANDING_FACE) != null;
+        }
+
+        /** Extracts {@code amiri} from {@code /fonts/google/amiri/Amiri-Regular.ttf}. */
+        private static String familyFolder(String normalizedPath) {
+            if (!normalizedPath.startsWith("/fonts/google/")) {
+                return "";
+            }
+            int start = "/fonts/google/".length();
+            int end = normalizedPath.indexOf('/', start);
+            return end < 0 ? normalizedPath.substring(start) : normalizedPath.substring(start, end);
         }
 
         @Override

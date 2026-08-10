@@ -56,7 +56,7 @@
         <junit.bom.version>6.1.2</junit.bom.version>
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.11</byteBuddy.version>
-        <archunit.version>1.4.2</archunit.version>
+        <archunit.version>1.5.0</archunit.version>
         <jqwik.version>1.10.1</jqwik.version>
 
         <!-- Bundled fonts / emoji, pulled in at test scope only. Pinned to the

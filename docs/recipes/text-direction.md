@@ -80,16 +80,23 @@ No bundled family covers both, so a paragraph mixing Hebrew and Arabic needs a
 font of your own registered through `FontFamilyDefinition`. Without a covering
 font every glyph is replaced with `?` — see [font coverage](../font-coverage.md).
 
-## What is not done yet
+## Arabic joining
+
+Arabic letters change shape by position, and the engine shapes them itself —
+a PDF never runs the font's own OpenType shaping, so the contextual forms are
+reached through the Arabic presentation forms the font carries. `FontName.AMIRI`
+carries them all. A font that covers the Arabic letters but not the forms
+renders unjoined base letters rather than `?`: the joining is lost, the text
+is not. Vowel points and direction marks sit between letters without breaking
+the join.
+
+## Where direction stops
 
 Direction is a property of a **paragraph**. Text inside a table cell goes through the
 table's own layout, which does not carry direction, so the same Hebrew string draws
-correctly in `addParagraph` and reversed in a cell. Set right-to-left text as a paragraph
-where you can; inside a table, the text is drawn in the order it is written.
-
-Arabic renders in unjoined letter forms. Contextual joining needs the font's
-Arabic presentation forms, which `FontName.AMIRI` carries, and the shaping step
-that maps to them is a separate piece of work.
+correctly in `addParagraph` and reversed in a cell, and Arabic in a cell is unjoined. Set
+right-to-left text as a paragraph where you can; inside a table the text is drawn in the
+order it is written.
 
 ## See also
 

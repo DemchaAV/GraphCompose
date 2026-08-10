@@ -72,9 +72,16 @@ public final class PptxParagraphFragmentRenderHandler
         // run, so one shared frame is only safe while every plain run agrees on
         // font size; chips, inline graphics, and mixed sizes go through
         // per-span absolute frames whose tops already encode their own ascent.
+        // A right-to-left line also goes per-span. The shared frame appends its runs and
+        // lets PowerPoint flow them, which puts the words back in reading order and
+        // undoes the ordering the layout resolved; an absolute frame per span pins each
+        // one where the page put it.
         boolean usesAbsoluteSpans = mixesFontSizes(line)
+                || !line.visualOrder().isEmpty()
                 || line.spans().stream().anyMatch(span ->
-                !(span instanceof ParagraphTextSpan textSpan) || textSpan.background() != null);
+                !(span instanceof ParagraphTextSpan textSpan)
+                        || textSpan.background() != null
+                        || textSpan.rightToLeft());
         XSLFTextParagraph paragraph = null;
         if (!usesAbsoluteSpans) {
             double top = environment.canvasHeight() - baselineY
@@ -91,7 +98,9 @@ public final class PptxParagraphFragmentRenderHandler
         }
 
         double cursorX = lineX;
-        for (ParagraphSpan span : line.spans()) {
+        // Drawn in visual order, matching the PDF backend, so the two describe the same
+        // page; for a left-to-right line this is the source order it always was.
+        for (ParagraphSpan span : line.spansInVisualOrder()) {
             if (span instanceof ParagraphTextSpan textSpan) {
                 String text = sanitized(fonts, textSpan);
                 if (textSpan.background() == null) {

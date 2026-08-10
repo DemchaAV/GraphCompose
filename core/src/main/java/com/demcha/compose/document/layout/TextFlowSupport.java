@@ -664,7 +664,8 @@ public final class TextFlowSupport {
                 Math.max(0.0, innerWidth),
                 node.bulletOffset(),
                 indentStrategy,
-                measurement)
+                measurement,
+                toBaseDirection(node.direction()))
                   : ParagraphWrapping.toParagraphLines(
                 ParagraphWrapping.wrapParagraph(
                         logicalLines,

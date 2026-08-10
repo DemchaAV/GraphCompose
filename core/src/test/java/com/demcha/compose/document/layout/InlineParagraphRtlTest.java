@@ -120,4 +120,33 @@ class InlineParagraphRtlTest {
                 .map(ParagraphTextSpan.class::cast)
                 .toList();
     }
+
+    @Test
+    void markdownEmphasisCarriesDirectionToo() {
+        // Markdown splits a line into styled bodies, which is a different splitter
+        // producing the same shape of spans — so it needs the same pass, and a path
+        // that quietly kept logical order would be invisible next to a working one.
+        List<ParagraphLine> lines = ParagraphWrapping.wrapMarkdownParagraph(
+                List.of("**" + HEBREW + "** " + HEBREW_WORLD),
+                STYLE, METRICS, 1000.0, "", TextIndentStrategy.NONE, MEASUREMENT,
+                BaseDirection.RIGHT_TO_LEFT);
+
+        ParagraphLine line = only(lines);
+        assertThat(textSpans(line))
+                .filteredOn(span -> !span.text().isBlank())
+                .allSatisfy(span -> assertThat(span.rightToLeft()).isTrue());
+        assertThat(line.visualOrder()).isNotEmpty();
+    }
+
+    @Test
+    void markdownWithoutRightToLeftTextIsUntouched() {
+        ParagraphLine line = only(ParagraphWrapping.wrapMarkdownParagraph(
+                List.of("**Bold** and plain"),
+                STYLE, METRICS, 1000.0, "", TextIndentStrategy.NONE, MEASUREMENT,
+                BaseDirection.LEFT_TO_RIGHT));
+
+        assertThat(line.visualOrder()).isEmpty();
+        assertThat(textSpans(line)).allSatisfy(span ->
+                assertThat(span.rightToLeft()).isFalse());
+    }
 }

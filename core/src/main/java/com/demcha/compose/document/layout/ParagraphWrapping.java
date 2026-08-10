@@ -404,6 +404,18 @@ final class ParagraphWrapping {
                                                              String bulletOffset,
                                                              TextIndentStrategy indentStrategy,
                                                              TextMeasurementSystem measurement) {
+        return wrapMarkdownParagraph(logicalLines, style, metrics, maxWidth, bulletOffset,
+                indentStrategy, measurement, BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT);
+    }
+
+    static List<ParagraphLine> wrapMarkdownParagraph(List<String> logicalLines,
+                                                             TextStyle style,
+                                                             TextMeasurementSystem.LineMetrics metrics,
+                                                             double maxWidth,
+                                                             String bulletOffset,
+                                                             TextIndentStrategy indentStrategy,
+                                                             TextMeasurementSystem measurement,
+                                                     BidiParagraphResolver.BaseDirection baseDirection) {
         List<ParagraphLine> result = new ArrayList<>();
         ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, style, measurement);
         MarkDownParser parser = new MarkDownParser();
@@ -451,7 +463,7 @@ final class ParagraphWrapping {
                 // Does not fit. If the line already has content, flush it and retry
                 // the token on a fresh line before resorting to a break.
                 if (!currentLine.isEmpty()) {
-                    result.add(toParagraphLine(currentLine, metrics, measurement));
+                    result.add(toParagraphLine(currentLine, metrics, measurement, baseDirection));
                     currentLine = new ArrayList<>();
                     if (!continuationPrefix.isEmpty()) {
                         currentLine.add(new TextDataBody(continuationPrefix, style));
@@ -489,7 +501,7 @@ final class ParagraphWrapping {
                     currentWidth += measurement.textWidth(chunkBody.textStyle(), chunkBody.text());
 
                     if (chunkIndex < chunks.size() - 1) {
-                        result.add(toParagraphLine(currentLine, metrics, measurement));
+                        result.add(toParagraphLine(currentLine, metrics, measurement, baseDirection));
                         currentLine = new ArrayList<>();
                         if (!continuationPrefix.isEmpty()) {
                             currentLine.add(new TextDataBody(continuationPrefix, style));
@@ -499,7 +511,7 @@ final class ParagraphWrapping {
                 }
             }
 
-            result.add(toParagraphLine(currentLine, metrics, measurement));
+            result.add(toParagraphLine(currentLine, metrics, measurement, baseDirection));
         }
 
         return List.copyOf(result);
@@ -594,7 +606,8 @@ final class ParagraphWrapping {
 
     private static ParagraphLine toParagraphLine(List<TextDataBody> bodies,
                                                  TextMeasurementSystem.LineMetrics metrics,
-                                                 TextMeasurementSystem measurement) {
+                                                 TextMeasurementSystem measurement,
+                                                 BidiParagraphResolver.BaseDirection baseDirection) {
         List<TextDataBody> trimmedBodies = trimTrailingWhitespaceBodies(bodies);
         if (trimmedBodies.isEmpty()) {
             return emptyParagraphLine(metrics);
@@ -619,7 +632,8 @@ final class ParagraphWrapping {
                 textLineHeight,
                 metrics.ascent(),
                 metrics.baselineOffsetFromBottom(),
-                spans);
+                spans,
+                directionOf(spans, baseDirection));
     }
 
     private static List<List<InlineLayoutToken>> tokenizeInlineRuns(List<InlineRun> runs,

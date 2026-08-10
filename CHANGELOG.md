@@ -5,6 +5,41 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.0 — Planned
 
+### Public API
+
+- **A paragraph can say which way it runs.** `ParagraphBuilder.direction(...)` takes
+  `TextDirection.LTR`, `RTL`, or `AUTO`, which reads the direction off the first strong
+  character. Hebrew and Arabic were previously laid out and drawn in logical order — the
+  order text is read in, not the order a page draws it — so every line came out reversed
+  in a document that otherwise looked finished.
+
+  Direction is a separate choice from `TextAlign`: alignment says where a line sits,
+  direction says which way it runs. They meet in one place, so a right-to-left paragraph
+  aligns right unless the caller chose an alignment of their own.
+
+  Lines are resolved with the Unicode Bidirectional Algorithm, so a Latin word or a
+  number embedded in Hebrew keeps running forwards, and the paragraph direction only
+  decides what it is embedded in. A line with no right-to-left character resolves to
+  itself without the algorithm running at all, so existing documents take the path they
+  always took — held to that by the layout snapshots and visual baselines, none of which
+  moved.
+
+  All three wrap paths carry it: plain text, inline runs (what templates author
+  through), and markdown. Each backend does what it must and no more — the PDF backend
+  reverses a right-to-left run, because a PDF draws characters in the order it is given
+  them; PowerPoint and Word have their own bidirectional engines, so the text reaches
+  them in logical order and a right-to-left paragraph is marked rather than rewritten.
+
+  The bidirectional formatting characters (`U+200E`, `U+200F`, `U+061C` and the
+  embeddings and isolates) now survive control-character sanitizing until the algorithm
+  has read them. They are what an author uses to steer a neutral stretch of text, and
+  removing them with the rest of Unicode category C deleted the instruction before
+  anything could act on it. They draw nothing, so they are dropped again at the seam
+  that measures and draws — where substituting them with `?` would have put a visible
+  mark on the page and given a zero-width character a width.
+
+  Arabic renders unjoined for now: contextual letter forms are the next step.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

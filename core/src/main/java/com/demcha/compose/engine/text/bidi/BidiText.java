@@ -17,6 +17,8 @@ import java.util.List;
  * which changes what the reader sees rather than only where it sits.</p>
  *
  * <p>Ownership: shared engine foundation.</p>
+ *
+ * @since 2.2.0
  */
 public final class BidiText {
 
@@ -34,7 +36,7 @@ public final class BidiText {
             return text == null ? "" : text;
         }
 
-        BreakIterator clusters = BreakIterator.getCharacterInstance();
+        BreakIterator clusters = BreakIterator.getCharacterInstance(java.util.Locale.ROOT);
         clusters.setText(text);
 
         List<String> parts = new ArrayList<>();

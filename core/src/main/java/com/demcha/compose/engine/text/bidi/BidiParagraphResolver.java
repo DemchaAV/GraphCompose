@@ -27,6 +27,8 @@ import java.util.List;
  * <p>Ownership: shared engine foundation. Callers translate their own public
  * direction option into a {@link BaseDirection}; this class knows nothing about the
  * document surface.</p>
+ *
+ * @since 2.2.0
  */
 public final class BidiParagraphResolver {
 
@@ -236,6 +238,8 @@ public final class BidiParagraphResolver {
      * handed to the algorithm rather than decoded here.
      */
     private static boolean isBidirectional(char character) {
+        // Written as escapes deliberately: raw bidirectional characters in source are
+        // the Trojan-Source shape (CVE-2021-42574) and trip scanners and renderers.
         return (character >= '֐' && character <= 'ࣿ')
                 || (character >= 'יִ' && character <= '﷿')
                 || (character >= 'ﹰ' && character <= '﻿')

@@ -207,4 +207,25 @@ class BidiParagraphResolverTest {
                     .isEqualTo(Bidi.requiresBidi(chars, 0, chars.length));
         }
     }
+
+    @Test
+    void theFastScanMayOverIncludeButNeverMisses() {
+        // The Arabic comma is bidi class CS — a separator the JDK's requiresBidi does
+        // not count, while the range scan does. Over-inclusion costs one harmless trip
+        // through the resolver, which finds nothing to reorder; the error the scan must
+        // never make is the opposite one, missing a character and skipping reordering
+        // entirely. (Arabic-Indic digits, class AN, are counted by BOTH — the JDK's own
+        // mask includes them.)
+        String arabicComma = "،";
+        char[] chars = arabicComma.toCharArray();
+
+        assertThat(Bidi.requiresBidi(chars, 0, chars.length)).isFalse();
+        assertThat(BidiParagraphResolver.requiresBidi(arabicComma)).isTrue();
+
+        String arabicIndicDigits = "١٢٣";
+        char[] digitChars = arabicIndicDigits.toCharArray();
+        assertThat(BidiParagraphResolver.requiresBidi(arabicIndicDigits))
+                .isEqualTo(Bidi.requiresBidi(digitChars, 0, digitChars.length))
+                .isTrue();
+    }
 }

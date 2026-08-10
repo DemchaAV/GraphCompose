@@ -15,7 +15,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
  * @param background optional rounded background "chip" painted behind the glyphs, or {@code null}
  * @param rightToLeft whether the span's characters are drawn right to left; the text
  *                    itself stays in logical order, so a backend that draws characters
- *                    in the order given has to reverse them
+ *                    in the order given has to reverse them ({@code @since 2.2.0})
  */
 public record ParagraphTextSpan(
         String text,

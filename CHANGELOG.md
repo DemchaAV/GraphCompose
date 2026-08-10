@@ -38,7 +38,12 @@ follow semantic versioning; release dates are ISO 8601.
   that measures and draws — where substituting them with `?` would have put a visible
   mark on the page and given a zero-width character a width.
 
-  Arabic renders unjoined for now: contextual letter forms are the next step.
+  Two limits are worth knowing. Plain text extraction and copy-paste read the PDF's
+  content stream, which carries the visual order — selecting a Hebrew line out of a
+  produced PDF yields its characters reversed. Undoing that would take `ActualText`
+  marked content, which this release does not write; the DOCX export is unaffected,
+  since Word receives logical text. And Arabic renders unjoined for now: contextual
+  letter forms are the next step.
 
 ### Fonts
 

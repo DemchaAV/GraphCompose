@@ -11,6 +11,8 @@ import com.demcha.compose.document.node.TextAlign;
  * copies of the same expression is three chances for them to drift, and a disagreement
  * shows up as a link that no longer covers its text, or a slide whose words sit a few
  * points off where the page had them.</p>
+ *
+ * @since 2.2.0
  */
 public final class ParagraphLineGeometry {
 

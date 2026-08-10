@@ -21,7 +21,9 @@ import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.RowNode;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
@@ -318,7 +320,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
         para.setAlignment(toAlignment(node.align()));
+        applyDirection(para, node);
         writeParagraphRuns(para, node);
+    }
+
+    /**
+     * Marks a right-to-left paragraph so Word lays it out in that direction.
+     *
+     * <p>The text stays in logical order — unlike a fixed-layout backend, Word has its
+     * own bidirectional engine and does the reordering and the Arabic joining itself.
+     * What it cannot infer is the paragraph's base direction: without {@code w:bidi} a
+     * line that starts with a neutral character, or one that mixes scripts, is laid out
+     * as left-to-right text that happens to contain Hebrew.</p>
+     *
+     * <p>{@link TextDirection#AUTO} is not written out. It was already resolved into a
+     * concrete alignment when the node was built, and asking Word to guess again could
+     * reach a different answer than the page did.</p>
+     */
+    private static void applyDirection(XWPFParagraph para, ParagraphNode node) {
+        if (node.direction() != TextDirection.RTL) {
+            return;
+        }
+        CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
+        if (!properties.isSetBidi()) {
+            properties.addNewBidi();
+        }
     }
 
     /**

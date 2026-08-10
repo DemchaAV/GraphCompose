@@ -154,6 +154,34 @@ public final class BidiParagraphResolver {
         return identity ? EMPTY_ORDER : order;
     }
 
+    /**
+     * Returns the embedding level of every character of a line.
+     *
+     * <p>For callers whose items are already split — inline runs arrive as one span per
+     * word — where each item sits in the line is known, so its direction is a lookup
+     * rather than a second split.</p>
+     *
+     * @param logicalLine the raw line, before control-character sanitizing
+     * @param baseDirection the paragraph direction to resolve against
+     * @return one level per character, or an empty array when every character is
+     *         left to right
+     */
+    public static int[] levelsFor(String logicalLine, BaseDirection baseDirection) {
+        if (logicalLine == null || logicalLine.isEmpty()
+                || !needsResolution(logicalLine, baseDirection)) {
+            return EMPTY_ORDER;
+        }
+
+        Bidi bidi = new Bidi(logicalLine, flagsFor(baseDirection));
+        int[] levels = new int[logicalLine.length()];
+        boolean anyRightToLeft = false;
+        for (int index = 0; index < levels.length; index++) {
+            levels[index] = bidi.getLevelAt(index);
+            anyRightToLeft |= isRightToLeftLevel(levels[index]);
+        }
+        return anyRightToLeft ? levels : EMPTY_ORDER;
+    }
+
     /** Returns whether an embedding level is drawn right to left. */
     public static boolean isRightToLeftLevel(int embeddingLevel) {
         return (embeddingLevel & 1) == 1;

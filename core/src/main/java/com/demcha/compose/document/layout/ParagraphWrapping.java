@@ -248,6 +248,18 @@ final class ParagraphWrapping {
                                                            String bulletOffset,
                                                            TextIndentStrategy indentStrategy,
                                                            TextMeasurementSystem measurement) {
+        return wrapInlineParagraph(runs, defaultStyle, defaultMetrics, maxWidth, bulletOffset,
+                indentStrategy, measurement, BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT);
+    }
+
+    static List<ParagraphLine> wrapInlineParagraph(List<InlineRun> runs,
+                                                           TextStyle defaultStyle,
+                                                           TextMeasurementSystem.LineMetrics defaultMetrics,
+                                                           double maxWidth,
+                                                           String bulletOffset,
+                                                           TextIndentStrategy indentStrategy,
+                                                           TextMeasurementSystem measurement,
+                                                           BidiParagraphResolver.BaseDirection baseDirection) {
         List<ParagraphLine> result = new ArrayList<>();
         ParagraphIndentSpec indentSpec = ParagraphIndentSpec.from(bulletOffset, defaultStyle, measurement);
         List<List<InlineLayoutToken>> logicalLines = tokenizeInlineRuns(runs, defaultStyle, measurement);
@@ -294,7 +306,7 @@ final class ParagraphWrapping {
                 // Does not fit. If the line already has content, flush it and retry
                 // the token on a fresh line before resorting to a break.
                 if (!currentLine.isEmpty()) {
-                    result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
+                    result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement, baseDirection));
                     currentLine = new ArrayList<>();
                     if (!continuationPrefix.isEmpty()) {
                         currentLine.add(InlineTextToken.of(continuationPrefix, defaultStyle, null, measurement));
@@ -360,7 +372,7 @@ final class ParagraphWrapping {
                     currentWidth += chunkToken.wrapWidth();
 
                     if (pieceIndex < pieces.size() - 1) {
-                        result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
+                        result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement, baseDirection));
                         currentLine = new ArrayList<>();
                         if (!continuationPrefix.isEmpty()) {
                             currentLine.add(InlineTextToken.of(continuationPrefix, defaultStyle, null, measurement));
@@ -370,7 +382,7 @@ final class ParagraphWrapping {
                 }
             }
 
-            result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement));
+            result.add(toInlineParagraphLine(currentLine, defaultMetrics, measurement, baseDirection));
         }
 
         return List.copyOf(result);
@@ -681,7 +693,8 @@ final class ParagraphWrapping {
 
     private static ParagraphLine toInlineParagraphLine(List<InlineLayoutToken> tokens,
                                                        TextMeasurementSystem.LineMetrics defaultMetrics,
-                                                       TextMeasurementSystem measurement) {
+                                                       TextMeasurementSystem measurement,
+                                                       BidiParagraphResolver.BaseDirection baseDirection) {
         List<InlineLayoutToken> trimmedTokens = trimTrailingWhitespaceTokens(tokens);
         if (trimmedTokens.isEmpty()) {
             return emptyParagraphLine(defaultMetrics);
@@ -841,8 +854,73 @@ final class ParagraphWrapping {
                 dominantTextLineHeight,
                 dominantAscent,
                 dominantBaselineFromBottom,
-                spans);
+                spans,
+                directionOf(spans, baseDirection));
     }
+
+    /**
+     * Works out how a line's already-split spans are drawn, and marks the ones that run
+     * right to left.
+     *
+     * <p>Inline runs arrive as one span per word, so a direction change lands on a span
+     * boundary and each span only needs to be told which way it goes — no second split.
+     * The line is resolved over a probe string where an inline graphic stands in as an
+     * object replacement character, which keeps a span's position in the probe equal to
+     * its position in the line and lets an image sit inside right-to-left text as the
+     * neutral object it is.</p>
+     *
+     * <p>Returns an empty order for a line that is entirely left to right, leaving both
+     * the spans and the drawing untouched.</p>
+     */
+    private static List<Integer> directionOf(List<ParagraphSpan> spans,
+                                             BidiParagraphResolver.BaseDirection baseDirection) {
+        if (spans.isEmpty()) {
+            return List.of();
+        }
+
+        StringBuilder probe = new StringBuilder();
+        int[] offsets = new int[spans.size()];
+        for (int index = 0; index < spans.size(); index++) {
+            offsets[index] = probe.length();
+            if (spans.get(index) instanceof ParagraphTextSpan textSpan) {
+                probe.append(textSpan.text());
+            } else {
+                probe.append(OBJECT_REPLACEMENT);
+            }
+        }
+
+        int[] levels = BidiParagraphResolver.levelsFor(probe.toString(), baseDirection);
+        if (levels.length == 0) {
+            return List.of();
+        }
+
+        int[] spanLevels = new int[spans.size()];
+        for (int index = 0; index < spans.size(); index++) {
+            int offset = Math.min(offsets[index], levels.length - 1);
+            spanLevels[index] = levels[offset];
+            if (spans.get(index) instanceof ParagraphTextSpan textSpan
+                    && BidiParagraphResolver.isRightToLeftLevel(spanLevels[index])
+                    && !textSpan.rightToLeft()) {
+                spans.set(index, new ParagraphTextSpan(
+                        textSpan.text(),
+                        textSpan.textStyle(),
+                        textSpan.width(),
+                        textSpan.height(),
+                        textSpan.linkTarget(),
+                        textSpan.background(),
+                        true));
+            }
+        }
+
+        List<Integer> visualOrder = new ArrayList<>();
+        for (int position : BidiParagraphResolver.visualOrder(spanLevels)) {
+            visualOrder.add(position);
+        }
+        return visualOrder;
+    }
+
+    /** Stands in for an inline graphic while a line's direction is resolved. */
+    private static final char OBJECT_REPLACEMENT = '￼';
 
     private static double inlineLineWidth(List<InlineLayoutToken> tokens) {
         double width = 0.0;

@@ -6,3 +6,9 @@
 # (a CRLF shebang is unrunnable there); the Windows `mvnw.cmd` batch stays CRLF.
 mvnw text eol=lf
 mvnw.cmd text eol=crlf
+
+# PDFs are binary. Without this, core.autocrlf treats the committed README
+# previews as text on checkout and corrupts them in the working tree — which
+# also blocks any branch switch (the file shows as modified forever). Found when the
+# A/B benchmark could not return to its branch across a preview change.
+*.pdf binary

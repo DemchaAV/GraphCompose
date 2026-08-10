@@ -689,11 +689,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             ParagraphLine line = payload.lines().get(lineIndex);
             double lineTop = cursorTop;
             double resolvedLineHeight = line.lineHeight();
-            double lineX = switch (payload.align()) {
-                case RIGHT -> innerX + innerWidth - line.width();
-                case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
-                case LEFT -> innerX;
-            };
+            double lineX = ParagraphLineGeometry.lineStartX(
+                    payload.align(), innerX, innerWidth, line.width());
 
             // Paragraph-level link covers each rendered line tightly. Without
             // this, right- or center-aligned paragraphs leaked clickable area

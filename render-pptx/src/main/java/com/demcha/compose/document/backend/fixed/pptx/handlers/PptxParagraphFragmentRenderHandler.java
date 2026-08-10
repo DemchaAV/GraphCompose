@@ -49,11 +49,8 @@ public final class PptxParagraphFragmentRenderHandler
             if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
                 baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
             }
-            double lineX = switch (payload.align()) {
-                case RIGHT -> innerX + innerWidth - line.width();
-                case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
-                case LEFT -> innerX;
-            };
+            double lineX = ParagraphLineGeometry.lineStartX(
+                    payload.align(), innerX, innerWidth, line.width());
             renderLine(fragment.pageIndex(), line, lineX, baselineY, cursorTop, payload, fonts, environment);
             cursorTop -= line.lineHeight() + payload.lineGap();
         }

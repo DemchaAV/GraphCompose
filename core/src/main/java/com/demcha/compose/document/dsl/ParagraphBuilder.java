@@ -17,6 +17,7 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -43,6 +44,8 @@ public final class ParagraphBuilder {
     private final List<InlineRun> inlineRuns = new ArrayList<>();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
     private TextAlign align = TextAlign.LEFT;
+    private boolean alignChosenByCaller;
+    private TextDirection direction = TextDirection.LTR;
     private double lineSpacing = 0.0;
     private String bulletOffset = "";
     private DocumentTextIndent indentStrategy = DocumentTextIndent.NONE;
@@ -102,6 +105,24 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder align(TextAlign align) {
         this.align = align == null ? TextAlign.LEFT : align;
+        this.alignChosenByCaller = true;
+        return this;
+    }
+
+    /**
+     * Sets the writing direction of the paragraph.
+     *
+     * <p>A {@link TextDirection#RTL} or first-strong-resolved {@link TextDirection#AUTO}
+     * paragraph aligns to the right, because that is the edge a right-to-left line starts
+     * from. Calling {@link #align(TextAlign)} overrides that — the caller's alignment is
+     * never second-guessed.</p>
+     *
+     * @param direction writing direction; {@code null} restores {@link TextDirection#LTR}
+     * @return this builder
+     * @since 2.2.0
+     */
+    public ParagraphBuilder direction(TextDirection direction) {
+        this.direction = direction == null ? TextDirection.LTR : direction;
         return this;
     }
 
@@ -1046,7 +1067,7 @@ public final class ParagraphBuilder {
                 text,
                 List.copyOf(inlineRuns),
                 textStyle,
-                align,
+                resolveAlign(),
                 lineSpacing,
                 bulletOffset,
                 indentStrategy,
@@ -1056,7 +1077,20 @@ public final class ParagraphBuilder {
                 margin,
                 autoSize,
                 verticalAlign,
-                anchor);
+                anchor,
+                direction);
+    }
+
+    /**
+     * A right-to-left paragraph starts at the right edge, so that is where its lines sit
+     * unless the caller said otherwise. {@link TextDirection#AUTO} is resolved later, from
+     * the text itself, so it cannot decide an alignment here.
+     */
+    private TextAlign resolveAlign() {
+        if (alignChosenByCaller || direction != TextDirection.RTL) {
+            return align;
+        }
+        return TextAlign.RIGHT;
     }
 }
 

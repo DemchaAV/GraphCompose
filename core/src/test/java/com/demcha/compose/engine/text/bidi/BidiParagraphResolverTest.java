@@ -5,6 +5,8 @@ import com.demcha.compose.engine.text.bidi.BidiParagraphResolver.DirectionalRun;
 
 import org.junit.jupiter.api.Test;
 
+import java.text.Bidi;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,5 +185,26 @@ class BidiParagraphResolverTest {
         int[] order = BidiParagraphResolver.visualOrder(new int[]{1, 2, 1, 2, 1});
 
         assertThat(order).hasSize(5).containsExactlyInAnyOrder(0, 1, 2, 3, 4);
+    }
+
+    @Test
+    void theFastScanAgreesWithTheAlgorithmItStandsInFor() {
+        // requiresBidi replaced java.text.Bidi.requiresBidi on the hot path, because that
+        // one takes a char[] and so copies every line of every document. A scan that
+        // disagreed would either send ordinary text down the reordering path or, worse,
+        // quietly skip a line that needed it — so it is checked against the original.
+        List<String> samples = List.of(
+                "", "Plain ASCII 123.", "café naïve — dash",
+                HEBREW, ARABIC, HEBREW + " Hello " + ARABIC,
+                "abc " + RLM + " def", "plain " + LRM + " text",
+                "emoji 🎉 here",
+                "א", "יִ", "ﹰ", "ܐ", "ހ", "؜");
+
+        for (String sample : samples) {
+            char[] chars = sample.toCharArray();
+            assertThat(BidiParagraphResolver.requiresBidi(sample))
+                    .describedAs("sample [%s]", sample)
+                    .isEqualTo(Bidi.requiresBidi(chars, 0, chars.length));
+        }
     }
 }

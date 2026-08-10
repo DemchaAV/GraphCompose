@@ -190,6 +190,63 @@ public final class BidiParagraphResolver {
     private static final int[] EMPTY_ORDER = new int[0];
 
     /**
+     * Returns whether a line contains anything the algorithm would have to reorder.
+     *
+     * <p>{@link Bidi#requiresBidi} answers the same question but takes a {@code char[]},
+     * so calling it copies the line. This runs on every laid-out line of every document,
+     * the overwhelming majority of which are ordinary left-to-right text, and a copy per
+     * line is measurable: it cost the layout stage double digits before this scan
+     * replaced it. Reading the string in place costs nothing and stops at the first
+     * character that settles it.</p>
+     *
+     * @param text line to inspect
+     * @return {@code true} when the line holds a right-to-left or bidirectional character
+     */
+    public static boolean requiresBidi(String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        for (int index = 0; index < text.length(); index++) {
+            char character = text.charAt(index);
+            if (Character.isHighSurrogate(character) && index + 1 < text.length()) {
+                // A supplementary code point is decoded and asked directly: the surrogate
+                // range holds emoji as well as right-to-left scripts, and treating every
+                // pair as bidirectional would send an emoji-bearing line down the slow
+                // path for nothing.
+                int codePoint = text.codePointAt(index);
+                index++;
+                byte directionality = Character.getDirectionality(codePoint);
+                if (directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+                        || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) {
+                    return true;
+                }
+                continue;
+            }
+            if (isBidirectional(character)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The ranges {@link Bidi#requiresBidi} treats as needing resolution: Hebrew, Arabic,
+     * Syriac, Thaana and the rest of the right-to-left block; the Arabic presentation
+     * forms; the bidirectional formatting characters; and the surrogates, which are
+     * handed to the algorithm rather than decoded here.
+     */
+    private static boolean isBidirectional(char character) {
+        return (character >= '֐' && character <= 'ࣿ')
+                || (character >= 'יִ' && character <= '﷿')
+                || (character >= 'ﹰ' && character <= '﻿')
+                || character == '‏'
+                || (character >= '‪' && character <= '‮')
+                || (character >= '⁦' && character <= '⁩')
+                || character == '؜'
+                || Character.isSurrogate(character);
+    }
+
+    /**
      * A left-to-right paragraph with no right-to-left character resolves to itself, and
      * skipping the algorithm keeps that path allocation-free.
      */
@@ -197,7 +254,7 @@ public final class BidiParagraphResolver {
         if (baseDirection == BaseDirection.RIGHT_TO_LEFT) {
             return true;
         }
-        return Bidi.requiresBidi(logicalLine.toCharArray(), 0, logicalLine.length());
+        return requiresBidi(logicalLine);
     }
 
     private static int flagsFor(BaseDirection baseDirection) {

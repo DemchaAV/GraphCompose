@@ -174,11 +174,16 @@ final class ParagraphWrapping {
         double textLineHeight = metrics.lineHeight();
         for (String line : wrappedLines) {
             String safeLine = line == null ? "" : line;
-            List<BidiParagraphResolver.DirectionalRun> runs =
-                    BidiParagraphResolver.resolve(safeLine, baseDirection);
-            if (runs.size() > 1 || (runs.size() == 1 && runs.get(0).isRightToLeft())) {
-                result.add(directionalLine(runs, style, metrics, measurement, textLineHeight));
-                continue;
+            // Checked before resolving, not inside it: a line with nothing to reorder must
+            // not pay for a copy of itself, a run record and a list, on every line of every
+            // document. It is the difference between a scan and an allocation per line.
+            if (needsDirectionalLayout(safeLine, baseDirection)) {
+                List<BidiParagraphResolver.DirectionalRun> runs =
+                        BidiParagraphResolver.resolve(safeLine, baseDirection);
+                if (runs.size() > 1 || (runs.size() == 1 && runs.get(0).isRightToLeft())) {
+                    result.add(directionalLine(runs, style, metrics, measurement, textLineHeight));
+                    continue;
+                }
             }
 
             // One left-to-right run: the line every document had before direction
@@ -888,7 +893,7 @@ final class ParagraphWrapping {
      */
     private static List<Integer> directionOf(List<ParagraphSpan> spans,
                                              BidiParagraphResolver.BaseDirection baseDirection) {
-        if (spans.isEmpty()) {
+        if (spans.isEmpty() || !spansNeedDirectionalLayout(spans, baseDirection)) {
             return List.of();
         }
 
@@ -935,6 +940,32 @@ final class ParagraphWrapping {
 
     /** Stands in for an inline graphic while a line's direction is resolved. */
     private static final char OBJECT_REPLACEMENT = '￼';
+
+    /**
+     * Whether a line has to go through directional layout at all. An explicit
+     * right-to-left paragraph always does; otherwise only text that holds something to
+     * reorder does, which is a scan rather than a copy.
+     */
+    private static boolean needsDirectionalLayout(String text,
+                                                  BidiParagraphResolver.BaseDirection baseDirection) {
+        return baseDirection == BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT
+                || BidiParagraphResolver.requiresBidi(text);
+    }
+
+    /** The same question for a line that is already split into spans. */
+    private static boolean spansNeedDirectionalLayout(List<ParagraphSpan> spans,
+                                                      BidiParagraphResolver.BaseDirection baseDirection) {
+        if (baseDirection == BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT) {
+            return true;
+        }
+        for (ParagraphSpan span : spans) {
+            if (span instanceof ParagraphTextSpan textSpan
+                    && BidiParagraphResolver.requiresBidi(textSpan.text())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private static double inlineLineWidth(List<InlineLayoutToken> tokens) {
         double width = 0.0;

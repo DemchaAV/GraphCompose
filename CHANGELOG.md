@@ -115,7 +115,7 @@ follow semantic versioning; release dates are ISO 8601.
   font artifact, in a drawn regular and bold. It carries all 11 172 precomposed Hangul
   syllables — asserted whole rather than sampled, since a gap in that range loses
   whichever words use it while the rest of the document renders — plus both jamo forms
-  and Latin-1, Latin Extended-A, Cyrillic and Greek.
+  and Latin-1, Latin Extended-A, the whole Cyrillic block and the modern Greek alphabet.
 
   The Latin coverage is why this family rather than a better-known one. A paragraph is
   drawn in a single family, so a Korean sentence holding a European name is drawn

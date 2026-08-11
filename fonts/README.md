@@ -34,7 +34,8 @@ resolve to it: they render, unemboldened and upright.
 
 Korean arrives with **Gothic A1** (`FontName.GOTHIC_A1`), in a drawn regular and bold.
 It carries all 11 172 precomposed Hangul syllables, both jamo forms, and — unlike the
-better-known Korean families — Latin-1, Latin Extended-A, Cyrillic and Greek. That last
+better-known Korean families — Latin-1, Latin Extended-A, the whole Cyrillic block and
+the modern Greek alphabet. That last
 part matters more than it sounds: one paragraph is drawn in one family, so a Korean
 sentence holding a European name is drawn entirely in the Korean font, and a family with
 ASCII but no accents turns *Müller* into *M?ller*. Hanja are not covered.

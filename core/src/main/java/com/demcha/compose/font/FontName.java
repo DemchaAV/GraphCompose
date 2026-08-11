@@ -115,7 +115,7 @@ public final class FontName {
 
     /**
      * Korean sans family covering the full Hangul syllable range alongside Latin,
-     * Latin Extended-A, Cyrillic and Greek.
+     * Latin Extended-A, the Cyrillic block and the modern Greek alphabet.
      *
      * <p>Korean text is normally written in precomposed syllables. This family also
      * carries the conjoining jamo a decomposed (NFD) string is made of, so text that

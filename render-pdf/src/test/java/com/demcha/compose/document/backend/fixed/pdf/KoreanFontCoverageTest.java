@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.face;
 import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.unencodable;
+import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.unencodableLetters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.demcha.compose.engine.components.content.text.TextDecoration;
@@ -53,15 +54,25 @@ class KoreanFontCoverageTest {
     private static final int LATIN_1_SUPPLEMENT_FIRST = 0x00C0;
     private static final int LATIN_1_SUPPLEMENT_LAST = 0x00FF;
 
-    private static final int CYRILLIC_FIRST = 0x0410;
-    private static final int CYRILLIC_LAST = 0x044F;
+    /**
+     * The whole Cyrillic block, not the Russian alphabet inside it: U+0400..U+045F carries
+     * Ё and Ї and the rest that a range starting at U+0410 quietly leaves out.
+     */
+    private static final int CYRILLIC_FIRST = 0x0400;
+    private static final int CYRILLIC_LAST = 0x04FF;
 
     private static final int LATIN_EXTENDED_A_FIRST = 0x0100;
     private static final int LATIN_EXTENDED_A_LAST = 0x017F;
 
-    // U+03A2 is unassigned, so no font carries it and a plain sweep would never be empty.
-    private static final int GREEK_FIRST = 0x0391;
-    private static final int GREEK_LAST = 0x03A1;
+    /**
+     * The modern Greek alphabet, both cases and the accented capitals — not the whole
+     * Greek and Coptic block, whose archaic and Coptic letters no text face carries.
+     * This range ended at U+03A1 to dodge the unassigned U+03A2, which left it covering
+     * half the capitals and no lowercase at all while the docs promised the script; the
+     * letters-only sweep skips the unassigned code points instead.
+     */
+    private static final int GREEK_FIRST = 0x0386;
+    private static final int GREEK_LAST = 0x03CE;
 
     private static final List<TextDecoration> FACES =
             List.of(TextDecoration.DEFAULT, TextDecoration.BOLD);
@@ -100,13 +111,13 @@ class KoreanFontCoverageTest {
                     .describedAs("a paragraph is drawn in one family, so a Korean sentence "
                             + "holding a European name is drawn in this font too")
                     .isEmpty();
-            assertThat(unencodable(FontName.GOTHIC_A1, decoration, CYRILLIC_FIRST, CYRILLIC_LAST))
+            assertThat(unencodableLetters(FontName.GOTHIC_A1, decoration, CYRILLIC_FIRST, CYRILLIC_LAST))
                     .isEmpty();
-            assertThat(unencodable(FontName.GOTHIC_A1, decoration,
+            assertThat(unencodableLetters(FontName.GOTHIC_A1, decoration,
                     LATIN_EXTENDED_A_FIRST, LATIN_EXTENDED_A_LAST))
                     .describedAs("the public Javadoc and both docs promise Latin Extended-A")
                     .isEmpty();
-            assertThat(unencodable(FontName.GOTHIC_A1, decoration, GREEK_FIRST, GREEK_LAST))
+            assertThat(unencodableLetters(FontName.GOTHIC_A1, decoration, GREEK_FIRST, GREEK_LAST))
                     .describedAs("and Greek")
                     .isEmpty();
         }

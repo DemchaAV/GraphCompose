@@ -1087,8 +1087,8 @@ public final class ParagraphBuilder {
      * unless the caller said otherwise.
      *
      * <p>{@link TextDirection#AUTO} is decided the same way the bidirectional algorithm
-     * decides it — by the first strong character — which {@link Character} answers
-     * without the engine. Resolving it here rather than during layout is what keeps
+     * decides it — by the first strong character, read through the same resolver the
+     * layout reads. Resolving it here rather than during layout is what keeps
      * "the caller did not choose an alignment" distinguishable from "the caller chose
      * LEFT": the node carries a concrete alignment, and that distinction lives only in
      * this builder.</p>
@@ -1097,9 +1097,6 @@ public final class ParagraphBuilder {
         if (alignChosenByCaller || direction == TextDirection.LTR) {
             return align;
         }
-        // Asked of the same resolver the layout asks, rather than answered again here.
-        // The paragraph has to sit at the edge it is laid out from, and two readings of
-        // "which way does this run" are two chances to pick different edges.
         // Asked of the same resolver the layout asks, rather than answered again here.
         // The paragraph has to sit at the edge it is laid out from, and two readings of
         // "which way does this run" are two chances to pick different edges.

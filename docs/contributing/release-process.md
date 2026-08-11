@@ -141,16 +141,27 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
   [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
   only `graph-compose-fonts` to Central. Then bump
-  `<graphcompose.fonts.version>` in the root reactor `pom.xml` (inherited by
-  examples + benchmarks) and `bundle/pom.xml` to the new fonts version so those
-  consumers pin it. `core/pom.xml` does **not** carry this property — the
-  engine has no dependency on the fonts artifact (its tests read the fonts from
-  the sibling module's source via `<testResources>`).
-- **No fonts bootstrap for the engine.** Because the engine does not depend on
-  the fonts artifact, `./mvnw clean verify -pl :graph-compose-core` builds it
-  without the fonts jar being published or installed. Only the consumer modules (examples,
-  benchmarks) need `graph-compose-fonts` in the local repo — their CI jobs run
-  `./mvnw -f fonts/pom.xml install` before building.
+  `<graphcompose.fonts.version>` to the new version in **every pom that declares
+  it** — currently the root reactor `pom.xml` (inherited by examples and
+  benchmarks), `core/pom.xml`, `render-pdf`, `render-docx`, `render-pptx` and
+  `bundle/pom.xml`. Do not work from that list: `VersionConsistencyGuardTest`
+  discovers the declaring poms and fails on any that disagrees with the root, so
+  run it rather than trusting a list that has been short before.
+- **Cut the tag last.** A Central artifact is immutable, and the catalog's
+  minimum-version metadata names the version a family first ships in. So the tag
+  for a fonts version goes up only once **every** family intended for it has
+  landed on the release branch — a tag cut between two font PRs publishes an
+  artifact that the engine then tells consumers contains families it does not,
+  and the failure is a missing resource at first use rather than anything a
+  build catches.
+- **Bootstrapping the fonts artifact.** `core` takes `graph-compose-fonts` at
+  **test** scope so its visual and snapshot suites render with the real binaries;
+  test scope is not transitive, so the published engine jar stays fonts-free. A
+  reactor build satisfies it from the just-built sibling, but a single-module
+  build (`-pl :graph-compose-core` without `-am`, which is what several CI jobs
+  run) resolves it from the local repository. Those jobs run
+  `./mvnw -f fonts/pom.xml install` first; a fonts version that is not published
+  yet needs the same locally.
 
 ### 2.E The emoji artifact (since v1.9.0)
 

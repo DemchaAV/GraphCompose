@@ -46,8 +46,14 @@ class ArabicHebrewFontCoverageTest {
     private static final int HEBREW_LETTERS_FIRST = 0x05D0;
     private static final int HEBREW_LETTERS_LAST = 0x05EA;
 
-    private static final List<TextDecoration> FACES =
-            List.of(TextDecoration.DEFAULT, TextDecoration.BOLD, TextDecoration.ITALIC);
+    /**
+     * All four: Amiri ships four distinct faces, and the sibling test asserts they never
+     * collapse onto one another. Sweeping only three leaves the fourth carrying the whole
+     * script with nothing checking that it can draw it.
+     */
+    private static final List<TextDecoration> FACES = List.of(
+            TextDecoration.DEFAULT, TextDecoration.BOLD,
+            TextDecoration.ITALIC, TextDecoration.BOLD_ITALIC);
 
     @Test
     void everyArabicPresentationFormIsEncodableInEveryAmiriFace() {

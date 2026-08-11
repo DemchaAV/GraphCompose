@@ -60,6 +60,28 @@ final class FontCoverageProbe {
         return true;
     }
 
+    /**
+     * Like {@link #unencodable}, but only over the code points in the range that Unicode
+     * defines as letters.
+     *
+     * <p>A script block is not a solid run of letters: it has unassigned gaps, and
+     * punctuation and modifiers sit among the letters. No font carries the gaps, so a
+     * plain range sweep reports every family as incomplete and the assertion has to be
+     * weakened to a shorter range — which then silently stops covering the letters that
+     * live past it. Asking Unicode which code points are letters keeps the range whole
+     * and the claim honest, and it moves with the JDK instead of with a hand-kept list.</p>
+     */
+    static List<String> unencodableLetters(FontName name, TextDecoration decoration, int first, int last) {
+        PDFont font = face(name, decoration);
+        List<String> missing = new ArrayList<>();
+        for (int codePoint = first; codePoint <= last; codePoint++) {
+            if (Character.isLetter(codePoint) && !canEncode(font, codePoint)) {
+                missing.add(String.format("U+%04X", codePoint));
+            }
+        }
+        return missing;
+    }
+
     /** Whether the family's regular face can encode every one of the given code points. */
     static boolean covers(FontName name, int... codePoints) {
         PDFont font = face(name, TextDecoration.DEFAULT);

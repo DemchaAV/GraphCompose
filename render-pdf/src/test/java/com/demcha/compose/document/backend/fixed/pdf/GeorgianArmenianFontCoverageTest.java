@@ -2,6 +2,7 @@ package com.demcha.compose.document.backend.fixed.pdf;
 
 import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.face;
 import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.unencodable;
+import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.unencodableLetters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.demcha.compose.engine.components.content.text.TextDecoration;
@@ -33,13 +34,19 @@ import java.util.List;
  */
 class GeorgianArmenianFontCoverageTest {
 
-    /** Mkhedruli — the case Georgian is normally written in. */
+    /**
+     * Mkhedruli — the case Georgian is normally written in. Through U+10FF rather than
+     * U+10FA: the block continues past the historic stopping point with letters Unicode
+     * added later, and a range that ends early reports "complete" without having looked
+     * at them. The unassigned gaps inside it are listed separately below.
+     */
     private static final int GEORGIAN_MKHEDRULI_FIRST = 0x10D0;
-    private static final int GEORGIAN_MKHEDRULI_LAST = 0x10FA;
+    private static final int GEORGIAN_MKHEDRULI_LAST = 0x10FF;
 
     /** Mtavruli — the capitals Georgian sets titles and emphasis in. */
     private static final int GEORGIAN_MTAVRULI_FIRST = 0x1C90;
-    private static final int GEORGIAN_MTAVRULI_LAST = 0x1CBA;
+    private static final int GEORGIAN_MTAVRULI_LAST = 0x1CBF;
+
 
     private static final int ARMENIAN_CAPITAL_FIRST = 0x0531;
     private static final int ARMENIAN_CAPITAL_LAST = 0x0556;
@@ -56,10 +63,10 @@ class GeorgianArmenianFontCoverageTest {
 
     @Test
     void theGeorgianFamilyCarriesBothCasesAndLatin() {
-        assertThat(unencodable(FontName.NOTO_SANS_GEORGIAN, TextDecoration.DEFAULT,
+        assertThat(unencodableLetters(FontName.NOTO_SANS_GEORGIAN, TextDecoration.DEFAULT,
                 GEORGIAN_MKHEDRULI_FIRST, GEORGIAN_MKHEDRULI_LAST))
                 .isEmpty();
-        assertThat(unencodable(FontName.NOTO_SANS_GEORGIAN, TextDecoration.DEFAULT,
+        assertThat(unencodableLetters(FontName.NOTO_SANS_GEORGIAN, TextDecoration.DEFAULT,
                 GEORGIAN_MTAVRULI_FIRST, GEORGIAN_MTAVRULI_LAST))
                 .describedAs("Georgian capitals live in their own block — a family without "
                         + "them sets body text and loses every heading")
@@ -72,11 +79,10 @@ class GeorgianArmenianFontCoverageTest {
 
     @Test
     void theArmenianFamilyCarriesBothCasesAndLatin() {
-        assertThat(unencodable(FontName.NOTO_SANS_ARMENIAN, TextDecoration.DEFAULT,
-                ARMENIAN_CAPITAL_FIRST, ARMENIAN_CAPITAL_LAST))
-                .isEmpty();
-        assertThat(unencodable(FontName.NOTO_SANS_ARMENIAN, TextDecoration.DEFAULT,
-                ARMENIAN_SMALL_FIRST, ARMENIAN_SMALL_LAST))
+        assertThat(unencodableLetters(FontName.NOTO_SANS_ARMENIAN, TextDecoration.DEFAULT,
+                ARMENIAN_CAPITAL_FIRST, ARMENIAN_SMALL_LAST))
+                .describedAs("both cases and the ligature between them, skipping the "
+                        + "unassigned code points inside the block")
                 .isEmpty();
         assertThat(unencodable(FontName.NOTO_SANS_ARMENIAN, TextDecoration.DEFAULT, 'A', 'z'))
                 .isEmpty();

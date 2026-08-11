@@ -619,7 +619,16 @@ public final class TextFlowSupport {
                 } else if (run instanceof InlineSvgRun svgRun) {
                     width += svgRun.width();
                 } else if (run instanceof InlineHighlightRun highlight) {
-                    width += measurement.textWidth(engineStyle, highlight.text())
+                    // Shaped, like the token this run becomes. An unshaped measurement
+                    // sizes the text off one string and lays it out from another: the
+                    // presentation forms carry their own advance widths, so the probe
+                    // was answering about a string the layout never sees. Not currently
+                    // observable end to end — auto-size does not shrink a paragraph
+                    // holding a chip at all, for any script — but the two paths have to
+                    // agree regardless of which of them is reached first.
+                    // Shaped, like the token this run becomes: an unshaped measurement
+                    // sizes the text off one string and lays it out from another.
+                    width += measurement.textWidth(engineStyle, ArabicShaper.shape(highlight.text()))
                             + highlight.background().padding().horizontal();
                 }
             }

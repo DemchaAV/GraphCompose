@@ -60,4 +60,26 @@ class TextControlSanitizerTest {
         assertThat(TextControlSanitizer.isBidiControl(0x200B)).isFalse();
         assertThat(TextControlSanitizer.isBidiControl(0xFEFF)).isFalse();
     }
+
+    @Test
+    void theJoiningControlsSurviveLayoutSanitizingBecauseTheShaperIsTheirReader() {
+        // Written as escapes: a raw zero-width control is invisible in review.
+        String zwnj = "‌";
+        String zwj = "‍";
+
+        assertThat(TextControlSanitizer.removeExceptDirectionMarks("ب" + zwnj + "ه"))
+                .describedAs("U+200C is category C like any other control, but deleting it "
+                        + "here removes the author's instruction before the shaper — the "
+                        + "only thing that reads it — has run")
+                .isEqualTo("ب" + zwnj + "ه");
+        assertThat(TextControlSanitizer.removeExceptDirectionMarks("ب" + zwj))
+                .isEqualTo("ب" + zwj);
+    }
+
+    @Test
+    void theJoiningControlsAreDroppedAtTheSeamThatHandsTextToABackend() {
+        assertThat(TextControlSanitizer.removeDirectionMarks("ب‌ه"))
+                .describedAs("no font can encode them, so they must not reach one")
+                .isEqualTo("به");
+    }
 }

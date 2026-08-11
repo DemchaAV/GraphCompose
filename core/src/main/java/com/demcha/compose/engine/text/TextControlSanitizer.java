@@ -44,7 +44,11 @@ public final class TextControlSanitizer {
      * anything had a chance to act on it.</p>
      *
      * @param text source text
-     * @return sanitized text keeping the bidirectional formatting characters, never {@code null}
+     * <p>The Arabic joining controls (U+200C, U+200D) are kept for the same reason and
+     * read by the same kind of later seam: the shaper consumes them to decide whether
+     * two letters connect.</p>
+     *
+     * @return sanitized text keeping the formatting controls, never {@code null}
      * @since 2.2.0
      */
     public static String removeExceptDirectionMarks(String text) {
@@ -56,7 +60,7 @@ public final class TextControlSanitizer {
         for (int inputIndex = 0; inputIndex < text.length(); ) {
             int codePoint = text.codePointAt(inputIndex);
             int charCount = Character.charCount(codePoint);
-            if (isCategoryC(codePoint) && !isBidiControl(codePoint)) {
+            if (isCategoryC(codePoint) && !isFormattingControl(codePoint)) {
                 if (sanitized == null) {
                     sanitized = new StringBuilder(text.length());
                     sanitized.append(text, 0, inputIndex);
@@ -88,7 +92,7 @@ public final class TextControlSanitizer {
         StringBuilder sanitized = null;
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
-            if (isBidiControl(character)) {
+            if (isFormattingControl(character)) {
                 if (sanitized == null) {
                     sanitized = new StringBuilder(text.length());
                     sanitized.append(text, 0, index);
@@ -109,6 +113,37 @@ public final class TextControlSanitizer {
      * @return {@code true} for a bidirectional formatting character
      * @since 2.2.0
      */
+    /**
+     * Returns whether a code point is an Arabic joining control — the zero-width
+     * non-joiner or joiner.
+     *
+     * <p>These are not bidirectional controls and are kept separate from them: they say
+     * nothing about direction, they say whether two letters may connect. U+200C forbids
+     * a join that would otherwise happen and U+200D forces one, which is the author's
+     * only way to write a form the contextual rules would not produce. Both draw
+     * nothing, and both are category C, so the plain control sanitizer deletes them —
+     * before the shaper that is their only reader has run.</p>
+     *
+     * @param codePoint code point to test
+     * @return {@code true} for U+200C or U+200D
+     * @since 2.2.0
+     */
+    public static boolean isJoiningControl(int codePoint) {
+        return codePoint == 0x200C || codePoint == 0x200D;
+    }
+
+    /**
+     * Returns whether a code point steers the text pipeline and draws nothing — a
+     * bidirectional formatting character or an Arabic joining control.
+     *
+     * @param codePoint code point to test
+     * @return {@code true} for a formatting control the pipeline reads and then drops
+     * @since 2.2.0
+     */
+    public static boolean isFormattingControl(int codePoint) {
+        return isBidiControl(codePoint) || isJoiningControl(codePoint);
+    }
+
     public static boolean isBidiControl(int codePoint) {
         return codePoint == 0x061C
                 || codePoint == 0x200E

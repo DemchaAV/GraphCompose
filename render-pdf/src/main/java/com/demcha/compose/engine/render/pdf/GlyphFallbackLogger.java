@@ -45,6 +45,12 @@ public final class GlyphFallbackLogger {
     private static final Set<Long> SEEN = ConcurrentHashMap.newKeySet();
 
     /**
+     * Fonts already reported as lacking the Arabic presentation forms. Separate from
+     * {@link #SEEN} because this fact is per font, not per code point.
+     */
+    private static final Set<String> DEGRADED_FONTS = ConcurrentHashMap.newKeySet();
+
+    /**
      * Per-font glyph-coverage memo: a font's PostScript base name to the set of
      * code points it can ({@code true}) or cannot ({@code false}) encode.
      *
@@ -110,11 +116,15 @@ public final class GlyphFallbackLogger {
         for (int offset = 0; offset < length; ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (codePoint == '\n' || codePoint == '\r' || TextControlSanitizer.isBidiControl(codePoint)) {
-                // A bidirectional formatting character steers the layout and draws
-                // nothing. Substituting it would put a visible '?' on the page and give
-                // a zero-width character a width, which the wrapping already committed
-                // to not having. Dropping it keeps measurement and rendering in step.
+            if (codePoint == '\n' || codePoint == '\r'
+                    || TextControlSanitizer.isFormattingControl(codePoint)) {
+                // A formatting character steers the layout and draws nothing —
+                // bidirectional controls steer the direction, joining controls the
+                // shaping. The shaper consumes its own, but only when it runs at all,
+                // so text with no Arabic in it still arrives carrying them.
+                // Substituting either would put a visible '?' on the page and give a
+                // zero-width character a width, which the wrapping already committed to
+                // not having. Dropping it keeps measurement and rendering in step.
                 continue;
             }
             if (isEncodable(font, coverage, codePoint)) {
@@ -150,10 +160,14 @@ public final class GlyphFallbackLogger {
         }
         sb.append(base);
         String fontName = fontKey(font);
-        long key = ((long) fontName.hashCode() << 32) | (codePoint & 0xFFFFFFFFL);
-        if (SEEN.add(key)) {
-            LOG.warn("glyph.degraded font={} codePoint=U+{} joined form unavailable, "
-                            + "drawing base letters — Arabic renders unjoined in this font",
+        // Keyed on the font alone rather than on (font, code point): a font that carries
+        // no presentation forms carries none of them, so the second form says nothing the
+        // first did not. Per-form keying turned one fact about the font into a warning for
+        // every distinct letter the document happened to use.
+        if (DEGRADED_FONTS.add(fontName)) {
+            LOG.warn("glyph.degraded font={} joined forms unavailable, drawing base "
+                            + "letters — Arabic renders unjoined in this font (first at "
+                            + "U+{})",
                     fontName, String.format("%04X", codePoint));
         }
         return true;

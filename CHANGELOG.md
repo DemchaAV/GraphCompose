@@ -64,7 +64,10 @@ follow semantic versioning; release dates are ISO 8601.
   that carries the letters but not the forms (the `GSUB`-only families) now degrades
   to unjoined base letters instead of `?`, which costs the joining rather than the
   text. In right-to-left runs, paired punctuation is mirrored at the PDF seam
-  (UAX #9 L4), so a parenthesis in Hebrew faces what it encloses.
+  (UAX #9 L4), so a parenthesis in Hebrew faces what it encloses. The mirrored set is
+  the punctuation that occurs in documents — parentheses, brackets, braces, angle
+  brackets, guillemets — rather than the whole Unicode mirroring table; a mathematical
+  operator passes through drawn as written.
 
 ### Fonts
 

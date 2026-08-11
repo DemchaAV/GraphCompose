@@ -245,4 +245,22 @@ class RtlGlyphOrderTest {
         }
         return drawn.toString().trim();
     }
+
+    @Test
+    void aZeroWidthNonJoinerWrittenIntoAParagraphReachesTheShaper() throws Exception {
+        // The end-to-end half of the joining-control guard. The shaper handles U+200C
+        // correctly on its own, but it only ever saw it once control sanitizing stopped
+        // deleting it first — a gap no unit test of either piece could show.
+        String joined = glyphsInDrawingOrder(renderArabic("به", TextDirection.RTL));
+        String broken = glyphsInDrawingOrder(
+                renderArabic("ب‌ه", TextDirection.RTL));
+
+        assertThat(joined)
+                .describedAs("beh and heh connect when nothing says otherwise")
+                .isNotEqualTo(broken);
+        assertThat(broken)
+                .describedAs("the author's non-joiner has to survive every seam between "
+                        + "the builder and the content stream")
+                .doesNotContain("‌");
+    }
 }

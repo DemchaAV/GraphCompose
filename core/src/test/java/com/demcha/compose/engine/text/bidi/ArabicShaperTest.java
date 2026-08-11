@@ -118,4 +118,56 @@ class ArabicShaperTest {
         assertThat(ArabicShaper.baseLettersOf('A')).isNull();
         assertThat(ArabicShaper.baseLettersOf(0x05D0)).isNull();
     }
+
+    // U+200C and U+200D are written as escapes on purpose: a raw zero-width control in a
+    // test source is invisible in review, and this file is about exactly those characters.
+    private static final String ZWNJ = "‌";
+    private static final String ZWJ = "‍";
+
+    @Test
+    void aZeroWidthNonJoinerBreaksAJoinTheLettersWouldOtherwiseMake() {
+        // beh + heh join; with ZWNJ between them the author is saying they must not.
+        String joined = ArabicShaper.shape("به");
+        String broken = ArabicShaper.shape("ب" + ZWNJ + "ه");
+
+        assertThat(joined).isNotEqualTo(broken);
+        assertThat(broken)
+                .describedAs("beh takes its isolated form and heh its own, as if they were "
+                        + "not adjacent; the control itself draws nothing and is consumed")
+                .isEqualTo("ﺏﻩ");
+        assertThat(broken).doesNotContain(ZWNJ);
+    }
+
+    @Test
+    void aZeroWidthJoinerMakesALetterTakeAConnectedFormWithNothingToConnectTo() {
+        String isolated = ArabicShaper.shape("ب");
+        String joinedForward = ArabicShaper.shape("ب" + ZWJ);
+
+        assertThat(isolated).isEqualTo("ﺏ");
+        assertThat(joinedForward)
+                .describedAs("the joiner stands in for a following letter, so beh takes its "
+                        + "initial form — the way an author quotes a connected form on its own")
+                .isEqualTo("ﺑ");
+        assertThat(joinedForward).doesNotContain(ZWJ);
+    }
+
+    @Test
+    void aJoiningControlDoesNotSurviveIntoTheShapedText() {
+        // Nothing downstream can encode them: a font has no glyph for either, so a control
+        // that survived shaping would be measured as one thing and drawn as '?'.
+        assertThat(ArabicShaper.shape("م" + ZWNJ + "ر" + ZWJ + "ح"))
+                .doesNotContain(ZWNJ)
+                .doesNotContain(ZWJ);
+    }
+
+    @Test
+    void aJoiningControlBetweenLamAndAlefKeepsThemOutOfTheLigature() {
+        String ligated = ArabicShaper.shape("لا");
+        String separated = ArabicShaper.shape("ل" + ZWNJ + "ا");
+
+        assertThat(ligated).hasSize(1);
+        assertThat(separated)
+                .describedAs("an author who broke the join must not get the ligature back")
+                .hasSize(2);
+    }
 }

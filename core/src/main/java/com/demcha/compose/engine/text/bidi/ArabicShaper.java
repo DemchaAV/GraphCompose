@@ -36,6 +36,19 @@ public final class ArabicShaper {
     /** Last code point of the table: U+064A, yeh. */
     private static final int BASE_LAST = 0x064A;
 
+    /**
+     * U+200D, joining type C: stands in for a letter that would have joined, so the
+     * neighbour takes a connected form even with nothing to connect to.
+     */
+    private static final char ZERO_WIDTH_JOINER = 0x200D;
+    /**
+     * U+200C, joining type U: an opaque non-joining character. It needs no special case
+     * in the lookups that walk letters — it is simply not a letter — but the two that
+     * ask about an adjacent character directly have to see it as a break rather than as
+     * an absence.
+     */
+    private static final char ZERO_WIDTH_NON_JOINER = 0x200C;
+
     /** Joining behaviour of a letter. */
     private static final int NON_JOINING = 0;
     /** Joins only to the letter before it (isolated and final forms exist). */
@@ -126,6 +139,13 @@ public final class ArabicShaper {
         StringBuilder shaped = new StringBuilder(text.length());
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
+            if (TextControlSanitizer.isJoiningControl(character)) {
+                // Read above as context, dropped here: the control has done its work by
+                // the time the neighbouring letters have their forms, and carrying it
+                // further would hand the font a code point it cannot encode — measured
+                // as one thing and drawn as a substitution mark.
+                continue;
+            }
             int[] letter = letterAt(character);
             if (letter == null) {
                 shaped.append(character);
@@ -266,6 +286,12 @@ public final class ArabicShaper {
             if (isTransparent(character)) {
                 continue;
             }
+            if (character == ZERO_WIDTH_JOINER) {
+                return true;
+            }
+            if (character == ZERO_WIDTH_NON_JOINER) {
+                return false;
+            }
             int[] letter = letterAt(character);
             return letter != null && letter[0] == DUAL_JOINING;
         }
@@ -282,7 +308,14 @@ public final class ArabicShaper {
         if (after < 0) {
             return false;
         }
-        int[] next = letterAt(text.charAt(after));
+        char following = text.charAt(after);
+        if (following == ZERO_WIDTH_JOINER) {
+            return true;
+        }
+        if (following == ZERO_WIDTH_NON_JOINER) {
+            return false;
+        }
+        int[] next = letterAt(following);
         return next != null && next[0] != NON_JOINING;
     }
 

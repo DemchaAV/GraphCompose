@@ -60,8 +60,10 @@
         engine, which depends on fonts at test scope). They are NOT children of
         this aggregator (no <parent> back-reference) and carry independent
         versions, so the lockstep `versions:set` does not rewrite them: fonts is
-        at its own 1.0.0 line, and the bundle (== engine version) is bumped with
-        the engine on purpose.
+        independently versioned — see fonts/pom.xml, and the
+        graphcompose.fonts.version property below, rather than a number repeated
+        here that goes stale on the next font release — and the bundle
+        (== engine version) is bumped with the engine on purpose.
     -->
     <modules>
         <module>core</module>

@@ -43,11 +43,12 @@ public final class TextControlSanitizer {
      * only way to say which direction a neutral stretch of text belongs to, before
      * anything had a chance to act on it.</p>
      *
-     * @param text source text
      * <p>The Arabic joining controls (U+200C, U+200D) are kept for the same reason and
-     * read by the same kind of later seam: the shaper consumes them to decide whether
-     * two letters connect.</p>
+     * read by the same kind of later seam: the shaper reads them to decide whether two
+     * letters connect, and leaves them in place for a backend that shapes the text
+     * itself.</p>
      *
+     * @param text source text
      * @return sanitized text keeping the formatting controls, never {@code null}
      * @since 2.2.0
      */

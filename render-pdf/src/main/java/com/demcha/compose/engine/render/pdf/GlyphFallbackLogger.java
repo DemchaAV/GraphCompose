@@ -228,6 +228,7 @@ public final class GlyphFallbackLogger {
      */
     static void resetForTesting() {
         SEEN.clear();
+        DEGRADED_FONTS.clear();
         ENCODABLE_BY_FONT.clear();
     }
 }

@@ -56,14 +56,35 @@ class DocxParagraphDirectionTest {
     }
 
     @Test
-    void autoIsNotPassedOnForWordToGuessAgain() throws Exception {
+    void automaticIsResolvedRatherThanLeftForWordToGuess() throws Exception {
         XWPFParagraph paragraph = paragraphsOf(export(HEBREW, TextDirection.AUTO)).get(0);
 
         assertThat(paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetBidi())
-                .describedAs("AUTO was already resolved into a concrete alignment when the node "
-                        + "was built; letting Word guess again could reach a different answer "
-                        + "than the page did")
+                .describedAs("an automatic paragraph that reads as right-to-left must reach Word "
+                        + "marked as one; leaving it unwritten left Word to infer a base "
+                        + "direction, which is the thing w:bidi exists to stop it doing")
+                .isTrue();
+    }
+
+    @Test
+    void automaticStaysUnmarkedWhenItResolvesLeftToRight() throws Exception {
+        XWPFParagraph paragraph = paragraphsOf(export("Hello world", TextDirection.AUTO)).get(0);
+
+        assertThat(paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetBidi())
+                .describedAs("the mark says right-to-left, so a left-to-right paragraph carries "
+                        + "none and every existing document exports as it did")
                 .isFalse();
+    }
+
+    @Test
+    void automaticReadsPastNeutralsTheSameWayThePageDoes() throws Exception {
+        // A line opening with a digit or a parenthesis is the case Word gets wrong on its
+        // own, and the case this resolution exists for: the page reads past the neutrals
+        // to the Hebrew and so must the export.
+        XWPFParagraph paragraph = paragraphsOf(export("2026 " + HEBREW, TextDirection.AUTO)).get(0);
+
+        assertThat(paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetBidi())
+                .isTrue();
     }
 
     private static byte[] export(String text, TextDirection direction) throws Exception {

@@ -17,6 +17,7 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.layout.ParagraphDirection;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
@@ -1096,27 +1097,16 @@ public final class ParagraphBuilder {
         if (alignChosenByCaller || direction == TextDirection.LTR) {
             return align;
         }
-        return direction == TextDirection.RTL || startsRightToLeft()
+        // Asked of the same resolver the layout asks, rather than answered again here.
+        // The paragraph has to sit at the edge it is laid out from, and two readings of
+        // "which way does this run" are two chances to pick different edges.
+        // Asked of the same resolver the layout asks, rather than answered again here.
+        // The paragraph has to sit at the edge it is laid out from, and two readings of
+        // "which way does this run" are two chances to pick different edges.
+        String probe = text.isBlank() ? inlineRunText() : text;
+        return ParagraphDirection.resolve(probe, direction) == TextDirection.RTL
                 ? TextAlign.RIGHT
                 : align;
-    }
-
-    /** Whether the paragraph's first strong character runs right to left. */
-    private boolean startsRightToLeft() {
-        String probe = text.isBlank() ? inlineRunText() : text;
-        for (int index = 0; index < probe.length(); ) {
-            int codePoint = probe.codePointAt(index);
-            index += Character.charCount(codePoint);
-            byte directionality = Character.getDirectionality(codePoint);
-            if (directionality == Character.DIRECTIONALITY_LEFT_TO_RIGHT) {
-                return false;
-            }
-            if (directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT
-                    || directionality == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private String inlineRunText() {

@@ -10,6 +10,7 @@ import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
 import com.demcha.compose.document.layout.LayoutCanvas;
+import com.demcha.compose.document.layout.ParagraphDirection;
 import com.demcha.compose.document.layout.NodeDefinitionSupport;
 import com.demcha.compose.document.layout.TableGrid;
 import com.demcha.compose.document.node.ChartNode;
@@ -333,12 +334,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * line that starts with a neutral character, or one that mixes scripts, is laid out
      * as left-to-right text that happens to contain Hebrew.</p>
      *
-     * <p>{@link TextDirection#AUTO} is not written out. It was already resolved into a
-     * concrete alignment when the node was built, and asking Word to guess again could
-     * reach a different answer than the page did.</p>
+     * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
+     * unwritten was leaving Word to guess, and Word guessing is the thing this attribute
+     * exists to prevent: an automatic paragraph that the page laid out right-to-left
+     * reached Word with nothing saying so, and a line starting with a digit or a
+     * parenthesis came out the other way round. The answer comes from the same resolver
+     * the page used, so the two cannot part company.</p>
      */
     private static void applyDirection(XWPFParagraph para, ParagraphNode node) {
-        if (node.direction() != TextDirection.RTL) {
+        if (ParagraphDirection.resolve(node) != TextDirection.RTL) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();

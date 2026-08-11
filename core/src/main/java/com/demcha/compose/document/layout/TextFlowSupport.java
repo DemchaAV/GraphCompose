@@ -790,18 +790,7 @@ public final class TextFlowSupport {
      * builder put it.</p>
      */
     private static BidiParagraphResolver.BaseDirection resolveBaseDirection(ParagraphNode node) {
-        TextDirection direction = node.direction();
-        if (direction == TextDirection.RTL) {
-            return BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
-        }
-        if (direction == TextDirection.AUTO) {
-            int baseLevel = BidiParagraphResolver.baseLevel(
-                    node.text(), BidiParagraphResolver.BaseDirection.FIRST_STRONG_CHARACTER);
-            return BidiParagraphResolver.isRightToLeftLevel(baseLevel)
-                    ? BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT
-                    : BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
-        }
-        return BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+        return ParagraphDirection.baseDirection(node);
     }
 
     private static List<String> sanitizeLogicalLines(String rawText) {

@@ -51,7 +51,7 @@ public final class TextControlSanitizer {
      * @return sanitized text keeping the formatting controls, never {@code null}
      * @since 2.2.0
      */
-    public static String removeExceptDirectionMarks(String text) {
+    public static String removeExceptFormattingControls(String text) {
         if (text == null || text.isEmpty()) {
             return "";
         }
@@ -77,8 +77,9 @@ public final class TextControlSanitizer {
     /**
      * Removes only the bidirectional formatting characters, leaving everything else.
      *
-     * <p>Used once the algorithm has read them, so the text handed to a backend
-     * carries no zero-width steering characters.</p>
+     * <p>Used once the algorithm has read them. The Arabic joining controls stay: their
+     * reader is further downstream — a backend that shapes the text itself — so removing
+     * them here would answer a question that has not been asked yet.</p>
      *
      * @param text source text
      * @return text without bidirectional formatting characters, never {@code null}
@@ -92,7 +93,7 @@ public final class TextControlSanitizer {
         StringBuilder sanitized = null;
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
-            if (isFormattingControl(character)) {
+            if (isBidiControl(character)) {
                 if (sanitized == null) {
                     sanitized = new StringBuilder(text.length());
                     sanitized.append(text, 0, index);

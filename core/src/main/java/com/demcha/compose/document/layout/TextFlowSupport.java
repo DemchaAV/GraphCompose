@@ -626,8 +626,6 @@ public final class TextFlowSupport {
                     // observable end to end — auto-size does not shrink a paragraph
                     // holding a chip at all, for any script — but the two paths have to
                     // agree regardless of which of them is reached first.
-                    // Shaped, like the token this run becomes: an unshaped measurement
-                    // sizes the text off one string and lays it out from another.
                     width += measurement.textWidth(engineStyle, ArabicShaper.shape(highlight.text()))
                             + highlight.background().padding().horizontal();
                 }
@@ -830,7 +828,7 @@ public final class TextFlowSupport {
             // The bidirectional formatting characters survive this pass: they are the
             // author's instruction to the layout, and they are dropped once it has
             // been read — at the span, and at the glyph seam that measures and draws.
-            sanitized.add(TextControlSanitizer.removeExceptDirectionMarks(logicalLine));
+            sanitized.add(TextControlSanitizer.removeExceptFormattingControls(logicalLine));
         }
         return List.copyOf(sanitized);
     }

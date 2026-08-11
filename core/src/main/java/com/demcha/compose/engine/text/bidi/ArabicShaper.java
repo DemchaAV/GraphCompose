@@ -18,9 +18,19 @@ import com.demcha.compose.engine.text.TextControlSanitizer;
  * so shaped text passes through unchanged — and a string with no Arabic in it is
  * returned as the same instance after one early-exiting scan.</p>
  *
- * <p>Vowel points and the bidirectional format characters are transparent: they sit
- * between letters without breaking the join, exactly as Unicode's joining rules say,
- * and stay in the output for the later seams that know what to do with them.</p>
+ * <p>Marks and format characters are transparent: they sit between letters without
+ * breaking the join, exactly as Unicode's joining rules say, and stay in the output for
+ * the later seams that know what to do with them. Transparency is decided by general
+ * category rather than by a list of ranges, which is Unicode's own rule and covers the
+ * annotation marks a hand-written list kept missing.</p>
+ *
+ * <p>The joining controls are the exception, and are read rather than passed over:
+ * U+200C forbids a join the context would otherwise make and U+200D forces one, which is
+ * how an author writes a form the rules alone would not produce. They stay in the output
+ * too. No font can encode them, but the PDF seam that measures and the one that draws
+ * pass through the same sanitizing, so dropping them there keeps the two in step — and
+ * leaving them in the text is what lets a backend with a shaper of its own still see the
+ * instruction, instead of a word it would join back together.</p>
  *
  * <p>Ownership: shared engine foundation.</p>
  *
@@ -139,13 +149,6 @@ public final class ArabicShaper {
         StringBuilder shaped = new StringBuilder(text.length());
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
-            if (TextControlSanitizer.isJoiningControl(character)) {
-                // Read above as context, dropped here: the control has done its work by
-                // the time the neighbouring letters have their forms, and carrying it
-                // further would hand the font a code point it cannot encode — measured
-                // as one thing and drawn as a substitution mark.
-                continue;
-            }
             int[] letter = letterAt(character);
             if (letter == null) {
                 shaped.append(character);
@@ -273,10 +276,20 @@ public final class ArabicShaper {
      * characters that survive sanitizing until the layout has read them.
      */
     private static boolean isTransparent(char character) {
-        return (character >= 0x064B && character <= 0x065F)
-                || character == 0x0670
-                || (character >= 0x06D6 && character <= 0x06ED)
-                || TextControlSanitizer.isBidiControl(character);
+        // Unicode's own rule rather than a list of ranges: a character not explicitly
+        // given a joining type, and of general category Mn, Me or Cf, has joining type
+        // T — transparent, sitting between two letters without breaking their join. The
+        // ranges this replaced covered the common vowel points and missed the rest, so
+        // an annotation mark such as U+0610 unjoined the letters around it. The joining
+        // controls are the exception: they are Cf but Unicode lists them explicitly, as
+        // non-joining and join-causing, which is the whole point of them.
+        if (TextControlSanitizer.isJoiningControl(character)) {
+            return false;
+        }
+        int category = Character.getType(character);
+        return category == Character.NON_SPACING_MARK
+                || category == Character.ENCLOSING_MARK
+                || category == Character.FORMAT;
     }
 
     /** The nearest non-transparent character before {@code index} joins forward. */

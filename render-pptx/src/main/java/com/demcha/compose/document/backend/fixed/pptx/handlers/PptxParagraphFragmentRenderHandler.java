@@ -382,7 +382,12 @@ public final class PptxParagraphFragmentRenderHandler
         // handing it the forms would freeze this shaper's choices into a file a user
         // may search or copy from. Frame widths stay measured on the form advances,
         // an approximation PowerPoint's own shaping may differ from by a hair.
-        return font.sanitizeForRender(span.textStyle(),
+        // The joining controls go back with the letters. They are what the author wrote
+        // to say which letters may connect, and PowerPoint's own shaper is exactly the
+        // reader they were written for; the render sanitizing drops them, because a PDF
+        // has no glyph for a zero-width control, and dropping them here would hand
+        // PowerPoint a word it joins straight back up.
+        return font.sanitizeForTextExport(span.textStyle(),
                 ArabicShaper.toBaseLetters(span.text()));
     }
 

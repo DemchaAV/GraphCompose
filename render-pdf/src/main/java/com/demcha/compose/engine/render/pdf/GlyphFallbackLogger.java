@@ -107,6 +107,28 @@ public final class GlyphFallbackLogger {
      * @return text containing only code points the font can encode
      */
     public static String sanitize(PDFont font, String text) {
+        return sanitize(font, text, false);
+    }
+
+    /**
+     * Sanitizes for a consumer that shapes the text itself.
+     *
+     * <p>A PDF draws glyphs, so a zero-width formatting control has nothing to draw and
+     * is dropped. A backend that emits <em>text</em> — PowerPoint receives characters and
+     * runs its own shaper over them — is in the opposite position: the Arabic joining
+     * controls are the author's instruction about which letters may connect, and dropping
+     * them hands that shaper a word it will join back together. So the same substitution
+     * policy applies, minus the removal of those two.</p>
+     *
+     * @param font font to validate glyph coverage against
+     * @param text raw text to sanitise; {@code null} returns empty
+     * @return text the font can encode, keeping the Arabic joining controls
+     */
+    public static String sanitizeKeepingJoiningControls(PDFont font, String text) {
+        return sanitize(font, text, true);
+    }
+
+    private static String sanitize(PDFont font, String text, boolean keepJoiningControls) {
         if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
@@ -116,12 +138,16 @@ public final class GlyphFallbackLogger {
         for (int offset = 0; offset < length; ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
+            if (keepJoiningControls && TextControlSanitizer.isJoiningControl(codePoint)) {
+                sb.appendCodePoint(codePoint);
+                continue;
+            }
             if (codePoint == '\n' || codePoint == '\r'
                     || TextControlSanitizer.isFormattingControl(codePoint)) {
                 // A formatting character steers the layout and draws nothing —
                 // bidirectional controls steer the direction, joining controls the
-                // shaping. The shaper consumes its own, but only when it runs at all,
-                // so text with no Arabic in it still arrives carrying them.
+                // shaping — and this is the seam both measurement and drawing pass
+                // through, so removing them here keeps the two reading one string.
                 // Substituting either would put a visible '?' on the page and give a
                 // zero-width character a width, which the wrapping already committed to
                 // not having. Dropping it keeps measurement and rendering in step.

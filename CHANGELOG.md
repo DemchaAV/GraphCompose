@@ -60,10 +60,16 @@ follow semantic versioning; release dates are ISO 8601.
   so what is measured is what is drawn. Vowel points and direction marks are
   transparent to the join, as Unicode's joining rules say. PowerPoint gets the base
   letters back — it shapes Arabic itself, and frozen forms would end up in a file
-  users search and copy from — and Word was never given forms to begin with. A font
+  users search and copy from — and Word was never given forms to begin with. The
+  joining controls travel with them: they are the author's instruction about which
+  letters may connect, and PowerPoint's shaper is the reader they were written for, so
+  dropping them would have handed it a word it joins straight back up. A font
   that carries the letters but not the forms (the `GSUB`-only families) now degrades
   to unjoined base letters instead of `?`, which costs the joining rather than the
-  text. In right-to-left runs, paired punctuation is mirrored at the PDF seam
+  text. An annotation mark between two letters no longer breaks their join: which
+  characters are transparent to shaping is decided by Unicode's own rule — general
+  category — rather than by a list of ranges that covered the vowel points and missed
+  the rest. In right-to-left runs, paired punctuation is mirrored at the PDF seam
   (UAX #9 L4), so a parenthesis in Hebrew faces what it encloses. The mirrored set is
   the punctuation that occurs in documents — parentheses, brackets, braces, angle
   brackets, guillemets — rather than the whole Unicode mirroring table; a mathematical

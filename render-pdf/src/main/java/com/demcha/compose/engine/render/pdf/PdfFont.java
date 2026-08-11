@@ -167,6 +167,26 @@ public class PdfFont extends FontBase<PDFont> {
     public String sanitizeByFont(PDFont font, String s) {
         return GlyphFallbackLogger.sanitize(font, s);
     }
+
+    /**
+     * Sanitizes for a backend that emits text and shapes it itself.
+     *
+     * <p>Same substitution policy as {@link #sanitizeForRender(TextStyle, String)}, except
+     * that the Arabic joining controls survive: they are an instruction to the consumer's
+     * own shaper, not something to draw.</p>
+     *
+     * @param style style whose decoration picks the face
+     * @param text raw text from the layout span
+     * @return text the face can encode, keeping the Arabic joining controls
+     * @since 2.2.0
+     */
+    public String sanitizeForTextExport(TextStyle style, String text) {
+        if (text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        return GlyphFallbackLogger.sanitizeKeepingJoiningControls(
+                fontType(style.decoration()), textSanitizer(text));
+    }
     public double getTextWidthNoSanitize(TextStyle style, String text) {
         double size = style.size();
         try {

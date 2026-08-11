@@ -130,12 +130,11 @@ class ArabicShaperTest {
         String joined = ArabicShaper.shape("به");
         String broken = ArabicShaper.shape("ب" + ZWNJ + "ه");
 
-        assertThat(joined).isNotEqualTo(broken);
+        assertThat(joined).isEqualTo("ﺑﻪ");
         assertThat(broken)
                 .describedAs("beh takes its isolated form and heh its own, as if they were "
-                        + "not adjacent; the control itself draws nothing and is consumed")
-                .isEqualTo("ﺏﻩ");
-        assertThat(broken).doesNotContain(ZWNJ);
+                        + "not adjacent — and the control stays where the author put it")
+                .isEqualTo("ﺏ" + ZWNJ + "ﻩ");
     }
 
     @Test
@@ -147,17 +146,22 @@ class ArabicShaperTest {
         assertThat(joinedForward)
                 .describedAs("the joiner stands in for a following letter, so beh takes its "
                         + "initial form — the way an author quotes a connected form on its own")
-                .isEqualTo("ﺑ");
-        assertThat(joinedForward).doesNotContain(ZWJ);
+                .isEqualTo("ﺑ" + ZWJ);
     }
 
     @Test
-    void aJoiningControlDoesNotSurviveIntoTheShapedText() {
-        // Nothing downstream can encode them: a font has no glyph for either, so a control
-        // that survived shaping would be measured as one thing and drawn as '?'.
-        assertThat(ArabicShaper.shape("م" + ZWNJ + "ر" + ZWJ + "ح"))
-                .doesNotContain(ZWNJ)
-                .doesNotContain(ZWJ);
+    void aJoiningControlSurvivesShapingSoABackendWithItsOwnShaperCanSeeIt() {
+        // Consuming them here would leave the slide backend, which maps the forms back to
+        // base letters and lets PowerPoint shape them, with no way to know the author had
+        // forbidden a join: it would hand PowerPoint two letters that join right back up.
+        // Nothing draws them — the PDF seam that measures and the one that draws share the
+        // sanitizing that removes them — so keeping them costs nothing there.
+        String shaped = ArabicShaper.shape("م" + ZWNJ + "ر" + ZWJ + "ح");
+
+        assertThat(shaped).contains(ZWNJ).contains(ZWJ);
+        assertThat(ArabicShaper.toBaseLetters(shaped))
+                .describedAs("and the inverse the slide backend takes keeps them too")
+                .isEqualTo("م" + ZWNJ + "ر" + ZWJ + "ح");
     }
 
     @Test
@@ -168,6 +172,26 @@ class ArabicShaperTest {
         assertThat(ligated).hasSize(1);
         assertThat(separated)
                 .describedAs("an author who broke the join must not get the ligature back")
-                .hasSize(2);
+                .isEqualTo("ﻝ" + ZWNJ + "ﺍ");
+    }
+
+    @Test
+    void anAnnotationMarkBetweenTwoLettersIsTransparentToTheJoin() {
+        // U+0610 is one of the Arabic annotation marks: general category Mn, and so
+        // joining type T by Unicode's rule for anything it does not list explicitly. A
+        // hand-written list of transparent ranges covered the vowel points and missed
+        // these, and a mark that is not transparent unjoins the letters around it — the
+        // word comes apart where an author added an honorific.
+        assertThat(ArabicShaper.shape("بؐت"))
+                .describedAs("beh keeps its initial form and teh its final one, with the "
+                        + "mark still between them")
+                .isEqualTo("ﺑؐﺖ");
+    }
+
+    @Test
+    void aVowelPointBetweenTwoLettersIsStillTransparent() {
+        assertThat(ArabicShaper.shape("بًت"))
+                .describedAs("the case the range list did cover, held while the rule changed")
+                .isEqualTo("ﺑًﺖ");
     }
 }

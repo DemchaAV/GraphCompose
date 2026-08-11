@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.demcha.testing.visual.ScriptGlyphDemo.assertNoGlyphSubstitution;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertScriptOnPage;
 import static com.demcha.testing.visual.ScriptGlyphDemo.assertValidPdf;
 import static com.demcha.testing.visual.ScriptGlyphDemo.render;
 
@@ -36,6 +37,13 @@ class ArabicHebrewGlyphsDemoTest {
 
     private static final DocumentColor INK = ScriptGlyphDemo.INK;
 
+    // The blocks the source text is written in; extraction maps the drawn Arabic
+    // presentation forms back to these through the ToUnicode map.
+    private static final int ARABIC_FIRST = 0x0621;
+    private static final int ARABIC_LAST = 0x064A;
+    private static final int HEBREW_FIRST = 0x05D0;
+    private static final int HEBREW_LAST = 0x05EA;
+
     private static final String ARABIC = "مرحبا بالعالم";
     private static final String HEBREW = "שלום עולם";
 
@@ -47,6 +55,7 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, ARABIC_FIRST, ARABIC_LAST, 11);
     }
 
     @Test
@@ -57,6 +66,7 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, HEBREW_FIRST, HEBREW_LAST, 8);
     }
 
     @Test
@@ -90,5 +100,6 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, HEBREW_FIRST, HEBREW_LAST, 24);
     }
 }

@@ -104,10 +104,30 @@ follow semantic versioning; release dates are ISO 8601.
   bold Georgian renders unemboldened rather than failing, which is asserted rather than
   left to be discovered.
 
-  With Arabic and Hebrew that makes four scripts, each with exactly one family that carries
-  it plus Latin and none of the other three. A paragraph is drawn in a single family, so a
-  run mixing two of them still needs a font registered through `FontFamilyDefinition`.
-  [`fonts/README.md`](fonts/README.md#which-script-needs-which-family) has the table.
+  With Arabic, Hebrew and Korean that makes five scripts covered by a named family. A
+  paragraph is drawn in a single family, so a run mixing two scripts needs one family that
+  carries both — and for Arabic, Georgian, Armenian and Hangul no bundled family carries
+  more than its own, so that means a font of your own registered through
+  `FontFamilyDefinition`. (Hebrew is the exception: Tinos and Cousine carry it too.)
+  [`fonts/README.md`](fonts/README.md#which-script-needs-which-family) has the table, and
+  `BundledScriptCoverageTest` holds it to the binaries.
+- **A bundled family for Korean.** `FontName.GOTHIC_A1` ships in the same **1.1.0**
+  font artifact, in a drawn regular and bold. It carries all 11 172 precomposed Hangul
+  syllables — asserted whole rather than sampled, since a gap in that range loses
+  whichever words use it while the rest of the document renders — plus both jamo forms
+  and Latin-1, Latin Extended-A, Cyrillic and Greek.
+
+  The Latin coverage is why this family rather than a better-known one. A paragraph is
+  drawn in a single family, so a Korean sentence holding a European name is drawn
+  entirely in the Korean font; the popular alternatives carry ASCII but almost no
+  accented Latin, which turns *Müller* into *M?ller* with the Korean around it
+  rendering perfectly. Hanja are not covered.
+
+  Chinese and Japanese are still without a bundled family, and not by oversight: the
+  official static Noto CJK faces use CFF outlines, which the PDF backend cannot embed
+  at all, and the variable ones default to the Thin weight — the weight a renderer
+  without variable-font support draws. Register a CJK font of your own through
+  `FontFamilyDefinition`.
 - **A stale font artifact is now distinguished from a missing one.** Asking for a
   family that a newer `graph-compose-fonts` introduced produced the same message as
   having no font artifact at all — an instruction to add a dependency that was already

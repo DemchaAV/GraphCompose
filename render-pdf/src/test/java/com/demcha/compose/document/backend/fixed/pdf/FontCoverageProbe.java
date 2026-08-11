@@ -43,6 +43,34 @@ final class FontCoverageProbe {
         return missing;
     }
 
+    /**
+     * Whether the family's regular face can encode every code point in the range.
+     *
+     * <p>Stops at the first miss rather than collecting them, so sweeping every bundled
+     * family across a large block costs about as much as the families that actually
+     * cover it — the rest fail on their first code point.</p>
+     */
+    static boolean covers(FontName name, int first, int last) {
+        PDFont font = face(name, TextDecoration.DEFAULT);
+        for (int codePoint = first; codePoint <= last; codePoint++) {
+            if (!canEncode(font, codePoint)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Whether the family's regular face can encode every one of the given code points. */
+    static boolean covers(FontName name, int... codePoints) {
+        PDFont font = face(name, TextDecoration.DEFAULT);
+        for (int codePoint : codePoints) {
+            if (!canEncode(font, codePoint)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static boolean canEncode(PDFont font, int codePoint) {
         try {
             font.encode(new String(Character.toChars(codePoint)));

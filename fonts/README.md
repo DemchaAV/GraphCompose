@@ -32,22 +32,47 @@ puts in a block of its own. Upstream ships them as variable fonts and there are 
 weights to take, so the artifact carries the regular instance and bold or italic styles
 resolve to it: they render, unemboldened and upright.
 
+Korean arrives with **Gothic A1** (`FontName.GOTHIC_A1`), in a drawn regular and bold.
+It carries all 11 172 precomposed Hangul syllables, both jamo forms, and — unlike the
+better-known Korean families — Latin-1, Latin Extended-A, Cyrillic and Greek. That last
+part matters more than it sounds: one paragraph is drawn in one family, so a Korean
+sentence holding a European name is drawn entirely in the Korean font, and a family with
+ASCII but no accents turns *Müller* into *M?ller*. Hanja are not covered.
+
 ## Which script needs which family
 
-| Script | Family | Covered by the rest of the set? |
-| --- | --- | --- |
-| Latin, Latin Extended, Vietnamese | any bundled family | yes |
-| Cyrillic | `PT_SANS`, `PT_SERIF`, `FIRA_SANS`, `ARSENAL`, … | yes |
-| Greek | `GENTIUM_PLUS`, `TINOS`, `COUSINE`, … | yes |
-| Thai | `SARABUN`, `KANIT`, `PROMPT`, `TAVIRAJ`, `TRIRONG`, `BAI_JAMJUREE` | yes |
-| Arabic | `AMIRI` | no |
-| Hebrew | `DAVID_LIBRE` | no |
-| Georgian | `NOTO_SANS_GEORGIAN` | no |
-| Armenian | `NOTO_SANS_ARMENIAN` | no |
+Counts below are out of the 35 bundled Google families, and count a family only when its
+`cmap` covers the script's letters in full — measured against the shipped binaries rather
+than against what a family is known for. (The standard-14 are WinAnsi and carry none of
+these scripts.) `BundledScriptCoverageTest` holds every row to those exact families, so
+this table fails a build rather than going quietly stale.
 
-Each of the last four carries its own script plus Latin, and nothing of the other three.
+| Script | Families that cover it | How many |
+| --- | --- | --- |
+| Basic Latin (ASCII) | all of them | 35 |
+| Vietnamese | most — **not** `VOLKHOV`, `AMIRI`, `PT_SANS`, `PT_SERIF`, `POPPINS`, `ZILLA_SLAB`, `UBUNTU`, `NOTO_SANS_GEORGIAN`, `NOTO_SANS_ARMENIAN` | 26 |
+| Cyrillic | `PT_SANS`, `PT_SERIF`, `FIRA_SANS`, `ARSENAL`, `LATO`, `CARLITO`, `GOTHIC_A1`, … | 18 |
+| Latin Extended-A | `LATO`, `CARLITO`, `FIRA_SANS`, `COUSINE`, `TINOS`, `GOTHIC_A1`, `AMIRI`, … | 11 |
+| Greek | `GENTIUM_PLUS`, `TINOS`, `COUSINE`, `LATO`, `FIRA_SANS`, `GOTHIC_A1`, … | 11 |
+| Thai | `SARABUN`, `KANIT`, `PROMPT`, `TAVIRAJ`, `TRIRONG`, `BAI_JAMJUREE` | 6 |
+| Hebrew | `DAVID_LIBRE`, `TINOS`, `COUSINE` | 3 |
+| Arabic | `AMIRI` | 1 |
+| Georgian | `NOTO_SANS_GEORGIAN` | 1 |
+| Armenian | `NOTO_SANS_ARMENIAN` | 1 |
+| Korean (Hangul) | `GOTHIC_A1` | 1 |
+| Chinese, Japanese | — | **0** |
+
 One paragraph is drawn in one family — the engine does not fall back across families — so
-a run mixing two of these scripts needs a font of your own that covers both.
+a run mixing two scripts needs a single family that carries both. For Arabic, Georgian,
+Armenian and Hangul there is exactly one bundled family each and it carries none of the
+others, so mixing any two of those means registering a font of your own through
+`FontFamilyDefinition`.
+
+Chinese and Japanese have no bundled family and cannot get one from the usual sources:
+the official static Noto CJK faces use CFF outlines, which the PDF backend cannot embed,
+and the variable ones carry a `wght` axis defaulting to 100 — Thin is the weight a PDF
+would draw, since it applies no variable-font instancing. Register a CJK font of your own
+with `FontFamilyDefinition`: a TrueType-outline file already at the weight you want.
 
 ## Install
 

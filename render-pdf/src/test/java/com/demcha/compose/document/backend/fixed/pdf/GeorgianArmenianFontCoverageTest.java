@@ -22,10 +22,14 @@ import java.util.List;
  * A font covering only the lowercase range renders body text and drops every title,
  * which no other test in this module would notice.</p>
  *
- * <p>Both families ship upstream as variable fonts and the catalog carries their regular
- * instance, so every decoration resolves to one face. That is asserted rather than
- * assumed: a bold that silently resolved to a <em>different</em> family's face would
- * still draw.</p>
+ * <p>Both binaries are the variable fonts upstream publishes — there is no static face to
+ * take — so every decoration resolves to the one face inside them, and which weight that
+ * is depends entirely on the file's {@code fvar} default. A PDF applies no variable-font
+ * instancing: it draws the default instance and nothing else. That is why the weight is
+ * asserted here rather than assumed, and it is not a hypothetical — the Noto CJK variable
+ * fonts default to 100, so the same vendoring done with one of those would have shipped a
+ * family that renders every page in hairline Thin, with full coverage and no failure
+ * anywhere to point at it.</p>
  */
 class GeorgianArmenianFontCoverageTest {
 
@@ -40,8 +44,12 @@ class GeorgianArmenianFontCoverageTest {
     private static final int ARMENIAN_CAPITAL_FIRST = 0x0531;
     private static final int ARMENIAN_CAPITAL_LAST = 0x0556;
 
+    /**
+     * Through U+0587 rather than U+0586: the ech-yiwn ligature և is the Armenian word
+     * for "and", so a family without it loses a word from nearly every sentence.
+     */
     private static final int ARMENIAN_SMALL_FIRST = 0x0561;
-    private static final int ARMENIAN_SMALL_LAST = 0x0586;
+    private static final int ARMENIAN_SMALL_LAST = 0x0587;
 
     private static final List<TextDecoration> FACES = List.of(
             TextDecoration.DEFAULT, TextDecoration.BOLD, TextDecoration.ITALIC, TextDecoration.BOLD_ITALIC);
@@ -72,6 +80,17 @@ class GeorgianArmenianFontCoverageTest {
                 .isEmpty();
         assertThat(unencodable(FontName.NOTO_SANS_ARMENIAN, TextDecoration.DEFAULT, 'A', 'z'))
                 .isEmpty();
+    }
+
+    @Test
+    void theWeightAVariableFontDefaultsToIsTheRegularOne() {
+        for (FontName family : List.of(FontName.NOTO_SANS_GEORGIAN, FontName.NOTO_SANS_ARMENIAN)) {
+            assertThat(face(family, TextDecoration.DEFAULT).getName())
+                    .describedAs("%s: the drawn weight is the file's fvar default, so the "
+                            + "face must name itself Regular — a refresh to a build that "
+                            + "defaults to another weight would render every page in it", family)
+                    .endsWith("-Regular");
+        }
     }
 
     @Test

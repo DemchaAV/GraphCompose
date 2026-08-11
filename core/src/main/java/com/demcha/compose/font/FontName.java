@@ -88,8 +88,9 @@ public final class FontName {
     /**
      * Georgian sans family covering Latin and the Georgian alphabet.
      *
-     * <p>Ships upstream as a variable font, so the catalog carries its regular
-     * instance and bold styles resolve to it.</p>
+     * <p>Upstream publishes this family only as a variable font, and a PDF draws a
+     * variable font at its default instance — regular here. Bold and italic styles
+     * therefore resolve to that same face.</p>
      *
      * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
      * on the classpath.</p>
@@ -101,8 +102,9 @@ public final class FontName {
     /**
      * Armenian sans family covering Latin and the Armenian alphabet.
      *
-     * <p>Ships upstream as a variable font, so the catalog carries its regular
-     * instance and bold styles resolve to it.</p>
+     * <p>Upstream publishes this family only as a variable font, and a PDF draws a
+     * variable font at its default instance — regular here. Bold and italic styles
+     * therefore resolve to that same face.</p>
      *
      * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
      * on the classpath.</p>
@@ -110,6 +112,26 @@ public final class FontName {
      * @since 2.2.0
      */
     public static final FontName NOTO_SANS_ARMENIAN = of("Noto Sans Armenian");
+
+    /**
+     * Korean sans family covering the full Hangul syllable range alongside Latin,
+     * Latin Extended-A, Cyrillic and Greek.
+     *
+     * <p>Korean text is normally written in precomposed syllables. This family also
+     * carries the conjoining jamo a decomposed (NFD) string is made of, so text that
+     * has been through Unicode normalization still draws instead of turning into
+     * substitution marks — though it draws as a row of separate jamo, since a PDF
+     * composes nothing. Normalize to NFC for stacked syllables.</p>
+     *
+     * <p>Upstream ships no italic face, so italic styles resolve to the regular one
+     * and bold-italic to bold. Hanja are not covered.</p>
+     *
+     * <p>Requires {@code io.github.demchaav:graph-compose-fonts:1.1.0} or newer
+     * on the classpath.</p>
+     *
+     * @since 2.2.0
+     */
+    public static final FontName GOTHIC_A1 = of("Gothic A1");
 
     private final String name;
     private final String normalizedName;

@@ -99,7 +99,7 @@ names the artifact to add (`graph-compose-render-pdf`, already included in
 Two opt-in companions carry their own version lines (they change on their own cadence, so
 an engine upgrade never re-downloads them):
 
-- `graph-compose-fonts:1.1.0` &mdash; the curated Google font families (~18&nbsp;MB).
+- `graph-compose-fonts:1.1.0` &mdash; the curated Google font families (~20&nbsp;MB).
   Pure-text and standard-14 documents need nothing extra; details in the
   [fonts migration note](./docs/migration/v1.8.0-fonts.md).
 - `graph-compose-emoji:1.0.0` &mdash; inline colour emoji for `RichText.emoji(":star:", size)`.

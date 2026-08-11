@@ -341,7 +341,8 @@ public final class FontFamilyDefinition {
                 "amiri", "1.1.0",
                 "davidlibre", "1.1.0",
                 "notosansgeorgian", "1.1.0",
-                "notosansarmenian", "1.1.0");
+                "notosansarmenian", "1.1.0",
+                "gothica1", "1.1.0");
 
         /**
          * A face that has shipped in every release of the font artifact. Its presence

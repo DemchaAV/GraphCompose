@@ -9,6 +9,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -103,31 +104,64 @@ class VersionConsistencyGuardTest {
 
     @Test
     void bundledFontsVersionAgreesAcrossModules() throws Exception {
-        // graph-compose-fonts carries an independent version line. The engine
-        // does NOT depend on the fonts artifact (its tests read the fonts from
-        // the sibling module's source), so the ${graphcompose.fonts.version}
-        // property that pins the artifact lives only in the modules that consume
-        // it: the aggregator (inherited by examples + benchmarks) and the bundle.
-        // This guards the version-literal drift class: those must always agree, even
-        // though they differ from the engine version line.
-        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "graphcompose.fonts.version");
-
-        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.fonts.version"))
-                .describedAs("bundle graphcompose.fonts.version must match the aggregator's (%s)", aggregator)
-                .isEqualTo(aggregator);
+        // graph-compose-fonts carries an independent version line, and the
+        // ${graphcompose.fonts.version} literal that pins it is repeated in every module
+        // that resolves the artifact. Each copy is load-bearing: a family added in a newer
+        // fonts release simply is not on the classpath of a module still pinned to the old
+        // one, and the failure surfaces lazily at first use. Rather than list the modules —
+        // a list that was already two short of reality — every declaring pom is discovered
+        // and held to the root's value.
+        assertPinAgreesAcrossEveryDeclaringModule("graphcompose.fonts.version");
     }
 
     @Test
     void bundledEmojiVersionAgreesAcrossModules() throws Exception {
-        // graph-compose-emoji, like graph-compose-fonts, carries an independent
-        // version line (emoji-v* tag) and the ${graphcompose.emoji.version} property
-        // that pins it lives in the aggregator (inherited by examples) and the bundle
-        // (which now ships the colour-emoji set). Guard the same version-literal drift.
-        String aggregator = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), "graphcompose.emoji.version");
+        // graph-compose-emoji, like graph-compose-fonts, carries an independent version
+        // line (emoji-v* tag). Guard the same version-literal drift the same way.
+        assertPinAgreesAcrossEveryDeclaringModule("graphcompose.emoji.version");
+    }
 
-        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("bundle/pom.xml"), "graphcompose.emoji.version"))
-                .describedAs("bundle graphcompose.emoji.version must match the aggregator's (%s)", aggregator)
-                .isEqualTo(aggregator);
+    /**
+     * Holds every module pom that declares {@code property} to the root's value.
+     *
+     * <p>Discovering the declaring poms rather than listing them is the point: a module
+     * that starts consuming the artifact gets guarded the day it does, instead of the day
+     * someone remembers this test. The count is asserted too, so a discovery that quietly
+     * finds nothing fails instead of passing over an empty set.</p>
+     */
+    private void assertPinAgreesAcrossEveryDeclaringModule(String property) throws Exception {
+        String root = pinnedVersionProperty(PROJECT_ROOT.resolve("pom.xml"), property);
+
+        List<Path> declaring;
+        try (Stream<Path> modules = Files.list(PROJECT_ROOT)) {
+            declaring = modules.filter(Files::isDirectory)
+                    .map(module -> module.resolve("pom.xml"))
+                    .filter(Files::isRegularFile)
+                    .filter(pom -> declaresProperty(pom, property))
+                    .sorted()
+                    .toList();
+        }
+
+        assertThat(declaring)
+                .describedAs("%s is declared by the root and by the modules that resolve the "
+                        + "artifact; finding none means the discovery broke, not that the "
+                        + "drift class went away", property)
+                .isNotEmpty();
+
+        for (Path pom : declaring) {
+            assertThat(pinnedVersionProperty(pom, property))
+                    .describedAs("%s in %s must match the root's (%s)",
+                            property, PROJECT_ROOT.relativize(pom), root)
+                    .isEqualTo(root);
+        }
+    }
+
+    private static boolean declaresProperty(Path pom, String property) {
+        try {
+            return Files.readString(pom).contains("<" + property + ">");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Test

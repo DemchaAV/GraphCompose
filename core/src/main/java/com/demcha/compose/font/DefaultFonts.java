@@ -62,7 +62,8 @@ public class DefaultFonts {
             google(FontName.AMIRI, "amiri", "Amiri"),
             regularAndBold(FontName.DAVID_LIBRE, "davidlibre", "DavidLibre"),
             regularOnly(FontName.NOTO_SANS_GEORGIAN, "notosansgeorgian", "NotoSansGeorgian"),
-            regularOnly(FontName.NOTO_SANS_ARMENIAN, "notosansarmenian", "NotoSansArmenian"));
+            regularOnly(FontName.NOTO_SANS_ARMENIAN, "notosansarmenian", "NotoSansArmenian"),
+            regularAndBold(FontName.GOTHIC_A1, "gothica1", "GothicA1"));
 
     private DefaultFonts() {
     }
@@ -117,9 +118,13 @@ public class DefaultFonts {
     }
 
     /**
-     * A family shipped upstream as a variable font, whose regular instance is the one
-     * the catalog carries. Every style resolves to it, so bold renders unemboldened —
-     * the alternative would be shipping a synthetic weight the designer never drew.
+     * A family upstream publishes only as a variable font, with no static face to take.
+     * The file the catalog carries is that variable font; a PDF has no variable-font
+     * support, so what gets drawn is its default instance — regular for the families
+     * registered this way. Every style therefore resolves to one face and bold renders
+     * unemboldened. The bold master does exist inside the file; reaching it would mean
+     * instancing the font at build time and shipping a binary no upstream publishes,
+     * which is a bigger commitment than an unemboldened heading.
      */
     private static FontFamilyDefinition regularOnly(FontName fontName, String folder, String prefix) {
         return FontFamilyDefinition.classpath(fontName, resource(folder, prefix + "-Regular.ttf"))

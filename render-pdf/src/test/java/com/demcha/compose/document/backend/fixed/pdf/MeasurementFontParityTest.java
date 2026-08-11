@@ -48,6 +48,10 @@ class MeasurementFontParityTest {
 
     @Test
     void measurementWidthsMatchRenderWidthsForEveryBinaryFamily() throws Exception {
+        // The list is derived, and the only assertion below sits inside the loop over it:
+        // an empty derivation would turn the whole guard into a green no-op.
+        assertThat(BINARY_FAMILIES).hasSizeGreaterThanOrEqualTo(32);
+
         try (PDDocument renderDocument = new PDDocument();
              PdfMeasurementResources measurement = PdfMeasurementResources.open(List.of())) {
             // Exactly what PdfFixedLayoutBackend builds: a render library that embeds

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 
 import static com.demcha.testing.visual.ScriptGlyphDemo.assertNoGlyphSubstitution;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertScriptOnPage;
 import static com.demcha.testing.visual.ScriptGlyphDemo.assertValidPdf;
 import static com.demcha.testing.visual.ScriptGlyphDemo.render;
 
@@ -36,6 +37,9 @@ class GeorgianArmenianGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, 0x10D0, 0x10FA, GEORGIAN.codePointCount(0, GEORGIAN.length()) - 1);
+        assertScriptOnPage(output, 0x1C90, 0x1CBA,
+                GEORGIAN_MTAVRULI.codePointCount(0, GEORGIAN_MTAVRULI.length()));
     }
 
     @Test
@@ -46,5 +50,9 @@ class GeorgianArmenianGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        // Through U+0587 rather than U+0586: the ech-yiwn ligature և is a letter of
+        // ordinary Armenian text — it is the word "and" — and sits past the small letters.
+        assertScriptOnPage(output, 0x0531, 0x0587,
+                ARMENIAN.codePointCount(0, ARMENIAN.length()) - 1);
     }
 }

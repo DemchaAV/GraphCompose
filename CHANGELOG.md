@@ -47,6 +47,14 @@ follow semantic versioning; release dates are ISO 8601.
   that measures and draws — where substituting them with `?` would have put a visible
   mark on the page and given a zero-width character a width.
 
+  One shaping limit is worth knowing. Letters are given their contextual forms before
+  the line is wrapped, because wrapping measures widths and the forms are what carry
+  them. A word longer than the column is therefore broken with the forms it was given
+  while whole: the letters either side of the break keep their connecting strokes, as if
+  the word continued across the line boundary. Arabic does not break words, so this only
+  arises where the word cannot fit at all — the case every script degrades in — and
+  re-shaping the halves would change their widths, which is what the wrap already spent.
+
   One limit is worth knowing. Plain text extraction and copy-paste read the PDF's
   content stream, which carries the visual order — selecting a Hebrew line out of a
   produced PDF yields its characters reversed. Undoing that would take `ActualText`

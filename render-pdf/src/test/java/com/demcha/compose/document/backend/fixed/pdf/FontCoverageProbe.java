@@ -82,6 +82,17 @@ final class FontCoverageProbe {
         return missing;
     }
 
+    /** Whether the family's regular face can encode every letter in the range. */
+    static boolean coversLetters(FontName name, int first, int last) {
+        PDFont font = face(name, TextDecoration.DEFAULT);
+        for (int codePoint = first; codePoint <= last; codePoint++) {
+            if (Character.isLetter(codePoint) && !canEncode(font, codePoint)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** Whether the family's regular face can encode every one of the given code points. */
     static boolean covers(FontName name, int... codePoints) {
         PDFont font = face(name, TextDecoration.DEFAULT);

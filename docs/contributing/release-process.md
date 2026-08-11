@@ -137,23 +137,31 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   version line (started at `1.0.0`) and is bumped **only when the font set
   changes**. `cut-release.ps1` deliberately does not touch `fonts/pom.xml`, and
   the version guard deliberately does not require it to equal the engine version.
-- **Cutting a fonts release** (only when fonts change): bump `fonts/pom.xml`
-  `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
-  [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
-  only `graph-compose-fonts` to Central. Then bump
-  `<graphcompose.fonts.version>` to the new version in **every pom that declares
-  it** — currently the root reactor `pom.xml` (inherited by examples and
-  benchmarks), `core/pom.xml`, `render-pdf`, `render-docx`, `render-pptx` and
-  `bundle/pom.xml`. Do not work from that list: `VersionConsistencyGuardTest`
-  discovers the declaring poms and fails on any that disagrees with the root, so
-  run it rather than trusting a list that has been short before.
-- **Cut the tag last.** A Central artifact is immutable, and the catalog's
-  minimum-version metadata names the version a family first ships in. So the tag
-  for a fonts version goes up only once **every** family intended for it has
-  landed on the release branch — a tag cut between two font PRs publishes an
-  artifact that the engine then tells consumers contains families it does not,
-  and the failure is a missing resource at first use rather than anything a
-  build catches.
+- **Cutting a fonts release** (only when fonts change) — one sequence, in this
+  order, because the last step is irreversible:
+
+  1. **Land every font change meant for the version first.** All of it, on the
+     release branch, before anything is tagged.
+  2. Bump `fonts/pom.xml` `<version>`.
+  3. Bump `<graphcompose.fonts.version>` to the same value in **every pom that
+     declares it** — currently the root reactor `pom.xml` (inherited by examples
+     and benchmarks), `core/pom.xml`, `render-pdf`, `render-docx`,
+     `render-pptx` and `bundle/pom.xml`. Do not work from that list: run
+     `VersionConsistencyGuardTest`, which discovers the declaring poms and fails
+     on any that disagrees with the root — the list has been short before.
+     Pinning a version that is not published yet is fine; CI installs the fonts
+     module from source before the jobs that need it.
+  4. Merge.
+  5. **Then** push the `fonts-vX.Y.Z` tag. It triggers
+     [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which
+     deploys only `graph-compose-fonts` to Central.
+
+  Step 5 is last because a Central artifact is immutable while the engine goes
+  on naming that version as the one a family arrived in. A tag pushed between
+  two font PRs publishes a jar that the catalog then promises families it does
+  not contain, and the failure lands on a consumer as a missing resource at
+  first use — not on us, and not on any build.
+
 - **Bootstrapping the fonts artifact.** `core` takes `graph-compose-fonts` at
   **test** scope so its visual and snapshot suites render with the real binaries;
   test scope is not transitive, so the published engine jar stays fonts-free. A

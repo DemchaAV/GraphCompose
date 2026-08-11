@@ -1,6 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
 import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.covers;
+import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.coversLetters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.demcha.compose.font.DefaultFonts;
@@ -89,22 +90,30 @@ class BundledScriptCoverageTest {
 
     @Test
     void theWiderLatinAndGreekAndCyrillicRowsMatchTheirCounts() {
-        assertThat(familiesCovering('A', 'z'))
+        assertThat(familiesCoveringLetters('A', 'z'))
                 .describedAs("basic Latin is the one range every binary family carries")
                 .hasSize(35);
-        assertThat(familiesCovering(0x0100, 0x017F))
+        assertThat(familiesCoveringLetters(0x0100, 0x017F))
                 .describedAs("Latin Extended-A — far from universal, which is why the table "
                         + "no longer says \"any bundled family\"")
                 .hasSize(11);
         assertThat(familiesCoveringEach(VIETNAMESE))
                 .describedAs("Vietnamese precomposed vowels")
                 .hasSize(26);
-        assertThat(familiesCovering(0x0410, 0x044F))
-                .describedAs("Cyrillic")
-                .hasSize(18);
-        assertThat(familiesCoveringEach(GREEK))
-                .describedAs("Greek, skipping U+03A2 which Unicode leaves unassigned")
+        assertThat(familiesCoveringLetters(0x0386, 0x03CE))
+                .describedAs("the modern Greek alphabet, both cases and the accented capitals "
+                        + "— not the Greek and Coptic block, whose archaic letters no text "
+                        + "face carries")
                 .hasSize(11);
+        assertThat(familiesCoveringLetters(0x0410, 0x044F))
+                .describedAs("the Russian and Ukrainian letters most Cyrillic text is written in")
+                .hasSize(18);
+        assertThat(familiesCoveringLetters(0x0400, 0x04FF))
+                .describedAs("the whole Cyrillic block is a different claim entirely — the "
+                        + "extended letters the Central Asian and Caucasian languages need "
+                        + "narrow it from eighteen families to four, which is the number a "
+                        + "table saying \"Cyrillic\" has to be honest about")
+                .hasSize(4);
     }
 
     /** The precomposed vowels that are Vietnamese rather than merely Latin-1. */
@@ -125,6 +134,20 @@ class BundledScriptCoverageTest {
     private static List<FontName> familiesCovering(int first, int last) {
         return FAMILIES.stream()
                 .filter(family -> covers(family, first, last))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Like {@link #familiesCovering}, over the code points Unicode calls letters.
+     *
+     * <p>The wider rows span blocks with unassigned gaps and with punctuation among the
+     * letters, so a plain range sweep would count nobody and the range would have to be
+     * trimmed until it did — which is how the Cyrillic row came to be measured on the
+     * Russian alphabet while the table said "Cyrillic".</p>
+     */
+    private static List<FontName> familiesCoveringLetters(int first, int last) {
+        return FAMILIES.stream()
+                .filter(family -> coversLetters(family, first, last))
                 .collect(Collectors.toList());
     }
 

@@ -43,18 +43,23 @@ ASCII but no accents turns *Müller* into *M?ller*. Hanja are not covered.
 ## Which script needs which family
 
 Counts below are out of the 35 bundled Google families, and count a family only when its
-`cmap` covers the script's letters in full — measured against the shipped binaries rather
-than against what a family is known for. (The standard-14 are WinAnsi and carry none of
-these scripts.) `BundledScriptCoverageTest` holds every row to those exact families, so
+`cmap` covers every letter of the named range — which is why Cyrillic appears twice.
+Eighteen families carry the Russian and Ukrainian letters most Cyrillic text is written
+in; four carry the whole block, including the extended letters the Central Asian and
+Caucasian languages need. Greek is the modern alphabet rather than its Unicode block,
+whose archaic and Coptic letters no text face carries. Everything here is measured against
+the shipped binaries rather than against what a family is known for. (The standard-14 are
+WinAnsi and carry none of these scripts.) `BundledScriptCoverageTest` holds every row to those exact families, so
 this table fails a build rather than going quietly stale.
 
 | Script | Families that cover it | How many |
 | --- | --- | --- |
 | Basic Latin (ASCII) | all of them | 35 |
 | Vietnamese | most — **not** `VOLKHOV`, `AMIRI`, `PT_SANS`, `PT_SERIF`, `POPPINS`, `ZILLA_SLAB`, `UBUNTU`, `NOTO_SANS_GEORGIAN`, `NOTO_SANS_ARMENIAN` | 26 |
-| Cyrillic | `PT_SANS`, `PT_SERIF`, `FIRA_SANS`, `ARSENAL`, `LATO`, `CARLITO`, `GOTHIC_A1`, … | 18 |
+| Cyrillic — Russian and Ukrainian letters | `PT_SANS`, `PT_SERIF`, `FIRA_SANS`, `ARSENAL`, `LATO`, `CARLITO`, `GOTHIC_A1`, … | 18 |
+| Cyrillic — the whole block | `LATO`, `TINOS`, `COUSINE`, `GOTHIC_A1` | 4 |
 | Latin Extended-A | `LATO`, `CARLITO`, `FIRA_SANS`, `COUSINE`, `TINOS`, `GOTHIC_A1`, `AMIRI`, … | 11 |
-| Greek | `GENTIUM_PLUS`, `TINOS`, `COUSINE`, `LATO`, `FIRA_SANS`, `GOTHIC_A1`, … | 11 |
+| Greek — the modern alphabet | `GENTIUM_PLUS`, `TINOS`, `COUSINE`, `LATO`, `FIRA_SANS`, `GOTHIC_A1`, … | 11 |
 | Thai | `SARABUN`, `KANIT`, `PROMPT`, `TAVIRAJ`, `TRIRONG`, `BAI_JAMJUREE` | 6 |
 | Hebrew | `DAVID_LIBRE`, `TINOS`, `COUSINE` | 3 |
 | Arabic | `AMIRI` | 1 |

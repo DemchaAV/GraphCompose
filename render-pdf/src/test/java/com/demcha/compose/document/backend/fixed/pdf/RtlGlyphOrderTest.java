@@ -32,6 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class RtlGlyphOrderTest {
 
+    /** The zero-width non-joiner, built from its code point: a literal would be invisible. */
+    private static final String ZWNJ = String.valueOf((char) 0x200C);
+
     private static final String HEBREW = "שלום";
     private static final String LATIN = "Hello";
 
@@ -159,19 +162,23 @@ class RtlGlyphOrderTest {
 
     @Test
     void arabicReachesThePageInJoinedForms() throws Exception {
-        // The base letters would render isolated; the presentation forms are what
-        // joining looks like to a PDF. Extraction reads the content stream, so the
-        // forms themselves are visible to this test — every extracted Arabic glyph
-        // must be a presentation form, and none the unjoined base letters.
-        byte[] pdf = renderArabic("مرحبا", TextDirection.RTL);
+        // Joining is a fact about which glyphs were drawn, so it is read from the codes.
+        // The reference is the same five letters with the joins suppressed: if the shaper
+        // did nothing, the two would draw the same glyphs.
+        byte[] joined = renderArabic("مرحبا", TextDirection.RTL);
+        byte[] unjoined = renderArabic(
+                "م" + ZWNJ + "ر" + ZWNJ + "ح" + ZWNJ + "ب" + ZWNJ + "ا", TextDirection.RTL);
 
-        String drawn = glyphsInDrawingOrder(pdf);
-        assertThat(drawn.chars().filter(cp -> cp >= 0xFE80 && cp <= 0xFEFC).count())
-                .describedAs("the word's five letters must all land as contextual forms")
-                .isEqualTo(5);
-        assertThat(drawn.chars().noneMatch(cp -> cp >= 0x0621 && cp <= 0x064A))
-                .describedAs("no unjoined base letter may leak through")
-                .isTrue();
+        assertThat(glyphCodesInDrawingOrder(joined))
+                .describedAs("the letters are drawn joined, not as the isolated forms the "
+                        + "same five letters take when told not to connect")
+                .isNotEqualTo(glyphCodesInDrawingOrder(unjoined))
+                .describedAs("and all five of them land").hasSize(5);
+
+        assertThat(glyphsInDrawingOrder(joined))
+                .describedAs("while what those glyphs stand for is the word as written, "
+                        + "read the way the page runs")
+                .isEqualTo(new StringBuilder("مرحبا").reverse().toString());
     }
 
     @Test
@@ -246,19 +253,47 @@ class RtlGlyphOrderTest {
         return drawn.toString().trim();
     }
 
+    /**
+     * The page's glyphs themselves, ordered by where they were placed, left to right.
+     *
+     * <p>A font code says which glyph was drawn; {@code getUnicode} says what the file
+     * claims that glyph means, and the two are deliberately different for Arabic — the
+     * shaped form is drawn and the letter is what it stands for. Joining can only be
+     * observed on this side.</p>
+     */
+    private static List<Integer> glyphCodesInDrawingOrder(byte[] pdf) throws IOException {
+        List<TextPosition> positions = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            PDFTextStripper collector = new PDFTextStripper() {
+                @Override
+                protected void writeString(String text, List<TextPosition> textPositions) {
+                    positions.addAll(textPositions);
+                }
+            };
+            collector.getText(document);
+        }
+
+        positions.sort(Comparator.comparingDouble(TextPosition::getXDirAdj));
+        List<Integer> codes = new ArrayList<>();
+        for (TextPosition position : positions) {
+            for (int code : position.getCharacterCodes()) {
+                codes.add(code);
+            }
+        }
+        return codes;
+    }
+
     @Test
     void aZeroWidthNonJoinerWrittenIntoAParagraphReachesTheShaper() throws Exception {
         // The end-to-end half of the joining-control guard. The shaper handles U+200C
         // correctly on its own, but it only ever saw it once control sanitizing stopped
         // deleting it first — a gap no unit test of either piece could show.
-        String joined = glyphsInDrawingOrder(renderArabic("به", TextDirection.RTL));
-        String broken = glyphsInDrawingOrder(
-                renderArabic("ب‌ه", TextDirection.RTL));
+        byte[] brokenPdf = renderArabic("ب" + ZWNJ + "ه", TextDirection.RTL);
 
-        assertThat(joined)
+        assertThat(glyphCodesInDrawingOrder(renderArabic("به", TextDirection.RTL)))
                 .describedAs("beh and heh connect when nothing says otherwise")
-                .isNotEqualTo(broken);
-        assertThat(broken)
+                .isNotEqualTo(glyphCodesInDrawingOrder(brokenPdf));
+        assertThat(glyphsInDrawingOrder(brokenPdf))
                 .describedAs("the author's non-joiner has to survive every seam between "
                         + "the builder and the content stream")
                 .doesNotContain("‌");

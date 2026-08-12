@@ -85,6 +85,28 @@ follow semantic versioning; release dates are ISO 8601.
   in that list are `<` and `>`, which Unicode also classes as mathematical, so they do
   mirror.)
 
+- **A PDF now says the letters an author wrote, not the shapes they were drawn as.** A
+  font's `ToUnicode` map states what each glyph in the file means, and the subsetter
+  builds it from the characters shown — which, for Arabic, are the joined forms. So the
+  file stated that a glyph meant U+FE8E, the final form of alef, where the author had
+  typed U+0627. A reader that applies a compatibility normalisation recovered the letter,
+  which is why extraction usually looked right; one that handed the code point straight to
+  a search box did not, and a search for the ordinary spelling of a word found nothing
+  with no sign of why. The maps are now corrected once the subsetter has built them, so a
+  copied word is the word, and the lam-alef ligature — one glyph standing for two letters
+  — comes back out as both. Hebrew is untouched: it is reordered, never shaped, so its
+  glyphs already named their own letters.
+
+  Only a document that drew a reordered run pays anything. The map has to exist before it
+  can be read and it is written during the save, so such a document is saved twice;
+  everything else takes exactly the path it took before, buffering nothing and saving
+  once.
+
+  Reading **order** in the file is still visual — a PDF is painted left to right, and a
+  reader recovers the order text is read in by running the bidirectional algorithm over
+  what it extracted, as PDFBox's own extractor does. Carrying that order in the file
+  itself would take `ActualText` marked content, which this does not add.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and
@@ -271,11 +293,31 @@ follow semantic versioning; release dates are ISO 8601.
   gross breakage and show what a deliberate change looked like, while exactness is carried
   by the byte-level drift guard, which no rasteriser can blur.
 
-- **What a produced document tells a reader its own text is, is asserted directly.** For
-  Arabic and Hebrew, extraction must return the words as typed, in the order typed — and
-  one known limit is pinned so the day it changes is deliberate: the font's glyph map
-  still names Arabic's joined presentation forms rather than the letters, so a reader
-  that does not normalise sees U+FE8E where the author wrote U+0627.
+- **What a document tells a reader its own text is, is now two questions.** What an
+  extractor returns and what the font's glyph map says are not the same thing: the first
+  can be right while the second is wrong, because a reader is free to normalise a shaped
+  form back to its letter and PDFBox's own extractor does. Both are asserted, for Arabic
+  and for Hebrew, so a correction that overreached — rewriting entries that were already
+  right — fails on the Hebrew case rather than passing everywhere.
+
+  Two existing assertions moved to a different channel as a result. They read the joined
+  forms out of what the file said its glyphs meant, which only worked while that answer
+  was the drawing rather than the text; joining is now read from the glyph codes
+  themselves, which is where it always was.
+
+- **A hyperlink, an underline, and a highlight chip are each held to the words they were
+  written on**, in a line that gets reordered. All three are placed by arithmetic rather
+  than by where the glyphs went, and in a left-to-right line the two orders agree, so
+  nothing distinguishes a correct implementation from one that walks the logical order.
+  Each is checked against that failure: placed by a logical walk, the mark or rectangle
+  lands under the other words, and the left-to-right control keeps passing — so the tests
+  tell the reordering apart from the arithmetic.
+
+  A first-line indent is held to the edge its paragraph starts from, which is the right
+  one: the indent is a text prefix, a left-to-right shape of thinking, and a reader of an
+  earlier measurement could reasonably have concluded it was being dropped. It is not —
+  the prefix spaces are drawn glyphs sitting at the margin, so asking where a line's first
+  glyph is answers where the padding starts rather than the text.
 
 - **Every rendered document is now held against a fresh render.** A third of the example
   catalogue — thirty-two documents, the cover-letter presets and most of the CV gallery

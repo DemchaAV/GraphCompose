@@ -318,8 +318,9 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
-        try (PDDocument document = buildDocument(graph, context)) {
-            document.save(output);
+        Rendered rendered = buildDocument(graph, context);
+        try (PDDocument document = rendered.document()) {
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(), output);
             return document.getNumberOfPages();
         }
     }
@@ -352,9 +353,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(context, "context");
         byte[] documentBytes;
-        try (PDDocument document = buildDocument(graph, context);
+        Rendered rendered = buildDocument(graph, context);
+        try (PDDocument document = rendered.document();
              ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            document.save(buffer);
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(), buffer);
             documentBytes = buffer.toByteArray();
         }
         try (PDDocument document = Loader.loadPDF(documentBytes)) {
@@ -377,14 +379,26 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
+     * A built document, and whether drawing it put any run in an order other than the
+     * one it was written in.
+     *
+     * <p>The second half is what {@link PdfShapedGlyphUnicode#save} needs and cannot
+     * work out for itself: it is a fact about the render, and by the time the document
+     * is saved the render is over.</p>
+     */
+    private record Rendered(PDDocument document, boolean reorderedText) {
+    }
+
+    /**
      * Builds the fully-rendered, post-processed {@link PDDocument} (pages drawn,
      * links and bookmarks resolved, metadata / watermark / protection /
      * header-footer applied) but does NOT save or close it — the caller owns the
-     * returned open document. On any build failure the document is closed and the
-     * exception rethrown, so the resource never leaks.
+     * open document inside the returned {@link Rendered}. On any build failure the
+     * document is closed and the exception rethrown, so the resource never leaks.
      */
-    private PDDocument buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
+    private Rendered buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
         PDDocument document = new PDDocument();
+        boolean reorderedText = false;
         try {
             FontLibrary fonts = PdfFontLibraryFactory.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
@@ -392,6 +406,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
                 renderGraph(graph, environment);
+                reorderedText = environment.reorderedText();
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
                 // Pass B of internal-link resolution: every anchor is now placed,
                 // so deferred go-to links (incl. forward references) can resolve.
@@ -413,7 +428,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
 
-            return document;
+            return new Rendered(document, reorderedText);
         } catch (Exception ex) {
             document.close();
             throw ex;
@@ -484,12 +499,13 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     @Override
     public void writeSections(List<SectionUnit> sections, OutputStream output) throws Exception {
         Objects.requireNonNull(output, "output");
-        try (PDDocument document = buildSectionsDocument(sections)) {
-            document.save(output);
+        Rendered rendered = buildSectionsDocument(sections);
+        try (PDDocument document = rendered.document()) {
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(), output);
         }
     }
 
-    private PDDocument buildSectionsDocument(List<SectionUnit> sections) throws Exception {
+    private Rendered buildSectionsDocument(List<SectionUnit> sections) throws Exception {
         Objects.requireNonNull(sections, "sections");
         if (sections.isEmpty()) {
             throw new IllegalArgumentException("A multi-section document needs at least one section.");
@@ -500,6 +516,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             Map<String, PdfRenderEnvironment.AnchorDestination> anchors = new LinkedHashMap<>();
             List<PdfRenderEnvironment.DeferredInternalLink> links = new ArrayList<>();
             List<PdfRenderEnvironment.BookmarkRecord> bookmarks = new ArrayList<>();
+            boolean reorderedText = false;
             int pageOffset = 0;
             for (SectionUnit section : sections) {
                 LayoutGraph graph = section.graph();
@@ -511,6 +528,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     PdfRenderEnvironment environment =
                             new PdfRenderEnvironment(document, fonts, renderSession, pageOffset);
                     chrome.renderGraph(graph, environment);
+                    reorderedText |= environment.reorderedText();
                     bookmarks.addAll(environment.bookmarkRecords());
                     links.addAll(environment.deferredInternalLinks());
                     environment.anchorDestinations().forEach((name, destination) -> {
@@ -537,7 +555,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             if (deterministicTimestamp != null) {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
-            return document;
+            return new Rendered(document, reorderedText);
         } catch (Exception ex) {
             document.close();
             throw ex;

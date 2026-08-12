@@ -41,6 +41,7 @@ public final class PdfRenderEnvironment {
     private final List<BookmarkRecord> bookmarkRecords = new ArrayList<>();
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<DeferredInternalLink> deferredInternalLinks = new ArrayList<>();
+    private boolean reorderedText;
 
     PdfRenderEnvironment(PDDocument document, FontLibrary fonts, PdfRenderSession session) {
         this(document, fonts, session, 0);
@@ -180,6 +181,28 @@ public final class PdfRenderEnvironment {
 
     List<BookmarkRecord> bookmarkRecords() {
         return List.copyOf(bookmarkRecords);
+    }
+
+    /**
+     * Records that a run was drawn in an order other than the one it was written in.
+     *
+     * <p>Reordering is the only way text reaches the page in a form that is not what an
+     * author typed — Arabic is shaped into its joined forms on the same path — so this is
+     * what tells the save whether the document's glyph maps are worth reading back. It is
+     * set from the paragraph and chip paths; a table cell carries no direction and so is
+     * never reordered.</p>
+     */
+    public void markReorderedText() {
+        reorderedText = true;
+    }
+
+    /**
+     * Whether any run was drawn in an order other than the one it was written in.
+     *
+     * @return {@code true} once {@link #markReorderedText()} has been called
+     */
+    public boolean reorderedText() {
+        return reorderedText;
     }
 
     /**

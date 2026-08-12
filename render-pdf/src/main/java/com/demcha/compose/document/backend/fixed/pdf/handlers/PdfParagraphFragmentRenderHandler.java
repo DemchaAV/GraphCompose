@@ -143,9 +143,11 @@ public final class PdfParagraphFragmentRenderHandler
         // letter order.
         String sanitizedLogical = font.sanitizeForRender(span.textStyle(),
                 span.rightToLeft() ? BidiMirroring.mirror(span.text()) : span.text());
-        String text = span.rightToLeft()
-                ? BidiText.reverseForDisplay(sanitizedLogical)
-                : sanitizedLogical;
+        String text = sanitizedLogical;
+        if (span.rightToLeft()) {
+            text = BidiText.reverseForDisplay(sanitizedLogical);
+            environment.markReorderedText();
+        }
         if (text.isEmpty()) {
             return false;                                       // nothing to paint — no glyph-less fill or mark
         }
@@ -392,9 +394,11 @@ public final class PdfParagraphFragmentRenderHandler
                             textSpan.rightToLeft()
                                     ? BidiMirroring.mirror(textSpan.text())
                                     : textSpan.text());
-                    String text = textSpan.rightToLeft()
-                            ? BidiText.reverseForDisplay(sanitizedLogical)
-                            : sanitizedLogical;
+                    String text = sanitizedLogical;
+                    if (textSpan.rightToLeft()) {
+                        text = BidiText.reverseForDisplay(sanitizedLogical);
+                        environment.markReorderedText();
+                    }
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
                         continue;

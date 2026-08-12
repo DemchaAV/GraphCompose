@@ -87,6 +87,10 @@ classpath the engine renders with the standard-14 fonts only, and asking for a
 bundled family fails fast with a message naming the dependency. See the
 [v1.8.0 fonts migration note](migration/v1.8.0-fonts.md).
 
+Arabic and Hebrew have covering families since fonts **1.1.0**: `FontName.AMIRI`
+and `FontName.DAVID_LIBRE`. Neither covers the other's script, so a run mixing
+both needs a font of your own.
+
 For glyphs no bundled family covers, register a custom font family that includes
 them and select it through `DocumentTextStyle.fontName(...)`.
 

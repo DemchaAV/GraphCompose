@@ -58,7 +58,9 @@ public class DefaultFonts {
             google(FontName.PROMPT, "prompt", "Prompt"),
             google(FontName.ANDIKA, "andika", "Andika"),
             google(FontName.BAI_JAMJUREE, "baijamjuree", "BaiJamjuree"),
-            google(FontName.JETBRAINS_MONO, "jetbrainsmono", "JetBrainsMono"));
+            google(FontName.JETBRAINS_MONO, "jetbrainsmono", "JetBrainsMono"),
+            google(FontName.AMIRI, "amiri", "Amiri"),
+            regularAndBold(FontName.DAVID_LIBRE, "davidlibre", "DavidLibre"));
 
     private DefaultFonts() {
     }
@@ -109,6 +111,12 @@ public class DefaultFonts {
                 .boldResource(resource(folder, prefix + "-Bold.ttf"))
                 .italicResource(resource(folder, prefix + "-Italic.ttf"))
                 .boldItalicResource(resource(folder, prefix + "-BoldItalic.ttf"))
+                .build();
+    }
+
+    private static FontFamilyDefinition regularAndBold(FontName fontName, String folder, String prefix) {
+        return FontFamilyDefinition.classpath(fontName, resource(folder, prefix + "-Regular.ttf"))
+                .boldResource(resource(folder, prefix + "-Bold.ttf"))
                 .build();
     }
 

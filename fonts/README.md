@@ -22,8 +22,8 @@ catalog when it is on the classpath. `graph-compose-bundle` includes it.
 contextual letter joining needs — a PDF draws text through the font's `cmap` without
 executing OpenType `GSUB`, so a family that shapes only through `GSUB` can never join its
 letters here. Neither family covers the other's script, so a run mixing both needs a font
-of your own registered through `FontFamilyDefinition`. The engine constants that select
-them ship with the engine release that pins this version.
+of your own registered through `FontFamilyDefinition`. Select them with `FontName.AMIRI`
+and `FontName.DAVID_LIBRE`.
 
 ## Install
 

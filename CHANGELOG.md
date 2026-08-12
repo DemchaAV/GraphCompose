@@ -3,7 +3,30 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.1.2 — Planned
+## v2.2.0 — Planned
+
+### Fonts
+
+- **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and
+  `FontName.DAVID_LIBRE` join the bundled catalog, shipping in
+  `graph-compose-fonts` **1.1.0** (the font artifact keeps its own version line).
+  Both scripts previously rendered as `?` unless you registered a font of your own.
+  Amiri was picked for a property that a later release needs: a PDF draws text through
+  the font's `cmap` without executing OpenType `GSUB`, so contextual Arabic letter
+  forms are only ever reachable when the font itself carries the Arabic presentation
+  forms — and popular families that shape purely through `GSUB`, Scheherazade New and
+  Rubik among them, carry none. `ArabicHebrewFontCoverageTest` holds both families to
+  the ranges they were chosen for, so swapping in a `GSUB`-only family fails loudly.
+  David Libre ships no italic upstream; italic styles resolve to its regular face and
+  bold-italic to its bold one. No bundled family covers both scripts, so a run mixing
+  Arabic and Hebrew still needs a font registered through `FontFamilyDefinition`.
+  Text is still laid out in logical order — this release makes the glyphs available,
+  not the bidirectional ordering or Arabic joining that use them.
+- **A stale font artifact is now distinguished from a missing one.** Asking for a
+  family that a newer `graph-compose-fonts` introduced produced the same message as
+  having no font artifact at all — an instruction to add a dependency that was already
+  there. The two causes are now told apart, and the stale case names the version that
+  carries the family.
 
 ### Templates
 
@@ -35,6 +58,17 @@ follow semantic versioning; release dates are ISO 8601.
   what does not match; they are unchanged here.
 
 ### Build
+
+- **CI builds the companion asset artifacts instead of downloading them.** The engine
+  pulls `graph-compose-fonts` and `graph-compose-emoji` at test scope, and both carry
+  their own version lines, so the tree can legitimately pin a version before it is
+  published. Jobs scoped to a single module without `-am` resolved them from Maven
+  Central and failed on dependency resolution — before running anything — whenever the
+  pinned version was newer than the published one. The guards and binary-compatibility
+  jobs now install both from source first, and the three benchmark jobs that already
+  did so for fonts do it for emoji too. Whether a pinned version really exists on
+  Central is still checked, by the release smoke harness, which resolves every
+  coordinate through Central in an isolated repository.
 
 - **The open changelog entry and the development version cannot name different
   releases.** The post-release step opens the next line by incrementing the patch, so a

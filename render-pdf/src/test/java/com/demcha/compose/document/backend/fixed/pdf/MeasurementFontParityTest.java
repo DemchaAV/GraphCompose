@@ -35,7 +35,8 @@ class MeasurementFontParityTest {
             FontName.IBM_PLEX_MONO, FontName.CRIMSON_TEXT, FontName.SPECTRAL, FontName.ZILLA_SLAB,
             FontName.GENTIUM_PLUS, FontName.TINOS, FontName.COUSINE, FontName.FIRA_SANS_CONDENSED,
             FontName.KANIT, FontName.VOLKHOV, FontName.TAVIRAJ, FontName.TRIRONG, FontName.SARABUN,
-            FontName.PROMPT, FontName.ANDIKA, FontName.BAI_JAMJUREE, FontName.JETBRAINS_MONO);
+            FontName.PROMPT, FontName.ANDIKA, FontName.BAI_JAMJUREE, FontName.JETBRAINS_MONO,
+            FontName.AMIRI, FontName.DAVID_LIBRE);
 
     private static final List<TextDecoration> FACES = List.of(
             TextDecoration.DEFAULT, TextDecoration.BOLD, TextDecoration.ITALIC, TextDecoration.BOLD_ITALIC);

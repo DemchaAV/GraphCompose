@@ -15,8 +15,6 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.TextPosition;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -143,39 +141,22 @@ class RtlLinkRectangleTest {
         return drawnSpanMatching(pdf, ch -> ch >= 0x05D0 && ch <= 0x05EA);
     }
 
-    /** Where the glyphs a predicate accepts were actually drawn. */
+    /** Where the glyphs standing for characters a predicate accepts were actually drawn. */
     private static Span drawnSpanMatching(byte[] pdf, java.util.function.IntPredicate accepts)
             throws IOException {
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            List<TextPosition> all = new ArrayList<>();
-            PDFTextStripper stripper = new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> positions) throws IOException {
-                    all.addAll(positions);
-                    super.writeString(text, positions);
-                }
-            };
-            stripper.getText(document);
 
-            // Extraction returns the line in the order it was painted, so the sequence says
-            // nothing; each glyph is attributed by what it is.
-            List<TextPosition> hits = new ArrayList<>();
-            for (TextPosition position : all) {
-                String glyph = position.getUnicode();
-                if (!glyph.isBlank() && accepts.test(glyph.codePointAt(0))) {
-                    hits.add(position);
-                }
-            }
-            assertThat(hits).describedAs("the glyphs reached the page").isNotEmpty();
+        // Each glyph is attributed by what the font says it stands for, not by the order
+        // it was painted in — the line is reordered, so the sequence says nothing.
+        List<DrawnGlyphs.Glyph> hits = DrawnGlyphs.matching(pdf, accepts);
+        assertThat(hits).describedAs("the glyphs reached the page").isNotEmpty();
 
-            double left = Double.MAX_VALUE;
-            double right = -Double.MAX_VALUE;
-            for (TextPosition position : hits) {
-                left = Math.min(left, position.getXDirAdj());
-                right = Math.max(right, position.getXDirAdj() + position.getWidthDirAdj());
-            }
-            return new Span(left, right);
+        double left = Double.MAX_VALUE;
+        double right = -Double.MAX_VALUE;
+        for (DrawnGlyphs.Glyph glyph : hits) {
+            left = Math.min(left, glyph.left());
+            right = Math.max(right, glyph.right());
         }
+        return new Span(left, right);
     }
 
     /** Horizontal extent of a drawn word. */

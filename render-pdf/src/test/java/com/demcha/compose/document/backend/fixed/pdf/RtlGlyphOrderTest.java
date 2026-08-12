@@ -99,17 +99,15 @@ class RtlGlyphOrderTest {
         // a left-to-right base and arrange itself backwards relative to its sibling.
         byte[] pdf = render(HEBREW + "\nGraphCompose " + HEBREW, TextDirection.AUTO);
 
-        List<TextPosition> secondLine = lineContaining(pdf, 'G');
+        List<DrawnGlyphs.Glyph> secondLine = lineContaining(pdf, 'G');
         double hebrewX = secondLine.stream()
-                .filter(pos -> !pos.getUnicode().isEmpty()
-                        && pos.getUnicode().charAt(0) >= 'א'
-                        && pos.getUnicode().charAt(0) <= 'ת')
-                .mapToDouble(TextPosition::getXDirAdj)
+                .filter(glyph -> glyph.is(codePoint -> codePoint >= 'א' && codePoint <= 'ת'))
+                .mapToDouble(DrawnGlyphs.Glyph::left)
                 .min()
                 .orElseThrow();
         double latinX = secondLine.stream()
-                .filter(pos -> "G".equals(pos.getUnicode()))
-                .mapToDouble(TextPosition::getXDirAdj)
+                .filter(glyph -> "G".equals(glyph.character()))
+                .mapToDouble(DrawnGlyphs.Glyph::left)
                 .min()
                 .orElseThrow();
 
@@ -139,24 +137,15 @@ class RtlGlyphOrderTest {
     }
 
     /** All glyphs sharing the vertical position of the first occurrence of {@code marker}. */
-    private static List<TextPosition> lineContaining(byte[] pdf, char marker) throws IOException {
-        List<TextPosition> positions = new ArrayList<>();
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            PDFTextStripper collector = new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> textPositions) {
-                    positions.addAll(textPositions);
-                }
-            };
-            collector.getText(document);
-        }
-        double markerY = positions.stream()
-                .filter(pos -> !pos.getUnicode().isEmpty() && pos.getUnicode().charAt(0) == marker)
-                .mapToDouble(TextPosition::getYDirAdj)
+    private static List<DrawnGlyphs.Glyph> lineContaining(byte[] pdf, char marker) throws IOException {
+        List<DrawnGlyphs.Glyph> glyphs = DrawnGlyphs.leftToRight(pdf);
+        double markerY = glyphs.stream()
+                .filter(glyph -> glyph.is(codePoint -> codePoint == marker))
+                .mapToDouble(DrawnGlyphs.Glyph::baselineY)
                 .findFirst()
                 .orElseThrow();
-        return positions.stream()
-                .filter(pos -> Math.abs(pos.getYDirAdj() - markerY) < 1.0)
+        return glyphs.stream()
+                .filter(glyph -> Math.abs(glyph.baselineY() - markerY) < 1.0)
                 .toList();
     }
 
@@ -234,43 +223,26 @@ class RtlGlyphOrderTest {
 
     /** The page's glyphs, ordered by where they were placed, left to right. */
     private static String glyphsInDrawingOrder(byte[] pdf) throws IOException {
-        List<TextPosition> positions = new ArrayList<>();
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            PDFTextStripper collector = new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> textPositions) {
-                    positions.addAll(textPositions);
-                }
-            };
-            collector.getText(document);
-        }
-
-        positions.sort(Comparator.comparingDouble(TextPosition::getXDirAdj));
-        StringBuilder drawn = new StringBuilder();
-        for (TextPosition position : positions) {
-            drawn.append(position.getUnicode());
-        }
-        return drawn.toString().trim();
+        return DrawnGlyphs.readLeftToRight(pdf);
     }
 
     /**
-     * The page's glyphs themselves, ordered by where they were placed, left to right.
+     * The page's glyph codes, ordered by where they were placed, left to right.
      *
-     * <p>A font code says which glyph was drawn; {@code getUnicode} says what the file
-     * claims that glyph means, and the two are deliberately different for Arabic — the
-     * shaped form is drawn and the letter is what it stands for. Joining can only be
-     * observed on this side.</p>
+     * <p>A font code says which glyph was drawn; what it stands for is a separate question
+     * the font's map answers, and the two are deliberately different for Arabic — the
+     * shaped form is drawn and the letter is what it means. Joining can only be observed
+     * on this side.</p>
      */
     private static List<Integer> glyphCodesInDrawingOrder(byte[] pdf) throws IOException {
         List<TextPosition> positions = new ArrayList<>();
         try (PDDocument document = Loader.loadPDF(pdf)) {
-            PDFTextStripper collector = new PDFTextStripper() {
+            new PDFTextStripper() {
                 @Override
                 protected void writeString(String text, List<TextPosition> textPositions) {
                     positions.addAll(textPositions);
                 }
-            };
-            collector.getText(document);
+            }.getText(document);
         }
 
         positions.sort(Comparator.comparingDouble(TextPosition::getXDirAdj));

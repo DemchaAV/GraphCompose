@@ -108,10 +108,22 @@ follow semantic versioning; release dates are ISO 8601.
   silently find nothing. The protected-document test reads the decrypted map itself, since
   opening and extracting were both true even while the correction was being skipped.
 
-  Reading **order** in the file is still visual — a PDF is painted left to right, and a
-  reader recovers the order text is read in by running the bidirectional algorithm over
-  what it extracted, as PDFBox's own extractor does. Carrying that order in the file
-  itself would take `ActualText` marked content, which this does not add.
+  And each reordered run now states its own text in the file. The glyphs of a
+  right-to-left run go out backwards — that is what drawing one means — and every reader
+  was left to work the letters back out for itself. The run is now wrapped in an
+  `ActualText` marked-content section carrying its text as written (for Arabic, the
+  letters rather than the joined forms), so a reader that honours the section gets the
+  words with no algorithm at all, and one that ignores it loses nothing it ever had.
+
+  The section is one run, deliberately not the line. A reader takes `ActualText`
+  *instead of* the glyphs it covers, so a section spanning the line would swallow the
+  left-to-right words inside it — measured before this shape was chosen: wrapping the
+  line made PDFBox return the embedded Latin word reversed and dropped the highlight
+  chip's glyph positions from extraction entirely. Wrapped run by run, mixed lines
+  extract exactly as they did before the sections existed, which a regression test now
+  pins. The order of runs across a line stays a bidirectional question either way; the
+  letters inside each run no longer are. A document with no reordered run emits no
+  marked content at all.
 
 ### Fonts
 

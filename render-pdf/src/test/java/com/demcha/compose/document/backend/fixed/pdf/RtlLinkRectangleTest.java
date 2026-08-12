@@ -178,11 +178,6 @@ class RtlLinkRectangleTest {
         }
     }
 
-    private static boolean covers(PDRectangle rect, Span span) {
-        double middle = (span.left + span.right) / 2.0;
-        return middle >= rect.getLowerLeftX() && middle <= rect.getUpperRightX();
-    }
-
     /** Horizontal extent of a drawn word. */
     private record Span(double left, double right) {
     }

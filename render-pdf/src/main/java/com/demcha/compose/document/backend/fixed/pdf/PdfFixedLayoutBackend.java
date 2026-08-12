@@ -318,8 +318,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     private int renderToOutput(LayoutGraph graph, FixedLayoutRenderContext context, OutputStream output) throws Exception {
-        try (PDDocument document = buildDocument(graph, context)) {
-            document.save(output);
+        Rendered rendered = buildDocument(graph, context);
+        try (PDDocument document = rendered.document()) {
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+                    rendered.deferredProtection(), output);
             return document.getNumberOfPages();
         }
     }
@@ -352,9 +354,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         Objects.requireNonNull(graph, "graph");
         Objects.requireNonNull(context, "context");
         byte[] documentBytes;
-        try (PDDocument document = buildDocument(graph, context);
+        Rendered rendered = buildDocument(graph, context);
+        try (PDDocument document = rendered.document();
              ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
-            document.save(buffer);
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+                    rendered.deferredProtection(), buffer);
             documentBytes = buffer.toByteArray();
         }
         try (PDDocument document = Loader.loadPDF(documentBytes)) {
@@ -377,14 +381,28 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     }
 
     /**
+     * A built document, and whether drawing it put any run in an order other than the
+     * one it was written in.
+     *
+     * <p>The second half is what {@link PdfShapedGlyphUnicode#save} needs and cannot
+     * work out for itself: it is a fact about the render, and by the time the document
+     * is saved the render is over.</p>
+     */
+    private record Rendered(PDDocument document,
+                            boolean reorderedText,
+                            PdfProtectionOptions deferredProtection) {
+    }
+
+    /**
      * Builds the fully-rendered, post-processed {@link PDDocument} (pages drawn,
      * links and bookmarks resolved, metadata / watermark / protection /
      * header-footer applied) but does NOT save or close it — the caller owns the
-     * returned open document. On any build failure the document is closed and the
-     * exception rethrown, so the resource never leaks.
+     * open document inside the returned {@link Rendered}. On any build failure the
+     * document is closed and the exception rethrown, so the resource never leaks.
      */
-    private PDDocument buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
+    private Rendered buildDocument(LayoutGraph graph, FixedLayoutRenderContext context) throws Exception {
         PDDocument document = new PDDocument();
+        boolean reorderedText = false;
         try {
             FontLibrary fonts = PdfFontLibraryFactory.library(document, context.customFontFamilies());
             List<PDPage> pages = createPages(document, graph);
@@ -392,6 +410,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             try (PdfRenderSession session = new PdfRenderSession(document, pages)) {
                 PdfRenderEnvironment environment = new PdfRenderEnvironment(document, fonts, session);
                 renderGraph(graph, environment);
+                reorderedText = environment.reorderedText();
                 PdfBookmarkOutlineWriter.apply(document, environment.bookmarkRecords());
                 // Pass B of internal-link resolution: every anchor is now placed,
                 // so deferred go-to links (incl. forward references) can resolve.
@@ -401,19 +420,26 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                         environment.deferredInternalLinks());
             }
 
+            // Protection is deferred for a reordered document: encrypting happens while
+            // saving and writes ciphertext back into the streams it encrypted, which
+            // would leave the glyph maps unreadable to the correction that runs between
+            // the saves. PdfShapedGlyphUnicode.save applies it after correcting.
+            PdfProtectionOptions protectNow =
+                    reorderedText && protectionOptions != null ? null : protectionOptions;
             PdfDocumentPostProcessor.apply(
                     document,
                     context.canvas(),
                     metadataOptions,
                     watermarkOptions,
-                    protectionOptions,
+                    protectNow,
                     headerFooterOptions);
             PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferencesOptions);
             if (deterministicTimestamp != null) {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
 
-            return document;
+            return new Rendered(document, reorderedText,
+                    reorderedText ? protectionOptions : null);
         } catch (Exception ex) {
             document.close();
             throw ex;
@@ -484,12 +510,14 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
     @Override
     public void writeSections(List<SectionUnit> sections, OutputStream output) throws Exception {
         Objects.requireNonNull(output, "output");
-        try (PDDocument document = buildSectionsDocument(sections)) {
-            document.save(output);
+        Rendered rendered = buildSectionsDocument(sections);
+        try (PDDocument document = rendered.document()) {
+            PdfShapedGlyphUnicode.save(document, rendered.reorderedText(),
+                    rendered.deferredProtection(), output);
         }
     }
 
-    private PDDocument buildSectionsDocument(List<SectionUnit> sections) throws Exception {
+    private Rendered buildSectionsDocument(List<SectionUnit> sections) throws Exception {
         Objects.requireNonNull(sections, "sections");
         if (sections.isEmpty()) {
             throw new IllegalArgumentException("A multi-section document needs at least one section.");
@@ -500,6 +528,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             Map<String, PdfRenderEnvironment.AnchorDestination> anchors = new LinkedHashMap<>();
             List<PdfRenderEnvironment.DeferredInternalLink> links = new ArrayList<>();
             List<PdfRenderEnvironment.BookmarkRecord> bookmarks = new ArrayList<>();
+            boolean reorderedText = false;
             int pageOffset = 0;
             for (SectionUnit section : sections) {
                 LayoutGraph graph = section.graph();
@@ -511,6 +540,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     PdfRenderEnvironment environment =
                             new PdfRenderEnvironment(document, fonts, renderSession, pageOffset);
                     chrome.renderGraph(graph, environment);
+                    reorderedText |= environment.reorderedText();
                     bookmarks.addAll(environment.bookmarkRecords());
                     links.addAll(environment.deferredInternalLinks());
                     environment.anchorDestinations().forEach((name, destination) -> {
@@ -533,18 +563,28 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             // combined outline resolve in a single pass over the merged maps.
             PdfBookmarkOutlineWriter.apply(document, List.copyOf(bookmarks));
             PdfInternalLinkWriter.apply(document, Map.copyOf(anchors), List.copyOf(links));
-            applyDocumentMetadataAndProtection(document, sections);
+            PdfProtectionOptions deferred =
+                    applyDocumentMetadataAndProtection(document, sections, reorderedText);
             if (deterministicTimestamp != null) {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
             }
-            return document;
+            return new Rendered(document, reorderedText, deferred);
         } catch (Exception ex) {
             document.close();
             throw ex;
         }
     }
 
-    private static void applyDocumentMetadataAndProtection(PDDocument document, List<SectionUnit> sections)
+    /**
+     * Applies document-global metadata and viewer preferences, and either applies or
+     * defers protection: a reordered document must not be encrypted before its glyph
+     * maps are corrected, so its protection is returned to the caller to apply between
+     * the two saves instead.
+     *
+     * @return the protection to apply after glyph-map correction, or {@code null}
+     */
+    private static PdfProtectionOptions applyDocumentMetadataAndProtection(
+            PDDocument document, List<SectionUnit> sections, boolean reorderedText)
             throws IOException {
         // Metadata, protection, and viewer preferences are document-global in PDF;
         // the first section that declares each wins for the combined document.
@@ -563,8 +603,11 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 viewerPreferences = chrome.viewerPreferencesOptions;
             }
         }
-        PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(document, metadata, protection);
+        PdfProtectionOptions deferred = reorderedText ? protection : null;
+        PdfDocumentPostProcessor.applyDocumentMetadataAndProtection(
+                document, metadata, deferred == null ? protection : null);
         PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferences);
+        return deferred;
     }
 
     private static List<FontFamilyDefinition> unionCustomFonts(List<SectionUnit> sections) {

@@ -38,9 +38,12 @@ import java.util.regex.Pattern;
  * see — they want the word as it was typed.</p>
  *
  * <p>What carries that intent across is the font's {@code ToUnicode} map: for each glyph in
- * the file, what character it stands for. This holds the engine to both halves of that —
- * what extraction returns, and what the map itself says, which are not the same question and
- * currently do not have the same answer.</p>
+ * the file, what character it stands for. This holds the engine to both halves of that, which
+ * are not the same question: what an extractor returns, and what the map itself says. The
+ * first can be right while the second is wrong, because a reader is free to normalise a
+ * shaped form back to its letter and PDFBox's own extractor does — so only the second
+ * question can see whether the file states the author's text or the engine's drawing of
+ * it.</p>
  */
 class PdfTextExtractionTest {
 
@@ -65,9 +68,9 @@ class PdfTextExtractionTest {
     @Test
     void theHebrewGlyphMapNamesTheLettersThemselves() throws Exception {
         // Hebrew is only reversed, never shaped, so each glyph in the file stands for the
-        // letter it is. This is the shape the Arabic map should have and does not, which is
-        // what identifies the difference below as being about shaping rather than about
-        // right-to-left.
+        // letter it is, with nothing to correct. Held alongside the Arabic case so a
+        // correction that overreached — rewriting entries that were already right — would
+        // fail here rather than pass everywhere.
         assertThat(glyphMeanings(HEBREW, FontName.DAVID_LIBRE))
                 .isNotEmpty()
                 .allSatisfy(codePoint -> assertThat(codePoint)
@@ -75,29 +78,29 @@ class PdfTextExtractionTest {
                         .isBetween(0x0590, 0x05FF));
     }
 
-    /**
-     * Pins a known limit rather than a wanted behaviour.
-     *
-     * <p>The map is built by the font subsetter from the characters actually shown, and
-     * what is shown is the shaped form — so the file says a glyph means U+FE8E, the final
-     * form of alef, where the author wrote U+0627, alef. A reader that normalises recovers
-     * the letter, which is why the extraction above passes: PDFBox's own extractor applies
-     * a compatibility normalisation and re-derives the reading order with the bidirectional
-     * algorithm. A reader that does not, does not — and the search that finds nothing gives
-     * no sign of why.</p>
-     *
-     * <p>This is asserted so the day it changes is a deliberate day. The engine already
-     * knows how to undo the shaping — {@code ArabicShaper.toBaseLetters} — and nothing on
-     * the write path calls it.</p>
-     */
     @Test
-    void theArabicGlyphMapStillNamesTheShapedForms() throws Exception {
+    void theArabicGlyphMapNamesTheLettersTooRatherThanTheShapesTheyWereDrawnAs() throws Exception {
+        // The map is built by the subsetter from the characters actually shown, and what is
+        // shown is the joined form — so left alone it states that a glyph means U+FE8E, the
+        // final form of alef, where the author wrote U+0627. A reader that normalises
+        // recovers the letter and one that does not sees a compatibility code point, which
+        // is why the extraction above cannot see the difference and this has to.
         assertThat(glyphMeanings(ARABIC, FontName.AMIRI))
                 .isNotEmpty()
                 .allSatisfy(codePoint -> assertThat(codePoint)
-                        .describedAs("U+%04X is a presentation form; a reader that does not "
-                                + "normalise sees this rather than the letter", codePoint)
-                        .isBetween(0xFE70, 0xFEFC));
+                        .describedAs("U+%04X is a presentation form, so the file still names "
+                                + "a shape rather than the letter it stands for", codePoint)
+                        .isBetween(0x0600, 0x06FF));
+    }
+
+    @Test
+    void aLigatureNamesBothOfTheLettersItWasMadeFrom() throws Exception {
+        // Lam followed by alef is drawn as one glyph, so its entry is the one place the
+        // correction cannot be a substitution of like for like: one code has to come back
+        // out as two letters, which a map spells by giving the destination both of them.
+        assertThat(glyphDestinations("لا", FontName.AMIRI))
+                .describedAs("the lam-alef glyph stands for the two letters written")
+                .contains("06440627");
     }
 
     /** The text a reader gets back, which is what the two transformations must not reach. */
@@ -115,6 +118,15 @@ class PdfTextExtractionTest {
      */
     private static List<Integer> glyphMeanings(String text, FontName font) throws IOException {
         List<Integer> meanings = new ArrayList<>();
+        for (String destination : glyphDestinations(text, font)) {
+            meanings.add(Integer.parseInt(destination.substring(0, 4), 16));
+        }
+        return meanings;
+    }
+
+    /** Every destination a page's glyph maps name, spelled as the map spells them. */
+    private static List<String> glyphDestinations(String text, FontName font) throws IOException {
+        List<String> destinations = new ArrayList<>();
         try (PDDocument document = Loader.loadPDF(render(text, font))) {
             PDResources resources = document.getPage(0).getResources();
             for (COSName name : resources.getFontNames()) {
@@ -125,12 +137,12 @@ class PdfTextExtractionTest {
                                 + "unextractable altogether")
                         .isInstanceOf(COSStream.class);
                 try (InputStream in = ((COSStream) raw).createInputStream()) {
-                    meanings.addAll(destinations(
+                    destinations.addAll(destinations(
                             new String(in.readAllBytes(), StandardCharsets.ISO_8859_1)));
                 }
             }
         }
-        return meanings;
+        return destinations;
     }
 
     /**
@@ -142,19 +154,19 @@ class PdfTextExtractionTest {
      * codes rather than what any of them mean, and its {@code <0000> <FFFF>} would
      * otherwise read as a glyph standing for U+FFFF.</p>
      */
-    private static List<Integer> destinations(String cmap) {
+    private static List<String> destinations(String cmap) {
         Pattern block = Pattern.compile("begin(bfchar|bfrange)(.*?)end\\1", Pattern.DOTALL);
         Pattern entry = Pattern.compile("^(?:<[0-9A-Fa-f]{4}>\\s+){1,2}<([0-9A-Fa-f]{4,})>\\s*$",
                 Pattern.MULTILINE);
 
-        List<Integer> destinations = new ArrayList<>();
+        List<String> destinations = new ArrayList<>();
         Matcher blocks = block.matcher(cmap);
         while (blocks.find()) {
             Matcher entries = entry.matcher(blocks.group(2));
             while (entries.find()) {
-                // A destination may be several code units — a ligature standing for the
-                // letters it was made from. The first places it in a block.
-                destinations.add(Integer.parseInt(entries.group(1).substring(0, 4), 16));
+                // Kept as written: a destination may be several code units — a ligature
+                // standing for the letters it was made from.
+                destinations.add(entries.group(1));
             }
         }
         return destinations;

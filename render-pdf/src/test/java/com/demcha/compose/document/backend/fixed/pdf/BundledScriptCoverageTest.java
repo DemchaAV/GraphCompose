@@ -121,16 +121,6 @@ class BundledScriptCoverageTest {
             0x1EA1, 0x1EA3, 0x1EA5, 0x1EAF, 0x1EBF, 0x1EC7, 0x1ED1,
             0x1EDD, 0x1EE7, 0x1EF1, 0x0102, 0x0110, 0x01A0, 0x01AF};
 
-    private static final int[] GREEK = greekLetters();
-
-    private static int[] greekLetters() {
-        // U+0391..U+03C9 with U+03A2 removed: it is unassigned, so no font carries it and
-        // a plain range sweep would report every Greek family as incomplete.
-        return java.util.stream.IntStream.rangeClosed(0x0391, 0x03C9)
-                .filter(codePoint -> codePoint != 0x03A2)
-                .toArray();
-    }
-
     private static List<FontName> familiesCovering(int first, int last) {
         return FAMILIES.stream()
                 .filter(family -> covers(family, first, last))

@@ -49,8 +49,10 @@ in; four carry the whole block, including the extended letters the Central Asian
 Caucasian languages need. Greek is the modern alphabet rather than its Unicode block,
 whose archaic and Coptic letters no text face carries. Everything here is measured against
 the shipped binaries rather than against what a family is known for. (The standard-14 are
-WinAnsi and carry none of these scripts.) `BundledScriptCoverageTest` holds every row to those exact families, so
-this table fails a build rather than going quietly stale.
+WinAnsi and carry none of these scripts.) `BundledScriptCoverageTest` holds this table to the binaries: the single-family rows to
+those exact families, and the wider rows to their counts — so changing the bundled set
+fails a build and names the row to re-measure, rather than leaving the table to go quietly
+stale.
 
 | Script | Families that cover it | How many |
 | --- | --- | --- |

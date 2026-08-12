@@ -110,6 +110,9 @@ final class ShowcaseMetadata {
         feature("layout", "block-align", "BlockAlignExample", "Block Alignment", "addAligned(align, node) / addSvgIcon(icon, w, align) — seat any fixed-size node left / centre / right across the content width.", "layout", "align", "v1.8");
         feature("transforms", "transforms", "TransformsExample", "Layers + Transforms", "rotate / scale on every leaf builder + LayerStack with explicit z-index.", "transforms", "layers");
         feature("text", "rich-text-showcase", "RichTextShowcaseExample", "Rich Text", "Inline runs with bold / italic / colour / link options, markdown parsing.", "text", "rich");
+        feature("text", "arabic-article", "ArabicArticleExample", "Arabic Article", "A full right-to-left article: shaped Arabic joined by the engine, every line reordered, natural pagination onto a second page.", "text", "rtl", "arabic", "v2.2");
+        feature("text", "hebrew-invoice", "HebrewInvoiceExample", "Hebrew Invoice", "A right-to-left invoice where every line mixes Hebrew with digits and Latin names — the case the bidirectional algorithm exists for.", "text", "rtl", "hebrew", "v2.2");
+        feature("text", "world-scripts", "WorldScriptsExample", "World Scripts", "One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean — each set in its own family with a line on what makes it non-obvious.", "text", "fonts", "v2.2");
         feature("text", "section-presets", "SectionPresetsExample", "Section Presets", "Pre-baked section bands, accent strips, soft panels for templates.", "text", "sections");
         feature("barcodes", "barcode-showcase", "BarcodeShowcaseExample", "Barcodes & QR", "QR code, Code128, EAN-13, PDF417 — every supported barcode + per-barcode styling.", "barcodes", "qr");
         feature("chrome", "pdf-chrome", "PdfChromeExample", "PDF Chrome", "Headers, footers, watermarks, metadata, document protection / encryption.", "chrome", "metadata", "watermark");

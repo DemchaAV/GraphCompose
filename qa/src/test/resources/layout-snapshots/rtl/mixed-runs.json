@@ -1,0 +1,137 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 360.0,
+    "pageHeight" : 200.0,
+    "innerWidth" : 324.0,
+    "innerHeight" : 164.0,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ContainerNode[0]",
+    "entityName" : null,
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 125.63,
+    "placementX" : 18.0,
+    "placementY" : 125.63,
+    "placementWidth" : 324.0,
+    "placementHeight" : 56.37,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 56.37,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 167.0,
+    "placementX" : 18.0,
+    "placementY" : 167.0,
+    "placementWidth" : 324.0,
+    "placementHeight" : 15.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 15.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 140.63,
+    "placementX" : 18.0,
+    "placementY" : 140.63,
+    "placementWidth" : 324.0,
+    "placementHeight" : 26.37,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 26.37,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 125.63,
+    "placementX" : 18.0,
+    "placementY" : 125.63,
+    "placementWidth" : 324.0,
+    "placementHeight" : 15.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 15.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

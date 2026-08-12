@@ -1,0 +1,197 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 360.0,
+    "pageHeight" : 260.0,
+    "innerWidth" : 324.0,
+    "innerHeight" : 224.0,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ContainerNode[0]",
+    "entityName" : null,
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 144.83,
+    "placementX" : 18.0,
+    "placementY" : 144.83,
+    "placementWidth" : 324.0,
+    "placementHeight" : 97.17,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 97.17,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 215.63,
+    "placementX" : 18.0,
+    "placementY" : 215.63,
+    "placementWidth" : 324.0,
+    "placementHeight" : 26.37,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 26.37,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 200.63,
+    "placementX" : 18.0,
+    "placementY" : 200.63,
+    "placementWidth" : 324.0,
+    "placementHeight" : 15.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 324.0,
+    "contentHeight" : 15.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 180.23,
+    "placementX" : 18.0,
+    "placementY" : 180.23,
+    "placementWidth" : 186.585,
+    "placementHeight" : 20.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 186.585,
+    "contentHeight" : 20.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 159.83,
+    "placementX" : 18.0,
+    "placementY" : 159.83,
+    "placementWidth" : 111.54,
+    "placementHeight" : 20.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.54,
+    "contentHeight" : 20.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 144.83,
+    "placementX" : 18.0,
+    "placementY" : 144.83,
+    "placementWidth" : 127.29,
+    "placementHeight" : 15.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 127.29,
+    "contentHeight" : 15.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

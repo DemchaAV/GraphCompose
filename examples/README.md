@@ -114,6 +114,9 @@ are with the canonical DSL, then jump to its detailed section below.
 |---|---|---|
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
 | [Text direction](#text-direction) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the first strong character, and Latin embedded in Hebrew | [PDF](../assets/readme/examples/text-direction.pdf) · [Source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java) |
+| [Arabic article](#arabic-article) | A full right-to-left article — shaped Arabic joined by the engine, every line reordered, natural pagination onto a second page | [PDF](../assets/readme/examples/arabic-article.pdf) · [Source](src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java) |
+| [Hebrew invoice](#hebrew-invoice) | A right-to-left invoice whose every line mixes Hebrew with digits and Latin names — built from rows, since a table cell carries no direction | [PDF](../assets/readme/examples/hebrew-invoice.pdf) · [Source](src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java) |
+| [World scripts](#world-scripts) | One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean — each set in its own `FontName` family | [PDF](../assets/readme/examples/world-scripts.pdf) · [Source](src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java) |
 | [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
 | [Inline highlight chips](#inline-highlight-chips) | `RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg, radius, padding)` — text on a rounded padded fill (inline code + status badges), wrapping across lines | [PDF](../assets/readme/examples/inline-highlight-chips.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java) |
 | [Inline SVG icons](#inline-svg-icons) | `RichText.svgIcon(icon, size)` — a parsed multi-colour `SvgIcon` on the text baseline, crisp at any zoom and carrying its own colours | [PDF](../assets/readme/examples/inline-svg-icons.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java) |
@@ -690,6 +693,70 @@ page.addParagraph(p -> p.text(userInput).direction(TextDirection.AUTO))
 
 [📄 View PDF](../assets/readme/examples/text-direction.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java)
+
+### Arabic article
+
+A whole document rather than a row of samples, because the interesting
+failures only appear at length: paragraphs wrap with every line reordered,
+the flow breaks onto a second page and keeps its direction, and Latin names
+and digits inside the Arabic keep running forwards. The one thing positioned
+by hand is the list — a list carries no direction of its own, so it declares
+`align(RIGHT)` or its bullets land on the wrong side.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+page.addParagraph(p -> p
+        .text(arabicProse)                  // shaped and joined by the engine
+        .direction(TextDirection.RTL)
+        .textStyle(body))                   // FontName.AMIRI carries the joined forms
+page.addList(list -> list
+        .align(TextAlign.RIGHT)             // a list has no direction of its own
+        .items(firstRule, secondRule, thirdRule)
+        .textStyle(body))
+```
+
+[📄 View PDF](../assets/readme/examples/arabic-article.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java)
+
+### Hebrew invoice
+
+The document type where right-to-left text meets numbers: a Hebrew
+description beside a Latin product name, a date, a quantity, a total. Line
+items are **rows rather than a table**, because a table cell carries no
+writing direction. Latin runs whose trailing punctuation must stay put are
+wrapped in Unicode isolates.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+row.weights(2.6, 0.7, 1.0, 1.1)
+   .addParagraph(p -> p.text(description)  // Hebrew + a Latin product name
+           .direction(TextDirection.RTL).textStyle(cell))
+   .addParagraph(p -> p.text(quantity)
+           .direction(TextDirection.RTL).textStyle(cell))
+```
+
+[📄 View PDF](../assets/readme/examples/hebrew-invoice.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java)
+
+### World scripts
+
+One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean —
+each set in its own `FontName` family, with one line on what makes that
+script's rendering non-obvious. Two of the five need the engine to do more
+than pick glyphs: Arabic is shaped into contextual forms, and both
+right-to-left scripts are reordered for display.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+row.addParagraph(p -> p
+        .text("مرحبا بالعالم")
+        .direction(TextDirection.RTL)
+        .textStyle(DocumentTextStyle.builder()
+                .fontName(FontName.AMIRI).size(17).build()))
+```
+
+[📄 View PDF](../assets/readme/examples/world-scripts.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java)
 
 ### Inline highlight chips
 

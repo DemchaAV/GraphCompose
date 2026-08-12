@@ -55,11 +55,10 @@ follow semantic versioning; release dates are ISO 8601.
   arises where the word cannot fit at all — the case every script degrades in — and
   re-shaping the halves would change their widths, which is what the wrap already spent.
 
-  One limit is worth knowing. Plain text extraction and copy-paste read the PDF's
-  content stream, which carries the visual order — selecting a Hebrew line out of a
-  produced PDF yields its characters reversed. Undoing that would take `ActualText`
-  marked content, which this release does not write; the DOCX export is unaffected,
-  since Word receives logical text.
+  One limit was worth knowing here, and this release closes it further down this page:
+  the content stream carries the visual order, and every reordered run now states its
+  text as written in an `ActualText` marked-content section — see the entry below. The
+  DOCX export was never affected, since Word receives logical text.
 
 - **Arabic joins.** Arabic letters change shape by position, and a font does that
   through OpenType `GSUB` — which a PDF never executes: `showText` walks the font's
@@ -108,10 +107,32 @@ follow semantic versioning; release dates are ISO 8601.
   silently find nothing. The protected-document test reads the decrypted map itself, since
   opening and extracting were both true even while the correction was being skipped.
 
-  Reading **order** in the file is still visual — a PDF is painted left to right, and a
-  reader recovers the order text is read in by running the bidirectional algorithm over
-  what it extracted, as PDFBox's own extractor does. Carrying that order in the file
-  itself would take `ActualText` marked content, which this does not add.
+  And each reordered run now states its own text in the file. The glyphs of a
+  right-to-left run go out backwards — that is what drawing one means — and every reader
+  was left to work the letters back out for itself. The run is now wrapped in an
+  `ActualText` marked-content section carrying its text as written (for Arabic, the
+  letters rather than the joined forms), so a reader that honours the section gets the
+  words with no algorithm at all, and one that ignores it loses nothing it ever had.
+
+  The section is one run, deliberately not the line. A reader takes `ActualText`
+  *instead of* the glyphs it covers, so a section spanning the line would swallow the
+  left-to-right words inside it — measured before this shape was chosen: wrapping the
+  line made PDFBox return the embedded Latin word reversed and dropped the highlight
+  chip's glyph positions from extraction entirely. Wrapped run by run, mixed lines
+  extract exactly as they did before the sections existed, which a regression test now
+  pins. The order of runs across a line stays a bidirectional question either way; the
+  letters inside each run no longer are. A document with no reordered run emits no
+  marked content at all.
+
+  Two costs, stated plainly. Each section registers a property-list entry in the page's
+  resources — roughly a tenth of an Arabic page's size in bookkeeping; writing the
+  dictionary inline would reclaim it and needs an operator PDFBox's content-stream API
+  does not expose. And a reader that honours `ActualText` takes it instead of the glyphs
+  it covers, so per-glyph text inside a reordered run is no longer available through
+  plain extraction — an extractor reports the run's whole text against its first glyph.
+  The character each glyph stands for is still in the file, in the font's own map, which
+  is where anything asking where a particular word was drawn now has to look; the
+  engine's own tests read it there.
 
 ### Fonts
 

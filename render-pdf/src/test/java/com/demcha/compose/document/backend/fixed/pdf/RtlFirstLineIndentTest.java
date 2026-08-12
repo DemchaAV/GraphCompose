@@ -10,10 +10,6 @@ import com.demcha.compose.document.style.DocumentTextIndent;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.TextPosition;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -116,25 +112,21 @@ class RtlFirstLineIndentTest {
         }
 
         List<Extent> lines = new ArrayList<>();
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> positions) throws IOException {
-                    double left = Double.MAX_VALUE;
-                    double right = -Double.MAX_VALUE;
-                    for (TextPosition position : positions) {
-                        if (position.getUnicode().isBlank()) {
-                            continue;
-                        }
-                        left = Math.min(left, position.getXDirAdj());
-                        right = Math.max(right, position.getXDirAdj() + position.getWidthDirAdj());
-                    }
-                    if (left < Double.MAX_VALUE) {
-                        lines.add(new Extent(left, right));
-                    }
-                    super.writeString(text, positions);
+        for (List<DrawnGlyphs.Glyph> line : DrawnGlyphs.byLine(pdf)) {
+            double left = Double.MAX_VALUE;
+            double right = -Double.MAX_VALUE;
+            for (DrawnGlyphs.Glyph glyph : line) {
+                // The prefix spaces are real drawn glyphs sitting at the margin, so a
+                // reading that counted them would answer where the padding is.
+                if (glyph.character().isBlank()) {
+                    continue;
                 }
-            }.getText(document);
+                left = Math.min(left, glyph.left());
+                right = Math.max(right, glyph.right());
+            }
+            if (left < Double.MAX_VALUE) {
+                lines.add(new Extent(left, right));
+            }
         }
         return lines;
     }

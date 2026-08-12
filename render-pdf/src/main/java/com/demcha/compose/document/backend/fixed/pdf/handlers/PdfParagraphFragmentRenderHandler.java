@@ -144,8 +144,10 @@ public final class PdfParagraphFragmentRenderHandler
         String sanitizedLogical = font.sanitizeForRender(span.textStyle(),
                 span.rightToLeft() ? BidiMirroring.mirror(span.text()) : span.text());
         String text = sanitizedLogical;
+        String written = null;
         if (span.rightToLeft()) {
             text = BidiText.reverseForDisplay(sanitizedLogical);
+            written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
         }
         if (text.isEmpty()) {
@@ -168,7 +170,13 @@ public final class PdfParagraphFragmentRenderHandler
         textState.invalidate();
         textState.applyFont(stream, font.fontType(span.textStyle().decoration()), (float) span.textStyle().size());
         textState.applyColor(stream, span.textStyle().color());
+        if (written != null) {
+            stream.beginMarkedContent(PdfActualText.tag(), PdfActualText.properties(written));
+        }
         stream.showText(text);
+        if (written != null) {
+            stream.endMarkedContent();
+        }
         stream.endText();
         return true;
     }
@@ -395,8 +403,14 @@ public final class PdfParagraphFragmentRenderHandler
                                     ? BidiMirroring.mirror(textSpan.text())
                                     : textSpan.text());
                     String text = sanitizedLogical;
+                    String written = null;
                     if (textSpan.rightToLeft()) {
                         text = BidiText.reverseForDisplay(sanitizedLogical);
+                        // The glyphs go out backwards, because that is what drawing a
+                        // right-to-left run means. The section states what they say —
+                        // one run, not the line, so every neighbouring left-to-right
+                        // run stays ordinary glyphs a reader keeps whole.
+                        written = PdfActualText.writtenTextOf(textSpan);
                         environment.markReorderedText();
                     }
                     if (text.isEmpty()) {
@@ -412,7 +426,14 @@ public final class PdfParagraphFragmentRenderHandler
                             font.fontType(textSpan.textStyle().decoration()),
                             (float) textSpan.textStyle().size());
                     textState.applyColor(stream, textSpan.textStyle().color());
+                    if (written != null) {
+                        stream.beginMarkedContent(PdfActualText.tag(),
+                                PdfActualText.properties(written));
+                    }
                     stream.showText(text);
+                    if (written != null) {
+                        stream.endMarkedContent();
+                    }
                     if (PdfTextDecorations.drawsMark(textSpan.textStyle().decoration())) {
                         decorations = addDecoration(decorations, new PdfTextDecorations.Segment(
                                 cursorX, baselineY, textSpan.width(),

@@ -13,13 +13,10 @@ import com.demcha.compose.font.FontName;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.TextPosition;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntPredicate;
 
@@ -149,35 +146,18 @@ class RtlUnderlineTest {
         return new Extent(left, right);
     }
 
-    /** Where the glyphs a predicate accepts were drawn, in points. */
+    /** Where the glyphs standing for characters a predicate accepts were drawn, in points. */
     private static Span drawnSpan(TextDirection direction, IntPredicate accepts) throws IOException {
-        try (PDDocument document = Loader.loadPDF(render(direction, true))) {
-            List<TextPosition> all = new ArrayList<>();
-            new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> positions) throws IOException {
-                    all.addAll(positions);
-                    super.writeString(text, positions);
-                }
-            }.getText(document);
+        List<DrawnGlyphs.Glyph> hits = DrawnGlyphs.matching(render(direction, true), accepts);
+        assertThat(hits).describedAs("the glyphs reached the page").isNotEmpty();
 
-            // Extraction hands the line back in the order it was painted, so the sequence
-            // says nothing about which word is which; each glyph is taken on what it is.
-            double left = Double.MAX_VALUE;
-            double right = -Double.MAX_VALUE;
-            int hits = 0;
-            for (TextPosition position : all) {
-                String glyph = position.getUnicode();
-                if (glyph.isBlank() || !accepts.test(glyph.codePointAt(0))) {
-                    continue;
-                }
-                hits++;
-                left = Math.min(left, position.getXDirAdj());
-                right = Math.max(right, position.getXDirAdj() + position.getWidthDirAdj());
-            }
-            assertThat(hits).describedAs("the glyphs reached the page").isGreaterThan(0);
-            return new Span(left, right);
+        double left = Double.MAX_VALUE;
+        double right = -Double.MAX_VALUE;
+        for (DrawnGlyphs.Glyph glyph : hits) {
+            left = Math.min(left, glyph.left());
+            right = Math.max(right, glyph.right());
         }
+        return new Span(left, right);
     }
 
     private static boolean isLatin(int codePoint) {

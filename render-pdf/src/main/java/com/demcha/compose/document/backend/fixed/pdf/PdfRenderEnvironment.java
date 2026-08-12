@@ -191,6 +191,8 @@ public final class PdfRenderEnvironment {
      * what tells the save whether the document's glyph maps are worth reading back. It is
      * set from the paragraph and chip paths; a table cell carries no direction and so is
      * never reordered.</p>
+     *
+     * @since 2.2.0
      */
     public void markReorderedText() {
         reorderedText = true;
@@ -199,9 +201,12 @@ public final class PdfRenderEnvironment {
     /**
      * Whether any run was drawn in an order other than the one it was written in.
      *
+     * <p>Package-private like the other end-of-render readers ({@code bookmarkRecords()},
+     * {@code anchorDestinations()}): the backend is the only caller.</p>
+     *
      * @return {@code true} once {@link #markReorderedText()} has been called
      */
-    public boolean reorderedText() {
+    boolean reorderedText() {
         return reorderedText;
     }
 

@@ -13,13 +13,10 @@ import com.demcha.compose.font.FontName;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.TextPosition;
 import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntPredicate;
 
@@ -166,53 +163,26 @@ class RtlChipTest {
      * leftmost of several is a reading about a word nobody asked about.</p>
      */
     private static double soleGlyphX(byte[] pdf, int codePoint) throws IOException {
-        List<TextPosition> hits = glyphsMatching(pdf, candidate -> candidate == codePoint);
+        List<DrawnGlyphs.Glyph> hits = DrawnGlyphs.matching(pdf, candidate -> candidate == codePoint);
         assertThat(hits)
                 .describedAs("the letter U+%04X has to occur once for its position to mean "
                         + "anything", codePoint)
                 .hasSize(1);
-        return hits.get(0).getXDirAdj();
+        return hits.get(0).left();
     }
 
-    /** Where the glyphs a predicate accepts were drawn, in points. */
+    /** Where the glyphs standing for characters a predicate accepts were drawn, in points. */
     private static Span drawnSpan(byte[] pdf, IntPredicate accepts) throws IOException {
-        List<TextPosition> hits = glyphsMatching(pdf, accepts);
+        List<DrawnGlyphs.Glyph> hits = DrawnGlyphs.matching(pdf, accepts);
         assertThat(hits).describedAs("the glyphs reached the page").isNotEmpty();
 
         double left = Double.MAX_VALUE;
         double right = -Double.MAX_VALUE;
-        for (TextPosition position : hits) {
-            left = Math.min(left, position.getXDirAdj());
-            right = Math.max(right, position.getXDirAdj() + position.getWidthDirAdj());
+        for (DrawnGlyphs.Glyph glyph : hits) {
+            left = Math.min(left, glyph.left());
+            right = Math.max(right, glyph.right());
         }
         return new Span(left, right);
-    }
-
-    /** Every drawn glyph a predicate accepts, taken on what it is rather than where it fell. */
-    private static List<TextPosition> glyphsMatching(byte[] pdf, IntPredicate accepts)
-            throws IOException {
-
-        try (PDDocument document = Loader.loadPDF(pdf)) {
-            List<TextPosition> all = new ArrayList<>();
-            new PDFTextStripper() {
-                @Override
-                protected void writeString(String text, List<TextPosition> positions) throws IOException {
-                    all.addAll(positions);
-                    super.writeString(text, positions);
-                }
-            }.getText(document);
-
-            // Extraction hands the line back in the order it was painted, so the sequence
-            // says nothing about which word is which.
-            List<TextPosition> hits = new ArrayList<>();
-            for (TextPosition position : all) {
-                String glyph = position.getUnicode();
-                if (!glyph.isBlank() && accepts.test(glyph.codePointAt(0))) {
-                    hits.add(position);
-                }
-            }
-            return hits;
-        }
     }
 
     private static boolean isLatin(int codePoint) {

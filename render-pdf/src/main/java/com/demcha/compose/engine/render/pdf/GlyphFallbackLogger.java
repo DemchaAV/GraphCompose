@@ -1,5 +1,7 @@
 package com.demcha.compose.engine.render.pdf;
 
+import com.demcha.compose.engine.text.TextControlSanitizer;
+
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +109,11 @@ public final class GlyphFallbackLogger {
         for (int offset = 0; offset < length; ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (codePoint == '\n' || codePoint == '\r') {
+            if (codePoint == '\n' || codePoint == '\r' || TextControlSanitizer.isBidiControl(codePoint)) {
+                // A bidirectional formatting character steers the layout and draws
+                // nothing. Substituting it would put a visible '?' on the page and give
+                // a zero-width character a width, which the wrapping already committed
+                // to not having. Dropping it keeps measurement and rendering in step.
                 continue;
             }
             if (isEncodable(font, coverage, codePoint)) {

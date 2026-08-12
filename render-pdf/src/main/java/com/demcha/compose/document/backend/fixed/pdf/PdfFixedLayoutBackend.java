@@ -689,11 +689,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             ParagraphLine line = payload.lines().get(lineIndex);
             double lineTop = cursorTop;
             double resolvedLineHeight = line.lineHeight();
-            double lineX = switch (payload.align()) {
-                case RIGHT -> innerX + innerWidth - line.width();
-                case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
-                case LEFT -> innerX;
-            };
+            double lineX = ParagraphLineGeometry.lineStartX(
+                    payload.align(), innerX, innerWidth, line.width());
 
             // Paragraph-level link covers each rendered line tightly. Without
             // this, right- or center-aligned paragraphs leaked clickable area
@@ -713,7 +710,10 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
             }
 
             double spanX = lineX;
-            for (ParagraphSpan span : line.spans()) {
+            // The same order the glyphs are drawn in: a clickable rectangle placed by
+            // walking the logical order would sit where the span would have been in a
+            // left-to-right line, which is somewhere else entirely on a reordered one.
+            for (ParagraphSpan span : line.spansInVisualOrder()) {
                 if (span.linkTarget() != null && span.width() > 0.0) {
                     PdfLinkAnnotationWriter.PlacedPdfRect rect = spanLinkRectangle(
                             span,

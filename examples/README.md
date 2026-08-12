@@ -113,6 +113,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
+| [Text direction](#text-direction) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the first strong character, and Latin embedded in Hebrew | [PDF](../assets/readme/examples/text-direction.pdf) · [Source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java) |
 | [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
 | [Inline highlight chips](#inline-highlight-chips) | `RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg, radius, padding)` — text on a rounded padded fill (inline code + status badges), wrapping across lines | [PDF](../assets/readme/examples/inline-highlight-chips.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java) |
 | [Inline SVG icons](#inline-svg-icons) | `RichText.svgIcon(icon, size)` — a parsed multi-colour `SvgIcon` on the text baseline, crisp at any zoom and carrying its own colours | [PDF](../assets/readme/examples/inline-svg-icons.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java) |
@@ -668,6 +669,27 @@ via `CheckmarkStyle` / `ArrowStyle`.
 
 [📄 View PDF](../assets/readme/examples/inline-shapes.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java)
+
+### Text direction
+
+`ParagraphBuilder.direction(...)` (`@since 2.2.0`) sets the paragraph's writing
+direction: `TextDirection.RTL` for Hebrew and Arabic, `AUTO` to read it off the
+first strong character. A right-to-left paragraph aligns right unless an
+explicit `align(...)` says otherwise, and a mixed line keeps embedded Latin and
+digits running forwards.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+page.addParagraph(p -> p
+        .text("שלום עולם")
+        .direction(TextDirection.RTL)
+        .textStyle(hebrew))          // FontName.DAVID_LIBRE covers Hebrew
+// AUTO decides from the text itself — useful for user-supplied strings:
+page.addParagraph(p -> p.text(userInput).direction(TextDirection.AUTO))
+```
+
+[📄 View PDF](../assets/readme/examples/text-direction.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java)
 
 ### Inline highlight chips
 

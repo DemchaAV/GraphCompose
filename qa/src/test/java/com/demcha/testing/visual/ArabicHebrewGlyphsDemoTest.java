@@ -2,6 +2,7 @@ package com.demcha.testing.visual;
 
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -55,6 +56,39 @@ class ArabicHebrewGlyphsDemoTest {
         Path output = VisualTestOutputs.preparePdf("hebrew-davidlibre", "rtl-fonts");
 
         render(output, FontName.DAVID_LIBRE, HEBREW + " — David Libre 2026");
+
+        assertValidPdf(output);
+        assertNoGlyphSubstitution(output);
+    }
+
+    @Test
+    void aRightToLeftParagraphReadsInItsOwnDirection() throws Exception {
+        Path output = VisualTestOutputs.preparePdf("hebrew-rtl-paragraph", "rtl-fonts");
+
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            DocumentTextStyle style = DocumentTextStyle.builder()
+                    .fontName(FontName.DAVID_LIBRE)
+                    .size(20)
+                    .color(INK)
+                    .build();
+
+            document.pageFlow(page -> page
+                    .addParagraph(p -> p.text(HEBREW).textStyle(style))
+                    .addParagraph(p -> p
+                            .text(HEBREW)
+                            .direction(TextDirection.RTL)
+                            .textStyle(style))
+                    .addParagraph(p -> p
+                            .text(HEBREW + " GraphCompose 2026 " + HEBREW)
+                            .direction(TextDirection.RTL)
+                            .textStyle(style)));
+
+            Files.write(output, document.toPdfBytes());
+        }
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);

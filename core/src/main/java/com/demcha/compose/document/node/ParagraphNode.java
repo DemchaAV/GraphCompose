@@ -29,6 +29,8 @@ import java.util.Objects;
  *                        ({@link TextVerticalAlign#DEFAULT} keeps baseline seating)
  * @param anchor          optional in-document navigation anchor name declared at the
  *                        paragraph's top-left, or {@code null} for none
+ * @param direction       writing direction; {@link TextDirection#LTR} when omitted
+ *                        ({@code @since 2.2.0})
  * @author Artem Demchyshyn
  */
 public record ParagraphNode(
@@ -46,7 +48,8 @@ public record ParagraphNode(
         DocumentInsets margin,
         DocumentTextAutoSize autoSize,
         TextVerticalAlign verticalAlign,
-        String anchor
+        String anchor,
+        TextDirection direction
 ) implements DocumentNode {
     /**
      * Normalizes optional text, inline runs, style, alignment, spacing, and
@@ -75,9 +78,50 @@ public record ParagraphNode(
         margin = margin == null ? DocumentInsets.zero() : margin;
         verticalAlign = verticalAlign == null ? TextVerticalAlign.DEFAULT : verticalAlign;
         anchor = anchor == null || anchor.isBlank() ? null : anchor.trim();
+        direction = direction == null ? TextDirection.LTR : direction;
         if (lineSpacing < 0 || Double.isNaN(lineSpacing) || Double.isInfinite(lineSpacing)) {
             throw new IllegalArgumentException("lineSpacing must be finite and non-negative: " + lineSpacing);
         }
+    }
+
+    /**
+     * Backwards-compatible 15-arg constructor without a writing direction; defaults
+     * {@link TextDirection#LTR}.
+     *
+     * @param name            node name used in snapshots and layout graph paths
+     * @param text            paragraph text when inline runs are not supplied
+     * @param inlineRuns      optional inline runs in source order
+     * @param textStyle       base paragraph text style
+     * @param align           horizontal text alignment
+     * @param lineSpacing     extra space between wrapped lines
+     * @param bulletOffset    first-line prefix used by list-style paragraph paths
+     * @param indentStrategy  hanging/first-line indent strategy
+     * @param linkTarget      optional node-level link target
+     * @param bookmarkOptions optional node-level bookmark metadata
+     * @param padding         inner padding
+     * @param margin          outer margin
+     * @param autoSize        optional automatic font down-scaling policy
+     * @param verticalAlign   vertical seating of the text within its line box
+     * @param anchor          optional in-document navigation anchor name
+     */
+    public ParagraphNode(String name,
+                         String text,
+                         List<InlineRun> inlineRuns,
+                         DocumentTextStyle textStyle,
+                         TextAlign align,
+                         double lineSpacing,
+                         String bulletOffset,
+                         DocumentTextIndent indentStrategy,
+                         DocumentLinkTarget linkTarget,
+                         DocumentBookmarkOptions bookmarkOptions,
+                         DocumentInsets padding,
+                         DocumentInsets margin,
+                         DocumentTextAutoSize autoSize,
+                         TextVerticalAlign verticalAlign,
+                         String anchor) {
+        this(name, text, inlineRuns, textStyle, align, lineSpacing, bulletOffset, indentStrategy,
+                linkTarget, bookmarkOptions, padding, margin, autoSize, verticalAlign, anchor,
+                TextDirection.LTR);
     }
 
     /**

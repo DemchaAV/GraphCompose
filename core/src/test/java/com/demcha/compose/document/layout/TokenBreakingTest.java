@@ -121,16 +121,4 @@ class TokenBreakingTest {
         assertThat(TokenBreaking.breakLongToken(null, STYLE, 5.0, UNIT)).isEmpty();
     }
 
-    /** Deterministic measurement: width == character count * unit; metrics are inert. */
-    private record FixedWidthMeasurement(double unit) implements TextMeasurementSystem {
-        @Override
-        public ContentSize measure(TextStyle style, String text) {
-            return new ContentSize(text.length() * unit, unit);
-        }
-
-        @Override
-        public LineMetrics lineMetrics(TextStyle style) {
-            return new LineMetrics(unit, 0.0, 0.0);
-        }
-    }
 }

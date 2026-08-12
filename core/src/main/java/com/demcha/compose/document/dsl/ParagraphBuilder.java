@@ -17,6 +17,8 @@ import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.layout.ParagraphDirection;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -43,6 +45,8 @@ public final class ParagraphBuilder {
     private final List<InlineRun> inlineRuns = new ArrayList<>();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
     private TextAlign align = TextAlign.LEFT;
+    private boolean alignChosenByCaller;
+    private TextDirection direction = TextDirection.LTR;
     private double lineSpacing = 0.0;
     private String bulletOffset = "";
     private DocumentTextIndent indentStrategy = DocumentTextIndent.NONE;
@@ -102,6 +106,24 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder align(TextAlign align) {
         this.align = align == null ? TextAlign.LEFT : align;
+        this.alignChosenByCaller = true;
+        return this;
+    }
+
+    /**
+     * Sets the writing direction of the paragraph.
+     *
+     * <p>A {@link TextDirection#RTL} or first-strong-resolved {@link TextDirection#AUTO}
+     * paragraph aligns to the right, because that is the edge a right-to-left line starts
+     * from. Calling {@link #align(TextAlign)} overrides that — the caller's alignment is
+     * never second-guessed.</p>
+     *
+     * @param direction writing direction; {@code null} restores {@link TextDirection#LTR}
+     * @return this builder
+     * @since 2.2.0
+     */
+    public ParagraphBuilder direction(TextDirection direction) {
+        this.direction = direction == null ? TextDirection.LTR : direction;
         return this;
     }
 
@@ -1046,7 +1068,7 @@ public final class ParagraphBuilder {
                 text,
                 List.copyOf(inlineRuns),
                 textStyle,
-                align,
+                resolveAlign(),
                 lineSpacing,
                 bulletOffset,
                 indentStrategy,
@@ -1056,7 +1078,44 @@ public final class ParagraphBuilder {
                 margin,
                 autoSize,
                 verticalAlign,
-                anchor);
+                anchor,
+                direction);
+    }
+
+    /**
+     * A right-to-left paragraph starts at the right edge, so that is where its lines sit
+     * unless the caller said otherwise.
+     *
+     * <p>{@link TextDirection#AUTO} is decided the same way the bidirectional algorithm
+     * decides it — by the first strong character, read through the same resolver the
+     * layout reads. Resolving it here rather than during layout is what keeps
+     * "the caller did not choose an alignment" distinguishable from "the caller chose
+     * LEFT": the node carries a concrete alignment, and that distinction lives only in
+     * this builder.</p>
+     */
+    private TextAlign resolveAlign() {
+        if (alignChosenByCaller || direction == TextDirection.LTR) {
+            return align;
+        }
+        // Asked of the same resolver the layout asks, rather than answered again here.
+        // The paragraph has to sit at the edge it is laid out from, and two readings of
+        // "which way does this run" are two chances to pick different edges.
+        String probe = text.isBlank() ? inlineRunText() : text;
+        return ParagraphDirection.resolve(probe, direction) == TextDirection.RTL
+                ? TextAlign.RIGHT
+                : align;
+    }
+
+    private String inlineRunText() {
+        StringBuilder concatenated = new StringBuilder();
+        for (InlineRun run : inlineRuns) {
+            if (run instanceof InlineTextRun textRun) {
+                concatenated.append(textRun.text());
+            } else if (run instanceof InlineHighlightRun highlight) {
+                concatenated.append(highlight.text());
+            }
+        }
+        return concatenated.toString();
     }
 }
 

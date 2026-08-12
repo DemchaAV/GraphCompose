@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.engine.text.bidi.BidiText;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -135,7 +136,12 @@ public final class PdfParagraphFragmentRenderHandler
                                    ParagraphLine line,
                                    TextRenderState textState) throws IOException {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        String text = font.sanitizeForRender(span.textStyle(), span.text());
+        // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
+        // mixed-direction text inside a chip keeps logical order (a known approximation).
+        String chipText = span.rightToLeft()
+                ? BidiText.reverseForDisplay(span.text())
+                : span.text();
+        String text = font.sanitizeForRender(span.textStyle(), chipText);
         if (text.isEmpty()) {
             return false;                                       // nothing to paint — no glyph-less fill or mark
         }
@@ -296,11 +302,8 @@ public final class PdfParagraphFragmentRenderHandler
                 if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
                     baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
                 }
-                double lineX = switch (payload.align()) {
-                    case RIGHT -> innerX + innerWidth - line.width();
-                    case CENTER -> innerX + (innerWidth - line.width()) / 2.0;
-                    case LEFT -> innerX;
-                };
+                double lineX = ParagraphLineGeometry.lineStartX(
+                    payload.align(), innerX, innerWidth, line.width());
 
                 renderLine(stream, fonts, line, lineX, baselineY, environment, textState, fragment.pageIndex());
 
@@ -319,7 +322,11 @@ public final class PdfParagraphFragmentRenderHandler
                             PdfRenderEnvironment environment,
                             TextRenderState textState,
                             int pageIndex) throws IOException {
-        List<ParagraphSpan> spans = line.spans();
+        // Drawn in visual order, which is the source order for every left-to-right
+        // line. The cursor advances over this same sequence, so a run of text spans
+        // still leaves the pen exactly where the next one starts and the implicit
+        // text position stays correct without reopening a text block per span.
+        List<ParagraphSpan> spans = line.spansInVisualOrder();
         if (spans.isEmpty()) {
             return;
         }
@@ -362,7 +369,17 @@ public final class PdfParagraphFragmentRenderHandler
                     // any code point the resolved font cannot encode
                     // with '?', preventing PDFBox from throwing on
                     // arrows / bullets / emoji / unsupported unicode.
-                    String text = font.sanitizeForRender(textSpan.textStyle(), textSpan.text());
+                    // A right-to-left run is stored in logical order, but showText emits
+                    // characters in the order it is given them — so it is reversed here,
+                    // by grapheme cluster. The span keeps its logical text for the
+                    // semantic backends; the PDF content stream, and therefore plain
+                    // text extraction and copy-paste, carries the visual order. Undoing
+                    // that would take ActualText marked content — a known trade-off,
+                    // recorded in the changelog rather than hidden here.
+                    String spanText = textSpan.rightToLeft()
+                            ? BidiText.reverseForDisplay(textSpan.text())
+                            : textSpan.text();
+                    String text = font.sanitizeForRender(textSpan.textStyle(), spanText);
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
                         continue;

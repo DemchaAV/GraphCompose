@@ -5,6 +5,55 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.0 — Planned
 
+### Public API
+
+- **A paragraph can say which way it runs.** `ParagraphBuilder.direction(...)` takes
+  `TextDirection.LTR`, `RTL`, or `AUTO`, which reads the direction off the first strong
+  character. Hebrew and Arabic were previously laid out and drawn in logical order — the
+  order text is read in, not the order a page draws it — so every line came out reversed
+  in a document that otherwise looked finished.
+
+  Direction is a separate choice from `TextAlign`: alignment says where a line sits,
+  direction says which way it runs. They meet in one place, so a right-to-left paragraph
+  aligns right unless the caller chose an alignment of their own.
+
+  Lines are resolved with the Unicode Bidirectional Algorithm, so a Latin word or a
+  number embedded in Hebrew keeps running forwards, and the paragraph direction only
+  decides what it is embedded in. A line with no right-to-left character resolves to
+  itself without the algorithm running at all, so existing documents take the path they
+  always took — held to that by the layout snapshots and visual baselines, none of which
+  moved.
+
+  A paragraph is the unit this applies to. Text inside a **table cell** goes through the
+  table's own layout, which has no direction handling, so the same Hebrew string draws
+  reversed in a cell while drawing correctly in a paragraph — and Arabic in a cell is
+  unjoined. Set such text as a paragraph, or place the table's own content right to left
+  by hand, until the table path carries direction too.
+
+  All three wrap paths carry it: plain text, inline runs (what templates author
+  through), and markdown. Each backend does what it must and no more — the PDF backend
+  reverses a right-to-left run, because a PDF draws characters in the order it is given
+  them; PowerPoint and Word have their own bidirectional engines, so the text reaches
+  them in logical order rather than rewritten. Word is told the paragraph's base
+  direction with `w:bidi`, which is the only way it can lay out a line that opens on a
+  neutral character; PowerPoint needs no such mark, because each span is pinned in an
+  absolute frame at the position the page gave it.
+
+  The bidirectional formatting characters (`U+200E`, `U+200F`, `U+061C` and the
+  embeddings and isolates) now survive control-character sanitizing until the algorithm
+  has read them. They are what an author uses to steer a neutral stretch of text, and
+  removing them with the rest of Unicode category C deleted the instruction before
+  anything could act on it. They draw nothing, so they are dropped again at the seam
+  that measures and draws — where substituting them with `?` would have put a visible
+  mark on the page and given a zero-width character a width.
+
+  Two limits are worth knowing. Plain text extraction and copy-paste read the PDF's
+  content stream, which carries the visual order — selecting a Hebrew line out of a
+  produced PDF yields its characters reversed. Undoing that would take `ActualText`
+  marked content, which this release does not write; the DOCX export is unaffected,
+  since Word receives logical text. And Arabic renders unjoined for now: contextual
+  letter forms are the next step.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

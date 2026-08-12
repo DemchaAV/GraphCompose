@@ -9,6 +9,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.engine.components.content.text.TextIndentStrategy;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
@@ -652,7 +653,8 @@ public final class TextFlowSupport {
                 Math.max(0.0, innerWidth),
                 node.bulletOffset(),
                 indentStrategy,
-                measurement)
+                measurement,
+                resolveBaseDirection(node))
                 : useMarkdownLayout
                   ? ParagraphWrapping.wrapMarkdownParagraph(
                 logicalLines,
@@ -661,7 +663,8 @@ public final class TextFlowSupport {
                 Math.max(0.0, innerWidth),
                 node.bulletOffset(),
                 indentStrategy,
-                measurement)
+                measurement,
+                resolveBaseDirection(node))
                   : ParagraphWrapping.toParagraphLines(
                 ParagraphWrapping.wrapParagraph(
                         logicalLines,
@@ -672,7 +675,8 @@ public final class TextFlowSupport {
                         measurement),
                 textStyle,
                 lineMetrics,
-                measurement);
+                measurement,
+                resolveBaseDirection(node));
         if (visualLines.isEmpty()) {
             visualLines = List.of(ParagraphWrapping.emptyParagraphLine(lineMetrics));
         }
@@ -750,7 +754,8 @@ public final class TextFlowSupport {
                         source.margin().left()),
                 null,
                 source.verticalAlign(),
-                keepTopInsets ? source.anchor() : null);
+                keepTopInsets ? source.anchor() : null,
+                source.direction());
 
         PreparedParagraphLayout fragmentLayout = new PreparedParagraphLayout(
                 List.copyOf(sliceLogicalLines),
@@ -770,12 +775,33 @@ public final class TextFlowSupport {
         return PreparedNode.leaf(fragmentNode, measure, fragmentLayout);
     }
 
+    /**
+     * Resolves the paragraph's base direction, once, from the whole paragraph.
+     *
+     * <p>UAX #9 fixes the base direction per paragraph (rules P2–P3); only the
+     * line-level reset (L1) is per line. {@link TextDirection#AUTO} is therefore
+     * decided here, from the paragraph's full text, and every wrapped line receives
+     * the same base. Resolving it per line instead would let a continuation line that
+     * happens to begin with Latin flip its base mid-paragraph — the same Hebrew prose
+     * laid out right-to-left on one line and left-to-right on the next.</p>
+     *
+     * <p>This is also the rule {@code ParagraphBuilder} applies when it derives the
+     * default alignment for {@code AUTO}, so what the page does agrees with where the
+     * builder put it.</p>
+     */
+    private static BidiParagraphResolver.BaseDirection resolveBaseDirection(ParagraphNode node) {
+        return ParagraphDirection.baseDirection(node);
+    }
+
     private static List<String> sanitizeLogicalLines(String rawText) {
         String safeText = rawText == null ? "" : rawText.replace("\r\n", "\n").replace('\r', '\n');
         String[] logicalLines = safeText.split("\n", -1);
         List<String> sanitized = new ArrayList<>(logicalLines.length);
         for (String logicalLine : logicalLines) {
-            sanitized.add(TextControlSanitizer.remove(logicalLine));
+            // The bidirectional formatting characters survive this pass: they are the
+            // author's instruction to the layout, and they are dropped once it has
+            // been read — at the span, and at the glyph seam that measures and draws.
+            sanitized.add(TextControlSanitizer.removeExceptDirectionMarks(logicalLine));
         }
         return List.copyOf(sanitized);
     }

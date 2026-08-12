@@ -16,6 +16,10 @@ import java.util.List;
  * @param baselineOffsetFromBottom distance from line bottom to the text
  *                                 baseline
  * @param spans                    measured styled spans in source order
+ * @param visualOrder              indices into {@code spans} in the order they are
+ *                                 drawn, left to right; empty when that is the source
+ *                                 order, which is every line of left-to-right text
+ *                                 ({@code @since 2.2.0})
  */
 public record ParagraphLine(
         String text,
@@ -24,13 +28,74 @@ public record ParagraphLine(
         double textLineHeight,
         double textAscent,
         double baselineOffsetFromBottom,
-        List<ParagraphSpan> spans
+        List<ParagraphSpan> spans,
+        List<Integer> visualOrder
 ) {
     /**
      * Creates a normalized measured paragraph line.
+     *
+     * @throws IllegalArgumentException if {@code visualOrder} is non-empty and is not a
+     *                                  permutation of the span indices
      */
     public ParagraphLine {
         text = text == null ? "" : text;
         spans = List.copyOf(spans);
+        visualOrder = visualOrder == null ? List.of() : List.copyOf(visualOrder);
+        if (!visualOrder.isEmpty()) {
+            // Validated here rather than trusted: this is a public payload record, and a
+            // hand-built line with a short or out-of-range order would otherwise drop
+            // spans silently or fail deep inside a render handler.
+            if (visualOrder.size() != spans.size()) {
+                throw new IllegalArgumentException("visualOrder size (" + visualOrder.size()
+                        + ") must match spans size (" + spans.size()
+                        + "), or be empty for source order");
+            }
+            boolean[] seen = new boolean[spans.size()];
+            for (int index : visualOrder) {
+                if (index < 0 || index >= spans.size() || seen[index]) {
+                    throw new IllegalArgumentException(
+                            "visualOrder must be a permutation of the span indices, got " + visualOrder);
+                }
+                seen[index] = true;
+            }
+        }
+    }
+
+    /**
+     * Creates a line whose spans are drawn in source order.
+     *
+     * <p>Keeps the previous shape available for the paths that never reorder, and for
+     * callers written before direction existed.</p>
+     */
+    public ParagraphLine(String text,
+                         double width,
+                         double lineHeight,
+                         double textLineHeight,
+                         double textAscent,
+                         double baselineOffsetFromBottom,
+                         List<ParagraphSpan> spans) {
+        this(text, width, lineHeight, textLineHeight, textAscent, baselineOffsetFromBottom,
+                spans, List.of());
+    }
+
+    /**
+     * Returns the spans in the order they are drawn, left to right.
+     *
+     * <p>Spans stay in logical order in {@link #spans()} — the order the text is read
+     * and the order the semantic backends need — so the visual order is expressed as a
+     * permutation rather than by rearranging them.</p>
+     *
+     * @return the spans in drawing order
+     * @since 2.2.0
+     */
+    public List<ParagraphSpan> spansInVisualOrder() {
+        if (visualOrder.isEmpty()) {
+            return spans;
+        }
+        List<ParagraphSpan> ordered = new java.util.ArrayList<>(visualOrder.size());
+        for (int index : visualOrder) {
+            ordered.add(spans.get(index));
+        }
+        return List.copyOf(ordered);
     }
 }

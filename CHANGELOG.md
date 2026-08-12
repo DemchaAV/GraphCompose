@@ -47,6 +47,14 @@ follow semantic versioning; release dates are ISO 8601.
   that measures and draws — where substituting them with `?` would have put a visible
   mark on the page and given a zero-width character a width.
 
+  One shaping limit is worth knowing. Letters are given their contextual forms before
+  the line is wrapped, because wrapping measures widths and the forms are what carry
+  them. A word longer than the column is therefore broken with the forms it was given
+  while whole: the letters either side of the break keep their connecting strokes, as if
+  the word continued across the line boundary. Arabic does not break words, so this only
+  arises where the word cannot fit at all — the case every script degrades in — and
+  re-shaping the halves would change their widths, which is what the wrap already spent.
+
   One limit is worth knowing. Plain text extraction and copy-paste read the PDF's
   content stream, which carries the visual order — selecting a Hebrew line out of a
   produced PDF yields its characters reversed. Undoing that would take `ActualText`
@@ -94,6 +102,40 @@ follow semantic versioning; release dates are ISO 8601.
   Arabic and Hebrew still needs a font registered through `FontFamilyDefinition`.
   Text is still laid out in logical order — this release makes the glyphs available,
   not the bidirectional ordering or Arabic joining that use them.
+- **Bundled families for Georgian and Armenian.** `FontName.NOTO_SANS_GEORGIAN` and
+  `FontName.NOTO_SANS_ARMENIAN` ship in the same **1.1.0** font artifact. Both scripts
+  rendered as `?` before, and both are covered in full: Armenian in both cases, Georgian
+  in Mkhedruli *and* Mtavruli — the capitals headings are set in, which Unicode encodes in
+  a block of its own, so a family carrying only the lowercase range sets body text and
+  loses every title. Upstream publishes them as variable fonts with no static weights to
+  take, so the artifact carries the regular instance and the other faces resolve to it:
+  bold Georgian renders unemboldened rather than failing, which is asserted rather than
+  left to be discovered.
+
+  With Arabic, Hebrew and Korean that makes five scripts covered by a named family. A
+  paragraph is drawn in a single family, so a run mixing two scripts needs one family that
+  carries both — and for Arabic, Georgian, Armenian and Hangul no bundled family carries
+  more than its own, so that means a font of your own registered through
+  `FontFamilyDefinition`. (Hebrew is the exception: Tinos and Cousine carry it too.)
+  [`fonts/README.md`](fonts/README.md#which-script-needs-which-family) has the table, and
+  `BundledScriptCoverageTest` holds it to the binaries.
+- **A bundled family for Korean.** `FontName.GOTHIC_A1` ships in the same **1.1.0**
+  font artifact, in a drawn regular and bold. It carries all 11 172 precomposed Hangul
+  syllables — asserted whole rather than sampled, since a gap in that range loses
+  whichever words use it while the rest of the document renders — plus both jamo forms
+  and Latin-1, Latin Extended-A, the whole Cyrillic block and the modern Greek alphabet.
+
+  The Latin coverage is why this family rather than a better-known one. A paragraph is
+  drawn in a single family, so a Korean sentence holding a European name is drawn
+  entirely in the Korean font; the popular alternatives carry ASCII but almost no
+  accented Latin, which turns *Müller* into *M?ller* with the Korean around it
+  rendering perfectly. Hanja are not covered.
+
+  Chinese and Japanese are still without a bundled family, and not by oversight: the
+  official static Noto CJK faces use CFF outlines, which the PDF backend cannot embed
+  at all, and the variable ones default to the Thin weight — the weight a renderer
+  without variable-font support draws. Register a CJK font of your own through
+  `FontFamilyDefinition`.
 - **A stale font artifact is now distinguished from a missing one.** Asking for a
   family that a newer `graph-compose-fonts` introduced produced the same message as
   having no font artifact at all — an instruction to add a dependency that was already

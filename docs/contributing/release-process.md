@@ -137,20 +137,39 @@ is a convenience aggregate `io.github.demchaav:graph-compose-bundle` (under
   version line (started at `1.0.0`) and is bumped **only when the font set
   changes**. `cut-release.ps1` deliberately does not touch `fonts/pom.xml`, and
   the version guard deliberately does not require it to equal the engine version.
-- **Cutting a fonts release** (only when fonts change): bump `fonts/pom.xml`
-  `<version>`, push a `fonts-vX.Y.Z` tag. That tag triggers
-  [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which deploys
-  only `graph-compose-fonts` to Central. Then bump
-  `<graphcompose.fonts.version>` in the root reactor `pom.xml` (inherited by
-  examples + benchmarks) and `bundle/pom.xml` to the new fonts version so those
-  consumers pin it. `core/pom.xml` does **not** carry this property — the
-  engine has no dependency on the fonts artifact (its tests read the fonts from
-  the sibling module's source via `<testResources>`).
-- **No fonts bootstrap for the engine.** Because the engine does not depend on
-  the fonts artifact, `./mvnw clean verify -pl :graph-compose-core` builds it
-  without the fonts jar being published or installed. Only the consumer modules (examples,
-  benchmarks) need `graph-compose-fonts` in the local repo — their CI jobs run
-  `./mvnw -f fonts/pom.xml install` before building.
+- **Cutting a fonts release** (only when fonts change) — one sequence, in this
+  order, because the last step is irreversible:
+
+  1. **Land every font change meant for the version first.** All of it, on the
+     release branch, before anything is tagged.
+  2. Bump `fonts/pom.xml` `<version>`.
+  3. Bump `<graphcompose.fonts.version>` to the same value in **every pom that
+     declares it** — currently the root reactor `pom.xml` (inherited by examples
+     and benchmarks), `core/pom.xml`, `render-pdf`, `render-docx`,
+     `render-pptx` and `bundle/pom.xml`. Do not work from that list: run
+     `VersionConsistencyGuardTest`, which discovers the declaring poms and fails
+     on any that disagrees with the root — the list has been short before.
+     Pinning a version that is not published yet is fine; CI installs the fonts
+     module from source before the jobs that need it.
+  4. Merge.
+  5. **Then** push the `fonts-vX.Y.Z` tag. It triggers
+     [`publish-fonts.yml`](../../.github/workflows/publish-fonts.yml), which
+     deploys only `graph-compose-fonts` to Central.
+
+  Step 5 is last because a Central artifact is immutable while the engine goes
+  on naming that version as the one a family arrived in. A tag pushed between
+  two font PRs publishes a jar that the catalog then promises families it does
+  not contain, and the failure lands on a consumer as a missing resource at
+  first use — not on us, and not on any build.
+
+- **Bootstrapping the fonts artifact.** `core` takes `graph-compose-fonts` at
+  **test** scope so its visual and snapshot suites render with the real binaries;
+  test scope is not transitive, so the published engine jar stays fonts-free. A
+  reactor build satisfies it from the just-built sibling, but a single-module
+  build (`-pl :graph-compose-core` without `-am`, which is what several CI jobs
+  run) resolves it from the local repository. Those jobs run
+  `./mvnw -f fonts/pom.xml install` first; a fonts version that is not published
+  yet needs the same locally.
 
 ### 2.E The emoji artifact (since v1.9.0)
 

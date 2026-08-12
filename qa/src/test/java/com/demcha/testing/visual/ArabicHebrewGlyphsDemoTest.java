@@ -9,16 +9,15 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertNoGlyphSubstitution;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertScriptOnPage;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertValidPdf;
+import static com.demcha.testing.visual.ScriptGlyphDemo.render;
 
 /**
  * Renders Arabic and Hebrew through the bundled families added in {@code graph-compose-fonts}
@@ -36,7 +35,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ArabicHebrewGlyphsDemoTest {
 
-    private static final DocumentColor INK = DocumentColor.rgb(34, 38, 50);
+    private static final DocumentColor INK = ScriptGlyphDemo.INK;
+
+    // The blocks the source text is written in; extraction maps the drawn Arabic
+    // presentation forms back to these through the ToUnicode map.
+    private static final int ARABIC_FIRST = 0x0621;
+    private static final int ARABIC_LAST = 0x064A;
+    private static final int HEBREW_FIRST = 0x05D0;
+    private static final int HEBREW_LAST = 0x05EA;
 
     private static final String ARABIC = "مرحبا بالعالم";
     private static final String HEBREW = "שלום עולם";
@@ -49,6 +55,7 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, ARABIC_FIRST, ARABIC_LAST, 11);
     }
 
     @Test
@@ -59,6 +66,7 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
+        assertScriptOnPage(output, HEBREW_FIRST, HEBREW_LAST, 8);
     }
 
     @Test
@@ -92,40 +100,6 @@ class ArabicHebrewGlyphsDemoTest {
 
         assertValidPdf(output);
         assertNoGlyphSubstitution(output);
-    }
-
-    private static void render(Path output, FontName fontName, String text) throws Exception {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(595, 842)
-                .margin(DocumentInsets.of(36))
-                .create()) {
-
-            document.pageFlow(page -> page
-                    .addParagraph(p -> p
-                            .text(text)
-                            .textStyle(DocumentTextStyle.builder()
-                                    .fontName(fontName)
-                                    .size(18)
-                                    .color(INK)
-                                    .build())));
-
-            Files.write(output, document.toPdfBytes());
-        }
-    }
-
-    private static void assertNoGlyphSubstitution(Path output) throws Exception {
-        try (PDDocument pdf = Loader.loadPDF(output.toFile())) {
-            String extracted = new PDFTextStripper().getText(pdf);
-            assertThat(extracted)
-                    .describedAs("a '?' in the extracted text means the family could not encode "
-                            + "the script and every glyph was substituted")
-                    .doesNotContain("?");
-        }
-    }
-
-    private static void assertValidPdf(Path output) throws Exception {
-        byte[] bytes = Files.readAllBytes(output);
-        assertThat(bytes).hasSizeGreaterThan(500);
-        assertThat(new String(bytes, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        assertScriptOnPage(output, HEBREW_FIRST, HEBREW_LAST, 24);
     }
 }

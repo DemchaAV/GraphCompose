@@ -9,7 +9,7 @@
         bundled Google font binaries that used to live inside the main
         graph-compose jar (src/main/resources/fonts/google). Split out in the
         engine's v1.8.0 cycle so:
-          * the engine artifact stays lean (no ~18 MB of fonts shipped on every
+          * the engine artifact stays lean (no ~20 MB of fonts shipped on every
             engine release — and never duplicated into the engine -sources.jar);
           * fonts release on their OWN cadence — bumping the engine never drags
             a new fonts download to consumers, and re-publishing fonts is only
@@ -127,7 +127,7 @@
                                 <configuration>
                                     <!--
                                         Central requires a -sources.jar to exist,
-                                        but there is no point shipping the ~17 MB
+                                        but there is no point shipping the ~20 MB
                                         of font binaries a SECOND time inside it.
                                         Exclude them so the sources jar carries
                                         only the real Java source (the marker

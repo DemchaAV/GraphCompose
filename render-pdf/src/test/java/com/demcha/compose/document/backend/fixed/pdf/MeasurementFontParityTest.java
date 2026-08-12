@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.DefaultFonts;
+import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 
@@ -27,16 +29,14 @@ import org.junit.jupiter.api.Test;
  */
 class MeasurementFontParityTest {
 
-    /** Every bundled binary (Google) family — the ones that actually embed. */
-    private static final List<FontName> BINARY_FAMILIES = List.of(
-            FontName.LATO, FontName.PT_SANS, FontName.PT_SERIF, FontName.FIRA_SANS, FontName.UBUNTU,
-            FontName.ALEGREYA_SANS, FontName.CARLITO, FontName.POPPINS, FontName.BARLOW,
-            FontName.BARLOW_CONDENSED, FontName.ASAP_CONDENSED, FontName.ARSENAL, FontName.IBM_PLEX_SERIF,
-            FontName.IBM_PLEX_MONO, FontName.CRIMSON_TEXT, FontName.SPECTRAL, FontName.ZILLA_SLAB,
-            FontName.GENTIUM_PLUS, FontName.TINOS, FontName.COUSINE, FontName.FIRA_SANS_CONDENSED,
-            FontName.KANIT, FontName.VOLKHOV, FontName.TAVIRAJ, FontName.TRIRONG, FontName.SARABUN,
-            FontName.PROMPT, FontName.ANDIKA, FontName.BAI_JAMJUREE, FontName.JETBRAINS_MONO,
-            FontName.AMIRI, FontName.DAVID_LIBRE);
+    /**
+     * Every bundled binary (Google) family — the ones that actually embed. Read off the
+     * catalog rather than listed here, so a family added to it is covered on the day it
+     * lands instead of on the day someone remembers this file.
+     */
+    private static final List<FontName> BINARY_FAMILIES = DefaultFonts.googleFamilies().stream()
+            .map(FontFamilyDefinition::name)
+            .toList();
 
     private static final List<TextDecoration> FACES = List.of(
             TextDecoration.DEFAULT, TextDecoration.BOLD, TextDecoration.ITALIC, TextDecoration.BOLD_ITALIC);
@@ -48,6 +48,10 @@ class MeasurementFontParityTest {
 
     @Test
     void measurementWidthsMatchRenderWidthsForEveryBinaryFamily() throws Exception {
+        // The list is derived, and the only assertion below sits inside the loop over it:
+        // an empty derivation would turn the whole guard into a green no-op.
+        assertThat(BINARY_FAMILIES).hasSizeGreaterThanOrEqualTo(32);
+
         try (PDDocument renderDocument = new PDDocument();
              PdfMeasurementResources measurement = PdfMeasurementResources.open(List.of())) {
             // Exactly what PdfFixedLayoutBackend builds: a render library that embeds

@@ -87,9 +87,13 @@ classpath the engine renders with the standard-14 fonts only, and asking for a
 bundled family fails fast with a message naming the dependency. See the
 [v1.8.0 fonts migration note](migration/v1.8.0-fonts.md).
 
-Arabic and Hebrew have covering families since fonts **1.1.0**: `FontName.AMIRI`
-and `FontName.DAVID_LIBRE`. Neither covers the other's script, so a run mixing
-both needs a font of your own.
+Five scripts gained a covering family in fonts **1.1.0**: `FontName.AMIRI`
+for Arabic, `FontName.DAVID_LIBRE` for Hebrew, `FontName.NOTO_SANS_GEORGIAN`,
+`FontName.NOTO_SANS_ARMENIAN`, and `FontName.GOTHIC_A1` for Korean. Each carries
+its own script plus Latin and none of the other four, and a paragraph is drawn in
+a single family, so a run mixing two of them needs a font of your own. Chinese and
+Japanese have no bundled family. The full table is in the
+[fonts artifact README](../fonts/README.md#which-script-needs-which-family).
 
 For glyphs no bundled family covers, register a custom font family that includes
 them and select it through `DocumentTextStyle.fontName(...)`.

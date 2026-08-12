@@ -1,17 +1,15 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.face;
+import static com.demcha.compose.document.backend.fixed.pdf.FontCoverageProbe.unencodable;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.demcha.compose.engine.components.content.text.TextDecoration;
-import com.demcha.compose.engine.render.pdf.PdfFont;
-import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Pins the glyph coverage the bundled right-to-left families are carried for.
@@ -34,13 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ArabicHebrewFontCoverageTest {
 
     /**
-     * The measurement library is the one that carries the bundled families and needs no
-     * owning document; encodability is a property of the font program, so the measurement
-     * face answers it exactly as the embedded render face would.
-     */
-    private static final FontLibrary LIBRARY = PdfFontLibraryFactory.measurementLibrary(List.of());
-
-    /**
      * Presentation forms for the Arabic <em>letters</em> and the lam-alef ligatures.
      * Deliberately starts at U+FE80 rather than at the U+FE70 block boundary: U+FE70..FE7F
      * are tashkeel-with-tatweel forms that contextual shaping never produces, and Amiri
@@ -55,8 +46,14 @@ class ArabicHebrewFontCoverageTest {
     private static final int HEBREW_LETTERS_FIRST = 0x05D0;
     private static final int HEBREW_LETTERS_LAST = 0x05EA;
 
-    private static final List<TextDecoration> FACES =
-            List.of(TextDecoration.DEFAULT, TextDecoration.BOLD, TextDecoration.ITALIC);
+    /**
+     * All four: Amiri ships four distinct faces, and the sibling test asserts they never
+     * collapse onto one another. Sweeping only three leaves the fourth carrying the whole
+     * script with nothing checking that it can draw it.
+     */
+    private static final List<TextDecoration> FACES = List.of(
+            TextDecoration.DEFAULT, TextDecoration.BOLD,
+            TextDecoration.ITALIC, TextDecoration.BOLD_ITALIC);
 
     @Test
     void everyArabicPresentationFormIsEncodableInEveryAmiriFace() {
@@ -100,32 +97,5 @@ class ArabicHebrewFontCoverageTest {
                 .describedAs("the builder collapses a missing face to the regular one, so "
                         + "italic Hebrew renders upright rather than failing")
                 .isEqualTo(face(FontName.DAVID_LIBRE, TextDecoration.DEFAULT).getName());
-    }
-
-    private static PDFont face(FontName name, TextDecoration decoration) {
-        PdfFont font = LIBRARY.getFont(name, PdfFont.class).orElseThrow(
-                () -> new AssertionError("family not in the bundled catalog: " + name));
-        return font.fontType(decoration);
-    }
-
-    /** Returns the code points in the range the face cannot encode, formatted for the failure message. */
-    private static List<String> unencodable(FontName name, TextDecoration decoration, int first, int last) {
-        PDFont font = face(name, decoration);
-        List<String> missing = new ArrayList<>();
-        for (int codePoint = first; codePoint <= last; codePoint++) {
-            if (!canEncode(font, codePoint)) {
-                missing.add(String.format("U+%04X", codePoint));
-            }
-        }
-        return missing;
-    }
-
-    private static boolean canEncode(PDFont font, int codePoint) {
-        try {
-            font.encode(new String(Character.toChars(codePoint)));
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

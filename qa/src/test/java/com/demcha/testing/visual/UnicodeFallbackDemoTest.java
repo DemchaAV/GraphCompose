@@ -15,11 +15,10 @@ import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.demcha.testing.visual.ScriptGlyphDemo.assertValidPdf;
 
 /**
  * End-to-end regression for R1 glyph sanitizer. Renders documents that
@@ -170,16 +169,4 @@ class UnicodeFallbackDemoTest {
                 .build();
     }
 
-    private static void assertValidPdf(Path output) throws Exception {
-        byte[] bytes = Files.readAllBytes(output);
-        // 500 bytes catches a truncated / empty render without
-        // over-specifying real PDF body size (PDFBox can emit a valid
-        // single-paragraph PDF in under 1 KB).
-        assertThat(bytes)
-                .describedAs("PDF should be a non-empty, reasonably-sized file")
-                .hasSizeGreaterThan(500);
-        assertThat(new String(bytes, 0, 5, StandardCharsets.US_ASCII))
-                .describedAs("PDF must start with the %PDF- magic header")
-                .isEqualTo("%PDF-");
-    }
 }

@@ -20,7 +20,11 @@ import org.apache.pdfbox.pdmodel.documentinterchange.markedcontent.PDPropertyLis
  * <p>{@code ActualText} is the mechanism the format provides for exactly this: content whose
  * meaning differs from the marks that were drawn. Each reversed run is wrapped in a marked
  * content section carrying its text as it was written — for Arabic, as the letters rather
- * than the joined forms they were drawn as.</p>
+ * than the joined forms they were drawn as. In the stream that is {@code /Span /PropN BDC},
+ * with the property list holding the text living in the page's resources; PDFBox registers
+ * one entry per section, which costs an Arabic page roughly a tenth of its size in
+ * bookkeeping. Writing the dictionary inline would reclaim that, and needs an operator the
+ * content-stream API does not expose.</p>
  *
  * <p>The section is one <em>run</em>, deliberately not the line. A reader that honours
  * {@code ActualText} takes it instead of the glyphs it covers, so the section's width is
@@ -48,6 +52,13 @@ final class PdfActualText {
      * about drawing. The section is the half of the file that is about meaning, so the base
      * letters go in. Mirrored punctuation likewise never enters: the span's own text still
      * holds the parenthesis the author typed, and the swap happens only in what is drawn.</p>
+     *
+     * <p>Deliberately the author's text, not the sanitised string the page draws. A glyph
+     * the font cannot encode is drawn as {@code '?'}, and the section still states the
+     * character the author wrote — replacement text is what {@code ActualText} is for, and
+     * a search for the real character should find the run whose drawing degraded. The same
+     * goes for the bidi controls the drawing strips: they are part of the written text, and
+     * a copy that carries them re-pastes with its directions intact.</p>
      *
      * @param span a span whose glyphs go out in display order
      * @return the text as written, or {@code null} when there is nothing to state

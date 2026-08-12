@@ -95,7 +95,10 @@ class RtlActualTextTest {
                 .textStyle(DocumentTextStyle.builder().size(14).build()));
 
         assertThat(actualTextSections(pdf)).isEmpty();
-        assertThat(contentStreamOf(pdf)).doesNotContain("BDC");
+        assertThat(operatorsOf(pdf))
+                .describedAs("no marked-content operator at all — parsed as operators, "
+                        + "because a glyph string is free to contain the letters B, D, C")
+                .doesNotContain("BDC");
     }
 
     @Test
@@ -121,6 +124,35 @@ class RtlActualTextTest {
         assertThat(glyphPositionCount(chip))
                 .describedAs("the chip's own glyphs stay extractable one by one")
                 .isEqualTo(("GRAPH " + HEBREW).length());
+    }
+
+    @Test
+    void adjacentSectionsExtractAsTheSentenceThatWasWritten() throws Exception {
+        // A styled word inside a right-to-left sentence is the most common real document
+        // this feature meets, and it makes two runs — two sections, side by side. Each
+        // collapses to one extractor position, which is structurally the situation that
+        // broke the wide-section shape; measured here so it stays working at chunk size
+        // two rather than assumed from the single-run cases.
+        DocumentTextStyle large = DocumentTextStyle.builder()
+                .fontName(FontName.DAVID_LIBRE).size(24).build();
+        byte[] pdf = render(p -> p
+                .rich(rich -> rich
+                        .style("שלום", large)
+                        .style(" עולם", HEBREW_STYLE))
+                .direction(TextDirection.RTL).textStyle(HEBREW_STYLE));
+
+        // How the engine chunks a line into spans is its own business — the contract is
+        // that the sections, read in logical order, are the sentence that was written.
+        List<String> sections = actualTextSections(pdf);
+        assertThat(sections).hasSizeGreaterThanOrEqualTo(2);
+        StringBuilder logical = new StringBuilder();
+        for (int index = sections.size() - 1; index >= 0; index--) {
+            logical.append(sections.get(index)); // sections sit in visual order, right to left
+        }
+        assertThat(logical.toString())
+                .describedAs("the sections together state the written sentence")
+                .isEqualTo("שלום עולם");
+        assertThat(extractedText(pdf)).isEqualTo("שלום עולם");
     }
 
     /**
@@ -152,6 +184,22 @@ class RtlActualTextTest {
                 }
             }
             return sections;
+        }
+    }
+
+    /** Every operator in the page's content stream, in order. */
+    private static List<String> operatorsOf(byte[] pdf) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            List<String> operators = new ArrayList<>();
+            org.apache.pdfbox.pdfparser.PDFStreamParser parser =
+                    new org.apache.pdfbox.pdfparser.PDFStreamParser(document.getPage(0));
+            Object token;
+            while ((token = parser.parseNextToken()) != null) {
+                if (token instanceof org.apache.pdfbox.contentstream.operator.Operator operator) {
+                    operators.add(operator.getName());
+                }
+            }
+            return operators;
         }
     }
 

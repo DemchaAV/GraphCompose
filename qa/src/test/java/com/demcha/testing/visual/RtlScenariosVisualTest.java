@@ -18,13 +18,15 @@ import java.util.function.Consumer;
  * Holds the situations right-to-left text actually gets into, against two kinds of baseline.
  *
  * <p>Each scenario is asserted twice, because the two catch different breakages. The layout
- * snapshot pins <b>coordinates</b> — where every line and span was placed — so a change in
- * wrapping or pagination shows up as a number that moved, and the failure names the node.
- * The pixel baseline pins <b>what was drawn</b>, and that is not a luxury: switching the
- * right-to-left reversal off leaves every coordinate identical — same spans, same widths,
- * same positions — and changes only the order the glyphs are painted in. Measured, not
- * assumed: with the reversal disabled the layout snapshots all pass and four of the five
- * pixel baselines fail. Coordinates cannot see a line drawn backwards.
+ * snapshot pins <b>node geometry</b> — each node's box and which pages it spans — so a
+ * paragraph that grows a line, or a flow that starts breaking a page earlier, shows up as a
+ * number that moved and the failure names the node. It records nothing below the node: no
+ * lines, no spans, no text, so it cannot see anything that happens inside a paragraph's box.
+ * The pixel baseline pins <b>what was drawn</b>, and it carries most of the weight here for
+ * that reason. Measured, not assumed: with the right-to-left reversal disabled the paragraph
+ * box is unchanged — same height, same page — so all five layout snapshots pass, while four
+ * of the five pixel baselines fail. Everything that makes a right-to-left line correct
+ * happens inside a box the coordinate snapshot only sees the outside of.
  *
  * <p>The scenarios are the ones a demo page does not reach. A paragraph long enough to wrap
  * over many lines, each of them reordered on its own; a flow long enough to break across a

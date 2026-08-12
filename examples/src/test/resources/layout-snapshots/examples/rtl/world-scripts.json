@@ -1,0 +1,827 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 499.276,
+    "innerHeight" : 737.89,
+    "margin" : {
+      "top" : 52.0,
+      "right" : 48.0,
+      "bottom" : 52.0,
+      "left" : 48.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "WorldScripts[0]",
+    "entityName" : "WorldScripts",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 48.0,
+    "computedY" : 344.179,
+    "placementX" : 48.0,
+    "placementY" : 344.179,
+    "placementWidth" : 499.276,
+    "placementHeight" : 445.711,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 445.711,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 769.54,
+    "placementX" : 48.0,
+    "placementY" : 769.54,
+    "placementWidth" : 302.038,
+    "placementHeight" : 20.35,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 302.038,
+    "contentHeight" : 20.35,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 740.19,
+    "placementX" : 48.0,
+    "placementY" : 740.19,
+    "placementWidth" : 466.466,
+    "placementHeight" : 20.35,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 466.466,
+    "contentHeight" : 20.35,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ShapeNode[2]",
+    "entityName" : null,
+    "entityKind" : "ShapeNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 724.19,
+    "placementX" : 48.0,
+    "placementY" : 724.19,
+    "placementWidth" : 499.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 655.304,
+    "placementX" : 48.0,
+    "placementY" : 655.304,
+    "placementWidth" : 499.276,
+    "placementHeight" : 53.886,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 53.886,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 14.0,
+      "bottom" : 12.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 62.0,
+    "computedY" : 686.09,
+    "placementX" : 62.0,
+    "placementY" : 686.09,
+    "placementWidth" : 101.208,
+    "placementHeight" : 11.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 101.208,
+    "contentHeight" : 11.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.481,
+    "computedY" : 667.304,
+    "placementX" : 195.481,
+    "placementY" : 667.304,
+    "placementWidth" : 188.991,
+    "placementHeight" : 29.886,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 188.991,
+    "contentHeight" : 29.886,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[3]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 400.471,
+    "computedY" : 672.215,
+    "placementX" : 400.471,
+    "placementY" : 672.215,
+    "placementWidth" : 116.559,
+    "placementHeight" : 24.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.559,
+    "contentHeight" : 24.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 597.329,
+    "placementX" : 48.0,
+    "placementY" : 597.329,
+    "placementWidth" : 499.276,
+    "placementHeight" : 48.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 48.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 14.0,
+      "bottom" : 12.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 62.0,
+    "computedY" : 612.644,
+    "placementX" : 62.0,
+    "placementY" : 612.644,
+    "placementWidth" : 96.0,
+    "placementHeight" : 21.66,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 96.0,
+    "contentHeight" : 21.66,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.481,
+    "computedY" : 617.304,
+    "placementX" : 195.481,
+    "placementY" : 617.304,
+    "placementWidth" : 188.991,
+    "placementHeight" : 17.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 188.991,
+    "contentHeight" : 17.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[4]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 400.471,
+    "computedY" : 609.329,
+    "placementX" : 400.471,
+    "placementY" : 609.329,
+    "placementWidth" : 125.559,
+    "placementHeight" : 24.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 125.559,
+    "contentHeight" : 24.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 532.109,
+    "placementX" : 48.0,
+    "placementY" : 532.109,
+    "placementWidth" : 499.276,
+    "placementHeight" : 56.22,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 56.22,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 14.0,
+      "bottom" : 12.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 62.0,
+    "computedY" : 544.109,
+    "placementX" : 62.0,
+    "placementY" : 544.109,
+    "placementWidth" : 86.4,
+    "placementHeight" : 32.22,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.4,
+    "contentHeight" : 32.22,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.481,
+    "computedY" : 553.209,
+    "placementX" : 195.481,
+    "placementY" : 553.209,
+    "placementWidth" : 95.659,
+    "placementHeight" : 23.12,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.659,
+    "contentHeight" : 23.12,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[5]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 400.471,
+    "computedY" : 551.354,
+    "placementX" : 400.471,
+    "placementY" : 551.354,
+    "placementWidth" : 131.553,
+    "placementHeight" : 24.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 131.553,
+    "contentHeight" : 24.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 466.889,
+    "placementX" : 48.0,
+    "placementY" : 466.889,
+    "placementWidth" : 499.276,
+    "placementHeight" : 56.22,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 56.22,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 14.0,
+      "bottom" : 12.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 62.0,
+    "computedY" : 478.889,
+    "placementX" : 62.0,
+    "placementY" : 478.889,
+    "placementWidth" : 86.4,
+    "placementHeight" : 32.22,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.4,
+    "contentHeight" : 32.22,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[6]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.481,
+    "computedY" : 487.989,
+    "placementX" : 195.481,
+    "placementY" : 487.989,
+    "placementWidth" : 126.412,
+    "placementHeight" : 23.12,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 126.412,
+    "contentHeight" : 23.12,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[6]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 400.471,
+    "computedY" : 486.134,
+    "placementX" : 400.471,
+    "placementY" : 486.134,
+    "placementWidth" : 117.558,
+    "placementHeight" : 24.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 117.558,
+    "contentHeight" : 24.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 412.229,
+    "placementX" : 48.0,
+    "placementY" : 412.229,
+    "placementWidth" : 499.276,
+    "placementHeight" : 45.66,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 45.66,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 14.0,
+      "bottom" : 12.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 62.0,
+    "computedY" : 424.229,
+    "placementX" : 62.0,
+    "placementY" : 424.229,
+    "placementWidth" : 86.4,
+    "placementHeight" : 21.66,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.4,
+    "contentHeight" : 21.66,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.481,
+    "computedY" : 428.889,
+    "placementX" : 195.481,
+    "placementY" : 428.889,
+    "placementWidth" : 144.262,
+    "placementHeight" : 17.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 144.262,
+    "contentHeight" : 17.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]/RowNode[7]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 400.471,
+    "computedY" : 429.239,
+    "placementX" : 400.471,
+    "placementY" : 429.239,
+    "placementWidth" : 130.554,
+    "placementHeight" : 16.65,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 130.554,
+    "contentHeight" : 16.65,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ShapeNode[8]",
+    "entityName" : null,
+    "entityKind" : "ShapeNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 8,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 394.229,
+    "placementX" : 48.0,
+    "placementY" : 394.229,
+    "placementWidth" : 499.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[9]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 9,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 360.579,
+    "placementX" : 48.0,
+    "placementY" : 360.579,
+    "placementWidth" : 499.239,
+    "placementHeight" : 16.65,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.239,
+    "contentHeight" : 16.65,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[10]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "WorldScripts[0]",
+    "childIndex" : 10,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 344.179,
+    "placementX" : 48.0,
+    "placementY" : 344.179,
+    "placementWidth" : 154.272,
+    "placementHeight" : 7.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 154.272,
+    "contentHeight" : 7.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

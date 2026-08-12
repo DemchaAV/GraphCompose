@@ -76,11 +76,36 @@ public final class HebrewInvoiceExample {
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("features/text", "hebrew-invoice.pdf");
 
-        try (DocumentSession document = GraphCompose.document(outputFile)
+        try (DocumentSession document = open(outputFile)) {
+            compose(document);
+            document.buildPdf();
+        }
+
+        return outputFile;
+    }
+
+    /**
+     * Opens a session with this document's page geometry.
+     *
+     * <p>Split out so the visual tests hold the same document this writes rather than
+     * a copy of it: pass {@code null} for an in-memory session the tests can measure.</p>
+     *
+     * @param outputFile file to write, or {@code null} for an in-memory session
+     * @return an open session
+     */
+    public static DocumentSession open(Path outputFile) {
+        return (outputFile == null ? GraphCompose.document() : GraphCompose.document(outputFile))
                 .pageSize(DocumentPageSize.A4)
                 .margin(48, 46, 48, 46)
-                .create()) {
+                .create();
+    }
 
+    /**
+     * Builds the document into an open session.
+     *
+     * @param document session to compose into
+     */
+    public static void compose(DocumentSession document) {
             document.pageFlow()
                     .name("HebrewInvoice")
                     .spacing(8)
@@ -130,11 +155,6 @@ public final class HebrewInvoiceExample {
                     .addParagraph(p -> p.text("GraphCompose · features/text/hebrew-invoice")
                             .align(TextAlign.LEFT).textStyle(text(8, MUTED)))
                     .build();
-
-            document.buildPdf();
-        }
-
-        return outputFile;
     }
 
     /**

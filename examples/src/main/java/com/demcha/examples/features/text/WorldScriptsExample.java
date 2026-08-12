@@ -46,11 +46,36 @@ public final class WorldScriptsExample {
     public static Path generate() throws Exception {
         Path outputFile = ExampleOutputPaths.prepare("features/text", "world-scripts.pdf");
 
-        try (DocumentSession document = GraphCompose.document(outputFile)
+        try (DocumentSession document = open(outputFile)) {
+            compose(document);
+            document.buildPdf();
+        }
+
+        return outputFile;
+    }
+
+    /**
+     * Opens a session with this document's page geometry.
+     *
+     * <p>Split out so the visual tests hold the same document this writes rather than
+     * a copy of it: pass {@code null} for an in-memory session the tests can measure.</p>
+     *
+     * @param outputFile file to write, or {@code null} for an in-memory session
+     * @return an open session
+     */
+    public static DocumentSession open(Path outputFile) {
+        return (outputFile == null ? GraphCompose.document() : GraphCompose.document(outputFile))
                 .pageSize(DocumentPageSize.A4)
                 .margin(52, 48, 52, 48)
-                .create()) {
+                .create();
+    }
 
+    /**
+     * Builds the document into an open session.
+     *
+     * @param document session to compose into
+     */
+    public static void compose(DocumentSession document) {
             document.pageFlow()
                     .name("WorldScripts")
                     .spacing(9)
@@ -105,11 +130,6 @@ public final class WorldScriptsExample {
                     .addParagraph(p -> p.text("GraphCompose · features/text/world-scripts")
                             .align(TextAlign.LEFT).textStyle(footer()))
                     .build();
-
-            document.buildPdf();
-        }
-
-        return outputFile;
     }
 
     /** A4 width less the two 48pt side margins; a divider is drawn, so it needs one. */

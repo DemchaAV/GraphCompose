@@ -139,8 +139,19 @@ follow semantic versioning; release dates are ISO 8601.
 - **A stale font artifact is now distinguished from a missing one.** Asking for a
   family that a newer `graph-compose-fonts` introduced produced the same message as
   having no font artifact at all — an instruction to add a dependency that was already
-  there. The two causes are now told apart, and the stale case names the version that
-  carries the family.
+  there. The two causes are now told apart, and the stale case names the version the
+  consumer actually has.
+
+  The artifact states that version itself: it ships a small descriptor written at build
+  time, and the engine reads it. Presence is asked separately, of a face the artifact has
+  carried since its first release — the descriptor only ships from 1.1.0, so for the
+  releases published before it a missing descriptor means "too old to say", not "not
+  here", and those two need opposite advice. The first shape of this carried a map from family folder
+  to the release that introduced it, which meant the catalog had to remember the
+  artifact's history and every new font needed an entry in a class that otherwise knows
+  nothing about which fonts exist. Reading the version off the artifact answers the
+  question that actually helps — *what do you have* rather than *what should you have* —
+  and needs no maintenance as families are added.
 
 ### Templates
 

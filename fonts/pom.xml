@@ -84,6 +84,27 @@
     </properties>
 
     <build>
+        <resources>
+            <!--
+                Everything except the descriptor, unfiltered. Filtering runs over the
+                bytes of every file it touches, and a font binary does not survive it.
+            -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>fonts/graph-compose-fonts.properties</exclude>
+                </excludes>
+            </resource>
+            <!-- The one text file, filtered so it carries this module's version. -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>fonts/graph-compose-fonts.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

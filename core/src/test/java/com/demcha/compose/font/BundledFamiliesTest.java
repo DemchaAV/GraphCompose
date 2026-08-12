@@ -53,12 +53,10 @@ class BundledFamiliesTest {
     }
 
     @Test
-    void aMissingResourceNamesTheFontsVersionForEveryFamilyThatNeedsOne() {
-        // The version map is keyed on the resource folder segment, and those keys are string
-        // literals written independently of the folder names in DefaultFonts. One typo and the
-        // family silently falls back to the generic "add the dependency" message — advice that
-        // is wrong for a consumer who already has the dependency, just an older one. So every
-        // family that needs the diagnostic is driven through it rather than one sample.
+    void aMissingResourceNamesTheVersionOfTheArtifactOnTheClasspath() {
+        // The advice a consumer needs depends on which of two setups they are in, and the
+        // artifact's own descriptor is what tells them apart — no list of which version
+        // introduced which family, which was five entries and one more per font.
         for (FontName family : List.of(FontName.AMIRI, FontName.DAVID_LIBRE,
                 FontName.NOTO_SANS_GEORGIAN, FontName.NOTO_SANS_ARMENIAN, FontName.GOTHIC_A1)) {
             String missingFace = folderOf(family) + "/NoSuchFace.ttf";
@@ -66,15 +64,80 @@ class BundledFamiliesTest {
                     .classpath(FontName.of(family.name() + " Probe"), missingFace)
                     .build();
 
-            // The font artifact is on this test classpath, so a missing face under a family it
-            // should carry means the artifact predates the family — not that it is absent.
             assertThatThrownBy(() -> definition.fontSourceSet().orElseThrow().regular().openStream())
-                    .describedAs("%s resolves under %s, which must be a key the version map "
-                            + "knows", family, missingFace)
+                    .describedAs("%s resolves under %s", family, missingFace)
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("graph-compose-fonts")
-                    .hasMessageContaining("1.1.0");
+                    .hasMessageContaining(bundledFontsVersion());
         }
+    }
+
+    @Test
+    void theVersionInTheMessageIsTheArtifactsOwnRatherThanAnythingHardcoded() {
+        // Read from the descriptor the fonts module writes at build time, so this stays
+        // true across a version bump without anyone editing a constant.
+        assertThat(bundledFontsVersion())
+                .describedAs("the fonts artifact on the test classpath states its version")
+                .isNotBlank()
+                .matches("[0-9]+[.][0-9]+[.][0-9]+(-.+)?");
+    }
+
+    @Test
+    void anAbsentFontArtifactGetsTheMigrationPointerInstead() {
+        // The branch that could never be exercised before: the artifact is on this test
+        // classpath, so the only way to see the advice a consumer without it receives is
+        // to ask for it directly. Without this the "add the dependency" wording could rot
+        // untouched — it is the message for the setup nobody here is in.
+        String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
+                "/fonts/google/amiri/Amiri-Regular.ttf", null, false);
+
+        assertThat(message)
+                .contains("graph-compose-fonts")
+                .contains("v1.8.0")
+                .contains("docs/migration/v1.8.0-fonts.md");
+    }
+
+    @Test
+    void aStaleFontArtifactIsToldWhichVersionItIsRatherThanToAddADependencyItHas() {
+        String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
+                "/fonts/google/gothica1/GothicA1-Regular.ttf", "1.2.0", true);
+
+        assertThat(message)
+                .describedAs("naming the version they have is what makes the problem "
+                        + "recognisable; telling them to add a dependency they already "
+                        + "have is the one answer that cannot help")
+                .contains("1.2.0")
+                .doesNotContain("v1.8.0");
+    }
+
+    @Test
+    void anArtifactTooOldToNameItselfIsStillNotToldToAddADependencyItHas() {
+        // The state every consumer of the published 1.0.0 is in: the fonts are on the
+        // classpath and the descriptor that would name their version is not, because the
+        // descriptor ships from 1.1.0. Reading only the descriptor makes that look
+        // identical to having no artifact at all — and sends the one reader who can
+        // actually hit this today to add a dependency they already depend on.
+        String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
+                "/fonts/google/amiri/Amiri-Regular.ttf", null, true);
+
+        assertThat(message)
+                .describedAs("presence and version are separate questions; only the first "
+                        + "can be asked of a release that shipped before either mechanism")
+                .contains("predates 1.1.0")
+                .doesNotContain("v1.8.0");
+    }
+
+    /** The version the fonts artifact on the classpath reports for itself. */
+    private static String bundledFontsVersion() {
+        java.util.Properties properties = new java.util.Properties();
+        try (java.io.InputStream descriptor = BundledFamiliesTest.class
+                .getResourceAsStream("/fonts/graph-compose-fonts.properties")) {
+            assertThat(descriptor).describedAs("the fonts artifact ships its descriptor").isNotNull();
+            properties.load(descriptor);
+        } catch (java.io.IOException e) {
+            throw new AssertionError(e);
+        }
+        return properties.getProperty("version");
     }
 
     /** {@code fonts/google/amiri} — the folder the family's real faces resolve under. */
@@ -131,19 +194,17 @@ class BundledFamiliesTest {
     }
 
     @Test
-    void aMissingLongStandingFamilyResourceStillPointsAtTheArtifactSplit() {
+    void aMissingFaceOfALongStandingFamilyIsDiagnosedTheSameWay() {
         FontFamilyDefinition definition = FontFamilyDefinition
                 .classpath(FontName.of("Lato Probe"), "fonts/google/lato/Lato-NoSuchFace.ttf")
                 .build();
 
-        // Asserted on the signal the split message carries rather than on the absence of the
-        // version wording: a marker that has to stay absent silently stops guarding anything
-        // once the wording changes.
+        // Lato predates the artifact split, but that says nothing about why one of its
+        // faces is missing here: the artifact is present, so the answer is the same as for
+        // any other family. It used to be told to add a dependency it already had.
         assertThatThrownBy(() -> definition.fontSourceSet().orElseThrow().regular().openStream())
                 .isInstanceOf(IllegalArgumentException.class)
-                .describedAs("a family that predates the split keeps the migration pointer "
-                        + "instead of being diagnosed as a version problem")
-                .hasMessageContaining("v1.8.0")
-                .hasMessageContaining("docs/migration/v1.8.0-fonts.md");
+                .hasMessageContaining(bundledFontsVersion())
+                .hasMessageNotContaining("v1.8.0");
     }
 }

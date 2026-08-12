@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 
 /**
  * Describes a reusable font family in backend-neutral terms.
@@ -316,8 +316,8 @@ public final class FontFamilyDefinition {
         }
     }
 
-    private record ClasspathFontSource(String resourcePath) implements FontBinarySource {
-        private ClasspathFontSource {
+    record ClasspathFontSource(String resourcePath) implements FontBinarySource {
+        ClasspathFontSource {
             Objects.requireNonNull(resourcePath, "resourcePath");
         }
 
@@ -332,42 +332,76 @@ public final class FontFamilyDefinition {
         }
 
         /**
-         * Families that entered the bundled set after its initial release, mapped
-         * to the fonts-artifact version that first carries them. A resource under
-         * one of these folders is missing for a different reason than the rest:
-         * the artifact is present but predates the family.
+         * Descriptor the fonts artifact ships, naming its own version.
+         *
+         * <p>Reading the version off the artifact is what lets this class say something
+         * true about a consumer's setup without knowing anything about the artifact's
+         * history. The alternative it replaced was a map from family folder to the
+         * version that introduced it — five entries and growing, kept in step by hand,
+         * in a class that otherwise knows nothing about which fonts exist.</p>
+         *
+         * <p>Its absence does not mean the artifact is absent. The descriptor itself only
+         * ships from 1.1.0, so every consumer of the one release published before it has
+         * the fonts and no descriptor — which is why presence is asked separately below.</p>
          */
-        private static final Map<String, String> FAMILY_MINIMUM_FONTS_VERSION = Map.of(
-                "amiri", "1.1.0",
-                "davidlibre", "1.1.0",
-                "notosansgeorgian", "1.1.0",
-                "notosansarmenian", "1.1.0",
-                "gothica1", "1.1.0");
+        private static final String FONTS_ARTIFACT_DESCRIPTOR = "/fonts/graph-compose-fonts.properties";
 
         /**
-         * A face that has shipped in every release of the font artifact. Its presence
-         * separates "the artifact is missing" from "the artifact is older than the
-         * family being asked for" — two causes with different fixes.
+         * A face that has shipped in every release of the font artifact, used to answer
+         * whether the artifact is on the classpath <em>at all</em>.
+         *
+         * <p>The descriptor cannot answer that. It is newer than the artifact, so a
+         * missing descriptor is ambiguous — no artifact, or one that predates the
+         * descriptor — and those two need opposite advice: add the dependency, or upgrade
+         * the one you have. Reading the version and detecting presence are two questions,
+         * and only the second can be asked of a release that shipped before either
+         * mechanism existed.</p>
          */
         private static final String LONG_STANDING_FACE = "/fonts/google/lato/Lato-Regular.ttf";
 
-        /**
-         * Builds the not-found message. For a bundled Google-font resource the
-         * likely cause is that the separately-versioned font artifact is not on
-         * the classpath (the fonts moved out of the core jar in v1.8.0), or that
-         * it is older than the family being requested, so the message points at
-         * the fix instead of a bare path.
-         */
-        private static String missingResourceMessage(String normalizedPath) {
-            String requiredVersion = FAMILY_MINIMUM_FONTS_VERSION.get(familyFolder(normalizedPath));
-            if (requiredVersion != null && fontArtifactIsOnTheClasspath()) {
-                return "Bundled font resource not found: " + normalizedPath
-                        + ". This family ships in io.github.demchaav:graph-compose-fonts "
-                        + requiredVersion + " or newer — upgrade that dependency (or the "
-                        + "io.github.demchaav:graph-compose-bundle aggregate) to use it, "
-                        + "or register your own font with FontFamilyDefinition.";
+        /** The fonts artifact's version, or {@code null} when it is not on the classpath. */
+        private static final String BUNDLED_FONTS_VERSION = readBundledFontsVersion();
+
+        private static String readBundledFontsVersion() {
+            try (InputStream descriptor =
+                         FontFamilyDefinition.class.getResourceAsStream(FONTS_ARTIFACT_DESCRIPTOR)) {
+                if (descriptor == null) {
+                    return null;
+                }
+                Properties properties = new Properties();
+                properties.load(descriptor);
+                String version = properties.getProperty("version");
+                return version == null || version.isBlank() ? null : version.trim();
+            } catch (IOException e) {
+                return null;
             }
-            if (normalizedPath.startsWith("/fonts/google/")) {
+        }
+
+        /**
+         * Builds the not-found message for a bundled font resource.
+         *
+         * <p>Three setups produce a missing bundled font and each needs different advice.
+         * The artifact may not be on the classpath at all — the fonts moved out of the
+         * core jar in v1.8.0, and a build that never added the new dependency reaches
+         * here. It may be present and older than the family being asked for, in which
+         * case telling the reader to add a dependency they already have is the one answer
+         * guaranteed not to help. And it may be present, older, and old enough to predate
+         * the descriptor that would have named its version — the state every consumer of
+         * the one release published before that descriptor is in.</p>
+         *
+         * <p>So presence and version are asked separately. A long-standing face answers
+         * the first for any release ever published; the descriptor answers the second for
+         * those new enough to carry it, and the message quotes the version the consumer
+         * actually has rather than the version that introduced the family — the fact that
+         * identifies the problem, and one that needs no list to stay true.</p>
+         */
+        static String missingResourceMessage(String normalizedPath,
+                                             String bundledFontsVersion,
+                                             boolean fontArtifactPresent) {
+            if (!normalizedPath.startsWith("/fonts/google/")) {
+                return "Classpath font resource not found: " + normalizedPath;
+            }
+            if (!fontArtifactPresent) {
                 return "Bundled font resource not found: " + normalizedPath
                         + ". The bundled Google fonts ship in a separate artifact since v1.8.0 — "
                         + "add the dependency io.github.demchaav:graph-compose-fonts (or the "
@@ -375,21 +409,19 @@ public final class FontFamilyDefinition {
                         + "them, or register your own font with FontFamilyDefinition. "
                         + "See https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v1.8.0-fonts.md";
             }
-            return "Classpath font resource not found: " + normalizedPath;
+            String which = bundledFontsVersion == null
+                    ? "predates 1.1.0"
+                    : "is " + bundledFontsVersion;
+            return "Bundled font resource not found: " + normalizedPath
+                    + ". The io.github.demchaav:graph-compose-fonts on your classpath "
+                    + which + " and does not carry it — upgrade that dependency "
+                    + "(or the io.github.demchaav:graph-compose-bundle aggregate) to a version "
+                    + "that does, or register your own font with FontFamilyDefinition.";
         }
 
-        private static boolean fontArtifactIsOnTheClasspath() {
-            return FontFamilyDefinition.class.getResource(LONG_STANDING_FACE) != null;
-        }
-
-        /** Extracts {@code amiri} from {@code /fonts/google/amiri/Amiri-Regular.ttf}. */
-        private static String familyFolder(String normalizedPath) {
-            if (!normalizedPath.startsWith("/fonts/google/")) {
-                return "";
-            }
-            int start = "/fonts/google/".length();
-            int end = normalizedPath.indexOf('/', start);
-            return end < 0 ? normalizedPath.substring(start) : normalizedPath.substring(start, end);
+        private static String missingResourceMessage(String normalizedPath) {
+            return missingResourceMessage(normalizedPath, BUNDLED_FONTS_VERSION,
+                    FontFamilyDefinition.class.getResource(LONG_STANDING_FACE) != null);
         }
 
         @Override

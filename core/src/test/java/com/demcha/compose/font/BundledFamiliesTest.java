@@ -89,7 +89,7 @@ class BundledFamiliesTest {
         // to ask for it directly. Without this the "add the dependency" wording could rot
         // untouched — it is the message for the setup nobody here is in.
         String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
-                "/fonts/google/amiri/Amiri-Regular.ttf", null);
+                "/fonts/google/amiri/Amiri-Regular.ttf", null, false);
 
         assertThat(message)
                 .contains("graph-compose-fonts")
@@ -100,13 +100,30 @@ class BundledFamiliesTest {
     @Test
     void aStaleFontArtifactIsToldWhichVersionItIsRatherThanToAddADependencyItHas() {
         String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
-                "/fonts/google/gothica1/GothicA1-Regular.ttf", "1.0.0");
+                "/fonts/google/gothica1/GothicA1-Regular.ttf", "1.2.0", true);
 
         assertThat(message)
                 .describedAs("naming the version they have is what makes the problem "
                         + "recognisable; telling them to add a dependency they already "
                         + "have is the one answer that cannot help")
-                .contains("1.0.0")
+                .contains("1.2.0")
+                .doesNotContain("v1.8.0");
+    }
+
+    @Test
+    void anArtifactTooOldToNameItselfIsStillNotToldToAddADependencyItHas() {
+        // The state every consumer of the published 1.0.0 is in: the fonts are on the
+        // classpath and the descriptor that would name their version is not, because the
+        // descriptor ships from 1.1.0. Reading only the descriptor makes that look
+        // identical to having no artifact at all — and sends the one reader who can
+        // actually hit this today to add a dependency they already depend on.
+        String message = FontFamilyDefinition.ClasspathFontSource.missingResourceMessage(
+                "/fonts/google/amiri/Amiri-Regular.ttf", null, true);
+
+        assertThat(message)
+                .describedAs("presence and version are separate questions; only the first "
+                        + "can be asked of a release that shipped before either mechanism")
+                .contains("predates 1.1.0")
                 .doesNotContain("v1.8.0");
     }
 

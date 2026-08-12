@@ -143,7 +143,10 @@ follow semantic versioning; release dates are ISO 8601.
   consumer actually has.
 
   The artifact states that version itself: it ships a small descriptor written at build
-  time, and the engine reads it. The first shape of this carried a map from family folder
+  time, and the engine reads it. Presence is asked separately, of a face the artifact has
+  carried since its first release — the descriptor only ships from 1.1.0, so for the
+  releases published before it a missing descriptor means "too old to say", not "not
+  here", and those two need opposite advice. The first shape of this carried a map from family folder
   to the release that introduced it, which meant the catalog had to remember the
   artifact's history and every new font needed an entry in a class that otherwise knows
   nothing about which fonts exist. Reading the version off the artifact answers the

@@ -339,8 +339,25 @@ public final class FontFamilyDefinition {
          * history. The alternative it replaced was a map from family folder to the
          * version that introduced it — five entries and growing, kept in step by hand,
          * in a class that otherwise knows nothing about which fonts exist.</p>
+         *
+         * <p>Its absence does not mean the artifact is absent. The descriptor itself only
+         * ships from 1.1.0, so every consumer of the one release published before it has
+         * the fonts and no descriptor — which is why presence is asked separately below.</p>
          */
         private static final String FONTS_ARTIFACT_DESCRIPTOR = "/fonts/graph-compose-fonts.properties";
+
+        /**
+         * A face that has shipped in every release of the font artifact, used to answer
+         * whether the artifact is on the classpath <em>at all</em>.
+         *
+         * <p>The descriptor cannot answer that. It is newer than the artifact, so a
+         * missing descriptor is ambiguous — no artifact, or one that predates the
+         * descriptor — and those two need opposite advice: add the dependency, or upgrade
+         * the one you have. Reading the version and detecting presence are two questions,
+         * and only the second can be asked of a release that shipped before either
+         * mechanism existed.</p>
+         */
+        private static final String LONG_STANDING_FACE = "/fonts/google/lato/Lato-Regular.ttf";
 
         /** The fonts artifact's version, or {@code null} when it is not on the classpath. */
         private static final String BUNDLED_FONTS_VERSION = readBundledFontsVersion();
@@ -363,23 +380,28 @@ public final class FontFamilyDefinition {
         /**
          * Builds the not-found message for a bundled font resource.
          *
-         * <p>Two setups produce a missing bundled font and they need different advice.
+         * <p>Three setups produce a missing bundled font and each needs different advice.
          * The artifact may not be on the classpath at all — the fonts moved out of the
          * core jar in v1.8.0, and a build that never added the new dependency reaches
-         * here. Or it is present and simply older than the family being asked for, in
-         * which case telling the reader to add a dependency they already have is the one
-         * answer guaranteed not to help.</p>
+         * here. It may be present and older than the family being asked for, in which
+         * case telling the reader to add a dependency they already have is the one answer
+         * guaranteed not to help. And it may be present, older, and old enough to predate
+         * the descriptor that would have named its version — the state every consumer of
+         * the one release published before that descriptor is in.</p>
          *
-         * <p>The two are told apart by whether the artifact's own descriptor is readable,
-         * and the second case quotes the version the consumer actually has rather than
-         * the version that introduced the family: it is the fact that identifies the
-         * problem, and it needs no list to stay true as families are added.</p>
+         * <p>So presence and version are asked separately. A long-standing face answers
+         * the first for any release ever published; the descriptor answers the second for
+         * those new enough to carry it, and the message quotes the version the consumer
+         * actually has rather than the version that introduced the family — the fact that
+         * identifies the problem, and one that needs no list to stay true.</p>
          */
-        static String missingResourceMessage(String normalizedPath, String bundledFontsVersion) {
+        static String missingResourceMessage(String normalizedPath,
+                                             String bundledFontsVersion,
+                                             boolean fontArtifactPresent) {
             if (!normalizedPath.startsWith("/fonts/google/")) {
                 return "Classpath font resource not found: " + normalizedPath;
             }
-            if (bundledFontsVersion == null) {
+            if (!fontArtifactPresent) {
                 return "Bundled font resource not found: " + normalizedPath
                         + ". The bundled Google fonts ship in a separate artifact since v1.8.0 — "
                         + "add the dependency io.github.demchaav:graph-compose-fonts (or the "
@@ -387,15 +409,19 @@ public final class FontFamilyDefinition {
                         + "them, or register your own font with FontFamilyDefinition. "
                         + "See https://github.com/DemchaAV/GraphCompose/blob/main/docs/migration/v1.8.0-fonts.md";
             }
+            String which = bundledFontsVersion == null
+                    ? "predates 1.1.0"
+                    : "is " + bundledFontsVersion;
             return "Bundled font resource not found: " + normalizedPath
-                    + ". The io.github.demchaav:graph-compose-fonts on your classpath is "
-                    + bundledFontsVersion + " and does not carry it — upgrade that dependency "
+                    + ". The io.github.demchaav:graph-compose-fonts on your classpath "
+                    + which + " and does not carry it — upgrade that dependency "
                     + "(or the io.github.demchaav:graph-compose-bundle aggregate) to a version "
                     + "that does, or register your own font with FontFamilyDefinition.";
         }
 
         private static String missingResourceMessage(String normalizedPath) {
-            return missingResourceMessage(normalizedPath, BUNDLED_FONTS_VERSION);
+            return missingResourceMessage(normalizedPath, BUNDLED_FONTS_VERSION,
+                    FontFamilyDefinition.class.getResource(LONG_STANDING_FACE) != null);
         }
 
         @Override

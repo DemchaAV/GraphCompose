@@ -23,7 +23,7 @@
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-fonts</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 
     <name>GraphCompose Fonts</name>
     <description>Bundled Google font binaries for GraphCompose, packaged as an independently-versioned companion artifact.</description>

@@ -41,6 +41,10 @@ public final class ArabicShaper {
     private ArabicShaper() {
     }
 
+    /** The Arabic Presentation Forms-B block, which is everything this shaper emits. */
+    private static final int PRESENTATION_FORMS_FIRST = 0xFE70;
+    private static final int PRESENTATION_FORMS_LAST = 0xFEFC;
+
     /** First code point of the table: U+0621, hamza. */
     private static final int BASE_FIRST = 0x0621;
     /** Last code point of the table: U+064A, yeh. */
@@ -199,6 +203,13 @@ public final class ArabicShaper {
      * @return the base letters in logical order, or {@code null}
      */
     public static String baseLettersOf(int codePoint) {
+        if (codePoint < PRESENTATION_FORMS_FIRST || codePoint > PRESENTATION_FORMS_LAST) {
+            // Everything this can answer for lives in one block, and the caller on the
+            // glyph seam asks about every code point a font cannot encode — a bullet or
+            // an emoji in an otherwise Latin document reaches here on each occurrence.
+            // One comparison rather than a walk of the whole table for a certain miss.
+            return null;
+        }
         for (int[] ligature : LAM_ALEF) {
             if (codePoint == ligature[1] || codePoint == ligature[2]) {
                 return new String(new char[]{(char) LAM, (char) ligature[0]});

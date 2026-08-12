@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
+import com.demcha.compose.engine.text.bidi.BidiMirroring;
 import com.demcha.compose.engine.text.bidi.BidiText;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
@@ -138,10 +139,13 @@ public final class PdfParagraphFragmentRenderHandler
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
         // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
         // mixed-direction text inside a chip keeps logical order (a known approximation).
-        String chipText = span.rightToLeft()
-                ? BidiText.reverseForDisplay(span.text())
-                : span.text();
-        String text = font.sanitizeForRender(span.textStyle(), chipText);
+        // Sanitize-then-reverse, as in renderLine, so a degraded ligature keeps its
+        // letter order.
+        String sanitizedLogical = font.sanitizeForRender(span.textStyle(),
+                span.rightToLeft() ? BidiMirroring.mirror(span.text()) : span.text());
+        String text = span.rightToLeft()
+                ? BidiText.reverseForDisplay(sanitizedLogical)
+                : sanitizedLogical;
         if (text.isEmpty()) {
             return false;                                       // nothing to paint — no glyph-less fill or mark
         }
@@ -376,10 +380,21 @@ public final class PdfParagraphFragmentRenderHandler
                     // text extraction and copy-paste, carries the visual order. Undoing
                     // that would take ActualText marked content — a known trade-off,
                     // recorded in the changelog rather than hidden here.
-                    String spanText = textSpan.rightToLeft()
-                            ? BidiText.reverseForDisplay(textSpan.text())
-                            : textSpan.text();
-                    String text = font.sanitizeForRender(textSpan.textStyle(), spanText);
+                    // Mirroring happens here and not in the span, for the same reason
+                    // reversal does: PowerPoint applies UAX #9 L4 itself, and a mirror
+                    // baked into the text would come out double-mirrored there.
+                    // Sanitizing runs BEFORE the reversal: the glyph seam may degrade a
+                    // lam-alef ligature into its two letters, and those come out in
+                    // logical order — appended into an already-reversed string they
+                    // would land swapped on the page. Reversing last keeps every
+                    // substitution on the correct side.
+                    String sanitizedLogical = font.sanitizeForRender(textSpan.textStyle(),
+                            textSpan.rightToLeft()
+                                    ? BidiMirroring.mirror(textSpan.text())
+                                    : textSpan.text());
+                    String text = textSpan.rightToLeft()
+                            ? BidiText.reverseForDisplay(sanitizedLogical)
+                            : sanitizedLogical;
                     if (text.isEmpty()) {
                         cursorX += textSpan.width();
                         continue;

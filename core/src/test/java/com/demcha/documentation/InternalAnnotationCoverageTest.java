@@ -8,6 +8,8 @@ import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.MeasureResult;
 import com.demcha.compose.document.layout.NodeDefinition;
 import com.demcha.compose.document.layout.PlacedFragment;
+import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +26,15 @@ class InternalAnnotationCoverageTest {
         assertPackageIsInternal(MeasureResult.class);
         assertPackageIsInternal(NodeDefinition.class);
         assertPackageIsInternal(PlacedFragment.class);
+    }
+
+    @Test
+    void theTextEnginePackagesAreMarkedInternal() {
+        // Their package documentation has always called them internal; until the
+        // annotation was there, nothing could check it, and a caller reading
+        // BidiParagraphResolver or ArabicShaper had no signal that they may change.
+        assertPackageIsInternal(TextControlSanitizer.class);
+        assertPackageIsInternal(BidiParagraphResolver.class);
     }
 
     private static void assertPackageIsInternal(Class<?> probe) {

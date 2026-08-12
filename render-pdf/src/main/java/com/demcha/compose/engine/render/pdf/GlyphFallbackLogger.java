@@ -1,6 +1,7 @@
 package com.demcha.compose.engine.render.pdf;
 
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.slf4j.Logger;
@@ -42,6 +43,12 @@ public final class GlyphFallbackLogger {
      * silently coalesced with an unrelated font.
      */
     private static final Set<Long> SEEN = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Fonts already reported as lacking the Arabic presentation forms. Separate from
+     * {@link #SEEN} because this fact is per font, not per code point.
+     */
+    private static final Set<String> DEGRADED_FONTS = ConcurrentHashMap.newKeySet();
 
     /**
      * Per-font glyph-coverage memo: a font's PostScript base name to the set of
@@ -100,6 +107,28 @@ public final class GlyphFallbackLogger {
      * @return text containing only code points the font can encode
      */
     public static String sanitize(PDFont font, String text) {
+        return sanitize(font, text, false);
+    }
+
+    /**
+     * Sanitizes for a consumer that shapes the text itself.
+     *
+     * <p>A PDF draws glyphs, so a zero-width formatting control has nothing to draw and
+     * is dropped. A backend that emits <em>text</em> — PowerPoint receives characters and
+     * runs its own shaper over them — is in the opposite position: the Arabic joining
+     * controls are the author's instruction about which letters may connect, and dropping
+     * them hands that shaper a word it will join back together. So the same substitution
+     * policy applies, minus the removal of those two.</p>
+     *
+     * @param font font to validate glyph coverage against
+     * @param text raw text to sanitise; {@code null} returns empty
+     * @return text the font can encode, keeping the Arabic joining controls
+     */
+    public static String sanitizeKeepingJoiningControls(PDFont font, String text) {
+        return sanitize(font, text, true);
+    }
+
+    private static String sanitize(PDFont font, String text, boolean keepJoiningControls) {
         if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
@@ -109,21 +138,65 @@ public final class GlyphFallbackLogger {
         for (int offset = 0; offset < length; ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (codePoint == '\n' || codePoint == '\r' || TextControlSanitizer.isBidiControl(codePoint)) {
-                // A bidirectional formatting character steers the layout and draws
-                // nothing. Substituting it would put a visible '?' on the page and give
-                // a zero-width character a width, which the wrapping already committed
-                // to not having. Dropping it keeps measurement and rendering in step.
+            if (keepJoiningControls && TextControlSanitizer.isJoiningControl(codePoint)) {
+                sb.appendCodePoint(codePoint);
+                continue;
+            }
+            if (codePoint == '\n' || codePoint == '\r'
+                    || TextControlSanitizer.isFormattingControl(codePoint)) {
+                // A formatting character steers the layout and draws nothing —
+                // bidirectional controls steer the direction, joining controls the
+                // shaping — and this is the seam both measurement and drawing pass
+                // through, so removing them here keeps the two reading one string.
+                // Substituting either would put a visible '?' on the page and give a
+                // zero-width character a width, which the wrapping already committed to
+                // not having. Dropping it keeps measurement and rendering in step.
                 continue;
             }
             if (isEncodable(font, coverage, codePoint)) {
                 sb.appendCodePoint(codePoint);
-            } else {
+            } else if (!appendBaseLetters(font, coverage, codePoint, sb)) {
                 report(font, codePoint);
                 sb.append('?');
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Degrades an Arabic presentation form a font cannot encode to its base letters.
+     *
+     * <p>A font that shapes only through {@code GSUB} carries the letters but not the
+     * forms. Substituting {@code '?'} would lose the text; the base letters render
+     * unjoined but readable, which is the honest middle. Only fires when every base
+     * letter is itself encodable — otherwise the ordinary substitution reports it.</p>
+     */
+    private static boolean appendBaseLetters(PDFont font,
+                                             Map<Integer, Boolean> coverage,
+                                             int codePoint,
+                                             StringBuilder sb) {
+        String base = ArabicShaper.baseLettersOf(codePoint);
+        if (base == null) {
+            return false;
+        }
+        for (int index = 0; index < base.length(); index++) {
+            if (!isEncodable(font, coverage, base.charAt(index))) {
+                return false;
+            }
+        }
+        sb.append(base);
+        String fontName = fontKey(font);
+        // Keyed on the font alone rather than on (font, code point): a font that carries
+        // no presentation forms carries none of them, so the second form says nothing the
+        // first did not. Per-form keying turned one fact about the font into a warning for
+        // every distinct letter the document happened to use.
+        if (DEGRADED_FONTS.add(fontName)) {
+            LOG.warn("glyph.degraded font={} joined forms unavailable, drawing base "
+                            + "letters — Arabic renders unjoined in this font (first at "
+                            + "U+{})",
+                    fontName, String.format("%04X", codePoint));
+        }
+        return true;
     }
 
     private static boolean isEncodable(PDFont font, Map<Integer, Boolean> coverage, int codePoint) {
@@ -155,6 +228,7 @@ public final class GlyphFallbackLogger {
      */
     static void resetForTesting() {
         SEEN.clear();
+        DEGRADED_FONTS.clear();
         ENCODABLE_BY_FONT.clear();
     }
 }

@@ -157,6 +157,55 @@ class RtlGlyphOrderTest {
                 .toList();
     }
 
+    @Test
+    void arabicReachesThePageInJoinedForms() throws Exception {
+        // The base letters would render isolated; the presentation forms are what
+        // joining looks like to a PDF. Extraction reads the content stream, so the
+        // forms themselves are visible to this test — every extracted Arabic glyph
+        // must be a presentation form, and none the unjoined base letters.
+        byte[] pdf = renderArabic("مرحبا", TextDirection.RTL);
+
+        String drawn = glyphsInDrawingOrder(pdf);
+        assertThat(drawn.chars().filter(cp -> cp >= 0xFE80 && cp <= 0xFEFC).count())
+                .describedAs("the word's five letters must all land as contextual forms")
+                .isEqualTo(5);
+        assertThat(drawn.chars().noneMatch(cp -> cp >= 0x0621 && cp <= 0x064A))
+                .describedAs("no unjoined base letter may leak through")
+                .isTrue();
+    }
+
+    @Test
+    void aParenthesisInHebrewFacesWhatItEncloses() throws Exception {
+        // Mirroring swaps the pair at the PDF seam, so the extracted stream carries
+        // the swapped characters: the logical '(' before Hebrew is drawn as ')'.
+        byte[] pdf = render("(" + HEBREW + ")", TextDirection.RTL);
+
+        String drawn = glyphsInDrawingOrder(pdf);
+        assertThat(drawn)
+                .describedAs("walking the page left to right, the visually-open side "
+                        + "must sit before the Hebrew and face it")
+                .startsWith("(");
+    }
+
+    private static byte[] renderArabic(String text, TextDirection direction) {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            document.pageFlow(page -> page
+                    .addParagraph(p -> p
+                            .text(text)
+                            .direction(direction)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.AMIRI)
+                                    .size(24)
+                                    .build())));
+
+            return document.toPdfBytes();
+        }
+    }
+
     private static byte[] render(String text, TextDirection direction) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(595, 842)
@@ -195,5 +244,23 @@ class RtlGlyphOrderTest {
             drawn.append(position.getUnicode());
         }
         return drawn.toString().trim();
+    }
+
+    @Test
+    void aZeroWidthNonJoinerWrittenIntoAParagraphReachesTheShaper() throws Exception {
+        // The end-to-end half of the joining-control guard. The shaper handles U+200C
+        // correctly on its own, but it only ever saw it once control sanitizing stopped
+        // deleting it first — a gap no unit test of either piece could show.
+        String joined = glyphsInDrawingOrder(renderArabic("به", TextDirection.RTL));
+        String broken = glyphsInDrawingOrder(
+                renderArabic("ب‌ه", TextDirection.RTL));
+
+        assertThat(joined)
+                .describedAs("beh and heh connect when nothing says otherwise")
+                .isNotEqualTo(broken);
+        assertThat(broken)
+                .describedAs("the author's non-joiner has to survive every seam between "
+                        + "the builder and the content stream")
+                .doesNotContain("‌");
     }
 }

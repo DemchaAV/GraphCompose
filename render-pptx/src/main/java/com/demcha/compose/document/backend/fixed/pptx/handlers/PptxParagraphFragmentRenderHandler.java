@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -376,7 +377,18 @@ public final class PptxParagraphFragmentRenderHandler
 
     private static String sanitized(FontLibrary fonts, ParagraphTextSpan span) {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        return font.sanitizeForRender(span.textStyle(), span.text());
+        // The span carries shaped Arabic because measurement measures what the PDF
+        // draws. PowerPoint shapes Arabic itself, so it gets the base letters back —
+        // handing it the forms would freeze this shaper's choices into a file a user
+        // may search or copy from. Frame widths stay measured on the form advances,
+        // an approximation PowerPoint's own shaping may differ from by a hair.
+        // The joining controls go back with the letters. They are what the author wrote
+        // to say which letters may connect, and PowerPoint's own shaper is exactly the
+        // reader they were written for; the render sanitizing drops them, because a PDF
+        // has no glyph for a zero-width control, and dropping them here would hand
+        // PowerPoint a word it joins straight back up.
+        return font.sanitizeForTextExport(span.textStyle(),
+                ArabicShaper.toBaseLetters(span.text()));
     }
 
     private static PdfFont.VerticalMetrics verticalMetrics(FontLibrary fonts,

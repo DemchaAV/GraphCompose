@@ -47,12 +47,35 @@ follow semantic versioning; release dates are ISO 8601.
   that measures and draws — where substituting them with `?` would have put a visible
   mark on the page and given a zero-width character a width.
 
-  Two limits are worth knowing. Plain text extraction and copy-paste read the PDF's
+  One limit is worth knowing. Plain text extraction and copy-paste read the PDF's
   content stream, which carries the visual order — selecting a Hebrew line out of a
   produced PDF yields its characters reversed. Undoing that would take `ActualText`
   marked content, which this release does not write; the DOCX export is unaffected,
-  since Word receives logical text. And Arabic renders unjoined for now: contextual
-  letter forms are the next step.
+  since Word receives logical text.
+
+- **Arabic joins.** Arabic letters change shape by position, and a font does that
+  through OpenType `GSUB` — which a PDF never executes: `showText` walks the font's
+  `cmap` and nothing else. The engine now shapes Arabic itself, mapping each letter to
+  its contextual presentation form (and lam-alef to its ligature) before measurement,
+  so what is measured is what is drawn. Vowel points and direction marks are
+  transparent to the join, as Unicode's joining rules say. PowerPoint gets the base
+  letters back — it shapes Arabic itself, and frozen forms would end up in a file
+  users search and copy from — and Word was never given forms to begin with. The
+  joining controls travel with them: they are the author's instruction about which
+  letters may connect, and PowerPoint's shaper is the reader they were written for, so
+  dropping them would have handed it a word it joins straight back up. A font
+  that carries the letters but not the forms (the `GSUB`-only families) now degrades
+  to unjoined base letters instead of `?`, which costs the joining rather than the
+  text. An annotation mark between two letters no longer breaks their join: which
+  characters are transparent to shaping is decided by Unicode's own rule — general
+  category — rather than by a list of ranges that covered the vowel points and missed
+  the rest. In right-to-left runs, paired punctuation is mirrored at the PDF seam
+  (UAX #9 L4), so a parenthesis in Hebrew faces what it encloses. The mirrored set is
+  the punctuation that occurs in documents — parentheses, brackets, braces, angle
+  brackets, guillemets — rather than the whole Unicode mirroring table, so a relational
+  or set operator such as `≤` or `⊂` passes through drawn as written. (The angle brackets
+  in that list are `<` and `>`, which Unicode also classes as mathematical, so they do
+  mirror.)
 
 ### Fonts
 

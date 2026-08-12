@@ -23,8 +23,8 @@ import java.nio.file.Path;
  * <p>Hebrew is set in {@code FontName.DAVID_LIBRE} and Arabic in {@code FontName.AMIRI},
  * both bundled since {@code graph-compose-fonts} 1.1.0. No bundled family covers both
  * scripts, so a paragraph mixing them needs a font registered through
- * {@code FontFamilyDefinition}. Arabic still renders unjoined — contextual letter forms
- * are a separate step.</p>
+ * {@code FontFamilyDefinition}. Arabic is shaped by the engine into its contextual
+ * forms, which is why the Arabic family has to carry the presentation forms.</p>
  */
 public final class TextDirectionExample {
 
@@ -81,7 +81,7 @@ public final class TextDirectionExample {
                             .direction(TextDirection.RTL)
                             .textStyle(hebrew()))
 
-                    .addParagraph(p -> p.text(".direction(RTL)  - Arabic, still unjoined")
+                    .addParagraph(p -> p.text(".direction(RTL)  - Arabic, joined by the engine")
                             .textStyle(caption()))
                     .addParagraph(p -> p
                             .text(ARABIC)

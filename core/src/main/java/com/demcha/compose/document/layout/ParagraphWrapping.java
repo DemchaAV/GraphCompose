@@ -659,7 +659,7 @@ final class ParagraphWrapping {
                 // Direction marks survive into the tokens so the directional pass can
                 // read them; they are zero-width and the glyph seam drops them, so
                 // they never reach a width or the page.
-                String normalized = TextControlSanitizer.removeExceptDirectionMarks(
+                String normalized = TextControlSanitizer.removeExceptFormattingControls(
                         textRun.text().replace("\r\n", "\n").replace('\r', '\n'));
                 String[] parts = normalized.split("\n", -1);
                 for (int partIndex = 0; partIndex < parts.length; partIndex++) {
@@ -692,7 +692,7 @@ final class ParagraphWrapping {
                 // run's outer edges — lead pad on the first word, trail pad on the
                 // last — and toInlineParagraphLine coalesces the same-group tokens on
                 // each visual line back into one rounded fill.
-                String normalized = TextControlSanitizer.removeExceptDirectionMarks(
+                String normalized = TextControlSanitizer.removeExceptFormattingControls(
                         highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' '));
                 if (normalized.isEmpty()) {
                     continue;

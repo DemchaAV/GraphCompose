@@ -108,6 +108,75 @@ class PptxRtlParagraphTest {
         }
     }
 
+    @Test
+    void arabicReachesPowerPointAsBaseLettersNotForms() throws Exception {
+        // The span carries shaped Arabic because measurement measures what the PDF
+        // draws; PowerPoint shapes Arabic itself, so it must get the base letters
+        // back. Handing it presentation forms would freeze this engine's shaping
+        // into a file a user searches and copies from.
+        byte[] pptx;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p
+                            .text("مرحبا")
+                            .direction(TextDirection.RTL)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.AMIRI)
+                                    .size(20)
+                                    .build())));
+
+            pptx = session.toPptxBytes();
+        }
+
+        try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+            String joined = String.join("",
+                    textShapesOf(show).stream().map(XSLFTextShape::getText).toList());
+            assertThat(joined).isEqualTo("مرحبا");
+            assertThat(joined.chars().anyMatch(cp -> cp >= 0xFE70 && cp <= 0xFEFC))
+                    .describedAs("no presentation form may leak into the slide text")
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void anAuthorsNonJoinerReachesPowerPointsOwnShaper() throws Exception {
+        // U+200C says these two letters must not connect. PowerPoint shapes Arabic
+        // itself, so it is the reader that instruction was written for — and it can only
+        // honour it if the character survives the round trip through the layout. The
+        // engine shapes the text for the PDF and the slide backend maps the forms back to
+        // base letters; drop the control anywhere along the way and PowerPoint receives
+        // two ordinary letters and joins them straight back up, silently rendering
+        // something the author explicitly wrote to avoid.
+        String nonJoiner = String.valueOf((char) 0x200C);
+        byte[] pptx;
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+
+            session.pageFlow(page -> page
+                    .addParagraph(p -> p
+                            .text("ب" + nonJoiner + "ه")
+                            .direction(TextDirection.RTL)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.AMIRI)
+                                    .size(20)
+                                    .build())));
+
+            pptx = session.toPptxBytes();
+        }
+
+        try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+            String joined = String.join("",
+                    textShapesOf(show).stream().map(XSLFTextShape::getText).toList());
+            assertThat(joined).isEqualTo("ب" + nonJoiner + "ه");
+        }
+    }
+
     private static List<XSLFTextShape> textShapesOf(XMLSlideShow show) {
         return show.getSlides().get(0).getShapes().stream()
                 .filter(XSLFTextShape.class::isInstance)

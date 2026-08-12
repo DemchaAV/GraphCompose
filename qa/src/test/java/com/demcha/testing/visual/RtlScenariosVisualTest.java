@@ -25,8 +25,14 @@ import java.util.function.Consumer;
  * The pixel baseline pins <b>what was drawn</b>, and it carries most of the weight here for
  * that reason. Measured, not assumed: with the right-to-left reversal disabled the paragraph
  * box is unchanged — same height, same page — so all five layout snapshots pass, while four
- * of the five pixel baselines fail. Everything that makes a right-to-left line correct
- * happens inside a box the coordinate snapshot only sees the outside of.
+ * of the five pixel baselines fail, with room to spare (signals of 6,243–8,095 pixels
+ * against budgets of 728–1,114). The two that need saying: <b>bundled-scripts</b> is the
+ * one that stays green — its two right-to-left lines are a dozen glyphs against a 1,337px
+ * budget, so it guards the font catalogue, not the reordering, and the four wrapping and
+ * mixing scenarios are what guard that — and <b>mixed-runs</b> passes at 1,333 against
+ * 1,028, a thin margin worth knowing before trusting it alone. Everything that makes a
+ * right-to-left line correct happens inside a box the coordinate snapshot only sees the
+ * outside of.
  *
  * <p>The scenarios are the ones a demo page does not reach. A paragraph long enough to wrap
  * over many lines, each of them reordered on its own; a flow long enough to break across a
@@ -101,6 +107,8 @@ class RtlScenariosVisualTest {
     @Test
     void aMixedLineKeepsItsLatinAndDigitsRunningForwards() throws Exception {
         assertBothWays("mixed-runs", 360, 200, page -> page
+                // The digits are test data (a number with periods inside a reordered
+                // line), not the release version — nothing bumps them.
                 .addParagraph(p -> p.text("שלום GraphCompose 2.2.0 עולם")
                         .direction(TextDirection.RTL)
                         .textStyle(style(FontName.DAVID_LIBRE, 15)))

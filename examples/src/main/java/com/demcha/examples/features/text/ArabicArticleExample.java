@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
 
 import java.nio.file.Path;
 
@@ -19,13 +20,16 @@ import java.nio.file.Path;
  * <p>The point of rendering a whole document rather than a row of samples is that the
  * interesting failures only appear at length: a paragraph has to wrap across many lines
  * with every line reordered, the flow has to break across a page boundary and keep its
- * direction on the other side, and a heading, a list and a two-column row all have to sit
+ * direction on the other side, and a heading and a three-column fact panel have to sit
  * at the right edge without anyone positioning them by hand.</p>
  *
- * <p>Every paragraph here declares {@link TextDirection#RTL} and none declares an
- * alignment: a right-to-left paragraph starts at the right edge on its own. The Latin
- * words and the digits inside the Arabic keep running forwards, which is the bidirectional
- * algorithm rather than anything this example does.</p>
+ * <p>Every Arabic paragraph declares {@link TextDirection#RTL} and no alignment: a
+ * right-to-left paragraph starts at the right edge on its own. The Latin words and the
+ * digits inside the Arabic keep running forwards, which is the bidirectional algorithm
+ * rather than anything this example does. Two things do position themselves by hand,
+ * both deliberate: the <b>list</b> carries no direction of its own, so it declares
+ * {@code align(RIGHT)} or its bullets land on the wrong side — the limit worth learning
+ * from this page — and the Latin footer aligns left because it is a Latin line.</p>
  *
  * <p>Set in {@code FontName.AMIRI}, bundled since {@code graph-compose-fonts} 1.1.0. The
  * engine shapes the letters into their contextual forms before measuring them, so the
@@ -40,9 +44,9 @@ public final class ArabicArticleExample {
     private static final DocumentColor PANEL = DocumentColor.rgb(246, 248, 252);
 
     /**
-     * A4 width less the two 52pt side margins. A divider is a drawn shape rather than a
-     * flow rule, so it carries its own width — and the page's own arithmetic rounds, so
-     * this stays a whole point inside the column rather than exactly on its edge.
+     * A4 width less the two 52pt side margins, rounded down. A divider is a drawn shape
+     * rather than a flow rule, so it carries its own width; A4 is 595.276pt, so this
+     * sits a fraction of a point inside the column rather than exactly on its edge.
      */
     private static final double COLUMN = 491;
 
@@ -64,7 +68,8 @@ public final class ArabicArticleExample {
 
     private static final String BODY_TWO =
             "الأرقام والكلمات اللاتينية داخل النص العربي تبقى متجهة من اليسار إلى اليمين. "
-            + "في السطر التالي مثال: صدرت النسخة GraphCompose 2.2.0 في عام 2026، ويظل ترتيب "
+            + "في السطر التالي مثال: صدرت النسخة GraphCompose " + ExampleVersion.withoutQualifier()
+            + " في عام 2026، ويظل ترتيب "
             + "الحروف والأرقام فيها كما هو رغم أن الفقرة كلها تُقرأ من اليمين.";
 
     private static final String BODY_THREE =
@@ -153,7 +158,7 @@ public final class ArabicArticleExample {
                             .padding(DocumentInsets.of(14))
                             .gap(18)
                             .weights(1.0, 1.0, 1.0)
-                            .addParagraph(p -> p.text("النسخة  2.2.0")
+                            .addParagraph(p -> p.text("النسخة  " + ExampleVersion.withoutQualifier())
                                     .direction(TextDirection.RTL).textStyle(fact()))
                             .addParagraph(p -> p.text("الخط  Amiri")
                                     .direction(TextDirection.RTL).textStyle(fact()))

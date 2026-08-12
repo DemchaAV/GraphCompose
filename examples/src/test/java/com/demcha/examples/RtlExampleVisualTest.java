@@ -9,7 +9,9 @@ import com.demcha.examples.features.text.WorldScriptsExample;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Holds the published right-to-left examples themselves, against coordinates and pixels.
@@ -45,10 +47,11 @@ class RtlExampleVisualTest {
      * Scaled to the page, and calibrated to the drift a different rasteriser produces.
      *
      * <p>One part in forty-five of an A4 page is about 11,100 pixels: 1.4× the largest
-     * honest cross-platform drift measured on these documents, and 1.5× under the smallest
-     * failure a disabled reversal produces on the pages whose pixel guard means anything.
-     * The class comment carries the numbers and what this budget deliberately does not
-     * promise.</p>
+     * honest cross-platform drift measured on these documents (7,886). That is <em>above</em>
+     * the smallest failure a disabled reversal produces (7,722, the article's quietest
+     * page) — on A4 the two overlap, so no budget can separate them, and this one does not
+     * try: it catches gross breakage, and exactness is the byte guard's job. The class
+     * comment carries the full reasoning.</p>
      */
     private static PdfVisualRegression visual(int width, int height) {
         return PdfVisualRegression.standard()
@@ -77,7 +80,7 @@ class RtlExampleVisualTest {
 
     private static void assertExample(String name,
                                       Consumer<DocumentSession> compose,
-                                      java.util.function.Function<java.nio.file.Path, DocumentSession> open)
+                                      Function<Path, DocumentSession> open)
             throws Exception {
 
         try (DocumentSession document = open.apply(null)) {

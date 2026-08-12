@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
+import com.demcha.examples.support.ExampleVersion;
 
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -134,7 +135,7 @@ public final class HebrewInvoiceExample {
                     .addRow(item("רישיון שנתי · GraphCompose Pro", "2", "1,200.00", "2,400.00", false))
                     .addRow(item("תמיכה טכנית · 12 חודשים", "1", "980.00", "980.00", true))
                     .addRow(item("הדרכה · 3 ימי סדנה", "3", "1,450.00", "4,350.00", false))
-                    .addRow(item("שדרוג לגרסה 2.2.0", "1", "0.00", "0.00", true))
+                    .addRow(item("שדרוג לגרסה " + ExampleVersion.withoutQualifier(), "1", "0.00", "0.00", true))
 
                     .addDivider(d -> d.width(COLUMN).color(RULE).thickness(1)
                             .margin(DocumentInsets.symmetric(6, 0)))
@@ -146,7 +147,8 @@ public final class HebrewInvoiceExample {
                     .addSpacer(s -> s.height(10))
                     .addParagraph(p -> p.text(
                             "התשלום בתוך 30 יום מתאריך החשבונית. חשבונית זו הופקה על ידי GraphCompose "
-                            + "2.2.0, והספרות והשמות הלטיניים שבתוכה שומרים על כיוונם גם כשהשורה כולה "
+                            + ExampleVersion.withoutQualifier()
+                            + ", והספרות והשמות הלטיניים שבתוכה שומרים על כיוונם גם כשהשורה כולה "
                             + "נקראת מימין לשמאל.")
                             .direction(TextDirection.RTL).textStyle(text(10, MUTED)))
 

@@ -256,11 +256,26 @@ follow semantic versioning; release dates are ISO 8601.
   right-to-left reversal off leaves *every coordinate identical* (same spans, same widths,
   same positions) and changes only the order the glyphs are painted in, so all five layout
   snapshots still pass while four of the five pixel baselines fail. Coordinates cannot see
-  a line drawn backwards.
+  a line drawn backwards. The fifth — every bundled script on one page — guards the font
+  catalogue rather than the reordering: its right-to-left lines are too short to trip a
+  pixel budget, and the wrapping and mixing scenarios are what guard the reordering.
 
   That same experiment found the pixel budget was too loose: copied from a page four times
   the area, it absorbed the regression on the shortest scenarios. It scales with the page
   now.
+
+  The published examples are held the same two ways, with one honest difference: their A4
+  pages are rasterised differently enough across platforms that a pixel budget tight
+  enough to catch a reordering regression on the quietest page would fail an honest render
+  on another machine — the two signals overlap, measured. So their pixel baselines catch
+  gross breakage and show what a deliberate change looked like, while exactness is carried
+  by the byte-level drift guard, which no rasteriser can blur.
+
+- **What a produced document tells a reader its own text is, is asserted directly.** For
+  Arabic and Hebrew, extraction must return the words as typed, in the order typed — and
+  one known limit is pinned so the day it changes is deliberate: the font's glyph map
+  still names Arabic's joined presentation forms rather than the letters, so a reader
+  that does not normalise sees U+FE8E where the author wrote U+0627.
 
 - **Every rendered document is now held against a fresh render.** A third of the example
   catalogue — thirty-two documents, the cover-letter presets and most of the CV gallery

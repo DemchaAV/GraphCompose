@@ -340,7 +340,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 
 ### Text &amp; internationalization
 
-- Text is laid out **left-to-right**. Bidirectional (RTL) reordering and complex-script shaping &mdash; Arabic contextual joining, Indic reordering &mdash; are **not** performed, so Arabic / Hebrew text renders in logical order without correct visual ordering. Full RTL / bidi support is tracked in [#140](https://github.com/DemchaAV/GraphCompose/issues/140).
+- Paragraphs support **right-to-left text**: `ParagraphBuilder.direction(RTL)` (or `AUTO`) reorders lines with the Unicode Bidirectional Algorithm, and Arabic is shaped into its joined contextual forms &mdash; Amiri and David Libre ship in `graph-compose-fonts`. Two limits remain: text inside a **table cell** carries no direction (set such text as a paragraph instead), and **Indic reordering** is not performed.
 - A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
 
 ### When to use GraphCompose

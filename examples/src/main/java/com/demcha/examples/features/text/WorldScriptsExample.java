@@ -14,7 +14,7 @@ import com.demcha.examples.support.ExampleOutputPaths;
 import java.nio.file.Path;
 
 /**
- * One page per script, showing what each bundled family actually renders.
+ * One card per script, on one page: what each bundled family actually renders.
  *
  * <p>A catalogue rather than a test: each card names the family, sets a line of real text
  * in it, and says in one line what makes that script's rendering non-obvious. Two of the
@@ -33,6 +33,9 @@ public final class WorldScriptsExample {
     private static final DocumentColor ACCENT = DocumentColor.rgb(21, 101, 192);
     private static final DocumentColor CARD = DocumentColor.rgb(247, 249, 252);
     private static final DocumentColor RULE = DocumentColor.rgb(224, 228, 236);
+
+    /** A4 width less the two 48pt side margins; a divider is drawn, so it needs one. */
+    private static final double COLUMN = 499;
 
     private WorldScriptsExample() {
     }
@@ -105,7 +108,7 @@ public final class WorldScriptsExample {
                             "NOTO_SANS_GEORGIAN", "Georgian",
                             "გამარჯობა",
                             FontName.NOTO_SANS_GEORGIAN, TextDirection.LTR,
-                            "Both cases: Mtavruli, the capitals headings use, is a block of its own."))
+                            "The family also carries Mtavruli — the capitals headings use, a block of its own."))
 
                     .addRow(card(
                             "NOTO_SANS_ARMENIAN", "Armenian",
@@ -131,9 +134,6 @@ public final class WorldScriptsExample {
                             .align(TextAlign.LEFT).textStyle(footer()))
                     .build();
     }
-
-    /** A4 width less the two 48pt side margins; a divider is drawn, so it needs one. */
-    private static final double COLUMN = 499;
 
     /**
      * One card: the constant on the left, the rendered line and its note on the right.

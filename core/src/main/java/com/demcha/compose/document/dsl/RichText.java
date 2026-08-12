@@ -30,6 +30,13 @@ import java.util.Objects;
  * section.addRich(line);
  * }</pre>
  *
+ * <p>Inside a configuration lambda — {@code rich(t -> ...)} or
+ * {@code addRich(t -> ...)} — seed the supplied builder with
+ * {@link #plain(String)}:</p>
+ * <pre>{@code
+ * section.addRich(t -> t.plain("Status: ").bold("Pending"));
+ * }</pre>
+ *
  * @author Artem Demchyshyn
  * @since 1.0.0
  */
@@ -50,6 +57,14 @@ public final class RichText {
 
     /**
      * Starts a rich text builder seeded with one plain text run.
+     *
+     * <p>This is a {@code static} factory for standalone chains such as
+     * {@code RichText.text("Status: ").bold("Pending")}. Inside a
+     * {@code rich(t -> ...)} / {@code addRich(t -> ...)} lambda, seed the
+     * supplied builder with {@link #plain(String)} instead: {@code t.text(...)}
+     * resolves to this factory (Java permits static calls through an instance
+     * reference), builds a separate {@code RichText}, and appends nothing to
+     * {@code t} — the paragraph would silently render empty.</p>
      *
      * @param text first plain text fragment
      * @return rich text builder ready for chained calls

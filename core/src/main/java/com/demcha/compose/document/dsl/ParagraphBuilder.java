@@ -879,7 +879,12 @@ public final class ParagraphBuilder {
      * Replaces inline runs by configuring a fresh {@link RichText} builder.
      *
      * <p>Convenient for inline declaration:
-     * {@code paragraph.rich(t -> t.text("Status: ").bold("Pending"))}.</p>
+     * {@code paragraph.rich(t -> t.plain("Status: ").bold("Pending"))}.</p>
+     *
+     * <p>Seed the supplied builder with {@link RichText#plain(String)} — not
+     * {@code t.text(...)}: {@link RichText#text(String)} is a static factory,
+     * so that call compiles but builds a separate, discarded {@code RichText}
+     * and leaves this paragraph empty.</p>
      *
      * @param spec callback that configures the rich-text builder
      * @return this builder

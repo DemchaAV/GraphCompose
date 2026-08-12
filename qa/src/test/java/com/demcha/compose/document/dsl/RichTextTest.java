@@ -157,6 +157,24 @@ class RichTextTest {
     }
 
     @Test
+    void documentedRichLambdaSeededWithPlainProducesNonEmptyParagraph() {
+        // Guards the Javadoc example on rich(Consumer<RichText>): the lambda must
+        // seed with the instance method plain(...) — the static RichText.text(...)
+        // called through the lambda parameter builds a separate, discarded builder
+        // and would leave the paragraph empty.
+        ParagraphNode paragraph = new ParagraphBuilder()
+                .rich(t -> t.plain("Status: ").bold("Pending"))
+                .build();
+
+        assertThat(paragraph.inlineTextRuns()).isNotEmpty();
+        assertThat(paragraph.inlineTextRuns()).hasSize(2);
+        assertThat(paragraph.inlineTextRuns().get(0).text()).isEqualTo("Status: ");
+        assertThat(paragraph.inlineTextRuns().get(1).text()).isEqualTo("Pending");
+        assertThat(paragraph.inlineTextRuns().get(1).textStyle().decoration())
+                .isEqualTo(DocumentTextDecoration.BOLD);
+    }
+
+    @Test
     void sectionBuilderAddRichConsumerProducesSingleParagraphChild() {
         SectionNode section = new SectionBuilder()
                 .name("Body")

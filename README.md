@@ -335,7 +335,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 | Format | Status | Notes |
 |---|---|---|
 | PDF | Production | Fixed-layout backend on PDFBox 3.0. Full DSL coverage. |
-| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, lists, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped, one logged warning per kind. Tables keep their `colSpan`/`rowSpan` and images their fit mode; **hyperlinks, bookmarks and headers/footers are not implemented**, and table fill and border paint are dropped &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
+| DOCX | Partial | Semantic export via Apache POI &mdash; paragraphs, lists, block images, tables and metadata. Word owns the flow, so drawing nodes (`shape`, `line`, `ellipse`, `barcode`) are dropped, one logged warning per kind. Tables keep their `colSpan`/`rowSpan`, their fill and their borders, and images their fit mode; **hyperlinks, bookmarks and headers/footers are not implemented** &mdash; see [render-docx](./render-docx/README.md#what-it-maps-and-what-it-does-not). |
 | PPTX | Beta | Fixed-layout export via Apache POI from the same resolved layout &mdash; one page per editable slide with native shapes and text frames; clipped regions land as pixel-exact pictures. First shipped in 2.1, marked `@Beta` while the API shape settles. |
 
 ### Text &amp; internationalization

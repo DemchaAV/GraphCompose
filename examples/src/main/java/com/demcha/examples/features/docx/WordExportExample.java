@@ -13,6 +13,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
@@ -133,11 +134,20 @@ public final class WordExportExample {
                                     .addItem("Two spaces of indent per depth in Word", l2 -> l2
                                             .addItem("Custom markers survive the export"))))
 
-                    .addParagraph("Tables stay tables", heading)
+                    .addParagraph("Tables stay tables, and keep their paint", heading)
                     .addTable(t -> t
                             .columns(DocumentTableColumn.auto(),
                                     DocumentTableColumn.auto(),
                                     DocumentTableColumn.auto())
+                            // The rule reaches Word as w:tcBorders and the header band as
+                            // w:shd, so the exported table reads the way it was designed
+                            // rather than on Word's defaults.
+                            .defaultCellStyle(DocumentTableStyle.builder()
+                                    .stroke(new DocumentStroke(DocumentColor.rgb(205, 212, 219), 0.75))
+                                    .build())
+                            .rowStyle(0, DocumentTableStyle.builder()
+                                    .fillColor(DocumentColor.rgb(232, 238, 243))
+                                    .build())
                             .headerRow("Quarter", "Revenue", "Profit")
                             .row("Q1", "42", "12")
                             .row("Q2", "55", "17")

@@ -27,6 +27,8 @@ import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableStyle;
@@ -42,11 +44,16 @@ import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRelativeRect;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +65,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -535,6 +543,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 TableGrid.Placement placement = physical.get(i);
                 XWPFTableCell cell = row.getCell(i);
                 applySpans(cell, placement, rowIdx);
+                // The covered positions of a merge take the paint too, so a merged
+                // region reads as one cell rather than as a striped run of them.
+                applyCellPaint(cell,
+                        resolveCellValue(node, placement, DocumentTableStyle::fillColor),
+                        resolveCellValue(node, placement, DocumentTableStyle::stroke));
                 if (placement.row() != rowIdx) {
                     // A covered position carries the merge marker and no content of its own.
                     continue;
@@ -549,9 +562,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         if (placement.colSpan() == 1 && placement.rowSpan() == 1) {
             return;
         }
-        CTTcPr properties = cell.getCTTc().isSetTcPr()
-                ? cell.getCTTc().getTcPr()
-                : cell.getCTTc().addNewTcPr();
+        CTTcPr properties = cellProperties(cell);
         if (placement.colSpan() > 1) {
             properties.addNewGridSpan().setVal(BigInteger.valueOf(placement.colSpan()));
         }
@@ -559,6 +570,72 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             properties.addNewVMerge().setVal(
                     placement.row() == rowIdx ? STMerge.RESTART : STMerge.CONTINUE);
         }
+    }
+
+    /**
+     * Paints a cell with the fill and the edges its style asks for.
+     *
+     * <p>A {@link DocumentTableStyle} carries a {@code fillColor} and a {@code stroke}, and
+     * neither reached the file: a zebra body, a header band and a ruled grid all exported on
+     * Word's defaults, which is to say with no fill and no borders. Word owns both —
+     * {@code w:shd} for the fill and {@code w:tcBorders} for the four edges — so this is
+     * mapping rather than approximation.</p>
+     *
+     * <p>What does not survive is transparency. A {@code w:shd} fill is opaque, so a colour
+     * carrying an opacity below 1 lands at full strength; the alternative would be blending it
+     * against a background this backend does not resolve, Word owning the flow.</p>
+     */
+    private void applyCellPaint(XWPFTableCell cell, DocumentColor fill, DocumentStroke stroke) {
+        if (fill == null && stroke == null) {
+            return;
+        }
+        CTTcPr properties = cellProperties(cell);
+        if (fill != null) {
+            CTShd shading = properties.isSetShd() ? properties.getShd() : properties.addNewShd();
+            shading.setVal(STShd.CLEAR);
+            shading.setFill(toHexColor(fill.color()));
+        }
+        if (stroke != null) {
+            CTTcBorders borders = properties.isSetTcBorders()
+                    ? properties.getTcBorders()
+                    : properties.addNewTcBorders();
+            if (stroke.width() > 0) {
+                // w:sz counts eighths of a point, and rounds to at least one so a hairline
+                // the author asked for stays a line rather than disappearing.
+                BigInteger eighths = BigInteger.valueOf(
+                        Math.max(1, Math.round(stroke.width() * 8.0)));
+                String colour = toHexColor(stroke.color().color());
+                paintEdge(borders.addNewTop(), STBorder.SINGLE, eighths, colour);
+                paintEdge(borders.addNewBottom(), STBorder.SINGLE, eighths, colour);
+                paintEdge(borders.addNewLeft(), STBorder.SINGLE, eighths, colour);
+                paintEdge(borders.addNewRight(), STBorder.SINGLE, eighths, colour);
+            } else {
+                // A stroke of no width is how this codebase says "no border" — the fixed-layout
+                // handler reads the same predicate as draw-nothing. Writing nothing here would
+                // leave the cell on the table's default grid, so a deliberately borderless
+                // design would export ruled. The cell says none of its own instead.
+                paintEdge(borders.addNewTop(), STBorder.NIL, null, null);
+                paintEdge(borders.addNewBottom(), STBorder.NIL, null, null);
+                paintEdge(borders.addNewLeft(), STBorder.NIL, null, null);
+                paintEdge(borders.addNewRight(), STBorder.NIL, null, null);
+            }
+        }
+    }
+
+    private static void paintEdge(CTBorder edge, STBorder.Enum kind, BigInteger eighths, String colour) {
+        edge.setVal(kind);
+        if (eighths != null) {
+            edge.setSz(eighths);
+        }
+        if (colour != null) {
+            edge.setColor(colour);
+        }
+    }
+
+    private static CTTcPr cellProperties(XWPFTableCell cell) {
+        return cell.getCTTc().isSetTcPr()
+                ? cell.getCTTc().getTcPr()
+                : cell.getCTTc().addNewTcPr();
     }
 
     private void writeCellContent(XWPFTableCell cell, TableGrid.Placement placement, TableNode node)
@@ -590,14 +667,27 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * column's, then the row's, then the cell's own.</p>
      */
     private DocumentTextStyle resolveCellTextStyle(TableNode node, TableGrid.Placement placement) {
-        DocumentTextStyle resolved = null;
+        return resolveCellValue(node, placement, DocumentTableStyle::textStyle);
+    }
+
+    /**
+     * Resolves one field of a cell's style, most specific wins.
+     *
+     * <p>The cascade the layout pipeline merges in — the table's default, then the column's,
+     * then the row's, then the cell's own — applied per field rather than per style object, so
+     * a table-wide border survives a row that only overrides the fill.</p>
+     */
+    private <T> T resolveCellValue(TableNode node, TableGrid.Placement placement,
+                                   Function<DocumentTableStyle, T> field) {
+        T resolved = null;
         for (DocumentTableStyle candidate : List.of(
                 orEmpty(node.defaultCellStyle()),
                 orEmpty(node.columnStyles().get(placement.column())),
                 orEmpty(node.rowStyles().get(placement.row())),
                 orEmpty(placement.cell().style()))) {
-            if (candidate.textStyle() != null) {
-                resolved = candidate.textStyle();
+            T value = field.apply(candidate);
+            if (value != null) {
+                resolved = value;
             }
         }
         return resolved;

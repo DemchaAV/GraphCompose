@@ -226,7 +226,41 @@ follow semantic versioning; release dates are ISO 8601.
   other, so it catches one being corrected without the other — not a pair that was wrong
   together from the start.
 
+### Documentation
+
+- **Three examples that render right-to-left documents rather than describing them.** An
+  Arabic article that runs onto a second page, a Hebrew invoice, and a catalogue of every
+  bundled script. The article exists because the interesting failures only appear at
+  length: a paragraph wrapping over many lines with each one reordered on its own, and a
+  page break landing inside a paragraph that then has to start from the right edge again.
+  The invoice exists because that is where right-to-left text meets numbers — nearly every
+  line mixes a Hebrew description with a Latin product name, a quantity and a total.
+
+  Two things the examples had to work around are worth knowing before writing one. A list
+  carries no direction of its own, so an Arabic list needs `align(RIGHT)` or its bullets
+  sit on the wrong side of the text. And the invoice is built from rows rather than a
+  table, because a table cell has no direction either.
+
+  The invoice also shows what isolates are for. A Latin name inside a Hebrew line is
+  handled by the algorithm, but the punctuation touching it is neutral — so
+  "GraphCompose Ltd." printed its full stop at the far end of the line until the run was
+  isolated.
+
 ### Tests
+
+- **Right-to-left layout is held against coordinates and against pixels.** Five scenarios —
+  Arabic wrapping, Hebrew wrapping, a page break inside a right-to-left flow, a line mixing
+  scripts with Latin and digits, and every bundled script on one page — each asserted twice.
+
+  The two catch different things, which was measured rather than assumed: switching the
+  right-to-left reversal off leaves *every coordinate identical* (same spans, same widths,
+  same positions) and changes only the order the glyphs are painted in, so all five layout
+  snapshots still pass while four of the five pixel baselines fail. Coordinates cannot see
+  a line drawn backwards.
+
+  That same experiment found the pixel budget was too loose: copied from a page four times
+  the area, it absorbed the regression on the shortest scenarios. It scales with the page
+  now.
 
 - **Every rendered document is now held against a fresh render.** A third of the example
   catalogue — thirty-two documents, the cover-letter presets and most of the CV gallery

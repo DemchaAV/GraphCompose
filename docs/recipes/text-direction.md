@@ -82,6 +82,11 @@ font every glyph is replaced with `?` — see [font coverage](../font-coverage.m
 
 ## What is not done yet
 
+Direction is a property of a **paragraph**. Text inside a table cell goes through the
+table's own layout, which does not carry direction, so the same Hebrew string draws
+correctly in `addParagraph` and reversed in a cell. Set right-to-left text as a paragraph
+where you can; inside a table, the text is drawn in the order it is written.
+
 Arabic renders in unjoined letter forms. Contextual joining needs the font's
 Arabic presentation forms, which `FontName.AMIRI` carries, and the shaping step
 that maps to them is a separate piece of work.

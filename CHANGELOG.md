@@ -24,6 +24,12 @@ follow semantic versioning; release dates are ISO 8601.
   always took — held to that by the layout snapshots and visual baselines, none of which
   moved.
 
+  A paragraph is the unit this applies to. Text inside a **table cell** goes through the
+  table's own layout, which has no direction handling, so the same Hebrew string draws
+  reversed in a cell while drawing correctly in a paragraph — and Arabic in a cell is
+  unjoined. Set such text as a paragraph, or place the table's own content right to left
+  by hand, until the table path carries direction too.
+
   All three wrap paths carry it: plain text, inline runs (what templates author
   through), and markdown. Each backend does what it must and no more — the PDF backend
   reverses a right-to-left run, because a PDF draws characters in the order it is given

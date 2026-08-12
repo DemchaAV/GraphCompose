@@ -98,9 +98,15 @@ follow semantic versioning; release dates are ISO 8601.
   glyphs already named their own letters.
 
   Only a document that drew a reordered run pays anything. The map has to exist before it
-  can be read and it is written during the save, so such a document is saved twice;
-  everything else takes exactly the path it took before, buffering nothing and saving
-  once.
+  can be read and it is written during the save, so such a document is saved twice — the
+  first time into a null sink, so both saves stream and nothing is buffered regardless of
+  document size. Everything else takes exactly the path it took before, saving once.
+
+  Password protection is applied *between* the two saves rather than before them, because
+  encrypting is part of saving and writes ciphertext back into the streams it encrypted —
+  a map built by a protected first save would be unreadable, and the correction would
+  silently find nothing. The protected-document test reads the decrypted map itself, since
+  opening and extracting were both true even while the correction was being skipped.
 
   Reading **order** in the file is still visual — a PDF is painted left to right, and a
   reader recovers the order text is read in by running the bidirectional algorithm over

@@ -11,21 +11,28 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 /**
- * Holds the one combination where correcting a document's glyph maps could cost something.
+ * Holds the combination that once made the correction a silent no-op.
  *
- * <p>A map is written by the font subsetter, and the subsetter runs while the document is
- * being saved — so a document whose maps need correcting is saved twice: once to build them
- * and once to write the corrected ones. Everything else in a save is idempotent under that.
- * Encryption is the thing that might not be: it is set up as part of writing, and a document
- * that is both password-protected and right-to-left is the only one that reaches that setup
- * more than once.</p>
- *
- * <p>Which is a question about whether the file still opens, so that is what is asked.</p>
+ * <p>Encrypting happens while a document is being saved, and it writes the ciphertext back
+ * into the streams it encrypted — so a glyph map built by a protected first save is
+ * unreadable to the correction that runs after it. The first version of this test asked
+ * only whether the file still opened and extracted, both of which were true before the
+ * correction existed, and it stayed green while the shipped map still named the shaped
+ * forms. So the map itself is what is asserted now, read out of the decrypted file: the
+ * letters the author wrote, under password, which is only true if protection was applied
+ * <em>after</em> the correction rather than before it.</p>
  */
 class ProtectedShapedDocumentTest {
 
@@ -33,7 +40,7 @@ class ProtectedShapedDocumentTest {
     private static final String PASSWORD = "keep-out";
 
     @Test
-    void aPasswordProtectedArabicDocumentStillOpensAndReadsBack() throws Exception {
+    void aPasswordProtectedArabicDocumentCarriesCorrectedGlyphMaps() throws Exception {
         byte[] pdf;
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(300, 120)
@@ -51,11 +58,28 @@ class ProtectedShapedDocumentTest {
 
         try (PDDocument opened = Loader.loadPDF(pdf, PASSWORD)) {
             assertThat(opened.isEncrypted())
-                    .describedAs("the protection survives the second write")
+                    .describedAs("the protection reached the file")
                     .isTrue();
             assertThat(new PDFTextStripper().getText(opened).trim())
-                    .describedAs("and so does the text, as the word that was written")
+                    .describedAs("the text extracts as the words that were written")
                     .isEqualTo(ARABIC);
+
+            // The half a green open-and-extract cannot see: what the file itself says its
+            // glyphs mean. Presentation forms here would mean the correction never ran —
+            // which is exactly what an encrypted first save used to cause.
+            for (COSName name : opened.getPage(0).getResources().getFontNames()) {
+                PDFont font = opened.getPage(0).getResources().getFont(name);
+                COSBase raw = font.getCOSObject().getDictionaryObject(COSName.TO_UNICODE);
+                assertThat(raw).isInstanceOf(COSStream.class);
+                String cmap;
+                try (InputStream in = ((COSStream) raw).createInputStream()) {
+                    cmap = new String(in.readAllBytes(), StandardCharsets.ISO_8859_1);
+                }
+                assertThat(cmap)
+                        .describedAs("the decrypted map names letters, not shaped forms")
+                        .doesNotContainPattern("<FE[0-9A-Fa-f]{2}>")
+                        .containsPattern("<06[0-9A-Fa-f]{2}>");
+            }
         }
     }
 }

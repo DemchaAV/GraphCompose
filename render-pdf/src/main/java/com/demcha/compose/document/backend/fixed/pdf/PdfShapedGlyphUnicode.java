@@ -1,16 +1,16 @@
 package com.demcha.compose.document.backend.fixed.pdf;
 
+import com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
 
 import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDResources;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,7 +56,10 @@ final class PdfShapedGlyphUnicode {
 
     /** {@code <src> <dst>} in a bfchar block, {@code <lo> <hi> <dst>} in a bfrange one. */
     private static final Pattern MAPPING_BLOCK =
-            Pattern.compile("begin(bfchar|bfrange)(.*?)end\\1", Pattern.DOTALL);
+            Pattern.compile("(\\d+)[ \\t\\r\\n]+begin(bfchar|bfrange)(.*?)end\\2", Pattern.DOTALL);
+
+    /** The most entries one mapping block may carry, per the CMap specification. */
+    private static final int BLOCK_LIMIT = 100;
     private static final Pattern MAPPING_ENTRY =
             Pattern.compile("^[ \\t]*<([0-9A-Fa-f]{4})>[ \\t]+(?:<([0-9A-Fa-f]{4})>[ \\t]+)?"
                     + "<([0-9A-Fa-f]{4,})>[ \\t]*$", Pattern.MULTILINE);
@@ -69,16 +72,35 @@ final class PdfShapedGlyphUnicode {
      *
      * <p>{@code mayCarryShapedText} is the caller's answer to whether the render reordered
      * anything, which is the only way text reaches the page in a shaped form. When it did
-     * not, this is {@link PDDocument#save(OutputStream)} and nothing else — no buffer, no
-     * second pass, no behaviour to regress.</p>
+     * not, this is {@link PDDocument#save(OutputStream)} and nothing else — no second
+     * pass, no behaviour to regress.</p>
+     *
+     * <p>When it did, the map this needs to read is built <em>during</em> a save, so the
+     * document is saved twice: once into a null sink, which builds the font subsets and
+     * their glyph maps and clears the subsetting queue, and once for real after the maps
+     * are corrected. Both saves stream; nothing is buffered.</p>
+     *
+     * <p>{@code deferredProtection} is how the correction survives encryption. Encrypting
+     * is part of saving, and it writes the ciphertext back into the streams it encrypted —
+     * so a map built by a protected first save would be unreadable, and the correction
+     * would silently find nothing. The caller therefore builds a protected, reordered
+     * document <em>without</em> its protection and hands it here; the policy is applied
+     * between the two saves, so the first save writes readable maps and the second
+     * encrypts the corrected document exactly once.</p>
      *
      * @param document           the rendered document
      * @param mayCarryShapedText whether the render drew any reordered text
+     * @param deferredProtection protection to apply between the saves, or {@code null}
+     *                           when the document is unprotected or was already protected
+     *                           by the build (which the caller does whenever no text was
+     *                           reordered)
      * @param output             where to write
      * @throws IOException if saving fails
      */
-    static void save(PDDocument document, boolean mayCarryShapedText, OutputStream output)
-            throws IOException {
+    static void save(PDDocument document,
+                     boolean mayCarryShapedText,
+                     PdfProtectionOptions deferredProtection,
+                     OutputStream output) throws IOException {
 
         if (!mayCarryShapedText) {
             document.save(output);
@@ -87,21 +109,20 @@ final class PdfShapedGlyphUnicode {
 
         // The first save is what builds the font subsets and, with them, the glyph maps
         // this needs to read. It also clears the document's subsetting queue, so the
-        // second save writes the corrected maps rather than rebuilding them.
-        ByteArrayOutputStream subsetted = new ByteArrayOutputStream();
-        document.save(subsetted);
-
-        if (restoreBaseLetters(document)) {
-            document.save(output);
-        } else {
-            // Right-to-left but not Arabic — Hebrew is reversed, never shaped, so its
-            // glyphs already name their own letters and the first save stands.
-            subsetted.writeTo(output);
+        // second save writes the corrected maps rather than rebuilding them. Its bytes
+        // are not kept: the second save produces the same document, corrected, and
+        // streaming it directly to the caller is what keeps memory flat for a document
+        // of any size.
+        document.save(OutputStream.nullOutputStream());
+        restoreBaseLetters(document);
+        if (deferredProtection != null) {
+            PdfDocumentPostProcessor.applyProtection(document, deferredProtection);
         }
+        document.save(output);
     }
 
     /**
-     * Rewrites every glyph map on the page that names a shaped form.
+     * Rewrites every glyph map in the document that names a shaped form.
      *
      * @param document a document whose fonts have been subset
      * @return whether any map was rewritten
@@ -109,22 +130,29 @@ final class PdfShapedGlyphUnicode {
      */
     static boolean restoreBaseLetters(PDDocument document) throws IOException {
         // One font is usually on several pages, and its map must not be rewritten twice —
-        // the second pass would find base letters and leave them, but the wasted stream
-        // would stay in the file.
-        Set<COSStream> rewritten = Collections.newSetFromMap(new IdentityHashMap<>());
+        // the second pass would find base letters, conclude the map needs nothing, and
+        // quietly undo the bookkeeping that says something changed.
+        Set<COSStream> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         boolean changed = false;
         for (PDPage page : document.getPages()) {
             PDResources resources = page.getResources();
             if (resources == null) {
                 continue;
             }
-            for (COSName name : resources.getFontNames()) {
-                PDFont font = resources.getFont(name);
-                if (font == null) {
+            // Walked as dictionaries rather than through resources.getFont(name): building
+            // a PDFont parses the embedded font program, and the only thing needed here
+            // is the ToUnicode entry on the font's own dictionary.
+            COSDictionary fonts = resources.getCOSObject().getCOSDictionary(COSName.FONT);
+            if (fonts == null) {
+                continue;
+            }
+            for (COSName name : fonts.keySet()) {
+                COSBase entry = fonts.getDictionaryObject(name);
+                if (!(entry instanceof COSDictionary font)) {
                     continue;
                 }
-                COSBase raw = font.getCOSObject().getDictionaryObject(COSName.TO_UNICODE);
-                if (!(raw instanceof COSStream map) || !rewritten.add(map)) {
+                COSBase raw = font.getDictionaryObject(COSName.TO_UNICODE);
+                if (!(raw instanceof COSStream map) || !visited.add(map)) {
                     continue;
                 }
                 changed |= rewrite(document, font, map);
@@ -134,7 +162,7 @@ final class PdfShapedGlyphUnicode {
     }
 
     /** Replaces one font's map, if it names any shaped form. */
-    private static boolean rewrite(PDDocument document, PDFont font, COSStream map)
+    private static boolean rewrite(PDDocument document, COSDictionary font, COSStream map)
             throws IOException {
 
         String cmap;
@@ -150,7 +178,7 @@ final class PdfShapedGlyphUnicode {
         try (OutputStream out = replacement.createOutputStream(COSName.FLATE_DECODE)) {
             out.write(corrected.getBytes(StandardCharsets.ISO_8859_1));
         }
-        font.getCOSObject().setItem(COSName.TO_UNICODE, replacement);
+        font.setItem(COSName.TO_UNICODE, replacement);
         return true;
     }
 
@@ -171,15 +199,32 @@ final class PdfShapedGlyphUnicode {
         boolean changed = false;
         int copiedTo = 0;
         while (blocks.find()) {
-            String kind = blocks.group(1);
-            String body = blocks.group(2);
-            String corrected = withBaseLetters(body, "bfrange".equals(kind));
+            boolean ranges = "bfrange".equals(blocks.group(2));
+            List<String> corrected = correctedBlockEntries(blocks.group(3), ranges);
             if (corrected == null) {
                 continue;
             }
             changed = true;
-            out.append(cmap, copiedTo, blocks.start(2)).append(corrected);
-            copiedTo = blocks.end(2);
+            // The whole block is rewritten, not just its body: expanding a multi-code
+            // range changes how many entries the block holds, and the count before
+            // "begin" has to say so. A block can also outgrow the specification's
+            // hundred-entry limit that way, in which case it is split into as many
+            // blocks as its entries need.
+            out.append(cmap, copiedTo, blocks.start(1));
+            String kind = blocks.group(2);
+            for (int from = 0; from < corrected.size(); from += BLOCK_LIMIT) {
+                List<String> chunk = corrected.subList(from,
+                        Math.min(corrected.size(), from + BLOCK_LIMIT));
+                if (from > 0) {
+                    out.append('\n');
+                }
+                out.append(chunk.size()).append(" begin").append(kind).append('\n');
+                for (String entry : chunk) {
+                    out.append(entry).append('\n');
+                }
+                out.append("end").append(kind);
+            }
+            copiedTo = blocks.end();
         }
         if (!changed) {
             return null;
@@ -188,36 +233,53 @@ final class PdfShapedGlyphUnicode {
     }
 
     /**
-     * One block's entries, or {@code null} when none of them names a shaped form.
+     * One block's entries after correction, or {@code null} when there is nothing to say.
      *
-     * <p>A range may also spell its destinations as an array, one per code. Nothing
-     * produces that here — the subsetter writes a range per code — and an entry this does
-     * not recognise is left exactly as written, so an unfamiliar map keeps whatever it
-     * said rather than being half-rewritten.</p>
+     * <p>Every entry of the block comes back — corrected where it named a shaped form,
+     * copied as written where it did not — so the caller can rebuild the block with a
+     * count that matches. A block holding any line the entry pattern cannot read is left
+     * untouched entirely, rather than risk dropping what was not understood: an
+     * unfamiliar map keeps whatever it said. A range may also spell its destinations as
+     * an array, one per code; nothing produces that here, and such a line fails the
+     * pattern and keeps its block as written.</p>
      */
-    private static String withBaseLetters(String body, boolean ranges) {
-        StringBuilder out = new StringBuilder(body.length());
-        Matcher entries = MAPPING_ENTRY.matcher(body);
-        boolean changed = false;
-        int copiedTo = 0;
-        while (entries.find()) {
-            int first = Integer.parseInt(entries.group(1), 16);
-            int last = ranges && entries.group(2) != null
-                    ? Integer.parseInt(entries.group(2), 16) : first;
-            String destination = entries.group(3);
+    private static List<String> correctedBlockEntries(String body, boolean ranges) {
+        int lines = 0;
+        for (String line : body.split("\\R")) {
+            if (!line.isBlank()) {
+                lines++;
+            }
+        }
 
+        List<String> entries = new ArrayList<>();
+        Matcher matcher = MAPPING_ENTRY.matcher(body);
+        boolean changed = false;
+        int recognised = 0;
+        while (matcher.find()) {
+            recognised++;
+            int first = Integer.parseInt(matcher.group(1), 16);
+            int last = ranges && matcher.group(2) != null
+                    ? Integer.parseInt(matcher.group(2), 16) : first;
+            String destination = matcher.group(3);
+
+            if (last < first) {
+                // A range running backwards is a malformed map. Correcting its healthy
+                // neighbours while carrying the malformed line forward would be a
+                // half-rewrite of something already broken — keep the block as written.
+                return null;
+            }
             List<String> corrected = correctedEntries(first, last, destination, ranges);
             if (corrected == null) {
-                continue;
+                entries.add(matcher.group().strip());
+            } else {
+                changed = true;
+                entries.addAll(corrected);
             }
-            changed = true;
-            out.append(body, copiedTo, entries.start()).append(String.join("\n", corrected));
-            copiedTo = entries.end();
         }
-        if (!changed) {
+        if (!changed || recognised != lines) {
             return null;
         }
-        return out.append(body, copiedTo, body.length()).toString();
+        return entries;
     }
 
     /**

@@ -281,7 +281,20 @@ public final class PdfDocumentPostProcessor {
                || (headerFooterOptions != null && !headerFooterOptions.isEmpty());
     }
 
-    private static void applyProtection(PDDocument document, PdfProtectionOptions options) throws IOException {
+    /**
+     * Applies password protection to a built document.
+     *
+     * <p>Package-visible because protection is the one post-processing step whose timing
+     * matters: encryption happens while a document is being <em>saved</em> and writes the
+     * ciphertext back into the streams it encrypted, so anything that needs to read a
+     * stream the save produced — the glyph-map correction — has to run before this
+     * does. {@link PdfShapedGlyphUnicode#save} defers it for exactly that reason.</p>
+     *
+     * @param document target PDFBox document
+     * @param options  protection options
+     * @throws IOException if the protection policy cannot be applied
+     */
+    static void applyProtection(PDDocument document, PdfProtectionOptions options) throws IOException {
         AccessPermission permission = new AccessPermission();
         permission.setCanPrint(options.isCanPrint());
         permission.setCanExtractContent(options.isCanCopyContent());

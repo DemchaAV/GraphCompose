@@ -46,9 +46,11 @@ class PptxRtlParagraphTest {
             assertThat(textShapes).isNotEmpty();
             assertThat(textShapes)
                     .allSatisfy(shape -> assertThat(shape.getShapeName())
-                            .describedAs("a right-to-left line must not go through the "
-                                    + "shared frame PowerPoint reflows")
-                            .isNotEqualTo("GraphCompose Text Line"));
+                            .describedAs("a right-to-left line goes through per-span absolute "
+                                    + "frames; naming the frame it must be rather than the one "
+                                    + "it must not keeps this failing if a third kind appears, "
+                                    + "or if the shared frame is simply renamed")
+                            .isEqualTo("GraphCompose Inline Text Span"));
 
             String joined = String.join(" ",
                     textShapes.stream().map(XSLFTextShape::getText).toList());

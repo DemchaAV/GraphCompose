@@ -81,10 +81,13 @@ class ParagraphWrappingRtlTest {
         ParagraphLine line = only(lines(List.of(HEBREW), BaseDirection.LEFT_TO_RIGHT));
 
         assertThat(line.spans()).hasSize(1);
-        assertThat(line.text())
+        assertThat(line.text()).isEqualTo(HEBREW);
+        assertThat(((ParagraphTextSpan) line.spans().get(0)).rightToLeft())
                 .describedAs("a single right-to-left run still goes through the directional "
-                        + "path, so the renderer is told which way it runs")
-                .isEqualTo(HEBREW);
+                        + "path, so the renderer is told which way it runs — the span count "
+                        + "and the text are both unchanged by a fast path that skips the "
+                        + "marking, which is the regression this is here to catch")
+                .isTrue();
     }
 
     @Test

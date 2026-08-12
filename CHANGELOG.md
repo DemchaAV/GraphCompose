@@ -34,7 +34,10 @@ follow semantic versioning; release dates are ISO 8601.
   through), and markdown. Each backend does what it must and no more — the PDF backend
   reverses a right-to-left run, because a PDF draws characters in the order it is given
   them; PowerPoint and Word have their own bidirectional engines, so the text reaches
-  them in logical order and a right-to-left paragraph is marked rather than rewritten.
+  them in logical order rather than rewritten. Word is told the paragraph's base
+  direction with `w:bidi`, which is the only way it can lay out a line that opens on a
+  neutral character; PowerPoint needs no such mark, because each span is pinned in an
+  absolute frame at the position the page gave it.
 
   The bidirectional formatting characters (`U+200E`, `U+200F`, `U+061C` and the
   embeddings and isolates) now survive control-character sanitizing until the algorithm

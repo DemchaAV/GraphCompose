@@ -134,6 +134,21 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
+- **PowerPoint mirrors the punctuation of a right-to-left line.** A line that gets
+  reordered reaches PowerPoint as one frame per span, each pinned where the layout put it,
+  so the order *across* the line is settled before PowerPoint sees it. What was not
+  settled is what happens inside a frame: the text handed over is logical, paired
+  punctuation still has to be mirrored (UAX #9 L4), and PowerPoint does that from the
+  paragraph's base direction — which nothing declared. A frame holding a lone bracket had
+  nothing to resolve against, so a parenthesis closing a right-to-left line was drawn
+  facing the way it was typed rather than the way the line reads, while the same document
+  as a PDF was correct.
+
+  Each frame carrying right-to-left text now says so. Declared rather than mirrored here
+  on purpose: the stored text stays the author's, so a copy out of the slide is the
+  written word and PowerPoint's own Arabic shaper still has the letters it expects.
+  Left-to-right frames are untouched.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

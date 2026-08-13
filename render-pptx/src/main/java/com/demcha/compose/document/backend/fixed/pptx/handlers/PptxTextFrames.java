@@ -10,6 +10,8 @@ import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraph;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraphProperties;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRegularTextRun;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTConnector;
@@ -56,6 +58,26 @@ final class PptxTextFrames {
      * paragraph itself always lays out from the frame's left edge.
      */
     static XSLFTextParagraph preparedParagraph(XSLFTextBox box) {
+        return preparedParagraph(box, false);
+    }
+
+    /**
+     * As {@link #preparedParagraph(XSLFTextBox)}, declaring the paragraph's base direction.
+     *
+     * <p>A right-to-left line is drawn as one frame per span, each pinned where the layout
+     * put it, so the order across the line is already settled before PowerPoint sees it.
+     * What is not settled is what happens <em>inside</em> a frame: the text handed over is
+     * logical, and paired punctuation still has to be mirrored (UAX #9 L4) and neutrals
+     * still have to fall on the correct side. PowerPoint does both — from the paragraph's
+     * base direction, which without this is left-to-right by default. A frame holding a
+     * lone bracket then has nothing to resolve against and draws it facing the way it was
+     * typed rather than the way the line reads.</p>
+     *
+     * <p>Declared rather than mirrored here on purpose: the stored text stays the author's,
+     * so a copy out of the slide is the written word and PowerPoint's own Arabic shaper
+     * still has the letters it expects.</p>
+     */
+    static XSLFTextParagraph preparedParagraph(XSLFTextBox box, boolean rightToLeft) {
         XSLFTextParagraph paragraph = box.getTextParagraphs().get(0);
         for (XSLFTextRun run : List.copyOf(paragraph.getTextRuns())) {
             if (run.getRawText() == null || run.getRawText().isEmpty()) {
@@ -63,6 +85,12 @@ final class PptxTextFrames {
             }
         }
         paragraph.setTextAlign(TextAlign.LEFT);
+        if (rightToLeft) {
+            CTTextParagraph xml = paragraph.getXmlObject();
+            CTTextParagraphProperties properties =
+                    xml.isSetPPr() ? xml.getPPr() : xml.addNewPPr();
+            properties.setRtl(true);
+        }
         return paragraph;
     }
 

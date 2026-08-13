@@ -198,7 +198,8 @@ public final class PptxParagraphFragmentRenderHandler
                 cursorX, top, Math.max(PptxTextFrames.FRAME_EPSILON, span.width() + PptxTextFrames.FRAME_EPSILON),
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Text Span");
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
+                text, span.textStyle(), environment);
     }
 
     private static void renderChip(XSLFShapeContainer surface,
@@ -236,7 +237,8 @@ public final class PptxParagraphFragmentRenderHandler
                 cursorX + padding.left(), textTop, textWidth,
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
+                text, span.textStyle(), environment);
     }
 
     /**

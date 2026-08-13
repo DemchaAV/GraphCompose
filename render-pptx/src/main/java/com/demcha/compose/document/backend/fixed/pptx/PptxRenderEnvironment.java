@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,8 +79,35 @@ public final class PptxRenderEnvironment {
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
     private final Set<String> substitutionWarned = new LinkedHashSet<>();
-    /** Every family a run asked for, so only those are offered to the embedder. */
-    private final Set<FontName> usedFonts = new LinkedHashSet<>();
+    /**
+     * Every face a run asked for: family to the bold/italic combinations drawn with it.
+     *
+     * <p>Kept per face rather than per family because embedding is whole-font. A deck
+     * showing six Korean characters in one weight was carrying Gothic A1 twice — 4.4 MB
+     * for a facet that is never on a slide.</p>
+     */
+    private final Map<FontName, Set<Face>> usedFaces = new LinkedHashMap<>();
+
+    /** A family's four faces, as the source set names them. */
+    private enum Face {
+        REGULAR, BOLD, ITALIC, BOLD_ITALIC;
+
+        static Face of(boolean bold, boolean italic) {
+            if (bold && italic) {
+                return BOLD_ITALIC;
+            }
+            return bold ? BOLD : italic ? ITALIC : REGULAR;
+        }
+
+        FontFamilyDefinition.FontBinarySource in(FontFamilyDefinition.FontSourceSet sources) {
+            return switch (this) {
+                case BOLD -> sources.bold();
+                case ITALIC -> sources.italic();
+                case BOLD_ITALIC -> sources.boldItalic();
+                case REGULAR -> sources.regular();
+            };
+        }
+    }
     /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
     private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
             DefaultFonts.bundledFamilies().stream()
@@ -276,8 +304,22 @@ public final class PptxRenderEnvironment {
      */
     @Internal
     public String fontFamily(FontName fontName) {
+        return fontFamily(fontName, false, false);
+    }
+
+    /**
+     * As {@link #fontFamily(FontName)}, recording which face of the family was drawn.
+     *
+     * @param fontName logical document font name
+     * @param bold     whether this run is bold
+     * @param italic   whether this run is italic
+     * @return viewer-facing PPTX family name
+     */
+    @Internal
+    public String fontFamily(FontName fontName, boolean bold, boolean italic) {
         if (fontName != null) {
-            usedFonts.add(fontName);
+            usedFaces.computeIfAbsent(fontName, name -> new LinkedHashSet<>())
+                    .add(Face.of(bold, italic));
             String customFamily = customFontFamilies.get(fontName);
             if (customFamily != null) {
                 return customFamily;
@@ -401,10 +443,26 @@ public final class PptxRenderEnvironment {
     private static boolean embedFontFamily(XMLSlideShow show,
                                            FontFamilyDefinition family,
                                            FontFamilyDefinition.FontSourceSet sources) {
+        return embedFontFamily(show, family, sources, EnumSet.allOf(Face.class));
+    }
+
+    /**
+     * Embeds the named faces of a family.
+     *
+     * <p>Faces rather than the whole family, because embedding carries a font program
+     * whole: a deck drawing one weight of a CJK family was shipping the other at over two
+     * megabytes for glyphs no slide contains. A family whose source set repeats a source
+     * across faces — a regular-and-bold family asked for italic — embeds it once, since
+     * the sources dedupe by description.</p>
+     */
+    private static boolean embedFontFamily(XMLSlideShow show,
+                                           FontFamilyDefinition family,
+                                           FontFamilyDefinition.FontSourceSet sources,
+                                           Set<Face> faces) {
         XSLFFontInfo embedded = new XSLFFontInfo(show, family.wordFamily());
         Set<String> embeddedSources = new LinkedHashSet<>();
-        for (FontFamilyDefinition.FontBinarySource source : List.of(
-                sources.regular(), sources.bold(), sources.italic(), sources.boldItalic())) {
+        for (FontFamilyDefinition.FontBinarySource source
+                : faces.stream().map(face -> face.in(sources)).toList()) {
             if (!embeddedSources.add(source.description())) {
                 continue;
             }
@@ -461,13 +519,14 @@ public final class PptxRenderEnvironment {
             // no binary to embed, and PPTX maps them to viewer-facing metric-compatible
             // replacements (Helvetica to Arial, and so on) rather than assuming the
             // viewer has the PDF built-in.
-            if (!usedFonts.contains(family.name()) || customFontFamilies.containsKey(family.name())) {
+            Set<Face> faces = usedFaces.get(family.name());
+            if (faces == null || customFontFamilies.containsKey(family.name())) {
                 // Not drawn with, or the caller registered their own under this name — the
                 // deck then references that family, so the bundled binary would be unused.
                 continue;
             }
             Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
-            if (embedFontFamily(show, family, sources.orElseThrow())) {
+            if (embedFontFamily(show, family, sources.orElseThrow(), faces)) {
                 embeddedAny = true;
             } else {
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "

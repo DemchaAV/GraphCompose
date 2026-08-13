@@ -6,6 +6,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
@@ -199,6 +200,40 @@ class PptxBundledFontEmbeddingTest {
                     .describedAs("a sectioned deck carries what a single-document one carries")
                     .isNotEmpty();
         }
+    }
+
+    @Test
+    void onlyTheFacesTheDeckDrewWithAreCarried() throws Exception {
+        // Embedding carries a font program whole, so a face nobody drew is pure weight —
+        // measured, the five-script catalogue was shipping Gothic A1 Bold at 2.2 MB for
+        // glyphs no slide contains. David Libre is regular-and-bold, so a deck that only
+        // draws regular must carry exactly one part.
+        byte[] regularOnly = render(page -> page.addParagraph(p -> p
+                .text("שלום עולם")
+                .textStyle(DocumentTextStyle.builder()
+                        .fontName(FontName.DAVID_LIBRE).size(18).build())));
+
+        assertThat(fontPartsOf(regularOnly))
+                .describedAs("one face drawn, one face carried")
+                .hasSize(1);
+    }
+
+    @Test
+    void aSecondFaceIsCarriedOnceItIsDrawn() throws Exception {
+        // The other side of it: asking for bold must bring the bold program, or the
+        // reader sees PowerPoint's synthetic emboldening of the regular one.
+        byte[] both = render(page -> page
+                .addParagraph(p -> p.text("שלום עולם")
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.DAVID_LIBRE).size(18).build()))
+                .addParagraph(p -> p.text("שלום עולם")
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.DAVID_LIBRE).size(18)
+                                .decoration(DocumentTextDecoration.BOLD).build())));
+
+        assertThat(fontPartsOf(both))
+                .describedAs("regular and bold both drawn, both carried")
+                .hasSize(2);
     }
 
     /** The presentation's embedded font parts, by name. */

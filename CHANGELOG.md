@@ -143,12 +143,13 @@ follow semantic versioning; release dates are ISO 8601.
   for when its reader is least likely to have the font, which is what made the asymmetry
   sharp.
 
-  Only what was drawn travels: the bundled set is dozens of families, and a deck carrying
-  all of them would be tens of megabytes. What it costs is what a font weighs — embedding
-  is whole-font, every facet of each family used. Measured on the shipped examples, the
-  Arabic article goes from 29 KB to 834 KB and the five-script catalogue from 27 KB to
-  3 MB. `PptxFixedLayoutBackend.Builder.embedBundledFonts(false)` declines it for a deck
-  whose readers are known to have the fonts.
+  Only what was drawn travels, down to the face: the bundled set is dozens of families,
+  and a face nobody drew is pure weight — embedding carries a font program whole, so the
+  five-script catalogue was shipping Gothic A1 Bold at 2.2 MB for glyphs no slide
+  contains. Measured on the shipped examples, the Arabic article goes from 29 KB to
+  235 KB and the catalogue from 27 KB to 1.4 MB.
+  `PptxFixedLayoutBackend.Builder.embedBundledFonts(false)` declines it for a deck whose
+  readers are known to have the fonts.
 
   A family the deck carries is no longer reported as one the reader must install. The
   substitution warning fires while a run is drawn and the embedding happens after the last

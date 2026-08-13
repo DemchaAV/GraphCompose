@@ -10,6 +10,7 @@ import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.DefaultFonts;
 import com.demcha.compose.font.FontFamilyDefinition;
 import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
@@ -33,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -76,6 +78,8 @@ public final class PptxRenderEnvironment {
     private final Map<String, AnchorDestination> anchorDestinations = new LinkedHashMap<>();
     private final List<FragmentLink> fragmentLinks = new ArrayList<>();
     private final Set<String> substitutionWarned = new LinkedHashSet<>();
+    /** Every family a run asked for, so only those are offered to the embedder. */
+    private final Set<FontName> usedFonts = new LinkedHashSet<>();
     private final java.util.Deque<XSLFGroupShape> groupStack = new java.util.ArrayDeque<>();
     private int rasterizedClipCount;
     private long rasterizedClipPixels;
@@ -264,6 +268,7 @@ public final class PptxRenderEnvironment {
     @Internal
     public String fontFamily(FontName fontName) {
         if (fontName != null) {
+            usedFonts.add(fontName);
             String customFamily = customFontFamilies.get(fontName);
             if (customFamily != null) {
                 return customFamily;
@@ -398,6 +403,52 @@ public final class PptxRenderEnvironment {
             }
         }
         return true;
+    }
+
+    /**
+     * Embeds the bundled families this deck drew with, on the terms a registered one gets.
+     *
+     * <p>A family a caller registers themselves is embedded, and warned about when it
+     * cannot be. A family this library <em>ships</em> — Amiri for Arabic, David Libre for
+     * Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was neither:
+     * the deck named it and embedded nothing, so a viewer without it installed substituted,
+     * and for a script the substitute does not cover the slide showed boxes. The asymmetry
+     * was the sharp edge, since the shipped families are the ones a deck reaches for
+     * precisely when the reader is least likely to have the font.</p>
+     *
+     * <p>Only what was drawn is embedded — the bundled set is dozens of families, and a
+     * deck carrying all of them would be tens of megabytes. Embedding here is whole-font,
+     * with no subsetting, so a deck grows by the size of each family it uses.</p>
+     *
+     * <p>Metrics are deliberately untouched. A registered family also contributes viewer
+     * metrics, which participate in layout; taking those from a bundled family now would
+     * move text in every deck that already renders correctly. This changes what the file
+     * carries, not where anything sits.</p>
+     */
+    void embedBundledFontsUsed() {
+        boolean embeddedAny = false;
+        for (FontFamilyDefinition family : DefaultFonts.bundledFamilies()) {
+            if (!usedFonts.contains(family.name()) || customFontFamilies.containsKey(family.name())) {
+                // Not drawn with, or already embedded as a registered family.
+                continue;
+            }
+            Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
+            if (sources.isEmpty()) {
+                // A standard-14 family: the viewer has it by definition.
+                continue;
+            }
+            if (embedFontFamily(show, family, sources.get())) {
+                embeddedAny = true;
+            } else {
+                LOG.warn("render.pptx.font.substitution family={} — a bundled family that "
+                                + "could not be embedded, the deck references \"{}\" by name "
+                                + "only; viewers without that font installed will substitute "
+                                + "their own", family.name().name(), family.wordFamily());
+            }
+        }
+        if (embeddedAny) {
+            show.getCTPresentation().setSaveSubsetFonts(false);
+        }
     }
 
     /**

@@ -134,6 +134,28 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
+- **A deck carries the bundled fonts it drew with.** A family a caller registers has
+  always been embedded, and warned about when it could not be; a family this library
+  *ships* — Amiri for Arabic, David Libre for Hebrew, the Noto faces for Georgian and
+  Armenian, Gothic A1 for Hangul — was neither. The deck named it and embedded nothing, so
+  a viewer without the font installed substituted, and for a script the substitute does not
+  cover the slide showed boxes. The shipped families are exactly the ones a deck reaches
+  for when its reader is least likely to have the font, which is what made the asymmetry
+  sharp.
+
+  Only what was drawn travels: the bundled set is dozens of families, and a deck carrying
+  all of them would be tens of megabytes. What it costs is what a font weighs — embedding
+  is whole-font, every facet of each family used. Measured on the shipped examples, the
+  Arabic article goes from 29 KB to 834 KB and the five-script catalogue from 27 KB to
+  3 MB. `PptxFixedLayoutBackend.Builder.embedBundledFonts(false)` declines it for a deck
+  whose readers are known to have the fonts.
+
+  Decks that use no bundled binary family are byte-identical — all seven committed deck
+  previews, measured. Layout is untouched either way: a registered family also contributes
+  viewer metrics, which participate in placement, and taking those from a bundled family
+  now would move text in decks that already render correctly. This changes what the file
+  carries, not where anything sits.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

@@ -10,6 +10,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
+import com.demcha.compose.engine.text.bidi.BidiMirroring;
+import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -198,7 +200,8 @@ public final class PptxParagraphFragmentRenderHandler
                 cursorX, top, Math.max(PptxTextFrames.FRAME_EPSILON, span.width() + PptxTextFrames.FRAME_EPSILON),
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Text Span");
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
+                text, span.textStyle(), environment);
     }
 
     private static void renderChip(XSLFShapeContainer surface,
@@ -236,7 +239,22 @@ public final class PptxParagraphFragmentRenderHandler
                 cursorX + padding.left(), textTop, textWidth,
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox), text, span.textStyle(), environment);
+        // A chip is the one span that can carry both directions' levels — one rounded
+        // fill, so the wrapper cannot split it, and its flag describes only its first
+        // character. Its text stays logical and its frame declares its direction, like
+        // every right-to-left frame: reordering is a property of strong right-to-left
+        // characters, not of the declaration, so a pre-reordered string would have its
+        // Hebrew re-reversed by PowerPoint's own engine. What that engine was measured
+        // not to do is the mirroring — so pairs are swapped here, but only on the
+        // levels where UAX #9 would swap them. The whole-string mirror reached the
+        // chip's left-to-right interior, where nothing mirrors, and turned "a > b"
+        // into "a < b" in the only copy of the text the file has. For a single-level
+        // chip this is the whole-string mirror it always had.
+        String chipText = span.rightToLeft()
+                ? BidiVisualOrder.mirrorRightToLeftLevels(text)
+                : text;
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
+                chipText, span.textStyle(), environment);
     }
 
     /**
@@ -387,8 +405,24 @@ public final class PptxParagraphFragmentRenderHandler
         // reader they were written for; the render sanitizing drops them, because a PDF
         // has no glyph for a zero-width control, and dropping them here would hand
         // PowerPoint a word it joins straight back up.
+        // Paired punctuation is mirrored here rather than left to PowerPoint. Declaring
+        // the frame's direction gets a neutral placed on the correct side — the em-dash
+        // of a mixed line moved to where it belongs the moment that was written — but
+        // PowerPoint does not go on to mirror the character itself, so a bracket closing
+        // a right-to-left line kept facing the way it was typed. Measured, on a slide it
+        // drew as ")AUTO resolves it (" where the same document as a PDF reads
+        // "(AUTO resolves it)". The cost is that a copy out of the slide carries the
+        // mirrored bracket rather than the typed one; a line nobody can read is worse.
+        // A chip is left alone here and settled at its own site (renderChip): it is the
+        // one span whose flag does not describe all of it — one rounded fill, so the
+        // wrapper cannot split it at a level boundary — and swapping it whole would
+        // invert punctuation its interior is entitled to keep. renderChip resolves the
+        // chip's own levels and mirrors only what actually moves.
+        String logical = span.rightToLeft() && span.background() == null
+                ? BidiMirroring.mirror(span.text())
+                : span.text();
         return font.sanitizeForTextExport(span.textStyle(),
-                ArabicShaper.toBaseLetters(span.text()));
+                ArabicShaper.toBaseLetters(logical));
     }
 
     private static PdfFont.VerticalMetrics verticalMetrics(FontLibrary fonts,

@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.text.bidi.BidiMirroring;
 import com.demcha.compose.engine.text.bidi.BidiText;
+import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -137,16 +138,19 @@ public final class PdfParagraphFragmentRenderHandler
                                    ParagraphLine line,
                                    TextRenderState textState) throws IOException {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
-        // mixed-direction text inside a chip keeps logical order (a known approximation).
-        // Sanitize-then-reverse, as in renderLine, so a degraded ligature keeps its
+        // A chip is one unsplittable span, so it is the one span that can reach this
+        // point carrying both directions' levels — the wrapper splits everything else
+        // at level boundaries. Reversing it whole inverted its interior: a chip reading
+        // "(a > b)" after a Hebrew word drew as "(b < a)", the comparison flipped. The
+        // level-aware transform reverses and mirrors only what UAX #9 moves; for a
+        // single-level chip it is the same reverse-and-mirror the plain path does.
+        // Sanitize-then-resolve, as in renderLine, so a degraded ligature keeps its
         // letter order.
-        String sanitizedLogical = font.sanitizeForRender(span.textStyle(),
-                span.rightToLeft() ? BidiMirroring.mirror(span.text()) : span.text());
+        String sanitizedLogical = font.sanitizeForRender(span.textStyle(), span.text());
         String text = sanitizedLogical;
         String written = null;
         if (span.rightToLeft()) {
-            text = BidiText.reverseForDisplay(sanitizedLogical);
+            text = BidiVisualOrder.visualize(sanitizedLogical);
             written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
         }
@@ -391,8 +395,11 @@ public final class PdfParagraphFragmentRenderHandler
                     // that would take ActualText marked content — a known trade-off,
                     // recorded in the changelog rather than hidden here.
                     // Mirroring happens here and not in the span, for the same reason
-                    // reversal does: PowerPoint applies UAX #9 L4 itself, and a mirror
-                    // baked into the text would come out double-mirrored there.
+                    // reversal does: the span's logical text is what the semantic
+                    // backends read. PowerPoint does NOT apply UAX #9 L4 — measured on a
+                    // slide, a bracket closing a right-to-left line kept facing the way
+                    // it was typed even with the frame's direction declared — so the PPTX
+                    // backend mirrors at its own seam too.
                     // Sanitizing runs BEFORE the reversal: the glyph seam may degrade a
                     // lam-alef ligature into its two letters, and those come out in
                     // logical order — appended into an already-reversed string they

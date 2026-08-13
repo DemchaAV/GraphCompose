@@ -36,8 +36,9 @@ follow semantic versioning; release dates are ISO 8601.
   them; PowerPoint and Word have their own bidirectional engines, so the text reaches
   them in logical order rather than rewritten. Word is told the paragraph's base
   direction with `w:bidi`, which is the only way it can lay out a line that opens on a
-  neutral character; PowerPoint needs no such mark, because each span is pinned in an
-  absolute frame at the position the page gave it.
+  neutral character; PowerPoint is told the same thing per frame, because pinning a span
+  where the page put it settles the order *across* the line but not which side a neutral
+  falls on *inside* a frame.
 
   The bidirectional formatting characters (`U+200E`, `U+200F`, `U+061C` and the
   embeddings and isolates) now survive control-character sanitizing until the algorithm
@@ -196,6 +197,50 @@ follow semantic versioning; release dates are ISO 8601.
   While the size path was being touched: a run's size is now written as the half-points
   `w:sz` and `w:szCs` actually count, rather than rounded to whole points first. A 9.5pt
   label — the timeline builder writes two — was reaching Word as 10pt.
+- **A right-to-left slide's punctuation faces the way the line reads.** A line that gets
+  reordered reaches PowerPoint as one frame per span, each pinned where the layout put it,
+  so the order *across* the line is settled before PowerPoint sees it. What was not
+  settled is what happens inside a frame: the text handed over is logical, the frame
+  declared no base direction, and a frame holding a lone bracket had nothing to resolve
+  against — so a parenthesis closing a right-to-left line was drawn facing the way it was
+  typed rather than the way the line reads, while the same document as a PDF was correct.
+
+  Each frame carrying right-to-left text now declares it, which settles *placement*: the
+  em-dash of a mixed line moved to the side it belongs on the moment that was written.
+  That is necessary and not sufficient. Measured on a slide, PowerPoint places a neutral
+  from the declared direction but does not go on to mirror it, so the character is swapped
+  before it is handed over, at the same seam the PDF backend swaps it.
+
+  The cost is worth naming: a copy out of the slide carries the mirrored character rather
+  than the typed one. The swapped set is document punctuation and includes `<` and `>`, so
+  a comparison written between two Hebrew or Arabic words copies out reversed. A `>`
+  surrounded by Latin does not, because the wrapper gives that stretch a left-to-right span
+  of its own and the swap is keyed to the span's direction. Left-to-right frames are
+  untouched.
+
+  This rests on PowerPoint not applying UAX #9 L4 itself, which is measured rather than
+  specified. A viewer that does apply it mirrors the character a second time and draws the
+  original bug; the assumption is recorded in the backend capability matrix.
+
+- **A chip that mixes directions is drawn the way each of its parts reads — in both
+  backends.** A chip is one rounded fill, so the wrapper cannot split it at a level
+  boundary the way it splits plain text; it reaches the renderer whole, carrying its
+  first character's level. The PDF backend reversed and mirrored it whole, and that
+  inverted meaning, not just shape: a chip reading `(a > b)` after a Hebrew word drew as
+  `(b < a)` — operands swapped, comparison flipped — while the chip's interior is
+  left-to-right text that UAX #9 neither reorders nor mirrors.
+
+  The engine now resolves the chip's own embedding levels (`BidiVisualOrder`), and each
+  backend takes from that resolution exactly what its viewer lacks. The PDF draws
+  characters in the order it is given them, so it gets the full visual transform —
+  runs reordered, right-to-left ones reversed and mirrored; for a single-level chip that
+  is exactly the old reverse-and-mirror, so a wholly-Hebrew chip is unchanged, and a
+  chip holding `שנה 2026` no longer draws its year backwards. The slide backend keeps
+  the chip's text **logical** and its frame's direction declared, because PowerPoint
+  reorders strong right-to-left characters by what they are, not by what the frame says
+  — a pre-reordered string would come back with its Hebrew re-reversed. What PowerPoint
+  was measured not to do is the mirroring, so pairs are swapped for it — but only on the
+  levels UAX #9 mirrors, which is what keeps the interior's `>` a `>`.
 
 ### Fonts
 

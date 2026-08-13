@@ -10,6 +10,8 @@ import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
 import org.apache.poi.xslf.usermodel.XSLFTextBox;
 import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextRun;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraph;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTTextParagraphProperties;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTRegularTextRun;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTTextCharacterProperties;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTConnector;
@@ -56,6 +58,26 @@ final class PptxTextFrames {
      * paragraph itself always lays out from the frame's left edge.
      */
     static XSLFTextParagraph preparedParagraph(XSLFTextBox box) {
+        return preparedParagraph(box, false);
+    }
+
+    /**
+     * As {@link #preparedParagraph(XSLFTextBox)}, declaring the paragraph's base direction.
+     *
+     * <p>A right-to-left line is drawn as one frame per span, each pinned where the layout
+     * put it, so the order across the line is settled before PowerPoint sees it. What is
+     * not settled is what happens <em>inside</em> a frame: the text handed over is logical,
+     * and neutrals still have to fall on the correct side of it. PowerPoint does that from
+     * the paragraph's base direction, which without this is left-to-right by default — the
+     * em-dash of a mixed line sat on the wrong side of its frame until this was written.</p>
+     *
+     * <p>It settles placement and not mirroring. PowerPoint does not go on to mirror a
+     * neutral it has placed, so a bracket is swapped by
+     * {@code PptxParagraphFragmentRenderHandler} before the text is handed over — measured
+     * on a slide, not assumed. The two halves are one fix; removing either brings the bug
+     * back.</p>
+     */
+    static XSLFTextParagraph preparedParagraph(XSLFTextBox box, boolean rightToLeft) {
         XSLFTextParagraph paragraph = box.getTextParagraphs().get(0);
         for (XSLFTextRun run : List.copyOf(paragraph.getTextRuns())) {
             if (run.getRawText() == null || run.getRawText().isEmpty()) {
@@ -63,6 +85,12 @@ final class PptxTextFrames {
             }
         }
         paragraph.setTextAlign(TextAlign.LEFT);
+        if (rightToLeft) {
+            CTTextParagraph xml = paragraph.getXmlObject();
+            CTTextParagraphProperties properties =
+                    xml.isSetPPr() ? xml.getPPr() : xml.addNewPPr();
+            properties.setRtl(true);
+        }
         return paragraph;
     }
 

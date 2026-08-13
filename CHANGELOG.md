@@ -135,9 +135,9 @@ follow semantic versioning; release dates are ISO 8601.
   engine's own tests read it there.
 
 - **Word draws a right-to-left paragraph on the side it starts from, at the size it was
-  asked for.** Three of a run's properties mean something different to Word than the way
-  they were written, and all three showed the moment a Hebrew or Arabic document was
-  opened.
+  asked for.** Four properties — one on the paragraph, three on its runs — meant something
+  different to Word than the way they were written, and all of them showed the moment a
+  Hebrew or Arabic document was opened.
 
   `w:jc` takes `left` and `right` as the *start* and *end* of the text flow rather than as
   edges of the page. The alignment the page resolved — flush right for a right-to-left
@@ -156,9 +156,18 @@ follow semantic versioning; release dates are ISO 8601.
   direction the identical paragraph gets outside a table. That is where an invoice keeps
   its line items, so every right-to-left cell in one was left undeclared.
 
-  A left-to-right document is unchanged — the alignment mapping is the identity there, and
-  Latin always obeyed the properties that were being written, which is why none of this
-  surfaced until a document had Hebrew in it.
+  A left-to-right document is drawn the way it always was: the alignment mapping is the
+  identity there, and Latin always obeyed the properties that were being written, which is
+  why none of this surfaced until a document had Hebrew in it. Its **bytes** do move, in
+  two ways worth knowing before re-baselining a committed `.docx`. A paragraph in a table
+  cell now carries `w:jc`, where before it carried none — so a right-aligned amount in a
+  line item draws flush right instead of flush left, which is what it asked for and did
+  not get. And every run now carries the complex-script twins beside the Latin ones; Word
+  picks between them per character, so for Latin they are inert, but they are in the file.
+
+  While the size path was being touched: a run's size is now written as the half-points
+  `w:sz` and `w:szCs` actually count, rather than rounded to whole points first. A 9.5pt
+  label — the timeline builder writes two — was reaching Word as 10pt.
 
 ### Fonts
 

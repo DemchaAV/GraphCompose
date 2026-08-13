@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.TextDirection;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
@@ -45,6 +46,10 @@ class PptxRightToLeftFrameTest {
     /** Hebrew, then a Latin phrase in brackets: the brackets are the neutrals at issue. */
     private static final String MIXED = "2026 שנה טובה (AUTO resolves it)";
     private static final String LATIN = "Plain left-to-right text";
+    /** A left-to-right line whose brackets must survive the mirroring gate untouched. */
+    private static final String BRACKETED_LATIN = "Revenue (Q4)";
+    /** A chip whose interior sits at the level opposite the one the chip is given. */
+    private static final String CHIP = "(a > b)";
 
     @Test
     void everyFrameCarryingRightToLeftTextDeclaresItsDirection() throws Exception {
@@ -97,6 +102,7 @@ class PptxRightToLeftFrameTest {
                 .contains("(");
         assertThat(frames.stream().filter(text -> text.contains("שנה טובה")).toList())
                 .describedAs("and the one sharing a frame with Hebrew is swapped too")
+                .isNotEmpty()
                 .allSatisfy(text -> assertThat(text).contains(")").doesNotContain("("));
     }
 
@@ -106,6 +112,50 @@ class PptxRightToLeftFrameTest {
         assertThat(paragraphsOf(render(LATIN, TextDirection.LTR)))
                 .describedAs("nothing about a left-to-right line changed")
                 .noneMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+    }
+
+    @Test
+    void aLeftToRightLineStoresItsBracketsAsTyped() throws Exception {
+        // The other side of the mirroring gate. Made unconditional, this swap rewrites
+        // every deck that ever drew a parenthesis: "Revenue (Q4)" would be stored as
+        // "Revenue )Q4(" with nothing in the suite objecting.
+        assertThat(texts(paragraphsOf(render(BRACKETED_LATIN, TextDirection.LTR))))
+                .describedAs("a left-to-right line is handed the characters the author typed")
+                .allSatisfy(text -> assertThat(text).doesNotContain(")Q4("));
+    }
+
+    @Test
+    void aChipInsideARightToLeftLineDeclaresItsDirection() throws Exception {
+        // The second frame-declaring site. Nothing else in the suite reaches it, so
+        // reverting it alone left an undeclared frame and every test still green.
+        // Located by the chip's letters rather than by its full text, so this case keeps
+        // failing for its own reason if the mirroring exemption is ever lost.
+        List<XSLFTextParagraph> chipFrames = paragraphsOf(renderChipLine()).stream()
+                .filter(paragraph -> paragraph.getText().contains("a")
+                        && paragraph.getText().contains("b"))
+                .toList();
+
+        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
+        assertThat(chipFrames)
+                .describedAs("the chip frame says which way it reads")
+                .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+    }
+
+    @Test
+    void aChipKeepsThePunctuationItsInteriorLevelIsEntitledTo() throws Exception {
+        // A chip is one rounded fill, so the wrapper cannot split it at a level boundary
+        // and gives it its first character's level whole. Mirroring such a span whole
+        // reaches an interior that sits at the opposite level, where UAX #9 L4 mirrors
+        // nothing: "(a > b)" after a Hebrew word came out ")a < b(", inverting a
+        // comparison in the only copy of the text the file has.
+        assertThat(texts(paragraphsOf(renderChipLine())))
+                .filteredOn(text -> text.contains("a ") && text.contains(" b"))
+                .describedAs("the chip's text is found in the deck")
+                .isNotEmpty()
+                .allSatisfy(text -> assertThat(text)
+                        .describedAs("the comparison reads the way it was written")
+                        .contains(">")
+                        .doesNotContain("<"));
     }
 
     private static boolean declaresRightToLeft(XSLFTextParagraph paragraph) {
@@ -130,6 +180,31 @@ class PptxRightToLeftFrameTest {
                 }
             }
             return paragraphs;
+        }
+    }
+
+    /**
+     * A Hebrew line carrying an inline chip whose interior is Latin.
+     *
+     * <p>The chip's leading bracket sits next to Hebrew, so the wrapper gives the whole
+     * chip a right-to-left level — while {@code a > b} inside it stays left-to-right.
+     * That gap between the flag and the span is what the two chip cases exercise.</p>
+     */
+    private static byte[] renderChipLine() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(420, 140)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            document.pageFlow(page -> page.addParagraph(p -> p
+                    .rich(rich -> rich.plain("שלום ").chip(CHIP,
+                            DocumentColor.rgb(0x24, 0x29, 0x2F),
+                            DocumentColor.rgb(0xEF, 0xF1, 0xF3)))
+                    .direction(TextDirection.RTL)
+                    .textStyle(DocumentTextStyle.builder()
+                            .fontName(FontName.DAVID_LIBRE).size(15).build())));
+
+            return document.toPptxBytes();
         }
     }
 

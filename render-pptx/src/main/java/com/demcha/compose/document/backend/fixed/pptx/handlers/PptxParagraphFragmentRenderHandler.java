@@ -398,7 +398,14 @@ public final class PptxParagraphFragmentRenderHandler
         // drew as ")AUTO resolves it (" where the same document as a PDF reads
         // "(AUTO resolves it)". The cost is that a copy out of the slide carries the
         // mirrored bracket rather than the typed one; a line nobody can read is worse.
-        String logical = span.rightToLeft()
+        // A chip is exempt, because it is the one span whose flag does not describe all
+        // of it: a chip is a single rounded fill, so the wrapper cannot split it at a
+        // level boundary and hands it its first character's level whole. Its interior may
+        // sit at the opposite level, where UAX #9 L4 mirrors nothing. Swapping such a span
+        // whole inverts punctuation the algorithm leaves alone — a chip reading
+        // "(a > b)" after a Hebrew word would be stored as ")a < b(", the comparison the
+        // wrong way round in the only copy of the text the file has.
+        String logical = span.rightToLeft() && span.background() == null
                 ? BidiMirroring.mirror(span.text())
                 : span.text();
         return font.sanitizeForTextExport(span.textStyle(),

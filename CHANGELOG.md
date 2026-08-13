@@ -36,8 +36,9 @@ follow semantic versioning; release dates are ISO 8601.
   them; PowerPoint and Word have their own bidirectional engines, so the text reaches
   them in logical order rather than rewritten. Word is told the paragraph's base
   direction with `w:bidi`, which is the only way it can lay out a line that opens on a
-  neutral character; PowerPoint needs no such mark, because each span is pinned in an
-  absolute frame at the position the page gave it.
+  neutral character; PowerPoint is told the same thing per frame, because pinning a span
+  where the page put it settles the order *across* the line but not which side a neutral
+  falls on *inside* a frame.
 
   The bidirectional formatting characters (`U+200E`, `U+200F`, `U+061C` and the
   embeddings and isolates) now survive control-character sanitizing until the algorithm
@@ -134,24 +135,32 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
-- **PowerPoint mirrors the punctuation of a right-to-left line.** A line that gets
+- **A right-to-left slide's punctuation faces the way the line reads.** A line that gets
   reordered reaches PowerPoint as one frame per span, each pinned where the layout put it,
   so the order *across* the line is settled before PowerPoint sees it. What was not
-  settled is what happens inside a frame: the text handed over is logical, paired
-  punctuation still has to be mirrored (UAX #9 L4), and PowerPoint does that from the
-  paragraph's base direction — which nothing declared. A frame holding a lone bracket had
-  nothing to resolve against, so a parenthesis closing a right-to-left line was drawn
-  facing the way it was typed rather than the way the line reads, while the same document
-  as a PDF was correct.
+  settled is what happens inside a frame: the text handed over is logical, the frame
+  declared no base direction, and a frame holding a lone bracket had nothing to resolve
+  against — so a parenthesis closing a right-to-left line was drawn facing the way it was
+  typed rather than the way the line reads, while the same document as a PDF was correct.
 
-  Each frame carrying right-to-left text now says so, which fixes *placement* — the
+  Each frame carrying right-to-left text now declares it, which settles *placement*: the
   em-dash of a mixed line moved to the side it belongs on the moment that was written.
-  It is not sufficient on its own: PowerPoint does not go on to mirror a neutral it has
-  placed, so the bracket is swapped at the same seam the PDF backend swaps it. The cost
-  is worth naming — a copy out of the slide carries the mirrored character rather than the
-  typed one. That set is document punctuation and it includes `<` and `>`, so an
-  expression like `a > b` inside a right-to-left line copies out with the comparison
-  swapped. Left-to-right frames are untouched.
+  That is necessary and not sufficient. Measured on a slide, PowerPoint places a neutral
+  from the declared direction but does not go on to mirror it, so the character is swapped
+  before it is handed over, at the same seam the PDF backend swaps it.
+
+  The cost is worth naming: a copy out of the slide carries the mirrored character rather
+  than the typed one. The swapped set is document punctuation and includes `<` and `>`, so
+  a comparison written between two Hebrew or Arabic words copies out reversed. A `>`
+  surrounded by Latin does not, because the wrapper gives that stretch a left-to-right span
+  of its own and the swap is keyed to the span's direction. An inline chip is exempt for
+  the same reason turned inside out: a chip is one rounded fill, so it cannot be split and
+  takes its first character's direction whole — swapping it whole would invert punctuation
+  its interior is entitled to keep. Left-to-right frames are untouched.
+
+  This rests on PowerPoint not applying UAX #9 L4 itself, which is measured rather than
+  specified. A viewer that does apply it mirrors the character a second time and draws the
+  original bug; the assumption is recorded in the backend capability matrix.
 
 ### Fonts
 

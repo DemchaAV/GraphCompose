@@ -21,9 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>It is the opposite of the PDF backend's, which is why it needs its own test: the
  * PDF reverses each run because a content stream draws characters in the order given,
- * while PowerPoint has a bidirectional engine of its own and must receive logical
- * text — reversed here as well, it would display it doubly reversed, reading forwards
- * again but with the letters shuffled. What the layout does own on a slide is where
+ * while PowerPoint has a bidirectional engine of its own and must receive its runs in
+ * logical <em>order</em> — reversed here as well, it would display them doubly reversed,
+ * reading forwards again but with the letters shuffled. Order is not the whole of it:
+ * paired punctuation is swapped before hand-off, which
+ * {@link PptxRightToLeftFrameTest} covers. What the layout does own on a slide is where
  * each word sits, so a right-to-left line goes through per-span absolute frames
  * instead of the one shared frame PowerPoint would reflow into reading order.</p>
  */

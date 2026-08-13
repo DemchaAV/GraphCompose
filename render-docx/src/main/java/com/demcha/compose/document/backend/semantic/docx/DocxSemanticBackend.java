@@ -332,6 +332,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * came out undeclared; splitting them again would set the next property up for the
      * same fate.</p>
      *
+     * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
+     * unwritten was leaving Word to guess, and Word guessing is the thing {@code w:bidi}
+     * exists to prevent: an automatic paragraph that the page laid out right-to-left
+     * reached Word with nothing saying so, and a line starting with a digit or a
+     * parenthesis came out the other way round. The answer comes from the same resolver
+     * the page used, so the two cannot part company — and because it is resolved once
+     * here, the alignment mapping and the direction mark cannot disagree about it.</p>
+     *
      * @param target the Word paragraph
      * @param source the node it was written from
      */
@@ -350,12 +358,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * line that starts with a neutral character, or one that mixes scripts, is laid out
      * as left-to-right text that happens to contain Hebrew.</p>
      *
-     * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
-     * unwritten was leaving Word to guess, and Word guessing is the thing this attribute
-     * exists to prevent: an automatic paragraph that the page laid out right-to-left
-     * reached Word with nothing saying so, and a line starting with a digit or a
-     * parenthesis came out the other way round. The answer comes from the same resolver
-     * the page used, so the two cannot part company.</p>
+     * <p>The direction reaches this method already resolved — {@link TextDirection#AUTO}
+     * is settled by {@link #applyParagraphProperties}, so the mark and the alignment are
+     * decided from one answer rather than two.</p>
+     *
+     * @param para        the Word paragraph
+     * @param rightToLeft whether the page laid the paragraph out right to left
      */
     private static void applyDirection(XWPFParagraph para, boolean rightToLeft) {
         if (!rightToLeft) {
@@ -834,12 +842,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setFontFamily(style.fontName().name());
         }
         if (style.size() > 0) {
-            int points = (int) Math.round(style.size());
-            run.setFontSize(points);
+            // Passed as a double, because w:sz counts half-points and rounding to whole
+            // points first throws away a precision the format has: the timeline's 8.5pt
+            // label was being written as 9pt.
+            run.setFontSize(style.size());
             // Word sizes complex-script characters — Hebrew, Arabic — from w:szCs and not
             // from w:sz, so a run carrying both scripts draws its Latin at the asked size
             // and everything else at Word's own default until this is written too.
-            run.setComplexScriptFontSize(points);
+            run.setComplexScriptFontSize(style.size());
         }
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));

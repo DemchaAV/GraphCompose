@@ -131,7 +131,8 @@ final class PptxTextFrames {
     static void applyStyle(XSLFTextRun run,
                            TextStyle style,
                            PptxRenderEnvironment environment) {
-        run.setFontFamily(environment.fontFamily(style.fontName()));
+        run.setFontFamily(environment.fontFamily(style.fontName(),
+                PptxFontMapping.isBold(style), PptxFontMapping.isItalic(style)));
         run.setFontSize(style.size());
         run.setFontColor(style.color() == null ? Color.BLACK : style.color());
         run.setBold(PptxFontMapping.isBold(style));

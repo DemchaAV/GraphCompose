@@ -142,7 +142,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * PDF backend into a transparent picture, giving pixel-exact clipping.
      */
     private final boolean clipRasterFallback;
-    private final boolean embedBundledFonts;
+    /** Package-visible: the multi-section assembly reads it off the invoked backend. */
+    final boolean embedBundledFonts;
 
     /**
      * Creates a backend with the default handler set.
@@ -387,6 +388,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxRenderEnvironment environment =
                     new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
                             measurement.fontLibrary(), context.customFontFamilies());
+            environment.embedsBundledFonts(embedBundledFonts);
             int pageCount = Math.max(graph.totalPages(), 1);
             PptxChromeRenderer.applyWatermarkBehindContent(
                     environment, watermarkOptions, graph.canvas(), pageCount);

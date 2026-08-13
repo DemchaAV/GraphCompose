@@ -80,6 +80,15 @@ public final class PptxRenderEnvironment {
     private final Set<String> substitutionWarned = new LinkedHashSet<>();
     /** Every family a run asked for, so only those are offered to the embedder. */
     private final Set<FontName> usedFonts = new LinkedHashSet<>();
+    /** Bundled families that carry a binary, i.e. the ones the embedder can take. */
+    private static final Map<FontName, FontFamilyDefinition> EMBEDDABLE_BUNDLED =
+            DefaultFonts.bundledFamilies().stream()
+                    .filter(family -> family.fontSourceSet().isPresent())
+                    .collect(java.util.stream.Collectors.toMap(
+                            FontFamilyDefinition::name, family -> family, (a, b) -> a,
+                            LinkedHashMap::new));
+    /** Whether this render will offer the families it used to the embedder. */
+    private boolean embedsBundledFonts = true;
     private final java.util.Deque<XSLFGroupShape> groupStack = new java.util.ArrayDeque<>();
     private int rasterizedClipCount;
     private long rasterizedClipPixels;
@@ -288,9 +297,15 @@ public final class PptxRenderEnvironment {
                                 + "a binary font family for identical glyphs in both formats",
                         sourceName, replacement);
             }
+        } else if (embedsBundledFonts && EMBEDDABLE_BUNDLED.containsKey(fontName)) {
+            // A bundled family this render carries itself. Warning here would tell the
+            // reader the opposite of what the deck ends up containing; if the embed
+            // fails, embedBundledFontsUsed says so at the point it knows.
+            LOG.debug("render.pptx.font.bundled family={} — carried by this deck", sourceName);
         } else if (substitutionWarned.add(viewerFamily)) {
-            // Not registered for this render: the deck can only reference the
-            // family by name, so a viewer without it installed substitutes.
+            // Nothing will carry it: either it was never registered, or this render was
+            // asked not to carry bundled families. Either way the deck can only name it,
+            // so a viewer without it installed substitutes.
             LOG.warn("render.pptx.font.substitution family={} — not registered with binary "
                             + "sources for this render, the deck references \"{}\" by name "
                             + "only; register the family (registerFontFamily) to embed it and "
@@ -425,19 +440,34 @@ public final class PptxRenderEnvironment {
      * move text in every deck that already renders correctly. This changes what the file
      * carries, not where anything sits.</p>
      */
+    /**
+     * Tells this render whether the families it uses will be carried.
+     *
+     * <p>Set before anything is drawn, because the answer changes what a run is warned
+     * about: a family the deck is about to carry must not be reported as one the reader
+     * has to install, and a render explicitly asked not to carry them must not be told to
+     * register what it just declined.</p>
+     *
+     * @param enabled whether {@link #embedBundledFontsUsed()} will run for this render
+     */
+    void embedsBundledFonts(boolean enabled) {
+        this.embedsBundledFonts = enabled;
+    }
+
     void embedBundledFontsUsed() {
         boolean embeddedAny = false;
-        for (FontFamilyDefinition family : DefaultFonts.bundledFamilies()) {
+        for (FontFamilyDefinition family : EMBEDDABLE_BUNDLED.values()) {
+            // EMBEDDABLE_BUNDLED already excludes the standard-14 definitions: they carry
+            // no binary to embed, and PPTX maps them to viewer-facing metric-compatible
+            // replacements (Helvetica to Arial, and so on) rather than assuming the
+            // viewer has the PDF built-in.
             if (!usedFonts.contains(family.name()) || customFontFamilies.containsKey(family.name())) {
-                // Not drawn with, or already embedded as a registered family.
+                // Not drawn with, or the caller registered their own under this name — the
+                // deck then references that family, so the bundled binary would be unused.
                 continue;
             }
             Optional<FontFamilyDefinition.FontSourceSet> sources = family.fontSourceSet();
-            if (sources.isEmpty()) {
-                // A standard-14 family: the viewer has it by definition.
-                continue;
-            }
-            if (embedFontFamily(show, family, sources.get())) {
+            if (embedFontFamily(show, family, sources.orElseThrow())) {
                 embeddedAny = true;
             } else {
                 LOG.warn("render.pptx.font.substitution family={} — a bundled family that "

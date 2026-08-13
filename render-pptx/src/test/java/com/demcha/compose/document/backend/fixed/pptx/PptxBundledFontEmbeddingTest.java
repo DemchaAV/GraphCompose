@@ -8,10 +8,15 @@ import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
+import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.font.FontName;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -105,12 +110,81 @@ class PptxBundledFontEmbeddingTest {
                 .isEmpty();
     }
 
+    @Test
+    void aFamilyTheDeckCarriesIsNotReportedAsOneTheReaderMustInstall() throws Exception {
+        // The warning fires while a run is drawn; the embedding happens after the last
+        // one. Left alone, a deck that carries Amiri told its author "not registered with
+        // binary sources ... register the family to embed it" — the opposite of what the
+        // file ends up containing, and nothing in the suite could see it because no test
+        // read the log.
+        List<String> warnings = substitutionWarningsFrom(true);
+
+        assertThat(warnings)
+                .describedAs("a carried family is not a substituted one")
+                .noneMatch(message -> message.contains("Amiri"));
+    }
+
+    @Test
+    void decliningToCarryThemStillReportsWhatTheReaderMustInstall() throws Exception {
+        // The other half: a render told not to carry the fonts genuinely does reference
+        // them by name, so the reader does need to install them — and saying so is right.
+        assertThat(substitutionWarningsFrom(false))
+                .describedAs("declined, so the family really is name-only")
+                .anyMatch(message -> message.contains("Amiri"));
+    }
+
+    /** The substitution warnings a render emits for a bundled Arabic family. */
+    private static List<String> substitutionWarningsFrom(boolean carry) throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger("com.demcha.compose.engine.render");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            renderWith(PptxFixedLayoutBackend.builder().embedBundledFonts(carry).build(),
+                    FontName.AMIRI, "مرحبا");
+            return appender.list.stream()
+                    .map(ILoggingEvent::getFormattedMessage)
+                    .filter(message -> message.startsWith("render.pptx.font.substitution"))
+                    .toList();
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
     /** Renders the Georgian deck through a configured backend. */
     private static byte[] renderWith(PptxFixedLayoutBackend backend) throws Exception {
+        return renderWith(backend, FontName.NOTO_SANS_GEORGIAN, "გამარჯობა");
+    }
+
+    private static byte[] renderWith(PptxFixedLayoutBackend backend, FontName font, String text)
+            throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(400, 160)
                 .margin(DocumentInsets.of(20))
                 .create()) {
+
+            document.pageFlow(page -> page.addParagraph(p -> p
+                    .text(text)
+                    .textStyle(DocumentTextStyle.builder().fontName(font).size(18).build())));
+
+            LayoutGraph graph = document.render(new GraphCapturingBackend());
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            backend.write(graph, new FixedLayoutRenderContext(graph.canvas(), List.of(), null, output));
+            return output.toByteArray();
+        }
+    }
+
+    @Test
+    void aSectionedDeckCarriesThemToo() throws Exception {
+        // renderSections is its own assembly with its own environment and its own write,
+        // and it had no embed call at all — a sectioned deck showed the reported boxes.
+        // Driven through the @Beta backend surface directly, because the convenience
+        // MultiSectionDocument path hands every section a PDF chrome and a PPTX render
+        // rejects that before it gets here.
+        PptxFixedLayoutBackend backend = PptxFixedLayoutBackend.builder().build();
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 160).margin(DocumentInsets.of(20)).create()) {
 
             document.pageFlow(page -> page.addParagraph(p -> p
                     .text("გამარჯობა")
@@ -118,9 +192,12 @@ class PptxBundledFontEmbeddingTest {
                             .fontName(FontName.NOTO_SANS_GEORGIAN).size(18).build())));
 
             LayoutGraph graph = document.render(new GraphCapturingBackend());
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            backend.write(graph, new FixedLayoutRenderContext(graph.canvas(), List.of(), null, output));
-            return output.toByteArray();
+            byte[] combined = backend.renderSections(List.of(
+                    new SectionUnit(graph, graph.canvas(), List.of(), backend)));
+
+            assertThat(fontPartsOf(combined))
+                    .describedAs("a sectioned deck carries what a single-document one carries")
+                    .isNotEmpty();
         }
     }
 

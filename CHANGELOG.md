@@ -150,6 +150,12 @@ follow semantic versioning; release dates are ISO 8601.
   3 MB. `PptxFixedLayoutBackend.Builder.embedBundledFonts(false)` declines it for a deck
   whose readers are known to have the fonts.
 
+  A family the deck carries is no longer reported as one the reader must install. The
+  substitution warning fires while a run is drawn and the embedding happens after the last
+  one, so a deck that carries Amiri was telling its author to register Amiri — the opposite
+  of what shipped. A render told not to carry them still says so, because then the file
+  really does only name the family.
+
   Decks that use no bundled binary family are byte-identical — all seven committed deck
   previews, measured. Layout is untouched either way: a registered family also contributes
   viewer metrics, which participate in placement, and taking those from a bundled family

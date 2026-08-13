@@ -66,6 +66,9 @@ final class PptxDeckAssembly {
                     show, canvas.width(), canvas.height(), totalPages);
             PptxRenderEnvironment environment = new PptxRenderEnvironment(
                     show, session, 0, canvas.height(), measurement.fontLibrary(), unionFonts);
+            // A combined deck has one presentation and one font table, so the first
+            // section's answer governs: sections are chrome, not separate documents.
+            environment.embedsBundledFonts(invoked.embedBundledFonts);
             int pageOffset = 0;
             for (SectionUnit section : sections) {
                 // Each section renders with its OWN backend's handlers and
@@ -107,6 +110,11 @@ final class PptxDeckAssembly {
                     .filter(Objects::nonNull)
                     .findFirst()
                     .ifPresent(metadata -> applyMetadata(show, metadata));
+            if (invoked.embedBundledFonts) {
+                // After every section is drawn, so the deck carries the union of what its
+                // sections used rather than one section's share.
+                environment.embedBundledFontsUsed();
+            }
             if (invoked.deterministicTimestamp != null) {
                 PptxDeterminismWriter.pinCoreProperties(show, invoked.deterministicTimestamp);
             }

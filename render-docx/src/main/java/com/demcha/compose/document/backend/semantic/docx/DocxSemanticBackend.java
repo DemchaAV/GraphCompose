@@ -320,9 +320,33 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
-        para.setAlignment(toAlignment(node.align()));
-        applyDirection(para, node);
+        applyParagraphProperties(para, node);
         writeParagraphRuns(para, node);
+    }
+
+    /**
+     * Writes the properties a paragraph carries whatever it sits in.
+     *
+     * <p>One place on purpose. These were written where a paragraph is a document child
+     * and not where it is a table cell's, which is how every right-to-left invoice line
+     * came out undeclared; splitting them again would set the next property up for the
+     * same fate.</p>
+     *
+     * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
+     * unwritten was leaving Word to guess, and Word guessing is the thing {@code w:bidi}
+     * exists to prevent: an automatic paragraph that the page laid out right-to-left
+     * reached Word with nothing saying so, and a line starting with a digit or a
+     * parenthesis came out the other way round. The answer comes from the same resolver
+     * the page used, so the two cannot part company — and because it is resolved once
+     * here, the alignment mapping and the direction mark cannot disagree about it.</p>
+     *
+     * @param target the Word paragraph
+     * @param source the node it was written from
+     */
+    private static void applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
+        boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
+        target.setAlignment(toAlignment(source.align(), rightToLeft));
+        applyDirection(target, rightToLeft);
     }
 
     /**
@@ -334,15 +358,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * line that starts with a neutral character, or one that mixes scripts, is laid out
      * as left-to-right text that happens to contain Hebrew.</p>
      *
-     * <p>{@link TextDirection#AUTO} is resolved here rather than passed on. Leaving it
-     * unwritten was leaving Word to guess, and Word guessing is the thing this attribute
-     * exists to prevent: an automatic paragraph that the page laid out right-to-left
-     * reached Word with nothing saying so, and a line starting with a digit or a
-     * parenthesis came out the other way round. The answer comes from the same resolver
-     * the page used, so the two cannot part company.</p>
+     * <p>The direction reaches this method already resolved — {@link TextDirection#AUTO}
+     * is settled by {@link #applyParagraphProperties}, so the mark and the alignment are
+     * decided from one answer rather than two.</p>
+     *
+     * @param para        the Word paragraph
+     * @param rightToLeft whether the page laid the paragraph out right to left
      */
-    private static void applyDirection(XWPFParagraph para, ParagraphNode node) {
-        if (ParagraphDirection.resolve(node) != TextDirection.RTL) {
+    private static void applyDirection(XWPFParagraph para, boolean rightToLeft) {
+        if (!rightToLeft) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
@@ -772,9 +796,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
         if (child instanceof ParagraphNode paragraph) {
-            // Same walk as writeParagraph: a cell paragraph keeps per-run styling
-            // instead of being flattened into the concatenated text in one style.
-            writeParagraphRuns(cell.addParagraph(), paragraph);
+            // Same walk as writeParagraph, all of it: a cell paragraph keeps per-run
+            // styling instead of being flattened into one style — and its alignment and
+            // direction too. Writing only the runs left every right-to-left paragraph
+            // inside a table undeclared, which is where an invoice keeps its line items.
+            XWPFParagraph cellParagraph = cell.addParagraph();
+            applyParagraphProperties(cellParagraph, paragraph);
+            writeParagraphRuns(cellParagraph, paragraph);
         } else if (child instanceof ContainerNode container) {
             for (DocumentNode grandChild : container.children()) {
                 writeCellNode(cell, grandChild);
@@ -814,18 +842,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setFontFamily(style.fontName().name());
         }
         if (style.size() > 0) {
-            run.setFontSize((int) Math.round(style.size()));
+            // Passed as a double, because w:sz counts half-points and rounding to whole
+            // points first throws away a precision the format has: the timeline's 8.5pt
+            // label was being written as 9pt.
+            run.setFontSize(style.size());
+            // Word sizes complex-script characters — Hebrew, Arabic — from w:szCs and not
+            // from w:sz, so a run carrying both scripts draws its Latin at the asked size
+            // and everything else at Word's own default until this is written too.
+            run.setComplexScriptFontSize(style.size());
         }
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));
         }
         if (style.decoration() != null) {
             switch (style.decoration()) {
-                case BOLD -> run.setBold(true);
-                case ITALIC -> run.setItalic(true);
+                case BOLD -> setBold(run);
+                case ITALIC -> setItalic(run);
                 case BOLD_ITALIC -> {
-                    run.setBold(true);
-                    run.setItalic(true);
+                    setBold(run);
+                    setItalic(run);
                 }
                 case UNDERLINE ->
                         run.setUnderline(org.apache.poi.xwpf.usermodel.UnderlinePatterns.SINGLE);
@@ -867,14 +902,50 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return String.format("%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
     }
 
-    private static ParagraphAlignment toAlignment(TextAlign align) {
-        if (align == null) {
-            return ParagraphAlignment.LEFT;
-        }
-        return switch (align) {
+    /**
+     * Sets bold on both the ordinary and the complex-script slot.
+     *
+     * <p>{@code w:b} does not reach Hebrew or Arabic; {@code w:bCs} is what does. Written
+     * apart, a bold right-to-left run comes out at book weight.</p>
+     */
+    private static void setBold(XWPFRun run) {
+        run.setBold(true);
+        run.setComplexScriptBold(true);
+    }
+
+    /** Sets italic on both slots, for the reason {@link #setBold(XWPFRun)} gives. */
+    private static void setItalic(XWPFRun run) {
+        run.setItalic(true);
+        run.setComplexScriptItalic(true);
+    }
+
+    /**
+     * Maps a page alignment onto the one Word will draw, given the paragraph's direction.
+     *
+     * <p>Word reads {@code w:jc}'s {@code left} and {@code right} as the <em>start</em> and
+     * <em>end</em> of the text flow rather than as edges of the page. In a {@code w:bidi}
+     * paragraph the flow starts at the right, so writing the alignment the page resolved —
+     * flush right for a right-to-left paragraph — told Word to align to the flow's end and
+     * drew it flush left, the one place it could not belong. Swapping the two for such a
+     * paragraph is what makes the written value mean what it says.</p>
+     *
+     * @param align        the page's resolved alignment, or {@code null} for the default
+     * @param rightToLeft  whether the paragraph is laid out right to left
+     * @return the alignment to write
+     */
+    private static ParagraphAlignment toAlignment(TextAlign align, boolean rightToLeft) {
+        ParagraphAlignment resolved = align == null ? ParagraphAlignment.LEFT : switch (align) {
             case CENTER -> ParagraphAlignment.CENTER;
             case RIGHT -> ParagraphAlignment.RIGHT;
             default -> ParagraphAlignment.LEFT;
+        };
+        if (!rightToLeft) {
+            return resolved;
+        }
+        return switch (resolved) {
+            case LEFT -> ParagraphAlignment.RIGHT;
+            case RIGHT -> ParagraphAlignment.LEFT;
+            default -> resolved;
         };
     }
 }

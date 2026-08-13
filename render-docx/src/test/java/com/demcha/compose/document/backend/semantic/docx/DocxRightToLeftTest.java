@@ -74,6 +74,40 @@ class DocxRightToLeftTest {
     }
 
     @Test
+    void aCentredRightToLeftParagraphStaysCentred() throws Exception {
+        // The third arm of the swap. Only left and right are flow-relative in ST_Jc;
+        // written as a two-way "right becomes left, everything else becomes right", a
+        // centred Hebrew heading would export as `right` and Word would draw it against
+        // a margin, with every other case in this class still green.
+        XWPFParagraph paragraph = onlyParagraph(HEBREW, TextDirection.RTL, TextAlign.CENTER);
+
+        assertThat(paragraph.getCTP().getPPr().getJc().getVal().toString())
+                .describedAs("centre is the same edge in either direction")
+                .isEqualTo("center");
+    }
+
+    @Test
+    void aLeftToRightCellParagraphKeepsTheAlignmentItAskedFor() throws Exception {
+        // The one change here that moves a document containing no Hebrew: before, a cell
+        // paragraph was written with its runs and no alignment at all, so an explicit
+        // right-aligned amount drew flush left. Gate the new call on `rightToLeft` and it
+        // silently goes back to doing that.
+        List<XWPFParagraph> cells = cellParagraphs(row -> row
+                .weights(1.0)
+                .addParagraph(p -> p.text("1,200.00").align(TextAlign.RIGHT)
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.HELVETICA).size(12).build())));
+
+        assertThat(cells).hasSize(1);
+        assertThat(cells.get(0).getCTP().getPPr().isSetBidi())
+                .describedAs("nothing declares a direction it does not have")
+                .isFalse();
+        assertThat(cells.get(0).getCTP().getPPr().getJc().getVal().toString())
+                .describedAs("the alignment the author asked for reaches the cell")
+                .isEqualTo("right");
+    }
+
+    @Test
     void theRequestedSizeReachesTheComplexScriptCharacters() throws Exception {
         XWPFParagraph paragraph = onlyParagraph(HEBREW, TextDirection.RTL, null);
         var properties = paragraph.getRuns().get(0).getCTR().getRPr();
@@ -111,40 +145,46 @@ class DocxRightToLeftTest {
         // Where an invoice keeps its line items. A row becomes a one-row table, and the
         // cell walk wrote the runs without the alignment and direction the same paragraph
         // gets outside a table — so every right-to-left cell was left undeclared.
+        List<XWPFParagraph> cells = cellParagraphs(row -> row
+                .weights(1.0, 1.0)
+                .addParagraph(p -> p.text(HEBREW).direction(TextDirection.RTL)
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.DAVID_LIBRE).size(12).build()))
+                .addParagraph(p -> p.text("1,200.00").direction(TextDirection.RTL)
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.DAVID_LIBRE).size(12).build())));
+
+        assertThat(cells).describedAs("the row became a table with its cells").hasSize(2);
+        assertThat(cells).allSatisfy(paragraph -> {
+            assertThat(paragraph.getCTP().getPPr().isSetBidi())
+                    .describedAs("cell paragraph %s declares its direction",
+                            paragraph.getText())
+                    .isTrue();
+            assertThat(paragraph.getCTP().getPPr().getJc().getVal().toString())
+                    .describedAs("and starts from the edge a right-to-left line starts from")
+                    .isEqualTo("left");
+        });
+    }
+
+    /** Exports a one-row table and returns the paragraphs its cells carry. */
+    private static List<XWPFParagraph> cellParagraphs(
+            Consumer<com.demcha.compose.document.dsl.RowBuilder> row) throws Exception {
         byte[] docx;
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(400, 200)
                 .margin(DocumentInsets.of(20))
                 .create()) {
-            document.pageFlow(page -> page.addRow(row -> row
-                    .weights(1.0, 1.0)
-                    .addParagraph(p -> p.text(HEBREW).direction(TextDirection.RTL)
-                            .textStyle(DocumentTextStyle.builder()
-                                    .fontName(FontName.DAVID_LIBRE).size(12).build()))
-                    .addParagraph(p -> p.text("1,200.00").direction(TextDirection.RTL)
-                            .textStyle(DocumentTextStyle.builder()
-                                    .fontName(FontName.DAVID_LIBRE).size(12).build()))));
+            document.pageFlow(page -> page.addRow(row::accept));
             docx = document.export(new DocxSemanticBackend());
         }
 
         try (XWPFDocument word = new XWPFDocument(new ByteArrayInputStream(docx))) {
-            List<XWPFParagraph> cells = word.getTables().stream()
+            return word.getTables().stream()
                     .flatMap(table -> table.getRows().stream())
-                    .flatMap(row -> row.getTableCells().stream())
+                    .flatMap(tableRow -> tableRow.getTableCells().stream())
                     .flatMap(cell -> cell.getParagraphs().stream())
                     .filter(paragraph -> !paragraph.getText().isBlank())
                     .toList();
-
-            assertThat(cells).describedAs("the row became a table with its cells").hasSize(2);
-            assertThat(cells).allSatisfy(paragraph -> {
-                assertThat(paragraph.getCTP().getPPr().isSetBidi())
-                        .describedAs("cell paragraph %s declares its direction",
-                                paragraph.getText())
-                        .isTrue();
-                assertThat(paragraph.getCTP().getPPr().getJc().getVal().toString())
-                        .describedAs("and starts from the edge a right-to-left line starts from")
-                        .isEqualTo("left");
-            });
         }
     }
 

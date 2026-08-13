@@ -53,10 +53,13 @@ public final class BidiVisualOrder {
      * @return the same order with paired punctuation at right-to-left levels swapped
      */
     public static String mirrorRightToLeftLevels(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
         int[] levels = BidiParagraphResolver.levelsFor(
                 text, BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT);
         if (levels.length == 0) {
-            return text == null ? "" : text;
+            return text;
         }
         StringBuilder mirrored = new StringBuilder(text.length());
         int from = 0;
@@ -88,10 +91,13 @@ public final class BidiVisualOrder {
      * @return the text as a left-to-right drawing order
      */
     public static String visualize(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
         int[] levels = BidiParagraphResolver.levelsFor(
                 text, BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT);
         if (levels.length == 0) {
-            return text == null ? "" : text;
+            return text;
         }
 
         List<String> runs = new ArrayList<>();

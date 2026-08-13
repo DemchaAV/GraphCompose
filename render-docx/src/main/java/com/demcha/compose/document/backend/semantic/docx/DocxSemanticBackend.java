@@ -25,8 +25,6 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.RowNode;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
@@ -322,10 +320,25 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
-        boolean rightToLeft = ParagraphDirection.resolve(node) == TextDirection.RTL;
-        para.setAlignment(toAlignment(node.align(), rightToLeft));
-        applyDirection(para, rightToLeft);
+        applyParagraphProperties(para, node);
         writeParagraphRuns(para, node);
+    }
+
+    /**
+     * Writes the properties a paragraph carries whatever it sits in.
+     *
+     * <p>One place on purpose. These were written where a paragraph is a document child
+     * and not where it is a table cell's, which is how every right-to-left invoice line
+     * came out undeclared; splitting them again would set the next property up for the
+     * same fate.</p>
+     *
+     * @param target the Word paragraph
+     * @param source the node it was written from
+     */
+    private static void applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
+        boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
+        target.setAlignment(toAlignment(source.align(), rightToLeft));
+        applyDirection(target, rightToLeft);
     }
 
     /**
@@ -780,9 +793,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // direction too. Writing only the runs left every right-to-left paragraph
             // inside a table undeclared, which is where an invoice keeps its line items.
             XWPFParagraph cellParagraph = cell.addParagraph();
-            boolean rightToLeft = ParagraphDirection.resolve(paragraph) == TextDirection.RTL;
-            cellParagraph.setAlignment(toAlignment(paragraph.align(), rightToLeft));
-            applyDirection(cellParagraph, rightToLeft);
+            applyParagraphProperties(cellParagraph, paragraph);
             writeParagraphRuns(cellParagraph, paragraph);
         } else if (child instanceof ContainerNode container) {
             for (DocumentNode grandChild : container.children()) {
@@ -828,7 +839,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // Word sizes complex-script characters — Hebrew, Arabic — from w:szCs and not
             // from w:sz, so a run carrying both scripts draws its Latin at the asked size
             // and everything else at Word's own default until this is written too.
-            complexScriptProperties(run).addNewSzCs().setVal(java.math.BigInteger.valueOf(points * 2L));
+            run.setComplexScriptFontSize(points);
         }
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));
@@ -889,19 +900,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private static void setBold(XWPFRun run) {
         run.setBold(true);
-        complexScriptProperties(run).addNewBCs();
+        run.setComplexScriptBold(true);
     }
 
     /** Sets italic on both slots, for the reason {@link #setBold(XWPFRun)} gives. */
     private static void setItalic(XWPFRun run) {
         run.setItalic(true);
-        complexScriptProperties(run).addNewICs();
-    }
-
-    /** The run's property block, created on first use. */
-    private static CTRPr complexScriptProperties(XWPFRun run) {
-        CTR ctr = run.getCTR();
-        return ctr.isSetRPr() ? ctr.getRPr() : ctr.addNewRPr();
+        run.setComplexScriptItalic(true);
     }
 
     /**

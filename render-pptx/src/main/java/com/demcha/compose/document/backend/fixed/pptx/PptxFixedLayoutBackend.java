@@ -142,6 +142,8 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * PDF backend into a transparent picture, giving pixel-exact clipping.
      */
     private final boolean clipRasterFallback;
+    /** Package-visible: the multi-section assembly reads it off the invoked backend. */
+    final boolean embedBundledFonts;
 
     /**
      * Creates a backend with the default handler set.
@@ -161,6 +163,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         this.handlers = Map.copyOf(merged);
         this.rasterSlidesDpi = builder.rasterSlidesDpi;
         this.clipRasterFallback = builder.clipRasterFallback;
+        this.embedBundledFonts = builder.embedBundledFonts;
         this.metadataOptions = builder.metadataOptions;
         this.watermarkOptions = builder.watermarkOptions;
         this.headerFooterOptions = List.copyOf(builder.headerFooterOptions);
@@ -269,9 +272,10 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * {@link SectionUnit#chrome() chrome} backend — handlers, watermark,
      * header/footer with section-local page numbering, and raster-slide mode
      * are all per-section settings; only deck-global concerns come from the
-     * backend this method is invoked on (deterministic output) or from the
-     * first section that declares them (metadata), matching the PDF backend's
-     * combined-document rules. Anchors, links, and slide names resolve across
+     * backend this method is invoked on (deterministic output, bundled-font
+     * embedding — a deck has one font table) or from the first section that
+     * declares them (metadata), matching the PDF backend's combined-document
+     * rules. Anchors, links, and slide names resolve across
      * section boundaries against the combined deck; a raster-slide section
      * still resolves incoming links and bookmarks, but its own outgoing
      * navigation is baked into the pixels. A PPTX deck carries one slide
@@ -385,6 +389,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
             PptxRenderEnvironment environment =
                     new PptxRenderEnvironment(show, session, 0, graph.canvas().height(),
                             measurement.fontLibrary(), context.customFontFamilies());
+            environment.embedsBundledFonts(embedBundledFonts);
             int pageCount = Math.max(graph.totalPages(), 1);
             PptxChromeRenderer.applyWatermarkBehindContent(
                     environment, watermarkOptions, graph.canvas(), pageCount);
@@ -395,6 +400,11 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                     environment, headerFooterOptions, graph.canvas(), pageCount);
             PptxNavigationWriter.apply(environment);
             environment.logRasterizedClipSummary();
+            // After the last run is drawn, so only the families the deck actually used
+            // are offered to the embedder.
+            if (embedBundledFonts) {
+                environment.embedBundledFontsUsed();
+            }
             if (metadataOptions != null) {
                 PptxDeckAssembly.applyMetadata(show, metadataOptions);
             }
@@ -684,6 +694,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
         private final List<PptxFragmentRenderHandler<?>> customHandlers = new ArrayList<>();
         private int rasterSlidesDpi;
         private boolean clipRasterFallback = true;
+        private boolean embedBundledFonts = true;
         private DocumentMetadata metadataOptions;
         private DocumentWatermark watermarkOptions;
         private final List<DocumentHeaderFooter> headerFooterOptions = new ArrayList<>();
@@ -857,6 +868,36 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
          */
         public Builder clipRasterFallback(boolean enabled) {
             this.clipRasterFallback = enabled;
+            return this;
+        }
+
+        /**
+         * Controls whether a bundled font family the deck drew with travels with it.
+         *
+         * <p>On by default, because a viewer without the family installed substitutes, and
+         * for a script the substitute does not cover — Georgian, Armenian, Hangul, Arabic,
+         * Hebrew — that means boxes rather than words. A family a caller registers has
+         * always travelled; this is the same terms for the ones the library ships.</p>
+         *
+         * <p>It costs what a font weighs. Embedding carries a font program whole — there is
+         * no subsetting — so only the faces a run actually drew are taken: a deck that uses
+         * one weight of a family does not carry the others. Measured on the shipped
+         * examples, an Arabic article grows from 29&nbsp;KB to 235&nbsp;KB and a
+         * five-script catalogue from 27&nbsp;KB to 1.4&nbsp;MB. Turn it off for a deck
+         * whose readers are known to have the fonts, or one that only uses Latin families
+         * a viewer will substitute acceptably — the deck then names each family and
+         * carries none.</p>
+         *
+         * <p>This governs the families the library <em>ships</em>. A family the caller
+         * registers through {@code registerFontFamily} travels regardless of this flag,
+         * and at family granularity rather than face.</p>
+         *
+         * @param enabled {@code true} carries the families the deck used
+         * @return this builder
+         * @since 2.2.0
+         */
+        public Builder embedBundledFonts(boolean enabled) {
+            this.embedBundledFonts = enabled;
             return this;
         }
 

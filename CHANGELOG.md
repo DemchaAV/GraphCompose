@@ -134,6 +134,35 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
+- **A deck carries the bundled fonts it drew with.** A family a caller registers has
+  always been embedded; a family this library *ships* — Amiri for Arabic, David Libre for
+  Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was only warned
+  about. The deck named it and embedded nothing, so a viewer without the font installed
+  substituted, and for a script the substitute does not cover the slide showed boxes. The
+  shipped families are exactly the ones a deck reaches for when its reader is least likely
+  to have the font, which is what made the asymmetry sharp: register your own Arabic font
+  and it travelled, use the one shipped for exactly that purpose and it did not.
+
+  Only what was drawn travels, down to the face: the bundled set is dozens of families,
+  and a face nobody drew is pure weight — embedding carries a font program whole, so the
+  five-script catalogue was shipping Gothic A1 Bold at 2.2 MB for glyphs no slide
+  contains. Measured on the shipped examples, the Arabic article goes from 29 KB to
+  235 KB and the catalogue from 27 KB to 1.4 MB.
+  `PptxFixedLayoutBackend.Builder.embedBundledFonts(false)` declines it for a deck whose
+  readers are known to have the fonts.
+
+  A family the deck carries is no longer reported as one the reader must install. The
+  substitution warning fires while a run is drawn and the embedding happens after the last
+  one, so a deck that carries Amiri was telling its author to register Amiri — the opposite
+  of what shipped. A render told not to carry them still says so, because then the file
+  really does only name the family.
+
+  Decks that use no bundled binary family are byte-identical — all seven committed deck
+  previews, measured. Layout is untouched either way: a registered family also contributes
+  viewer metrics, which participate in placement, and taking those from a bundled family
+  now would move text in decks that already render correctly. This changes what the file
+  carries, not where anything sits.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

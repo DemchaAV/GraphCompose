@@ -65,17 +65,17 @@ final class PptxTextFrames {
      * As {@link #preparedParagraph(XSLFTextBox)}, declaring the paragraph's base direction.
      *
      * <p>A right-to-left line is drawn as one frame per span, each pinned where the layout
-     * put it, so the order across the line is already settled before PowerPoint sees it.
-     * What is not settled is what happens <em>inside</em> a frame: the text handed over is
-     * logical, and paired punctuation still has to be mirrored (UAX #9 L4) and neutrals
-     * still have to fall on the correct side. PowerPoint does both — from the paragraph's
-     * base direction, which without this is left-to-right by default. A frame holding a
-     * lone bracket then has nothing to resolve against and draws it facing the way it was
-     * typed rather than the way the line reads.</p>
+     * put it, so the order across the line is settled before PowerPoint sees it. What is
+     * not settled is what happens <em>inside</em> a frame: the text handed over is logical,
+     * and neutrals still have to fall on the correct side of it. PowerPoint does that from
+     * the paragraph's base direction, which without this is left-to-right by default — the
+     * em-dash of a mixed line sat on the wrong side of its frame until this was written.</p>
      *
-     * <p>Declared rather than mirrored here on purpose: the stored text stays the author's,
-     * so a copy out of the slide is the written word and PowerPoint's own Arabic shaper
-     * still has the letters it expects.</p>
+     * <p>It settles placement and not mirroring. PowerPoint does not go on to mirror a
+     * neutral it has placed, so a bracket is swapped by
+     * {@code PptxParagraphFragmentRenderHandler} before the text is handed over — measured
+     * on a slide, not assumed. The two halves are one fix; removing either brings the bug
+     * back.</p>
      */
     static XSLFTextParagraph preparedParagraph(XSLFTextBox box, boolean rightToLeft) {
         XSLFTextParagraph paragraph = box.getTextParagraphs().get(0);

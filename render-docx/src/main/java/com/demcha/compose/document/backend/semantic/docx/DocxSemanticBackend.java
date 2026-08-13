@@ -775,9 +775,15 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      */
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
         if (child instanceof ParagraphNode paragraph) {
-            // Same walk as writeParagraph: a cell paragraph keeps per-run styling
-            // instead of being flattened into the concatenated text in one style.
-            writeParagraphRuns(cell.addParagraph(), paragraph);
+            // Same walk as writeParagraph, all of it: a cell paragraph keeps per-run
+            // styling instead of being flattened into one style — and its alignment and
+            // direction too. Writing only the runs left every right-to-left paragraph
+            // inside a table undeclared, which is where an invoice keeps its line items.
+            XWPFParagraph cellParagraph = cell.addParagraph();
+            boolean rightToLeft = ParagraphDirection.resolve(paragraph) == TextDirection.RTL;
+            cellParagraph.setAlignment(toAlignment(paragraph.align(), rightToLeft));
+            applyDirection(cellParagraph, rightToLeft);
+            writeParagraphRuns(cellParagraph, paragraph);
         } else if (child instanceof ContainerNode container) {
             for (DocumentNode grandChild : container.children()) {
                 writeCellNode(cell, grandChild);

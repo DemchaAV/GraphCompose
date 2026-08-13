@@ -16,6 +16,7 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -103,6 +104,48 @@ class DocxRightToLeftTest {
     /** The schema types a measure as an open value; every writer here puts a number in it. */
     private static int halfPoints(Object value) {
         return ((Number) value).intValue();
+    }
+
+    @Test
+    void aRightToLeftParagraphInsideATableCellIsDeclaredToo() throws Exception {
+        // Where an invoice keeps its line items. A row becomes a one-row table, and the
+        // cell walk wrote the runs without the alignment and direction the same paragraph
+        // gets outside a table — so every right-to-left cell was left undeclared.
+        byte[] docx;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow(page -> page.addRow(row -> row
+                    .weights(1.0, 1.0)
+                    .addParagraph(p -> p.text(HEBREW).direction(TextDirection.RTL)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.DAVID_LIBRE).size(12).build()))
+                    .addParagraph(p -> p.text("1,200.00").direction(TextDirection.RTL)
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.DAVID_LIBRE).size(12).build()))));
+            docx = document.export(new DocxSemanticBackend());
+        }
+
+        try (XWPFDocument word = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            List<XWPFParagraph> cells = word.getTables().stream()
+                    .flatMap(table -> table.getRows().stream())
+                    .flatMap(row -> row.getTableCells().stream())
+                    .flatMap(cell -> cell.getParagraphs().stream())
+                    .filter(paragraph -> !paragraph.getText().isBlank())
+                    .toList();
+
+            assertThat(cells).describedAs("the row became a table with its cells").hasSize(2);
+            assertThat(cells).allSatisfy(paragraph -> {
+                assertThat(paragraph.getCTP().getPPr().isSetBidi())
+                        .describedAs("cell paragraph %s declares its direction",
+                                paragraph.getText())
+                        .isTrue();
+                assertThat(paragraph.getCTP().getPPr().getJc().getVal().toString())
+                        .describedAs("and starts from the edge a right-to-left line starts from")
+                        .isEqualTo("left");
+            });
+        }
     }
 
     private static XWPFParagraph onlyParagraph(String text, TextDirection direction,

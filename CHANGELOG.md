@@ -151,6 +151,11 @@ follow semantic versioning; release dates are ISO 8601.
   paragraph was drawn at Word's own default while Latin in the same run obeyed `w:sz`.
   Each is now written alongside its Latin twin.
 
+  The same two properties now reach a paragraph **inside a table cell**, which the cell
+  walk had been writing without them: it wrote the runs and skipped the alignment and
+  direction the identical paragraph gets outside a table. That is where an invoice keeps
+  its line items, so every right-to-left cell in one was left undeclared.
+
   A left-to-right document is unchanged — the alignment mapping is the identity there, and
   Latin always obeyed the properties that were being written, which is why none of this
   surfaced until a document had Hebrew in it.

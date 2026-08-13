@@ -148,9 +148,10 @@ follow semantic versioning; release dates are ISO 8601.
   em-dash of a mixed line moved to the side it belongs on the moment that was written.
   It is not sufficient on its own: PowerPoint does not go on to mirror a neutral it has
   placed, so the bracket is swapped at the same seam the PDF backend swaps it. The cost
-  is worth naming — a copy out of the slide carries the mirrored bracket rather than the
-  typed one, which is the trade a readable line is worth. Left-to-right frames are
-  untouched.
+  is worth naming — a copy out of the slide carries the mirrored character rather than the
+  typed one. That set is document punctuation and it includes `<` and `>`, so an
+  expression like `a > b` inside a right-to-left line copies out with the comparison
+  swapped. Left-to-right frames are untouched.
 
 ### Fonts
 

@@ -272,9 +272,10 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
      * {@link SectionUnit#chrome() chrome} backend — handlers, watermark,
      * header/footer with section-local page numbering, and raster-slide mode
      * are all per-section settings; only deck-global concerns come from the
-     * backend this method is invoked on (deterministic output) or from the
-     * first section that declares them (metadata), matching the PDF backend's
-     * combined-document rules. Anchors, links, and slide names resolve across
+     * backend this method is invoked on (deterministic output, bundled-font
+     * embedding — a deck has one font table) or from the first section that
+     * declares them (metadata), matching the PDF backend's combined-document
+     * rules. Anchors, links, and slide names resolve across
      * section boundaries against the combined deck; a raster-slide section
      * still resolves incoming links and bookmarks, but its own outgoing
      * navigation is baked into the pixels. A PPTX deck carries one slide
@@ -878,12 +879,18 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
          * Hebrew — that means boxes rather than words. A family a caller registers has
          * always travelled; this is the same terms for the ones the library ships.</p>
          *
-         * <p>It costs what a font weighs. Embedding is whole-font, all facets of each
-         * family that was drawn with: measured on the shipped examples, an Arabic article
-         * grows from 29&nbsp;KB to 834&nbsp;KB and a five-script catalogue from
-         * 27&nbsp;KB to 3&nbsp;MB. Turn it off for a deck whose readers are known to have
-         * the fonts, or one that only uses Latin families a viewer will substitute
-         * acceptably — the deck then names each family and carries none.</p>
+         * <p>It costs what a font weighs. Embedding carries a font program whole — there is
+         * no subsetting — so only the faces a run actually drew are taken: a deck that uses
+         * one weight of a family does not carry the others. Measured on the shipped
+         * examples, an Arabic article grows from 29&nbsp;KB to 235&nbsp;KB and a
+         * five-script catalogue from 27&nbsp;KB to 1.4&nbsp;MB. Turn it off for a deck
+         * whose readers are known to have the fonts, or one that only uses Latin families
+         * a viewer will substitute acceptably — the deck then names each family and
+         * carries none.</p>
+         *
+         * <p>This governs the families the library <em>ships</em>. A family the caller
+         * registers through {@code registerFontFamily} travels regardless of this flag,
+         * and at family granularity rather than face.</p>
          *
          * @param enabled {@code true} carries the families the deck used
          * @return this builder

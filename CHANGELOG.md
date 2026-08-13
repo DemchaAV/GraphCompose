@@ -135,13 +135,13 @@ follow semantic versioning; release dates are ISO 8601.
   engine's own tests read it there.
 
 - **A deck carries the bundled fonts it drew with.** A family a caller registers has
-  always been embedded, and warned about when it could not be; a family this library
-  *ships* — Amiri for Arabic, David Libre for Hebrew, the Noto faces for Georgian and
-  Armenian, Gothic A1 for Hangul — was neither. The deck named it and embedded nothing, so
-  a viewer without the font installed substituted, and for a script the substitute does not
-  cover the slide showed boxes. The shipped families are exactly the ones a deck reaches
-  for when its reader is least likely to have the font, which is what made the asymmetry
-  sharp.
+  always been embedded; a family this library *ships* — Amiri for Arabic, David Libre for
+  Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was only warned
+  about. The deck named it and embedded nothing, so a viewer without the font installed
+  substituted, and for a script the substitute does not cover the slide showed boxes. The
+  shipped families are exactly the ones a deck reaches for when its reader is least likely
+  to have the font, which is what made the asymmetry sharp: register your own Arabic font
+  and it travelled, use the one shipped for exactly that purpose and it did not.
 
   Only what was drawn travels, down to the face: the bundled set is dozens of families,
   and a face nobody drew is pure weight — embedding carries a font program whole, so the

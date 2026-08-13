@@ -37,9 +37,10 @@ import java.util.zip.ZipInputStream;
  * edge, because the shipped families are exactly what a deck reaches for when the reader is
  * least likely to have the font.</p>
  *
- * <p>Only what was drawn is embedded. The bundled set is dozens of families and embedding
- * here is whole-font, so a deck that carried all of them would be tens of megabytes — which
- * is what the last case is about.</p>
+ * <p>Only what was drawn is embedded, down to the face. The bundled set is dozens of
+ * families and embedding here is whole-font, so a deck that carried all of them would be
+ * tens of megabytes — which is what {@code aDeckCarriesOnlyTheFamiliesItDrewWith} and the
+ * two face cases are about.</p>
  */
 class PptxBundledFontEmbeddingTest {
 
@@ -102,8 +103,8 @@ class PptxBundledFontEmbeddingTest {
     @Test
     void aDeckCanBeAskedToCarryNothing() throws Exception {
         // The escape hatch, and the reason it exists: embedding is whole-font, so the
-        // shipped five-script catalogue goes from 27 KB to 3 MB. A deck whose readers are
-        // known to have the fonts can decline that.
+        // shipped five-script catalogue goes from 27 KB to 1.4 MB. A deck whose readers
+        // are known to have the fonts can decline that.
         assertThat(fontPartsOf(renderWith(PptxFixedLayoutBackend.builder()
                 .embedBundledFonts(false)
                 .build())))
@@ -116,8 +117,9 @@ class PptxBundledFontEmbeddingTest {
         // The warning fires while a run is drawn; the embedding happens after the last
         // one. Left alone, a deck that carries Amiri told its author "not registered with
         // binary sources ... register the family to embed it" — the opposite of what the
-        // file ends up containing, and nothing in the suite could see it because no test
-        // read the log.
+        // file ends up containing. PptxFontSubstitutionWarningTest already reads this log,
+        // but only for Helvetica, a facet-suffixed name and a registered family, so no
+        // case ever drew with a bundled one and the contradiction passed CI.
         List<String> warnings = substitutionWarningsFrom(true);
 
         assertThat(warnings)

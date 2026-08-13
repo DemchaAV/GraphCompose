@@ -66,8 +66,9 @@ final class PptxDeckAssembly {
                     show, canvas.width(), canvas.height(), totalPages);
             PptxRenderEnvironment environment = new PptxRenderEnvironment(
                     show, session, 0, canvas.height(), measurement.fontLibrary(), unionFonts);
-            // A combined deck has one presentation and one font table, so the first
-            // section's answer governs: sections are chrome, not separate documents.
+            // A combined deck has one presentation and one font table, so one answer has
+            // to govern: the backend renderSections was invoked on, as deterministic
+            // output already does. A per-section chrome that declines is not consulted.
             environment.embedsBundledFonts(invoked.embedBundledFonts);
             int pageOffset = 0;
             for (SectionUnit section : sections) {

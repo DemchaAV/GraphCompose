@@ -125,11 +125,13 @@ class PptxRightToLeftFrameTest {
     }
 
     @Test
-    void aChipInsideARightToLeftLineDeclaresItsDirection() throws Exception {
-        // The second frame-declaring site. Nothing else in the suite reaches it, so
-        // reverting it alone left an undeclared frame and every test still green.
-        // Located by the chip's letters rather than by its full text, so this case keeps
-        // failing for its own reason if the mirroring exemption is ever lost.
+    void aMixedChipIsSettledByTheEngineNotByPowerPoint() throws Exception {
+        // A chip is one rounded fill, so the wrapper cannot split it at a level
+        // boundary; a chip that mixes directions therefore cannot be trusted to
+        // PowerPoint, which re-places the levels but does not mirror what it moves.
+        // The engine resolves the chip's own levels and hands over its visual string —
+        // the same string the PDF draws — in a frame that declares nothing, so
+        // PowerPoint has nothing left to re-resolve.
         List<XSLFTextParagraph> chipFrames = paragraphsOf(renderChipLine()).stream()
                 .filter(paragraph -> paragraph.getText().contains("a")
                         && paragraph.getText().contains("b"))
@@ -137,25 +139,38 @@ class PptxRightToLeftFrameTest {
 
         assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
         assertThat(chipFrames)
-                .describedAs("the chip frame says which way it reads")
-                .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+                .describedAs("a settled frame declares nothing, or PowerPoint would "
+                        + "reorder the settled string a second time")
+                .noneMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+        assertThat(chipFrames)
+                .describedAs("the stored string is the engine's visual order, its "
+                        + "interior exactly as the author wrote it")
+                .allSatisfy(paragraph -> assertThat(paragraph.getText())
+                        .contains("(a > b)")
+                        .doesNotContain("<"));
     }
 
     @Test
-    void aChipKeepsThePunctuationItsInteriorLevelIsEntitledTo() throws Exception {
-        // A chip is one rounded fill, so the wrapper cannot split it at a level boundary
-        // and gives it its first character's level whole. Mirroring such a span whole
-        // reaches an interior that sits at the opposite level, where UAX #9 L4 mirrors
-        // nothing: "(a > b)" after a Hebrew word came out ")a < b(", inverting a
-        // comparison in the only copy of the text the file has.
-        assertThat(texts(paragraphsOf(renderChipLine())))
-                .filteredOn(text -> text.contains("a ") && text.contains(" b"))
-                .describedAs("the chip's text is found in the deck")
-                .isNotEmpty()
-                .allSatisfy(text -> assertThat(text)
-                        .describedAs("the comparison reads the way it was written")
-                        .contains(">")
-                        .doesNotContain("<"));
+    void aSingleLevelChipGetsThePlainSpanTreatment() throws Exception {
+        // A chip that is wholly right-to-left has nothing mixed to settle: it keeps
+        // logical order for PowerPoint to place, declares its direction, and its
+        // paired punctuation is pre-mirrored — exactly what a plain span gets.
+        // Built through highlight() so the chip run carries the Hebrew-capable font
+        // itself; chip() leaves the run's font to the default, which has no Hebrew.
+        List<XSLFTextParagraph> chipFrames = paragraphsOf(
+                renderHighlightLine("(" + "שנה" + ")")).stream()
+                .filter(paragraph -> paragraph.getText().contains("שנה"))
+                .toList();
+
+        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
+        assertThat(chipFrames)
+                .describedAs("a logical-order frame must say which way it reads")
+                .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+        assertThat(chipFrames)
+                .describedAs("logical order with mirrored pairs: the stored text opens "
+                        + "on the mirrored closing form")
+                .allSatisfy(paragraph -> assertThat(paragraph.getText())
+                        .isEqualTo(")" + "שנה" + "("));
     }
 
     private static boolean declaresRightToLeft(XSLFTextParagraph paragraph) {
@@ -191,13 +206,38 @@ class PptxRightToLeftFrameTest {
      * That gap between the flag and the span is what the two chip cases exercise.</p>
      */
     private static byte[] renderChipLine() {
+        return renderChipLine(CHIP);
+    }
+
+    /** As {@link #renderChipLine(String)}, but the chip run carries its own full style. */
+    private static byte[] renderHighlightLine(String chipText) {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(420, 140)
                 .margin(DocumentInsets.of(20))
                 .create()) {
 
             document.pageFlow(page -> page.addParagraph(p -> p
-                    .rich(rich -> rich.plain("שלום ").chip(CHIP,
+                    .rich(rich -> rich.plain("שלום ").highlight(chipText,
+                            DocumentTextStyle.builder()
+                                    .fontName(FontName.DAVID_LIBRE).size(15).build(),
+                            DocumentColor.rgb(0xEF, 0xF1, 0xF3),
+                            3, DocumentInsets.of(2)))
+                    .direction(TextDirection.RTL)
+                    .textStyle(DocumentTextStyle.builder()
+                            .fontName(FontName.DAVID_LIBRE).size(15).build())));
+
+            return document.toPptxBytes();
+        }
+    }
+
+    private static byte[] renderChipLine(String chipText) {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(420, 140)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+
+            document.pageFlow(page -> page.addParagraph(p -> p
+                    .rich(rich -> rich.plain("שלום ").chip(chipText,
                             DocumentColor.rgb(0x24, 0x29, 0x2F),
                             DocumentColor.rgb(0xEF, 0xF1, 0xF3)))
                     .direction(TextDirection.RTL)

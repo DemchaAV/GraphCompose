@@ -939,8 +939,10 @@ final class ParagraphWrapping {
             }
             if (textSpan.background() != null) {
                 // A chip is one rounded fill, so it cannot be split; it takes its first
-                // character's level whole. A chip whose text changes direction inside
-                // itself keeps logical order within the chip — a known approximation.
+                // character's level whole, for placement in the line. Its interior is
+                // not flattened to that level: the render seam resolves the chip's own
+                // levels (BidiVisualOrder), so a chip whose text changes direction
+                // inside itself still draws each part the way it reads.
                 resolved.add(withDirection(textSpan, levels[start]));
                 resolvedLevels.add(levels[start]);
                 continue;

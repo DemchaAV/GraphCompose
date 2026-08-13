@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.engine.text.bidi.BidiMirroring;
+import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -238,8 +239,26 @@ public final class PptxParagraphFragmentRenderHandler
                 cursorX + padding.left(), textTop, textWidth,
                 Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
-                text, span.textStyle(), environment);
+        // A chip is the one span that can carry both directions' levels — one rounded
+        // fill, so the wrapper cannot split it, and its flag describes only its first
+        // character. A single-level chip gets the treatment a plain span gets: logical
+        // text, mirrored pairs, and the frame declaring its direction for PowerPoint to
+        // place. A mixed chip cannot be trusted to PowerPoint — it re-places the levels
+        // but does not mirror what it moves — so the engine settles the order itself and
+        // hands over its visual string in an undeclared frame: the same string the PDF
+        // draws, which is what keeps the two backends telling one story.
+        String chipText = text;
+        boolean frameRightToLeft = span.rightToLeft();
+        if (span.rightToLeft()) {
+            if (BidiVisualOrder.mixesDirections(chipText)) {
+                chipText = BidiVisualOrder.visualize(chipText);
+                frameRightToLeft = false;
+            } else {
+                chipText = BidiMirroring.mirror(chipText);
+            }
+        }
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, frameRightToLeft),
+                chipText, span.textStyle(), environment);
     }
 
     /**
@@ -398,13 +417,11 @@ public final class PptxParagraphFragmentRenderHandler
         // drew as ")AUTO resolves it (" where the same document as a PDF reads
         // "(AUTO resolves it)". The cost is that a copy out of the slide carries the
         // mirrored bracket rather than the typed one; a line nobody can read is worse.
-        // A chip is exempt, because it is the one span whose flag does not describe all
-        // of it: a chip is a single rounded fill, so the wrapper cannot split it at a
-        // level boundary and hands it its first character's level whole. Its interior may
-        // sit at the opposite level, where UAX #9 L4 mirrors nothing. Swapping such a span
-        // whole inverts punctuation the algorithm leaves alone — a chip reading
-        // "(a > b)" after a Hebrew word would be stored as ")a < b(", the comparison the
-        // wrong way round in the only copy of the text the file has.
+        // A chip is left alone here and settled at its own site (renderChip): it is the
+        // one span whose flag does not describe all of it — one rounded fill, so the
+        // wrapper cannot split it at a level boundary — and swapping it whole would
+        // invert punctuation its interior is entitled to keep. renderChip resolves the
+        // chip's own levels and mirrors only what actually moves.
         String logical = span.rightToLeft() && span.background() == null
                 ? BidiMirroring.mirror(span.text())
                 : span.text();

@@ -153,14 +153,30 @@ follow semantic versioning; release dates are ISO 8601.
   than the typed one. The swapped set is document punctuation and includes `<` and `>`, so
   a comparison written between two Hebrew or Arabic words copies out reversed. A `>`
   surrounded by Latin does not, because the wrapper gives that stretch a left-to-right span
-  of its own and the swap is keyed to the span's direction. An inline chip is exempt for
-  the same reason turned inside out: a chip is one rounded fill, so it cannot be split and
-  takes its first character's direction whole — swapping it whole would invert punctuation
-  its interior is entitled to keep. Left-to-right frames are untouched.
+  of its own and the swap is keyed to the span's direction. Left-to-right frames are
+  untouched.
 
   This rests on PowerPoint not applying UAX #9 L4 itself, which is measured rather than
   specified. A viewer that does apply it mirrors the character a second time and draws the
   original bug; the assumption is recorded in the backend capability matrix.
+
+- **A chip that mixes directions is drawn the way each of its parts reads — in both
+  backends.** A chip is one rounded fill, so the wrapper cannot split it at a level
+  boundary the way it splits plain text; it reaches the renderer whole, carrying its
+  first character's level. The PDF backend reversed and mirrored it whole, and that
+  inverted meaning, not just shape: a chip reading `(a > b)` after a Hebrew word drew as
+  `(b < a)` — operands swapped, comparison flipped — while the chip's interior is
+  left-to-right text that UAX #9 neither reorders nor mirrors.
+
+  The engine now resolves the chip's own embedding levels and reverses and mirrors only
+  the parts that actually read right to left (`BidiVisualOrder`). For a single-level chip
+  this is exactly the old reverse-and-mirror, so a wholly-Hebrew chip is unchanged. The
+  slide backend uses the same resolution: a mixed chip is handed to PowerPoint as the
+  engine's settled visual string in a frame that declares no direction — the same string
+  the PDF draws — because handing it logical text would let PowerPoint re-place the
+  neutrals it does not mirror. A single-level chip keeps the plain-span treatment:
+  logical order, mirrored pairs, declared direction. The digits case rode along: a chip
+  holding `שנה 2026` drew its year backwards for the same reason and no longer does.
 
 ### Fonts
 

@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.text.bidi.BidiMirroring;
 import com.demcha.compose.engine.text.bidi.BidiText;
+import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -137,16 +138,19 @@ public final class PdfParagraphFragmentRenderHandler
                                    ParagraphLine line,
                                    TextRenderState textState) throws IOException {
         PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
-        // A chip is one unsplittable span, so a right-to-left chip is reversed whole;
-        // mixed-direction text inside a chip keeps logical order (a known approximation).
-        // Sanitize-then-reverse, as in renderLine, so a degraded ligature keeps its
+        // A chip is one unsplittable span, so it is the one span that can reach this
+        // point carrying both directions' levels — the wrapper splits everything else
+        // at level boundaries. Reversing it whole inverted its interior: a chip reading
+        // "(a > b)" after a Hebrew word drew as "(b < a)", the comparison flipped. The
+        // level-aware transform reverses and mirrors only what UAX #9 moves; for a
+        // single-level chip it is the same reverse-and-mirror the plain path does.
+        // Sanitize-then-resolve, as in renderLine, so a degraded ligature keeps its
         // letter order.
-        String sanitizedLogical = font.sanitizeForRender(span.textStyle(),
-                span.rightToLeft() ? BidiMirroring.mirror(span.text()) : span.text());
+        String sanitizedLogical = font.sanitizeForRender(span.textStyle(), span.text());
         String text = sanitizedLogical;
         String written = null;
         if (span.rightToLeft()) {
-            text = BidiText.reverseForDisplay(sanitizedLogical);
+            text = BidiVisualOrder.visualize(sanitizedLogical);
             written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
         }

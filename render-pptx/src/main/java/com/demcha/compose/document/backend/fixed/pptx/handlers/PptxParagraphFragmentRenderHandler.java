@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
+import com.demcha.compose.engine.text.bidi.BidiMirroring;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.xslf.usermodel.XSLFShapeContainer;
@@ -389,8 +390,19 @@ public final class PptxParagraphFragmentRenderHandler
         // reader they were written for; the render sanitizing drops them, because a PDF
         // has no glyph for a zero-width control, and dropping them here would hand
         // PowerPoint a word it joins straight back up.
+        // Paired punctuation is mirrored here rather than left to PowerPoint. Declaring
+        // the frame's direction gets a neutral placed on the correct side — the em-dash
+        // of a mixed line moved to where it belongs the moment that was written — but
+        // PowerPoint does not go on to mirror the character itself, so a bracket closing
+        // a right-to-left line kept facing the way it was typed. Measured, on a slide it
+        // drew as ")AUTO resolves it (" where the same document as a PDF reads
+        // "(AUTO resolves it)". The cost is that a copy out of the slide carries the
+        // mirrored bracket rather than the typed one; a line nobody can read is worse.
+        String logical = span.rightToLeft()
+                ? BidiMirroring.mirror(span.text())
+                : span.text();
         return font.sanitizeForTextExport(span.textStyle(),
-                ArabicShaper.toBaseLetters(span.text()));
+                ArabicShaper.toBaseLetters(logical));
     }
 
     private static PdfFont.VerticalMetrics verticalMetrics(FontLibrary fonts,

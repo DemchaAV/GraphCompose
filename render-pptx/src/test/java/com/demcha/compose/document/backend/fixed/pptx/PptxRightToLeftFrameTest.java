@@ -33,10 +33,12 @@ import java.util.List;
  * was drawn facing the way it was typed rather than the way the line reads, while the same
  * document as a PDF was correct.</p>
  *
- * <p>What the slide draws is PowerPoint's to decide, so this pins the two things the file
- * is responsible for: the frames that carry right-to-left text say so, and the text inside
- * them is still the author's — mirroring here instead would have baked reversed brackets
- * into what a reader copies out.</p>
+ * <p>Declaring the direction is necessary and not sufficient. It fixes <em>placement</em>:
+ * the em-dash of a mixed line moved to the side it belongs on the moment it was written.
+ * It does not make PowerPoint mirror the character — measured on a slide, a bracket
+ * closing a right-to-left line still faced the way it was typed — so the swap is done
+ * here too, as it is at the PDF's own seam. The cost, stated because it is real: a copy
+ * out of the slide carries the mirrored bracket rather than the typed one.</p>
  */
 class PptxRightToLeftFrameTest {
 
@@ -77,17 +79,25 @@ class PptxRightToLeftFrameTest {
     }
 
     @Test
-    void theTextInsideStaysTheAuthorsRatherThanTheMirroredForm() throws Exception {
-        // Declared rather than mirrored on purpose: what a reader copies out of the slide
-        // is the written word, and PowerPoint's own Arabic shaper still gets the letters it
-        // expects. Mirroring in the backend would have looked identical and cost both.
-        String slideText = String.join("", texts(paragraphsOf(render(MIXED, TextDirection.RTL))));
+    void aBracketIsMirroredBeforeItIsHandedOver() throws Exception {
+        // Declaring the direction gets a neutral placed on the correct side — the em-dash
+        // of a mixed line moved the moment that was written — but PowerPoint does not go
+        // on to mirror the character, so the bracket kept facing the way it was typed.
+        // Measured on a slide: ")AUTO resolves it (" against the PDF's "(AUTO resolves
+        // it)". So the swap happens here, as it does at the PDF's own seam.
+        //
+        // Each frame is its own paragraph, so the check is per frame: the one the author
+        // ended with ')' is drawn leftmost and must therefore carry '(' — the bracket
+        // that opens the phrase where a reader meets it.
+        List<String> frames = texts(paragraphsOf(render(MIXED, TextDirection.RTL)));
 
-        assertThat(slideText)
-                .describedAs("brackets as typed, not swapped by us")
-                .contains("(")
-                .contains(")");
-        assertThat(slideText).contains("שנה טובה");
+        assertThat(frames)
+                .describedAs("the lone bracket is stored as the one that draws correctly; "
+                        + "frames were %s", frames)
+                .contains("(");
+        assertThat(frames.stream().filter(text -> text.contains("שנה טובה")).toList())
+                .describedAs("and the one sharing a frame with Hebrew is swapped too")
+                .allSatisfy(text -> assertThat(text).contains(")").doesNotContain("("));
     }
 
     @Test

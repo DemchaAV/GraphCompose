@@ -144,10 +144,13 @@ follow semantic versioning; release dates are ISO 8601.
   facing the way it was typed rather than the way the line reads, while the same document
   as a PDF was correct.
 
-  Each frame carrying right-to-left text now says so. Declared rather than mirrored here
-  on purpose: the stored text stays the author's, so a copy out of the slide is the
-  written word and PowerPoint's own Arabic shaper still has the letters it expects.
-  Left-to-right frames are untouched.
+  Each frame carrying right-to-left text now says so, which fixes *placement* — the
+  em-dash of a mixed line moved to the side it belongs on the moment that was written.
+  It is not sufficient on its own: PowerPoint does not go on to mirror a neutral it has
+  placed, so the bracket is swapped at the same seam the PDF backend swaps it. The cost
+  is worth naming — a copy out of the slide carries the mirrored bracket rather than the
+  typed one, which is the trade a readable line is worth. Left-to-right frames are
+  untouched.
 
 ### Fonts
 

@@ -87,6 +87,8 @@ public final class PptxRenderEnvironment {
      * for a facet that is never on a slide.</p>
      */
     private final Map<FontName, Set<Face>> usedFaces = new LinkedHashMap<>();
+    /** Bundled families already noted as carried, so the note is one line per family. */
+    private final Set<String> bundledCarryNoted = new LinkedHashSet<>();
 
     /** A family's four faces, as the source set names them. */
     private enum Face {
@@ -342,8 +344,14 @@ public final class PptxRenderEnvironment {
         } else if (embedsBundledFonts && EMBEDDABLE_BUNDLED.containsKey(fontName)) {
             // A bundled family this render carries itself. Warning here would tell the
             // reader the opposite of what the deck ends up containing; if the embed
-            // fails, embedBundledFontsUsed says so at the point it knows.
-            LOG.debug("render.pptx.font.bundled family={} — carried by this deck", sourceName);
+            // fails, embedBundledFontsUsed says so at the point it knows. Noted once per
+            // family, as the warning below is — an Arabic article draws sixteen hundred
+            // runs in one family, and sixteen hundred identical lines say nothing more
+            // than the first. Its own set, so a later decline still warns.
+            if (bundledCarryNoted.add(viewerFamily)) {
+                LOG.debug("render.pptx.font.bundled family={} — carried by this deck",
+                        sourceName);
+            }
         } else if (substitutionWarned.add(viewerFamily)) {
             // Nothing will carry it: either it was never registered, or this render was
             // asked not to carry bundled families. Either way the deck can only name it,
@@ -479,26 +487,6 @@ public final class PptxRenderEnvironment {
     }
 
     /**
-     * Embeds the bundled families this deck drew with, on the terms a registered one gets.
-     *
-     * <p>A family a caller registers themselves is embedded, and warned about when it
-     * cannot be. A family this library <em>ships</em> — Amiri for Arabic, David Libre for
-     * Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was neither:
-     * the deck named it and embedded nothing, so a viewer without it installed substituted,
-     * and for a script the substitute does not cover the slide showed boxes. The asymmetry
-     * was the sharp edge, since the shipped families are the ones a deck reaches for
-     * precisely when the reader is least likely to have the font.</p>
-     *
-     * <p>Only what was drawn is embedded — the bundled set is dozens of families, and a
-     * deck carrying all of them would be tens of megabytes. Embedding here is whole-font,
-     * with no subsetting, so a deck grows by the size of each family it uses.</p>
-     *
-     * <p>Metrics are deliberately untouched. A registered family also contributes viewer
-     * metrics, which participate in layout; taking those from a bundled family now would
-     * move text in every deck that already renders correctly. This changes what the file
-     * carries, not where anything sits.</p>
-     */
-    /**
      * Tells this render whether the families it uses will be carried.
      *
      * <p>Set before anything is drawn, because the answer changes what a run is warned
@@ -512,6 +500,29 @@ public final class PptxRenderEnvironment {
         this.embedsBundledFonts = enabled;
     }
 
+    /**
+     * Embeds the bundled families this deck drew with, on the terms a registered one gets.
+     *
+     * <p>A family a caller registers themselves is embedded, and warned about when it
+     * cannot be. A family this library <em>ships</em> — Amiri for Arabic, David Libre for
+     * Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was neither:
+     * the deck named it and embedded nothing, so a viewer without it installed substituted,
+     * and for a script the substitute does not cover the slide showed boxes. The asymmetry
+     * was the sharp edge, since the shipped families are the ones a deck reaches for
+     * precisely when the reader is least likely to have the font.</p>
+     *
+     * <p>Only what was drawn is embedded, down to the face — the bundled set is dozens of
+     * families, and embedding carries a font program whole with no subsetting, so a deck
+     * offering all of them would be tens of megabytes and one offering a face it never
+     * drew would pay megabytes for glyphs no slide contains.</p>
+     *
+     * <p>Metrics are deliberately untouched. A registered family also contributes viewer
+     * metrics, which participate in layout; taking those from a bundled family now would
+     * move text in every deck that already renders correctly. This changes what the file
+     * carries, not where anything sits.</p>
+     *
+     * <p>Call after the last run is drawn — the recorded face set is only complete then.</p>
+     */
     void embedBundledFontsUsed() {
         boolean embeddedAny = false;
         for (FontFamilyDefinition family : EMBEDDABLE_BUNDLED.values()) {

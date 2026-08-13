@@ -25,6 +25,8 @@ import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.node.RowNode;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.SpacerNode;
@@ -320,8 +322,9 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
-        para.setAlignment(toAlignment(node.align()));
-        applyDirection(para, node);
+        boolean rightToLeft = ParagraphDirection.resolve(node) == TextDirection.RTL;
+        para.setAlignment(toAlignment(node.align(), rightToLeft));
+        applyDirection(para, rightToLeft);
         writeParagraphRuns(para, node);
     }
 
@@ -341,8 +344,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * parenthesis came out the other way round. The answer comes from the same resolver
      * the page used, so the two cannot part company.</p>
      */
-    private static void applyDirection(XWPFParagraph para, ParagraphNode node) {
-        if (ParagraphDirection.resolve(node) != TextDirection.RTL) {
+    private static void applyDirection(XWPFParagraph para, boolean rightToLeft) {
+        if (!rightToLeft) {
             return;
         }
         CTPPr properties = para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
@@ -814,18 +817,23 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             run.setFontFamily(style.fontName().name());
         }
         if (style.size() > 0) {
-            run.setFontSize((int) Math.round(style.size()));
+            int points = (int) Math.round(style.size());
+            run.setFontSize(points);
+            // Word sizes complex-script characters — Hebrew, Arabic — from w:szCs and not
+            // from w:sz, so a run carrying both scripts draws its Latin at the asked size
+            // and everything else at Word's own default until this is written too.
+            complexScriptProperties(run).addNewSzCs().setVal(java.math.BigInteger.valueOf(points * 2L));
         }
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));
         }
         if (style.decoration() != null) {
             switch (style.decoration()) {
-                case BOLD -> run.setBold(true);
-                case ITALIC -> run.setItalic(true);
+                case BOLD -> setBold(run);
+                case ITALIC -> setItalic(run);
                 case BOLD_ITALIC -> {
-                    run.setBold(true);
-                    run.setItalic(true);
+                    setBold(run);
+                    setItalic(run);
                 }
                 case UNDERLINE ->
                         run.setUnderline(org.apache.poi.xwpf.usermodel.UnderlinePatterns.SINGLE);
@@ -867,14 +875,56 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         return String.format("%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
     }
 
-    private static ParagraphAlignment toAlignment(TextAlign align) {
-        if (align == null) {
-            return ParagraphAlignment.LEFT;
-        }
-        return switch (align) {
+    /**
+     * Sets bold on both the ordinary and the complex-script slot.
+     *
+     * <p>{@code w:b} does not reach Hebrew or Arabic; {@code w:bCs} is what does. Written
+     * apart, a bold right-to-left run comes out at book weight.</p>
+     */
+    private static void setBold(XWPFRun run) {
+        run.setBold(true);
+        complexScriptProperties(run).addNewBCs();
+    }
+
+    /** Sets italic on both slots, for the reason {@link #setBold(XWPFRun)} gives. */
+    private static void setItalic(XWPFRun run) {
+        run.setItalic(true);
+        complexScriptProperties(run).addNewICs();
+    }
+
+    /** The run's property block, created on first use. */
+    private static CTRPr complexScriptProperties(XWPFRun run) {
+        CTR ctr = run.getCTR();
+        return ctr.isSetRPr() ? ctr.getRPr() : ctr.addNewRPr();
+    }
+
+    /**
+     * Maps a page alignment onto the one Word will draw, given the paragraph's direction.
+     *
+     * <p>Word reads {@code w:jc}'s {@code left} and {@code right} as the <em>start</em> and
+     * <em>end</em> of the text flow rather than as edges of the page. In a {@code w:bidi}
+     * paragraph the flow starts at the right, so writing the alignment the page resolved —
+     * flush right for a right-to-left paragraph — told Word to align to the flow's end and
+     * drew it flush left, the one place it could not belong. Swapping the two for such a
+     * paragraph is what makes the written value mean what it says.</p>
+     *
+     * @param align        the page's resolved alignment, or {@code null} for the default
+     * @param rightToLeft  whether the paragraph is laid out right to left
+     * @return the alignment to write
+     */
+    private static ParagraphAlignment toAlignment(TextAlign align, boolean rightToLeft) {
+        ParagraphAlignment resolved = align == null ? ParagraphAlignment.LEFT : switch (align) {
             case CENTER -> ParagraphAlignment.CENTER;
             case RIGHT -> ParagraphAlignment.RIGHT;
             default -> ParagraphAlignment.LEFT;
+        };
+        if (!rightToLeft) {
+            return resolved;
+        }
+        return switch (resolved) {
+            case LEFT -> ParagraphAlignment.RIGHT;
+            case RIGHT -> ParagraphAlignment.LEFT;
+            default -> resolved;
         };
     }
 }

@@ -134,6 +134,27 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
+- **Word draws a right-to-left paragraph on the side it starts from, at the size it was
+  asked for.** Three of a run's properties mean something different to Word than the way
+  they were written, and all three showed the moment a Hebrew or Arabic document was
+  opened.
+
+  `w:jc` takes `left` and `right` as the *start* and *end* of the text flow rather than as
+  edges of the page. The alignment the page resolved — flush right for a right-to-left
+  paragraph — was written literally, which told Word to align to the flow's end and drew
+  the text flush left. Alignment is now mapped through the paragraph's direction, so the
+  value written is the one that means what the page decided.
+
+  Hebrew and Arabic are complex scripts, and Word takes their size and weight from
+  `w:szCs`, `w:bCs` and `w:iCs`; the Latin twins do not reach them. None of the three was
+  written, and the export ships no `styles.xml` to fall back on, so a 15pt Hebrew
+  paragraph was drawn at Word's own default while Latin in the same run obeyed `w:sz`.
+  Each is now written alongside its Latin twin.
+
+  A left-to-right document is unchanged — the alignment mapping is the identity there, and
+  Latin always obeyed the properties that were being written, which is why none of this
+  surfaced until a document had Hebrew in it.
+
 ### Fonts
 
 - **Bundled families for Arabic and Hebrew.** `FontName.AMIRI` and

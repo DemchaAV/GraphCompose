@@ -125,13 +125,15 @@ class PptxRightToLeftFrameTest {
     }
 
     @Test
-    void aMixedChipIsSettledByTheEngineNotByPowerPoint() throws Exception {
+    void aMixedChipKeepsItsInteriorAsTypedAndItsLettersLogical() throws Exception {
         // A chip is one rounded fill, so the wrapper cannot split it at a level
-        // boundary; a chip that mixes directions therefore cannot be trusted to
-        // PowerPoint, which re-places the levels but does not mirror what it moves.
-        // The engine resolves the chip's own levels and hands over its visual string —
-        // the same string the PDF draws — in a frame that declares nothing, so
-        // PowerPoint has nothing left to re-resolve.
+        // boundary; it reaches the backend whole. Its text must stay logical —
+        // PowerPoint reorders strong right-to-left characters by what they are, not by
+        // what the frame declares, so a pre-reordered string would come back
+        // re-reversed. Only the mirroring is done for PowerPoint, and only on the
+        // levels UAX #9 mirrors: the brackets swap, the interior's comparison must
+        // not. Mirrored whole, this chip stored "a < b" — inverted meaning in the only
+        // copy of the text the file has.
         List<XSLFTextParagraph> chipFrames = paragraphsOf(renderChipLine()).stream()
                 .filter(paragraph -> paragraph.getText().contains("a")
                         && paragraph.getText().contains("b"))
@@ -139,15 +141,34 @@ class PptxRightToLeftFrameTest {
 
         assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
         assertThat(chipFrames)
-                .describedAs("a settled frame declares nothing, or PowerPoint would "
-                        + "reorder the settled string a second time")
-                .noneMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
+                .describedAs("logical text needs its declared direction, like every "
+                        + "right-to-left frame")
+                .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
         assertThat(chipFrames)
-                .describedAs("the stored string is the engine's visual order, its "
-                        + "interior exactly as the author wrote it")
+                .describedAs("brackets mirrored, comparison as typed, order logical")
                 .allSatisfy(paragraph -> assertThat(paragraph.getText())
-                        .contains("(a > b)")
+                        .contains(")a > b(")
                         .doesNotContain("<"));
+    }
+
+    @Test
+    void aChipHoldingHebrewAndAYearStoresItsLettersInLogicalOrder() throws Exception {
+        // The case a visual-order hand-off breaks: strong letters are reordered by
+        // PowerPoint's own engine whatever the frame declares, so letters stored
+        // pre-reversed would display re-reversed — scrambled. Nothing in this chip
+        // mirrors, so the stored text must be exactly what the author typed.
+        List<XSLFTextParagraph> chipFrames = paragraphsOf(
+                renderHighlightLine("שנה 2026")).stream()
+                .filter(paragraph -> paragraph.getText().contains("2026"))
+                .toList();
+
+        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
+        assertThat(chipFrames)
+                .describedAs("letters logical, digits as written, direction declared")
+                .allSatisfy(paragraph -> {
+                    assertThat(paragraph.getText()).isEqualTo("שנה 2026");
+                    assertThat(declaresRightToLeft(paragraph)).isTrue();
+                });
     }
 
     @Test

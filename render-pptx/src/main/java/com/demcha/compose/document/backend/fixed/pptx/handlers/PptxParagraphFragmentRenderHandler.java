@@ -241,23 +241,19 @@ public final class PptxParagraphFragmentRenderHandler
         PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
         // A chip is the one span that can carry both directions' levels — one rounded
         // fill, so the wrapper cannot split it, and its flag describes only its first
-        // character. A single-level chip gets the treatment a plain span gets: logical
-        // text, mirrored pairs, and the frame declaring its direction for PowerPoint to
-        // place. A mixed chip cannot be trusted to PowerPoint — it re-places the levels
-        // but does not mirror what it moves — so the engine settles the order itself and
-        // hands over its visual string in an undeclared frame: the same string the PDF
-        // draws, which is what keeps the two backends telling one story.
-        String chipText = text;
-        boolean frameRightToLeft = span.rightToLeft();
-        if (span.rightToLeft()) {
-            if (BidiVisualOrder.mixesDirections(chipText)) {
-                chipText = BidiVisualOrder.visualize(chipText);
-                frameRightToLeft = false;
-            } else {
-                chipText = BidiMirroring.mirror(chipText);
-            }
-        }
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, frameRightToLeft),
+        // character. Its text stays logical and its frame declares its direction, like
+        // every right-to-left frame: reordering is a property of strong right-to-left
+        // characters, not of the declaration, so a pre-reordered string would have its
+        // Hebrew re-reversed by PowerPoint's own engine. What that engine was measured
+        // not to do is the mirroring — so pairs are swapped here, but only on the
+        // levels where UAX #9 would swap them. The whole-string mirror reached the
+        // chip's left-to-right interior, where nothing mirrors, and turned "a > b"
+        // into "a < b" in the only copy of the text the file has. For a single-level
+        // chip this is the whole-string mirror it always had.
+        String chipText = span.rightToLeft()
+                ? BidiVisualOrder.mirrorRightToLeftLevels(text)
+                : text;
+        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
                 chipText, span.textStyle(), environment);
     }
 

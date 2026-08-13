@@ -168,15 +168,17 @@ follow semantic versioning; release dates are ISO 8601.
   `(b < a)` — operands swapped, comparison flipped — while the chip's interior is
   left-to-right text that UAX #9 neither reorders nor mirrors.
 
-  The engine now resolves the chip's own embedding levels and reverses and mirrors only
-  the parts that actually read right to left (`BidiVisualOrder`). For a single-level chip
-  this is exactly the old reverse-and-mirror, so a wholly-Hebrew chip is unchanged. The
-  slide backend uses the same resolution: a mixed chip is handed to PowerPoint as the
-  engine's settled visual string in a frame that declares no direction — the same string
-  the PDF draws — because handing it logical text would let PowerPoint re-place the
-  neutrals it does not mirror. A single-level chip keeps the plain-span treatment:
-  logical order, mirrored pairs, declared direction. The digits case rode along: a chip
-  holding `שנה 2026` drew its year backwards for the same reason and no longer does.
+  The engine now resolves the chip's own embedding levels (`BidiVisualOrder`), and each
+  backend takes from that resolution exactly what its viewer lacks. The PDF draws
+  characters in the order it is given them, so it gets the full visual transform —
+  runs reordered, right-to-left ones reversed and mirrored; for a single-level chip that
+  is exactly the old reverse-and-mirror, so a wholly-Hebrew chip is unchanged, and a
+  chip holding `שנה 2026` no longer draws its year backwards. The slide backend keeps
+  the chip's text **logical** and its frame's direction declared, because PowerPoint
+  reorders strong right-to-left characters by what they are, not by what the frame says
+  — a pre-reordered string would come back with its Hebrew re-reversed. What PowerPoint
+  was measured not to do is the mirroring, so pairs are swapped for it — but only on the
+  levels UAX #9 mirrors, which is what keeps the interior's `>` a `>`.
 
 ### Fonts
 

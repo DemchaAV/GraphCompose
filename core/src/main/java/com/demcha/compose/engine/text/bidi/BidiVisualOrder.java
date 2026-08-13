@@ -33,29 +33,46 @@ public final class BidiVisualOrder {
     }
 
     /**
-     * Returns whether a right-to-left run holds characters at both directions' levels.
+     * Mirrors only the characters that resolve to a right-to-left level, keeping
+     * logical order.
      *
-     * <p>A backend with a bidirectional engine of its own — PowerPoint — handles a
-     * single-level run correctly when handed logical text and the run's direction. A
-     * mixed run is what it cannot be trusted with: it places the levels itself but does
-     * not mirror the neutrals it moves, so the caller must hand it {@link #visualize
-     * settled text} instead.</p>
+     * <p>For a viewer that runs the bidirectional algorithm itself — PowerPoint — the
+     * text must stay logical: reordering is a property of strong right-to-left
+     * characters, not of a declared direction, so a pre-reordered string would have its
+     * Hebrew re-reversed on display. What such a viewer was measured not to do is
+     * UAX&nbsp;#9's L4, so the paired punctuation is swapped for it here — but only
+     * where L4 itself would apply. A run at the left-to-right level keeps its brackets
+     * and comparisons exactly as typed; mirroring those, as the whole-string swap did,
+     * turns {@code a > b} into {@code a < b} in the only copy of the text the file
+     * has.</p>
+     *
+     * <p>For a single-level right-to-left run this is {@link BidiMirroring#mirror},
+     * unchanged.</p>
      *
      * @param text run text in logical order
-     * @return {@code true} when the text resolves to more than one embedding level
+     * @return the same order with paired punctuation at right-to-left levels swapped
      */
-    public static boolean mixesDirections(String text) {
+    public static String mirrorRightToLeftLevels(String text) {
         int[] levels = BidiParagraphResolver.levelsFor(
                 text, BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT);
         if (levels.length == 0) {
-            return false;
+            return text == null ? "" : text;
         }
-        for (int index = 1; index < levels.length; index++) {
-            if (levels[index] != levels[0]) {
-                return true;
+        StringBuilder mirrored = new StringBuilder(text.length());
+        int from = 0;
+        while (from < text.length()) {
+            int level = levels[from];
+            int to = from + 1;
+            while (to < text.length() && levels[to] == level) {
+                to++;
             }
+            String run = text.substring(from, to);
+            mirrored.append(BidiParagraphResolver.isRightToLeftLevel(level)
+                    ? BidiMirroring.mirror(run)
+                    : run);
+            from = to;
         }
-        return false;
+        return mirrored.toString();
     }
 
     /**

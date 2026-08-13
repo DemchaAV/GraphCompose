@@ -45,13 +45,26 @@ class BidiVisualOrderTest {
     }
 
     @Test
-    void mixedAndHomogeneousRunsAreToldApart() {
-        assertThat(BidiVisualOrder.mixesDirections("(a > b)")).isTrue();
-        assertThat(BidiVisualOrder.mixesDirections(HEBREW + " 123")).isTrue();
-        assertThat(BidiVisualOrder.mixesDirections("(" + HEBREW + ")")).isFalse();
-        assertThat(BidiVisualOrder.mixesDirections(HEBREW)).isFalse();
-        assertThat(BidiVisualOrder.mixesDirections("plain latin")).isFalse();
-        assertThat(BidiVisualOrder.mixesDirections("")).isFalse();
+    void levelKeyedMirroringSwapsOnlyWhatTheAlgorithmWould() {
+        // For a viewer with its own bidi engine the text must stay logical — strong
+        // right-to-left characters are reordered by what they are, not by what the
+        // paragraph declares, so a pre-reordered string would come back re-reversed.
+        // Only the mirroring is done for it, and only on the levels L4 touches.
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(a > b)"))
+                .describedAs("brackets sit at the right-to-left level and swap; the "
+                        + "interior's comparison does not")
+                .isEqualTo(")a > b(");
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(" + HEBREW + ")"))
+                .describedAs("a single-level run is the whole-string mirror, unchanged")
+                .isEqualTo(BidiMirroring.mirror("(" + HEBREW + ")"));
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(HEBREW + " 2026"))
+                .describedAs("nothing mirrors, nothing reorders — the letters stay "
+                        + "logical for the viewer's own engine")
+                .isEqualTo(HEBREW + " 2026");
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("plain latin"))
+                .isEqualTo("plain latin");
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("")).isEmpty();
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(null)).isEmpty();
     }
 
     @Test

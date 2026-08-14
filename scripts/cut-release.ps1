@@ -280,6 +280,60 @@ function Test-ReadmeLatestStable($version) {
     return $readme -match "\*\*Latest stable\*\*:\s*\[v$([regex]::Escape($version))\]"
 }
 
+function Test-RoadmapCurrentStable($version) {
+    # True when ROADMAP's 'Current stable' section names $version in bold. Used to
+    # verify the section AFTER Step 1 rewrote it — see Update-RoadmapCurrentStable.
+    $roadmap = Get-Content (Join-Path $repoRoot 'ROADMAP.md') -Raw
+    $section = Get-RoadmapCurrentStableSection $roadmap
+    if (-not $section) { return $false }
+    return $section -match "\*\*$([regex]::Escape($version))\*\*"
+}
+
+function Get-RoadmapCurrentStableSection($content) {
+    # The '## Current stable' section body, up to the next '## ' heading. Everything
+    # below that heading is per-release history and must not be touched.
+    $start = $content.IndexOf('## Current stable')
+    if ($start -lt 0) { return $null }
+    $next = $content.IndexOf("`n## ", $start + 1)
+    if ($next -lt 0) { return $content.Substring($start) }
+    return $content.Substring($start, $next - $start)
+}
+
+function Update-RoadmapCurrentStable($roadmapPath, $newVersion) {
+    # ROADMAP's 'Current stable' section names the live release, and
+    # VersionConsistencyGuardTest holds it to a published version. Step 5 runs
+    # `mvnw clean verify` AFTER the poms are already at the final version, so a cut that
+    # left this section behind would fail its own gate: the guard would read the pom's
+    # X.Y.Z and find the previous release still named here. The README block is rewritten
+    # for exactly this reason (Update-ReadmeReleaseStatus) — this is the same contract for
+    # the other page that makes a claim about what is live.
+    #
+    # FINAL releases only, like the README block: a pre-release never reaches Maven
+    # Central, so the section keeps naming the last stable version a reader can resolve.
+    #
+    # Only the bolded version token in that section is rewritten; the maintainer's prose,
+    # and every per-release section below it, are left alone.
+    if (-not (Test-Path $roadmapPath)) {
+        Note "skip (no file): $roadmapPath"
+        return
+    }
+    $content = Get-Content $roadmapPath -Raw
+    $section = Get-RoadmapCurrentStableSection $content
+    if (-not $section) {
+        throw "ROADMAP.md has no '## Current stable' section to update — VersionConsistencyGuardTest requires one, so Step 5 would fail."
+    }
+    $updated = [regex]::Replace($section, '\*\*\d+\.\d+\.\d+\*\*', "**$newVersion**", 1)
+    if ($updated -eq $section) {
+        throw "ROADMAP.md '## Current stable' section names no bolded X.Y.Z version to update — VersionConsistencyGuardTest would fail at Step 5."
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] ROADMAP.md 'Current stable' -> $newVersion" -ForegroundColor Yellow
+        return
+    }
+    Set-Content -Path $roadmapPath -Value $content.Replace($section, $updated) -NoNewline
+    Note "ROADMAP.md 'Current stable' -> $newVersion"
+}
+
 function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
     # The README 'Release status' blockquote carries two halves:
     #
@@ -357,6 +411,14 @@ function Assert-ReleaseMetadata($version, $isFinalRelease) {
         #     pre-cut hand-edit gate).
         if (-not (Test-ReadmeLatestStable $version)) {
             $problems += "README.md release-status block does not name v$version as 'Latest stable'."
+        }
+
+        # 2c. ROADMAP's 'Current stable' section names this version (Step 1 rewrites it).
+        #     Held here for the same reason as 2b: VersionConsistencyGuardTest reads it
+        #     during the Step 5 verify gate, so a section left behind fails the cut after
+        #     the poms have already moved.
+        if (-not (Test-RoadmapCurrentStable $version)) {
+            $problems += "ROADMAP.md 'Current stable' section does not name $version."
         }
     }
 
@@ -1054,6 +1116,7 @@ try {
     if ($isFinalRelease) {
         Update-ReadmeInstallVersion (Join-Path $repoRoot 'README.md') $Version
         Update-ReadmeReleaseStatus (Join-Path $repoRoot 'README.md') $Version
+        Update-RoadmapCurrentStable (Join-Path $repoRoot 'ROADMAP.md') $Version
         # Per-module README install snippets (train modules only — fonts/emoji pin
         # their own independent versions).
         foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
@@ -1225,6 +1288,7 @@ try {
         'examples/pom.xml',
         'benchmarks/pom.xml',
         'README.md',
+        'ROADMAP.md',
         'CHANGELOG.md',
         'web/index.html',
         # Bumped by Update-ReleaseSmokeDefaultVersion so the post-release smoke run

@@ -113,10 +113,15 @@ class DocxImageResolutionTest {
         // available answers, and it was reachable for a path that simply was not there.
         Path absent = dir.resolve("never-written.png");
 
+        // Named rather than left as any Exception: what this pins is that the failure is
+        // the source read, so a later change that starts failing here for some other
+        // reason cannot pass by throwing something else. Matched on the phrase, not the
+        // whole message — the rest of it is a temp-directory path.
         assertThatThrownBy(() -> export(absent))
                 .describedAs("an unreadable source stops the export instead of quietly "
                         + "removing the image from the document")
-                .isInstanceOf(Exception.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Failed to read image bytes");
     }
 
     /** The bytes of the document's only embedded picture. */

@@ -61,7 +61,17 @@ jobs:
           $line = (Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)').Matches[0].Groups[1].Value
           $major, $minor = $line.Split('.')
           $crossing = "$major.$([int]$minor + 1).0"
-          $out = ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          # The refusal is a `throw`, which terminates the script — so it has to be
+          # caught here, not merged with `*>&1`. Redirection captures the message but
+          # not the termination, and an uncaught throw fails this step for doing
+          # precisely what it is being tested for.
+          $out = ''
+          try {
+            $out = ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          } catch {
+            $out = ($_ | Out-String)
+          }
+          $global:LASTEXITCODE = 0
           if ($out -notmatch 'describes the .* line, but this cut is') {
             throw "a cut at $crossing must refuse the $line section, but the script did not say so. Output:`n$out"
           }

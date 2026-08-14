@@ -250,8 +250,14 @@ public final class PptxParagraphFragmentRenderHandler
         // chip's left-to-right interior, where nothing mirrors, and turned "a > b"
         // into "a < b" in the only copy of the text the file has. For a single-level
         // chip this is the whole-string mirror it always had.
+        // Gated on the chip's own direction, and that is enough here: a chip opening on
+        // Latin is a left-to-right run, and against a left-to-right base nothing inside
+        // it resolves to a right-to-left level — even brackets enclosing Hebrew stay
+        // put, so there is nothing to mirror. Its Hebrew still reads correctly because
+        // PowerPoint orders the letters itself. (The PDF has no such engine, which is
+        // why the same chip must be resolved there — see PdfParagraphFragmentRenderHandler.)
         String chipText = span.rightToLeft()
-                ? BidiVisualOrder.mirrorRightToLeftLevels(text)
+                ? BidiVisualOrder.mirrorRightToLeftLevels(text, true)
                 : text;
         PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
                 chipText, span.textStyle(), environment);

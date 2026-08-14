@@ -31,6 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PdfRtlChipTest {
 
+    /** Shares no letter with the line's own Hebrew, so a glyph lookup is unambiguous. */
+    private static final String HEBREW = "בית";
+
     @Test
     void aMixedChipKeepsItsOperandsInReadingOrder() throws Exception {
         List<DrawnGlyphs.Glyph> glyphs = DrawnGlyphs.leftToRight(renderChipLine("(a > b)"));
@@ -61,6 +64,26 @@ class PdfRtlChipTest {
                 .isNotNegative();
         assertThat(two).describedAs("2 before 0, as written").isLessThan(zero);
         assertThat(zero).describedAs("0 before 6, as written").isLessThan(six);
+    }
+
+    @Test
+    void aChipThatOpensOnLatinStillDrawsItsHebrewInReadingOrder() throws Exception {
+        // The chip takes its direction from its first character, and that character
+        // decides only where the chip sits in the line — not what its interior holds.
+        // A chip opening on Latin is flagged left-to-right, so the whole span skipped
+        // the resolution, and the Hebrew inside it was handed to the content stream
+        // logically: drawn left to right, the word came out backwards.
+        List<DrawnGlyphs.Glyph> glyphs = DrawnGlyphs.leftToRight(renderChipLine("a " + HEBREW));
+
+        int lastLetterFirst = indexOfFirst(glyphs, HEBREW.substring(HEBREW.length() - 1));
+        int firstLetterFirst = indexOfFirst(glyphs, HEBREW.substring(0, 1));
+        assertThat(firstLetterFirst)
+                .describedAs("the Hebrew is on the page; glyphs were %s", glyphs)
+                .isNotNegative();
+        assertThat(lastLetterFirst)
+                .describedAs("a Hebrew word reads right to left, so its LAST letter is "
+                        + "drawn leftmost; glyphs were %s", glyphs)
+                .isLessThan(firstLetterFirst);
     }
 
     private static int indexOfFirst(List<DrawnGlyphs.Glyph> glyphs, String character) {

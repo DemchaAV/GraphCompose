@@ -25,14 +25,14 @@ class BidiVisualOrderTest {
         // is left-to-right level and must come through exactly as written. The two
         // effects cancel on the brackets, so the visual string equals the logical one —
         // which is precisely what reversing the whole span destroys.
-        assertThat(BidiVisualOrder.visualize("(a > b)")).isEqualTo("(a > b)");
+        assertThat(BidiVisualOrder.visualize("(a > b)", true)).isEqualTo("(a > b)");
     }
 
     @Test
     void aSingleLevelRunIsReversedAndMirroredWhole() {
         // For homogeneous text the transform must agree with the treatment plain spans
         // always had: reverse by cluster, mirror the pairs.
-        assertThat(BidiVisualOrder.visualize("(" + HEBREW + ")"))
+        assertThat(BidiVisualOrder.visualize("(" + HEBREW + ")", true))
                 .isEqualTo("(" + HEBREW_REVERSED + ")");
     }
 
@@ -40,7 +40,7 @@ class BidiVisualOrderTest {
     void digitsInsideARightToLeftRunStayForward() {
         // Digits resolve to the left-to-right level even in Hebrew text: the year in
         // "ב-2026" reads forwards. Reversed whole, it would not.
-        assertThat(BidiVisualOrder.visualize(HEBREW + " 123"))
+        assertThat(BidiVisualOrder.visualize(HEBREW + " 123", true))
                 .isEqualTo("123 " + HEBREW_REVERSED);
     }
 
@@ -50,21 +50,35 @@ class BidiVisualOrderTest {
         // right-to-left characters are reordered by what they are, not by what the
         // paragraph declares, so a pre-reordered string would come back re-reversed.
         // Only the mirroring is done for it, and only on the levels L4 touches.
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(a > b)"))
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(a > b)", true))
                 .describedAs("brackets sit at the right-to-left level and swap; the "
                         + "interior's comparison does not")
                 .isEqualTo(")a > b(");
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(" + HEBREW + ")"))
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(" + HEBREW + ")", true))
                 .describedAs("a single-level run is the whole-string mirror, unchanged")
                 .isEqualTo(BidiMirroring.mirror("(" + HEBREW + ")"));
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(HEBREW + " 2026"))
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(HEBREW + " 2026", true))
                 .describedAs("nothing mirrors, nothing reorders — the letters stay "
                         + "logical for the viewer's own engine")
                 .isEqualTo(HEBREW + " 2026");
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("plain latin"))
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("plain latin", true))
                 .isEqualTo("plain latin");
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("")).isEmpty();
-        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(null)).isEmpty();
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("", true)).isEmpty();
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels(null, true)).isEmpty();
+    }
+
+    @Test
+    void aLeftToRightBaseKeepsItsHebrewOnTheSideThatBaseGivesIt() {
+        // The base is the run's own, not the paragraph's: a chip opening on Latin is a
+        // left-to-right run that may still hold Hebrew. Resolved against the wrong base
+        // — or not resolved at all, which is what a direction-flag gate did — the word
+        // is handed over in logical order and drawn backwards.
+        assertThat(BidiVisualOrder.visualize("a " + HEBREW, false))
+                .describedAs("Latin first, then the Hebrew reversed for drawing")
+                .isEqualTo("a " + HEBREW_REVERSED);
+        assertThat(BidiVisualOrder.visualize(HEBREW + " a", false))
+                .describedAs("the run still reads left to right overall")
+                .isEqualTo(HEBREW_REVERSED + " a");
     }
 
     @Test
@@ -72,8 +86,8 @@ class BidiVisualOrderTest {
         // The flag the caller holds comes from paragraph context; if the run's own
         // analysis finds nothing right-to-left, drawing it as written is already
         // correct and the transform must not invent a reversal.
-        assertThat(BidiVisualOrder.visualize("plain latin")).isEqualTo("plain latin");
-        assertThat(BidiVisualOrder.visualize("")).isEmpty();
-        assertThat(BidiVisualOrder.visualize(null)).isEmpty();
+        assertThat(BidiVisualOrder.visualize("plain latin", true)).isEqualTo("plain latin");
+        assertThat(BidiVisualOrder.visualize("", true)).isEmpty();
+        assertThat(BidiVisualOrder.visualize(null, true)).isEmpty();
     }
 }

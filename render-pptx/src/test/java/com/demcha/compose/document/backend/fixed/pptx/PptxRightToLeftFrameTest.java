@@ -194,6 +194,28 @@ class PptxRightToLeftFrameTest {
                         .isEqualTo(")" + "שנה" + "("));
     }
 
+    @Test
+    void aChipThatOpensOnLatinKeepsItsHebrewLogicalAndUnmirrored() throws Exception {
+        // Pins a contract this backend already keeps, not a defect it once had: the
+        // chip's flag is its first character's, so this one is left-to-right, declares
+        // nothing, and is handed over untouched — PowerPoint orders the Hebrew inside
+        // it from the letters themselves. It is here because the PDF needed a real fix
+        // for the same input, and the next person to touch that seam should see, in
+        // this suite, that the slide's answer is to leave it alone: against a
+        // left-to-right base nothing in such a chip resolves to a right-to-left level,
+        // so there is never anything to mirror.
+        List<XSLFTextParagraph> chipFrames = paragraphsOf(
+                renderHighlightLine("a בית")).stream()
+                .filter(paragraph -> paragraph.getText().contains("בית"))
+                .toList();
+
+        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
+        assertThat(chipFrames).allSatisfy(paragraph ->
+                assertThat(paragraph.getText())
+                        .describedAs("logical order, nothing swapped")
+                        .isEqualTo("a בית"));
+    }
+
     private static boolean declaresRightToLeft(XSLFTextParagraph paragraph) {
         var properties = paragraph.getXmlObject().getPPr();
         return properties != null && properties.isSetRtl() && properties.getRtl();

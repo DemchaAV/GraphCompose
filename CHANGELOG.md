@@ -135,6 +135,20 @@ follow semantic versioning; release dates are ISO 8601.
   is where anything asking where a particular word was drawn now has to look; the
   engine's own tests read it there.
 
+- **A chip that opens on Latin still draws its Hebrew the way it reads.** A chip takes
+  its direction from its first character, and that character settles only where the chip
+  sits in the line — not what the chip holds. One opening on Latin is a left-to-right
+  run that may still carry Hebrew or Arabic, and the PDF skipped the bidirectional
+  resolution for it entirely, handing the content stream logical order: drawn left to
+  right, the word came out backwards.
+
+  The direction is now the *base* the resolution runs against rather than the question
+  of whether to run it, so a chip is resolved whenever its text needs it. A chip that is
+  wholly right-to-left is unchanged, and so is one holding no such script at all. The
+  slide backend needs nothing here: against a left-to-right base nothing inside such a
+  chip resolves to a right-to-left level, so there is never anything to mirror, and
+  PowerPoint orders the letters itself.
+
 - **A deck carries the bundled fonts it drew with.** A family a caller registers has
   always been embedded; a family this library *ships* — Amiri for Arabic, David Libre for
   Hebrew, the Noto faces for Georgian and Armenian, Gothic A1 for Hangul — was only warned

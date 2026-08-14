@@ -32,6 +32,12 @@ public final class BidiVisualOrder {
     private BidiVisualOrder() {
     }
 
+    private static BidiParagraphResolver.BaseDirection baseOf(boolean rightToLeft) {
+        return rightToLeft
+                ? BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT
+                : BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+    }
+
     /**
      * Mirrors only the characters that resolve to a right-to-left level, keeping
      * logical order.
@@ -49,15 +55,17 @@ public final class BidiVisualOrder {
      * <p>For a single-level right-to-left run this is {@link BidiMirroring#mirror},
      * unchanged.</p>
      *
-     * @param text run text in logical order
+     * @param text            run text in logical order
+     * @param rightToLeftBase the run's own base direction — the level its neutrals
+     *                        resolve against, which for a chip is the direction the
+     *                        line gave it
      * @return the same order with paired punctuation at right-to-left levels swapped
      */
-    public static String mirrorRightToLeftLevels(String text) {
+    public static String mirrorRightToLeftLevels(String text, boolean rightToLeftBase) {
         if (text == null || text.isEmpty()) {
             return "";
         }
-        int[] levels = BidiParagraphResolver.levelsFor(
-                text, BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT);
+        int[] levels = BidiParagraphResolver.levelsFor(text, baseOf(rightToLeftBase));
         if (levels.length == 0) {
             return text;
         }
@@ -87,15 +95,21 @@ public final class BidiVisualOrder {
      * right-to-left level at all is returned unchanged — drawing it as written is
      * already correct.</p>
      *
-     * @param text run text in logical order
+     * <p>The base direction is the run's own, not the paragraph's. A chip takes its
+     * direction from its first character, and that character decides only where the
+     * chip sits in the line: one opening on Latin is a left-to-right run that may
+     * still hold Hebrew, and resolving it against the wrong base puts that Hebrew on
+     * the wrong side of what surrounds it.</p>
+     *
+     * @param text            run text in logical order
+     * @param rightToLeftBase the run's own base direction
      * @return the text as a left-to-right drawing order
      */
-    public static String visualize(String text) {
+    public static String visualize(String text, boolean rightToLeftBase) {
         if (text == null || text.isEmpty()) {
             return "";
         }
-        int[] levels = BidiParagraphResolver.levelsFor(
-                text, BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT);
+        int[] levels = BidiParagraphResolver.levelsFor(text, baseOf(rightToLeftBase));
         if (levels.length == 0) {
             return text;
         }

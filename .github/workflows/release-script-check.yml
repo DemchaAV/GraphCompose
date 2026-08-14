@@ -250,8 +250,12 @@ jobs:
           try { Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $crossing } catch { $err = "$_" }
           if ($err -notmatch 'carries no bolded version for the cut to promote') { throw "malformed: expected the no-version refusal, got: $err" }
 
-          # 3. Staged with a version off the line being cut — refused.
-          $repoRoot = New-Roadmap "## Upcoming — $next`n`n**$major.9.9** wrong line.`n`n"
+          # 3. Staged with a version off the line being cut — refused. The wrong line is
+          #    derived, not written down: a literal like $major.9.9 stops being wrong the
+          #    day the project reaches 2.8, when it becomes the very line being cut and
+          #    this case quietly starts asserting the opposite of its name.
+          $offLine = "$major.$([int]$minor + 2).0"
+          $repoRoot = New-Roadmap "## Upcoming — $next`n`n**$offLine** wrong line.`n`n"
           $err = $null
           try { Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $crossing } catch { $err = "$_" }
           if ($err -notmatch 'is not on the .* line this cut releases') { throw "off-line: expected the line-mismatch refusal, got: $err" }

@@ -72,7 +72,11 @@ jobs:
             $out = ($_ | Out-String)
           }
           $global:LASTEXITCODE = 0
-          if ($out -notmatch 'describes the .* line, but this cut is') {
+          # PowerShell wraps a thrown message across lines and prefixes each with '| ',
+          # so a phrase long enough to be worth asserting is split before it can be
+          # matched. Flatten the continuation markers and the wrapping first.
+          $flat = (($out -replace '\r?\n\s*\|\s*', ' ') -replace '\s+', ' ')
+          if ($flat -notmatch 'describes the .* line, but this cut is') {
             throw "a cut at $crossing must refuse the $line section, but the script did not say so. Output:`n$out"
           }
           # And it must refuse before writing anything. The check used to live beside the
@@ -106,7 +110,8 @@ jobs:
             $out = ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
           } catch { $out = ($_ | Out-String) }
           $global:LASTEXITCODE = 0
-          if ($out -notmatch 'carries no bolded version for the cut to promote') {
+          $flat = (($out -replace '\r?\n\s*\|\s*', ' ') -replace '\s+', ' ')
+          if ($flat -notmatch 'carries no bolded version for the cut to promote') {
             throw "a malformed staged section must be refused. Output:`n$out"
           }
           # Only ROADMAP.md is dirty — the file this step wrote itself. Nothing the cut

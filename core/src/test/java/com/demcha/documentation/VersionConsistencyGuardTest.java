@@ -701,6 +701,53 @@ class VersionConsistencyGuardTest {
     }
 
     /**
+     * A prepared {@code ## Upcoming — X.Y} section describes the line under development.
+     *
+     * <p>This is how the next release line is staged. "Current stable" must keep naming
+     * what is published — the guard above holds it there — so the prose for a line that
+     * has not shipped waits in its own section, and {@code cut-release.ps1} promotes it
+     * during the cut. Without that, preparing a minor was impossible: committing the new
+     * version into "Current stable" failed this suite, editing it uncommitted failed the
+     * cut's clean-tree check, and preparing nothing failed the cut after every pom had
+     * already been rewritten.</p>
+     *
+     * <p>What can rot is the section itself — left behind after its release ships, or
+     * naming a line nobody is working toward, it becomes the same false claim about
+     * "next" that the stale roadmap was about "now". So when one exists it must name the
+     * line the poms are on, and that line must be ahead of the published one.</p>
+     *
+     * <p>Absent is the normal state and passes: most of a cycle has nothing staged.</p>
+     */
+    @Test
+    void aPreparedUpcomingSectionNamesTheLineUnderDevelopment() throws Exception {
+        String roadmap = Files.readString(PROJECT_ROOT.resolve("ROADMAP.md"));
+        Matcher upcoming = Pattern.compile("##\\s+Upcoming\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(roadmap);
+        if (!upcoming.find()) {
+            return;
+        }
+
+        String pom = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
+        String pomLine = pom.replaceAll("^(\\d+\\.\\d+)\\..*$", "$1");
+        assertThat(upcoming.group(1))
+                .describedAs("ROADMAP.md stages an '## Upcoming — %s' section while the poms "
+                        + "are on %s. A staged section names the line being worked toward, "
+                        + "so it is either stale — left behind by the release that shipped "
+                        + "it — or promising a line nothing is building", upcoming.group(1), pom)
+                .isEqualTo(pomLine);
+
+        Matcher current = Pattern.compile("##\\s+Current stable\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(roadmap);
+        assertThat(current.find())
+                .describedAs("ROADMAP.md must carry a '## Current stable — X.Y' heading")
+                .isTrue();
+        assertThat(upcoming.group(1))
+                .describedAs("the staged line (%s) must differ from the published one (%s) — "
+                        + "the same line in both sections means the release already shipped "
+                        + "and the staged copy was never promoted",
+                        upcoming.group(1), current.group(1))
+                .isNotEqualTo(current.group(1));
+    }
+
+    /**
      * Returns the set of versions an install snippet may legitimately advertise.
      *
      * <p>Only a <strong>final</strong> release ({@code X.Y.Z}, no suffix) lands on Maven

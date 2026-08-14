@@ -79,7 +79,19 @@ Running `pwsh ./scripts/cut-release.ps1 -Version <X.Y.Z>` performs:
 3. **Date the CHANGELOG** — flips `## v<X.Y.Z> — Planned` to `## v<X.Y.Z> — <today-ISO>`.
 3b. **Validate release metadata** — a fast, build-free pre-tag gate: the CHANGELOG is dated for the target, the README `Latest stable` prose block names the target, the ROADMAP `Current stable` section names the target, the README install snippet reads the target, and every published-train pom carries the target version. Fails immediately (before showcase / verify / commit / tag) if any is stale. These are post-mutation checks: Step 2 rewrites both prose blocks (`Update-ReadmeReleaseStatus`, `Update-RoadmapCurrentStable`), and this step confirms the rewrite landed rather than trusting it. (The full per-module + Gradle + showcase snippet consistency is separately enforced by `VersionConsistencyGuardTest` in the Step-5 verify, which also holds the ROADMAP section to a published version — so a section left behind would fail the cut *after* the poms had already moved. That is why the script owns it.)
 
-   **A cut that crosses a release line stops here.** `Update-RoadmapCurrentStable` swaps the version within the line the section already describes (2.1.1 → 2.1.2). It refuses to do so across lines (2.1.1 → 2.2.0), because the section's heading and prose describe the old line's headline feature and only a maintainer can write the new one; rewriting the version alone would leave `## Current stable — 2.1` above `**2.2.0** is the current release`. Prepare the section by hand before such a cut — a section that already names the target is accepted as a no-op.
+   **A cut that crosses a release line needs the next section staged.** `Update-RoadmapCurrentStable` swaps the version within the line the section already describes (2.1.1 → 2.1.2). Across lines (2.1.1 → 2.2.0) it cannot: the heading and prose describe the old line's headline feature, and rewriting one token would leave `## Current stable — 2.1` above `**2.2.0** is the current release`.
+
+   Stage the new line **in its own commit, before the cut**, as a section immediately above the current one:
+
+   ```markdown
+   ## Upcoming — 2.2
+
+   **2.2.0** is the current release. … what this line leads with …
+   ```
+
+   Leave `## Current stable` naming the published release while you do — `VersionConsistencyGuardTest` holds it to what is on Central, so a `develop` that already claimed 2.2.0 would fail its own build. The cut promotes `Upcoming` to `Current stable` and demotes the old line to `Previously`. `aPreparedUpcomingSectionNamesTheLineUnderDevelopment` keeps the staged section honest: it must name the line the poms are on, and must not linger after promotion.
+
+   The compatibility check itself runs in **Step 0**, before any file is written, so a cut that cannot describe itself refuses with a clean tree rather than after every pom has moved.
 4. **Switch ShowcaseMetadata GH_BASE** from `/blob/develop` to `/blob/v<X.Y.Z>` and regenerate `web/examples.json`.
 5. **`mvnw verify`** — full reactor sanity build (the script auto-detects the layout by the presence of `core/pom.xml`, scoping to `-pl .` on the 1.x line). Skip with `-SkipVerify` only if you just ran it.
 5b. **Binary-compatibility gate** — `mvnw -P japicmp verify -pl :graph-compose-core` against the published baseline (2.0 module layout only). Fails the cut if the tagged code breaks binary compatibility of the `graph-compose-core` public API (the japicmp profile lives only in `core/pom.xml`) with the baseline — a second line of defence independent of the PR-time CI japicmp job, which a direct-to-branch push could bypass. Skipped by `-SkipVerify`.

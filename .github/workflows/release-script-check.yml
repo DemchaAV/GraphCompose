@@ -75,7 +75,51 @@ jobs:
           if ($out -notmatch 'describes the .* line, but this cut is') {
             throw "a cut at $crossing must refuse the $line section, but the script did not say so. Output:`n$out"
           }
-          Write-Host "refused $crossing against the $line section, as it must"
+          # And it must refuse before writing anything. The check used to live beside the
+          # edit in Step 1, by which point every pom and README already carried the new
+          # version — so the refusal handed back a dirty tree for a condition that was
+          # knowable before the first write.
+          $dirty = git status --porcelain
+          if ($dirty) {
+            throw "the refusal left the tree dirty, so it ran after some mutation:`n$dirty"
+          }
+          Write-Host "refused $crossing against the $line section, before touching anything"
+
+      - name: A prepared Upcoming section carries the cut across release lines
+        shell: pwsh
+        run: |
+          # The other half of the same rule, and the one that makes the refusal
+          # survivable: staging '## Upcoming — X.Y' is how a maintainer prepares a minor
+          # without lying in the meantime. 'Current stable' keeps naming the published
+          # release — VersionConsistencyGuardTest holds it there — and the cut promotes
+          # the staged section, demoting the line it replaces.
+          $line = (Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)').Matches[0].Groups[1].Value
+          $major, $minor = $line.Split('.')
+          $next = "$major.$([int]$minor + 1)"
+          $crossing = "$next.0"
+
+          $roadmap = Get-Content ROADMAP.md -Raw
+          $staged = "## Upcoming — $next`n`n**$crossing** is the current release. Rehearsal prose.`n`n"
+          Set-Content -Path ROADMAP.md -Value ($roadmap -replace "## Current stable — $([regex]::Escape($line))", "$staged## Current stable — $line") -NoNewline
+          git -c user.email=ci@local -c user.name=ci commit -qam "stage $next for the rehearsal"
+
+          ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>$null
+          if ($LASTEXITCODE -ne 0) { throw "a cut at $crossing must succeed once $next is staged" }
+
+          # -DryRun proves the branch is reachable but writes nothing, so the promotion
+          # itself is asserted from a real run: no push, no verify, throwaway checkout.
+          ./scripts/cut-release.ps1 -Version $crossing -Branch develop -SkipPush -SkipVerify -SkipShowcase *>$null
+          if ($LASTEXITCODE -ne 0) { throw "the real cut at $crossing failed" }
+
+          $after = Get-Content ROADMAP.md -Raw
+          if ($after -notmatch "##\s+Current stable\s*[—-]\s*$([regex]::Escape($next))") {
+            throw "the staged section was not promoted to 'Current stable — $next'"
+          }
+          if ($after -notmatch "##\s+Previously\s*[—-]\s*$([regex]::Escape($line))") {
+            throw "the $line line was not demoted to 'Previously'"
+          }
+          if ($after -match '##\s+Upcoming') { throw "the staged 'Upcoming' heading survived the promotion" }
+          Write-Host "promoted $next to current stable and demoted $line, in a real cut"
 
       - name: Dry-run PostReleaseOnly
         shell: pwsh

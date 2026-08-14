@@ -307,6 +307,64 @@ function Get-RoadmapSectionLine($section) {
     return $null
 }
 
+function Get-RoadmapUpcomingHeading($content, $line) {
+    # The literal '## Upcoming — X.Y' heading for $line, or $null. This is how a
+    # maintainer prepares the next release line: 'Current stable' keeps naming the
+    # version that is actually published — so VersionConsistencyGuardTest stays green
+    # on a -SNAPSHOT develop — while the prose for the line being cut waits beside it,
+    # labelled as not yet released. The cut promotes it.
+    $pattern = '##\s+Upcoming\s*[—-]\s*' + [regex]::Escape($line) + '\b.*'
+    $match = [regex]::Match($content, $pattern)
+    if ($match.Success) { return $match.Value.TrimEnd() }
+    return $null
+}
+
+function Assert-RoadmapReadyForCut($roadmapPath, $newVersion) {
+    # Step 0. The roadmap edit itself happens in Step 1, by which point every pom and
+    # README has already been rewritten — so a refusal there leaves a dirty tree to
+    # unwind by hand. Everything that can refuse is decided here, before the first
+    # write, and this function only reads.
+    if (-not (Test-Path $roadmapPath)) { return }
+    $content = Get-Content $roadmapPath -Raw
+    $section = Get-RoadmapCurrentStableSection $content
+    if (-not $section) {
+        throw "ROADMAP.md has no '## Current stable' section — VersionConsistencyGuardTest requires one, so the Step 5 verify would fail."
+    }
+
+    $targetLine = Get-VersionLine $newVersion
+    $sectionLine = Get-RoadmapSectionLine $section
+
+    # A patch inside the line already described, or a section prepared by hand: both
+    # are handled by Step 1 without further input.
+    if ($sectionLine -eq $targetLine) { return }
+    if (Test-RoadmapCurrentStable $newVersion) { return }
+
+    $upcoming = Get-RoadmapUpcomingHeading $content $targetLine
+    if (-not $upcoming) {
+        throw @"
+ROADMAP.md '## Current stable' describes the $sectionLine line, but this cut is $newVersion ($targetLine).
+Rewriting the version alone would leave the heading and the prose describing $sectionLine.
+
+Prepare the new line before cutting, in a commit of its own:
+
+  ## Upcoming — $targetLine
+
+  **$newVersion** … what this line leads with …
+
+Put that section immediately above '## Current stable — $sectionLine' and leave the current
+section naming the published release — the version guard holds it to what is on Central, so a
+develop that already claimed $newVersion would fail its own build. The cut promotes 'Upcoming'
+to 'Current stable' and demotes $sectionLine to 'Previously'.
+"@
+    }
+
+    # The promotion renames headings in place, so the prepared section has to sit above
+    # the one it replaces or the page comes out with its newest release at the bottom.
+    if ($content.IndexOf($upcoming) -gt $content.IndexOf($section.Split("`n")[0])) {
+        throw "ROADMAP.md '$upcoming' must sit immediately above '## Current stable — $sectionLine': the cut promotes it in place, and below the current section it would leave the newest release at the bottom of the page."
+    }
+}
+
 function Get-RoadmapCurrentStableSection($content) {
     # The '## Current stable' section body, up to the next '## ' heading. Everything
     # below that heading is per-release history and must not be touched.
@@ -359,15 +417,32 @@ function Update-RoadmapCurrentStable($roadmapPath, $newVersion) {
     # headline feature — rewriting one token would leave "Current stable — 2.1" above
     # "**2.2.0** is the current release", internally contradictory and green under every
     # guard, since each only asks whether the version is published. What the new line
-    # needs is a paragraph only the maintainer can write, so the cut stops and says so.
+    # needs is a paragraph only the maintainer can write, and Step 0 has already refused
+    # the cut if one is not waiting. Here it is promoted: the prepared 'Upcoming'
+    # section becomes 'Current stable', and the line it replaces becomes 'Previously'.
     if ($sectionLine -ne $targetLine) {
-        throw @"
-ROADMAP.md '## Current stable' describes the $sectionLine line, but this cut is $newVersion ($targetLine).
-Rewriting the version alone would leave the heading and the prose describing $sectionLine.
-Prepare the section before cutting: update the heading to '## Current stable — $targetLine',
-write what this line leads with, and move the $sectionLine text down to a 'Previously' section.
-Then re-run the cut — a section already naming $newVersion is accepted as-is.
-"@
+        $upcoming = Get-RoadmapUpcomingHeading $content $targetLine
+        if (-not $upcoming) {
+            throw "ROADMAP.md has no '## Upcoming — $targetLine' section to promote (Step 0 should have caught this)."
+        }
+        $currentHeading = $section.Split("`n")[0].TrimEnd()
+        # Old heading first: renaming 'Upcoming' first would leave two sections briefly
+        # calling themselves 'Current stable', and the second rename would hit the wrong one.
+        $promoted = $content.Replace($currentHeading, "## Previously — $sectionLine")
+        $promoted = $promoted.Replace($upcoming, "## Current stable — $targetLine")
+
+        $promotedSection = Get-RoadmapCurrentStableSection $promoted
+        if (-not (($promotedSection -replace '\s', '') -match "\*\*$([regex]::Escape($newVersion))\*\*")) {
+            $promotedSection2 = [regex]::Replace($promotedSection, '\*\*\d+\.\d+\.\d+\*\*', "**$newVersion**", 1)
+            $promoted = $promoted.Replace($promotedSection, $promotedSection2)
+        }
+        if ($DryRun) {
+            Write-Host "    [DRY RUN] ROADMAP.md promote 'Upcoming - $targetLine' -> 'Current stable', demote $sectionLine" -ForegroundColor Yellow
+            return
+        }
+        Set-Content -Path $roadmapPath -Value $promoted -NoNewline
+        Note "ROADMAP.md promoted 'Upcoming — $targetLine' to 'Current stable' ($newVersion); $sectionLine moved to 'Previously'"
+        return
     }
 
     $updated = [regex]::Replace($section, '\*\*\d+\.\d+\.\d+\*\*', "**$newVersion**", 1)
@@ -1075,6 +1150,15 @@ try {
 
     # Branch / clean-tree / origin-sync gate (shared with -PostReleaseOnly).
     Assert-BranchPreflight $Branch
+
+    # The roadmap has to be able to describe this release before anything is rewritten.
+    # Deciding it here rather than at the edit in Step 1 is the whole point: by Step 1
+    # every pom and README already carries the new version, so a refusal there hands the
+    # maintainer a dirty tree for a condition that was knowable before the first write.
+    # FINAL releases only, matching the rewrite it gates.
+    if ($isFinalRelease) {
+        Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $Version
+    }
 
     # Tag doesn't already exist — locally or on origin?
     $existingTag = git tag -l $tag

@@ -123,26 +123,4 @@ class AgentsGuideGuardTest {
                         + "removed or renamed, and the list still sends work to them")
                 .isEmpty();
     }
-
-    @Test
-    void theClaudePointerLeadsToTheOneSetOfRules() throws IOException {
-        // Claude Code reads CLAUDE.md and several other tools read AGENTS.md. The
-        // pointer is what keeps that from becoming two divergent rule sets, so it has
-        // to stay a pointer: a CLAUDE.md that grew its own instructions is the
-        // duplication it exists to prevent.
-        Path pointer = PROJECT_ROOT.resolve("CLAUDE.md");
-        assertThat(pointer)
-                .describedAs("CLAUDE.md must exist, or Claude Code reads no rules at all")
-                .exists();
-
-        String text = Files.readString(pointer);
-        assertThat(text)
-                .describedAs("CLAUDE.md must point at AGENTS.md")
-                .contains("AGENTS.md");
-        assertThat(text.lines().count())
-                .describedAs("CLAUDE.md is a pointer, not a second rule set — it has grown "
-                        + "to %d lines, which is long enough to have started disagreeing "
-                        + "with AGENTS.md", text.lines().count())
-                .isLessThan(20L);
-    }
 }

@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.engine.text.bidi.BidiMirroring;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
@@ -250,14 +251,17 @@ public final class PptxParagraphFragmentRenderHandler
         // chip's left-to-right interior, where nothing mirrors, and turned "a > b"
         // into "a < b" in the only copy of the text the file has. For a single-level
         // chip this is the whole-string mirror it always had.
-        // Gated on the chip's own direction, and that is enough here: a chip opening on
-        // Latin is a left-to-right run, and against a left-to-right base nothing inside
-        // it resolves to a right-to-left level — even brackets enclosing Hebrew stay
-        // put, so there is nothing to mirror. Its Hebrew still reads correctly because
-        // PowerPoint orders the letters itself. (The PDF has no such engine, which is
-        // why the same chip must be resolved there — see PdfParagraphFragmentRenderHandler.)
-        String chipText = span.rightToLeft()
-                ? BidiVisualOrder.mirrorRightToLeftLevels(text, true)
+        // The flag is the base the mirroring resolves against, not the question of
+        // whether to mirror. It is the chip's FIRST character's, and a chip opening on
+        // Latin still carries whatever follows: a neutral standing between two
+        // right-to-left words takes their level even under a left-to-right base, so it
+        // is one of the characters PowerPoint places but does not mirror. "a בית > ספר"
+        // must reach the slide as "a בית < ספר" or the comparison is drawn facing the
+        // wrong way. Ordering stays PowerPoint's — only the mirroring is done for it.
+        boolean needsResolution =
+                span.rightToLeft() || BidiParagraphResolver.requiresBidi(text);
+        String chipText = needsResolution
+                ? BidiVisualOrder.mirrorRightToLeftLevels(text, span.rightToLeft())
                 : text;
         PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
                 chipText, span.textStyle(), environment);

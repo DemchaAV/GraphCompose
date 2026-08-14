@@ -144,10 +144,15 @@ follow semantic versioning; release dates are ISO 8601.
 
   The direction is now the *base* the resolution runs against rather than the question
   of whether to run it, so a chip is resolved whenever its text needs it. A chip that is
-  wholly right-to-left is unchanged, and so is one holding no such script at all. The
-  slide backend needs nothing here: against a left-to-right base nothing inside such a
-  chip resolves to a right-to-left level, so there is never anything to mirror, and
-  PowerPoint orders the letters itself.
+  wholly right-to-left is unchanged, and so is one holding no such script at all.
+
+  The slide backend has the same gap for the same reason, and it shows in the
+  punctuation rather than the letters: PowerPoint orders the Hebrew itself, but a
+  neutral standing between two right-to-left words takes their level even under a
+  left-to-right base, and PowerPoint does not mirror what it places. A chip reading
+  `a בית > ספר` now reaches the slide as `a בית < ספר`, so the comparison faces the way
+  the line reads; a bracket enclosing Hebrew swaps for the same reason, while everything
+  the left-to-right base owns is left as typed.
 
 - **A deck carries the bundled fonts it drew with.** A family a caller registers has
   always been embedded; a family this library *ships* — Amiri for Arabic, David Libre for

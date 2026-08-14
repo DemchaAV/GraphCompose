@@ -195,25 +195,43 @@ class PptxRightToLeftFrameTest {
     }
 
     @Test
-    void aChipThatOpensOnLatinKeepsItsHebrewLogicalAndUnmirrored() throws Exception {
-        // Pins a contract this backend already keeps, not a defect it once had: the
-        // chip's flag is its first character's, so this one is left-to-right, declares
-        // nothing, and is handed over untouched — PowerPoint orders the Hebrew inside
-        // it from the letters themselves. It is here because the PDF needed a real fix
-        // for the same input, and the next person to touch that seam should see, in
-        // this suite, that the slide's answer is to leave it alone: against a
-        // left-to-right base nothing in such a chip resolves to a right-to-left level,
-        // so there is never anything to mirror.
-        List<XSLFTextParagraph> chipFrames = paragraphsOf(
-                renderHighlightLine("a בית")).stream()
-                .filter(paragraph -> paragraph.getText().contains("בית"))
+    void aChipThatOpensOnLatinCarriesNothingToMirrorWhenItHoldsOnlyLetters() throws Exception {
+        // The chip's flag is its first character's, so this one is left-to-right. Its
+        // Hebrew still needs no help: PowerPoint orders the letters itself, and with no
+        // neutral in the chip there is nothing to mirror for it either.
+        assertThat(storedChipOf("a בית", "בית"))
+                .describedAs("logical order, nothing swapped")
+                .isEqualTo("a בית");
+    }
+
+    @Test
+    void aChipThatOpensOnLatinStillMirrorsANeutralBetweenTwoHebrewWords() throws Exception {
+        // The reason the chip's flag cannot gate the mirroring. A neutral standing
+        // between two right-to-left words takes THEIR level even under a left-to-right
+        // base, so it is one of the characters PowerPoint places but does not mirror.
+        // Left unmirrored, the comparison is drawn facing the wrong way on the slide.
+        assertThat(storedChipOf("a בית > ספר", "בית"))
+                .describedAs("the comparison is pre-mirrored for PowerPoint")
+                .isEqualTo("a בית < ספר");
+    }
+
+    @Test
+    void aChipThatOpensOnLatinMirrorsOnlyItsRightToLeftLevelPunctuation() throws Exception {
+        // And only that: brackets enclosing Hebrew take the Hebrew's level and swap,
+        // while everything the left-to-right base owns is left exactly as typed.
+        assertThat(storedChipOf("a בית (ספר)", "בית"))
+                .describedAs("brackets swapped, the Latin opening untouched")
+                .isEqualTo("a בית )ספר(");
+    }
+
+    /** The text stored for the chip frame carrying {@code marker}. */
+    private static String storedChipOf(String chipText, String marker) throws Exception {
+        List<XSLFTextParagraph> frames = paragraphsOf(renderHighlightLine(chipText)).stream()
+                .filter(paragraph -> paragraph.getText().contains(marker))
                 .toList();
 
-        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
-        assertThat(chipFrames).allSatisfy(paragraph ->
-                assertThat(paragraph.getText())
-                        .describedAs("logical order, nothing swapped")
-                        .isEqualTo("a בית"));
+        assertThat(frames).describedAs("the chip's own frame is found").hasSize(1);
+        return frames.get(0).getText();
     }
 
     private static boolean declaresRightToLeft(XSLFTextParagraph paragraph) {

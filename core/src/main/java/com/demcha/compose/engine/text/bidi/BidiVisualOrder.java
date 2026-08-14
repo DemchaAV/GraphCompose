@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Turns one atomic right-to-left run into the exact string a backend draws, level by
- * level.
+ * Turns one atomic run into the exact string a backend draws, level by level.
  *
  * <p>A plain span never needs this: the wrapper splits it wherever its characters
  * resolve to a different embedding level, so each piece is single-level and reversing
@@ -16,11 +15,18 @@ import java.util.List;
  * {@code (b < a)}, the comparison inverted, because the left-to-right interior was
  * reversed and mirrored along with the brackets that enclose it.</p>
  *
- * <p>This class re-resolves the run's own levels (right-to-left base, matching the
- * flag the caller holds), reorders the level runs visually, and reverses and mirrors
- * only the right-to-left ones — UAX #9's L2 and L4 applied to the one span the wrapper
- * could not split. For a single-level run the result is identical to reversing and
- * mirroring the whole string, so the transform is safe for every chip, not only the
+ * <p>Both entry points re-resolve the run's own levels against <em>the base the caller
+ * passes</em> — the run's direction, which for a chip is its first character's and says
+ * only where the chip sits in the line. A left-to-right base does not mean a
+ * left-to-right run: Hebrew inside such a chip still resolves to level 1, and a neutral
+ * standing between two Hebrew words takes their level too. The base decides how those
+ * runs are ordered and where the neutrals fall, not whether any exist.</p>
+ *
+ * <p>{@link #visualize} applies UAX #9's L2 and L4 — reorder, reverse, mirror — for a
+ * backend that draws characters in the order it is handed them. {@link
+ * #mirrorRightToLeftLevels} applies L4 alone, for one that runs the algorithm itself
+ * and only skips the mirroring. For a single-level run each is identical to the
+ * whole-string treatment it replaced, so both are safe for every chip, not only the
  * mixed ones.</p>
  *
  * <p>Ownership: shared engine foundation.</p>

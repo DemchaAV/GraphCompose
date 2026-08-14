@@ -427,20 +427,14 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         // metadata from the old one — a picture embedded at the previous version's
         // dimensions. The bytes and the size a frame is built from now come from the
         // same resolution.
-        ImageData resolved;
-        try {
-            resolved = NodeDefinitionSupport.toImageData(node.imageData());
-        } catch (RuntimeException failure) {
-            // A source that cannot be read used to leave here silently, through a
-            // readBytes that swallowed its exception and returned nothing. Keeping the
-            // export alive is right — one bad image should not lose the document — but
-            // it is worth saying so, as every other dropped node here does.
-            if (warnedNodeKinds.add("image-unreadable")) {
-                LOG.warn("DocxSemanticBackend: dropping an image whose source could not be "
-                        + "read — {}", failure.getMessage());
-            }
-            return;
-        }
+        // Resolution failures are not caught here. The old readBytes swallowed one
+        // narrow case — a path that would not read — and even that was a side effect of
+        // its catch rather than a contract. Catching around the resolver instead would
+        // widen the silence to every way it can fail: corrupt bytes, a format with no
+        // reader, a metadata decode that gives up, a defect in the cache. An export that
+        // quietly drops a picture for any of those is a worse answer than one that says
+        // the image could not be read.
+        ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
         byte[] bytes = resolved.getBytes();
         if (bytes.length == 0) {
             return;

@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Holds the DOCX export to resolving an image once.
@@ -102,6 +103,20 @@ class DocxImageResolutionTest {
                         + "consistent with itself even when the file has moved on")
                 .isEqualTo(40);
         assertThat(embedded.getHeight()).isEqualTo(20);
+    }
+
+    @Test
+    void anImageThatCannotBeReadFailsTheExportRatherThanVanishing(@TempDir Path dir) {
+        // Not a behaviour this backend chose: the old byte read swallowed its exception
+        // and returned nothing, which the length check then read as "nothing to draw".
+        // A document that silently comes back one picture short is the worst of the
+        // available answers, and it was reachable for a path that simply was not there.
+        Path absent = dir.resolve("never-written.png");
+
+        assertThatThrownBy(() -> export(absent))
+                .describedAs("an unreadable source stops the export instead of quietly "
+                        + "removing the image from the document")
+                .isInstanceOf(Exception.class);
     }
 
     /** The bytes of the document's only embedded picture. */

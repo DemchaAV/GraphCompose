@@ -293,7 +293,26 @@ public final class NodeDefinitionSupport {
      * @return resolved image dimensions excluding padding
      */
     public static ImageDimensions resolveImageDimensions(ImageNode node, double availableWidth) {
-        ImageData imageData = toImageData(node.imageData());
+        return resolveImageDimensions(node, availableWidth, toImageData(node.imageData()));
+    }
+
+    /**
+     * As {@link #resolveImageDimensions(ImageNode, double)}, for a caller that already
+     * holds the node's resolved data.
+     *
+     * <p>Resolving it is not free: {@code ImageSourceCache.fromBytes} copies the byte
+     * array and hashes it whole, and a path-sourced image logs its arrival. A caller that
+     * needs the data <em>and</em> the dimensions — the DOCX backend writes the bytes and
+     * sizes the frame — paid all of that twice for one image, which on a large one is two
+     * copies and two SHA-256 passes.</p>
+     *
+     * @param node           image node to measure
+     * @param availableWidth parent available width
+     * @param imageData      the node's already-resolved data; must be the node's own
+     * @return resolved image dimensions excluding padding
+     */
+    public static ImageDimensions resolveImageDimensions(ImageNode node, double availableWidth,
+                                                         ImageData imageData) {
         int intrinsicWidth = Math.max(1, imageData.getMetadata().width());
         int intrinsicHeight = Math.max(1, imageData.getMetadata().height());
         double ratio = intrinsicWidth / (double) intrinsicHeight;

@@ -433,8 +433,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
         double sourceWidth = Math.max(1, resolved.getMetadata().width());
         double sourceHeight = Math.max(1, resolved.getMetadata().height());
+        // Handed the data this method already resolved. Left to resolve it itself, the
+        // sizing pass repeated the copy and the whole-array hash behind
+        // ImageSourceCache.fromBytes, so one image cost two of each on the way out.
         NodeDefinitionSupport.ImageDimensions box =
-                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth);
+                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth, resolved);
 
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();

@@ -548,6 +548,22 @@ follow semantic versioning; release dates are ISO 8601.
   where digits following a letter resolve as an Arabic number rather than a European one,
   and only there does Word part company with the algorithm. Measured in Word, one property
   at a time, against a matrix that also ruled out `w:cs` and `w:lang`.
+- **A Word export resolves an image once, and says so when it cannot.** `writeImage`
+  needed the node's data twice over — the bytes it writes, and the intrinsic size it
+  measures the fit against — and fetched it twice, from two places. Resolving is not
+  free: the source cache copies the byte array whole and hashes it, so a large image
+  paid both costs on every export.
+
+  The second fetch was also reading a different thing. The cache keys on the path alone,
+  so once a render had warmed it, a file rewritten underneath gave the export fresh bytes
+  from disk and the previous version's dimensions — a picture embedded at another image's
+  size, with nothing reporting it, because both halves succeeded and simply described
+  different files. The bytes now come from the resolution that sizes the frame.
+
+  One behaviour changes with it: an image whose source cannot be read stops the export.
+  It used to disappear from the document silently — not a decision, but the side effect
+  of a read that swallowed its own exception — and a document that comes back one picture
+  short is the worst of the available answers.
 
 - **DOCX keeps the styling a mixed paragraph asks for.** A `RichText` paragraph exported
   with every run in the paragraph's base style, so a bold segment, an accent-coloured

@@ -97,6 +97,27 @@ class CanonicalSurfaceGuardTest {
             "docs/roadmaps/",
             "docs/templates/v1-classic/");
 
+    /**
+     * Files that name the removed engine architecture <em>as removed</em>, which is the
+     * one thing prose about it may still do.
+     *
+     * <p>Kept to two entries and listed rather than pattern-matched, because the
+     * distinction is editorial, not structural: both say the layer is gone, and a guard
+     * that recognised "gone" would pass any sentence containing the word. Naming the
+     * files is what keeps the exemption reviewable.</p>
+     *
+     * <ul>
+     *   <li>{@code ROADMAP.md} — its per-GA sections record what each release removed,
+     *       the same job the changelog does one entry at a time.</li>
+     *   <li>{@code baselines/COMPARISON.md} — a dated benchmark log describing runs
+     *       measured while that engine still existed. Rewriting it would falsify the
+     *       record it exists to keep.</li>
+     * </ul>
+     */
+    private static final Set<String> ENGINE_HISTORY_ALLOWLIST = Set.of(
+            "ROADMAP.md",
+            "baselines/COMPARISON.md");
+
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
     private static final Set<String> DOCUMENTATION_ALLOWLIST = Set.of(
@@ -345,6 +366,82 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/style"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/table"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/image")));
+    }
+
+    /**
+     * The entity-component-system engine is gone, and no prose may say otherwise.
+     *
+     * <p>Nothing named {@code SystemECS}, {@code Entity} or {@code ComponentSystem}
+     * survives in any {@code src/main} tree, and no {@code ecs} sub-package exists. Yet
+     * this repository carried, for a full release line, javadoc telling readers the
+     * adapters "talk to the ECS-based engine", that a watermark "is not an ECS entity",
+     * and that the legacy renderer had "moved to the {@code ecs} sub-package" — a
+     * package a reader can never open. The contributor guide sent people around an
+     * "engine ECS" that is not there.</p>
+     *
+     * <p>Every existing scan missed all of it, and the reason is worth keeping: the
+     * retired-token scan reads markdown only, and the one scan that reads main sources
+     * is scoped to {@code document/**}. These claims live in engine and render-backend
+     * javadoc — outside every root any guard looked at. This one reads the source trees
+     * the others do not.</p>
+     *
+     * <p>Matched on word boundaries rather than as a substring, so {@code SPECS} and
+     * {@code RECS} do not trip it, and the historical prefixes still apply: a changelog
+     * entry or an ADR recording the removal names it on purpose.</p>
+     */
+    @Test
+    void nothingShouldDescribeTheEngineAsEntityComponentSystem() throws IOException {
+        Pattern ecs = Pattern.compile("\\bECS\\b|\\bentity[- ]component[- ]system\\b",
+                Pattern.CASE_INSENSITIVE);
+        List<Path> roots = List.of(
+                PROJECT_ROOT.resolve("README.md"),
+                PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                PROJECT_ROOT.resolve("ROADMAP.md"),
+                PROJECT_ROOT.resolve("docs"),
+                PROJECT_ROOT.resolve("baselines"),
+                PROJECT_ROOT.resolve("core/src/main/java"),
+                PROJECT_ROOT.resolve("render-pdf/src/main/java"),
+                PROJECT_ROOT.resolve("render-pptx/src/main/java"),
+                PROJECT_ROOT.resolve("render-docx/src/main/java"),
+                PROJECT_ROOT.resolve("templates/src/main/java"));
+
+        Set<String> violations = new TreeSet<>();
+        for (Path root : roots) {
+            for (Path file : proseBearingFilesUnder(root)) {
+                String rel = relative(file);
+                if (isHistoricalRecord(rel) || ENGINE_HISTORY_ALLOWLIST.contains(rel)) {
+                    continue;
+                }
+                Matcher matcher = ecs.matcher(Files.readString(file));
+                if (matcher.find()) {
+                    violations.add(rel + " says \"" + matcher.group() + "\"");
+                }
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("the entity-component-system engine was removed, so prose "
+                        + "naming it as current describes an architecture this code does "
+                        + "not have. A document whose job is to record the removal belongs "
+                        + "under one of %s.", HISTORICAL_RECORD_PREFIXES)
+                .isEmpty();
+    }
+
+    /** Markdown and Java files under a root, or the root itself when it is one. */
+    private static List<Path> proseBearingFilesUnder(Path root) throws IOException {
+        if (Files.isRegularFile(root)) {
+            return List.of(root);
+        }
+        if (!Files.isDirectory(root)) {
+            return List.of();
+        }
+        try (var paths = Files.walk(root)) {
+            return paths.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".md")
+                            || path.toString().endsWith(".java"))
+                    .sorted()
+                    .toList();
+        }
     }
 
     /** Markdown files under a root, or the root itself when it is one. */

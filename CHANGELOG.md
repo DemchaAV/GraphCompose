@@ -83,6 +83,14 @@ follow semantic versioning; release dates are ISO 8601.
   its own. PowerPoint is told the direction on the cell's frame and likewise receives the
   text as written.
 
+  The Unicode formatting controls reach whoever still has to read them. A cell's line keeps
+  its joining controls and direction marks through the backend's own sanitising, because
+  below that sit the shaper and the algorithm — and in a cell handed to PowerPoint neither
+  has run yet. They are dropped at the glyph seam, where a zero-width character has nothing
+  to draw. Removed earlier, with a space in their place, a `ZWNJ` between two Arabic letters
+  did not merely go missing: it became a word break, and the letters the author had
+  separated joined up anyway.
+
   That last one is the opposite of what a paragraph does, and the difference is the size of
   what each hands over. A paragraph reaches PowerPoint as one frame per span, so no frame
   holds a bracket pair for PowerPoint to resolve and the mirroring has to be done first. A

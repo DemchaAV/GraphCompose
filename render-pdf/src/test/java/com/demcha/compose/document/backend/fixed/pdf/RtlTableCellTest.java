@@ -26,6 +26,12 @@ class RtlTableCellTest {
 
     private static final String HEBREW = "שלום";
     private static final String LATIN = "Hello";
+    /** Built from code points: a literal control would be invisible in the source. */
+    private static final String ZWNJ = String.valueOf((char) 0x200C);
+    private static final String ZWJ = String.valueOf((char) 0x200D);
+    /** Two Arabic letters that connect when nothing says otherwise. */
+    private static final String BEH = "ب";
+    private static final String HEH = "ه";
 
     @Test
     void hebrewInACellIsDrawnRightToLeft() throws Exception {
@@ -89,6 +95,49 @@ class RtlTableCellTest {
                 .describedAs("under the cell's base direction the Hebrew sits left of the "
                         + "Latin it follows in reading order")
                 .isLessThan(latinX);
+    }
+
+    @Test
+    void theJoiningControlsReachTheShaper() throws Exception {
+        // ZWNJ and ZWJ are instructions to the shaper, which runs below the cell's own
+        // sanitising pass. The plain control sanitizer removed them there and put a space
+        // in their place, so the shaper was handed a different word than the author wrote —
+        // and both controls came out the same, because a space separates either way.
+        //
+        // The width is the evidence: two connected letters are drawn narrower than the same
+        // two standing apart. Asserted in both directions, so a pass needs the controls to
+        // be read rather than merely present.
+        double joinedNaturally = drawnWidth(BEH + HEH);
+        double keptApart = drawnWidth(BEH + ZWNJ + HEH);
+        double heldTogether = drawnWidth(BEH + ZWJ + HEH);
+
+        assertThat(keptApart)
+                .describedAs("ZWNJ reached the shaper, so the letters take their unconnected "
+                        + "forms and the pair is wider than the joined one")
+                .isGreaterThan(joinedNaturally);
+        assertThat(heldTogether)
+                .describedAs("ZWJ is not a separator: the connection survives, so the pair "
+                        + "is drawn at the width it has when nothing sits between the letters")
+                .isEqualTo(joinedNaturally);
+    }
+
+    /** The horizontal extent of everything the page drew, in points. */
+    private static double drawnWidth(String text) throws Exception {
+        java.util.List<DrawnGlyphs.Glyph> glyphs = DrawnGlyphs.leftToRight(renderArabic(text));
+        double left = glyphs.stream().mapToDouble(DrawnGlyphs.Glyph::left).min().orElseThrow();
+        double right = glyphs.stream().mapToDouble(DrawnGlyphs.Glyph::right).max().orElseThrow();
+        return right - left;
+    }
+
+    private static byte[] renderArabic(String text) {
+        return render(table -> table
+                .columns(DocumentTableColumn.fixed(300))
+                .defaultCellStyle(DocumentTableStyle.builder()
+                        .textStyle(DocumentTextStyle.builder()
+                                .fontName(FontName.AMIRI).size(24).build())
+                        .direction(TextDirection.RTL)
+                        .build())
+                .row(text));
     }
 
     @Test

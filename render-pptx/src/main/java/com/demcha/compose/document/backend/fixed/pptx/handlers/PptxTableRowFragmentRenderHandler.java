@@ -235,7 +235,13 @@ public final class PptxTableRowFragmentRenderHandler
             // implementation is complete for. Pre-mirroring that line swaps the brackets a
             // second time: measured in PowerPoint, "(2026)" closing an Arabic cell came out
             // as ")2026(".
-            String safeText = font.sanitizeForRender(cell.style().textStyle(), line);
+            // Sanitised for a consumer that has been left both jobs. The render sanitizer
+            // drops every formatting control, which is right for a PDF — the engine has
+            // read them and none of them draw — and wrong here twice over: it hands
+            // PowerPoint's shaper a word it joins straight back up, and it deletes the
+            // direction marks the line was handed over logical for PowerPoint to resolve
+            // against.
+            String safeText = font.sanitizeForLogicalTextExport(cell.style().textStyle(), line);
             PptxTextFrames.singleRunBox(surface,
                     "GraphCompose Table Cell Text",
                     new Rectangle2D.Double(
@@ -267,7 +273,11 @@ public final class PptxTableRowFragmentRenderHandler
         }
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
-            result.add(TextControlSanitizer.replace(line, " ").trim());
+            // The formatting controls survive: this backend hands the line over for
+            // PowerPoint to shape and to order, so both classes of control are still
+            // unread instructions. Replacing them with a space did not merely lose them —
+            // it inserted a word break where the author had asked for the opposite.
+            result.add(TextControlSanitizer.removeExceptFormattingControls(line).trim());
         }
         return List.copyOf(result);
     }

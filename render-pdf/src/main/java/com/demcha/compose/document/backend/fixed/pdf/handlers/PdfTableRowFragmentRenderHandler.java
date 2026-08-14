@@ -312,7 +312,14 @@ public final class PdfTableRowFragmentRenderHandler
 
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
-            result.add(TextControlSanitizer.replace(line, " ").trim());
+            // The formatting controls survive this pass, as they do for a paragraph. They
+            // are instructions to two readers further down — the shaper reads the joining
+            // controls to decide whether two letters connect, the algorithm reads the
+            // direction marks and isolates — and both run below this line. Stripping them
+            // here handed the shaper a different word than the author wrote and ran the
+            // algorithm over a different string than the one layout resolved the cell's
+            // direction from. They are dropped at the glyph seam, once both have read them.
+            result.add(TextControlSanitizer.removeExceptFormattingControls(line).trim());
         }
         return List.copyOf(result);
     }

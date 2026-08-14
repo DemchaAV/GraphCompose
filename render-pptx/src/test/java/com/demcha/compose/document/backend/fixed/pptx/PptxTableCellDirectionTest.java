@@ -23,17 +23,23 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Holds a table cell's frame to declaring which way it reads.
+ * Holds a table cell's frame to declaring which way it reads, and to handing over the line
+ * as written.
  *
- * <p>The cell's frame is pinned where the layout put it, so a slide already agrees with
- * the PDF about where the text sits. What it does not agree about without this is what
- * happens inside the frame: PowerPoint resolves neutrals against the paragraph's base
- * direction, which defaults to left-to-right, so a Hebrew cell ending in a full stop put
- * the stop on the wrong end of its own box.</p>
+ * <p>The frame is pinned where the layout put it, so a slide already agrees with the PDF
+ * about where the text sits. What it does not agree about without this is what happens
+ * inside the frame: PowerPoint resolves neutrals against the paragraph's base direction,
+ * which defaults to left-to-right, so a Hebrew cell ending in a full stop put the stop on
+ * the wrong end of its own box.</p>
  *
- * <p>The text goes over logical and unshaped — PowerPoint reorders and joins it — with one
- * exception carried over from the paragraph handler: PowerPoint does not mirror a neutral
- * it has placed, so a bracket is swapped before the hand-off.</p>
+ * <p>Everything else is left to PowerPoint, and this is where the cell parts company with
+ * the paragraph handler. A paragraph arrives as one frame per span, so no frame holds a
+ * bracket pair for PowerPoint to resolve and the mirroring has to be done first; a cell is
+ * one frame holding a whole line, which is the input PowerPoint's own algorithm is complete
+ * for. Mirroring it first swaps the brackets twice. For the same reason the formatting
+ * controls survive the hand-off: the joining controls are the instruction to a shaper that
+ * has not run, and the direction marks are the instruction to an algorithm that has not
+ * run either.</p>
  */
 class PptxTableCellDirectionTest {
 
@@ -41,6 +47,14 @@ class PptxTableCellDirectionTest {
     private static final String LATIN = "Hello world";
     /** Hebrew closing on a bracket: the neutral whose facing is at issue. */
     private static final String BRACKETED = "שנה טובה (2026)";
+    /** Built from code points: a literal control would be invisible in the source. */
+    private static final String ZWNJ = String.valueOf((char) 0x200C);
+    private static final String LRI = String.valueOf((char) 0x2066);
+    private static final String PDI = String.valueOf((char) 0x2069);
+    /** Two Arabic letters the author has told the shaper not to connect. */
+    private static final String WITH_ZWNJ = "ب" + ZWNJ + "ه";
+    /** A neutral stretch the author has isolated from the line it sits in. */
+    private static final String WITH_ISOLATE = "שלום " + LRI + "(a > b)" + PDI;
 
     @Test
     void aRightToLeftCellDeclaresItsDirection() throws Exception {
@@ -79,6 +93,30 @@ class PptxTableCellDirectionTest {
                         + "\")2026(\" on a slide until this stopped")
                 .anyMatch(text -> text.contains("(2026)"))
                 .noneMatch(text -> text.contains(")2026("));
+    }
+
+    @Test
+    void theArabicJoiningControlsSurviveTheHandOff() throws Exception {
+        // ZWNJ says these two letters must not connect. PowerPoint shapes the text itself,
+        // so the control is an instruction to its shaper — dropped on the way over, it
+        // receives a word it joins straight back up, and the author's spelling is gone.
+        assertThat(texts(paragraphsOf(render(WITH_ZWNJ, TextDirection.RTL, FontName.AMIRI))))
+                .describedAs("the render sanitizer drops these because a PDF draws glyphs "
+                        + "and a zero-width control has none; the consumer that shapes for "
+                        + "itself needs them")
+                .anyMatch(text -> text.contains(ZWNJ));
+    }
+
+    @Test
+    void theBidiControlsSurviveTheHandOffToo() throws Exception {
+        // The cell is handed over as a whole logical line precisely so PowerPoint runs its
+        // own algorithm over it. That makes an isolate part of its input, not something the
+        // engine has already consumed — which is what separates this path from a paragraph
+        // span, where the order is settled before the hand-off.
+        assertThat(texts(paragraphsOf(render(WITH_ISOLATE, TextDirection.RTL))))
+                .describedAs("an isolate is the author's instruction about a neutral stretch "
+                        + "of text, and nothing has read it yet")
+                .anyMatch(text -> text.contains(LRI) && text.contains(PDI));
     }
 
     @Test
@@ -121,9 +159,13 @@ class PptxTableCellDirectionTest {
     }
 
     private static byte[] render(String text, TextDirection direction) {
+        return render(text, direction, FontName.DAVID_LIBRE);
+    }
+
+    private static byte[] render(String text, TextDirection direction, FontName font) {
         return render(table -> table
                 .columns(DocumentTableColumn.fixed(300))
-                .defaultCellStyle(cellStyle(direction))
+                .defaultCellStyle(cellStyle(direction, font))
                 .row(text));
     }
 
@@ -135,9 +177,13 @@ class PptxTableCellDirectionTest {
     }
 
     private static DocumentTableStyle cellStyle(TextDirection direction) {
+        return cellStyle(direction, FontName.DAVID_LIBRE);
+    }
+
+    private static DocumentTableStyle cellStyle(TextDirection direction, FontName font) {
         DocumentTableStyle.Builder builder = DocumentTableStyle.builder()
                 .textStyle(DocumentTextStyle.builder()
-                        .fontName(FontName.DAVID_LIBRE)
+                        .fontName(font)
                         .size(13)
                         .build());
         if (direction != null) {

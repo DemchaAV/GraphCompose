@@ -194,6 +194,46 @@ class PptxRightToLeftFrameTest {
                         .isEqualTo(")" + "שנה" + "("));
     }
 
+    @Test
+    void aChipThatOpensOnLatinCarriesNothingToMirrorWhenItHoldsOnlyLetters() throws Exception {
+        // The chip's flag is its first character's, so this one is left-to-right. Its
+        // Hebrew still needs no help: PowerPoint orders the letters itself, and with no
+        // neutral in the chip there is nothing to mirror for it either.
+        assertThat(storedChipOf("a בית", "בית"))
+                .describedAs("logical order, nothing swapped")
+                .isEqualTo("a בית");
+    }
+
+    @Test
+    void aChipThatOpensOnLatinStillMirrorsANeutralBetweenTwoHebrewWords() throws Exception {
+        // The reason the chip's flag cannot gate the mirroring. A neutral standing
+        // between two right-to-left words takes THEIR level even under a left-to-right
+        // base, so it is one of the characters PowerPoint places but does not mirror.
+        // Left unmirrored, the comparison is drawn facing the wrong way on the slide.
+        assertThat(storedChipOf("a בית > ספר", "בית"))
+                .describedAs("the comparison is pre-mirrored for PowerPoint")
+                .isEqualTo("a בית < ספר");
+    }
+
+    @Test
+    void aChipThatOpensOnLatinMirrorsOnlyItsRightToLeftLevelPunctuation() throws Exception {
+        // And only that: brackets enclosing Hebrew take the Hebrew's level and swap,
+        // while everything the left-to-right base owns is left exactly as typed.
+        assertThat(storedChipOf("a בית (ספר)", "בית"))
+                .describedAs("brackets swapped, the Latin opening untouched")
+                .isEqualTo("a בית )ספר(");
+    }
+
+    /** The text stored for the chip frame carrying {@code marker}. */
+    private static String storedChipOf(String chipText, String marker) throws Exception {
+        List<XSLFTextParagraph> frames = paragraphsOf(renderHighlightLine(chipText)).stream()
+                .filter(paragraph -> paragraph.getText().contains(marker))
+                .toList();
+
+        assertThat(frames).describedAs("the chip's own frame is found").hasSize(1);
+        return frames.get(0).getText();
+    }
+
     private static boolean declaresRightToLeft(XSLFTextParagraph paragraph) {
         var properties = paragraph.getXmlObject().getPPr();
         return properties != null && properties.isSetRtl() && properties.getRtl();

@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.InlineBackground;
 import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.engine.text.bidi.BidiMirroring;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import com.demcha.compose.engine.text.bidi.BidiText;
 import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.engine.render.pdf.PdfFont;
@@ -149,8 +150,14 @@ public final class PdfParagraphFragmentRenderHandler
         String sanitizedLogical = font.sanitizeForRender(span.textStyle(), span.text());
         String text = sanitizedLogical;
         String written = null;
-        if (span.rightToLeft()) {
-            text = BidiVisualOrder.visualize(sanitizedLogical);
+        // Not gated on the chip's own direction: that flag is its FIRST character's, and
+        // it settles where the chip sits in the line, not what the chip holds. A chip
+        // opening on Latin is a left-to-right run that may still carry Hebrew, and
+        // skipping the resolution handed that Hebrew to the content stream logically —
+        // drawn left to right, the word came out backwards. The flag is the base the
+        // resolution runs against, not the question of whether to run it.
+        if (span.rightToLeft() || BidiParagraphResolver.requiresBidi(sanitizedLogical)) {
+            text = BidiVisualOrder.visualize(sanitizedLogical, span.rightToLeft());
             written = PdfActualText.writtenTextOf(span);
             environment.markReorderedText();
         }

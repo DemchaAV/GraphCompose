@@ -24,11 +24,10 @@ import java.util.function.Consumer;
  * while the digits and the Latin inside it keep running forwards, and nothing in this file
  * positions them — the algorithm does.</p>
  *
- * <p>The line items are built from <b>rows</b>, not from a table. A table cell goes through
- * the table's own layout, which carries no writing direction, so Hebrew inside one would be
- * drawn in the order it was written rather than reordered for display. A row holds
- * paragraphs, and a paragraph carries its direction — so the columns here read correctly
- * and sit at the right edge of their own cell.</p>
+ * <p>The line items are built from <b>rows</b> rather than from a table. That is a choice
+ * about layout and no longer one about direction — a table cell declares its own with
+ * {@code DocumentTableStyle.direction(...)}. Rows stay because each column of an invoice
+ * wants its own alignment and its own style, which a row of paragraphs gives directly.</p>
  *
  * <p>Set in {@code FontName.DAVID_LIBRE}, bundled since {@code graph-compose-fonts} 1.1.0.
  * Hebrew has no contextual forms, so the family is held only to covering the block —

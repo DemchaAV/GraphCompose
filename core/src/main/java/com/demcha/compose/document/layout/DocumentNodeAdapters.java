@@ -1,6 +1,7 @@
 package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -17,6 +18,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -106,7 +108,28 @@ final class DocumentNodeAdapters {
                 .textStyle(style.textStyle() == null ? null : toTextStyle(style.textStyle()))
                 .textAnchor(style.textAnchor() == null ? null : toAnchor(style.textAnchor()))
                 .lineSpacing(style.lineSpacing())
+                .direction(toBaseDirection(style.direction()))
                 .build();
+    }
+
+    /**
+     * Carries the declared direction across as a question, not an answer.
+     *
+     * <p>{@link TextDirection#AUTO} maps to
+     * {@link BidiParagraphResolver.BaseDirection#FIRST_STRONG_CHARACTER} rather than being
+     * resolved here, because the text it has to be read off is the cell's, and a style
+     * override is merged before anyone knows which cell it landed on. The layout answers
+     * it once the two have met.</p>
+     */
+    private static BidiParagraphResolver.BaseDirection toBaseDirection(TextDirection direction) {
+        if (direction == null) {
+            return null;
+        }
+        return switch (direction) {
+            case LTR -> BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT;
+            case RTL -> BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
+            case AUTO -> BidiParagraphResolver.BaseDirection.FIRST_STRONG_CHARACTER;
+        };
     }
 
     static Map<Integer, TableCellLayoutStyle> toTableStyles(Map<Integer, DocumentTableStyle> styles) {

@@ -104,9 +104,26 @@ final class PptxTextFrames {
                                     String text,
                                     TextStyle style,
                                     PptxRenderEnvironment environment) {
+        return singleRunBox(surface, shapeName, anchor, text, style, environment, false);
+    }
+
+    /**
+     * As {@link #singleRunBox(XSLFShapeContainer, String, Rectangle2D, String, TextStyle,
+     * PptxRenderEnvironment)}, declaring the frame's base direction.
+     *
+     * <p>The frame is pinned where the layout put it, so what is left to settle is what
+     * happens inside it — see {@link #preparedParagraph(XSLFTextBox, boolean)}.</p>
+     */
+    static XSLFTextBox singleRunBox(XSLFShapeContainer surface,
+                                    String shapeName,
+                                    Rectangle2D anchor,
+                                    String text,
+                                    TextStyle style,
+                                    PptxRenderEnvironment environment,
+                                    boolean rightToLeft) {
         XSLFTextBox box = newTextBox(surface, anchor);
         setShapeName(box, shapeName);
-        addRun(preparedParagraph(box), text, style, environment);
+        addRun(preparedParagraph(box, rightToLeft), text, style, environment);
         return box;
     }
 

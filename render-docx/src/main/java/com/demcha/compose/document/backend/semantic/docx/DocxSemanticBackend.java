@@ -52,6 +52,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcBorders;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STBorder;
@@ -319,8 +320,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
 
     private void writeParagraph(XWPFDocument document, ParagraphNode node) {
         XWPFParagraph para = document.createParagraph();
-        applyParagraphProperties(para, node);
-        writeParagraphRuns(para, node);
+        boolean rightToLeft = applyParagraphProperties(para, node);
+        writeParagraphRuns(para, node, rightToLeft);
     }
 
     /**
@@ -341,11 +342,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * @param target the Word paragraph
      * @param source the node it was written from
+     * @return whether the paragraph runs right to left, for its runs to declare too
      */
-    private static void applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
+    private static boolean applyParagraphProperties(XWPFParagraph target, ParagraphNode source) {
         boolean rightToLeft = ParagraphDirection.resolve(source) == TextDirection.RTL;
         target.setAlignment(toAlignment(source.align(), rightToLeft));
         applyDirection(target, rightToLeft);
+        return rightToLeft;
     }
 
     /**
@@ -388,17 +391,19 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * blank {@code ParagraphNode} fills it by concatenating exactly the runs
      * {@code inlineTextRuns()} returns, highlight chips included.</p>
      */
-    private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node) {
+    private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
         List<InlineTextRun> runs = node.inlineTextRuns();
         if (runs.isEmpty()) {
             XWPFRun docRun = para.createRun();
             applyStyle(docRun, node.textStyle());
+            applyRunDirection(docRun, rightToLeft);
             docRun.setText(node.text() == null ? "" : node.text());
             return;
         }
         for (InlineTextRun run : runs) {
             XWPFRun docRun = para.createRun();
             applyStyle(docRun, run.textStyle() == null ? node.textStyle() : run.textStyle());
+            applyRunDirection(docRun, rightToLeft);
             docRun.setText(run.text() == null ? "" : run.text());
         }
     }
@@ -705,9 +710,17 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             return;
         }
         XWPFParagraph para = cell.addParagraph();
+        List<String> lines = source.lines();
+        // Word has a bidirectional engine of its own: it reorders the line and joins the
+        // Arabic itself, given the text as written. What it cannot work out is the base
+        // direction, and without w:bidi it assumes left to right — which puts a Hebrew
+        // cell's trailing punctuation on the wrong side and starts the line at the wrong
+        // edge. So the cell is told, and the text goes over untouched.
+        boolean rightToLeft = resolveCellDirection(node, placement, lines);
+        applyDirection(para, rightToLeft);
         XWPFRun run = para.createRun();
         applyStyle(run, resolveCellTextStyle(node, placement));
-        List<String> lines = source.lines();
+        applyRunDirection(run, rightToLeft);
         for (int i = 0; i < lines.size(); i++) {
             if (i > 0) {
                 // A joined "\n" is not a line break in Word; it renders as one line.
@@ -715,6 +728,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
             run.setText(lines.get(i) == null ? "" : lines.get(i), i);
         }
+    }
+
+    /**
+     * Whether a cell's text runs right to left.
+     *
+     * <p>{@link TextDirection#AUTO} is read off the cell as a whole rather than off each
+     * line, because the cell is what the bidirectional algorithm calls a paragraph — a
+     * second line that happens to open on Latin must not run the other way from the first.
+     * The PDF backend resolves it from the same text, which is what keeps the two files
+     * agreeing about the same table.</p>
+     */
+    private boolean resolveCellDirection(TableNode node, TableGrid.Placement placement,
+                                         List<String> lines) {
+        TextDirection declared = resolveCellValue(node, placement, DocumentTableStyle::direction);
+        if (declared == null) {
+            return false;
+        }
+        return ParagraphDirection.resolve(String.join("\n", lines), declared) == TextDirection.RTL;
     }
 
     /**
@@ -804,8 +835,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // direction too. Writing only the runs left every right-to-left paragraph
             // inside a table undeclared, which is where an invoice keeps its line items.
             XWPFParagraph cellParagraph = cell.addParagraph();
-            applyParagraphProperties(cellParagraph, paragraph);
-            writeParagraphRuns(cellParagraph, paragraph);
+            boolean cellRightToLeft = applyParagraphProperties(cellParagraph, paragraph);
+            writeParagraphRuns(cellParagraph, paragraph, cellRightToLeft);
         } else if (child instanceof ContainerNode container) {
             for (DocumentNode grandChild : container.children()) {
                 writeCellNode(cell, grandChild);
@@ -835,6 +866,29 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFParagraph para = document.createParagraph();
         XWPFRun run = para.createRun();
         run.addBreak(BreakType.PAGE);
+    }
+
+    /**
+     * Marks a run as right-to-left text.
+     *
+     * <p>{@code w:bidi} on the paragraph settles which edge the line starts from. It does
+     * not settle how Word resolves the characters inside a run: without {@code w:rtl} the
+     * run is handled as Latin, and paired punctuation is not mirrored — measured in Word,
+     * an Arabic cell ending in {@code (2026)} drew it as {@code )2026(} while the same
+     * document as a PDF was correct. It is the run-level half of the same pair
+     * {@code w:szCs} belongs to: Word takes complex scripts from properties of their own,
+     * and a run that does not declare itself one gets the treatment Latin gets.</p>
+     */
+    private static void applyRunDirection(XWPFRun run, boolean rightToLeft) {
+        if (!rightToLeft) {
+            return;
+        }
+        CTRPr properties = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
+        // The schema models w:rtl as a repeating element, so there is no isSet — an empty
+        // element is the "on" form, and adding a second would be writing the flag twice.
+        if (properties.sizeOfRtlArray() == 0) {
+            properties.addNewRtl();
+        }
     }
 
     private void applyStyle(XWPFRun run, DocumentTextStyle style) {

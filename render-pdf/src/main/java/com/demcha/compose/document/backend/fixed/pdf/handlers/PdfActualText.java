@@ -64,7 +64,23 @@ final class PdfActualText {
      * @return the text as written, or {@code null} when there is nothing to state
      */
     static String writtenTextOf(ParagraphTextSpan span) {
-        String written = ArabicShaper.toBaseLetters(span.text());
+        return writtenTextOf(span.text());
+    }
+
+    /**
+     * As {@link #writtenTextOf(ParagraphTextSpan)}, for a line that is not a span.
+     *
+     * <p>A table cell is drawn line by line rather than span by span, and it owes a reader
+     * the same thing a paragraph does.</p>
+     *
+     * @param logical the line as written
+     * @return the text as written, or {@code null} when there is nothing to state
+     */
+    static String writtenTextOf(String logical) {
+        if (logical == null) {
+            return null;
+        }
+        String written = ArabicShaper.toBaseLetters(logical);
         return written.isEmpty() ? null : written;
     }
 

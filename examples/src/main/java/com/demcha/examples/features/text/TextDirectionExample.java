@@ -7,6 +7,8 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableColumn;
+import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 
@@ -87,6 +89,18 @@ public final class TextDirectionExample {
                             .text(ARABIC)
                             .direction(TextDirection.RTL)
                             .textStyle(arabic()))
+
+                    .addParagraph(p -> p.text(
+                                    "DocumentTableStyle.direction(AUTO)  - answered per cell")
+                            .textStyle(caption()))
+                    .addTable(t -> t
+                            .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(),
+                                    DocumentTableColumn.auto())
+                            .defaultCellStyle(DocumentTableStyle.builder()
+                                    .textStyle(hebrew())
+                                    .direction(TextDirection.AUTO)
+                                    .build())
+                            .row(HEBREW, "שנה טובה 2026", "Latin stays put"))
 
                     .build();
 

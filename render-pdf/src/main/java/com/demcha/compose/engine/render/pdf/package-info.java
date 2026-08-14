@@ -19,8 +19,8 @@
  * canonical {@code document.backend.fixed.pdf} backend) rather than leaking them
  * into backend-neutral engine components or builders.</p>
  *
- * <p>The legacy {@code Entity}-based ECS PDF renderer has moved to the
- * {@code ecs} sub-package and is {@code @Deprecated}; nothing in this package or
- * the canonical pipeline depends on it.</p>
+ * <p>The 2.0 line removed the legacy entity-based PDF renderer that once sat beside
+ * this package; nothing here or in the canonical pipeline replaced it, because the
+ * canonical backend had already taken over every path it served.</p>
  */
 package com.demcha.compose.engine.render.pdf;

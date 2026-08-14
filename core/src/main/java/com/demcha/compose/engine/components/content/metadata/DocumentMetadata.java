@@ -7,7 +7,7 @@ import lombok.Getter;
  * Document-level metadata for the generated file (title, author, subject, keywords).
  *
  * <p>This is applied to the PDF information dictionary during the final
- * output phase. It does not participate in the ECS layout pipeline.</p>
+ * output phase. It does not participate in layout or pagination.</p>
  *
  * @author Artem Demchyshyn
  */

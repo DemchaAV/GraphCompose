@@ -13,8 +13,8 @@ import java.nio.file.Path;
  * support rotation, opacity, color, and font size. Image watermarks
  * support opacity and positioning.</p>
  *
- * <p>This is a document-level config attached to canonical PDF rendering,
- * not an ECS entity. The renderer applies it to every page after (or before)
+ * <p>This is a document-level config attached to canonical PDF rendering, not a node
+ * in the document tree. The renderer applies it to every page after (or before)
  * content rendering depending on the {@link WatermarkLayer}.</p>
  *
  * @author Artem Demchyshyn

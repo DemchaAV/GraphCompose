@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  *
  * <p>Public authoring packages should stay on {@code document.*} types. Layout,
  * pagination, measurement, and rendering code use this adapter at runtime
- * boundaries before talking to the ECS-based engine.</p>
+ * boundaries before talking to the engine's own value types.</p>
  */
 final class DocumentNodeAdapters {
     private DocumentNodeAdapters() {

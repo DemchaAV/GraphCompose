@@ -1,7 +1,7 @@
 # Extension Guide
 
 How to extend the canonical document API without reaching into the
-engine ECS. The guide walks through four common extension paths,
+engine internals. The guide walks through four common extension paths,
 each with the v1.5 `ShapeContainerNode` work as a worked example so
 the moving pieces are easy to find in the source tree.
 
@@ -227,7 +227,7 @@ locate the responsible file:
 | Layout pipeline | `com.demcha.compose.document.layout` (`LayoutCompiler`, `BuiltInNodeDefinitions`, `TableLayoutSupport`) |
 | PDF backend | `com.demcha.compose.document.backend.fixed.pdf` |
 | DOCX backend | `com.demcha.compose.document.backend.semantic` |
-| Engine ECS internals | `com.demcha.compose.engine.*` (don't reach in from canonical code) |
+| Engine internals | `com.demcha.compose.engine.*` (don't reach in from canonical code) |
 
 Detailed ownership lives in
 [`docs/architecture/package-map.md`](../architecture/package-map.md).

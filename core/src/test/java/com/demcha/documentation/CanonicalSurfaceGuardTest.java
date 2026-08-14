@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -108,21 +109,26 @@ class CanonicalSurfaceGuardTest {
      * the exemption to the historical statement itself, so any other mention in the same
      * file still fails.</p>
      *
-     * <p>Listed rather than pattern-matched: a guard that recognised "gone" or "removed"
-     * would pass any sentence containing the word, including a new false one.</p>
+     * <p>Keyed by file, so an exemption applies where the sentence IS the record and
+     * nowhere else. Listed rather than pattern-matched: a guard that recognised "gone"
+     * or "removed" would pass any sentence containing the word, including a new false
+     * one.</p>
      */
-    private static final List<String> ENGINE_HISTORY_SENTENCES = List.of(
+    private static final Map<String, List<String>> ENGINE_HISTORY_SENTENCES = Map.of(
             // ROADMAP's 2.0 section, recording what that GA dropped — the same job the
             // changelog does one entry at a time.
-            "the dead Entity-Component-System execution layer and the deprecated",
+            "ROADMAP.md", List.of(
+                    "the dead Entity-Component-System execution layer and the deprecated"),
             // The post-2.0 roadmap's opening paragraph, naming what that line removed.
             // Kept to one physical line: the sentence wraps in the source, and the
             // line ending it wraps with is not the same on every checkout.
-            "Entity-Component-System code, retiring the deprecated API surface",
+            "docs/roadmaps/post-2.0-engineering.md", List.of(
+                    "Entity-Component-System code, retiring the deprecated API surface"),
             // A dated benchmark log, measured while that engine still existed. Rewriting
             // it would falsify the record it is kept for.
-            "too small to expose ECS lookup overhead",
-            "that go through the legacy ECS");
+            "baselines/COMPARISON.md", List.of(
+                    "too small to expose ECS lookup overhead",
+                    "that go through the legacy ECS"));
 
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
@@ -432,9 +438,11 @@ class CanonicalSurfaceGuardTest {
                     continue;
                 }
                 String source = Files.readString(file);
-                if (ENGINE_HISTORY_SENTENCES.stream().anyMatch(source::contains)) {
-                    source = ENGINE_HISTORY_SENTENCES.stream()
-                            .reduce(source, (text, allowed) -> text.replace(allowed, ""));
+                // Keyed by file: a sentence is exempt where it is the record, not
+                // wherever anyone repeats it. Applied globally, any live document could
+                // have quoted one of these and walked through the guard.
+                for (String allowed : ENGINE_HISTORY_SENTENCES.getOrDefault(rel, List.of())) {
+                    source = source.replace(allowed, "");
                 }
                 Matcher matcher = ecs.matcher(source);
                 if (matcher.find()) {

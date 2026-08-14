@@ -6,6 +6,24 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 Consolidation ahead of the next patch: the documentation and contributor surfaces are being brought onto the 2.x vocabulary, the CI guards onto what they actually run, and the committed example assets onto a regeneration path. Open engineering threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) — vector clipping for the PPTX backend, backend-neutral font measurement, and font-face selection are the live ones.
 
+## Upcoming — 2.2
+
+**2.2.0** is the current release. Its headline is **right-to-left text**: a paragraph says
+which way it runs, and Hebrew and Arabic lay out, shape, join and mirror correctly through
+all three backends. The PDF is painted, so the engine resolves the line itself with the
+Unicode Bidirectional Algorithm, shapes Arabic into its joined forms, and writes the file
+so a reader copies out the letters an author typed rather than the shapes they were drawn
+as. Word and PowerPoint have bidirectional engines of their own, so each is handed logical
+text and told what it needs — `w:bidi` and the complex-script twins for Word, a declared
+direction per frame for PowerPoint — with the differences recorded in the
+[backend capability matrix](docs/architecture/backend-capability-matrix.md).
+
+The scripts come with it: Amiri, David Libre, the Noto faces for Georgian and Armenian and
+Gothic A1 for Korean join the bundled catalogue, and a PowerPoint deck now carries the
+bundled family it drew with instead of naming a font the reader may not have.
+
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.2.0`.
+
 ## Current stable — 2.1
 
 **2.1.1** is the current release. Its headline is the one 2.1.0 opened the line with: the **fixed-layout PPTX render backend**, where the same `DocumentSession` that prints a PDF also emits an editable PowerPoint deck — one page per slide, identical geometry by construction, native shapes. It ships as `@Beta` (Experimental) while its API shape settles; the geometry identity with the PDF backend is a design invariant, not subject to change. See the [API stability policy](docs/api-stability.md) and the [backend capability matrix](docs/architecture/backend-capability-matrix.md).

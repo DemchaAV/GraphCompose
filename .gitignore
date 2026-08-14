@@ -52,7 +52,11 @@ render-pdf/logs/
 /patch-root-position.diff
 /rectangle.pdf
 /Test.pdf
-/AGENTS.md
+# Agent config that is not the project's to publish. AGENTS.md is the generic,
+# tool-independent guide and ships; a tool-specific file stays on the machine
+# that uses it, so the repository carries one set of rules rather than one per
+# vendor.
+/CLAUDE.md
 
 ### Editor / OS scratch files ###
 *.tmp

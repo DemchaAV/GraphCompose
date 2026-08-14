@@ -5,7 +5,6 @@ import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.dsl.TableBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
@@ -422,19 +421,31 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the box.</p>
      */
     private void writeImage(XWPFDocument document, ImageNode node) throws Exception {
-        DocumentImageData data = node.imageData();
-        byte[] bytes = data.bytes()
-                .orElseGet(() -> data.path()
-                        .map(this::readBytes)
-                        .orElse(new byte[0]));
+        // One acquisition, and the bytes come from it. Reading the file separately was
+        // not only a second read: the source cache keys on the path alone, so a file
+        // rewritten between renders gave this method fresh bytes off disk and cached
+        // metadata from the old one — a picture embedded at the previous version's
+        // dimensions. The bytes and the size a frame is built from now come from the
+        // same resolution.
+        // Resolution failures are not caught here. The old readBytes swallowed one
+        // narrow case — a path that would not read — and even that was a side effect of
+        // its catch rather than a contract. Catching around the resolver instead would
+        // widen the silence to every way it can fail: corrupt bytes, a format with no
+        // reader, a metadata decode that gives up, a defect in the cache. An export that
+        // quietly drops a picture for any of those is a worse answer than one that says
+        // the image could not be read.
+        ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
+        byte[] bytes = resolved.getBytes();
         if (bytes.length == 0) {
             return;
         }
-        ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
         double sourceWidth = Math.max(1, resolved.getMetadata().width());
         double sourceHeight = Math.max(1, resolved.getMetadata().height());
+        // Handed the data this method already resolved. Left to resolve it itself, the
+        // sizing pass repeated the copy and the whole-array hash behind
+        // ImageSourceCache.fromBytes, so one image cost two of each on the way out.
         NodeDefinitionSupport.ImageDimensions box =
-                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth);
+                NodeDefinitionSupport.resolveImageDimensions(node, contentWidth, resolved);
 
         DocumentImageFitMode fitMode =
                 node.fitMode() == null ? DocumentImageFitMode.STRETCH : node.fitMode();
@@ -527,14 +538,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return true;
-    }
-
-    private byte[] readBytes(Path path) {
-        try {
-            return Files.readAllBytes(path);
-        } catch (Exception e) {
-            return new byte[0];
-        }
     }
 
     /**

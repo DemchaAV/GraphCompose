@@ -99,8 +99,12 @@ follow semantic versioning; release dates are ISO 8601.
   an Arabic cell was drawn as `)2026(` until this stopped. The upside is that a copy out of
   a cell carries the brackets as typed, which the paragraph path cannot promise.
 
-  A cell that declares no direction is untouched, so every table laid out before this
-  keeps its geometry and its export.
+  A left-to-right cell is untouched, so a table of Latin content keeps the geometry and the
+  export it always had. A cell holding Hebrew or Arabic is not, and deliberately: what a
+  declaration settles is the direction a line is *embedded* in, while a script runs the way
+  it runs inside that whatever the base. So a cell that declares nothing is now shaped and
+  ordered too, and its auto column measured on the joined forms. Such a table moves —
+  because what it drew before was the word backwards.
 
 - **Arabic joins.** Arabic letters change shape by position, and a font does that
   through OpenType `GSUB` — which a PDF never executes: `showText` walks the font's

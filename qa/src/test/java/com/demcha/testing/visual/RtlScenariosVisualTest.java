@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.font.FontName;
@@ -163,6 +164,34 @@ class RtlScenariosVisualTest {
                         .columns(DocumentTableColumn.fixed(160), DocumentTableColumn.auto())
                         .defaultCellStyle(cells(FontName.HELVETICA, null))
                         .row("Revenue (Q4)", "grew when a > b")));
+    }
+
+    @Test
+    void everyBundledScriptInsideATableCell() throws Exception {
+        // The sibling scenario above puts all five scripts in paragraphs. This one puts
+        // them through the cell path, which measures and draws on its own — so a font swap,
+        // a shaping regression, or a column sized on the wrong form shows up here rather
+        // than in whichever document happens to hold that script in a table. Arabic and
+        // Hebrew declare a direction; the other three do not, and must not acquire one.
+        assertBothWays("bundled-scripts-in-cells", 380, 260, page -> page
+                .addTable(t -> t
+                        .columns(DocumentTableColumn.fixed(120), DocumentTableColumn.auto())
+                        .defaultCellStyle(cells(FontName.HELVETICA, null))
+                        .rowCells(DocumentTableCell.text("Arabic"),
+                                DocumentTableCell.text("مرحبا بالعالم").withStyle(
+                                        cells(FontName.AMIRI, TextDirection.RTL)))
+                        .rowCells(DocumentTableCell.text("Hebrew"),
+                                DocumentTableCell.text("שלום עולם 2026").withStyle(
+                                        cells(FontName.DAVID_LIBRE, TextDirection.RTL)))
+                        .rowCells(DocumentTableCell.text("Georgian"),
+                                DocumentTableCell.text("გამარჯობა · ᲒᲐᲛᲐᲠᲯᲝᲑᲐ").withStyle(
+                                        cells(FontName.NOTO_SANS_GEORGIAN, null)))
+                        .rowCells(DocumentTableCell.text("Armenian"),
+                                DocumentTableCell.text("Բարև աշխարհ").withStyle(
+                                        cells(FontName.NOTO_SANS_ARMENIAN, null)))
+                        .rowCells(DocumentTableCell.text("Korean"),
+                                DocumentTableCell.text("안녕하세요 · Müller").withStyle(
+                                        cells(FontName.GOTHIC_A1, null)))));
     }
 
     private static DocumentTableStyle cells(FontName font, TextDirection direction) {

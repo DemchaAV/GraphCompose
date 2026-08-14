@@ -44,10 +44,24 @@ class RtlTableCellTest {
     }
 
     @Test
-    void aCellWithNoDeclaredDirectionIsUntouched() throws Exception {
+    void aLeftToRightCellWithNoDeclaredDirectionIsUntouched() throws Exception {
         assertThat(DrawnGlyphs.readLeftToRight(render(LATIN, null)))
-                .describedAs("the path every existing table takes must be unchanged")
+                .describedAs("the path every existing left-to-right table takes must be "
+                        + "unchanged")
                 .isEqualTo(LATIN);
+    }
+
+    @Test
+    void anUndeclaredCellStillDrawsItsHebrewTheRightWayRound() throws Exception {
+        // The declared direction is what a *line* is embedded in, not what a script does
+        // inside it: Hebrew letters run right to left whatever the base, so a cell that
+        // declares nothing is corrected rather than left alone. Naming this the other way
+        // round — "an undeclared cell is untouched" — would be true of the Latin case above
+        // and false here, and it is here that the old behaviour was wrong.
+        assertThat(DrawnGlyphs.readLeftToRight(render(HEBREW, null)))
+                .describedAs("an existing table holding Hebrew moves, because what it drew "
+                        + "before was the word backwards")
+                .isEqualTo(new StringBuilder(HEBREW).reverse().toString());
     }
 
     @Test

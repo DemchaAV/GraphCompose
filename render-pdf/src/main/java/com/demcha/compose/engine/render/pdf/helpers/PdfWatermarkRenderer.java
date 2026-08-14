@@ -22,7 +22,7 @@ import java.nio.file.Files;
  * PDF-specific helper that renders a watermark on every page of a document.
  *
  * <p>This is a post-processing helper called after all content has been rendered.
- * It is not an ECS entity — watermarks are document-level concerns.</p>
+ * It draws no node of its own — watermarks are document-level concerns.</p>
  *
  * @author Artem Demchyshyn
  */

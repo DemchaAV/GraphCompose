@@ -636,6 +636,141 @@ class VersionConsistencyGuardTest {
     };
 
     /**
+     * The roadmap's "current stable" section names a release that exists.
+     *
+     * <p>The README's release-status line is rewritten by {@code cut-release.ps1}, so it
+     * cannot drift. The roadmap's went unowned until this guard arrived: it kept calling
+     * 2.1.0 the current stable line after 2.1.1 shipped, which is the first thing a
+     * reader checks when deciding whether the project is maintained. The section is the
+     * one place in the file that makes a claim about *now*; everything below it is
+     * per-release history and is left alone.</p>
+     *
+     * <p>Pinned to a published version rather than to the latest one, because between a
+     * GA and the next cut the pom already names the version under development while the
+     * roadmap correctly still names the shipped one.</p>
+     *
+     * <p>The heading is checked against the version for a reason this guard learned the
+     * hard way: on its own, the version check passes {@code ## Current stable — 2.1}
+     * standing above {@code **2.2.0** is the current release}, which is precisely what a
+     * one-token rewrite of this section produces when a cut crosses a release line. The
+     * script now refuses that cut ({@code Update-RoadmapCurrentStable}); this half holds
+     * the same line against a hand edit.</p>
+     */
+    @Test
+    void roadmapCurrentStableSectionNamesAPublishedVersion() throws Exception {
+        Set<String> targets = acceptableTargets();
+        String roadmap = Files.readString(PROJECT_ROOT.resolve("ROADMAP.md"));
+
+        int section = roadmap.indexOf("## Current stable");
+        assertThat(section)
+                .describedAs("ROADMAP.md must carry a '## Current stable' section — it is "
+                        + "where a reader looks first to see which release is live")
+                .isNotNegative();
+        int nextSection = roadmap.indexOf("\n## ", section + 1);
+        String body = nextSection < 0 ? roadmap.substring(section) : roadmap.substring(section, nextSection);
+
+        Matcher named = Pattern.compile("\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*").matcher(body);
+        assertThat(named.find())
+                .describedAs("the 'Current stable' section must name the live release in bold, "
+                        + "so this guard and a reader are reading the same claim; section was:%n%s",
+                        body)
+                .isTrue();
+        assertThat(named.group(1))
+                .describedAs("ROADMAP.md calls %s the current release, but the published "
+                        + "releases are %s — the roadmap is the page that says whether this "
+                        + "project is alive, and it named a superseded version for a whole "
+                        + "release", named.group(1), targets)
+                .isIn(targets);
+
+        // The heading carries the release LINE and the body the exact release. Checking
+        // only the version leaves the two free to disagree: "## Current stable — 2.1"
+        // above "**2.2.0** is the current release" passes a version check, reads as a
+        // contradiction, and is exactly what a one-token rewrite of this section
+        // produces when the cut crosses a line.
+        Matcher heading = Pattern.compile("##\\s+Current stable\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(body);
+        assertThat(heading.find())
+                .describedAs("the 'Current stable' heading must name the release line, as "
+                        + "'## Current stable — X.Y'; section was:%n%s", body)
+                .isTrue();
+        String version = named.group(1);
+        assertThat(heading.group(1))
+                .describedAs("the 'Current stable' heading says line %s while the section "
+                        + "names %s — one of the two is describing the wrong release, and a "
+                        + "reader has no way to tell which", heading.group(1), version)
+                .isEqualTo(version.substring(0, version.lastIndexOf('.')));
+    }
+
+    /**
+     * A prepared {@code ## Upcoming — X.Y} section describes the line under development.
+     *
+     * <p>This is how the next release line is staged. "Current stable" must keep naming
+     * what is published — the guard above holds it there — so the prose for a line that
+     * has not shipped waits in its own section, and {@code cut-release.ps1} promotes it
+     * during the cut. Without that, preparing a minor was impossible: committing the new
+     * version into "Current stable" failed this suite, editing it uncommitted failed the
+     * cut's clean-tree check, and preparing nothing failed the cut after every pom had
+     * already been rewritten.</p>
+     *
+     * <p>What can rot is the section itself — left behind after its release ships, or
+     * naming a line nobody is working toward, it becomes the same false claim about
+     * "next" that the stale roadmap was about "now". So when one exists it must name the
+     * line the poms are on, and that line must be ahead of the published one.</p>
+     *
+     * <p>Absent is the normal state and passes: most of a cycle has nothing staged.</p>
+     */
+    @Test
+    void aPreparedUpcomingSectionNamesTheLineUnderDevelopment() throws Exception {
+        String roadmap = Files.readString(PROJECT_ROOT.resolve("ROADMAP.md"));
+        Matcher upcoming = Pattern.compile("##\\s+Upcoming\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(roadmap);
+        if (!upcoming.find()) {
+            return;
+        }
+
+        String pom = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
+        String pomLine = pom.replaceAll("^(\\d+\\.\\d+)\\..*$", "$1");
+        assertThat(upcoming.group(1))
+                .describedAs("ROADMAP.md stages an '## Upcoming — %s' section while the poms "
+                        + "are on %s. A staged section names the line being worked toward, "
+                        + "so it is either stale — left behind by the release that shipped "
+                        + "it — or promising a line nothing is building", upcoming.group(1), pom)
+                .isEqualTo(pomLine);
+
+        Matcher current = Pattern.compile("##\\s+Current stable\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(roadmap);
+        assertThat(current.find())
+                .describedAs("ROADMAP.md must carry a '## Current stable — X.Y' heading")
+                .isTrue();
+        assertThat(upcoming.group(1))
+                .describedAs("the staged line (%s) must differ from the published one (%s) — "
+                        + "the same line in both sections means the release already shipped "
+                        + "and the staged copy was never promoted",
+                        upcoming.group(1), current.group(1))
+                .isNotEqualTo(current.group(1));
+
+        // The heading says which line is staged; the body is what the cut promotes into
+        // "Current stable". A section with no bolded version promotes to a section that
+        // names no release — the version substitution finds nothing to replace and
+        // silently does nothing — so the same contract the script checks in Step 0 is
+        // held here, where a maintainer staging the section sees it first.
+        int start = roadmap.indexOf(upcoming.group());
+        int next = roadmap.indexOf("\n## ", start + 1);
+        String body = next < 0 ? roadmap.substring(start) : roadmap.substring(start, next);
+
+        Matcher staged = Pattern.compile("\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*").matcher(body);
+        assertThat(staged.find())
+                .describedAs("the staged '## Upcoming — %s' section names no release in bold. "
+                        + "The cut promotes this body verbatim, so it would produce a "
+                        + "'Current stable' section naming no version at all; section was:%n%s",
+                        upcoming.group(1), body)
+                .isTrue();
+        String stagedVersion = staged.group(1);
+        assertThat(stagedVersion.substring(0, stagedVersion.lastIndexOf('.')))
+                .describedAs("the staged section is headed %s but names **%s** — the heading "
+                        + "and the release it stages must agree, or the promotion writes one "
+                        + "of them wrong", upcoming.group(1), stagedVersion)
+                .isEqualTo(upcoming.group(1));
+    }
+
+    /**
      * Returns the set of versions an install snippet may legitimately advertise.
      *
      * <p>Only a <strong>final</strong> release ({@code X.Y.Z}, no suffix) lands on Maven

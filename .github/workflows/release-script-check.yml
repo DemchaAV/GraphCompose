@@ -27,14 +27,67 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Resolve a throwaway version on the roadmap's current line
+        shell: pwsh
+        run: |
+          # The cut refuses a version whose release line the ROADMAP 'Current stable'
+          # section does not describe — a minor bump needs a section a maintainer wrote,
+          # not a one-token rewrite. So the rehearsal version has to sit on whatever line
+          # the roadmap currently carries. Derived rather than hardcoded: pinning it
+          # would break this job the day the project moves to the next line, which is
+          # exactly when the release path most needs a working rehearsal.
+          $heading = Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)'
+          if (-not $heading) { throw "ROADMAP.md has no '## Current stable — X.Y' heading to derive a rehearsal version from" }
+          $line = $heading.Matches[0].Groups[1].Value
+          "REHEARSAL_VERSION=$line.99" >> $env:GITHUB_ENV
+          Write-Host "rehearsing a cut at $line.99 (roadmap line $line)"
+
       - name: Dry-run a full release cut
         shell: pwsh
         run: |
           # -DryRun mutates nothing; -SkipShowcase skips the mvnw install the showcase
           # regen would run. A parse error, a bad parameter set, or any throw fails the
           # step. The version is a throwaway — nothing is written or pushed.
-          ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase
+          ./scripts/cut-release.ps1 -Version $env:REHEARSAL_VERSION -Branch develop -DryRun -SkipShowcase
           if ($LASTEXITCODE -ne 0) { throw "full-cut dry-run exited $LASTEXITCODE" }
+
+      - name: A cut across release lines is refused until the section is prepared
+        shell: pwsh
+        run: |
+          # The negative half, and the failure it guards: rewriting only the bolded
+          # version would leave '## Current stable — 2.1' above '**2.2.0** is the current
+          # release'. Both the old guard and the new one pass that, because each asks
+          # only whether the version is published. The cut has to refuse it instead.
+          $line = (Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)').Matches[0].Groups[1].Value
+          $major, $minor = $line.Split('.')
+          $crossing = "$major.$([int]$minor + 1).0"
+          # The refusal is a `throw`, which terminates the script — so it has to be
+          # caught here, not merged with `*>&1`. Redirection captures the message but
+          # not the termination, and an uncaught throw fails this step for doing
+          # precisely what it is being tested for.
+          $out = ''
+          try {
+            $out = ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          } catch {
+            $out = ($_ | Out-String)
+          }
+          $global:LASTEXITCODE = 0
+          # PowerShell wraps a thrown message across lines and prefixes each with '| ',
+          # so a phrase long enough to be worth asserting is split before it can be
+          # matched. Flatten the continuation markers and the wrapping first.
+          $flat = (($out -replace '\r?\n\s*\|\s*', ' ') -replace '\s+', ' ')
+          if ($flat -notmatch 'describes the .* line, but this cut is') {
+            throw "a cut at $crossing must refuse the $line section, but the script did not say so. Output:`n$out"
+          }
+          # And it must refuse before writing anything. The check used to live beside the
+          # edit in Step 1, by which point every pom and README already carried the new
+          # version — so the refusal handed back a dirty tree for a condition that was
+          # knowable before the first write.
+          $dirty = git status --porcelain
+          if ($dirty) {
+            throw "the refusal left the tree dirty, so it ran after some mutation:`n$dirty"
+          }
+          Write-Host "refused $crossing against the $line section, before touching anything"
 
       - name: Dry-run PostReleaseOnly
         shell: pwsh
@@ -52,9 +105,10 @@ jobs:
           # compared, and carried into an -rc it would have the previews advertise a release
           # that does not exist. Assert the branch that ran, not the file it would write:
           # -DryRun mutates nothing, so the notice is the only evidence either way.
-          $final = ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          $version = $env:REHEARSAL_VERSION
+          $final = ./scripts/cut-release.ps1 -Version $version -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
           if ($LASTEXITCODE -ne 0) { throw "final dry-run exited $LASTEXITCODE" }
-          if ($final -notmatch 'asset version -> 9\.9\.9') { throw 'a final cut must move the asset version' }
+          if ($final -notmatch "asset version -> $([regex]::Escape($version))") { throw 'a final cut must move the asset version' }
           if ($final -notmatch 'Re-render the README assets') { throw 'a final cut must re-render the previews' }
 
           $rc = ./scripts/cut-release.ps1 -Version 2.1.0-rc.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
@@ -133,3 +187,94 @@ jobs:
           if (-not (Test-ReadmeLatestStable $cur)) { throw "Test-ReadmeLatestStable failed for the README's own version $cur" }
           if (Test-ReadmeLatestStable '0.0.0-nonexistent') { throw "Test-ReadmeLatestStable matched a bogus version" }
           Write-Host "Test-ReadmeLatestStable: README names v$cur (bogus rejected)."
+
+      - name: Unit-check the roadmap promotion (refusals and the real rewrite)
+        shell: pwsh
+        run: |
+          # The positive path, exercised against the shipped functions rather than a
+          # whole cut. Running the real cut for this needed a git remote the runner's
+          # shallow checkout could not push to, and would then have reached Step 4,
+          # which builds the example catalogue through the Windows-only mvnw.cmd. None
+          # of that is what the promotion does; all of it is what stood between CI and
+          # ever reaching it.
+          #
+          # Functions are lifted by AST rather than by brace-scanning, so the extraction
+          # cannot silently pick up half a body, and the code under test is the code
+          # that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $want = @('Get-VersionLine', 'Get-RoadmapSectionLine', 'Get-RoadmapCurrentStableSection',
+                    'Get-RoadmapUpcomingHeading', 'Get-RoadmapUpcomingSection',
+                    'Test-RoadmapCurrentStable', 'Assert-RoadmapReadyForCut',
+                    'Update-RoadmapCurrentStable')
+          $found = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $want -contains $n.Name
+            }, $true)
+          $missing = $want | Where-Object { $_ -notin ($found | ForEach-Object { $_.Name }) }
+          if ($missing) { throw "cut-release.ps1 no longer defines: $($missing -join ', ')" }
+          Invoke-Expression (($found | ForEach-Object { $_.Extent.Text }) -join "`n")
+
+          # The two ambient names the roadmap functions read from the script's scope.
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          function New-Roadmap($staged) {
+            # A scratch repoRoot per case, so each starts from the committed roadmap.
+            $dir = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())
+            New-Item -ItemType Directory -Path $dir | Out-Null
+            $text = Get-Content ROADMAP.md -Raw
+            if ($staged) {
+              $text = $text -replace "## Current stable — $([regex]::Escape($script:line))", "$staged## Current stable — $($script:line)"
+            }
+            Set-Content -Path (Join-Path $dir 'ROADMAP.md') -Value $text -NoNewline
+            return $dir
+          }
+
+          $script:line = (Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)').Matches[0].Groups[1].Value
+          $major, $minor = $script:line.Split('.')
+          $next = "$major.$([int]$minor + 1)"
+          $crossing = "$next.0"
+
+          # 1. Nothing staged — refused, naming what to prepare.
+          $repoRoot = New-Roadmap $null
+          $err = $null
+          try { Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $crossing } catch { $err = "$_" }
+          if ($err -notmatch 'Prepare the new line before cutting') { throw "unstaged: expected the preparation instructions, got: $err" }
+
+          # 2. Staged but carrying no release — refused. This is the one that used to
+          #    slip through: the heading looked prepared, the body had nothing to promote,
+          #    and the no-op rewrite surfaced only after every pom had moved.
+          $repoRoot = New-Roadmap "## Upcoming — $next`n`nProse with no bolded version at all.`n`n"
+          $err = $null
+          try { Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $crossing } catch { $err = "$_" }
+          if ($err -notmatch 'carries no bolded version for the cut to promote') { throw "malformed: expected the no-version refusal, got: $err" }
+
+          # 3. Staged with a version off the line being cut — refused. The wrong line is
+          #    derived, not written down: a literal like $major.9.9 stops being wrong the
+          #    day the project reaches 2.8, when it becomes the very line being cut and
+          #    this case quietly starts asserting the opposite of its name.
+          $offLine = "$major.$([int]$minor + 2).0"
+          $repoRoot = New-Roadmap "## Upcoming — $next`n`n**$offLine** wrong line.`n`n"
+          $err = $null
+          try { Assert-RoadmapReadyForCut (Join-Path $repoRoot 'ROADMAP.md') $crossing } catch { $err = "$_" }
+          if ($err -notmatch 'is not on the .* line this cut releases') { throw "off-line: expected the line-mismatch refusal, got: $err" }
+
+          # 4. Staged correctly — accepted, and the promotion actually rewrites the file.
+          $repoRoot = New-Roadmap "## Upcoming — $next`n`n**$crossing** is the current release. Rehearsal prose.`n`n"
+          $roadmap = Join-Path $repoRoot 'ROADMAP.md'
+          Assert-RoadmapReadyForCut $roadmap $crossing
+          Update-RoadmapCurrentStable $roadmap $crossing
+
+          $after = Get-Content $roadmap -Raw
+          if ($after -notmatch "##\s+Current stable\s*[—-]\s*$([regex]::Escape($next))") { throw "the staged section was not promoted to 'Current stable — $next'" }
+          if ($after -notmatch "##\s+Previously\s*[—-]\s*$([regex]::Escape($script:line))") { throw "the $($script:line) line was not demoted to 'Previously'" }
+          if ($after -match '##\s+Upcoming') { throw "the staged 'Upcoming' heading survived the promotion" }
+          if ($after -notmatch "\*\*$([regex]::Escape($crossing))\*\*") { throw "the promoted section does not name $crossing" }
+          if (-not (Test-RoadmapCurrentStable $crossing)) { throw "the promoted roadmap does not satisfy the script's own post-check" }
+
+          # 5. Idempotent: re-running against the promoted file is a no-op, not a throw.
+          Update-RoadmapCurrentStable $roadmap $crossing
+          if ((Get-Content $roadmap -Raw) -ne $after) { throw "a second promotion changed the file" }
+
+          Write-Host "roadmap promotion: 3 refusals, 1 rewrite, idempotent on re-run."

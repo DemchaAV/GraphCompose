@@ -8,7 +8,7 @@
         The PDF render backend, split out of the engine in the 2.0 module line so
         the lean core carries no PDFBox. This module holds the fixed-layout PDF
         backend (document.backend.fixed.pdf.**), the PDF render tree
-        (engine.render.pdf.**, incl. the ecs system + handlers), PdfFont /
+        (engine.render.pdf.**, incl. its fragment handlers), PdfFont /
         GlyphFallbackLogger, and the ServiceLoader registrations for the
         FixedLayoutBackendProvider + FontMetricsProvider seams. Adding this artifact
         (directly, or transitively via graph-compose) puts a PDF backend on the

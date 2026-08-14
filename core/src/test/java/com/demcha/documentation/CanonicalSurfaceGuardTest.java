@@ -2,10 +2,12 @@ package com.demcha.documentation;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -96,6 +98,37 @@ class CanonicalSurfaceGuardTest {
             "docs/private/",
             "docs/roadmaps/",
             "docs/templates/v1-classic/");
+
+    /**
+     * The exact sentences allowed to name the removed engine architecture, because they
+     * name it <em>as removed</em> — the one thing such prose may still do.
+     *
+     * <p>Exempting the whole file was the first attempt and it was too coarse: it would
+     * have let a fresh claim into {@code ROADMAP.md}'s live "Current stable" section,
+     * which is precisely the sentence a reader trusts most. Matching the wording pins
+     * the exemption to the historical statement itself, so any other mention in the same
+     * file still fails.</p>
+     *
+     * <p>Keyed by file, so an exemption applies where the sentence IS the record and
+     * nowhere else. Listed rather than pattern-matched: a guard that recognised "gone"
+     * or "removed" would pass any sentence containing the word, including a new false
+     * one.</p>
+     */
+    private static final Map<String, List<String>> ENGINE_HISTORY_SENTENCES = Map.of(
+            // ROADMAP's 2.0 section, recording what that GA dropped — the same job the
+            // changelog does one entry at a time.
+            "ROADMAP.md", List.of(
+                    "the dead Entity-Component-System execution layer and the deprecated"),
+            // The post-2.0 roadmap's opening paragraph, naming what that line removed.
+            // Kept to one physical line: the sentence wraps in the source, and the
+            // line ending it wraps with is not the same on every checkout.
+            "docs/roadmaps/post-2.0-engineering.md", List.of(
+                    "Entity-Component-System code, retiring the deprecated API surface"),
+            // A dated benchmark log, measured while that engine still existed. Rewriting
+            // it would falsify the record it is kept for.
+            "baselines/COMPARISON.md", List.of(
+                    "too small to expose ECS lookup overhead",
+                    "that go through the legacy ECS"));
 
     private static final Set<String> MAIN_CANONICAL_SOURCE_ALLOWLIST = Set.of();
 
@@ -345,6 +378,114 @@ class CanonicalSurfaceGuardTest {
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/style"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/table"),
                         PROJECT_ROOT.resolve("core/src/main/java/com/demcha/compose/document/image")));
+    }
+
+    /**
+     * The entity-component-system engine is gone, and no prose may say otherwise.
+     *
+     * <p>Nothing named {@code SystemECS}, {@code Entity} or {@code ComponentSystem}
+     * survives in any {@code src/main} tree, and no {@code ecs} sub-package exists. Yet
+     * this repository carried, for a full release line, javadoc telling readers the
+     * adapters "talk to the ECS-based engine", that a watermark "is not an ECS entity",
+     * and that the legacy renderer had "moved to the {@code ecs} sub-package" — a
+     * package a reader can never open. The contributor guide sent people around an
+     * "engine ECS" that is not there.</p>
+     *
+     * <p>Every existing scan missed all of it, and the reasons are worth keeping,
+     * because each is a different blind spot. The retired-token scan reads markdown
+     * only. The one scan that reads main sources is scoped to {@code document/**}, while
+     * these claims lived in engine and render-backend javadoc. And a module's {@code
+     * pom.xml} description — read by anyone browsing the artifact on Central — is not
+     * source or markdown, so nothing had ever looked at one. This scan reads all three.</p>
+     *
+     * <p>{@code docs/roadmaps/} is deliberately <em>not</em> skipped here, unlike in the
+     * retired-token scan. The root roadmap links {@code post-2.0-engineering.md} as
+     * committed engineering direction, so it is a live document that happened to sit
+     * under a prefix treated as archival — and it went on describing a live entity model
+     * that had already been removed.</p>
+     *
+     * <p>Matched on word boundaries rather than as a substring, so {@code SPECS} and
+     * {@code RECS} do not trip it. A changelog entry, an ADR, or one of the sentences in
+     * {@link #ENGINE_HISTORY_SENTENCES} names the architecture on purpose.</p>
+     */
+    @Test
+    void nothingShouldDescribeTheEngineAsEntityComponentSystem() throws IOException {
+        Pattern ecs = Pattern.compile("\\bECS\\b|\\bentity[- ]component[- ]system\\b",
+                Pattern.CASE_INSENSITIVE);
+        List<Path> roots = List.of(
+                PROJECT_ROOT.resolve("README.md"),
+                PROJECT_ROOT.resolve("CONTRIBUTING.md"),
+                PROJECT_ROOT.resolve("ROADMAP.md"),
+                PROJECT_ROOT.resolve("docs"),
+                PROJECT_ROOT.resolve("baselines"),
+                PROJECT_ROOT.resolve("pom.xml"),
+                PROJECT_ROOT.resolve("core"),
+                PROJECT_ROOT.resolve("render-pdf"),
+                PROJECT_ROOT.resolve("render-pptx"),
+                PROJECT_ROOT.resolve("render-docx"),
+                PROJECT_ROOT.resolve("templates"));
+
+        Set<String> violations = new TreeSet<>();
+        for (Path root : roots) {
+            for (Path file : proseBearingFilesUnder(root)) {
+                String rel = relative(file);
+                // The guard files themselves spell the tokens they forbid, as they do for
+                // the retired-surface scan.
+                if (rel.startsWith("CHANGELOG.md") || rel.startsWith("docs/adr/")
+                        || rel.startsWith("docs/archive/") || rel.startsWith("docs/migration/")
+                        || rel.startsWith("docs/private/")
+                        || DOCUMENTATION_ALLOWLIST.contains(rel)) {
+                    continue;
+                }
+                String source = Files.readString(file);
+                // Keyed by file: a sentence is exempt where it is the record, not
+                // wherever anyone repeats it. Applied globally, any live document could
+                // have quoted one of these and walked through the guard.
+                for (String allowed : ENGINE_HISTORY_SENTENCES.getOrDefault(rel, List.of())) {
+                    source = source.replace(allowed, "");
+                }
+                Matcher matcher = ecs.matcher(source);
+                if (matcher.find()) {
+                    violations.add(rel + " says \"" + matcher.group() + "\"");
+                }
+            }
+        }
+
+        assertThat(violations)
+                .describedAs("the entity-component-system engine was removed, so prose "
+                        + "naming it as current describes an architecture this code does "
+                        + "not have. A sentence recording the removal belongs in the "
+                        + "changelog, an ADR, or %s.", ENGINE_HISTORY_SENTENCES)
+                .isEmpty();
+    }
+
+    /**
+     * Markdown, Java and pom files under a root, or the root itself when it is one.
+     *
+     * <p>Build output is skipped explicitly: the roots here are whole modules rather
+     * than {@code src/main/java}, so that a module's {@code pom.xml} description is
+     * read, and walking a module reaches its {@code target/} tree — where a stale
+     * generated copy would report a violation nobody can fix in source.</p>
+     */
+    private static List<Path> proseBearingFilesUnder(Path root) throws IOException {
+        if (Files.isRegularFile(root)) {
+            return List.of(root);
+        }
+        if (!Files.isDirectory(root)) {
+            return List.of();
+        }
+        try (var paths = Files.walk(root)) {
+            return paths.filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String name = path.toString();
+                        return name.endsWith(".md") || name.endsWith(".java")
+                                || name.endsWith(".xml");
+                    })
+                    .filter(path -> !path.toString().contains(File.separator + "target"
+                            + File.separator))
+                    .sorted()
+                    .toList();
+        }
     }
 
     /** Markdown files under a root, or the root itself when it is one. */

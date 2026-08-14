@@ -9,9 +9,9 @@ import java.awt.Color;
 /**
  * Configuration for a repeating page header or footer.
  *
- * <p>Headers and footers are document-level constructs, not regular ECS
- * entities. They are attached to the canonical PDF render configuration and rendered once
- * per page after the main layout/pagination pass.</p>
+ * <p>Headers and footers are document-level constructs rather than nodes in the
+ * document tree. They are attached to the canonical PDF render configuration and rendered
+ * once per page after the main layout/pagination pass.</p>
  *
  * <p>Text content may include placeholders:</p>
  * <ul>

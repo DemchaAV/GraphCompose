@@ -24,7 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * describing a removed engine stayed green here for a full release line.</p>
  *
  * <p>Neither case is a judgement about the advice. What is checked is that the file
- * still points somewhere real, and still declines to answer questions it has delegated.</p>
+ * still points somewhere real, that the gate it prescribes is a command, and that it has
+ * not started restating package coordinates again — the one restatement recognisable on
+ * sight, and the one the first draft of this file actually made.</p>
  */
 class AgentsGuideGuardTest {
 
@@ -78,7 +80,7 @@ class AgentsGuideGuardTest {
     }
 
     @Test
-    void itDoesNotAnswerWhatItDelegates() throws IOException {
+    void itDoesNotRestateThePackageCoordinatesItLinksTo() throws IOException {
         // The failure this guards is the one that made the first draft of this file a
         // second copy of the documentation: restating the package roots and the module
         // inventory, both owned by docs/architecture/package-map.md. Existence checks

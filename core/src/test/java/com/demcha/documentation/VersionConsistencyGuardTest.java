@@ -636,19 +636,6 @@ class VersionConsistencyGuardTest {
     };
 
     /**
-     * Returns the set of versions an install snippet may legitimately advertise.
-     *
-     * <p>Only a <strong>final</strong> release ({@code X.Y.Z}, no suffix) lands on Maven
-     * Central, so only then must the snippets equal the pom version. For any non-final
-     * working version — a normal {@code -SNAPSHOT} development cycle, or a pre-release
-     * ({@code X.Y.Z-rc.N} / {@code -alpha} / {@code -beta}), which the publish workflow
-     * never ships to Central — the snippets must stay on the <strong>latest published
-     * release</strong>, the version a user can actually resolve today, never the
-     * in-development or unpublished pre-release version. In the release commit itself
-     * {@code cut-release.ps1} bumps the pom to the final release version and rewrites the
-     * snippets to match, so once the pom is a concrete final version the two must agree.</p>
-     */
-    /**
      * The roadmap's "current stable" section names a release that exists.
      *
      * <p>The README's release-status line is rewritten by {@code cut-release.ps1}, so it
@@ -689,6 +676,19 @@ class VersionConsistencyGuardTest {
                 .isIn(targets);
     }
 
+    /**
+     * Returns the set of versions an install snippet may legitimately advertise.
+     *
+     * <p>Only a <strong>final</strong> release ({@code X.Y.Z}, no suffix) lands on Maven
+     * Central, so only then must the snippets equal the pom version. For any non-final
+     * working version — a normal {@code -SNAPSHOT} development cycle, or a pre-release
+     * ({@code X.Y.Z-rc.N} / {@code -alpha} / {@code -beta}), which the publish workflow
+     * never ships to Central — the snippets must stay on the <strong>latest published
+     * release</strong>, the version a user can actually resolve today, never the
+     * in-development or unpublished pre-release version. In the release commit itself
+     * {@code cut-release.ps1} bumps the pom to the final release version and rewrites the
+     * snippets to match, so once the pom is a concrete final version the two must agree.</p>
+     */
     private Set<String> acceptableTargets() throws Exception {
         String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
         if (pomVersion.matches("\\d+\\.\\d+\\.\\d+")) {

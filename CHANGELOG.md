@@ -24,11 +24,12 @@ follow semantic versioning; release dates are ISO 8601.
   always took — held to that by the layout snapshots and visual baselines, none of which
   moved.
 
-  A paragraph is the unit this applies to. Text inside a **table cell** goes through the
-  table's own layout, which has no direction handling, so the same Hebrew string draws
-  reversed in a cell while drawing correctly in a paragraph — and Arabic in a cell is
-  unjoined. Set such text as a paragraph, or place the table's own content right to left
-  by hand, until the table path carries direction too.
+  A paragraph is the unit this applies to, and a **table cell** gets it by being one:
+  `DocumentTableCell.node(...)` takes a composed paragraph, which carries its direction
+  into the cell like anywhere else. What does not is the plain-string shortcut —
+  `row("...")` and `DocumentTableCell.text(...)` go through the table's own layout, which
+  neither reorders nor shapes, so the same Hebrew string draws reversed there and Arabic
+  draws unjoined. Compose the cell until that path carries direction too.
 
   All three wrap paths carry it: plain text, inline runs (what templates author
   through), and markdown. Each backend does what it must and no more — the PDF backend
@@ -490,6 +491,23 @@ follow semantic versioning; release dates are ISO 8601.
   which is the price of the exceptions rather than an oversight.
 
 ### Fixed
+
+- **A Word export resolves an image once, and says so when it cannot.** `writeImage`
+  needed the node's data twice over — the bytes it writes, and the intrinsic size it
+  measures the fit against — and fetched it twice, from two places. Resolving is not
+  free: the source cache copies the byte array whole and hashes it, so a large image
+  paid both costs on every export.
+
+  The second fetch was also reading a different thing. The cache keys on the path alone,
+  so once a render had warmed it, a file rewritten underneath gave the export fresh bytes
+  from disk and the previous version's dimensions — a picture embedded at another image's
+  size, with nothing reporting it, because both halves succeeded and simply described
+  different files. The bytes now come from the resolution that sizes the frame.
+
+  One behaviour changes with it: an image whose source cannot be read stops the export.
+  It used to disappear from the document silently — not a decision, but the side effect
+  of a read that swallowed its own exception — and a document that comes back one picture
+  short is the worst of the available answers.
 
 - **DOCX keeps the styling a mixed paragraph asks for.** A `RichText` paragraph exported
   with every run in the paragraph's base style, so a bold segment, an accent-coloured

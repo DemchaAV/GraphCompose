@@ -10,6 +10,9 @@ import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.render.pdf.PdfFont;
 import com.demcha.compose.engine.text.TextControlSanitizer;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
+import com.demcha.compose.engine.text.bidi.BidiVisualOrder;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 
@@ -201,10 +204,21 @@ public final class PdfTableRowFragmentRenderHandler
                 // Sanitise per-line so a single unsupported glyph in a
                 // cell does not crash the whole table render.
                 String safeText = font.sanitizeForRender(cell.style().textStyle(), line.text());
+                // A reordered line goes out wrapped in what it says, so a reader copying
+                // the cell gets the letters that were typed rather than the order they
+                // happen to be painted in.
+                if (line.written() != null) {
+                    stream.beginMarkedContent(PdfActualText.tag(),
+                            PdfActualText.properties(line.written()));
+                    environment.markReorderedText();
+                }
                 stream.beginText();
                 stream.newLineAtOffset((float) line.x(), (float) line.baselineY());
                 stream.showText(safeText);
                 stream.endText();
+                if (line.written() != null) {
+                    stream.endMarkedContent();
+                }
                 if (PdfTextDecorations.drawsMark(cell.style().textStyle().decoration())) {
                     if (decorations == null) {
                         decorations = new ArrayList<>();
@@ -249,9 +263,17 @@ public final class PdfTableRowFragmentRenderHandler
         PdfFont.VerticalMetrics metrics = font.verticalMetrics(cell.style().textStyle());
         List<ResolvedTextLine> resolved = new ArrayList<>(safeLines.size());
 
+        boolean rightToLeft = cell.style().rightToLeft();
         for (int lineIndex = 0; lineIndex < safeLines.size(); lineIndex++) {
-            String line = safeLines.get(lineIndex);
-            double lineWidth = font.getTextWidth(cell.style().textStyle(), line);
+            String logical = safeLines.get(lineIndex);
+            // A PDF is painted: it draws the characters it is handed, in the order it is
+            // handed them. So the whole transform happens here — joined forms first,
+            // because that is what the layout measured this column against, then display
+            // order. The cell's own text stays logical for everyone else to read.
+            String shaped = ArabicShaper.shape(logical);
+            boolean reordered = rightToLeft || BidiParagraphResolver.requiresBidi(shaped);
+            String drawn = reordered ? BidiVisualOrder.visualize(shaped, rightToLeft) : shaped;
+            double lineWidth = font.getTextWidth(cell.style().textStyle(), drawn);
             double lineX = switch (anchor.h()) {
                 case RIGHT -> innerX + innerWidth - lineWidth;
                 case CENTER -> innerX + (innerWidth - lineWidth) / 2.0;
@@ -259,7 +281,9 @@ public final class PdfTableRowFragmentRenderHandler
             };
             double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
-            resolved.add(new ResolvedTextLine(line, lineX, baselineY));
+            resolved.add(new ResolvedTextLine(drawn,
+                    reordered ? PdfActualText.writtenTextOf(logical) : null,
+                    lineX, baselineY));
         }
 
         return List.copyOf(resolved);
@@ -288,11 +312,23 @@ public final class PdfTableRowFragmentRenderHandler
 
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
-            result.add(TextControlSanitizer.replace(line, " ").trim());
+            // The formatting controls survive this pass, as they do for a paragraph. They
+            // are instructions to two readers further down — the shaper reads the joining
+            // controls to decide whether two letters connect, the algorithm reads the
+            // direction marks and isolates — and both run below this line. Stripping them
+            // here handed the shaper a different word than the author wrote and ran the
+            // algorithm over a different string than the one layout resolved the cell's
+            // direction from. They are dropped at the glyph seam, once both have read them.
+            result.add(TextControlSanitizer.removeExceptFormattingControls(line).trim());
         }
         return List.copyOf(result);
     }
 
-    private record ResolvedTextLine(String text, double x, double baselineY) {
+    /**
+     * @param text     what the page draws: shaped, and in display order
+     * @param written  the same line as the author typed it, or {@code null} when the two
+     *                 are the same line and nothing needs stating
+     */
+    private record ResolvedTextLine(String text, String written, double x, double baselineY) {
     }
 }

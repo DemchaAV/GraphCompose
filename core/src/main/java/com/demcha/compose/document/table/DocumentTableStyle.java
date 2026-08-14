@@ -1,5 +1,6 @@
 package com.demcha.compose.document.table;
 
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -20,6 +21,7 @@ public final class DocumentTableStyle {
     private final DocumentTextStyle textStyle;
     private final DocumentTableTextAnchor textAnchor;
     private final Double lineSpacing;
+    private final TextDirection direction;
 
     private DocumentTableStyle(Builder builder) {
         this.padding = builder.padding;
@@ -28,6 +30,7 @@ public final class DocumentTableStyle {
         this.textStyle = builder.textStyle;
         this.textAnchor = builder.textAnchor;
         this.lineSpacing = builder.lineSpacing;
+        this.direction = builder.direction;
     }
 
     /**
@@ -103,6 +106,16 @@ public final class DocumentTableStyle {
     }
 
     /**
+     * Returns the writing direction the cell's text runs in.
+     *
+     * @return direction override, or {@code null} to inherit
+     * @since 2.2.0
+     */
+    public TextDirection direction() {
+        return direction;
+    }
+
+    /**
      * Mutable builder for {@link DocumentTableStyle}.
      */
     public static final class Builder {
@@ -112,6 +125,7 @@ public final class DocumentTableStyle {
         private DocumentTextStyle textStyle;
         private DocumentTableTextAnchor textAnchor;
         private Double lineSpacing;
+        private TextDirection direction;
 
         private Builder() {
         }
@@ -189,6 +203,27 @@ public final class DocumentTableStyle {
          */
         public Builder lineSpacing(double lineSpacing) {
             this.lineSpacing = lineSpacing;
+            return this;
+        }
+
+        /**
+         * Sets the writing direction of the cell's text.
+         *
+         * <p>The same choice {@code ParagraphBuilder.direction(...)} offers, and the same
+         * default: text runs left to right unless a cell, row, column or the table says
+         * otherwise. {@link TextDirection#AUTO} reads the direction off the cell's own
+         * first strong character.</p>
+         *
+         * <p>Direction is not alignment. It decides which way the line runs, and a cell
+         * that runs right to left sits at its right edge unless a
+         * {@link #textAnchor(DocumentTableTextAnchor)} of its own says where to put it.</p>
+         *
+         * @param direction writing direction; {@code null} inherits
+         * @return this builder
+         * @since 2.2.0
+         */
+        public Builder direction(TextDirection direction) {
+            this.direction = direction;
             return this;
         }
 

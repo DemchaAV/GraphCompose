@@ -113,7 +113,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [Rich text](#rich-text) | Every `RichText` method (bold / italic / underline / link / colour / accent / size / append) | [PDF](../assets/readme/examples/rich-text-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/text/RichTextShowcaseExample.java) |
-| [Text direction](#text-direction) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the first strong character, and Latin embedded in Hebrew | [PDF](../assets/readme/examples/text-direction.pdf) · [Source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java) |
+| [Text direction](#text-direction) | `TextDirection` — right-to-left paragraphs and table cells, `AUTO` resolved from the first strong character, and Latin embedded in Hebrew | [PDF](../assets/readme/examples/text-direction.pdf) · [Source](src/main/java/com/demcha/examples/features/text/TextDirectionExample.java) |
 | [Arabic article](#arabic-article) | A full right-to-left article — shaped Arabic joined by the engine, every line reordered, natural pagination onto a second page | [PDF](../assets/readme/examples/arabic-article.pdf) · [Source](src/main/java/com/demcha/examples/features/text/ArabicArticleExample.java) |
 | [Hebrew invoice](#hebrew-invoice) | A right-to-left invoice whose every line mixes Hebrew with digits and Latin names — built from rows, since a table cell carries no direction | [PDF](../assets/readme/examples/hebrew-invoice.pdf) · [Source](src/main/java/com/demcha/examples/features/text/HebrewInvoiceExample.java) |
 | [World scripts](#world-scripts) | One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean — each set in its own `FontName` family | [PDF](../assets/readme/examples/world-scripts.pdf) · [Source](src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java) |
@@ -689,6 +689,10 @@ page.addParagraph(p -> p
         .textStyle(hebrew))          // FontName.DAVID_LIBRE covers Hebrew
 // AUTO decides from the text itself — useful for user-supplied strings:
 page.addParagraph(p -> p.text(userInput).direction(TextDirection.AUTO))
+// A table cell says it the same way, and AUTO is answered per cell:
+page.addTable(t -> t.defaultCellStyle(DocumentTableStyle.builder()
+        .textStyle(hebrew).direction(TextDirection.AUTO).build())
+        .row("שלום עולם", "Latin stays put"))
 ```
 
 [📄 View PDF](../assets/readme/examples/text-direction.pdf) ·

@@ -107,7 +107,7 @@ public final class GlyphFallbackLogger {
      * @return text containing only code points the font can encode
      */
     public static String sanitize(PDFont font, String text) {
-        return sanitize(font, text, false);
+        return sanitize(font, text, ControlPolicy.KEEP_NONE);
     }
 
     /**
@@ -125,10 +125,47 @@ public final class GlyphFallbackLogger {
      * @return text the font can encode, keeping the Arabic joining controls
      */
     public static String sanitizeKeepingJoiningControls(PDFont font, String text) {
-        return sanitize(font, text, true);
+        return sanitize(font, text, ControlPolicy.KEEP_JOINING);
     }
 
-    private static String sanitize(PDFont font, String text, boolean keepJoiningControls) {
+    /**
+     * Sanitizes for a consumer that resolves the direction itself, as well as the shaping.
+     *
+     * <p>A table cell reaches PowerPoint as one frame holding a whole logical line,
+     * precisely so that PowerPoint's own bidirectional algorithm runs over it. That makes
+     * the direction marks and isolates part of its input, the same way the joining controls
+     * are the shaper's: they are how an author says which way a neutral stretch of text
+     * belongs. The paragraph path can drop them because the engine has already resolved the
+     * order by the time a span is handed over; this path has not resolved anything.</p>
+     *
+     * @param font font to validate glyph coverage against
+     * @param text raw text to sanitise; {@code null} returns empty
+     * @return text the font can encode, keeping every formatting control
+     * @since 2.2.0
+     */
+    public static String sanitizeKeepingFormattingControls(PDFont font, String text) {
+        return sanitize(font, text, ControlPolicy.KEEP_ALL);
+    }
+
+    /** Which formatting controls a consumer still has to read. */
+    private enum ControlPolicy {
+        /** The engine read them all; a PDF draws glyphs and none of these draw. */
+        KEEP_NONE,
+        /** The consumer shapes the text, so the joining controls are its instruction. */
+        KEEP_JOINING,
+        /** The consumer also resolves the direction, so the bidi controls are too. */
+        KEEP_ALL;
+
+        boolean keeps(int codePoint) {
+            return switch (this) {
+                case KEEP_NONE -> false;
+                case KEEP_JOINING -> TextControlSanitizer.isJoiningControl(codePoint);
+                case KEEP_ALL -> TextControlSanitizer.isFormattingControl(codePoint);
+            };
+        }
+    }
+
+    private static String sanitize(PDFont font, String text, ControlPolicy policy) {
         if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
@@ -138,7 +175,7 @@ public final class GlyphFallbackLogger {
         for (int offset = 0; offset < length; ) {
             int codePoint = text.codePointAt(offset);
             offset += Character.charCount(codePoint);
-            if (keepJoiningControls && TextControlSanitizer.isJoiningControl(codePoint)) {
+            if (policy.keeps(codePoint)) {
                 sb.appendCodePoint(codePoint);
                 continue;
             }

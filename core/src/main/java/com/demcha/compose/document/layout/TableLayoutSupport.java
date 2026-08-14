@@ -2,6 +2,7 @@ package com.demcha.compose.document.layout;
 
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.TableNode;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.engine.components.content.shape.Side;
@@ -9,8 +10,11 @@ import com.demcha.compose.engine.components.content.table.TableCellContent;
 import com.demcha.compose.engine.components.content.table.TableCellLayoutStyle;
 import com.demcha.compose.engine.components.content.table.TableColumnLayout;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
+import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 
 import java.util.*;
 
@@ -408,8 +412,7 @@ final class TableLayoutSupport {
     private static TableCellLayoutStyle[][] buildStylesGrid(TableNode node,
                                                             List<List<LogicalCell>> logicalRows,
                                                             int columnCount) {
-        TableCellLayoutStyle tableDefault = TableCellLayoutStyle.merge(
-                TableCellLayoutStyle.DEFAULT, toTableStyle(node.defaultCellStyle()));
+        TableCellLayoutStyle tableDefault = toTableStyle(node.defaultCellStyle());
         Map<Integer, TableCellLayoutStyle> rowStyleOverrides = toTableStyles(node.rowStyles());
         Map<Integer, TableCellLayoutStyle> columnStyleOverrides = toTableStyles(node.columnStyles());
         TableCellLayoutStyle[][] grid = new TableCellLayoutStyle[logicalRows.size()][columnCount];
@@ -417,10 +420,18 @@ final class TableLayoutSupport {
         for (int rowIndex = 0; rowIndex < logicalRows.size(); rowIndex++) {
             TableCellLayoutStyle rowOverride = rowStyleOverrides.get(rowIndex);
             for (LogicalCell logical : logicalRows.get(rowIndex)) {
-                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(
+                // The author's cascade merges on its own, and the built-in defaults go
+                // underneath it afterwards, because a field nobody set has to stay
+                // recognisable as unset. The edge a right-to-left cell sits at is decided
+                // by asking exactly that about the anchor, and merging DEFAULT in first
+                // answers "somebody set it" for every cell in every table.
+                TableCellLayoutStyle authored = TableCellLayoutStyle.merge(
                         tableDefault, columnStyleOverrides.get(logical.startColumn()));
-                resolved = TableCellLayoutStyle.merge(resolved, rowOverride);
-                resolved = TableCellLayoutStyle.merge(resolved, logical.content().styleOverride());
+                authored = TableCellLayoutStyle.merge(authored, rowOverride);
+                authored = TableCellLayoutStyle.merge(authored, logical.content().styleOverride());
+                TableCellLayoutStyle resolved = TableCellLayoutStyle.merge(
+                        TableCellLayoutStyle.DEFAULT,
+                        answerDirection(authored, logical.sanitizedLines()));
                 // Propagate the spanning cell's resolved style to every
                 // grid position it occupies (across rowSpan rows AND
                 // colSpan columns) so neighbour-style lookups for borders
@@ -434,6 +445,44 @@ final class TableLayoutSupport {
         }
 
         return grid;
+    }
+
+    /**
+     * Turns the cell's declared direction into the one it is drawn with.
+     *
+     * <p>A renderer must not have to ask this question. It sees one cell at a time, and
+     * three of them asking separately — with three notions of what "the text" is — is how
+     * a Word export and a PDF come to disagree about the same table. So the answer is
+     * decided once, here, and travels in the resolved style.</p>
+     *
+     * <p>The cell is the paragraph for UAX&nbsp;#9 purposes: {@code AUTO} reads the first
+     * strong character of the whole cell, not of each line. A cell whose second line opens
+     * on Latin would otherwise run the other way from its first.</p>
+     *
+     * <p>Direction also decides the edge, but only when nobody asked for one. That is the
+     * rule paragraphs already follow — alignment says where a line sits, direction says
+     * which way it runs, and they meet only in the default.</p>
+     */
+    private static TableCellLayoutStyle answerDirection(TableCellLayoutStyle authored,
+                                                        List<String> lines) {
+        BidiParagraphResolver.BaseDirection declared = authored.direction();
+        if (declared == null || declared == BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT) {
+            return authored;
+        }
+        boolean rightToLeft = declared == BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT
+                || ParagraphDirection.resolve(String.join("\n", lines), TextDirection.AUTO)
+                        == TextDirection.RTL;
+        if (!rightToLeft) {
+            return authored.toBuilder()
+                    .direction(BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT)
+                    .build();
+        }
+        return authored.toBuilder()
+                .direction(BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT)
+                .textAnchor(authored.textAnchor() == null
+                        ? Anchor.centerRight()
+                        : authored.textAnchor())
+                .build();
     }
 
     private static double[] resolveNaturalColumnWidths(TableNode node,
@@ -584,13 +633,22 @@ final class TableLayoutSupport {
         return natural + padding.horizontal();
     }
 
+    /**
+     * The width the cell needs, measured on the glyphs it will actually be drawn with.
+     *
+     * <p>Arabic is measured shaped. An unjoined string is wider than the joined one the
+     * page draws, so measuring the logical form sizes an auto column to text that never
+     * appears — and reordering, which is the other half of the transform, moves no glyph
+     * and changes no advance, so it has nothing to say here.</p>
+     */
     private static double cellNaturalWidth(List<String> sanitizedLines,
                                            TableCellLayoutStyle style,
                                            TextMeasurementSystem measurement) {
         Padding padding = style.padding() == null ? Padding.zero() : style.padding();
         double maxWidth = 0.0;
         for (String line : sanitizedLines) {
-            maxWidth = Math.max(maxWidth, measurement.textWidth(style.textStyle(), line));
+            maxWidth = Math.max(maxWidth,
+                    measurement.textWidth(style.textStyle(), ArabicShaper.shape(line)));
         }
         return maxWidth + padding.horizontal();
     }

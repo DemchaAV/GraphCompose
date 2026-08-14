@@ -187,6 +187,31 @@ public class PdfFont extends FontBase<PDFont> {
         return GlyphFallbackLogger.sanitizeKeepingJoiningControls(
                 fontType(style.decoration()), textSanitizer(text));
     }
+
+    /**
+     * Sanitizes for a backend that resolves the direction itself, as well as the shaping.
+     *
+     * <p>As {@link #sanitizeForTextExport(TextStyle, String)}, except that the direction
+     * marks and isolates survive too. The difference is what the consumer has been left to
+     * do: a span handed to PowerPoint has already been ordered by the engine, so its bidi
+     * controls have been read and can go, while a table cell is handed over as a whole
+     * logical line for PowerPoint's own algorithm to resolve — which makes them part of its
+     * input. Dropping them there deletes the author's only way to say which direction a
+     * neutral stretch of text belongs to.</p>
+     *
+     * @param style style whose decoration picks the face
+     * @param text raw text in logical order
+     * @return text the face can encode, keeping every formatting control
+     * @since 2.2.0
+     */
+    public String sanitizeForLogicalTextExport(TextStyle style, String text) {
+        if (text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        return GlyphFallbackLogger.sanitizeKeepingFormattingControls(
+                fontType(style.decoration()), textSanitizer(text));
+    }
+
     public double getTextWidthNoSanitize(TextStyle style, String text) {
         double size = style.size();
         try {

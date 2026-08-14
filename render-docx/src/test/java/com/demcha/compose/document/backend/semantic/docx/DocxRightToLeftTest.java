@@ -13,6 +13,7 @@ import com.demcha.compose.font.FontName;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -37,6 +38,8 @@ class DocxRightToLeftTest {
 
     private static final String HEBREW = "שלום עולם";
     private static final String LATIN = "Hello world";
+    /** Arabic closing on a bracket: the one case that exposed the missing run flag. */
+    private static final String ARABIC_BRACKETED = "صدرت في (2026)";
 
     @Test
     void aRightToLeftParagraphIsAlignedToTheEdgeItStartsFrom() throws Exception {
@@ -164,6 +167,43 @@ class DocxRightToLeftTest {
                     .describedAs("and starts from the edge a right-to-left line starts from")
                     .isEqualTo("left");
         });
+    }
+
+    @Test
+    void everyRunOfARightToLeftParagraphDeclaresItselfRightToLeft() throws Exception {
+        // w:bidi settles which edge the line starts from and nothing else. Word resolves
+        // the characters inside a run from w:rtl, and a run without it is handled as
+        // Latin: measured in Word, "(2026)" closing an Arabic paragraph was drawn as
+        // ")2026(" while the same document as a PDF was correct. It is the run-level half
+        // of the pair w:szCs belongs to — a run that does not declare itself a complex
+        // script gets what Latin gets.
+        //
+        // Hebrew came out right either way, which is how this survived the release that
+        // introduced direction: the defect needs Arabic, where digits following a letter
+        // resolve as an Arabic number rather than a European one.
+        XWPFParagraph paragraph = onlyParagraph(ARABIC_BRACKETED, TextDirection.RTL, null);
+
+        assertThat(paragraph.getRuns())
+                .isNotEmpty()
+                .allSatisfy(run -> assertThat(run.getCTR().getRPr())
+                        .describedAs("the run declares itself right-to-left, not only the "
+                                + "paragraph it sits in")
+                        .isNotNull()
+                        .matches(properties -> properties.sizeOfRtlArray() > 0));
+    }
+
+    @Test
+    void aLeftToRightParagraphLeavesItsRunsAlone() throws Exception {
+        XWPFParagraph paragraph = onlyParagraph(LATIN, TextDirection.LTR, null);
+
+        assertThat(paragraph.getRuns())
+                .isNotEmpty()
+                .allSatisfy(run -> {
+                    CTRPr properties = run.getCTR().getRPr();
+                    assertThat(properties == null || properties.sizeOfRtlArray() == 0)
+                            .describedAs("every document exported before this keeps its runs")
+                            .isTrue();
+                });
     }
 
     /** Exports a one-row table and returns the paragraphs its cells carry. */

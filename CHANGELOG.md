@@ -24,12 +24,8 @@ follow semantic versioning; release dates are ISO 8601.
   always took — held to that by the layout snapshots and visual baselines, none of which
   moved.
 
-  A paragraph is the unit this applies to, and a **table cell** gets it by being one:
-  `DocumentTableCell.node(...)` takes a composed paragraph, which carries its direction
-  into the cell like anywhere else. What does not is the plain-string shortcut —
-  `row("...")` and `DocumentTableCell.text(...)` go through the table's own layout, which
-  neither reorders nor shapes, so the same Hebrew string draws reversed there and Arabic
-  draws unjoined. Compose the cell until that path carries direction too.
+  A paragraph is the unit this applies to; the sibling entry below carries it into a
+  table cell.
 
   All three wrap paths carry it: plain text, inline runs (what templates author
   through), and markdown. Each backend does what it must and no more — the PDF backend
@@ -61,6 +57,54 @@ follow semantic versioning; release dates are ISO 8601.
   the content stream carries the visual order, and every reordered run now states its
   text as written in an `ActualText` marked-content section — see the entry below. The
   DOCX export was never affected, since Word receives logical text.
+
+- **A table cell can say which way it runs.** `DocumentTableStyle.direction(...)` takes the
+  same `TextDirection.LTR`, `RTL` or `AUTO` a paragraph does, and inherits down the cascade
+  a cell style already follows — the table's default, then the column's, then the row's,
+  then the cell's own — so one call turns a whole table round.
+
+  A cell written as a plain string reached the page through the table's own layout rather
+  than the text pipeline, and so received neither of the two things that make Hebrew and
+  Arabic correct: the same string drew reversed in a cell while drawing properly in a
+  paragraph, and Arabic came out as isolated letters instead of joined. Both now happen on
+  the cell path, and a column is measured on the joined forms, so an auto column is sized
+  to the text the page actually draws rather than to a wider form that never appears.
+
+  The cell is the unit `AUTO` reads. Two cells side by side under one declared direction
+  answer it separately, and a cell's second line does not run the other way from its first
+  because it happens to open on Latin. Direction decides the edge only when nobody asked
+  for one — a right-to-left cell sits at its right edge unless it carries a `textAnchor` of
+  its own — which is the rule a paragraph already follows for alignment.
+
+  Each backend does what it must and no more. The PDF is painted, so the engine shapes and
+  reorders the line itself and marks it with the text as written, which is what a reader
+  copies out. Word is told the direction twice — `w:bidi` on the cell's paragraph and
+  `w:rtl` on its runs — and receives the text untouched, because it reorders and joins on
+  its own. PowerPoint is told the direction on the cell's frame and likewise receives the
+  text as written.
+
+  The Unicode formatting controls reach whoever still has to read them. A cell's line keeps
+  its joining controls and direction marks through the backend's own sanitising, because
+  below that sit the shaper and the algorithm — and in a cell handed to PowerPoint neither
+  has run yet. They are dropped at the glyph seam, where a zero-width character has nothing
+  to draw. Removed earlier, with a space in their place, a `ZWNJ` between two Arabic letters
+  did not merely go missing: it became a word break, and the letters the author had
+  separated joined up anyway.
+
+  That last one is the opposite of what a paragraph does, and the difference is the size of
+  what each hands over. A paragraph reaches PowerPoint as one frame per span, so no frame
+  holds a bracket pair for PowerPoint to resolve and the mirroring has to be done first. A
+  cell is one frame holding a whole line, which is the input PowerPoint's own algorithm is
+  complete for — mirroring it first swaps the brackets a second time, and `(2026)` closing
+  an Arabic cell was drawn as `)2026(` until this stopped. The upside is that a copy out of
+  a cell carries the brackets as typed, which the paragraph path cannot promise.
+
+  A left-to-right cell is untouched, so a table of Latin content keeps the geometry and the
+  export it always had. A cell holding Hebrew or Arabic is not, and deliberately: what a
+  declaration settles is the direction a line is *embedded* in, while a script runs the way
+  it runs inside that whatever the base. So a cell that declares nothing is now shaped and
+  ordered too, and its auto column measured on the joined forms. Such a table moves —
+  because what it drew before was the word backwards.
 
 - **Arabic joins.** Arabic letters change shape by position, and a font does that
   through OpenType `GSUB` — which a PDF never executes: `showText` walks the font's
@@ -492,6 +536,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Word mirrors the brackets in an Arabic line.** A right-to-left paragraph declared its
+  direction with `w:bidi` and nothing else. That settles which edge the line starts from;
+  it does not settle how Word resolves the characters *inside* a run, which comes from
+  `w:rtl`. Without it a run is handled as Latin, and paired punctuation is not mirrored —
+  `صدرت في (2026)` was drawn as `صدرت في )2026(` while the same document as a PDF was
+  correct. Every right-to-left run now carries `w:rtl`, in a paragraph and in a table cell
+  alike; it is the run-level half of the pair `w:szCs` belongs to.
+
+  Hebrew came out right either way, which is how this shipped: the defect needs Arabic,
+  where digits following a letter resolve as an Arabic number rather than a European one,
+  and only there does Word part company with the algorithm. Measured in Word, one property
+  at a time, against a matrix that also ruled out `w:cs` and `w:lang`.
 - **A Word export resolves an image once, and says so when it cannot.** `writeImage`
   needed the node's data twice over — the bytes it writes, and the intrinsic size it
   measures the fit against — and fetched it twice, from two places. Resolving is not

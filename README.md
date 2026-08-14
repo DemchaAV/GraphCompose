@@ -340,7 +340,7 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 
 ### Text &amp; internationalization
 
-- Paragraphs support **right-to-left text**: `ParagraphBuilder.direction(RTL)` (or `AUTO`) reorders lines with the Unicode Bidirectional Algorithm, and Arabic is shaped into its joined contextual forms &mdash; Amiri and David Libre ship in `graph-compose-fonts`. Two limits remain: a **table cell written as a plain string** carries no direction &mdash; put a paragraph in the cell with `DocumentTableCell.node(...)` and it does &mdash; and **Indic reordering** is not performed.
+- Paragraphs and table cells support **right-to-left text**: `ParagraphBuilder.direction(RTL)` and `DocumentTableStyle.direction(RTL)` (or `AUTO`) reorder lines with the Unicode Bidirectional Algorithm, and Arabic is shaped into its joined contextual forms &mdash; Amiri and David Libre ship in `graph-compose-fonts`. One limit remains: **Indic reordering** is not performed.
 - A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
 
 ### When to use GraphCompose

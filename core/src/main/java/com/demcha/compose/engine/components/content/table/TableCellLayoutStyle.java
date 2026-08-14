@@ -5,6 +5,7 @@ import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.ComponentColor;
 import com.demcha.compose.engine.components.style.Padding;
+import com.demcha.compose.engine.text.bidi.BidiParagraphResolver;
 import lombok.Builder;
 
 import java.awt.Color;
@@ -16,6 +17,14 @@ import java.awt.Color;
  * property-wise merge in the order: built-in defaults, table default, column
  * override, row override, then cell override.</p>
  *
+ * <p>{@code direction} is the one field the layout answers rather than merges. It
+ * arrives as a question — {@link BidiParagraphResolver.BaseDirection#FIRST_STRONG_CHARACTER}
+ * means "read it off the text" — and the resolved style handed to a renderer never
+ * carries that value: the layout has already read the cell's own lines and left either
+ * {@code LEFT_TO_RIGHT} or {@code RIGHT_TO_LEFT} behind. A backend can therefore read it
+ * as a fact without measuring anything itself, which is what keeps the three of them
+ * agreeing about a cell.</p>
+ *
  * @author Artem Demchyshyn
  */
 @Builder(toBuilder = true)
@@ -25,7 +34,8 @@ public record TableCellLayoutStyle(
         Stroke stroke,
         TextStyle textStyle,
         Anchor textAnchor,
-        Double lineSpacing
+        Double lineSpacing,
+        BidiParagraphResolver.BaseDirection direction
 ) {
     public static final TableCellLayoutStyle DEFAULT = TableCellLayoutStyle.builder()
             .padding(Padding.of(4))
@@ -39,6 +49,7 @@ public record TableCellLayoutStyle(
                     .build())
             .textAnchor(Anchor.centerLeft())
             .lineSpacing(0.0)
+            .direction(BidiParagraphResolver.BaseDirection.LEFT_TO_RIGHT)
             .build();
 
     public TableCellLayoutStyle {
@@ -46,6 +57,18 @@ public record TableCellLayoutStyle(
         validateStroke(stroke);
         validateTextStyle(textStyle);
         validateLineSpacing(lineSpacing);
+    }
+
+    /**
+     * Constructor for callers that do not declare a writing direction.
+     */
+    public TableCellLayoutStyle(Padding padding,
+                                Color fillColor,
+                                Stroke stroke,
+                                TextStyle textStyle,
+                                Anchor textAnchor,
+                                Double lineSpacing) {
+        this(padding, fillColor, stroke, textStyle, textAnchor, lineSpacing, null);
     }
 
     /**
@@ -57,7 +80,19 @@ public record TableCellLayoutStyle(
                                 Stroke stroke,
                                 TextStyle textStyle,
                                 Anchor textAnchor) {
-        this(padding, fillColor, stroke, textStyle, textAnchor, null);
+        this(padding, fillColor, stroke, textStyle, textAnchor, null, null);
+    }
+
+    /**
+     * Whether the cell's text runs right to left.
+     *
+     * <p>Answers {@code false} for an unresolved style, so a renderer reading a style the
+     * layout never touched behaves the way every table did before direction existed.</p>
+     *
+     * @return {@code true} when the resolved direction is right to left
+     */
+    public boolean rightToLeft() {
+        return direction == BidiParagraphResolver.BaseDirection.RIGHT_TO_LEFT;
     }
 
     /**
@@ -89,7 +124,8 @@ public record TableCellLayoutStyle(
                 override.stroke != null ? override.stroke : base.stroke,
                 override.textStyle != null ? override.textStyle : base.textStyle,
                 override.textAnchor != null ? override.textAnchor : base.textAnchor,
-                override.lineSpacing != null ? override.lineSpacing : base.lineSpacing
+                override.lineSpacing != null ? override.lineSpacing : base.lineSpacing,
+                override.direction != null ? override.direction : base.direction
         );
     }
 

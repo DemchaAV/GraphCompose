@@ -10,6 +10,7 @@ import com.demcha.compose.engine.components.content.table.TableResolvedCell;
 import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.engine.text.bidi.ArabicShaper;
 import com.demcha.compose.engine.text.TextControlSanitizer;
 import com.demcha.compose.font.FontLibrary;
 import org.apache.poi.sl.usermodel.ShapeType;
@@ -206,12 +207,16 @@ public final class PptxTableRowFragmentRenderHandler
 
         PdfFont.VerticalMetrics metrics = font.verticalMetrics(cell.style().textStyle());
         double viewerAscent = environment.viewerAscent(cell.style().textStyle(), metrics.ascent());
+        boolean rightToLeft = cell.style().rightToLeft();
         for (int lineIndex = 0; lineIndex < safeLines.size(); lineIndex++) {
             String line = safeLines.get(lineIndex);
             if (line.isEmpty()) {
                 continue;
             }
-            double lineWidth = font.getTextWidth(cell.style().textStyle(), line);
+            // Measured on the joined forms, because that is the width the layout gave this
+            // column and the width the PDF draws — the two files are the same geometry by
+            // construction, and a cell measured on unjoined Arabic would break that.
+            double lineWidth = font.getTextWidth(cell.style().textStyle(), ArabicShaper.shape(line));
             double lineX = switch (anchor.h()) {
                 case RIGHT -> innerX + innerWidth - lineWidth;
                 case CENTER -> innerX + (innerWidth - lineWidth) / 2.0;
@@ -219,7 +224,24 @@ public final class PptxTableRowFragmentRenderHandler
             };
             double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
-            String safeText = font.sanitizeForRender(cell.style().textStyle(), line);
+            // The line goes over exactly as it was typed, and PowerPoint runs the whole
+            // algorithm on it: ordering, joining and the mirroring of paired punctuation.
+            //
+            // The paragraph handler pre-mirrors and this one must not, which looks like an
+            // inconsistency and is not. A paragraph reaches PowerPoint as one frame per
+            // span, so each frame holds a fragment with no pair inside it to resolve and
+            // PowerPoint has nothing to mirror — the swap has to be made here. A cell is
+            // one frame holding a whole line, which is the input PowerPoint's own
+            // implementation is complete for. Pre-mirroring that line swaps the brackets a
+            // second time: measured in PowerPoint, "(2026)" closing an Arabic cell came out
+            // as ")2026(".
+            // Sanitised for a consumer that has been left both jobs. The render sanitizer
+            // drops every formatting control, which is right for a PDF — the engine has
+            // read them and none of them draw — and wrong here twice over: it hands
+            // PowerPoint's shaper a word it joins straight back up, and it deletes the
+            // direction marks the line was handed over logical for PowerPoint to resolve
+            // against.
+            String safeText = font.sanitizeForLogicalTextExport(cell.style().textStyle(), line);
             PptxTextFrames.singleRunBox(surface,
                     "GraphCompose Table Cell Text",
                     new Rectangle2D.Double(
@@ -230,7 +252,8 @@ public final class PptxTableRowFragmentRenderHandler
                             Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())),
                     safeText,
                     cell.style().textStyle(),
-                    environment);
+                    environment,
+                    rightToLeft);
         }
     }
 
@@ -250,7 +273,11 @@ public final class PptxTableRowFragmentRenderHandler
         }
         List<String> result = new ArrayList<>(lines.size());
         for (String line : lines) {
-            result.add(TextControlSanitizer.replace(line, " ").trim());
+            // The formatting controls survive: this backend hands the line over for
+            // PowerPoint to shape and to order, so both classes of control are still
+            // unread instructions. Replacing them with a space did not merely lose them —
+            // it inserted a word break where the author had asked for the opposite.
+            result.add(TextControlSanitizer.removeExceptFormattingControls(line).trim());
         }
         return List.copyOf(result);
     }

@@ -1,0 +1,77 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 380.0,
+    "pageHeight" : 260.0,
+    "innerWidth" : 344.0,
+    "innerHeight" : 224.0,
+    "margin" : {
+      "top" : 18.0,
+      "right" : 18.0,
+      "bottom" : 18.0,
+      "left" : 18.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ContainerNode[0]",
+    "entityName" : null,
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 18.0,
+    "computedY" : 124.264,
+    "placementX" : 18.0,
+    "placementY" : 124.264,
+    "placementWidth" : 277.268,
+    "placementHeight" : 117.736,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 277.268,
+    "contentHeight" : 117.736,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/TableNode[0]",
+    "entityName" : null,
+    "entityKind" : "TableNode",
+    "parentPath" : "ContainerNode[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 18.0,
+    "computedY" : 124.264,
+    "placementX" : 18.0,
+    "placementY" : 124.264,
+    "placementWidth" : 277.268,
+    "placementHeight" : 117.736,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 277.268,
+    "contentHeight" : 117.736,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

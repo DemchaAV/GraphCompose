@@ -745,6 +745,29 @@ class VersionConsistencyGuardTest {
                         + "and the staged copy was never promoted",
                         upcoming.group(1), current.group(1))
                 .isNotEqualTo(current.group(1));
+
+        // The heading says which line is staged; the body is what the cut promotes into
+        // "Current stable". A section with no bolded version promotes to a section that
+        // names no release — the version substitution finds nothing to replace and
+        // silently does nothing — so the same contract the script checks in Step 0 is
+        // held here, where a maintainer staging the section sees it first.
+        int start = roadmap.indexOf(upcoming.group());
+        int next = roadmap.indexOf("\n## ", start + 1);
+        String body = next < 0 ? roadmap.substring(start) : roadmap.substring(start, next);
+
+        Matcher staged = Pattern.compile("\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*").matcher(body);
+        assertThat(staged.find())
+                .describedAs("the staged '## Upcoming — %s' section names no release in bold. "
+                        + "The cut promotes this body verbatim, so it would produce a "
+                        + "'Current stable' section naming no version at all; section was:%n%s",
+                        upcoming.group(1), body)
+                .isTrue();
+        String stagedVersion = staged.group(1);
+        assertThat(stagedVersion.substring(0, stagedVersion.lastIndexOf('.')))
+                .describedAs("the staged section is headed %s but names **%s** — the heading "
+                        + "and the release it stages must agree, or the promotion writes one "
+                        + "of them wrong", upcoming.group(1), stagedVersion)
+                .isEqualTo(upcoming.group(1));
     }
 
     /**

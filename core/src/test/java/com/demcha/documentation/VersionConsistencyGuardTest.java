@@ -648,6 +648,47 @@ class VersionConsistencyGuardTest {
      * {@code cut-release.ps1} bumps the pom to the final release version and rewrites the
      * snippets to match, so once the pom is a concrete final version the two must agree.</p>
      */
+    /**
+     * The roadmap's "current stable" section names a release that exists.
+     *
+     * <p>The README's release-status line is rewritten by {@code cut-release.ps1}, so it
+     * cannot drift. The roadmap's is prose, and nothing rewrites it: it went on calling
+     * 2.1.0 the current stable line after 2.1.1 shipped, which is the first thing a
+     * reader checks when deciding whether the project is maintained. The section is the
+     * one place in the file that makes a claim about *now*; everything below it is
+     * per-release history and is left alone.</p>
+     *
+     * <p>Pinned to a published version rather than to the latest one, because between a
+     * GA and the next cut the pom already names the version under development while the
+     * roadmap correctly still names the shipped one.</p>
+     */
+    @Test
+    void roadmapCurrentStableSectionNamesAPublishedVersion() throws Exception {
+        Set<String> targets = acceptableTargets();
+        String roadmap = Files.readString(PROJECT_ROOT.resolve("ROADMAP.md"));
+
+        int section = roadmap.indexOf("## Current stable");
+        assertThat(section)
+                .describedAs("ROADMAP.md must carry a '## Current stable' section — it is "
+                        + "where a reader looks first to see which release is live")
+                .isNotNegative();
+        int nextSection = roadmap.indexOf("\n## ", section + 1);
+        String body = nextSection < 0 ? roadmap.substring(section) : roadmap.substring(section, nextSection);
+
+        Matcher named = Pattern.compile("\\*\\*(\\d+\\.\\d+\\.\\d+)\\*\\*").matcher(body);
+        assertThat(named.find())
+                .describedAs("the 'Current stable' section must name the live release in bold, "
+                        + "so this guard and a reader are reading the same claim; section was:%n%s",
+                        body)
+                .isTrue();
+        assertThat(named.group(1))
+                .describedAs("ROADMAP.md calls %s the current release, but the published "
+                        + "releases are %s — the roadmap is the page that says whether this "
+                        + "project is alive, and it named a superseded version for a whole "
+                        + "release", named.group(1), targets)
+                .isIn(targets);
+    }
+
     private Set<String> acceptableTargets() throws Exception {
         String pomVersion = effectiveVersion(PROJECT_ROOT.resolve("core/pom.xml"));
         if (pomVersion.matches("\\d+\\.\\d+\\.\\d+")) {

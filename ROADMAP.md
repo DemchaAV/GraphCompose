@@ -8,11 +8,11 @@ Consolidation ahead of the next patch: the documentation and contributor surface
 
 ## Current stable — 2.1
 
-The **2.1.0** GA is the current stable line. Its headline is the **fixed-layout PPTX render backend**: the same `DocumentSession` that prints a PDF also emits an editable PowerPoint deck — one page per slide, identical geometry by construction, native shapes. It ships as `@Beta` (Experimental) while its API shape settles; the geometry identity with the PDF backend is a design invariant, not subject to change. See the [API stability policy](docs/api-stability.md) and the [backend capability matrix](docs/architecture/backend-capability-matrix.md).
+**2.1.1** is the current release. Its headline is the one 2.1.0 opened the line with: the **fixed-layout PPTX render backend**, where the same `DocumentSession` that prints a PDF also emits an editable PowerPoint deck — one page per slide, identical geometry by construction, native shapes. It ships as `@Beta` (Experimental) while its API shape settles; the geometry identity with the PDF backend is a design invariant, not subject to change. See the [API stability policy](docs/api-stability.md) and the [backend capability matrix](docs/architecture/backend-capability-matrix.md).
 
-2.1 also hardened pagination: `keepWithNext()` for headings, orphaned-heading fixes ahead of paragraphs, tables and lists, and the layered CV presets wired to the keep-with-next policy.
+2.1 also hardened pagination: `keepWithNext()` for headings, orphaned-heading fixes ahead of paragraphs, tables and lists, and the layered CV presets wired to the keep-with-next policy. 2.1.1 followed with release-tooling and Javadoc-gate fixes only — no authoring API moved.
 
-Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.1.0`.
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.1.1` and `v2.1.0`.
 
 ## Previously — 2.0
 

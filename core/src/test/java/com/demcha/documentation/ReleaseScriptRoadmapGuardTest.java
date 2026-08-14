@@ -65,6 +65,41 @@ class ReleaseScriptRoadmapGuardTest {
                 .contains("Test-RoadmapCurrentStable $version");
     }
 
+    /**
+     * The two behaviours a version-only rewrite got wrong, asserted as wiring.
+     *
+     * <p>Swapping the bolded version is right within a release line and wrong across
+     * one: the section's heading and prose describe the old line, so a 2.1 → 2.2 cut
+     * would have produced {@code ## Current stable — 2.1} above {@code **2.2.0** is the
+     * current release} — contradictory, and green under a guard that only asks whether
+     * the version is published. And the first cut of this function threw on a section
+     * already naming the target, so a maintainer who prepared it correctly was told the
+     * version was missing when it was the only thing there.</p>
+     *
+     * <p>The behaviour itself is exercised for real by
+     * {@code .github/workflows/release-script-check.yml}, which runs the script both
+     * ways against the live roadmap. This test holds the source-level markers so the
+     * two halves cannot quietly disappear from the script while that job keeps
+     * rehearsing a version that happens to sit on the current line.</p>
+     */
+    @Test
+    void theRewriteIsScopedToOneLineAndIsIdempotent() throws IOException {
+        String script = Files.readString(SCRIPT);
+
+        assertThat(script)
+                .describedAs("the cut must compare the section's release line against the "
+                        + "version's, or a line-crossing cut silently writes a "
+                        + "self-contradicting section")
+                .contains("function Get-RoadmapSectionLine")
+                .contains("function Get-VersionLine")
+                .contains("if ($sectionLine -ne $targetLine)");
+        assertThat(script)
+                .describedAs("a section already naming the target must be a no-op, not a "
+                        + "throw — that is the state a maintainer preparing a minor-line "
+                        + "section leaves behind")
+                .contains("already names $newVersion");
+    }
+
     @Test
     void theReleaseCommitCarriesTheRoadmap() throws IOException {
         String script = Files.readString(SCRIPT);

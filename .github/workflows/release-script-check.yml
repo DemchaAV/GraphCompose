@@ -27,14 +27,45 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Resolve a throwaway version on the roadmap's current line
+        shell: pwsh
+        run: |
+          # The cut refuses a version whose release line the ROADMAP 'Current stable'
+          # section does not describe — a minor bump needs a section a maintainer wrote,
+          # not a one-token rewrite. So the rehearsal version has to sit on whatever line
+          # the roadmap currently carries. Derived rather than hardcoded: pinning it
+          # would break this job the day the project moves to the next line, which is
+          # exactly when the release path most needs a working rehearsal.
+          $heading = Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)'
+          if (-not $heading) { throw "ROADMAP.md has no '## Current stable — X.Y' heading to derive a rehearsal version from" }
+          $line = $heading.Matches[0].Groups[1].Value
+          "REHEARSAL_VERSION=$line.99" >> $env:GITHUB_ENV
+          Write-Host "rehearsing a cut at $line.99 (roadmap line $line)"
+
       - name: Dry-run a full release cut
         shell: pwsh
         run: |
           # -DryRun mutates nothing; -SkipShowcase skips the mvnw install the showcase
           # regen would run. A parse error, a bad parameter set, or any throw fails the
           # step. The version is a throwaway — nothing is written or pushed.
-          ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase
+          ./scripts/cut-release.ps1 -Version $env:REHEARSAL_VERSION -Branch develop -DryRun -SkipShowcase
           if ($LASTEXITCODE -ne 0) { throw "full-cut dry-run exited $LASTEXITCODE" }
+
+      - name: A cut across release lines is refused until the section is prepared
+        shell: pwsh
+        run: |
+          # The negative half, and the failure it guards: rewriting only the bolded
+          # version would leave '## Current stable — 2.1' above '**2.2.0** is the current
+          # release'. Both the old guard and the new one pass that, because each asks
+          # only whether the version is published. The cut has to refuse it instead.
+          $line = (Select-String -Path ROADMAP.md -Pattern '##\s+Current stable\s*[—-]\s*(\d+\.\d+)').Matches[0].Groups[1].Value
+          $major, $minor = $line.Split('.')
+          $crossing = "$major.$([int]$minor + 1).0"
+          $out = ./scripts/cut-release.ps1 -Version $crossing -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          if ($out -notmatch 'describes the .* line, but this cut is') {
+            throw "a cut at $crossing must refuse the $line section, but the script did not say so. Output:`n$out"
+          }
+          Write-Host "refused $crossing against the $line section, as it must"
 
       - name: Dry-run PostReleaseOnly
         shell: pwsh
@@ -52,9 +83,10 @@ jobs:
           # compared, and carried into an -rc it would have the previews advertise a release
           # that does not exist. Assert the branch that ran, not the file it would write:
           # -DryRun mutates nothing, so the notice is the only evidence either way.
-          $final = ./scripts/cut-release.ps1 -Version 9.9.9 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
+          $version = $env:REHEARSAL_VERSION
+          $final = ./scripts/cut-release.ps1 -Version $version -Branch develop -DryRun -SkipShowcase *>&1 | Out-String
           if ($LASTEXITCODE -ne 0) { throw "final dry-run exited $LASTEXITCODE" }
-          if ($final -notmatch 'asset version -> 9\.9\.9') { throw 'a final cut must move the asset version' }
+          if ($final -notmatch "asset version -> $([regex]::Escape($version))") { throw 'a final cut must move the asset version' }
           if ($final -notmatch 'Re-render the README assets') { throw 'a final cut must re-render the previews' }
 
           $rc = ./scripts/cut-release.ps1 -Version 2.1.0-rc.1 -Branch develop -DryRun -SkipShowcase *>&1 | Out-String

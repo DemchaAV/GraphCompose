@@ -281,12 +281,30 @@ function Test-ReadmeLatestStable($version) {
 }
 
 function Test-RoadmapCurrentStable($version) {
-    # True when ROADMAP's 'Current stable' section names $version in bold. Used to
-    # verify the section AFTER Step 1 rewrote it — see Update-RoadmapCurrentStable.
+    # True when ROADMAP's 'Current stable' section names $version in bold AND its
+    # heading names the same release line. Both halves matter: the heading carries the
+    # line ("## Current stable — 2.1") and the body the exact release, so a section
+    # that passed on the version alone could still read "Current stable — 2.1" above
+    # "**2.2.0** is the current release". Used to verify the section AFTER Step 1
+    # touched it — see Update-RoadmapCurrentStable.
     $roadmap = Get-Content (Join-Path $repoRoot 'ROADMAP.md') -Raw
     $section = Get-RoadmapCurrentStableSection $roadmap
     if (-not $section) { return $false }
-    return $section -match "\*\*$([regex]::Escape($version))\*\*"
+    if ($section -notmatch "\*\*$([regex]::Escape($version))\*\*") { return $false }
+    return (Get-RoadmapSectionLine $section) -eq (Get-VersionLine $version)
+}
+
+function Get-VersionLine($version) {
+    # "2.2.0" -> "2.2". The release line a version belongs to.
+    if ($version -match '^(\d+\.\d+)\.\d+') { return $Matches[1] }
+    return $null
+}
+
+function Get-RoadmapSectionLine($section) {
+    # The line named in the '## Current stable — X.Y' heading, or $null when the
+    # heading carries no line.
+    if ($section -match '##\s+Current stable\s*[—-]\s*(\d+\.\d+)') { return $Matches[1] }
+    return $null
 }
 
 function Get-RoadmapCurrentStableSection($content) {
@@ -322,6 +340,36 @@ function Update-RoadmapCurrentStable($roadmapPath, $newVersion) {
     if (-not $section) {
         throw "ROADMAP.md has no '## Current stable' section to update — VersionConsistencyGuardTest requires one, so Step 5 would fail."
     }
+
+    $targetLine = Get-VersionLine $newVersion
+    $sectionLine = Get-RoadmapSectionLine $section
+
+    # Already correct — a section prepared by hand, or a re-run. Not an error: throwing
+    # here made a correctly-prepared 2.2 section abort the cut, claiming the version was
+    # missing when it was the only thing present.
+    if ((Test-RoadmapCurrentStable $newVersion)) {
+        Note "ROADMAP.md 'Current stable' already names $newVersion"
+        return
+    }
+
+    # A patch within the line the section already describes: the heading and the prose
+    # are about this line, so swapping the version is the whole edit.
+    #
+    # A different line is not that. The section's prose describes the previous line's
+    # headline feature — rewriting one token would leave "Current stable — 2.1" above
+    # "**2.2.0** is the current release", internally contradictory and green under every
+    # guard, since each only asks whether the version is published. What the new line
+    # needs is a paragraph only the maintainer can write, so the cut stops and says so.
+    if ($sectionLine -ne $targetLine) {
+        throw @"
+ROADMAP.md '## Current stable' describes the $sectionLine line, but this cut is $newVersion ($targetLine).
+Rewriting the version alone would leave the heading and the prose describing $sectionLine.
+Prepare the section before cutting: update the heading to '## Current stable — $targetLine',
+write what this line leads with, and move the $sectionLine text down to a 'Previously' section.
+Then re-run the cut — a section already naming $newVersion is accepted as-is.
+"@
+    }
+
     $updated = [regex]::Replace($section, '\*\*\d+\.\d+\.\d+\*\*', "**$newVersion**", 1)
     if ($updated -eq $section) {
         throw "ROADMAP.md '## Current stable' section names no bolded X.Y.Z version to update — VersionConsistencyGuardTest would fail at Step 5."

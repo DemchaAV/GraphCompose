@@ -639,7 +639,7 @@ class VersionConsistencyGuardTest {
      * The roadmap's "current stable" section names a release that exists.
      *
      * <p>The README's release-status line is rewritten by {@code cut-release.ps1}, so it
-     * cannot drift. The roadmap's is prose, and nothing rewrites it: it went on calling
+     * cannot drift. The roadmap's went unowned until this guard arrived: it kept calling
      * 2.1.0 the current stable line after 2.1.1 shipped, which is the first thing a
      * reader checks when deciding whether the project is maintained. The section is the
      * one place in the file that makes a claim about *now*; everything below it is
@@ -648,6 +648,13 @@ class VersionConsistencyGuardTest {
      * <p>Pinned to a published version rather than to the latest one, because between a
      * GA and the next cut the pom already names the version under development while the
      * roadmap correctly still names the shipped one.</p>
+     *
+     * <p>The heading is checked against the version for a reason this guard learned the
+     * hard way: on its own, the version check passes {@code ## Current stable — 2.1}
+     * standing above {@code **2.2.0** is the current release}, which is precisely what a
+     * one-token rewrite of this section produces when a cut crosses a release line. The
+     * script now refuses that cut ({@code Update-RoadmapCurrentStable}); this half holds
+     * the same line against a hand edit.</p>
      */
     @Test
     void roadmapCurrentStableSectionNamesAPublishedVersion() throws Exception {
@@ -674,6 +681,23 @@ class VersionConsistencyGuardTest {
                         + "project is alive, and it named a superseded version for a whole "
                         + "release", named.group(1), targets)
                 .isIn(targets);
+
+        // The heading carries the release LINE and the body the exact release. Checking
+        // only the version leaves the two free to disagree: "## Current stable — 2.1"
+        // above "**2.2.0** is the current release" passes a version check, reads as a
+        // contradiction, and is exactly what a one-token rewrite of this section
+        // produces when the cut crosses a line.
+        Matcher heading = Pattern.compile("##\\s+Current stable\\s*[—-]\\s*(\\d+\\.\\d+)").matcher(body);
+        assertThat(heading.find())
+                .describedAs("the 'Current stable' heading must name the release line, as "
+                        + "'## Current stable — X.Y'; section was:%n%s", body)
+                .isTrue();
+        String version = named.group(1);
+        assertThat(heading.group(1))
+                .describedAs("the 'Current stable' heading says line %s while the section "
+                        + "names %s — one of the two is describing the wrong release, and a "
+                        + "reader has no way to tell which", heading.group(1), version)
+                .isEqualTo(version.substring(0, version.lastIndexOf('.')));
     }
 
     /**

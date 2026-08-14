@@ -53,16 +53,15 @@ explicitly rejected: cross-references and tables of contents require layout
 results to feed back into content, which a one-way pipeline cannot express.
 **Status: Done.**
 
-### Retire the internal `Entity` model
+### Retire the internal entity model
 
-The engine still resolves layout on a legacy `Entity` / `EntityManager` object
-model — the live layout coordinate, geometry (`EntityBounds`), and guide helpers
-are built on it. The dead ECS *execution* layer around it has been removed; what
-remains is genuinely live infrastructure. Fully retiring `Entity` /
-`EntityManager` means rebuilding the coordinate / geometry / guide helpers on a
-non-`Entity` representation and removing the legacy `engine.debug` snapshot
-overloads in `graph-compose-testing` that still reference it. This is a real
-engine refactor, sequenced after the module line stabilises. **Status: Deferred.**
+Layout once resolved on a legacy object model whose coordinate, geometry and guide
+helpers all hung off it, and this entry planned the rebuild that would replace it.
+The 2.0 line did the work instead of deferring it: the execution layer and the
+object model went together, layout now resolves through `LayoutCompiler` on the
+canonical node tree, and the `graph-compose-testing` snapshot overloads that
+referenced the old types went with them. No type of that model survives in any
+`src/main` tree. **Status: Done.**
 
 ### Fail loudly on non-converged layout
 

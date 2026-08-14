@@ -5,7 +5,6 @@ import com.demcha.compose.document.backend.semantic.SemanticExportContext;
 import com.demcha.compose.document.chart.ChartData;
 import com.demcha.compose.document.chart.NumberFormatSpec;
 import com.demcha.compose.document.dsl.TableBuilder;
-import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.image.DocumentImageFitMode;
 import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.document.layout.DocumentGraph;
@@ -422,15 +421,30 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * the box.</p>
      */
     private void writeImage(XWPFDocument document, ImageNode node) throws Exception {
-        DocumentImageData data = node.imageData();
-        byte[] bytes = data.bytes()
-                .orElseGet(() -> data.path()
-                        .map(this::readBytes)
-                        .orElse(new byte[0]));
+        // One acquisition, and the bytes come from it. Reading the file separately was
+        // not only a second read: the source cache keys on the path alone, so a file
+        // rewritten between renders gave this method fresh bytes off disk and cached
+        // metadata from the old one — a picture embedded at the previous version's
+        // dimensions. The bytes and the size a frame is built from now come from the
+        // same resolution.
+        ImageData resolved;
+        try {
+            resolved = NodeDefinitionSupport.toImageData(node.imageData());
+        } catch (RuntimeException failure) {
+            // A source that cannot be read used to leave here silently, through a
+            // readBytes that swallowed its exception and returned nothing. Keeping the
+            // export alive is right — one bad image should not lose the document — but
+            // it is worth saying so, as every other dropped node here does.
+            if (warnedNodeKinds.add("image-unreadable")) {
+                LOG.warn("DocxSemanticBackend: dropping an image whose source could not be "
+                        + "read — {}", failure.getMessage());
+            }
+            return;
+        }
+        byte[] bytes = resolved.getBytes();
         if (bytes.length == 0) {
             return;
         }
-        ImageData resolved = NodeDefinitionSupport.toImageData(node.imageData());
         double sourceWidth = Math.max(1, resolved.getMetadata().width());
         double sourceHeight = Math.max(1, resolved.getMetadata().height());
         // Handed the data this method already resolved. Left to resolve it itself, the
@@ -530,14 +544,6 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         }
         return true;
-    }
-
-    private byte[] readBytes(Path path) {
-        try {
-            return Files.readAllBytes(path);
-        } catch (Exception e) {
-            return new byte[0];
-        }
     }
 
     /**

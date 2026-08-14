@@ -12,8 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFPictureData;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -72,6 +76,52 @@ class DocxImageResolutionTest {
         } finally {
             logger.detachAppender(appender);
             appender.stop();
+        }
+    }
+
+    @Test
+    void theEmbeddedBytesAndTheSizeComeFromOneResolution(@TempDir Path dir) throws Exception {
+        // The source cache keys on the path alone, with no regard for what the file has
+        // since become. Reading the file separately therefore did not merely read it
+        // twice: after a first render warmed the cache, the bytes came fresh off disk
+        // while the metadata sizing the frame came from the version before it, and the
+        // document carried a picture drawn at the wrong image's dimensions.
+        Path png = dir.resolve("swap.png");
+        ImageIO.write(new BufferedImage(40, 20, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+        export(png);
+
+        // Same path, different image. Anything reading the file now disagrees with
+        // anything reading the cache.
+        ImageIO.write(new BufferedImage(90, 30, BufferedImage.TYPE_INT_RGB), "png", png.toFile());
+        byte[] docx = export(png);
+
+        BufferedImage embedded = ImageIO.read(new ByteArrayInputStream(onlyPicture(docx)));
+        assertThat(embedded.getWidth())
+                .describedAs("the embedded picture must be the one the frame was sized "
+                        + "from — both come from a single resolution, so the export is "
+                        + "consistent with itself even when the file has moved on")
+                .isEqualTo(40);
+        assertThat(embedded.getHeight()).isEqualTo(20);
+    }
+
+    /** The bytes of the document's only embedded picture. */
+    private static byte[] onlyPicture(byte[] docx) throws Exception {
+        try (XWPFDocument word = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            List<XWPFPictureData> pictures = word.getAllPictures();
+            assertThat(pictures).describedAs("one image in, one picture out").hasSize(1);
+            return pictures.get(0).getData();
+        }
+    }
+
+    private static byte[] export(Path png) throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            document.pageFlow(page -> page.addImage(image -> image
+                    .source(DocumentImageData.fromPath(png))
+                    .width(100)));
+            return document.export(new DocxSemanticBackend());
         }
     }
 }

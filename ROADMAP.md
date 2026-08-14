@@ -8,9 +8,10 @@ Consolidation ahead of the next patch: the documentation and contributor surface
 
 ## Upcoming — 2.2
 
-**2.2.0** is the current release. Its headline is **right-to-left text**: a paragraph says
-which way it runs, and Hebrew and Arabic lay out, shape, join and mirror correctly through
-all three backends. The PDF is painted, so the engine resolves the line itself with the
+**2.2.0** brings **right-to-left text**: a paragraph says which way it runs, and Hebrew and
+Arabic lay out, shape, join and mirror correctly through all three backends. The paragraph
+is the unit that carries it, including inside a table cell composed as one; a cell written
+as a plain string still has no direction. The PDF is painted, so the engine resolves the line itself with the
 Unicode Bidirectional Algorithm, shapes Arabic into its joined forms, and writes the file
 so a reader copies out the letters an author typed rather than the shapes they were drawn
 as. Word and PowerPoint have bidirectional engines of their own, so each is handed logical

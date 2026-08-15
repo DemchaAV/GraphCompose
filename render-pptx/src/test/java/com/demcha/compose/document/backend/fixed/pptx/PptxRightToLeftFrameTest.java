@@ -125,50 +125,28 @@ class PptxRightToLeftFrameTest {
     }
 
     @Test
-    void aMixedChipKeepsItsInteriorAsTypedAndItsLettersLogical() throws Exception {
-        // A chip is one rounded fill, so the wrapper cannot split it at a level
-        // boundary; it reaches the backend whole. Its text must stay logical —
-        // PowerPoint reorders strong right-to-left characters by what they are, not by
-        // what the frame declares, so a pre-reordered string would come back
-        // re-reversed. Only the mirroring is done for PowerPoint, and only on the
-        // levels UAX #9 mirrors: the brackets swap, the interior's comparison must
-        // not. Mirrored whole, this chip stored "a < b" — inverted meaning in the only
-        // copy of the text the file has.
-        List<XSLFTextParagraph> chipFrames = paragraphsOf(renderChipLine()).stream()
-                .filter(paragraph -> paragraph.getText().contains("a")
-                        && paragraph.getText().contains("b"))
-                .toList();
-
-        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
-        assertThat(chipFrames)
-                .describedAs("logical text needs its declared direction, like every "
-                        + "right-to-left frame")
-                .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
-        assertThat(chipFrames)
-                .describedAs("brackets mirrored, comparison as typed, order logical")
-                .allSatisfy(paragraph -> assertThat(paragraph.getText())
-                        .contains(")a > b(")
-                        .doesNotContain("<"));
+    void aChipSplitsAtEveryLevelBoundaryItHolds() throws Exception {
+        // Three runs, not one: the brackets take the right-to-left level from the line
+        // around them while the comparison between them stays left-to-right. Each gets
+        // its own frame, placed left to right, so the viewer has nothing to re-resolve —
+        // and the comparison survives as typed. Reversed whole, which is what a single
+        // frame invited, this chip stored "a < b": inverted meaning in the only copy of
+        // the text the file has.
+        assertThat(chipRunsOf("(a > b)"))
+                .describedAs("bracket, comparison, bracket — three frames, in that order")
+                .containsExactly("(", "a > b", ")");
     }
 
     @Test
     void aChipHoldingHebrewAndAYearStoresItsLettersInLogicalOrder() throws Exception {
         // The case a visual-order hand-off breaks: strong letters are reordered by
         // PowerPoint's own engine whatever the frame declares, so letters stored
-        // pre-reversed would display re-reversed — scrambled. Nothing in this chip
-        // mirrors, so the stored text must be exactly what the author typed.
-        List<XSLFTextParagraph> chipFrames = paragraphsOf(
-                renderHighlightLine("שנה 2026")).stream()
-                .filter(paragraph -> paragraph.getText().contains("2026"))
-                .toList();
-
-        assertThat(chipFrames).describedAs("the chip's own frame is found").isNotEmpty();
-        assertThat(chipFrames)
-                .describedAs("letters logical, digits as written, direction declared")
-                .allSatisfy(paragraph -> {
-                    assertThat(paragraph.getText()).isEqualTo("שנה 2026");
-                    assertThat(declaresRightToLeft(paragraph)).isTrue();
-                });
+        // pre-reversed would display re-reversed — scrambled. Each run goes over as the
+        // author typed it, and the digits are a run of their own because they resolve to
+        // the other level.
+        assertThat(chipRunsOf("שנה 2026"))
+                .describedAs("digits placed left of the word, both as written")
+                .containsExactly("2026", "שנה ");
     }
 
     @Test
@@ -188,8 +166,8 @@ class PptxRightToLeftFrameTest {
                 .describedAs("a logical-order frame must say which way it reads")
                 .allMatch(PptxRightToLeftFrameTest::declaresRightToLeft);
         assertThat(chipFrames)
-                .describedAs("logical order with mirrored pairs: the stored text opens "
-                        + "on the mirrored closing form")
+                .describedAs("one uniformly right-to-left run, so one frame, mirrored — "
+                        + "the case the viewer reverses for itself and does not swap")
                 .allSatisfy(paragraph -> assertThat(paragraph.getText())
                         .isEqualTo(")" + "שנה" + "("));
     }
@@ -199,29 +177,57 @@ class PptxRightToLeftFrameTest {
         // The chip's flag is its first character's, so this one is left-to-right. Its
         // Hebrew still needs no help: PowerPoint orders the letters itself, and with no
         // neutral in the chip there is nothing to mirror for it either.
-        assertThat(storedChipOf("a בית", "בית"))
-                .describedAs("logical order, nothing swapped")
-                .isEqualTo("a בית");
+        assertThat(chipRunsOf("a בית"))
+                .describedAs("the Latin placed first, the Hebrew after it, both as typed")
+                .containsExactly("a ", "בית");
     }
 
     @Test
-    void aChipThatOpensOnLatinStillMirrorsANeutralBetweenTwoHebrewWords() throws Exception {
-        // The reason the chip's flag cannot gate the mirroring. A neutral standing
-        // between two right-to-left words takes THEIR level even under a left-to-right
-        // base, so it is one of the characters PowerPoint places but does not mirror.
-        // Left unmirrored, the comparison is drawn facing the wrong way on the slide.
-        assertThat(storedChipOf("a בית > ספר", "בית"))
-                .describedAs("the comparison is pre-mirrored for PowerPoint")
-                .isEqualTo("a בית < ספר");
+    void aChipThatOpensOnLatinSplitsAroundALoneNeutral() throws Exception {
+        // A neutral standing between two right-to-left words takes THEIR level even under
+        // a left-to-right base, so it belongs to the Hebrew run rather than to the Latin
+        // one — and that run, being uniformly right-to-left, is the kind the viewer
+        // reverses itself, so its comparison is mirrored on the way over.
+        assertThat(chipRunsOf("a בית > ספר", "בית"))
+                .describedAs("Latin first, then one right-to-left run carrying the neutral")
+                .containsExactly("a ", "בית < ספר");
     }
 
     @Test
-    void aChipThatOpensOnLatinMirrorsOnlyItsRightToLeftLevelPunctuation() throws Exception {
-        // And only that: brackets enclosing Hebrew take the Hebrew's level and swap,
-        // while everything the left-to-right base owns is left exactly as typed.
-        assertThat(storedChipOf("a בית (ספר)", "בית"))
-                .describedAs("brackets swapped, the Latin opening untouched")
-                .isEqualTo("a בית )ספר(");
+    void aChipThatOpensOnLatinSplitsAtItsLevelBoundary() throws Exception {
+        // The whole point of splitting. Handed over as one frame, this chip reached
+        // PowerPoint as a fragment with no line around it, its engine re-resolved it on
+        // its own terms, and the deck disagreed with the PDF about where the Latin sat.
+        // One frame per directional run leaves it nothing to re-resolve.
+        assertThat(chipRunsOf("a בית (ספר)", "בית"))
+                .describedAs("Latin first, then the Hebrew run with its pair mirrored")
+                .containsExactly("a ", "בית )ספר(");
+    }
+
+    /**
+     * The chip's frames, left to right — a chip is one frame per directional run.
+     *
+     * <p>Filtered by a marker where the line's own words would otherwise be picked up
+     * too; the chip's runs are the frames that are not the surrounding text.</p>
+     */
+    private static List<String> chipRunsOf(String chipText) throws Exception {
+        return chipRunsOf(chipText, null);
+    }
+
+    private static List<String> chipRunsOf(String chipText, String marker) throws Exception {
+        byte[] pptx = renderHighlightLine(chipText);
+        try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+            List<XSLFTextShape> chipBoxes = new ArrayList<>();
+            for (XSLFShape shape : show.getSlides().get(0).getShapes()) {
+                if (shape instanceof XSLFTextShape box
+                        && "GraphCompose Inline Chip Text".equals(box.getShapeName())
+                        && !box.getText().isBlank()) {
+                    chipBoxes.add(box);
+                }
+            }
+            chipBoxes.sort(java.util.Comparator.comparingDouble(box -> box.getAnchor().getX()));
+            return chipBoxes.stream().map(XSLFTextShape::getText).toList();
+        }
     }
 
     /** The text stored for the chip frame carrying {@code marker}. */

@@ -20,6 +20,7 @@ import org.apache.poi.xslf.usermodel.*;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 /**
  * Renders each pre-wrapped paragraph line into an absolute, non-wrapping text
@@ -231,40 +232,48 @@ public final class PptxParagraphFragmentRenderHandler
         }
         chip.setFillColor(background.fill().color());
         chip.setLineColor(null);
+        PptxTextFrames.setShapeName(chip, "GraphCompose Inline Chip Fill");
 
         PdfFont.VerticalMetrics metrics = verticalMetrics(fonts, span);
         double textTop = canvasHeight - baselineY
                 - environment.viewerAscent(span.textStyle(), metrics.ascent());
-        double textWidth = Math.max(PptxTextFrames.FRAME_EPSILON, span.width() - padding.horizontal());
-        XSLFTextBox textBox = PptxTextFrames.newTextBox(surface, new Rectangle2D.Double(
-                cursorX + padding.left(), textTop, textWidth,
-                Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
-        PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
-        // A chip is the one span that can carry both directions' levels — one rounded
-        // fill, so the wrapper cannot split it, and its flag describes only its first
-        // character. Its text stays logical and its frame declares its direction, like
-        // every right-to-left frame: reordering is a property of strong right-to-left
-        // characters, not of the declaration, so a pre-reordered string would have its
-        // Hebrew re-reversed by PowerPoint's own engine. What that engine was measured
-        // not to do is the mirroring — so pairs are swapped here, but only on the
-        // levels where UAX #9 would swap them. The whole-string mirror reached the
-        // chip's left-to-right interior, where nothing mirrors, and turned "a > b"
-        // into "a < b" in the only copy of the text the file has. For a single-level
-        // chip this is the whole-string mirror it always had.
-        // The flag is the base the mirroring resolves against, not the question of
-        // whether to mirror. It is the chip's FIRST character's, and a chip opening on
-        // Latin still carries whatever follows: a neutral standing between two
-        // right-to-left words takes their level even under a left-to-right base, so it
-        // is one of the characters PowerPoint places but does not mirror. "a בית > ספר"
-        // must reach the slide as "a בית < ספר" or the comparison is drawn facing the
-        // wrong way. Ordering stays PowerPoint's — only the mirroring is done for it.
-        boolean needsResolution =
-                span.rightToLeft() || BidiParagraphResolver.requiresBidi(text);
-        String chipText = needsResolution
-                ? BidiVisualOrder.mirrorRightToLeftLevels(text, span.rightToLeft())
-                : text;
-        PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, span.rightToLeft()),
-                chipText, span.textStyle(), environment);
+        // A chip is one rounded fill, so the wrapper cannot split it at a level boundary
+        // the way it splits a plain span — it reaches the backend whole, carrying its
+        // first character's direction and whatever its interior holds. The fill stays one
+        // shape; the TEXT is split here, one box per directional run, laid out left to
+        // right in the order the page places them.
+        //
+        // Handing the chip over whole is what put PowerPoint and the PDF at odds. Its
+        // engine re-resolves whatever string it is given, and it re-resolves it without
+        // the line around it: "a בית (ספר)" as an isolated fragment comes back in the
+        // order that fragment deserves rather than the order the line does, so the same
+        // document read one way as a PDF and another as a deck. A single-level run has
+        // nothing left to reorder, so splitting removes the question rather than
+        // answering it.
+        List<BidiParagraphResolver.DirectionalRun> runs =
+                BidiVisualOrder.visualRuns(text, span.rightToLeft());
+        PdfFont font = fonts.getFont(span.textStyle().fontName(), PdfFont.class).orElseThrow();
+        double runX = cursorX + padding.left();
+        for (BidiParagraphResolver.DirectionalRun run : runs) {
+            // Each run is uniformly one level, so this is the whole-string mirror for a
+            // right-to-left one and the identity for the rest — the case PowerPoint was
+            // measured to need the swap for, and the case it was measured not to.
+            String runText = BidiVisualOrder.mirrorRightToLeftLevels(
+                    run.text(), run.isRightToLeft());
+            // Measured on the joined forms, because that is what the layout sized the
+            // chip's fill against — the text goes over unshaped for PowerPoint to join
+            // itself, and measuring it that way walks the runs off the end of their own
+            // background: an Arabic chip's last run ended 0.6cm past the rounded rect.
+            double runWidth = font.getTextWidth(span.textStyle(), ArabicShaper.shape(run.text()));
+            XSLFTextBox textBox = PptxTextFrames.newTextBox(surface, new Rectangle2D.Double(
+                    runX, textTop,
+                    Math.max(PptxTextFrames.FRAME_EPSILON, runWidth + PptxTextFrames.FRAME_EPSILON),
+                    Math.max(PptxTextFrames.FRAME_EPSILON, metrics.lineHeight())));
+            PptxTextFrames.setShapeName(textBox, "GraphCompose Inline Chip Text");
+            PptxTextFrames.addRun(PptxTextFrames.preparedParagraph(textBox, run.isRightToLeft()),
+                    runText, span.textStyle(), environment);
+            runX += runWidth;
+        }
     }
 
     /**
@@ -426,8 +435,9 @@ public final class PptxParagraphFragmentRenderHandler
         // A chip is left alone here and settled at its own site (renderChip): it is the
         // one span whose flag does not describe all of it — one rounded fill, so the
         // wrapper cannot split it at a level boundary — and swapping it whole would
-        // invert punctuation its interior is entitled to keep. renderChip resolves the
-        // chip's own levels and mirrors only what actually moves.
+        // invert punctuation its interior is entitled to keep. renderChip splits it into
+        // its directional runs instead, one frame each, and swaps only the runs that are
+        // uniformly right-to-left.
         String logical = span.rightToLeft() && span.background() == null
                 ? BidiMirroring.mirror(span.text())
                 : span.text();

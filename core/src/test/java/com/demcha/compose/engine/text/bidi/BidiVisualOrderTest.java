@@ -51,11 +51,16 @@ class BidiVisualOrderTest {
         // paragraph declares, so a pre-reordered string would come back re-reversed.
         // Only the mirroring is done for it, and only on the levels L4 touches.
         assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(a > b)", true))
-                .describedAs("brackets sit at the right-to-left level and swap; the "
-                        + "interior's comparison does not")
-                .isEqualTo(")a > b(");
+                .describedAs("a run that mixes levels goes over as typed: the viewer was "
+                        + "measured to draw this correctly from the author's text, and to "
+                        + "draw \")a > b(\" from a pre-swapped one")
+                .isEqualTo("(a > b)");
+        assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(2026)", true))
+                .describedAs("digits resolve to the left-to-right level, so this mixes too")
+                .isEqualTo("(2026)");
         assertThat(BidiVisualOrder.mirrorRightToLeftLevels("(" + HEBREW + ")", true))
-                .describedAs("a single-level run is the whole-string mirror, unchanged")
+                .describedAs("uniformly right-to-left is the case that does need the swap — "
+                        + "handed over as typed it was drawn with the brackets reversed")
                 .isEqualTo(BidiMirroring.mirror("(" + HEBREW + ")"));
         assertThat(BidiVisualOrder.mirrorRightToLeftLevels(HEBREW + " 2026", true))
                 .describedAs("nothing mirrors, nothing reorders — the letters stay "

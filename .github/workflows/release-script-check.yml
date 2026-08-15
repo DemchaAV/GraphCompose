@@ -201,6 +201,61 @@ jobs:
           if (Test-ReadmeLatestStable '0.0.0-nonexistent') { throw "Test-ReadmeLatestStable matched a bogus version" }
           Write-Host "Test-ReadmeLatestStable: README names v$cur (bogus rejected)."
 
+      - name: Unit-check the README release-status promotion
+        shell: pwsh
+        run: |
+          # The block is two halves, and what moves between them is the sentence, not
+          # only the version. Lifted by AST like the roadmap check below, so the code
+          # under test is the code that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $want = @('Update-ReadmeReleaseStatus', 'Move-ReleaseStatusProse', 'Get-NextSnapshotVersion')
+          $found = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $want -contains $n.Name
+            }, $true)
+          $missing = $want | Where-Object { $_ -notin ($found | ForEach-Object { $_.Name }) }
+          if ($missing) { throw "cut-release.ps1 no longer defines: $($missing -join ', ')" }
+          Invoke-Expression (($found | ForEach-Object { $_.Extent.Text }) -join "`n")
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          function New-Readme($stableProse, $devProse) {
+            $file = Join-Path ([IO.Path]::GetTempPath()) ("readme-" + [guid]::NewGuid().ToString() + ".md")
+            Set-Content -Path $file -NoNewline -Value (@(
+              '> **Release status** &mdash;',
+              "> 🟢 **Latest stable**: [v1.2.3](https://github.com/DemchaAV/GraphCompose/releases/tag/v1.2.3) &mdash; $stableProse",
+              "> &nbsp;·&nbsp; 🟡 **In development**: v1.3.0 on ``develop`` &mdash; $devProse"
+            ) -join "`n")
+            return $file
+          }
+
+          # 1. A staged story is the release's own: it moves up, and the lower half is
+          #    left with the pointer. Leaving it behind would publish the new version
+          #    under the previous line's headline.
+          $readme = New-Readme 'the **previous** release: what 1.2 was about.' 'the **staged** release: what 1.3 is about.'
+          Update-ReadmeReleaseStatus $readme '1.3.0'
+          $after = Get-Content $readme -Raw
+          if ($after -notmatch '\*\*Latest stable\*\*:\s*\[v1\.3\.0\]\(\S+/releases/tag/v1\.3\.0\) &mdash; the \*\*staged\*\* release') {
+            throw "the staged story did not move onto the latest-stable half:`n$after"
+          }
+          if ($after -match 'the \*\*previous\*\* release') { throw "the superseded headline survived the promotion:`n$after" }
+          if ($after -notmatch '\*\*In development\*\*: v1\.3\.1 on `develop` &mdash; see \[CHANGELOG\.md\]') {
+            throw "the lower half was not opened on the next patch with the changelog pointer:`n$after"
+          }
+
+          # 2. Nothing staged — a patch on the same line has no new story, and its
+          #    headline is the one already sitting above. Promoting the pointer would
+          #    leave the release advertised by nothing.
+          $readme = New-Readme 'the **line** release: what 1.3 was about.' 'see [CHANGELOG.md](./CHANGELOG.md).'
+          Update-ReadmeReleaseStatus $readme '1.3.1'
+          $after = Get-Content $readme -Raw
+          if ($after -notmatch '\*\*Latest stable\*\*:\s*\[v1\.3\.1\].*the \*\*line\*\* release') {
+            throw "a patch cut lost the headline of the line it belongs to:`n$after"
+          }
+
+          Write-Host "release-status: a staged story is promoted, a patch keeps its line's headline."
+
       - name: Unit-check the roadmap promotion (refusals and the real rewrite)
         shell: pwsh
         run: |

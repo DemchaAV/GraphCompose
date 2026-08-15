@@ -512,6 +512,36 @@ function Update-RoadmapCurrentStable($roadmapPath, $newVersion) {
     Note "ROADMAP.md 'Current stable' -> $newVersion"
 }
 
+function Move-ReleaseStatusProse($content) {
+    # Promotes the 'In development' sentence onto the 'Latest stable' half and leaves the
+    # lower half with the line that says where the detail lives.
+    #
+    # Only when there is a sentence to promote. After a cut the lower half carries the
+    # bare CHANGELOG pointer, and the next patch on the same line has no new story — its
+    # headline is the one the line opened with, which is already sitting above. Promoting
+    # the pointer would delete that headline and leave the release advertised by nothing.
+    $stableLine = [regex]'(?m)^(?<head>>\s*🟢\s*\*\*Latest stable\*\*:\s*\[v[\w\.\-]+\]\([^)]*\)\s*&mdash;\s*)(?<prose>.+)$'
+    $devLine = [regex]'(?m)^(?<head>>.*?🟡\s*\*\*In development\*\*:\s*v[\w\.\-]+\s+on\s+`develop`\s*&mdash;\s*)(?<prose>.+)$'
+
+    $stableMatch = $stableLine.Match($content)
+    $devMatch = $devLine.Match($content)
+    if (-not $stableMatch.Success -or -not $devMatch.Success) {
+        # Nothing recognisable to move. The version tokens are rewritten by the caller
+        # either way, and Assert-ReleaseMetadata refuses a block it cannot read.
+        return $content
+    }
+
+    $promoted = $devMatch.Groups['prose'].Value.Trim()
+    if ($promoted -match '^(?i)see \[CHANGELOG') {
+        Note "README release-status: nothing staged under 'In development' — prose left as it is"
+        return $content
+    }
+
+    $content = $content.Replace($devMatch.Value,
+        $devMatch.Groups['head'].Value + 'see [CHANGELOG.md](./CHANGELOG.md).')
+    return $content.Replace($stableMatch.Value, $stableMatch.Groups['head'].Value + $promoted)
+}
+
 function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
     # The README 'Release status' blockquote carries two halves:
     #
@@ -524,7 +554,12 @@ function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
     # link that 404s. The script owns the block now — Step 1 promotes the in-development
     # half to latest-stable and opens the next patch line — so `develop` stays truthful
     # between releases and the release commit still carries the right text to `main`.
-    # Only the version tokens are rewritten; the maintainer's prose is left alone.
+    #
+    # The prose moves with the version, because the sentence belongs to the release
+    # rather than to the half it sits in: the story a maintainer writes under 'In
+    # development' is the story of the version being cut, and leaving it behind would
+    # publish the new version under the previous line's headline while advertising the
+    # work that just shipped as still to come.
     if (-not (Test-Path $readmePath)) {
         Note "skip (no file): $readmePath"
         return
@@ -537,7 +572,8 @@ function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
     $stableUrl = [regex]'(?<=/releases/tag/v)[\w\.\-]+(?=\))'
     $inDev = [regex]'(?<=\*\*In development\*\*:\s*v)[\w\.\-]+'
 
-    $updated = $stable.Replace($content, $newVersion, 1)
+    $updated = Move-ReleaseStatusProse $content
+    $updated = $stable.Replace($updated, $newVersion, 1)
     $updated = $stableUrl.Replace($updated, $newVersion, 1)
     if ($nextVersion) {
         $updated = $inDev.Replace($updated, $nextVersion, 1)

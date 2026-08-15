@@ -29,8 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MavenBannerNativeShapeTest {
 
-    /** Banner, pipeline, measured, scaling. */
-    private static final int SLIDES = 4;
+    /** Banner, pipeline, measured, scaling, scripts. */
+    private static final int SLIDES = 5;
 
     @Test
     void everySlideStaysNativeApartFromTheCheckIcon() throws Exception {

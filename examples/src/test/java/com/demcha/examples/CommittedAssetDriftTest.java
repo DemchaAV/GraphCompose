@@ -40,10 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * recorded in {@code examples/pom.xml}. Without that the coordinate pill alone would differ and
  * this would fail on every preview that carries one.</p>
  *
- * <p>Nothing moves that property yet, and this guard cannot notice: it compares both sides at
- * whatever the property says, so a release that re-renders the showcase site at a new version
- * while leaving the previews behind passes here. Closing that is the release step's job, and it
- * is the reason to land it alongside rather than long after.</p>
+ * <p>The release moves that property in the same commit as the tag, next to the step that
+ * re-renders the previews at the new version. It has to be the same commit, because this guard
+ * cannot notice if the two come apart: it compares both sides at whatever the property says, so
+ * previews left behind at the old version would pass here.</p>
  */
 class CommittedAssetDriftTest {
 

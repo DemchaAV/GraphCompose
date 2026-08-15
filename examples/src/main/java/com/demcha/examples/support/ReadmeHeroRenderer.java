@@ -23,7 +23,7 @@ import java.nio.file.Paths;
  * </pre>
  *
  * @author Artem Demchyshyn
- * @since 2.0.0
+ * @since 2.2.0
  */
 public final class ReadmeHeroRenderer {
 

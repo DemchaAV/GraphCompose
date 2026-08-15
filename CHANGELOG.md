@@ -472,8 +472,8 @@ follow semantic versioning; release dates are ISO 8601.
   of the module-first deck, and the caption beside it pointed at a PDF the release does not
   advertise. Both now name the same document — `MavenBannerPptxExample`, which the release
   publishes as a PDF and as an editable PowerPoint deck, so the picture a reader sees is a
-  page of a file they can open. The file the release commits keeps its name, so what
-  re-renders it on every version bump is unchanged.
+  page of a file they can open. What the release commits keeps its name and its place in
+  the cut, so the version stamped into the image still arrives from the version bump.
 
   The banner gained a page for this release: Amiri, David Libre, the two Noto faces and
   Gothic A1 each set a word, and where that word sits in its card is the direction it

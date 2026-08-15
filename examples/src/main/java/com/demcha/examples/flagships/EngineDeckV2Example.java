@@ -40,7 +40,6 @@ import com.demcha.compose.font.FontName;
 import com.demcha.examples.support.ExampleOutputPaths;
 import com.demcha.examples.support.ExampleVersion;
 
-import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -50,16 +49,16 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Parallel 2.0 release concept for the GraphCompose README hero and engine
- * capability deck. The existing {@link EngineDeckExample} remains the active
- * release asset; this class deliberately writes {@code *-v2} files so both
- * designs can be reviewed side by side before any release-flow switch.
+ * The module-first engine capability deck. It writes {@code *-v2} files
+ * alongside {@link EngineDeckExample}'s, so the two designs can be read side by
+ * side; neither is the README hero, which is page one of
+ * {@link MavenBannerPptxExample}.
  *
- * <p>The first page is a 16:9 full-bleed banner shared byte-for-layout with
- * {@link #renderBannerImage(int)}. The remaining pages explain the 2.0 module
- * split, the two renderer lanes, dependency choices, and the repository's
- * bundled comparative reference snapshot. Every panel, connector, SVG icon
- * and chart is composed through the canonical document DSL.</p>
+ * <p>The first page is a 16:9 full-bleed banner, also written on its own by
+ * {@link #generateBanner()}. The remaining pages explain the 2.0 module split,
+ * the two renderer lanes, dependency choices, and the repository's bundled
+ * comparative reference snapshot. Every panel, connector, SVG icon and chart is
+ * composed through the canonical document DSL.</p>
  *
  * <p>Benchmark wording is intentionally conservative. The bundled JSON is a
  * dated single-machine reference run without hardware or commit provenance;
@@ -136,24 +135,6 @@ public final class EngineDeckV2Example {
             document.buildPdf();
         }
         return outputFile;
-    }
-
-    /**
-     * Renders page one directly to a widescreen image without a PDF round trip.
-     *
-     * @param dpi raster resolution in dots per inch
-     * @return rendered banner image
-     * @throws Exception when composition or rendering fails
-     */
-    public static BufferedImage renderBannerImage(int dpi) throws Exception {
-        try (DocumentSession document = GraphCompose.document()
-                .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
-                .pageBackground(NIGHT)
-                .margin(DocumentInsets.zero())
-                .create()) {
-            composeBanner(document);
-            return document.toImage(0, dpi);
-        }
     }
 
     /**

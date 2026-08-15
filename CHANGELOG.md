@@ -457,15 +457,28 @@ follow semantic versioning; release dates are ISO 8601.
   The invoice exists because that is where right-to-left text meets numbers — nearly every
   line mixes a Hebrew description with a Latin product name, a quantity and a total.
 
-  Two things the examples had to work around are worth knowing before writing one. A list
+  One thing the examples had to work around is worth knowing before writing one: a list
   carries no direction of its own, so an Arabic list needs `align(RIGHT)` or its bullets
-  sit on the wrong side of the text. And the invoice is built from rows rather than a
-  table, because a table cell has no direction either.
+  sit on the wrong side of the text. The invoice is built from rows rather than a table
+  because it was written before a cell could declare a direction — a table would carry it
+  now, and the layout is what keeps the rows.
 
   The invoice also shows what isolates are for. A Latin name inside a Hebrew line is
   handled by the algorithm, but the punctuation touching it is neutral — so
   "GraphCompose Ltd." printed its full stop at the far end of the line until the run was
   isolated.
+
+- **The image at the top of README is page one of the Maven Central banner.** It was a page
+  of the module-first deck, and the caption beside it pointed at a PDF the release does not
+  advertise. Both now name the same document — `MavenBannerPptxExample`, which the release
+  publishes as a PDF and as an editable PowerPoint deck, so the picture a reader sees is a
+  page of a file they can open. What the release commits keeps its name and its place in
+  the cut, so the version stamped into the image still arrives from the version bump.
+
+  The banner gained a page for this release: Amiri, David Libre, the two Noto faces and
+  Gothic A1 each set a word, and where that word sits in its card is the direction it
+  declared — Hebrew and Arabic to the right, the rest to the left. Nothing on the page is an
+  image.
 
 ### Tests
 

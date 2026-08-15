@@ -26,6 +26,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.node.TextDirection;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -205,6 +206,8 @@ public final class MavenBannerPptxExample {
                 .addSection("Measured", MavenBannerPptxExample::measuredPage)
                 .addPageBreak(b -> b.name("ToScaling"))
                 .addSection("Scaling", MavenBannerPptxExample::scalingPage)
+                .addPageBreak(b -> b.name("ToScripts"))
+                .addSection("Scripts", MavenBannerPptxExample::scriptsPage)
                 .build();
     }
 
@@ -332,8 +335,60 @@ public final class MavenBannerPptxExample {
                 .margin(DocumentInsets.top(20)));
     }
 
+    /**
+     * Page 5 — the scripts, set in the scripts.
+     *
+     * <p>The claim on this page is the page. Every word of Hebrew and Arabic here was
+     * laid out by the engine that drew the rest of it: reordered by the Unicode
+     * Bidirectional Algorithm, the Arabic joined into its contextual forms, from a
+     * paragraph that says which way it runs. Written as a screenshot it would prove
+     * nothing.</p>
+     */
+    private static void scriptsPage(SectionBuilder page) {
+        page.padding(DocumentInsets.symmetric(38, 52)).spacing(0);
+        kicker(page, "MULTILINGUAL", "Documents that read right to left");
+        lede(page, "A paragraph — or a table cell — says which way it runs, and Hebrew and "
+                + "Arabic lay out, join and mirror correctly. The PDF is painted, so the engine "
+                + "resolves the line itself; Word and PowerPoint order text themselves and are "
+                + "told what each needs instead. Five script families ship with the library.");
+
+        page.addRow("ScriptSamples", row -> {
+            row.spacing(14).evenWeights().margin(DocumentInsets.top(AFTER_LEDE));
+            scriptCard(row, "Arabic", "AMIRI", "مرحبا بالعالم", arabicSample());
+            scriptCard(row, "Hebrew", "DAVID_LIBRE", "שלום עולם", hebrewSample());
+            scriptCard(row, "Georgian", "NOTO_SANS_GEORGIAN", "გამარჯობა",
+                    scriptSample(FontName.NOTO_SANS_GEORGIAN));
+            scriptCard(row, "Armenian", "NOTO_SANS_ARMENIAN", "Բարև աշխարհ",
+                    scriptSample(FontName.NOTO_SANS_ARMENIAN));
+            scriptCard(row, "Korean", "GOTHIC_A1", "안녕하세요",
+                    scriptSample(FontName.GOTHIC_A1));
+        });
+
+        page.addRow("ScriptProof", row -> {
+            row.spacing(14).evenWeights().margin(DocumentInsets.top(18));
+            proofCard(row, "Ordered by the algorithm",
+                    "Lines resolve through UAX #9, so a Latin word or a number inside Hebrew "
+                            + "keeps running forwards and paired punctuation faces what it "
+                            + "encloses.");
+            proofCard(row, "Joined, then measured",
+                    "Arabic is shaped into its contextual forms before the line is measured, so "
+                            + "a column is sized to the letters the page actually draws.");
+            proofCard(row, "The same in three formats",
+                    "PDF, PowerPoint and Word each get what their own text engine needs — the "
+                            + "document is authored once.");
+        });
+
+        page.addParagraph(p -> p
+                .text("Each card names its FontName constant. Every word of Hebrew and Arabic "
+                        + "above was laid out by the engine that drew this page — no image is "
+                        + "embedded.")
+                .textStyle(sans(9.5, FAINT_TX))
+                .lineSpacing(3)
+                .margin(DocumentInsets.top(20)));
+    }
+
     // ---------------------------------------------------------------------
-    // Page furniture for 2–4.
+    // Page furniture for 2–5.
     // ---------------------------------------------------------------------
 
     /**
@@ -346,6 +401,7 @@ public final class MavenBannerPptxExample {
     private static final double CONTENT_W = PAGE_W - 104;
     private static final double STEP_INNER = (CONTENT_W - 3 * 14) / 4 - 32;
     private static final double TRIPLE_INNER = (CONTENT_W - 2 * 14) / 3 - 32;
+    private static final double SCRIPT_INNER = (CONTENT_W - 4 * 14) / 5 - 32;
 
     /**
      * Space between the lede and the panels under it.
@@ -389,6 +445,41 @@ public final class MavenBannerPptxExample {
                         .textStyle(sans(11, MUTED_TX))
                         .lineSpacing(3)
                         .margin(DocumentInsets.top(6))));
+    }
+
+    /**
+     * One script, set in the family that carries it.
+     *
+     * <p>The sample is a paragraph like any other, so what appears on the card is what an
+     * author would get from the same three lines.</p>
+     */
+    private static void scriptCard(RowBuilder row, String name, String constant,
+                                   String sample, DocumentTextStyle sampleStyle) {
+        row.addSection("Script" + name, s -> s
+                .softPanel(CARD, 10, 16)
+                .stroke(DocumentStroke.of(BORDER, 1))
+                .spacing(0)
+                .addSpacer(sp -> sp.size(SCRIPT_INNER, 0))
+                .addParagraph(p -> p.text(name).textStyle(sansBold(12, WHITE_TX)))
+                .addParagraph(p -> p.text(constant)
+                        .textStyle(mono(8.5, MUTED_TX))
+                        .margin(DocumentInsets.top(4)))
+                .addParagraph(p -> p.text(sample)
+                        .direction(TextDirection.AUTO)
+                        .textStyle(sampleStyle)
+                        .margin(DocumentInsets.top(12))));
+    }
+
+    private static DocumentTextStyle scriptSample(FontName font) {
+        return DocumentTextStyle.builder().fontName(font).size(17).color(ORANGE_HI).build();
+    }
+
+    private static DocumentTextStyle arabicSample() {
+        return scriptSample(FontName.AMIRI);
+    }
+
+    private static DocumentTextStyle hebrewSample() {
+        return scriptSample(FontName.DAVID_LIBRE);
     }
 
     private static void proofCard(RowBuilder row, String title, String desc) {

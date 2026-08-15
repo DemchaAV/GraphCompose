@@ -1026,17 +1026,17 @@ function Refresh-CommittedPreviews {
 }
 
 function Render-ReadmeBanner {
-    # Re-renders assets/readme/repository_showcase_render.png — the 2.0 module-first
-    # hero (EngineDeckV2Example.renderBannerImage) — so the hero's version pill
-    # carries the just-bumped ${project.version} (read from the filtered
-    # banner.properties). The `compile` is REQUIRED: banner.properties is filtered
-    # at examples-compile time, so the examples module must be recompiled AFTER the
-    # Step-1 version bump — otherwise the banner would carry the previous release
-    # version. Runs after Build-ExampleCatalogue, which already installed the bumped root
-    # artifact into the local m2 cache so the examples module resolves it.
+    # Re-renders assets/readme/repository_showcase_render.png — page one of the Maven
+    # Central banner (MavenBannerPptxExample) — so the hero's version pill carries the
+    # just-bumped ${project.version} (read from the filtered banner.properties). The
+    # `compile` is REQUIRED: banner.properties is filtered at examples-compile time, so
+    # the examples module must be recompiled AFTER the Step-1 version bump — otherwise
+    # the banner would carry the previous release version. Runs after
+    # Build-ExampleCatalogue, which already installed the bumped root artifact into the
+    # local m2 cache so the examples module resolves it.
     Write-Host "  > Re-render the version-stamped README hero banner" -ForegroundColor Cyan
     $banner = Join-Path $repoRoot 'assets/readme/repository_showcase_render.png'
-    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ReadmeBannerV2Renderer"'
+    $execProp = '"-Dexec.mainClass=com.demcha.examples.support.ReadmeHeroRenderer"'
     $execArgs = "`"-Dexec.args=$banner`""
     if ($DryRun) {
         Write-Host "    [DRY RUN] $mvnw -f examples/pom.xml -DskipTests compile exec:java $execProp $execArgs" -ForegroundColor Yellow

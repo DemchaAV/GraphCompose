@@ -38,7 +38,7 @@
 </p>
 
 <p align="center">
-  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/engine-deck-v2.pdf"><b>view the full module-first deck (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/EngineDeckV2Example.java"><code>EngineDeckV2Example</code></a>: the module graph, native vector charts, and real comparative benchmarks, all drawn by the engine. It renders its own marketing.</sub>
+  <sub>☝ This banner is itself a GraphCompose document — <a href="./assets/readme/examples/maven-banner.pdf"><b>read all five pages (PDF)</b></a>, rendered by <a href="./examples/src/main/java/com/demcha/examples/flagships/MavenBannerPptxExample.java"><code>MavenBannerPptxExample</code></a>: how a document is authored, how it measures against the field, how it scales, and Hebrew and Arabic running right to left. The charts are native vector output, and the same file exports as an editable PowerPoint deck. It renders its own marketing.</sub>
 </p>
 
 ## Why GraphCompose

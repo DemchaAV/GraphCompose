@@ -1038,6 +1038,82 @@ class VersionConsistencyGuardTest {
         return false;
     }
 
+    /**
+     * Every consumer-smoke default names the release a user can actually resolve.
+     *
+     * <p>The harness verifies the published artefacts, and each of its entry points writes
+     * down which version to verify when the caller names none: the two runner scripts, the
+     * workflow input, and the {@code <gc.version>} each consumer pom falls back to. The
+     * runners always pass one, so the poms' copy decides nothing on a normal run — which is
+     * how it sat two releases behind the rest without a single run going red, until
+     * Dependabot opened a pull request to move it.</p>
+     *
+     * <p>Read out of the files rather than compared against a constant here, and held to
+     * {@link #acceptableTargets()} — the same published-release rule the install snippets
+     * follow. A default naming a version nobody can download would have the gate verify a
+     * release that does not exist; one naming an older release has it report green for the
+     * release before, which is the failure a release gate must not have.</p>
+     */
+    @Test
+    void everyConsumerSmokeDefaultNamesThePublishedRelease() throws Exception {
+        Set<String> targets = acceptableTargets();
+        Map<String, String> defaults = new LinkedHashMap<>();
+
+        defaults.put("scripts/release-smoke/run.sh",
+                declaredVersion("scripts/release-smoke/run.sh",
+                        "(?m)^GC_VERSION=\"([\\w.\\-]+)\""));
+        defaults.put("scripts/release-smoke/run.ps1",
+                declaredVersion("scripts/release-smoke/run.ps1",
+                        "\\[string]\\$Version = '([\\w.\\-]+)'"));
+        defaults.put(".github/workflows/release-smoke.yml",
+                declaredVersion(".github/workflows/release-smoke.yml",
+                        "(?m)^\\s+default: '([\\w.\\-]+)'"));
+
+        List<Path> consumers = consumerProjects();
+        assertThat(consumers)
+                .describedAs("no consumer-smoke project under scripts/release-smoke: the harness "
+                        + "this guards would be verifying nothing")
+                .isNotEmpty();
+        for (Path pom : consumers) {
+            String relative = PROJECT_ROOT.relativize(pom).toString().replace('\\', '/');
+            defaults.put(relative,
+                    declaredVersion(relative, "<gc\\.version>([\\w.\\-]+)</gc\\.version>"));
+        }
+
+        assertThat(defaults)
+                .describedAs("each consumer-smoke default must name the published release %s: a "
+                        + "run that accepts the prefilled value would otherwise verify a version "
+                        + "nobody can resolve, or the release before this one", targets)
+                .allSatisfy((where, version) -> assertThat(version)
+                        .describedAs("%s", where)
+                        .isIn(targets));
+    }
+
+    /** The consumer projects, found rather than listed: one arrives per published coordinate. */
+    private static List<Path> consumerProjects() throws IOException {
+        Path root = PROJECT_ROOT.resolve("scripts/release-smoke");
+        if (!Files.isDirectory(root)) {
+            return List.of();
+        }
+        try (Stream<Path> entries = Files.list(root)) {
+            return entries.map(entry -> entry.resolve("pom.xml"))
+                    .filter(Files::isRegularFile)
+                    .sorted()
+                    .toList();
+        }
+    }
+
+    /** The one version a file declares, or a failure naming the file that stopped declaring it. */
+    private static String declaredVersion(String relativePath, String pattern) throws IOException {
+        Matcher declared = Pattern.compile(pattern)
+                .matcher(Files.readString(PROJECT_ROOT.resolve(relativePath)));
+        assertThat(declared.find())
+                .describedAs("%s no longer declares a smoke version matching %s — the release step "
+                        + "that moves it would silently skip the file", relativePath, pattern)
+                .isTrue();
+        return declared.group(1);
+    }
+
     private static Element directChild(Element parent, String name) {
         NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {

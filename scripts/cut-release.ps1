@@ -776,6 +776,16 @@ function Update-ReleaseSmokeDefaultVersion($repoRoot, $newVersion) {
     # re-verifies the PREVIOUS release and reports green — the one failure mode a
     # release gate must not have. Each pattern is anchored to its own construct so
     # a bump cannot smear across unrelated version strings in the same file.
+    #
+    # The consumer projects carry that default a second time, in the <gc.version>
+    # each pom falls back to when the runner passes none. Every runner does pass one,
+    # so the fallback decides nothing on a normal run — which is why it sat two
+    # releases behind until Dependabot opened a PR to move it. It is still a published
+    # version written down in the repository, so it moves with the release.
+    #
+    # Found rather than listed: the projects are one per published coordinate
+    # combination, so the set grows when a coordinate does, and a list here would be a
+    # second place to remember that.
     $targets = @(
         @{ Path = 'scripts/release-smoke/run.sh';        Pattern = '(?<=^GC_VERSION=")[\w\.\-]+(?=")';               Label = 'run.sh default' },
         @{ Path = 'scripts/release-smoke/run.sh';        Pattern = '(?<=tests gc\.version=)[\w\.\-]+';                Label = 'run.sh usage' },
@@ -784,6 +794,19 @@ function Update-ReleaseSmokeDefaultVersion($repoRoot, $newVersion) {
         @{ Path = '.github/workflows/release-smoke.yml'; Pattern = "(?<=^\s{8}default: ')[\w\.\-]+(?=')";             Label = 'workflow input default' },
         @{ Path = 'scripts/release-smoke/README.md';     Pattern = '(?<=defaults to the current published release \(`)[\w\.\-]+(?=`\))'; Label = 'README prose' }
     )
+
+    $consumerRoot = Join-Path $repoRoot 'scripts/release-smoke'
+    if (Test-Path $consumerRoot) {
+        foreach ($project in Get-ChildItem $consumerRoot -Directory | Sort-Object Name) {
+            if (Test-Path (Join-Path $project.FullName 'pom.xml')) {
+                $targets += @{
+                    Path    = "scripts/release-smoke/$($project.Name)/pom.xml"
+                    Pattern = '(?<=<gc\.version>)[\w\.\-]+(?=</gc\.version>)'
+                    Label   = "$($project.Name) fallback"
+                }
+            }
+        }
+    }
 
     foreach ($target in $targets) {
         $path = Join-Path $repoRoot $target.Path

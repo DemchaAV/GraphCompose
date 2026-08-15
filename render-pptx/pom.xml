@@ -61,9 +61,9 @@
         <!-- Keep in lockstep with render-pdf/pom.xml: a drift would mix fontbox
              and pdfbox versions at runtime (the direct fontbox wins mediation). -->
         <pdfbox.version>3.0.8</pdfbox.version>
-        <junit.bom.version>6.1.2</junit.bom.version>
+        <junit.bom.version>6.1.3</junit.bom.version>
         <assertj.version>3.27.7</assertj.version>
-        <logback.version>1.6.1</logback.version>
+        <logback.version>1.6.2</logback.version>
         <graphcompose.fonts.version>1.1.0</graphcompose.fonts.version>
 
         <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>

@@ -1,5 +1,6 @@
 package com.demcha.compose.engine.text.bidi;
 
+import java.text.Bidi;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,24 +73,83 @@ public final class BidiVisualOrder {
             return "";
         }
         int[] levels = BidiParagraphResolver.levelsFor(text, baseOf(rightToLeftBase));
-        if (levels.length == 0) {
+        if (levels.length == 0 || !isUniformlyRightToLeft(levels)) {
             return text;
         }
-        StringBuilder mirrored = new StringBuilder(text.length());
-        int from = 0;
-        while (from < text.length()) {
-            int level = levels[from];
-            int to = from + 1;
-            while (to < text.length() && levels[to] == level) {
-                to++;
+        return BidiMirroring.mirror(text);
+    }
+
+    /**
+     * Whether every character of the run resolves to a right-to-left level.
+     *
+     * <p>This is the whole condition, and it was measured rather than derived. A viewer
+     * that orders the text itself is handed a run and does two things to it: it reorders
+     * the levels and it mirrors what UAX&nbsp;#9 L4 mirrors. Which of the two it has
+     * already done by the time a glyph is drawn is not something to reason about from the
+     * outside — so it was read off a slide, one category of content at a time.</p>
+     *
+     * <p>A run that is uniformly right-to-left comes back needing the swap: {@code (}
+     * Hebrew {@code )} handed over as typed was drawn {@code )}Hebrew{@code (}. A run that
+     * mixes levels does not: the brackets of {@code (a > b)}, of {@code (2026)}, and of a
+     * chip opening on Latin were all drawn correctly from the text exactly as typed, and
+     * pre-swapping them is what produced {@code )a > b(} on a slide. Mirroring per level
+     * run — the shape this replaces — is right for the first case and wrong for the rest,
+     * because it applies half of a transform whose other half the viewer has already
+     * decided not to need.</p>
+     */
+    private static boolean isUniformlyRightToLeft(int[] levels) {
+        for (int level : levels) {
+            if (!BidiParagraphResolver.isRightToLeftLevel(level)) {
+                return false;
             }
-            String run = text.substring(from, to);
-            mirrored.append(BidiParagraphResolver.isRightToLeftLevel(level)
-                    ? BidiMirroring.mirror(run)
-                    : run);
-            from = to;
         }
-        return mirrored.toString();
+        return true;
+    }
+
+    /**
+     * Splits a run into its directional runs, ordered the way the page lays them out.
+     *
+     * <p>{@link BidiParagraphResolver#resolve} answers which runs there are and at what
+     * level, in the order they are <em>read</em>. This answers the other half — the order
+     * they are <em>placed</em> in, left to right across the page — which is UAX&nbsp;#9's
+     * L2 and the one thing a caller that positions each run itself cannot work out from
+     * levels alone.</p>
+     *
+     * <p>It exists for a backend that hands its runs to a consumer with a bidirectional
+     * engine of its own. Such a consumer re-resolves whatever string it is given, and it
+     * re-resolves it <em>without the line around it</em>: an atomic span handed over whole
+     * is a fragment out of context, and the order it comes back in is the order that
+     * fragment deserves rather than the one the line does. Placing each directional run in
+     * its own box removes the question — a single-level run has nothing left to reorder —
+     * and this is the order to place them in.</p>
+     *
+     * @param text            run text in logical order
+     * @param rightToLeftBase the run's own base direction
+     * @return the directional runs, first one leftmost; empty for empty text
+     * @since 2.2.0
+     */
+    public static List<BidiParagraphResolver.DirectionalRun> visualRuns(String text,
+                                                                       boolean rightToLeftBase) {
+        if (text == null || text.isEmpty()) {
+            return List.of();
+        }
+        List<BidiParagraphResolver.DirectionalRun> logical =
+                BidiParagraphResolver.resolve(text, baseOf(rightToLeftBase));
+        if (logical.size() <= 1) {
+            return logical;
+        }
+        byte[] levels = new byte[logical.size()];
+        Integer[] order = new Integer[logical.size()];
+        for (int index = 0; index < logical.size(); index++) {
+            levels[index] = (byte) logical.get(index).embeddingLevel();
+            order[index] = index;
+        }
+        Bidi.reorderVisually(levels, 0, order, 0, logical.size());
+        List<BidiParagraphResolver.DirectionalRun> visual = new ArrayList<>(logical.size());
+        for (Integer index : order) {
+            visual.add(logical.get(index));
+        }
+        return List.copyOf(visual);
     }
 
     /**

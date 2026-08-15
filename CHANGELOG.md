@@ -536,6 +536,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **An inline chip reads the same on a slide as it does on the page.** A chip is one
+  rounded fill, so the wrapper cannot split it where its characters change direction — it
+  reached PowerPoint as a single frame holding the whole thing. PowerPoint has a
+  bidirectional engine of its own and re-resolves whatever string it is handed, and it
+  re-resolved this one *without the line around it*: a fragment out of context comes back
+  in the order that fragment deserves, so a chip reading `a בית (ספר)` put its Latin in one
+  place on a slide and another in the PDF. The chip's **text** is now split into its
+  directional runs, one frame each, placed in the order the page places them; the fill
+  stays a single shape. A single-level run has nothing left to reorder, so the question
+  does not arise rather than being answered.
+
+  The mirroring that goes with it was keyed to the wrong thing. Paired punctuation is
+  swapped for PowerPoint because it places a neutral without mirroring it — but only for a
+  run that is **uniformly** right-to-left, the one it reverses for itself. A run that mixes
+  levels comes out right from the text exactly as typed, and swapping it drew `(a > b)` as
+  `)a > b(` inside a Hebrew line. Both halves were measured in PowerPoint, one category of
+  content at a time, rather than derived.
+
 - **Word mirrors the brackets in an Arabic line.** A right-to-left paragraph declared its
   direction with `w:bidi` and nothing else. That settles which edge the line starts from;
   it does not settle how Word resolves the characters *inside* a run, which comes from

@@ -45,12 +45,12 @@ Same version as the rest of the GraphCompose train (lockstep):
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-templates</artifactId>
-    <version>2.1.1</version>
+    <version>2.2.0</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose-templates:2.1.1") }
+dependencies { implementation("io.github.demchaav:graph-compose-templates:2.2.0") }
 ```
 
 The full "which artifact?" table: [root README → Installation](../README.md#installation).

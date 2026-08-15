@@ -233,10 +233,15 @@ jobs:
           $DryRun = $false
 
           function New-Roadmap($staged) {
-            # A scratch repoRoot per case, so each starts from the committed roadmap.
+            # A scratch repoRoot per case, so each starts from the committed roadmap —
+            # with whatever it stages taken out. Every case below stages exactly what it
+            # is about, so a section the repository happens to carry would answer for
+            # them: case 1 would find the line prepared and not refuse, and case 4's
+            # promotion would leave that heading behind and trip its own check.
             $dir = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())
             New-Item -ItemType Directory -Path $dir | Out-Null
-            $text = Get-Content ROADMAP.md -Raw
+            $text = [regex]::Replace((Get-Content ROADMAP.md -Raw),
+                                     '(?ms)^##\s+Upcoming\s*[—-].*?(?=^##\s|\z)', '')
             if ($staged) {
               $text = $text -replace "## Current stable — $([regex]::Escape($script:line))", "$staged## Current stable — $($script:line)"
             }

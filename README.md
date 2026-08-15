@@ -21,7 +21,7 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
-> &nbsp;·&nbsp; 🟡 **In development**: v2.2.0 on `develop` &mdash; the **right-to-left** line: Hebrew and Arabic lay out, shape, join and mirror through PDF, PowerPoint and Word &mdash; in paragraphs and in table cells &mdash; with the fonts to render them. See [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.2.0 on `develop` &mdash; the **right-to-left** release: Hebrew and Arabic lay out, shape, join and mirror through PDF, PowerPoint and Word &mdash; in paragraphs and in table cells &mdash; with the fonts to render them. See [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>

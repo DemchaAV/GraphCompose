@@ -21,7 +21,7 @@
 
 > **Release status** &mdash;
 > 🟢 **Latest stable**: [v2.1.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.1.1) &mdash; the **PowerPoint** release: `graph-compose-render-pptx` turns the same resolved layout into an editable deck &mdash; one page per slide, geometry-identical to the PDF, text and panels as native shapes. Ships as `@Beta`. **[What each backend supports &darr;](docs/architecture/backend-capability-matrix.md)**
-> &nbsp;·&nbsp; 🟡 **In development**: v2.2.0 on `develop` &mdash; the **right-to-left** line: Hebrew and Arabic **paragraphs** lay out, shape, join and mirror through PDF, PowerPoint and Word, with the fonts to render them. See [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.2.0 on `develop` &mdash; the **right-to-left** line: Hebrew and Arabic lay out, shape, join and mirror through PDF, PowerPoint and Word &mdash; in paragraphs and in table cells &mdash; with the fonts to render them. See [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>
@@ -47,6 +47,7 @@
 - **Deterministic by design.** Two-pass layout. Snapshots are stable across machines, so layout regressions are catchable in tests before any byte ships.
 - **Cinematic by default.** Soft panels, accent strips, transforms, native vector charts, and gradients are first-class primitives, not workarounds.
 - **Lean core, pluggable backends.** The `graph-compose-core` engine carries no PDFBox or POI; render backends are separate modules discovered via `ServiceLoader` &mdash; PDF is one dependency away (or already included in `graph-compose`), DOCX/PPTX are opt-in &mdash; see [support matrix](#output-support).
+- **Writes in more than one direction.** Hebrew and Arabic lay out through the Unicode Bidirectional Algorithm, Arabic is shaped into its joined forms, and a paragraph or a table cell says which way it runs with `direction(RTL)` &mdash; or `AUTO`, read off the text. The same document does it in **all three formats**: the PDF is painted, so the engine resolves the line itself; Word and PowerPoint have bidirectional engines of their own and are told what each needs instead. Five script families ship in `graph-compose-fonts` &mdash; Arabic, Hebrew, Georgian, Armenian, Korean &mdash; so a mixed page renders with no font hunting ([preview](assets/readme/examples/world-scripts.pdf)).
 
 Sits between **iText** (low-level page primitives) and **JasperReports** (XML-template-driven layout): a Java DSL describes the document semantically, the engine renders.
 
@@ -341,6 +342,8 @@ See [CONTRIBUTING](./CONTRIBUTING.md) for the branch-routing table and the full 
 ### Text &amp; internationalization
 
 - Paragraphs and table cells support **right-to-left text**: `ParagraphBuilder.direction(RTL)` and `DocumentTableStyle.direction(RTL)` (or `AUTO`) reorder lines with the Unicode Bidirectional Algorithm, and Arabic is shaped into its joined contextual forms &mdash; Amiri and David Libre ship in `graph-compose-fonts`. One limit remains: **Indic reordering** is not performed.
+- **Five bundled script families**, each carrying its own script plus Latin: Arabic (`AMIRI`), Hebrew (`DAVID_LIBRE`), Georgian (`NOTO_SANS_GEORGIAN`), Armenian (`NOTO_SANS_ARMENIAN`), Korean (`GOTHIC_A1`). Chinese and Japanese have none: the official static Noto CJK faces use CFF outlines a PDF cannot embed, and the variable ones draw at their default weight, which is Thin &mdash; register your own with `FontFamilyDefinition`. See the [world-scripts example](examples/src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java) ([preview](assets/readme/examples/world-scripts.pdf)).
+- **The direction reaches every backend, each on its own terms.** A PDF is painted, so the engine resolves the line and draws it reordered. Word and PowerPoint order the text themselves, so they are told what they need instead &mdash; `w:bidi` plus `w:rtl` for Word, a declared direction per frame for PowerPoint &mdash; and receive the text as written. What each one does, and where it deviates, is in the [backend capability matrix](docs/architecture/backend-capability-matrix.md).
 - A glyph the active font does not cover renders as `?` (with a warning logged); load a font that covers the script you need.
 
 ### When to use GraphCompose

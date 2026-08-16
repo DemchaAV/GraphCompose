@@ -3,6 +3,40 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.2.1 — Planned
+
+### Fixed
+
+- **A PDF now carries the words it draws.** Text set in a bundled TrueType family lost
+  letters from its text layer: `Platform` extracted as `Pla orm`, `certification` as
+  `cer fica on`. The page looked right, so nothing showed it — but the text layer is what
+  a search box, a copy-and-paste, a screen reader and an applicant tracking system all
+  read, so a CV rendered through one of these families quietly failed to contain the
+  words printed on it.
+
+  PDFBox applies a font's `GSUB` substitutions itself whenever a face carrying them is
+  made current on a content stream, and most of the bundled families define ligatures
+  over the commonest English letter pairs — `ti`, `tf`, `ft`. Each pair was drawn as a
+  single glyph, and the map that says what a glyph stands for is built by reading the
+  font's character map backwards, where a ligature is reachable from no character at all.
+  The entry was therefore absent and both letters were lost. The families whose ligatures
+  happen to have code points of their own (`fi`, `fl`) survived, which is why the damage
+  looked arbitrary.
+
+  A Latin face is now handed to PDFBox with nothing to substitute. That is also what the
+  engine already assumed: layout measures a string ligature-blind, so a line drawn with
+  ligatures was slightly narrower than the box measured for it, and the DOCX and PPTX
+  backends never substituted. Non-Latin faces are untouched — PDFBox shapes Devanagari,
+  Bengali and Gujarati through the same mechanism, and there the substitutions are how
+  the script renders rather than a flourish on top of it.
+
+  Visible consequence: text set in a bundled family no longer forms ligatures, so `fi`
+  and `fl` are drawn as two letters. PDFBox applies `ccmp`, `liga` and `clig` together
+  and offers no way to keep one without the others, but in the bundled families the
+  Latin `ccmp` changes nothing — decomposed combining sequences and precomposed letters
+  are drawn exactly as before. The committed visual baselines for the layered CV and
+  cover-letter presets moved by the ligatures alone and were re-recorded.
+
 ## v2.2.0 — 2026-08-15
 
 ### Public API

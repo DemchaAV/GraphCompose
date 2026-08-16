@@ -42,6 +42,29 @@ import java.util.*;
  * any preset-side filler logic. The preset draws its visual ornaments
  * (monogram ring, section rules) inline because none of these visuals
  * are shared with another v2 preset today.</p>
+ *
+ * <h2>What this preset does not draw</h2>
+ *
+ * <p>The composition is fixed to one page, and each block is capped at the
+ * number of items that page was drawn for: <strong>2</strong> experience
+ * entries, <strong>2</strong> education entries, <strong>7</strong> skills,
+ * <strong>3</strong> projects and <strong>3</strong> additional-information
+ * rows. Anything past a cap is <em>not rendered</em> — it does not move to a
+ * second page, and neither the API nor the produced PDF says it was dropped.
+ * A CV with four jobs shows the first two.</p>
+ *
+ * <p>The caps are load-bearing rather than a matter of taste. The two columns
+ * are one {@code addRow}, and a row is atomic — it must fit a page whole or
+ * the paginator raises {@code AtomicNodeTooLargeException} rather than
+ * breaking inside it. Lifting a cap without teaching the preset to choose its
+ * own page boundaries turns a CV that silently lost an entry into one that
+ * fails to render at all.</p>
+ *
+ * <p>So this preset is a choice about how much a reader should see, not a
+ * layout that adapts to the document handed to it. For a CV whose length is
+ * the author's rather than the template's, use a preset that paginates —
+ * {@link TimelineMinimal} splits its own columns with {@link ColumnPagination}
+ * and carries every entry it is given onto as many pages as it needs.</p>
  */
 public final class MonogramSidebar {
 
@@ -103,10 +126,24 @@ public final class MonogramSidebar {
 
     private static final double MAIN_SECTION_RULE_WIDTH = 355.0;
 
+    /*
+     * How much of each block the one-page composition draws. Entries past a
+     * cap are dropped, not paginated — see the class documentation.
+     */
+
+    /** Education entries drawn in the sidebar; the rest are dropped. */
     private static final int EDUCATION_LIMIT = 2;
+
+    /** Skill tokens drawn in the sidebar; the rest are dropped. */
     private static final int SKILL_LIMIT = 7;
+
+    /** Experience entries drawn in the main column; the rest are dropped. */
     private static final int EXPERIENCE_LIMIT = 2;
+
+    /** Projects drawn in the main column; the rest are dropped. */
     private static final int PROJECT_LIMIT = 3;
+
+    /** Additional-information rows drawn in the main column; the rest are dropped. */
     private static final int ADDITIONAL_LIMIT = 3;
 
     private static final String CONTACT_ICON_ROOT =
@@ -693,6 +730,7 @@ public final class MonogramSidebar {
                 return;
             }
             DocumentTextStyle positionStyle = mainEntryTitleStyle();
+            DocumentTextStyle employerStyle = theme.entrySubtitleStyle();
             DocumentTextStyle dateStyle = mainEntryDateStyle();
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
@@ -705,6 +743,17 @@ public final class MonogramSidebar {
                         .lineSpacing(1.15)
                         .margin(DocumentInsets.top(5))
                         .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), positionStyle)));
+                if (!entry.subtitle().isBlank()) {
+                    // The employer. Drawn on its own line between the position and the
+                    // date, as the sidebar's education block draws the institution, so
+                    // the two entry kinds read the same way down the page.
+                    section.addParagraph(paragraph -> paragraph
+                            .textStyle(employerStyle)
+                            .align(TextAlign.LEFT)
+                            .lineSpacing(1.15)
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), employerStyle)));
+                }
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
                             .text(TextOrnaments.spacedUpper(

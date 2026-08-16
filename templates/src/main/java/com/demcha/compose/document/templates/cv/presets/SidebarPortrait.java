@@ -47,6 +47,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * continuation pages of multi-page CVs) without any preset-side
  * filler logic. Use {@link Options} to override the sidebar fill,
  * main fill or accent colour without forking the theme.</p>
+ *
+ * <h2>What this preset does not draw</h2>
+ *
+ * <p>Each block is capped at the number of items the composition was drawn
+ * for: <strong>2</strong> experience entries, <strong>2</strong> education
+ * entries, <strong>5</strong> skills, <strong>3</strong> languages and
+ * <strong>2</strong> projects. Anything past a cap is <em>not rendered</em> —
+ * it does not move to a continuation page, and neither the API nor the
+ * produced PDF says it was dropped. A CV with four jobs shows the first
+ * two.</p>
+ *
+ * <p>The caps are load-bearing rather than a matter of taste. The two columns
+ * are one {@code addRow}, and a row is atomic — it must fit a page whole or
+ * the paginator raises {@code AtomicNodeTooLargeException} rather than
+ * breaking inside it. Lifting a cap without teaching the preset to choose its
+ * own page boundaries turns a CV that silently lost an entry into one that
+ * fails to render at all.</p>
+ *
+ * <p>So this preset is a choice about how much a reader should see, not a
+ * layout that adapts to the document handed to it. For a CV whose length is
+ * the author's rather than the template's, use a preset that paginates —
+ * {@link TimelineMinimal} splits its own columns with {@link ColumnPagination}
+ * and carries every entry it is given onto as many pages as it needs.</p>
  */
 public final class SidebarPortrait {
 
@@ -135,9 +158,21 @@ public final class SidebarPortrait {
      */
     private static final double MAIN_SECTION_RULE_WIDTH = 346.0;
 
+    /*
+     * How much of each block the one-page composition draws. Entries past a
+     * cap are dropped, not paginated — see the class documentation.
+     */
+
+    /** Education entries drawn in the sidebar; the rest are dropped. */
     private static final int EDUCATION_LIMIT = 2;
+
+    /** Skill tokens drawn in the sidebar; the rest are dropped. */
     private static final int SKILL_LIMIT = 5;
+
+    /** Language rows drawn in the sidebar; the rest are dropped. */
     private static final int LANGUAGE_LIMIT = 3;
+
+    /** Experience entries drawn in the main column; the rest are dropped. */
     private static final int EXPERIENCE_LIMIT = 2;
 
     private static final String TEMPLATE_ASSET_ROOT =

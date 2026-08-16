@@ -215,6 +215,29 @@ BoxedSections.create(BrandTheme.boxedClassic())    // explicit
 BoxedSections.create(myCustomTheme)             // your own
 ```
 
+### Presets that cap content
+
+Three presets are compositions for a fixed amount of content rather than
+layouts that grow with the document. Items past the cap are **not
+rendered** — they do not move to a continuation page, and nothing in the
+API or the produced PDF reports that they were dropped.
+
+| Preset | Caps |
+|---|---|
+| `MonogramSidebar.create()` | 2 experience, 2 education, 7 skills, 3 projects, 3 additional-info rows |
+| `SidebarPortrait.create()` | 2 experience, 2 education, 5 skills, 3 languages, 2 projects |
+| `MintEditorial.create()` | 6 expertise labels, 6 skill bars (experience spans both pages in full) |
+
+The caps are load-bearing, not a matter of taste: each of these presets
+builds its columns as one `addRow`, and a row is atomic — it fits a page
+whole or the paginator raises `AtomicNodeTooLargeException`. Lifting a
+cap without teaching the preset to pick its own page boundaries turns a
+CV that silently lost an entry into one that fails to render.
+
+If the document's length is the author's rather than the template's,
+pick a preset that paginates — `TimelineMinimal` splits its own columns
+and carries every entry it is given onto as many pages as it needs.
+
 `NordicClean` also exposes preset-specific options because its
 signature has a structural rail and three editable colour surfaces:
 the accent rules/links/name underline, the rail fill, and the profile

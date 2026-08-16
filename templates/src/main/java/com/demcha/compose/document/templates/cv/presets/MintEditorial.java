@@ -110,6 +110,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * delegated to {@link IconTextRow} and {@link SkillBar}; the preset only
  * orchestrates page composition, section mapping, and the Awards / References
  * grids (which are page-composition concerns local to this layout).</p>
+ *
+ * <h2>What this preset does not draw</h2>
+ *
+ * <p>Experience spans both pages, so a long career is carried in full. The
+ * two page-2 sidebar blocks are not: <strong>6</strong> expertise labels and
+ * <strong>6</strong> skill bars are drawn, and anything past that is
+ * <em>not rendered</em> — and neither the API nor the produced PDF says a
+ * skill was dropped. A document listing ten skills shows six of them.</p>
+ *
+ * <p>The caps are load-bearing rather than a matter of taste. Each page is one
+ * atomic {@code addRow} (see above), so a sidebar that outgrows its page does
+ * not spill onto a third one — it raises {@code AtomicNodeTooLargeException}
+ * and the CV does not render at all. Lifting a cap means teaching the preset
+ * to choose its own page boundaries first, the way {@link TimelineMinimal}
+ * does with {@link ColumnPagination}.</p>
  */
 public final class MintEditorial {
 
@@ -164,12 +179,12 @@ public final class MintEditorial {
     private static final int EXPERIENCE_PAGE_ONE = 2;
 
     /**
-     * Expertise category labels shown beneath the badge.
+     * Expertise category labels shown beneath the badge; the rest are dropped.
      */
     private static final int EXPERTISE_LIMIT = 6;
 
     /**
-     * Skill bars rendered in the page-2 sidebar.
+     * Skill bars rendered in the page-2 sidebar; the rest are dropped.
      */
     private static final int SKILL_LIMIT = 6;
 

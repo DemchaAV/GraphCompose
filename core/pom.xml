@@ -47,13 +47,13 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <logback.version>1.6.1</logback.version>
+        <logback.version>1.6.2</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <slf4j.version>2.0.18</slf4j.version>
 
         <!-- Test dependencies -->
         <assertj.version>3.27.7</assertj.version>
-        <junit.bom.version>6.1.2</junit.bom.version>
+        <junit.bom.version>6.1.3</junit.bom.version>
         <mockito.version>5.23.0</mockito.version>
         <byteBuddy.version>1.18.11</byteBuddy.version>
         <archunit.version>1.5.0</archunit.version>

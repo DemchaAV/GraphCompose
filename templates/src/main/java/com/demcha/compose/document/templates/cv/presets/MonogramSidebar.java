@@ -376,14 +376,13 @@ public final class MonogramSidebar {
             addSidebarHeader(section, "CONTACT", innerWidth);
             addContactBlock(section, doc.identity());
 
-            CvSection education = SectionLookup.firstMatching(sections,
-                    EDUCATION_KEYS);
+            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
             if (hasContent(education)) {
                 addSidebarHeader(section, education.title(), innerWidth);
                 addEducationEntries(section, education);
             }
 
-            CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
+            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
                 addSidebarHeader(section, "EXPERTISE", innerWidth);
                 addSkillsList(section, skills);
@@ -540,8 +539,7 @@ public final class MonogramSidebar {
 
             addNameBlock(section, identity);
 
-            CvSection profile = SectionLookup.firstMatching(sections,
-                    SUMMARY_KEYS);
+            CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
             if (hasContent(profile)) {
                 addMainSectionHeader(section,
                         profile.title().isBlank()
@@ -550,8 +548,7 @@ public final class MonogramSidebar {
                 addProfileBody(section, profile);
             }
 
-            CvSection experience = SectionLookup.firstMatching(sections,
-                    EXPERIENCE_KEYS);
+            CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
             if (hasContent(experience)) {
                 addMainSectionHeader(section,
                         experience.title().isBlank()
@@ -560,8 +557,7 @@ public final class MonogramSidebar {
                 addExperienceEntries(section, experience);
             }
 
-            CvSection projects = SectionLookup.firstMatching(sections,
-                    PROJECT_KEYS);
+            CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
             if (hasContent(projects)) {
                 addMainSectionHeader(section,
                         projects.title().isBlank()
@@ -570,8 +566,7 @@ public final class MonogramSidebar {
                 addProjectsList(section, projects);
             }
 
-            CvSection additional = SectionLookup.firstMatching(sections,
-                    ADDITIONAL_KEYS);
+            CvSection additional = SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
             if (hasContent(additional)) {
                 addMainSectionHeader(section,
                         additional.title().isBlank()

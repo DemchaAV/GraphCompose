@@ -2,6 +2,10 @@ package com.demcha.compose.document.templates.cv.components;
 
 import com.demcha.compose.document.templates.cv.data.CvSection;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
+import com.demcha.compose.document.templates.cv.data.ModuleSection;
+import com.demcha.compose.document.templates.cv.data.SectionRole;
+import com.demcha.compose.document.templates.cv.data.CvItem;
+import com.demcha.compose.document.templates.cv.data.CvKind;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.data.RowStyle;
 import com.demcha.compose.document.templates.cv.data.RowsSection;
@@ -129,5 +133,60 @@ class SectionAllocationTest {
         assertThatThrownBy(() -> SectionAllocation.titleOr(SUMMARY, null))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("fallback");
+    }
+
+    @Test
+    void aRoleClaimTakesTheModuleThatNamedTheRole() {
+        ModuleSection experience = ModuleSection.builder("Опыт работы",
+                        SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
+                .item(CvItem.of("Ведущий инженер").period("2021"))
+                .build();
+        SectionAllocation allocation = SectionAllocation.of(List.of(SUMMARY, experience));
+
+        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
+                .as("the heading matches no English keyword; the role is the answer")
+                .isSameAs(experience);
+        assertThat(allocation.remaining())
+                .as("a role-claimed section is claimed, so it is not also a leftover")
+                .doesNotContain(experience);
+    }
+
+    @Test
+    void aRoleClaimFallsBackToTheHeadingForSectionsWithoutARole() {
+        SectionAllocation allocation = SectionAllocation.of(List.of(SUMMARY));
+
+        assertThat(allocation.claim(SectionRole.SUMMARY, List.of("summary")))
+                .as("hand-written sections carry no role and still route by heading")
+                .isSameAs(SUMMARY);
+    }
+
+    @Test
+    void aDeclaredRoleIsNotClaimableByAnotherSlotsKeywords() {
+        // Otherwise the experience slot takes it by role and the projects slot
+        // takes it by heading, and the same module renders twice.
+        ModuleSection module = ModuleSection.builder("Projects", SectionRole.EXPERIENCE,
+                        CvKind.ENTRIES_DATED)
+                .item(CvItem.of("Senior Engineer").period("2021"))
+                .build();
+        SectionAllocation allocation = SectionAllocation.of(List.of(module));
+
+        assertThat(allocation.claim(SectionRole.PROJECTS, List.of("projects"))).isNull();
+        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
+                .isSameAs(module);
+    }
+
+    @Test
+    void aRoleClaimsAtMostOneSectionSoASecondSlotSeesTheNextOne() {
+        ModuleSection first = ModuleSection.builder("Erfahrung", SectionRole.EXPERIENCE,
+                        CvKind.ENTRIES_DATED).item(CvItem.of("First").period("2021")).build();
+        ModuleSection second = ModuleSection.builder("Weitere Erfahrung",
+                        SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
+                .item(CvItem.of("Second").period("2019")).build();
+        SectionAllocation allocation = SectionAllocation.of(List.of(first, second));
+
+        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience"))).isSameAs(first);
+        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
+                .as("claiming hands each section out once")
+                .isSameAs(second);
     }
 }

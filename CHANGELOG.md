@@ -58,6 +58,28 @@ follow semantic versioning; release dates are ISO 8601.
   trusting it, so a preset that ships without being registered fails the build instead
   of being invisible to every caller that looks a template up by id.
 
+- **Presets route by what a section means, not by the language it is written in.** A
+  preset with a designed layout places sections into fixed slots, and it chose what went
+  where by matching the heading against a list of English words each preset kept
+  privately — then guarded the slot on the section's Java type as well. A CV headed
+  `Ausbildung`, `Опыт работы`, or anything else in the author's own language matched
+  nothing: the section was dropped and the slot that wanted it rendered empty. Nothing
+  failed; the CV came out looking finished, one job short.
+
+  `SectionRouter` asks the module's `SectionRole` first and falls back to the headings
+  for the sections that carry no role — every hand-written one, and any module left as
+  `OTHER` — so a document of hand-written sections routes exactly as it did. A heading
+  may not overrule a role: a module declared `EXPERIENCE` and headed "Projects" goes where its
+  author put it, and the projects slot does not also claim it, which would have rendered
+  it twice. The router also hands each slot the section in the shape that slot draws, so
+  a module reaching a slot written against `EntriesSection` is no longer discarded by
+  the guard — the preset draws it exactly as it draws everything else, with the entry
+  style, rules and spacing that make it that preset. `SectionAllocation.claim` gained
+  the same role-first overload for the preset that allocates rather than looks up.
+
+  Nine presets and every slot they compose changed; a CV written in Russian and German
+  now renders on all sixteen, which `RoleRoutingTest` holds by rendering one.
+
 - **A preset can draw runtime modules in its own style.** `CvRenderKit` is the three
   shapes a section body reduces to — a paragraph, a label/value row, a timeline entry —
   and a template hands back the kit it draws them with. The lowering from `CvItem`

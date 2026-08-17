@@ -200,13 +200,21 @@ on the kind alone — which is what lets a "Volunteering" module be
 shaped exactly like Education without a new type.
 
 `SectionRole` says what a section *means*, separately from how it
-draws. Multi-column presets decide what belongs in a sidebar by
-matching headings against English keywords, which a CV headed
-`Ausbildung` or `Навыки` never matches. The role is where that
-decision belongs — stated by the author, who knows the answer. **The
-presets do not read it yet**: today it travels with the section and is
-the input the routing work will consume, so a document built now needs
-no rewrite when they do.
+draws — and it is the first thing a preset routes on. A preset with a designed
+layout places sections into fixed slots, and it used to choose what
+went where by matching the heading against a list of English words:
+a CV headed `Ausbildung` or `Навыки` matched nothing, so the section
+was dropped and the slot that wanted it rendered empty. Give the module
+a role and it lands in the right slot whatever language the CV is
+written in, and whatever kind you chose to draw it with — for the roles
+that preset has a slot for. `SectionRole.OTHER` names no slot, so a
+module carrying it routes by heading like any other section.
+
+A heading that matches a keyword still routes a section that has no
+role — every hand-written section, and any module you left as
+`SectionRole.OTHER`. What a heading may not do is overrule a role: a
+module declared `EXPERIENCE` and headed "Projects" goes where you put
+it, and the projects slot does not also claim it.
 
 Modules and the four fixed types mix freely in one document, and both
 render through the same components — a module drawn as `ENTRIES_DATED`
@@ -240,6 +248,15 @@ author's own words.
 The promise covers `Slot.MAIN`, which is where sections go unless you say
 otherwise. Every shipped preset composes a single main column, so a section
 placed in `Slot.SIDEBAR` is dropped — by these templates as by every other.
+
+The presets outside that list are not broken, they are *designed*: each
+composes a fixed set of slots, so it renders the roles it has a place for
+and drops a section it has no slot for. Give such a preset a CV whose
+sections map onto roles and it renders them all; give it an extra
+"Volunteering" module and that one is lost. The reason is structural — the
+whole body of those presets is one atomic block that cannot break across
+pages, so there is nowhere to put an extra section — and lifting it needs
+pagination work, not routing.
 
 A template also says *how* it draws through `CvRenderKit`. The shared
 lowering turns a module into paragraphs, rows, and entries; the kit draws

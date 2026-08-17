@@ -17,6 +17,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
+import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -392,21 +393,19 @@ public final class SidebarPortrait {
             addPhotoBlock(section);
             addContactBlock(section, doc.identity());
 
-            CvSection education = SectionLookup.firstMatching(sections,
-                    EDUCATION_KEYS);
+            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
             if (hasContent(education)) {
                 addSidebarHeader(section, "Education");
                 addEducationEntries(section, education);
             }
 
-            CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
+            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
                 addSidebarHeader(section, "Key Skills");
                 addSkillsList(section, skills);
             }
 
-            CvSection languages = SectionLookup.firstMatching(sections,
-                    LANGUAGE_KEYS);
+            CvSection languages = SectionRouter.rows(sections, SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
             if (hasContent(languages)) {
                 addSidebarHeader(section, "Languages");
                 addLanguageList(section, languages);
@@ -610,22 +609,19 @@ public final class SidebarPortrait {
                 content.spacing(10)
                         .padding(new DocumentInsets(24, 34, 24, 34));
 
-                CvSection profile = SectionLookup.firstMatching(sections,
-                        SUMMARY_KEYS);
+                CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
                 if (hasContent(profile)) {
                     addMainSectionHeader(content, "Professional Profile");
                     addProfileBody(content, profile);
                 }
 
-                CvSection experience = SectionLookup.firstMatching(sections,
-                        EXPERIENCE_KEYS);
+                CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
                 if (hasContent(experience)) {
                     addMainSectionHeader(content, "Experience");
                     addExperienceEntries(content, experience);
                 }
 
-                CvSection projects = SectionLookup.firstMatching(sections,
-                        PROJECT_KEYS);
+                CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
                 if (hasContent(projects)) {
                     addMainSectionHeader(content, "Projects");
                     addProjectsList(content, projects);
@@ -1002,6 +998,22 @@ public final class SidebarPortrait {
                 } else if (!label.isBlank()
                            && (body.contains("(") || body.contains("|"))) {
                     result.add(label + " " + body);
+                }
+            }
+            if (result.isEmpty()) {
+                // The sniffing above exists because this slot also accepts an
+                // "Additional Information" section and has to pick the language
+                // rows out of it. A section routed here by its role is entirely
+                // languages, and nothing in it needs to look like one — without
+                // this the block draws its heading over nothing, which is worse
+                // than the drop it replaced.
+                for (CvRow row : rows.rows()) {
+                    String label = MarkdownInline.plainText(row.label()).trim();
+                    String body = MarkdownInline.plainText(row.body()).trim();
+                    if (label.isBlank() && body.isBlank()) {
+                        continue;
+                    }
+                    result.add(body.isBlank() ? label : label + " " + body);
                 }
             }
         } else if (section instanceof SkillsSection skills) {

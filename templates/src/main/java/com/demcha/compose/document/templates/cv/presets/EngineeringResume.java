@@ -12,6 +12,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
+import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -272,17 +273,12 @@ public final class EngineeringResume {
             // -- Body 2-column -------------------------------------------------
 
             private void addBody(PageFlowBuilder flow, List<CvSection> sections) {
-                CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
-                CvSection education = SectionLookup.firstMatching(sections,
-                        EDUCATION_KEYS);
-                CvSection additional = SectionLookup.firstMatching(sections,
-                        ADDITIONAL_KEYS);
-                CvSection summary = SectionLookup.firstMatching(sections,
-                        SUMMARY_KEYS);
-                CvSection experience = SectionLookup.firstMatching(sections,
-                        EXPERIENCE_KEYS);
-                CvSection projects = SectionLookup.firstMatching(sections,
-                        PROJECT_KEYS);
+                CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
+                CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
+                CvSection additional = SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
+                CvSection summary = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
+                CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+                CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
 
                 flow.addRow("CvV2EngineeringResumeBody", row -> row
                         .spacing(14)

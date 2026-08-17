@@ -18,6 +18,7 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.cv.data.*;
@@ -487,13 +488,13 @@ public final class MintEditorial {
             List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
             CvIdentity identity = doc.identity();
 
-            CvSection interests = SectionLookup.firstMatching(sections, INTERESTS_KEYS);
-            CvSection education = SectionLookup.firstMatching(sections, EDUCATION_KEYS);
-            CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
-            CvSection profile = SectionLookup.firstMatching(sections, SUMMARY_KEYS);
-            CvSection experience = SectionLookup.firstMatching(sections, EXPERIENCE_KEYS);
-            CvSection awards = SectionLookup.firstMatching(sections, AWARDS_KEYS);
-            CvSection references = SectionLookup.firstMatching(sections, REFERENCES_KEYS);
+            CvSection interests = SectionRouter.rows(sections, SectionRole.OTHER, INTERESTS_KEYS, RowStyle.PLAIN);
+            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
+            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
+            CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
+            CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+            CvSection awards = SectionRouter.rows(sections, SectionRole.OTHER, AWARDS_KEYS, RowStyle.PLAIN);
+            CvSection references = SectionRouter.rows(sections, SectionRole.OTHER, REFERENCES_KEYS, RowStyle.PLAIN);
 
             List<CvEntry> experienceEntries = entriesOf(experience);
             List<CvEntry> experiencePage1 = experienceEntries.stream()

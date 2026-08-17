@@ -118,16 +118,16 @@ public final class ClassicSerif {
                         .spacing(theme.spacing().pageFlowSpacing());
 
                 addHeader(flow, doc, width);
-                addSummary(flow, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
-                addCoverSkillsModule(flow, SectionLookup.firstMatching(sections, SKILL_KEYS));
+                addSummary(flow, SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS));
+                addCoverSkillsModule(flow, SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS));
                 addLinearModule(flow, "Experience",
-                        SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
+                        SectionRouter.find(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS));
                 addLinearModule(flow, "Projects",
-                        SectionLookup.firstMatching(sections, PROJECT_KEYS));
+                        SectionRouter.find(sections, SectionRole.PROJECTS, PROJECT_KEYS));
                 addLinearModule(flow, "Education",
-                        SectionLookup.firstMatching(sections, EDUCATION_KEYS));
+                        SectionRouter.find(sections, SectionRole.EDUCATION, EDUCATION_KEYS));
                 addLinearModule(flow, "Additional",
-                        SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
+                        SectionRouter.find(sections, SectionRole.OTHER, ADDITIONAL_KEYS));
                 flow.build();
             }
 

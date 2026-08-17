@@ -176,12 +176,12 @@ public final class Panel {
                         .name("CvV2PanelRoot")
                         .spacing(gap);
 
-                CvSection summary = SectionLookup.firstMatching(sections, SUMMARY_KEYS);
-                CvSection skills = SectionLookup.firstMatching(sections, SKILL_KEYS);
-                CvSection education = SectionLookup.firstMatching(sections, EDUCATION_KEYS);
-                CvSection experience = SectionLookup.firstMatching(sections, EXPERIENCE_KEYS);
-                CvSection projects = SectionLookup.firstMatching(sections, PROJECT_KEYS);
-                CvSection additional = SectionLookup.firstMatching(sections, ADDITIONAL_KEYS);
+                CvSection summary = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
+                CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
+                CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
+                CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+                CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
+                CvSection additional = SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
 
                 addHeader(flow, doc.identity(), fullCardContentWidth);
                 addFullWidthPanel(flow, "Profile", "Profile", summary,

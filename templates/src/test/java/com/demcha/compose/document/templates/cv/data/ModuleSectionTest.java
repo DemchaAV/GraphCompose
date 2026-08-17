@@ -135,6 +135,10 @@ class ModuleSectionTest {
 
         assertThat(module.items()).extracting(CvItem::title)
                 .containsExactly("kept", "also kept");
+        // Both halves of "copied": the caller's list cannot reach in (above), and
+        // the accessor hands out nothing a caller could reach in through.
+        assertThatThrownBy(() -> module.items().add(CvItem.of("smuggled")))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

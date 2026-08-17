@@ -3,6 +3,28 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.2.1 — Planned
+
+### Build
+
+- **The weekly benchmark run builds the modules it measures.** The JMH workflow
+  installed the engine from source and then let Maven resolve the rest from Central,
+  and one of them is not there to resolve: the benchmarks read their document fixtures
+  out of the `tests`-classifier jar of `graph-compose-templates`, which the templates
+  release profile unbinds precisely so it is never published. The job died at
+  dependency resolution before a single benchmark ran: five of the six weekly runs
+  since the 2.0 module split reached the default branch failed that way, on four
+  different versions, each looking for the jar under the version the release before it
+  had just published. It now installs `render-pdf` and `templates` from source the way
+  the two benchmark jobs in the main pipeline already do.
+
+  `BenchmarkDependencyInstallGuardTest` reads every workflow and fails when a job
+  builds `benchmarks/pom.xml` without first installing each first-party dependency the
+  benchmarks pom declares. It takes that list from the pom rather than a copy of it, so
+  a new sibling dependency is guarded the day it is added, and it runs in the guard job
+  on every pull request — which is what the workflow itself cannot do, running only
+  from the default branch on a schedule.
+
 ## v2.2.0 — 2026-08-15
 
 ### Public API

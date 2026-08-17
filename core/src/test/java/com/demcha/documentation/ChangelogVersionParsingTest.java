@@ -268,6 +268,26 @@ class ChangelogVersionParsingTest {
                 "## v2.10.0 — 2026-12-01\n## v2.9.0 — 2026-11-01\n", "2.10.1-SNAPSHOT")).contains("2.10.0");
     }
 
+    @Test
+    void aVersionSegmentTooWideForAnIntIsOrderedNotRejected() {
+        // Segments are compared as digit strings, so a number no int could hold orders
+        // correctly instead of throwing NumberFormatException out of a guard — which
+        // would replace the assertion message naming the wrong pin with a stack trace.
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore("""
+                ## v2.99999999999.0 — 2026-12-01
+                ## v2.2.0 — 2026-08-15
+                """, "2.99999999999.1-SNAPSHOT")).contains("2.99999999999.0");
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(
+                "## v2.99999999999.0 — 2026-12-01\n## v2.2.0 — 2026-08-15\n", "2.3.0-SNAPSHOT"))
+                .contains("2.2.0");
+    }
+
+    @Test
+    void leadingZerosDoNotChangeTheOrder() {
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(
+                "## v2.02.0 — 2026-08-15\n## v2.1.0 — 2026-07-01\n", "2.3.0-SNAPSHOT")).contains("2.02.0");
+    }
+
     private static Optional<String> previousReleaseFor(String pomVersion) {
         return VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(RELEASES, pomVersion);
     }

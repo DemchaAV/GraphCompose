@@ -13,7 +13,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -317,32 +316,54 @@ class VersionConsistencyGuardTest {
      * the opening of a new major, and a log with nothing older.</p>
      */
     static Optional<String> newestFinalReleaseInMajorBefore(String changelog, String version) {
-        int[] working = releaseNumbers(releaseLineOf(version));
+        String working = releaseLineOf(version);
         Matcher released = Pattern.compile(
                         "^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
                 .matcher(changelog);
         String newest = null;
-        int[] newestNumbers = null;
         while (released.find()) {
             String candidate = released.group(1);
-            int[] numbers = releaseNumbers(candidate);
-            if (numbers[0] == working[0]
-                    && Arrays.compare(numbers, working) < 0
-                    && (newestNumbers == null || Arrays.compare(numbers, newestNumbers) > 0)) {
+            if (segment(candidate, 0).equals(segment(working, 0))
+                    && compareReleases(candidate, working) < 0
+                    && (newest == null || compareReleases(candidate, newest) > 0)) {
                 newest = candidate;
-                newestNumbers = numbers;
             }
         }
         return Optional.ofNullable(newest);
     }
 
-    private static int[] releaseNumbers(String version) {
-        String[] parts = version.split("\\.");
-        int[] numbers = new int[3];
-        for (int i = 0; i < 3 && i < parts.length; i++) {
-            numbers[i] = Integer.parseInt(parts[i]);
+    /**
+     * Orders two {@code X.Y.Z} release lines, comparing each segment as a number.
+     *
+     * <p>Compared as digit strings rather than parsed: {@code Integer.parseInt} throws
+     * {@link NumberFormatException} on a segment wider than an {@code int}, which in a
+     * guard would surface as a stack trace instead of the assertion message that says
+     * which pin is wrong. Nothing here needs the numeric value — only the order — and
+     * a longer digit string is the larger number once leading zeros are gone.</p>
+     */
+    private static int compareReleases(String left, String right) {
+        for (int i = 0; i < 3; i++) {
+            String a = segment(left, i);
+            String b = segment(right, i);
+            int order = a.length() != b.length()
+                    ? Integer.compare(a.length(), b.length())
+                    : a.compareTo(b);
+            if (order != 0) {
+                return order;
+            }
         }
-        return numbers;
+        return 0;
+    }
+
+    /** Segment {@code index} of an {@code X.Y.Z} version, leading zeros stripped. */
+    private static String segment(String version, int index) {
+        String[] parts = version.split("\\.");
+        String part = index < parts.length ? parts[index] : "0";
+        int firstSignificant = 0;
+        while (firstSignificant < part.length() - 1 && part.charAt(firstSignificant) == '0') {
+            firstSignificant++;
+        }
+        return part.substring(firstSignificant);
     }
 
     /**

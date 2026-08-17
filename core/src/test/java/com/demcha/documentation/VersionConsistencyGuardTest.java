@@ -13,10 +13,12 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -207,8 +209,9 @@ class VersionConsistencyGuardTest {
      * standalone pom. Two literals of one version drift apart silently, and a
      * plugin skew here means the two modules are judged by different
      * compatibility rules. Only the plugin version is held in lockstep: each
-     * module's {@code japicmp.baseline} is its own published floor and legitimately
-     * differs from the engine's the day one of them crosses a major.
+     * module's baselines name its own published releases, which
+     * {@link #japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease} checks
+     * against that module's own version and the CHANGELOG.
      */
     @Test
     void japicmpPluginVersionAgreesAcrossGatedModules() throws Exception {
@@ -217,6 +220,129 @@ class VersionConsistencyGuardTest {
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "japicmp.version"))
                 .describedAs("templates japicmp.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+    }
+
+    /** The modules whose pom carries a {@code japicmp} profile with the two baselines. */
+    private static final List<String> JAPICMP_GATED_POMS = List.of("core/pom.xml", "templates/pom.xml");
+
+    /**
+     * The binary-compatibility gate diffs each gated module against two published
+     * releases. The major floor ({@code japicmp.baseline.floor}) is the first release
+     * of the working major and holds the GA surface. It cannot hold anything added
+     * later: a method that first shipped in 2.2.0 is absent from both 2.0.0 and a
+     * 2.2.1 that removes it, so that diff stays green while a caller compiled against
+     * 2.2.0 gets {@code NoSuchMethodError}. The previous-release pin
+     * ({@code japicmp.baseline.previous}) closes that hole — but only while it names
+     * the latest release actually published, and it is a literal in a pom that
+     * {@code cut-release.ps1 -PostReleaseOnly} moves after each cut. A move that does
+     * not happen leaves every element added in the release just shipped unprotected,
+     * with the gate reporting green, so the pin is held to the CHANGELOG here: it
+     * must name the newest dated final release <em>of the working major</em> strictly
+     * older than the working version. That reading is right on both sides of a cut —
+     * on the release commit (pom {@code 2.3.0}, CHANGELOG {@code ## v2.3.0 — <date>})
+     * the newest release older than 2.3.0 is still 2.2.0, which is what the release
+     * must be diffed against; on the next {@code 2.3.1-SNAPSHOT} it is 2.3.0, so the
+     * bump commit that forgets the pin fails here.
+     *
+     * <p>Both pins stay inside the working major, and the major boundary is where that
+     * matters. On {@code 3.0.0-SNAPSHOT} the floor is {@code 3.0.0} and no 3.x release
+     * exists yet, so the previous pin falls back to the floor: both name a version
+     * nobody has published, both executions skip (the poms set
+     * {@code ignoreMissingOldVersion}), and the 3.0 cycle is free to break 2.x — the
+     * report-only posture the 2.0 transition ran under, without a hand-edited pom.
+     * Pinning across the boundary instead would fail the build on every intentional
+     * major break. The pins start enforcing again the moment {@code 3.0.0} is on
+     * Central, which is the first {@code -PostReleaseOnly} of the new major.</p>
+     */
+    @Test
+    void japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
+
+        for (String pom : JAPICMP_GATED_POMS) {
+            Path path = PROJECT_ROOT.resolve(pom);
+            String working = effectiveVersion(path);
+            String floor = releaseLineOf(working).split("\\.")[0] + ".0.0";
+
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.floor"))
+                    .describedAs("%s japicmp.baseline.floor must be the first release of the working "
+                            + "major (%s for working version %s)", pom, floor, working)
+                    .isEqualTo(floor);
+
+            String expected = newestFinalReleaseInMajorBefore(changelog, working).orElse(floor);
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.previous"))
+                    .describedAs("%s japicmp.baseline.previous must be the newest dated CHANGELOG release "
+                            + "of the working major older than the working version %s (the floor itself "
+                            + "while the major has none) — cut-release.ps1 -PostReleaseOnly moves it to "
+                            + "the version just published; a stale pin leaves everything added in that "
+                            + "release unprotected by the japicmp gate", pom, working)
+                    .isEqualTo(expected);
+        }
+    }
+
+    /**
+     * Every japicmp execution each gated pom must keep. Two properties with one
+     * execution reading them is the same hole with a tidier pom: the previous-release
+     * diff would simply stop running, and a guard that only reads properties would
+     * stay green through it.
+     */
+    @Test
+    void bothJapicmpBaselineExecutionsSurviveInEachGatedPom() throws Exception {
+        for (String pom : JAPICMP_GATED_POMS) {
+            String text = Files.readString(PROJECT_ROOT.resolve(pom));
+            for (String execution : List.of("japicmp-against-major-floor", "japicmp-against-previous-release")) {
+                assertThat(text)
+                        .describedAs("%s must keep the <execution> with id %s — the gate is two diffs, "
+                                + "and one of them silently not running is the hole the second baseline "
+                                + "exists to close", pom, execution)
+                        .contains("<id>" + execution + "</id>");
+            }
+            for (String property : List.of("japicmp.baseline.floor", "japicmp.baseline.previous")) {
+                assertThat(text)
+                        .describedAs("%s must reference ${%s} from an execution's <oldVersion>", pom, property)
+                        .contains("${" + property + "}");
+            }
+        }
+    }
+
+    /**
+     * The newest dated final release ({@code ## vX.Y.Z — YYYY-MM-DD}) in {@code changelog}
+     * that shares {@code version}'s major and is strictly older than its {@code X.Y.Z};
+     * empty when the major has none yet. Open ({@code — Planned}) and pre-release
+     * ({@code -rc.N}) entries never count: neither is a published Maven Central artifact
+     * a gate could resolve. Releases of an earlier major never count either — diffing
+     * across a major boundary would fail the build on breaks the major is allowed to make.
+     *
+     * <p>String-driven so {@code ChangelogVersionParsingTest} can hold the shapes: a
+     * snapshot cycle, the release commit (working version equal to the newest release),
+     * the opening of a new major, and a log with nothing older.</p>
+     */
+    static Optional<String> newestFinalReleaseInMajorBefore(String changelog, String version) {
+        int[] working = releaseNumbers(releaseLineOf(version));
+        Matcher released = Pattern.compile(
+                        "^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
+                .matcher(changelog);
+        String newest = null;
+        int[] newestNumbers = null;
+        while (released.find()) {
+            String candidate = released.group(1);
+            int[] numbers = releaseNumbers(candidate);
+            if (numbers[0] == working[0]
+                    && Arrays.compare(numbers, working) < 0
+                    && (newestNumbers == null || Arrays.compare(numbers, newestNumbers) > 0)) {
+                newest = candidate;
+                newestNumbers = numbers;
+            }
+        }
+        return Optional.ofNullable(newest);
+    }
+
+    private static int[] releaseNumbers(String version) {
+        String[] parts = version.split("\\.");
+        int[] numbers = new int[3];
+        for (int i = 0; i < 3 && i < parts.length; i++) {
+            numbers[i] = Integer.parseInt(parts[i]);
+        }
+        return numbers;
     }
 
     /**

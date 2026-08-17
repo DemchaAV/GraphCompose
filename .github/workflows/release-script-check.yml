@@ -351,3 +351,69 @@ jobs:
           if ((Get-Content $roadmap -Raw) -ne $after) { throw "a second promotion changed the file" }
 
           Write-Host "roadmap promotion: 3 refusals, 1 rewrite, idempotent on re-run."
+
+      - name: Unit-check the japicmp previous-release baseline move
+        shell: pwsh
+        run: |
+          # The binary-compatibility gate diffs against two published releases: the major
+          # floor, which never moves inside a major, and the previous release, which must
+          # move to the version just published at every cut. A pin left behind leaves
+          # everything added in that release freely removable with the gate green, so the
+          # move is code that has to be exercised, not a step someone remembers. Lifted by
+          # AST like the checks above, so the code under test is the code that ships.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $fn = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-JapicmpPreviousBaseline'
+            }, $true)
+          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-JapicmpPreviousBaseline' }
+          Invoke-Expression $fn[0].Extent.Text
+          function Note($m) { Write-Host "    $m" }
+          $DryRun = $false
+
+          # A function nothing calls moves no pin. Assert the post-release path still
+          # invokes it — the failure this guards is the helper surviving a refactor that
+          # drops the call, which every content assertion below would still pass.
+          $calls = $ast.FindAll({
+              param($n)
+              $n -is [System.Management.Automation.Language.CommandAst] -and
+              $n.GetCommandName() -eq 'Update-JapicmpPreviousBaseline'
+            }, $true)
+          if (-not $calls) { throw 'nothing in cut-release.ps1 calls Update-JapicmpPreviousBaseline' }
+
+          function New-Pom($previous) {
+            $file = Join-Path ([IO.Path]::GetTempPath()) ("pom-" + [guid]::NewGuid().ToString() + ".xml")
+            Set-Content -Path $file -NoNewline -Value (@(
+              '<project>',
+              '  <version>2.3.1-SNAPSHOT</version>',
+              '  <properties>',
+              '    <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>',
+              "    <japicmp.baseline.previous>$previous</japicmp.baseline.previous>",
+              '  </properties>',
+              '</project>'
+            ) -join "`n")
+            return $file
+          }
+
+          $pom = New-Pom '2.2.0'
+          if (-not (Update-JapicmpPreviousBaseline $pom '2.3.0')) { throw 'moving the pin reported no change' }
+          $after = Get-Content $pom -Raw
+          if ($after -notmatch '<japicmp\.baseline\.previous>2\.3\.0</japicmp\.baseline\.previous>') {
+            throw "the previous-release pin did not move:`n$after"
+          }
+          if ($after -notmatch '<japicmp\.baseline\.floor>2\.0\.0</japicmp\.baseline\.floor>') {
+            throw "the major floor must not move at a cut:`n$after"
+          }
+          if ($after -notmatch '<version>2\.3\.1-SNAPSHOT</version>') { throw "the project version was rewritten:`n$after" }
+
+          if (Update-JapicmpPreviousBaseline $pom '2.3.0') { throw 'a second move reported a change' }
+
+          $bare = Join-Path ([IO.Path]::GetTempPath()) ("pom-" + [guid]::NewGuid().ToString() + ".xml")
+          Set-Content -Path $bare -NoNewline -Value "<project>`n  <version>2.3.1-SNAPSHOT</version>`n</project>"
+          if (Update-JapicmpPreviousBaseline $bare '2.3.0') { throw 'a pom without the pin reported a change' }
+          if (Update-JapicmpPreviousBaseline (Join-Path ([IO.Path]::GetTempPath()) 'no-such-pom.xml') '2.3.0') {
+            throw 'a missing pom reported a change'
+          }
+
+          Write-Host 'japicmp baseline: previous moves, floor stays, idempotent, and the cut calls it.'

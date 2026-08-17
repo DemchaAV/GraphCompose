@@ -223,6 +223,44 @@ function Update-PomVersion($pomPath, $newVersion) {
     }
 }
 
+function Update-JapicmpPreviousBaseline($pomPath, $releasedVersion) {
+    # Moves <japicmp.baseline.previous> — the release the binary-compatibility gate
+    # diffs against alongside the major floor. The floor (<japicmp.baseline.floor>)
+    # holds the GA surface and only moves at a major; the previous pin holds every
+    # public element added SINCE the floor, and it does that only while it names the
+    # release actually published last. Left behind, the gate keeps comparing against
+    # an older release and everything added in the release just cut becomes freely
+    # removable with CI green — the exact NoSuchMethodError this pair exists to stop.
+    #
+    # Runs in -PostReleaseOnly, next to the SNAPSHOT bump: on the release commit
+    # itself the just-cut version is not on Central yet, so the pin must stay one
+    # release back until the publish workflow has uploaded it. Idempotent, and held
+    # to the CHANGELOG by VersionConsistencyGuardTest.
+    if (-not (Test-Path $pomPath)) {
+        Note "skip (no file): $pomPath"
+        return $false
+    }
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $previousRegex = [regex]'<japicmp\.baseline\.previous>[\w\.\-]+</japicmp\.baseline\.previous>'
+    $match = $previousRegex.Match($content)
+    if (-not $match.Success) {
+        Note "no <japicmp.baseline.previous> in $pomPath — nothing to move"
+        return $false
+    }
+    $new = "<japicmp.baseline.previous>$releasedVersion</japicmp.baseline.previous>"
+    if ($match.Value -eq $new) {
+        Note "japicmp previous baseline already $releasedVersion in $pomPath"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] japicmp previous baseline: $pomPath -> $releasedVersion" -ForegroundColor Yellow
+        return $true
+    }
+    [System.IO.File]::WriteAllText($pomPath, $previousRegex.Replace($content, $new, 1))
+    Note "japicmp previous baseline: $pomPath -> $releasedVersion"
+    return $true
+}
+
 function Update-AssetVersion($pomPath, $newVersion) {
     # Moves <graphcompose.examples.assetVersion> — the version the committed previews
     # under assets/readme were rendered at. CommittedAssetDriftTest renders at it to
@@ -1170,8 +1208,22 @@ if ($PostReleaseOnly) {
                     $bumpedPoms += $pom
                 }
             }
+
+            # The release just cut is now the newest published one, so it becomes the
+            # japicmp previous-release baseline for the cycle that opens here. Only the
+            # two gated modules carry the pin; a module without it is skipped.
+            Step "3a" "Move the japicmp previous-release baseline to $currentVersion"
+            foreach ($pom in @('core/pom.xml', 'templates/pom.xml')) {
+                if (Update-JapicmpPreviousBaseline (Join-Path $repoRoot $pom) $currentVersion) {
+                    if ($bumpedPoms -notcontains $pom) { $bumpedPoms += $pom }
+                }
+            }
         } else {
-            Step 3 "Skipped SNAPSHOT bump (no core/pom.xml, or the current version is not a final X.Y.Z release)"
+            # Same condition governs the japicmp previous-release pin: it may only be
+            # moved onto a final X.Y.Z, never onto a -SNAPSHOT or an -rc (neither is on
+            # Central for the gate to resolve). A re-run over already-bumped poms lands
+            # here, and VersionConsistencyGuardTest is what catches a pin that never moved.
+            Step 3 "Skipped SNAPSHOT bump + japicmp baseline move (no core/pom.xml, or the current version is not a final X.Y.Z release)"
         }
 
         # Validate the bump BEFORE committing or pushing: a reactor `validate` resolves
@@ -1209,7 +1261,7 @@ if ($PostReleaseOnly) {
         $filesToCommit += $bumpedPoms
         if ($filesToCommit.Count -gt 0) {
             $parts = @()
-            if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot" }
+            if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot + japicmp baseline $currentVersion" }
             if ($showcaseChanged -or $DryRun) { $parts += "restore /blob/$Branch showcase links" }
             $msg = "chore(release): " + ($parts -join ' + ')
             Step 4 "Commit"
@@ -1493,10 +1545,12 @@ try {
         # binary-compatible with their japicmp baselines BEFORE the tag is cut —
         # independent of the PR-time CI japicmp job, which a direct-to-branch push could
         # bypass. 2.0 module layout only (core/ present); the legacy 1.x single-artifact
-        # tree has no such gate. Precondition: each baseline (japicmp.baseline in
-        # core/pom.xml and templates/pom.xml) must already be on Central — so this gate
-        # is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
-        # first-of-a-major cut that publishes the baseline itself. One reactor
+        # tree has no such gate. Precondition: both baselines of each module
+        # (japicmp.baseline.floor / .previous in core/pom.xml and templates/pom.xml)
+        # must already be on Central — so this gate is meaningful from 2.0.1 onward
+        # (vs the published 2.0.0), not on the first-of-a-major cut that publishes the
+        # floor itself. The previous pin still names the release before this one; Step
+        # 3a of -PostReleaseOnly moves it forward once this cut is published. One reactor
         # invocation covers both: the reactor orders core before templates, so
         # templates compiles against the freshly-built core.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {

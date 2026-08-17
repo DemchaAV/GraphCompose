@@ -130,21 +130,22 @@ jobs:
         # unpublished tests-jar no longer fails the deploy.
         run: ./mvnw -B -ntp clean install
 
-      - name: Verify binary compatibility against the published baseline
+      - name: Verify binary compatibility against the published baselines
         # Defence in depth: run the japicmp gate on the tagged commit before any
         # deploy, so an accidental binary-incompatible change to the public
         # surface aborts the publish even when the tag reached here by bypassing
         # branch protection (the CI japicmp job only gates pull requests). Compares
-        # the freshly built graph-compose-core against the japicmp.baseline release
-        # on Maven Central and fails the job on any Stable-surface break; the
-        # Internal packages (engine.**, document.layout.**) are excluded per
-        # docs/api-stability.md. Test build is skipped — the install step above
-        # already ran the full suite on this commit.
+        # the freshly built graph-compose-core against both baselines pinned in
+        # core/pom.xml — the major floor and the latest published release — and
+        # fails the job on any Stable-surface break; the Internal packages
+        # (engine.**, document.layout.**) are excluded per docs/api-stability.md.
+        # Test build is skipped — the install step above already ran the full
+        # suite on this commit.
         run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
 
-      - name: Verify templates binary compatibility against the published baseline
+      - name: Verify templates binary compatibility against the published baselines
         # Same defence for graph-compose-templates: its own `japicmp` profile
-        # diffs the freshly built jar against the japicmp.baseline pinned in
+        # diffs the freshly built jar against the two baselines pinned in
         # templates/pom.xml. Every templates.* package is Stable per
         # docs/api-stability.md, so only elements carrying the per-element
         # @Internal marker are excluded (none today). Standalone pom — it

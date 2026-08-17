@@ -7,20 +7,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
-- **The templates module is under the binary-compatibility gate.** `docs/api-stability.md`
-  has listed every `templates.*` package as Stable — no binary break outside a major —
-  since the 2.0 module split, but japicmp only ever diffed `graph-compose-core`; a
-  removed or narrowed public method in a preset, a data record, or a shared widget
-  would have shipped in a 2.x minor with nothing looking at it. `templates/pom.xml` now
-  carries the same `japicmp` profile as the engine pom, pinned to its own published
-  floor of the major (`graph-compose-templates:2.0.0`); the PR-time `Binary
-  Compatibility` job runs it whenever the core or templates sources or pom changed,
-  `cut-release.ps1` step 5b runs it before the tag is cut, and the publish workflow
-  runs it again on the tagged commit before anything is deployed. The current surface
-  is binary- and source-compatible with
-  2.0.0 (the diff is additions only), and narrowing a public method to package-private
-  fails the build with `METHOD_LESS_ACCESSIBLE`, so the gate is proven live, not
-  merely configured.
+- **The templates module is under the binary-compatibility gate, and the gate now
+  protects what a release added.** `docs/api-stability.md` has listed every
+  `templates.*` package as Stable — no binary break outside a major — since the 2.0
+  module split, but japicmp only ever diffed `graph-compose-core`; a removed or
+  narrowed public method in a preset, a data record, or a shared widget would have
+  shipped in a 2.x minor with nothing looking at it. `templates/pom.xml` now carries
+  the same `japicmp` profile as the engine pom.
+
+  Both modules pin **two** baselines instead of one, each diffed in its own execution.
+  A floor pin alone protects only the surface the major shipped with: a method that
+  first ships in 2.2.0 is absent from both 2.0.0 and a 2.2.1 that deletes it, so the
+  floor diff stays green while an application compiled against 2.2.0 gets
+  `NoSuchMethodError` — and `MarkdownInline.appendTransformed` and `SectionAllocation`,
+  both added after 2.0.0, sat in exactly that gap. `japicmp.baseline.floor` keeps
+  holding the GA surface; `japicmp.baseline.previous` holds everything added since and
+  moves to the version just published in `cut-release.ps1 -PostReleaseOnly`. A pin left
+  behind is not a silent hole: `VersionConsistencyGuardTest` derives both rather than
+  trusting them — the floor from the module's own version, the previous pin from the
+  CHANGELOG — and asserts both executions are still in the pom, while the release-script
+  workflow drives the move itself. Both pins stay inside the working major, so opening
+  the next one leaves them naming a version nobody has published and the gate stands
+  down for that cycle rather than failing every break the major is for.
+
+  The PR-time `Binary Compatibility` job runs the gate whenever the core or templates
+  sources or pom changed, `cut-release.ps1` step 5b runs it before the tag is cut, and
+  the publish workflow runs it again on the tagged commit before anything is deployed.
+  The current surface is binary- and source-compatible with both baselines; removing
+  `MarkdownInline.appendTransformed` fails the build with `METHOD_REMOVED` against the
+  2.2.0 pin while the 2.0.0 diff stays green, which is the hole the second baseline
+  closes.
 
 - **The weekly benchmark run builds the modules it measures.** The JMH workflow
   installed the engine from source and then let Maven resolve the rest from Central,

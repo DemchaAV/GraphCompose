@@ -74,14 +74,20 @@
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
         <gpg.skip>true</gpg.skip>
 
-        <!-- Binary compatibility baseline (japicmp profile). Same plugin version as
-             the engine pom; the baseline is this module's own published floor of the
-             current major (2.0.0 for the whole 2.x line — the first
-             graph-compose-templates on Central), advancing only at the next major.
-             docs/api-stability.md lists every templates.* package as Stable, so the
-             gate holds each 2.x build binary-compatible with that surface. -->
+        <!-- Binary compatibility baselines (japicmp profile). Same plugin version as
+             the engine pom (VersionConsistencyGuardTest holds the two in lockstep).
+             Two published graph-compose-templates baselines, diffed in two executions:
+             the floor of the current major (2.0.0 — the first graph-compose-templates
+             on Central) holds the GA surface; the previous (latest published) release
+             holds everything added since — see the engine pom for why the floor alone
+             leaves post-GA additions unprotected. The previous pin moves to the
+             just-published version in `cut-release.ps1 -PostReleaseOnly` and is held
+             to the CHANGELOG by VersionConsistencyGuardTest. docs/api-stability.md
+             lists every templates.* package as Stable, so the gate holds each 2.x
+             build binary-compatible with every 2.x release before it. -->
         <japicmp.version>0.26.1</japicmp.version>
-        <japicmp.baseline>2.0.0</japicmp.baseline>
+        <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
+        <japicmp.baseline.previous>2.2.0</japicmp.baseline.previous>
     </properties>
 
     <dependencies>
@@ -274,10 +280,12 @@
 
         <!--
             Binary-compatibility gate. Activated with `-P japicmp`. Mirrors the
-            engine pom's profile for this module: resolves the baseline
-            graph-compose-templates pinned by the japicmp.baseline property from
-            Maven Central and diffs it against the freshly-built jar. Fails the
-            build on any binary-incompatible modification to the public surface;
+            engine pom's profile for this module: resolves the two baseline
+            graph-compose-templates artifacts pinned by japicmp.baseline.floor /
+            japicmp.baseline.previous from Maven Central and diffs the freshly-built
+            jar against each in its own execution (major floor holds the GA surface,
+            previous release holds everything added since). Fails the build on any
+            binary-incompatible modification to the public surface;
             source-incompatible changes are reported but do not fail (same phased
             policy as the engine). This module has no @Internal package tree —
             every templates.* package is Stable per docs/api-stability.md — so
@@ -293,27 +301,50 @@
                         <version>${japicmp.version}</version>
                         <executions>
                             <execution>
-                                <id>japicmp-against-baseline</id>
+                                <id>japicmp-against-major-floor</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>cmp</goal>
                                 </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-templates</artifactId>
+                                            <version>${japicmp.baseline.floor}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>japicmp-against-previous-release</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-templates</artifactId>
+                                            <version>${japicmp.baseline.previous}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
                             </execution>
                         </executions>
                         <configuration>
-                            <oldVersion>
-                                <dependency>
-                                    <groupId>io.github.demchaav</groupId>
-                                    <artifactId>graph-compose-templates</artifactId>
-                                    <version>${japicmp.baseline}</version>
-                                </dependency>
-                            </oldVersion>
                             <newVersion>
                                 <file>
                                     <path>${project.build.directory}/${project.build.finalName}.jar</path>
                                 </file>
                             </newVersion>
                             <parameter>
+                                <!-- See the engine pom: an unpublished baseline skips its
+                                     execution, which is the pre-GA window of a new major
+                                     and nothing else. The exact pin values are guarded by
+                                     VersionConsistencyGuardTest. -->
+                                <ignoreMissingOldVersion>true</ignoreMissingOldVersion>
                                 <onlyModified>true</onlyModified>
                                 <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>

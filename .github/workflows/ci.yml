@@ -398,7 +398,7 @@ jobs:
           if-no-files-found: error
 
   binary-compat:
-    name: Binary Compatibility (japicmp vs pom baseline)
+    name: Binary Compatibility (japicmp vs pom baselines)
     # japicmp diffs the graph-compose-core and graph-compose-templates public
     # surfaces (both carry a `japicmp` profile), so it only matters when one of
     # those modules (`core/**` or `templates/**` sources / pom) changed. Both are
@@ -430,11 +430,13 @@ jobs:
       - name: Install graph-compose-emoji (resolved at test scope by core)
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
-      - name: Compare public API against baseline
-        # The `japicmp` profile in each module resolves the baseline release
-        # pinned by that module's `japicmp.baseline` property (the published
-        # graph-compose-core / graph-compose-templates on Maven Central) and
-        # diffs it against the freshly-built artifact. Fails the job on any
+      - name: Compare public API against baselines
+        # The `japicmp` profile in each module resolves TWO published baselines of
+        # that module (japicmp.baseline.floor — the major's first release, holding
+        # the GA surface; japicmp.baseline.previous — the latest release, holding
+        # everything added since) and diffs each against the freshly-built
+        # artifact. The floor alone would let a method introduced after it be
+        # deleted with the diff green. Fails the job on any
         # binary-incompatible modification to the public surface. Source-
         # incompatible changes are reported only (phased policy). Both modules
         # sit in one reactor invocation: the reactor orders core before

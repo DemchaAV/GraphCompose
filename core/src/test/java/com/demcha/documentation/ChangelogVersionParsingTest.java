@@ -3,6 +3,7 @@ package com.demcha.documentation;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -193,6 +194,82 @@ class ChangelogVersionParsingTest {
         assertThat(VersionConsistencyGuardTest.releaseLineOf("2.2.0-SNAPSHOT")).isEqualTo("2.2.0");
         assertThat(VersionConsistencyGuardTest.releaseLineOf("2.2.0-rc.1")).isEqualTo("2.2.0");
         assertThat(VersionConsistencyGuardTest.releaseLineOf("2.2.0")).isEqualTo("2.2.0");
+    }
+
+    // ── Which release the japicmp previous-release pin must name ────
+
+    private static final String RELEASES = """
+            # Changelog
+
+            ## v2.3.0 — Planned
+
+            ## v2.2.0 — 2026-08-15
+
+            ## v2.2.0-rc.1 — 2026-08-12
+
+            ## v2.1.1 — 2026-08-05
+
+            ## v2.0.0 — 2026-07-01
+            """;
+
+    @Test
+    void duringASnapshotCycleThePreviousReleaseIsTheNewestDatedEntry() {
+        assertThat(previousReleaseFor("2.2.1-SNAPSHOT")).contains("2.2.0");
+        assertThat(previousReleaseFor("2.3.0-SNAPSHOT")).contains("2.2.0");
+    }
+
+    @Test
+    void onTheReleaseCommitThePreviousReleaseIsTheOneBeforeIt() {
+        // The cut dates the entry and sets the poms to the release in the same commit;
+        // the release itself is not yet on Central, so the gate must still diff it
+        // against the release before it — and 2.2.0 excludes itself.
+        assertThat(previousReleaseFor("2.2.0")).contains("2.1.1");
+        assertThat(previousReleaseFor("2.2.0-rc.2")).contains("2.1.1");
+    }
+
+    @Test
+    void openAndPreReleaseEntriesNeverBecomeThePreviousRelease() {
+        // A -rc entry is dated but never published to Central; a Planned entry is
+        // undated. Neither is an artifact the gate could resolve.
+        assertThat(previousReleaseFor("2.2.0-rc.2")).contains("2.1.1");
+        assertThat(previousReleaseFor("2.4.0-SNAPSHOT")).contains("2.2.0");
+    }
+
+    @Test
+    void aReleaseOfAnEarlierMajorIsNeverThePreviousRelease() {
+        // Opening 3.0 leaves the major with no release of its own. Reaching back to
+        // 2.2.0 would diff across the boundary and fail the build on every break the
+        // major is allowed to make; the caller falls back to the floor instead, which
+        // is unpublished during the cycle and so skips.
+        assertThat(previousReleaseFor("3.0.0-SNAPSHOT")).isEmpty();
+        assertThat(previousReleaseFor("3.0.0")).isEmpty();
+        // Once the major has shipped one, it is used — and only within the major.
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(
+                RELEASES + "\n## v3.0.0 — 2026-10-01\n", "3.0.1-SNAPSHOT")).contains("3.0.0");
+    }
+
+    @Test
+    void aLogWithNothingOlderYieldsNoPreviousRelease() {
+        assertThat(previousReleaseFor("2.0.0")).isEmpty();
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore("## v2.0.0 — Planned\n", "2.0.0-SNAPSHOT"))
+                .isEmpty();
+    }
+
+    @Test
+    void thePreviousReleaseIsChosenNumericallyNotByFilePosition() {
+        // A patch entry filed above a newer minor (a hotfix line released after the
+        // minor opened) must not shadow it: 2.2.0 is newer than 2.1.2 whatever the order.
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore("""
+                ## v2.1.2 — 2026-08-20
+                ## v2.2.0 — 2026-08-15
+                ## v2.1.1 — 2026-08-05
+                """, "2.2.1-SNAPSHOT")).contains("2.2.0");
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(
+                "## v2.10.0 — 2026-12-01\n## v2.9.0 — 2026-11-01\n", "2.10.1-SNAPSHOT")).contains("2.10.0");
+    }
+
+    private static Optional<String> previousReleaseFor(String pomVersion) {
+        return VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(RELEASES, pomVersion);
     }
 
     private static String problem(String changelog, String pomVersion) {

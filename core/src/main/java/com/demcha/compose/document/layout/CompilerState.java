@@ -73,6 +73,42 @@ final class CompilerState {
         return canvas.height() - activeMargin().top();
     }
 
+    /**
+     * A second cursor over the same canvas, starting exactly where this one
+     * is. Used by a multi-column flow so each column advances independently:
+     * they all begin at the flow's entry position and are rejoined afterwards
+     * via {@link #rejoinAt(int, double, int)}.
+     *
+     * <p>The geometry is shared, not copied — per-page margins must resolve
+     * identically in every column, or the layout fixed point would not
+     * converge.</p>
+     */
+    CompilerState forkAtCurrentPosition() {
+        CompilerState fork = new CompilerState(canvas, geometry);
+        fork.pageIndex = pageIndex;
+        fork.usedHeight = usedHeight;
+        fork.maxTouchedPage = maxTouchedPage;
+        return fork;
+    }
+
+    /**
+     * Moves this cursor to where the longest of several forked cursors ended.
+     *
+     * <p>{@code usedHeight} is meaningful only together with the page it was
+     * measured on, which is why the caller passes both: a column that finished
+     * two pages earlier says nothing about how much of the final page is
+     * occupied.</p>
+     *
+     * @param page        the page the flow ends on
+     * @param used        the height consumed on that page
+     * @param touchedPage the highest page any fork reached
+     */
+    void rejoinAt(int page, double used, int touchedPage) {
+        pageIndex = page;
+        usedHeight = Math.min(activeInnerHeight(), Math.max(0.0, used));
+        maxTouchedPage = Math.max(maxTouchedPage, Math.max(touchedPage, page));
+    }
+
     void newPage() {
         pageIndex++;
         usedHeight = 0.0;

@@ -11,7 +11,8 @@ import java.util.List;
  *
  * @param spacing spacing between child nodes (vertical for {@link Axis#VERTICAL}, horizontal for {@link Axis#HORIZONTAL})
  * @param axis    composite stacking axis
- * @param weights optional per-child weights (only consulted for {@link Axis#HORIZONTAL})
+ * @param weights optional per-child weights (consulted for {@link Axis#HORIZONTAL}
+ *                and {@link Axis#COLUMN_FLOW})
  */
 public record CompositeLayoutSpec(double spacing, Axis axis, List<Double> weights) {
     /**
@@ -61,6 +62,19 @@ public record CompositeLayoutSpec(double spacing, Axis axis, List<Double> weight
          * Children flow left to right inside a single row band.
          */
         HORIZONTAL,
+        /**
+         * Children are columns placed side by side, each flowing down its own
+         * column and continuing on the next page. Unlike {@link #HORIZONTAL},
+         * which places one band that must fit the page it starts on, a column
+         * flow ends on the last page any column reached. Used by
+         * {@code ColumnFlowNode}.
+         *
+         * <p>A {@code switch} over this enum that was exhaustive without a
+         * {@code default} needs one.</p>
+         *
+         * @since 2.3.0
+         */
+        COLUMN_FLOW,
         /**
          * Children share the same bounding box and are painted in source order
          * (first child behind, last child in front). Used by {@code LayerStackNode}

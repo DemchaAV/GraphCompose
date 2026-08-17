@@ -16,6 +16,7 @@ authoring API; public application code should not import
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
 | [Page backgrounds](recipes/page-backgrounds.md) | `pageBackground` / `pageBackgrounds`, `PageBackgroundFill` columns, bands, point-based fills, layering |
+| [Multi-column flow](recipes/multi-column-flow.md) | `addColumnFlow(...)` — columns side by side, each continuing on the next page (a row is one atomic band) |
 | [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |

@@ -961,6 +961,36 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     }
 
     /**
+     * Adds a multi-column flow: columns side by side, each continuing on the
+     * next page.
+     *
+     * <p>The page-spanning counterpart to {@link #addRow(Consumer)}. A row is
+     * one band and is atomic, so a two-column body built from a row holds only
+     * as much as fits the page it starts on; a column flow lets each column
+     * break and resume.</p>
+     *
+     * @param spec column-flow builder callback
+     * @return this builder
+     * @since 2.3.0
+     */
+    public T addColumnFlow(Consumer<ColumnFlowBuilder> spec) {
+        return add(BuilderSupport.configure(new ColumnFlowBuilder(), spec).build());
+    }
+
+    /**
+     * Adds a named multi-column flow without repeating the name inside the
+     * nested builder.
+     *
+     * @param name flow name used in snapshots and layout graph paths
+     * @param spec column-flow builder callback
+     * @return this builder
+     * @since 2.3.0
+     */
+    public T addColumnFlow(String name, Consumer<ColumnFlowBuilder> spec) {
+        return add(BuilderSupport.configure(new ColumnFlowBuilder().name(name), spec).build());
+    }
+
+    /**
      * Adds a section configured through a nested builder.
      *
      * @param spec section builder callback

@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.cv.components.*;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -93,7 +94,7 @@ public final class BlueBanner {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -103,6 +104,11 @@ public final class BlueBanner {
             @Override
             public String displayName() {
                 return DISPLAY_NAME;
+            }
+
+            @Override
+            public CvRenderKit kit() {
+                return KIT;
             }
 
             @Override
@@ -167,7 +173,7 @@ public final class BlueBanner {
             // page, which matters more than matching this preset's flavour of
             // entry. A preset that wants its own module styling overrides this
             // branch, it does not lose the content by omission.
-            SectionDispatcher.renderBody(host, section, theme);
+            SectionDispatcher.renderBody(host, section, theme, KIT);
         }
     }
 
@@ -184,6 +190,31 @@ public final class BlueBanner {
             RowRenderer.render(host, row, section.style(), theme);
         }
     }
+
+    /**
+     * This preset's own drawing, so a runtime module gets the upper-cased
+     * two-column entry and the dash-joined project row the rest of the
+     * document uses rather than the canonical ones.
+     *
+     * <p>Stateless: every method takes its theme, so one instance serves
+     * every {@code create(theme)}.</p>
+     */
+    private static final CvRenderKit KIT = new CvRenderKit() {
+
+        @Override
+        public void entry(SectionBuilder host, CvEntry entry, BrandTheme theme) {
+            renderEntry(host, entry, theme);
+        }
+
+        @Override
+        public void row(SectionBuilder host, CvRow row, RowStyle style, BrandTheme theme) {
+            if (style == RowStyle.BULLETED_STACKED) {
+                renderPlainProjectRow(host, row, theme);
+                return;
+            }
+            RowRenderer.render(host, row, style, theme);
+        }
+    };
 
     private static void renderPlainProjectRow(SectionBuilder host,
                                               CvRow row,

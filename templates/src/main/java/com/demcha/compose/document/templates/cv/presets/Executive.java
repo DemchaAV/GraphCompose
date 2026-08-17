@@ -12,7 +12,9 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -96,7 +98,7 @@ public final class Executive {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -106,6 +108,13 @@ public final class Executive {
             @Override
             public String displayName() {
                 return DISPLAY_NAME;
+            }
+
+            @Override
+            public CvRenderKit kit() {
+                // This preset renders bodies through the shared dispatcher, so a
+                // runtime module already looks like the rest of its document.
+                return CvRenderKit.defaults();
             }
 
             @Override
@@ -132,7 +141,7 @@ public final class Executive {
                                 ACCENT, theme);
                     });
                     flow.addSection("CvV2ExecutiveBody_" + idx, host ->
-                            SectionDispatcher.renderBody(host, sec, theme));
+                            SectionDispatcher.renderBody(host, sec, theme, kit()));
                 }
 
                 flow.build();

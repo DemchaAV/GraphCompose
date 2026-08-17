@@ -246,8 +246,43 @@ public final class ClassicSerif {
                     // runtime ModuleSection. The canonical dispatcher renders it
                     // rather than the render failing on a section the author
                     // legitimately added.
-                    SectionDispatcher.renderBody(host, section, theme);
+                    SectionDispatcher.renderBody(host, section, theme, kit());
                 }
+            }
+
+            /**
+             * This preset's own drawing, so a runtime module routed into one
+             * of its modules gets the serif entry and the project row the
+             * rest of the document uses.
+             *
+             * <p>Not a {@code ModularCvTemplate}: this preset composes six
+             * fixed modules and finds each by matching headings, so a section
+             * it does not recognise never reaches a renderer at all. Drawing
+             * modules well and rendering every module are different promises,
+             * and it can only make the first.</p>
+             *
+             * <p>Built per call rather than cached: a record's methods are
+             * only reachable from an instance, and the kit closes over this
+             * template's theme.</p>
+             */
+            private CvRenderKit kit() {
+                return new CvRenderKit() {
+
+                    @Override
+                    public void entry(SectionBuilder host, CvEntry entry, BrandTheme unused) {
+                        renderEntry(host, entry);
+                    }
+
+                    @Override
+                    public void row(SectionBuilder host, CvRow row, RowStyle style,
+                                    BrandTheme unused) {
+                        if (style == RowStyle.BULLETED_STACKED) {
+                            renderProject(host, row);
+                            return;
+                        }
+                        renderKeyValue(host, row);
+                    }
+                };
             }
 
             private void renderEntries(SectionBuilder host, EntriesSection entries) {

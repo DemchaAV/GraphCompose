@@ -3,6 +3,8 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvSection;
@@ -83,7 +85,7 @@ public final class MinimalUnderlined {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -93,6 +95,13 @@ public final class MinimalUnderlined {
             @Override
             public String displayName() {
                 return DISPLAY_NAME;
+            }
+
+            @Override
+            public CvRenderKit kit() {
+                // This preset renders bodies through the shared dispatcher, so a
+                // runtime module already looks like the rest of its document.
+                return CvRenderKit.defaults();
             }
 
             @Override
@@ -123,7 +132,7 @@ public final class MinimalUnderlined {
                         SectionHeader.underlined(host, sec.title(), theme);
                     });
                     pageFlow.addSection("Body_" + idx, host ->
-                            SectionDispatcher.renderBody(host, sec, theme));
+                            SectionDispatcher.renderBody(host, sec, theme, kit()));
                 }
 
                 pageFlow.build();

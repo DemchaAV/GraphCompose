@@ -33,6 +33,40 @@ follow semantic versioning; release dates are ISO 8601.
   interface, so a downstream `switch` over `CvSection` that was exhaustive without a
   `default` needs one.
 
+- **Which presets can be handed a runtime module, declared rather than assumed.** A module
+  is only useful if the template renders it, and not every preset can promise that:
+  several compose a fixed set of modules and find each by matching headings, so a
+  section they do not recognise never reaches a renderer. The CV still comes out —
+  minus a section, looking finished — which is the kind of failure nobody reports.
+
+  `ModularCvTemplate` is the promise, and `CvTemplates.modular()` is the list a CV
+  builder should offer; `CvTemplates` also answers `byId`, `all`, `ids`, and
+  `recommendedMargin`, so picking a preset at runtime stops being a hand-kept map in
+  every consumer. Declaring the interface is not free: `ModularCvTemplateFidelityTest`
+  renders a document carrying every kind, an invented heading, a heading in a
+  script no keyword list contains, and a heading that *does* match one, through each
+  template that declares it, and asserts every item reached the page under the words
+  the author wrote — the last case because `EditorialBlue` renamed any heading
+  matching "certification" to EDUCATION, so "Certifications & Awards" arrived as a
+  word nobody had written. The promise covers `Slot.MAIN`, and says so: every shipped
+  preset composes a single main column, so a sidebar section is dropped by these
+  templates as by every other. Seven presets qualify today. `ClassicSerif` does not,
+  and finding that out is what the gate is for — it draws any shape it is given, but
+  only gives itself the sections it recognises.
+
+  `CvTemplatesCoverageTest` derives the catalogue from the presets package rather than
+  trusting it, so a preset that ships without being registered fails the build instead
+  of being invisible to every caller that looks a template up by id.
+
+- **A preset can draw runtime modules in its own style.** `CvRenderKit` is the three
+  shapes a section body reduces to — a paragraph, a label/value row, a timeline entry —
+  and a template hands back the kit it draws them with. The lowering from `CvItem`
+  stays shared, because deciding what a linked title looks like or which fields a kind
+  reads belongs to the model and must not be re-decided per preset; only the drawing is
+  the preset's. `BlueBanner`, `ClassicSerif`, and `EditorialBlue` now render modules
+  with their own entry and project shapes rather than the canonical ones — the
+  limitation the entry above left open.
+
 ### Fixed
 
 - **A section shape a preset did not recognise was lost three different ways.**

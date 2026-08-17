@@ -48,6 +48,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * continuation pages of multi-page CVs) without any preset-side
  * filler logic. Use {@link Options} to override the sidebar fill,
  * main fill or accent colour without forking the theme.</p>
+ *
+ * <p>The body is a column flow, so each column continues on the next page and
+ * the preset draws every entry of the sections it recognises. It used to be a
+ * row — one atomic band that had to fit the page it started on — and carried
+ * per-section caps (two jobs, two degrees, five skills, three languages, two
+ * projects) to stay under that bound; the rest was dropped without a word. Both
+ * are gone. A section this preset has no slot for is still dropped, as in every
+ * preset that composes a fixed layout.</p>
+ *
+ * <p>The portrait geometry is sized for A4. A narrower page cannot hold it: the
+ * photo is clipped to the sidebar column — at 420pt roughly a third of it
+ * survives — and below about 310pt the column runs out of room altogether and
+ * the layout fails rather than drawing. The clipping predates the column flow;
+ * the failure is new, and replaces a page that came out with the portrait laid
+ * over the main column.</p>
  */
 public final class SidebarPortrait {
 
@@ -128,18 +143,12 @@ public final class SidebarPortrait {
     private static final double SIDEBAR_HEADER_RULE_WIDTH = 50.0;
 
     /**
-     * Width of the divider rule under each main-column section title
-     * (Professional Profile / Experience / Projects). V1 token —
-     * sized to match the natural main-column inner width once the 34pt
-     * left + right padding is subtracted from the column's allocated
-     * outer width.
+     * Vertical spacing inside the sidebar column and inside the main column's
+     * content section. The heading groups repeat these so wrapping a heading in
+     * its own section leaves the rhythm exactly as it was.
      */
-    private static final double MAIN_SECTION_RULE_WIDTH = 346.0;
-
-    private static final int EDUCATION_LIMIT = 2;
-    private static final int SKILL_LIMIT = 5;
-    private static final int LANGUAGE_LIMIT = 3;
-    private static final int EXPERIENCE_LIMIT = 2;
+    private static final double SIDEBAR_SPACING = 9.0;
+    private static final double MAIN_CONTENT_SPACING = 10.0;
 
     private static final String TEMPLATE_ASSET_ROOT =
             "/templates/cv/sidebar-portrait/";
@@ -163,22 +172,6 @@ public final class SidebarPortrait {
                     "work");
     private static final List<String> PROJECT_KEYS =
             List.of("projects", "project", "selected projects");
-
-    /**
-     * Maximum number of project rows rendered in the main column.
-     *
-     * <p>The side-by-side body is wrapped in a {@code flow.addRow},
-     * which is atomic by engine contract (see {@code RowBuilder}'s
-     * error message: <em>"tables are splittable and would conflict
-     * with the row's atomic pagination"</em>). That means the whole
-     * sidebar + main row has to fit on a single page — content
-     * overflow raises {@code AtomicNodeTooLargeException} instead of
-     * page-breaking. Capping projects keeps the dense canonical
-     * sample data inside the page bound; richer CVs that genuinely
-     * need page-breaking sidebar layouts will need a separate
-     * preset wired against a future splittable-row engine primitive.</p>
-     */
-    private static final int PROJECT_LIMIT = 2;
 
     private SidebarPortrait() {
     }
@@ -363,14 +356,19 @@ public final class SidebarPortrait {
                     .name("CvV2SidebarPortraitRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .padding(DocumentInsets.zero())
-                    .addRow("CvV2SidebarPortraitBodyRow", row -> row
-                            .spacing(0)
+                    // A column flow rather than a row: both columns keep
+                    // flowing onto the next page instead of having to fit the
+                    // first one. The page backgrounds above already repeat the
+                    // two fills per page, so a continuation page looks like the
+                    // page it continues.
+                    .addColumnFlow("CvV2SidebarPortraitBody", body -> body
+                            .gap(0)
                             .weights(SIDEBAR_WIDTH_RATIO,
                                     1.0 - SIDEBAR_WIDTH_RATIO)
-                            .addSection("CvV2SidebarPortraitSidebar",
+                            .addColumn("CvV2SidebarPortraitSidebar",
                                     section -> addSidebar(section, doc,
                                             sections))
-                            .addSection("CvV2SidebarPortraitMain",
+                            .addColumn("CvV2SidebarPortraitMain",
                                     section -> {
                                         section.spacing(0)
                                                 .padding(DocumentInsets.zero());
@@ -387,7 +385,7 @@ public final class SidebarPortrait {
             // Sidebar section deliberately has no fillColor — the
             // pageBackgrounds emitted in compose() paint the pale fill
             // edge-to-edge on every page.
-            section.spacing(9)
+            section.spacing(SIDEBAR_SPACING)
                     .padding(new DocumentInsets(54, 20, 45.45, 26));
 
             addPhotoBlock(section);
@@ -469,20 +467,29 @@ public final class SidebarPortrait {
             }
         }
 
+        /**
+         * Rule + heading as one keep-with-next group, so the pair travels to the
+         * next page rather than closing this one with a heading whose block is
+         * overleaf. A row could not break at all; a column can, which is what
+         * makes the stranding reachable.
+         */
         private void addSidebarHeader(SectionBuilder section, String title) {
             if (title == null || title.isBlank()) {
                 return;
             }
-            section.addLine(line -> line
-                    .horizontal(SIDEBAR_HEADER_RULE_WIDTH)
-                    .color(accent)
-                    .thickness(0.75)
-                    .margin(new DocumentInsets(12, 0, 7, 0)));
-            section.addParagraph(paragraph -> paragraph
-                    .text(spacedUpper(title))
-                    .textStyle(sidebarHeaderStyle())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.zero()));
+            section.addSection("CvV2SidebarPortraitSidebarHeading", heading -> heading
+                    .spacing(SIDEBAR_SPACING)
+                    .keepWithNext()
+                    .addLine(line -> line
+                            .horizontal(SIDEBAR_HEADER_RULE_WIDTH)
+                            .color(accent)
+                            .thickness(0.75)
+                            .margin(new DocumentInsets(12, 0, 7, 0)))
+                    .addParagraph(paragraph -> paragraph
+                            .text(spacedUpper(title))
+                            .textStyle(sidebarHeaderStyle())
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.zero())));
         }
 
         private void addEducationEntries(SectionBuilder section,
@@ -493,9 +500,7 @@ public final class SidebarPortrait {
             DocumentTextStyle headingStyle = sidebarEntryTitleStyle();
             DocumentTextStyle metaStyle = sidebarEntryMetaStyle();
 
-            List<CvEntry> list = entries.entries();
-            for (int i = 0; i < Math.min(list.size(), EDUCATION_LIMIT); i++) {
-                CvEntry entry = list.get(i);
+            for (CvEntry entry : entries.entries()) {
                 section.addParagraph(paragraph -> paragraph
                         .textStyle(headingStyle)
                         .align(TextAlign.LEFT)
@@ -527,8 +532,7 @@ public final class SidebarPortrait {
                 return;
             }
             DocumentTextStyle skillStyle = sidebarSkillStyle();
-            List<String> tokens = skillTokens(skills);
-            for (String token : tokens.stream().limit(SKILL_LIMIT).toList()) {
+            for (String token : skillTokens(skills)) {
                 section.addParagraph(paragraph -> paragraph
                         .text(MarkdownInline.plainText(token))
                         .textStyle(skillStyle)
@@ -542,8 +546,7 @@ public final class SidebarPortrait {
                                      CvSection langSection) {
             DocumentTextStyle nameStyle = sidebarLanguageNameStyle();
             DocumentTextStyle metaStyle = sidebarLanguageMetaStyle();
-            List<String> items = languageItems(langSection);
-            for (String item : items.stream().limit(LANGUAGE_LIMIT).toList()) {
+            for (String item : languageItems(langSection)) {
                 String text = MarkdownInline.plainText(item);
                 int paren = text.indexOf('(');
                 String langName = paren > 0
@@ -606,7 +609,7 @@ public final class SidebarPortrait {
 
         private void addMain(SectionBuilder section, List<CvSection> sections) {
             section.addSection("CvV2SidebarPortraitContent", content -> {
-                content.spacing(10)
+                content.spacing(MAIN_CONTENT_SPACING)
                         .padding(new DocumentInsets(24, 34, 24, 34));
 
                 CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
@@ -629,20 +632,36 @@ public final class SidebarPortrait {
             });
         }
 
+        /**
+         * Title + rule as one keep-with-next group, so the pair moves to the next
+         * page rather than closing this one with a heading whose body is
+         * overleaf — reachable only now that the column breaks at all.
+         */
         private void addMainSectionHeader(SectionBuilder section, String title) {
             if (title == null || title.isBlank()) {
                 return;
             }
-            section.addParagraph(paragraph -> paragraph
-                    .text(spacedUpper(title))
-                    .textStyle(mainHeaderStyle())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(8)));
-            section.addLine(line -> line
-                    .horizontal(MAIN_SECTION_RULE_WIDTH)
-                    .color(theme.palette().rule())
-                    .thickness(theme.spacing().accentRuleWidth())
-                    .margin(new DocumentInsets(2, 0, 7, 0)));
+            section.addSection("CvV2SidebarPortraitMainHeading", heading -> heading
+                    .spacing(MAIN_CONTENT_SPACING)
+                    .keepWithNext()
+                    .addParagraph(paragraph -> paragraph
+                            .text(spacedUpper(title))
+                            .textStyle(mainHeaderStyle())
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.top(8)))
+                    .addLine(line -> line
+                            // Fills the main column rather than carrying a width of
+                            // its own: the fixed 346pt this used to draw was 21pt
+                            // wider than the column's content box on A4 and wider
+                            // still on a narrower page, and a row slot never said so.
+                            // horizontal(0) first so thickness() still reserves the
+                            // stroke's height — fill() alone leaves the box at 1pt
+                            // and a thicker themed rule would bleed into the text.
+                            .horizontal(0)
+                            .fill()
+                            .color(theme.palette().rule())
+                            .thickness(theme.spacing().accentRuleWidth())
+                            .margin(new DocumentInsets(2, 0, 7, 0))));
         }
 
         private void addProfileBody(SectionBuilder section,
@@ -672,9 +691,7 @@ public final class SidebarPortrait {
             DocumentTextStyle subtitleStyle = mainEntrySubtitleStyle();
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
-            List<CvEntry> list = entries.entries();
-            for (int i = 0; i < Math.min(list.size(), EXPERIENCE_LIMIT); i++) {
-                CvEntry entry = list.get(i);
+            for (CvEntry entry : entries.entries()) {
                 section.addParagraph(paragraph -> paragraph
                         .textStyle(positionStyle)
                         .align(TextAlign.LEFT)
@@ -738,7 +755,7 @@ public final class SidebarPortrait {
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
             List<CvRow> list = rows.rows();
-            for (int i = 0; i < Math.min(list.size(), PROJECT_LIMIT); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 CvRow row = list.get(i);
                 ProjectLabel label = ProjectLabel.parse(row.label());
                 String body = MarkdownInline.plainText(row.body());

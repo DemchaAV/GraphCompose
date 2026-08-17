@@ -84,6 +84,33 @@ follow semantic versioning; release dates are ISO 8601.
   layers are pinned to one page, and a flow that advances pages would have run past the
   band and overlapped what followed.
 
+- **Sidebar Portrait stops truncating the sections it draws.** The preset held its body in
+  one row, and a row must fit the page it starts on, so it capped every block to stay under
+  that bound: two jobs, two degrees, five skills, three languages, two projects. A denser
+  CV came out looking finished, one job short, with nothing to tell the reader — and the
+  caps could not simply be deleted, because uncapped content raised
+  `AtomicNodeTooLargeException` instead of paginating. (A section the preset has no slot
+  for is still dropped; that is a separate, documented limit of every fixed-layout preset.)
+
+  The body is a column flow now and the caps are gone: both columns continue onto the pages
+  they need, and the page backgrounds keep painting both fills on every page.
+  `SidebarPortraitContentFidelityTest` renders a career denser than one page and asserts
+  that each of its four degrees, twelve skills, five languages, five employers and three
+  projects reached the PDF, that both columns — not only the main one — carried past the
+  first page, and that they stayed side by side. The visual baseline and the committed
+  preview are both re-recorded, and each now runs to two pages.
+
+  Two smaller changes ride along. The rule under each main-column section title fills the
+  column instead of drawing a fixed 346pt: that width was 21pt wider than the column's
+  content box on A4 and wider still on a narrower page — a row slot never checks a child's
+  measured width, and a column does. And each section heading is now kept with the block it
+  introduces, as in every single-column preset; a body that can break at all is a body that
+  can strand its heading at the foot of a page.
+
+  The portrait geometry is still A4-sized, which now has an edge: below roughly 310pt of
+  page width the sidebar column has no room for the photo and the layout fails instead of
+  drawing it over the main column.
+
 - **Presets route by what a section means, not by the language it is written in.** A
   preset with a designed layout places sections into fixed slots, and it chose what went
   where by matching the heading against a list of English words each preset kept

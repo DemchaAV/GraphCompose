@@ -242,9 +242,11 @@ public final class ClassicSerif {
                                 new CvRow(group.category(), group.skillsInline()));
                     }
                 } else {
-                    throw new IllegalStateException(
-                            "Unknown CvSection subtype: "
-                            + section.getClass().getName());
+                    // A shape this preset has no serif-styled path for — today the
+                    // runtime ModuleSection. The canonical dispatcher renders it
+                    // rather than the render failing on a section the author
+                    // legitimately added.
+                    SectionDispatcher.renderBody(host, section, theme);
                 }
             }
 

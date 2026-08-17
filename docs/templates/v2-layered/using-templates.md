@@ -19,11 +19,12 @@ it sets up the conceptual model in 5 minutes.
 1. [The pieces you assemble](#the-pieces-you-assemble)
 2. [Identity — name, contact, optional links](#identity)
 3. [Section types](#section-types)
-4. [Slots — main vs sidebar](#slots)
-5. [Picking a preset](#picking-a-preset)
-6. [Customising a theme](#customising-a-theme)
-7. [Rendering — pageSize, margins, output](#rendering)
-8. [Common patterns](#common-patterns)
+4. [Building sections at runtime — `ModuleSection`](#runtime-modules)
+5. [Slots — main vs sidebar](#slots)
+6. [Picking a preset](#picking-a-preset)
+7. [Customising a theme](#customising-a-theme)
+8. [Rendering — pageSize, margins, output](#rendering)
+9. [Common patterns](#common-patterns)
 
 ---
 
@@ -158,6 +159,58 @@ EntriesSection.builder("Experience")
 Blank fields collapse — a blank `date` removes the right column, a
 blank `subtitle` drops the italic line, a blank `body` drops the
 paragraph beneath.
+
+---
+
+<a id="runtime-modules"></a>
+## Building sections at runtime — `ModuleSection`
+
+The four types above are the right choice when you write a CV in Java:
+you pick the record and the compiler checks it. They are the wrong one
+when the CV is assembled from data — a form, a JSON payload, an LLM —
+because the shape is not known until it arrives, and a user who picks
+"dated entries" from a menu cannot instantiate a different record per
+choice.
+
+`ModuleSection` moves that choice into a value. One item record carries
+every optional field, and a `CvKind` decides which of them are read:
+
+```java
+ModuleSection.builder("Volunteering", SectionRole.OTHER, CvKind.ENTRIES_DATED)
+    .item(CvItem.of("Mentor, Rails Girls")
+                .at("Rails Girls Berlin")       // subtitle
+                .in("Berlin, DE")               // location
+                .period("2019 - 2021")          // read by dated kinds only
+                .bullets("Ran three weekend workshops"))
+    .build();
+```
+
+| `CvKind` | Shape | Reads |
+|---|---|---|
+| `PARAGRAPH` | prose under the section heading | `body` |
+| `BULLETS` | a bullet per item, description inline | `title`, `body` (not `link`) |
+| `BULLETS_STACKED` | a bullet per item, description underneath | `title`, `link`, `body` |
+| `INLINE_LIST` | `Languages: Java 21, Kotlin` | `title`, `body` (not `link`) |
+| `ENTRIES` | timeline, no date column | everything but `period` |
+| `ENTRIES_DATED` | timeline with dates | everything |
+
+Only `title` is required on an item. Whatever a kind does not read is
+ignored, so the same item renders with or without its dates depending
+on the kind alone — which is what lets a "Volunteering" module be
+shaped exactly like Education without a new type.
+
+`SectionRole` says what a section *means*, separately from how it
+draws. Multi-column presets decide what belongs in a sidebar by
+matching headings against English keywords, which a CV headed
+`Ausbildung` or `Навыки` never matches. The role is where that
+decision belongs — stated by the author, who knows the answer. **The
+presets do not read it yet**: today it travels with the section and is
+the input the routing work will consume, so a document built now needs
+no rewrite when they do.
+
+Modules and the four fixed types mix freely in one document, and both
+render through the same components — a module drawn as `ENTRIES_DATED`
+lays out exactly like the `EntriesSection` carrying the same content.
 
 ---
 

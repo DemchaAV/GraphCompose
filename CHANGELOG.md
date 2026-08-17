@@ -5,6 +5,53 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.3.0 — Planned
 
+### Public API
+
+- **A CV section whose shape is a value, for CVs assembled at runtime.** The four
+  section records each fix one shape at compile time, which is right when a CV is
+  written in Java — you pick the record, the compiler checks it. It is the wrong model
+  when the CV arrives as data: a user who has just chosen "Volunteering, shaped like
+  Education, with dates" cannot instantiate a different record per choice, so every
+  shape somebody thought of would have to become a type.
+
+  `ModuleSection` carries the choice instead. One `CvItem` record holds every optional
+  field — title, link, subtitle, period, location, description lines — and a `CvKind`
+  (`PARAGRAPH`, `BULLETS`, `BULLETS_STACKED`, `INLINE_LIST`, `ENTRIES`,
+  `ENTRIES_DATED`) decides which of them are read: the same item renders with or without its dates depending on the kind
+  alone. `BodyStyle` decides whether a description reads as prose or as bullets, and
+  `SectionRole` states what a section *means* — the decision multi-column presets make
+  by matching headings against English keywords, which a CV headed `Ausbildung` or
+  `Навыки` never matches. The presets do not read the role yet; it travels with the
+  section now so a document built today needs no rewrite when the routing work lands.
+
+  The existing four records are untouched and mix with modules in the same document.
+  A module renders through the existing components rather than beside them, so one
+  drawn as `ENTRIES_DATED` lays out exactly like the `EntriesSection` carrying the same
+  content — held node-for-node by a parity suite, for every kind, alongside the
+  extracted text so structure and content are both pinned. The addition is binary-
+  compatible (the japicmp gate covers this module); it is a fifth permit on a sealed
+  interface, so a downstream `switch` over `CvSection` that was exhaustive without a
+  `default` needs one.
+
+### Fixed
+
+- **A section shape a preset did not recognise was lost three different ways.**
+  `BlueBanner` and `ClassicSerif` each kept a private copy of the section dispatcher
+  whose final `else` threw `IllegalStateException`; `EditorialBlue`'s had no `else` at
+  all; and `SectionLookup.hasContent` — which presets consult *before* routing, and
+  which `SectionAllocation.remaining()` uses to decide what still needs a home —
+  answered `false` for any subtype it had not been taught, dropping the heading along
+  with the body. So a section type added to the model would have crashed two presets
+  and vanished from several more, including through the very fallback that exists to
+  catch unplaced sections. All three dispatchers now delegate unfamiliar shapes to the
+  canonical one, and `hasContent` answers for every permit.
+
+- **An entry with no date no longer reserves a column for it.** `EntryRenderer` always
+  emitted the two-column title/date header, so an undated entry — a certification, a
+  project — had its title wrapped early to leave room for nothing. Its Javadoc had
+  described the collapsing behaviour since the entry renderer was written. No shipped
+  fixture has a blank date, so no existing render moves.
+
 ### Build
 
 - **The templates module is under the binary-compatibility gate, and the gate now

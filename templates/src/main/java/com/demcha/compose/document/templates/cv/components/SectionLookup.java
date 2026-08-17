@@ -50,9 +50,18 @@ public final class SectionLookup {
      * sealed {@code CvSection} hierarchy — {@code SectionLookupTest} pins the
      * contract.</p>
      *
+     * <p>The default is {@code false}, which makes an unlisted subtype
+     * <em>invisible</em> rather than merely unstyled: presets filter on this
+     * before they route or render, so a section this method does not
+     * recognise never reaches a dispatcher at all. Every {@code CvSection}
+     * permit therefore needs a case here — the branch below for
+     * {@code ModuleSection} exists because the fallback dropped the section
+     * heading and body together, on presets that had a perfectly good
+     * rendering path for it.</p>
+     *
      * @param section the section to inspect; may be {@code null}
      * @return {@code true} if the section has non-empty body, entries,
-     * rows, or skill groups
+     * rows, skill groups, or module items
      */
     public static boolean hasContent(CvSection section) {
         if (section instanceof ParagraphSection paragraph) {
@@ -66,6 +75,9 @@ public final class SectionLookup {
         }
         if (section instanceof SkillsSection skills) {
             return skills.groups() != null && !skills.groups().isEmpty();
+        }
+        if (section instanceof ModuleSection module) {
+            return !module.items().isEmpty();
         }
         return false;
     }

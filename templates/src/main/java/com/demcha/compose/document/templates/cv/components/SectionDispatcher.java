@@ -54,6 +54,11 @@ public final class SectionDispatcher {
                 }
                 RowRenderer.render(host, r.rows().get(i), r.style(), theme);
             }
+        } else if (section instanceof ModuleSection m) {
+            // Runtime-assembled module. The kind decides which of the
+            // renderers above each item lands on, so this branch draws
+            // nothing of its own — see ModuleRenderer.
+            ModuleRenderer.render(host, m, theme);
         } else if (section instanceof EntriesSection e) {
             // Timeline entries (Education, Experience) get a spacer
             // between items — each entry is a multi-line block

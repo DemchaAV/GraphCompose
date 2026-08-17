@@ -70,11 +70,11 @@ Almost all work targets **`develop`**, the ongoing 2.x line. The `1.x` branch ta
    - `Architecture and Documentation Guards` &mdash; fast canonical / engine-boundary guard tests, fail-first gate (always runs)
    - `Build and run tests (JDK 17)`, `(JDK 21)`, `(JDK 25)` &mdash; full `mvnw verify` in parallel matrix across the supported JVMs
    - `Examples Generation Smoke Test` &mdash; regenerates every runnable example and uploads the PDFs as a CI artifact
-   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` surface
+   - `Binary Compatibility` &mdash; PR-only japicmp diff of the `graph-compose-core` and `graph-compose-templates` surfaces
    - `Performance Smoke Check` &mdash; PR-only coarse benchmark to catch performance regressions
    - `CI Gate` &mdash; single aggregate status check that is green when every job that ran passed
 
-   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build. Markdown counts as a build input, so a **docs-only PR still runs the reactor** &mdash; on the baseline JDK alone, and without example generation &mdash; because that is where the guards compiling the published snippets live. `Binary Compatibility` runs only when the core module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `develop` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
+   **Selective on pull requests:** a `dorny/paths-filter` step skips the heavy jobs when a PR touches nothing that affects the build. Markdown counts as a build input, so a **docs-only PR still runs the reactor** &mdash; on the baseline JDK alone, and without example generation &mdash; because that is where the guards compiling the published snippets live. `Binary Compatibility` runs only when the core or templates module changed, and the `Performance Smoke Check` only when core / render-pdf / templates changed. Pushes to `develop` / `main` (and manual dispatch) always run the full gate. Point branch protection at **`CI Gate`** + **`Architecture and Documentation Guards`** rather than the individual matrix legs, so a docs-only PR is not left waiting on a skipped check.
 
    The PR cannot merge into a protected branch until all required checks are green.
 7. **Address review comments**, then squash any fixup commits before merge. The maintainer merges through GitHub once review is complete.

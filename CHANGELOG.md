@@ -7,6 +7,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Build
 
+- **The templates module is under the binary-compatibility gate.** `docs/api-stability.md`
+  has listed every `templates.*` package as Stable — no binary break outside a major —
+  since the 2.0 module split, but japicmp only ever diffed `graph-compose-core`; a
+  removed or narrowed public method in a preset, a data record, or a shared widget
+  would have shipped in a 2.x minor with nothing looking at it. `templates/pom.xml` now
+  carries the same `japicmp` profile as the engine pom, pinned to its own published
+  floor of the major (`graph-compose-templates:2.0.0`); the PR-time `Binary
+  Compatibility` job runs it whenever the core or templates sources or pom changed,
+  `cut-release.ps1` step 5b runs it before the tag is cut, and the publish workflow
+  runs it again on the tagged commit before anything is deployed. The current surface
+  is binary- and source-compatible with
+  2.0.0 (the diff is additions only), and narrowing a public method to package-private
+  fails the build with `METHOD_LESS_ACCESSIBLE`, so the gate is proven live, not
+  merely configured.
+
 - **The weekly benchmark run builds the modules it measures.** The JMH workflow
   installed the engine from source and then let Maven resolve the rest from Central,
   and one of them is not there to resolve: the benchmarks read their document fixtures

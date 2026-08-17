@@ -142,6 +142,15 @@ jobs:
         # already ran the full suite on this commit.
         run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
 
+      - name: Verify templates binary compatibility against the published baseline
+        # Same defence for graph-compose-templates: its own `japicmp` profile
+        # diffs the freshly built jar against the japicmp.baseline pinned in
+        # templates/pom.xml. Every templates.* package is Stable per
+        # docs/api-stability.md, so only elements carrying the per-element
+        # @Internal marker are excluded (none today). Standalone pom — it
+        # resolves graph-compose-core from the local m2 the install step seeded.
+        run: ./mvnw -B -ntp -f templates/pom.xml -P japicmp -Dmaven.test.skip=true verify
+
       - name: Plan the deploy set (start_at resume)
         id: plan
         # A partial Central publication CANNOT be blindly re-dispatched: the deploys

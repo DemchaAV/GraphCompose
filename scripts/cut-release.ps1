@@ -1489,15 +1489,18 @@ try {
 
     if (-not $SkipVerify) {
         Step "5b" "Binary-compatibility gate (japicmp vs the published baseline)"
-        # Confirm the graph-compose-core public API stays binary-compatible with the
-        # japicmp baseline BEFORE the tag is cut — independent of the PR-time CI japicmp
-        # job, which a direct-to-branch push could bypass. 2.0 module layout only (core/
-        # present); the legacy 1.x single-artifact tree has no such gate. Precondition:
-        # the baseline (japicmp.baseline in core/pom.xml) must already be on Central — so
-        # this gate is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
-        # first-of-a-major cut that publishes the baseline itself.
+        # Confirm the graph-compose-core AND graph-compose-templates public APIs stay
+        # binary-compatible with their japicmp baselines BEFORE the tag is cut —
+        # independent of the PR-time CI japicmp job, which a direct-to-branch push could
+        # bypass. 2.0 module layout only (core/ present); the legacy 1.x single-artifact
+        # tree has no such gate. Precondition: each baseline (japicmp.baseline in
+        # core/pom.xml and templates/pom.xml) must already be on Central — so this gate
+        # is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
+        # first-of-a-major cut that publishes the baseline itself. One reactor
+        # invocation covers both: the reactor orders core before templates, so
+        # templates compiles against the freshly-built core.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
-            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core')
+            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {

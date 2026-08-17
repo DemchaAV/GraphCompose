@@ -73,6 +73,15 @@
 
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
         <gpg.skip>true</gpg.skip>
+
+        <!-- Binary compatibility baseline (japicmp profile). Same plugin version as
+             the engine pom; the baseline is this module's own published floor of the
+             current major (2.0.0 for the whole 2.x line — the first
+             graph-compose-templates on Central), advancing only at the next major.
+             docs/api-stability.md lists every templates.* package as Stable, so the
+             gate holds each 2.x build binary-compatible with that surface. -->
+        <japicmp.version>0.26.1</japicmp.version>
+        <japicmp.baseline>2.0.0</japicmp.baseline>
     </properties>
 
     <dependencies>
@@ -257,6 +266,64 @@
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>false</autoPublish>
                             <waitUntil>validated</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Binary-compatibility gate. Activated with `-P japicmp`. Mirrors the
+            engine pom's profile for this module: resolves the baseline
+            graph-compose-templates pinned by the japicmp.baseline property from
+            Maven Central and diffs it against the freshly-built jar. Fails the
+            build on any binary-incompatible modification to the public surface;
+            source-incompatible changes are reported but do not fail (same phased
+            policy as the engine). This module has no @Internal package tree —
+            every templates.* package is Stable per docs/api-stability.md — so
+            only the per-element @Internal marker is excluded.
+        -->
+        <profile>
+            <id>japicmp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.siom79.japicmp</groupId>
+                        <artifactId>japicmp-maven-plugin</artifactId>
+                        <version>${japicmp.version}</version>
+                        <executions>
+                            <execution>
+                                <id>japicmp-against-baseline</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <oldVersion>
+                                <dependency>
+                                    <groupId>io.github.demchaav</groupId>
+                                    <artifactId>graph-compose-templates</artifactId>
+                                    <version>${japicmp.baseline}</version>
+                                </dependency>
+                            </oldVersion>
+                            <newVersion>
+                                <file>
+                                    <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                                </file>
+                            </newVersion>
+                            <parameter>
+                                <onlyModified>true</onlyModified>
+                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
+                                <includeSynthetic>false</includeSynthetic>
+                                <reportOnlyFilename>true</reportOnlyFilename>
+                                <skipPomModules>true</skipPomModules>
+                                <excludes>
+                                    <exclude>@com.demcha.compose.document.api.Internal</exclude>
+                                </excludes>
+                            </parameter>
                         </configuration>
                     </plugin>
                 </plugins>

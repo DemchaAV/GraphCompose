@@ -202,6 +202,24 @@ class VersionConsistencyGuardTest {
     }
 
     /**
+     * The binary-compatibility gate runs the same japicmp plugin in every module
+     * that carries a {@code japicmp} profile — a version pinned as a literal in each
+     * standalone pom. Two literals of one version drift apart silently, and a
+     * plugin skew here means the two modules are judged by different
+     * compatibility rules. Only the plugin version is held in lockstep: each
+     * module's {@code japicmp.baseline} is its own published floor and legitimately
+     * differs from the engine's the day one of them crosses a major.
+     */
+    @Test
+    void japicmpPluginVersionAgreesAcrossGatedModules() throws Exception {
+        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "japicmp.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "japicmp.version"))
+                .describedAs("templates japicmp.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
+    }
+
+    /**
      * The wrapper builds its javadoc jar from the engine's sources, which are
      * Lombok-annotated, so it feeds Lombok to the javadoc plugin as an additional
      * dependency. That pins a second literal of a version the engine already owns —

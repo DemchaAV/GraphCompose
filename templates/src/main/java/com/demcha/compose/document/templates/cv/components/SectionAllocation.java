@@ -1,6 +1,8 @@
 package com.demcha.compose.document.templates.cv.components;
 
 import com.demcha.compose.document.templates.cv.data.CvSection;
+import com.demcha.compose.document.templates.cv.data.ModuleSection;
+import com.demcha.compose.document.templates.cv.data.SectionRole;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -59,12 +61,63 @@ public final class SectionAllocation {
     }
 
     /**
+     * Claims the section this slot means, preferring a module that named the
+     * role over one whose heading happens to match.
+     *
+     * <p>Headings are the fallback because a section that carries no role —
+     * every hand-written one — has nothing else to be found by. A module that
+     * <em>did</em> name a role is never claimed by a different slot's
+     * keywords: it would then render in two places, which is a worse failure
+     * than the one role routing exists to fix.</p>
+     *
+     * @param role the role this slot holds; {@code null} or
+     *             {@link SectionRole#OTHER} means "keywords only"
+     * @param keys candidate heading fragments
+     * @return the claimed section, or {@code null} when nothing matches
+     * @since 2.3.0
+     */
+    public CvSection claim(SectionRole role, List<String> keys) {
+        if (role != null && role != SectionRole.OTHER) {
+            for (CvSection section : sections) {
+                if (claimed.containsKey(section)) {
+                    continue;
+                }
+                if (section instanceof ModuleSection module && module.role() == role) {
+                    claimed.put(section, Boolean.TRUE);
+                    return section;
+                }
+            }
+        }
+        for (CvSection section : sections) {
+            if (claimed.containsKey(section)) {
+                continue;
+            }
+            if (section instanceof ModuleSection module
+                    && module.role() != SectionRole.OTHER) {
+                continue;
+            }
+            String title = SectionLookup.normalize(section.title());
+            for (String key : keys == null ? List.<String>of() : keys) {
+                if (title.contains(SectionLookup.normalize(key))) {
+                    claimed.put(section, Boolean.TRUE);
+                    return section;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Claims the first not-yet-claimed section whose normalised title contains
      * any of the keys.
      *
      * <p>Claiming is what makes a second call with overlapping keys return a
      * <em>different</em> section instead of the same one twice, and what moves
      * the section out of {@link #remaining()}.</p>
+     *
+     * <p>Heading-only. A slot that knows which {@link SectionRole} it holds
+     * should call {@link #claim(SectionRole, List)}, so a CV written in another
+     * language routes on what its sections mean.</p>
      *
      * @param keys candidate title fragments; {@code null} claims nothing
      * @return the claimed section, or {@code null} when nothing matches

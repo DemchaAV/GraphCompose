@@ -284,7 +284,7 @@ public final class NordicClean {
                         .spacing(theme.spacing().pageFlowSpacing());
 
                 addHeader(flow, doc);
-                addProfile(flow, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
+                addProfile(flow, SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS));
                 addBody(flow, sections);
                 flow.build();
             }
@@ -367,15 +367,15 @@ public final class NordicClean {
                         .fillColor(options.railFillColor())
                         .stroke(DocumentStroke.of(theme.palette().rule(), 0.35))
                         .cornerRadius(4);
-                addSkills(rail, SectionLookup.firstMatching(sections, SKILL_KEYS));
-                addEducation(rail, SectionLookup.firstMatching(sections, EDUCATION_KEYS));
-                addAdditional(rail, SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
+                addSkills(rail, SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS));
+                addEducation(rail, SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS));
+                addAdditional(rail, SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN));
             }
 
             private void addMain(SectionBuilder main, List<CvSection> sections) {
                 main.spacing(9);
-                addExperience(main, SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
-                addProjects(main, SectionLookup.firstMatching(sections, PROJECT_KEYS));
+                addExperience(main, SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS));
+                addProjects(main, SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED));
             }
 
             private void addSkills(SectionBuilder parent, CvSection section) {

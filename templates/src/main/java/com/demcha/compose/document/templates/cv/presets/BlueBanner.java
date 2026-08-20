@@ -250,11 +250,11 @@ public final class BlueBanner {
     private static List<CvSection> orderedSections(CvDocument doc) {
         List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
         List<CvSection> ordered = new ArrayList<>();
-        addIfPresent(ordered, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
-        addIfPresent(ordered, SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
-        addIfPresent(ordered, SectionLookup.firstMatching(sections, EDUCATION_KEYS));
-        addIfPresent(ordered, SectionLookup.firstMatching(sections, SKILL_KEYS));
-        addIfPresent(ordered, SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
+        addIfPresent(ordered, SectionRouter.find(sections, SectionRole.SUMMARY, SUMMARY_KEYS));
+        addIfPresent(ordered, SectionRouter.find(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS));
+        addIfPresent(ordered, SectionRouter.find(sections, SectionRole.EDUCATION, EDUCATION_KEYS));
+        addIfPresent(ordered, SectionRouter.find(sections, SectionRole.SKILLS, SKILL_KEYS));
+        addIfPresent(ordered, SectionRouter.find(sections, SectionRole.OTHER, ADDITIONAL_KEYS));
         for (CvSection section : sections) {
             addIfPresent(ordered, section);
         }

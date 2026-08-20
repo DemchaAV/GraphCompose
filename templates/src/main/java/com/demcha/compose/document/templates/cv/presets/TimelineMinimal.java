@@ -25,6 +25,8 @@ import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.templates.core.widgets.TimelineAxisWidget;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * v2 port of the legacy "Timeline Minimal" CV preset.
@@ -220,12 +222,12 @@ public final class TimelineMinimal {
                 // Claim order decides which module wins when two lists could
                 // match the same title, and every claim removes the section
                 // from what falls through to the main column below.
-                CvSection education = allocation.claim(EDUCATION_KEYS);
-                CvSection skills = allocation.claim(SKILL_KEYS);
-                CvSection projects = allocation.claim(PROJECT_KEYS);
-                CvSection additional = allocation.claim(ADDITIONAL_KEYS);
-                CvSection summary = allocation.claim(SUMMARY_KEYS);
-                CvSection experience = allocation.claim(EXPERIENCE_KEYS);
+                CvSection education = allocation.claim(SectionRole.EDUCATION, EDUCATION_KEYS);
+                CvSection skills = allocation.claim(SectionRole.SKILLS, SKILL_KEYS);
+                CvSection projects = allocation.claim(SectionRole.PROJECTS, PROJECT_KEYS);
+                CvSection additional = allocation.claim(SectionRole.OTHER, ADDITIONAL_KEYS);
+                CvSection summary = allocation.claim(SectionRole.SUMMARY, SUMMARY_KEYS);
+                CvSection experience = allocation.claim(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
 
                 List<ColumnPagination.Block> sidebar = modules(
                         module(education, "Education"),
@@ -653,6 +655,27 @@ public final class TimelineMinimal {
                 } else {
                     lines.add(label + ": " + body);
                 }
+            }
+        } else if (section instanceof ModuleSection module) {
+            // A runtime module flattens the same way everything else does — one
+            // line per item — because these lines are what the column
+            // pagination measures. Rendering it through the shared dispatcher
+            // instead would draw rich multi-paragraph output the estimator
+            // never counted, and the axis row it lands in cannot page-break.
+            for (CvItem item : module.items()) {
+                StringBuilder line = new StringBuilder(MarkdownInline.plainText(item.title()));
+                String meta = Stream.of(item.subtitle(), item.location(),
+                                module.kind() == CvKind.ENTRIES_DATED ? item.period() : "")
+                        .filter(value -> !value.isBlank())
+                        .collect(Collectors.joining(" · "));
+                if (!meta.isBlank()) {
+                    line.append(" — ").append(meta);
+                }
+                if (!item.body().isEmpty()) {
+                    line.append(": ").append(MarkdownInline.plainText(
+                            String.join(" ", item.body())));
+                }
+                lines.add(line.toString());
             }
         } else if (section instanceof EntriesSection entries) {
             for (CvEntry entry : entries.entries()) {

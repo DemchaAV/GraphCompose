@@ -168,16 +168,16 @@ public final class CompactMono {
                         .padding(new DocumentInsets(11, 11, 13, 11))
                         .fillColor(theme.palette().banner())
                         .accentLeft(ACCENT, 3.0);
-                addRailSkills(rail, SectionLookup.firstMatching(sections, SKILL_KEYS));
-                addRailEducation(rail, SectionLookup.firstMatching(sections, EDUCATION_KEYS));
-                addRailAdditional(rail, SectionLookup.firstMatching(sections, ADDITIONAL_KEYS));
+                addRailSkills(rail, SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS));
+                addRailEducation(rail, SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS));
+                addRailAdditional(rail, SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN));
             }
 
             private void addMain(SectionBuilder main, List<CvSection> sections) {
                 main.spacing(8);
-                addProfile(main, SectionLookup.firstMatching(sections, SUMMARY_KEYS));
-                addExperience(main, SectionLookup.firstMatching(sections, EXPERIENCE_KEYS));
-                addProjects(main, SectionLookup.firstMatching(sections, PROJECT_KEYS));
+                addProfile(main, SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS));
+                addExperience(main, SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS));
+                addProjects(main, SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED));
             }
 
             private void addRailSkills(SectionBuilder parent, CvSection section) {

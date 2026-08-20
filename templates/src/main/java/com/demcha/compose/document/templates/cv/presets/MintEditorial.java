@@ -18,6 +18,7 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.cv.components.SectionAllocation;
 import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
@@ -465,16 +466,17 @@ public final class MintEditorial {
             double mainInner = usable * MAIN_WEIGHT;
             double gridColumnWidth = mainInner / 2.0;
 
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+            SectionAllocation allocation =
+                    SectionAllocation.of(doc.sectionsIn(Slot.MAIN));
             CvIdentity identity = doc.identity();
 
-            CvSection interests = SectionRouter.rows(sections, SectionRole.OTHER, INTERESTS_KEYS, RowStyle.PLAIN);
-            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
-            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
-            CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
-            CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
-            CvSection awards = SectionRouter.rows(sections, SectionRole.OTHER, AWARDS_KEYS, RowStyle.PLAIN);
-            CvSection references = SectionRouter.rows(sections, SectionRole.OTHER, REFERENCES_KEYS, RowStyle.PLAIN);
+            CvSection interests = allocation.rows(SectionRole.OTHER, INTERESTS_KEYS, RowStyle.PLAIN);
+            CvSection education = allocation.entries(SectionRole.EDUCATION, EDUCATION_KEYS);
+            CvSection skills = allocation.skills(SectionRole.SKILLS, SKILL_KEYS);
+            CvSection profile = allocation.paragraph(SectionRole.SUMMARY, SUMMARY_KEYS);
+            CvSection experience = allocation.entries(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+            CvSection awards = allocation.rows(SectionRole.OTHER, AWARDS_KEYS, RowStyle.PLAIN);
+            CvSection references = allocation.rows(SectionRole.OTHER, REFERENCES_KEYS, RowStyle.PLAIN);
 
             List<CvEntry> experienceEntries = entriesOf(experience);
             PageFlowBuilder flow = document.dsl()
@@ -517,6 +519,13 @@ public final class MintEditorial {
                             addExperience(main, "Experience", experienceEntries);
                             addAwards(main, awards, gridColumnWidth);
                             addReferences(main, references, gridColumnWidth);
+                            // Whatever no block claimed — an author's own
+                            // category, a module the catalogue has no role for —
+                            // under the title they wrote, rather than off the
+                            // page. The flow gives it somewhere to go.
+                            for (CvSection leftover : allocation.remaining()) {
+                                addLeftoverBlock(main, leftover);
+                            }
                         });
                     })
                     .build();
@@ -1059,6 +1068,61 @@ public final class MintEditorial {
         }
 
         // -- Shared block heading (spaced-caps accent title) --------------
+
+        /**
+         * Draws a section this preset has no block for, in the shape its author
+         * chose, through the main column's own renderers.
+         */
+        private void addLeftoverBlock(SectionBuilder main, CvSection leftover) {
+            CvSection shaped = SectionRouter.naturalShape(leftover);
+            // A module with items but nothing in them lowers to an empty shape;
+            // a heading over nothing is worse than the drop.
+            if (!SectionLookup.hasContent(shaped)) {
+                return;
+            }
+            if (shaped instanceof EntriesSection) {
+                // The experience renderer already draws a titled run of entries.
+                addExperience(main, leftover.title(), entriesOf(shaped));
+                return;
+            }
+            main.addSection("CvV2MintEditorialLeftover", block -> {
+                block.spacing(0).padding(DocumentInsets.zero());
+                addBlockHeading(block, leftover.title());
+                DocumentTextStyle bodyStyle = bodyStyle();
+                if (shaped instanceof ParagraphSection paragraph) {
+                    block.addParagraph(p -> p
+                            .textStyle(bodyStyle)
+                            .lineSpacing(theme.typography().bodyLineSpacing())
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.bottom(12))
+                            .rich(rich -> MarkdownInline.appendTrimmed(rich,
+                                    paragraph.body(), bodyStyle)));
+                } else if (shaped instanceof RowsSection rows) {
+                    for (CvRow row : rows.rows()) {
+                        addLeftoverRow(block, row.label(), row.body(), bodyStyle);
+                    }
+                } else if (shaped instanceof SkillsSection skills) {
+                    for (SkillGroup group : skills.groups()) {
+                        addLeftoverRow(block, group.category(),
+                                group.skillsInline(), bodyStyle);
+                    }
+                }
+            });
+        }
+
+        /** One label/value line of a leftover block, in the body style. */
+        private void addLeftoverRow(SectionBuilder block, String label, String value,
+                                    DocumentTextStyle bodyStyle) {
+            String text = MarkdownInline.plainText(label);
+            String body = MarkdownInline.plainText(value);
+            String line = body.isBlank() ? text : text + ": " + body;
+            block.addParagraph(p -> p
+                    .text(line)
+                    .textStyle(bodyStyle)
+                    .lineSpacing(theme.typography().bodyLineSpacing())
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.bottom(6)));
+        }
 
         /**
          * The block's heading, bound to what follows it. A column breaks between

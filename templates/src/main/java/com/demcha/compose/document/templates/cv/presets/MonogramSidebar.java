@@ -344,7 +344,8 @@ public final class MonogramSidebar {
             double sidebarHorizontalPadding = 13.0 * 2.0;
             double sidebarInnerWidth = Math.max(0.0,
                     sidebarOuterWidth - sidebarHorizontalPadding);
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+            SectionAllocation allocation =
+                    SectionAllocation.of(doc.sectionsIn(Slot.MAIN));
 
             // Paint the two-column chrome via pageBackgrounds — the
             // engine emits both fills on every page automatically, so
@@ -375,18 +376,18 @@ public final class MonogramSidebar {
                             .weights(SIDEBAR_WIDTH_RATIO,
                                     1.0 - SIDEBAR_WIDTH_RATIO)
                             .addColumn("CvV2MonogramSidebarSidebar",
-                                    section -> addSidebar(section, doc, sections,
+                                    section -> addSidebar(section, doc, allocation,
                                             sidebarInnerWidth))
                             .addColumn("CvV2MonogramSidebarMain",
                                     section -> addMain(section, doc.identity(),
-                                            sections)))
+                                            allocation)))
                     .build();
         }
 
         // -- Sidebar -------------------------------------------------------
 
         private void addSidebar(SectionBuilder section, CvDocument doc,
-                                List<CvSection> sections, double innerWidth) {
+                                SectionAllocation allocation, double innerWidth) {
             // Sidebar section deliberately has no fillColor — the
             // pageBackgrounds emitted in compose() paint the pale fill
             // edge-to-edge on every page, including continuation
@@ -401,13 +402,13 @@ public final class MonogramSidebar {
             addSidebarHeader(section, "CONTACT", innerWidth);
             addContactBlock(section, doc.identity());
 
-            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
+            CvSection education = allocation.entries(SectionRole.EDUCATION, EDUCATION_KEYS);
             if (hasContent(education)) {
                 addSidebarHeader(section, education.title(), innerWidth);
                 addEducationEntries(section, education);
             }
 
-            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
+            CvSection skills = allocation.skills(SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
                 addSidebarHeader(section, "EXPERTISE", innerWidth);
                 addSkillsList(section, skills);
@@ -565,7 +566,7 @@ public final class MonogramSidebar {
         // -- Main column ---------------------------------------------------
 
         private void addMain(SectionBuilder section, CvIdentity identity,
-                             List<CvSection> sections) {
+                             SectionAllocation allocation) {
             // No fillColor — the page background defaults to white, so
             // the right column is naturally white from top to bottom.
             section.spacing(MAIN_CONTENT_SPACING)
@@ -573,7 +574,7 @@ public final class MonogramSidebar {
 
             addNameBlock(section, identity);
 
-            CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
+            CvSection profile = allocation.paragraph(SectionRole.SUMMARY, SUMMARY_KEYS);
             if (hasContent(profile)) {
                 addMainSectionHeader(section,
                         profile.title().isBlank()
@@ -582,7 +583,7 @@ public final class MonogramSidebar {
                 addProfileBody(section, profile);
             }
 
-            CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+            CvSection experience = allocation.entries(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
             if (hasContent(experience)) {
                 addMainSectionHeader(section,
                         experience.title().isBlank()
@@ -591,7 +592,7 @@ public final class MonogramSidebar {
                 addExperienceEntries(section, experience);
             }
 
-            CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
+            CvSection projects = allocation.rows(SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
             if (hasContent(projects)) {
                 addMainSectionHeader(section,
                         projects.title().isBlank()
@@ -600,13 +601,55 @@ public final class MonogramSidebar {
                 addProjectsList(section, projects);
             }
 
-            CvSection additional = SectionRouter.rows(sections, SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
+            CvSection additional = allocation.rows(SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
             if (hasContent(additional)) {
                 addMainSectionHeader(section,
                         additional.title().isBlank()
                                 ? "Additional Information"
                                 : additional.title());
                 addAdditionalList(section, additional);
+            }
+
+            // Whatever no slot claimed — an "Awards", a "Publications", a module
+            // the catalogue has no role for — under the title its author wrote.
+            // This preset has a place for six categories and a CV is not obliged
+            // to have exactly those; dropping the rest looked like a finished page.
+            for (CvSection leftover : allocation.remaining()) {
+                CvSection shaped = SectionRouter.naturalShape(leftover);
+                // A module with items but nothing in them lowers to an empty
+                // shape; a heading over nothing is worse than the drop.
+                if (!hasContent(shaped)) {
+                    continue;
+                }
+                addMainSectionHeader(section, leftover.title());
+                addLeftoverBody(section, shaped);
+            }
+        }
+
+        /**
+         * Draws a section this preset has no slot for, in the shape its author
+         * chose, using the main column's own renderers.
+         */
+        private void addLeftoverBody(SectionBuilder section, CvSection shaped) {
+            if (shaped instanceof ParagraphSection) {
+                addProfileBody(section, shaped);
+            } else if (shaped instanceof EntriesSection) {
+                addExperienceEntries(section, shaped);
+            } else if (shaped instanceof RowsSection rows) {
+                if (rows.style() == RowStyle.PLAIN) {
+                    addAdditionalList(section, shaped);
+                } else {
+                    addProjectsList(section, shaped);
+                }
+            } else if (shaped instanceof SkillsSection skills) {
+                // Grouped skills read as one labelled row per category, which is
+                // what the additional-information renderer draws.
+                List<CvRow> rows = new ArrayList<>();
+                for (SkillGroup group : skills.groups()) {
+                    rows.add(new CvRow(group.category(), group.skillsInline()));
+                }
+                addAdditionalList(section, new RowsSection(skills.title(), rows,
+                        RowStyle.PLAIN));
             }
         }
 

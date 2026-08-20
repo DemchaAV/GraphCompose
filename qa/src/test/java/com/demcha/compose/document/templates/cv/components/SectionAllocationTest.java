@@ -189,4 +189,41 @@ class SectionAllocationTest {
                 .as("claiming hands each section out once")
                 .isSameAs(second);
     }
+
+    @Test
+    void naturalShapeGivesAModuleTheShapeItsOwnKindNames() {
+        // A slot lowers a module to the shape it draws. A leftover has no slot,
+        // so the only reading that cannot be wrong is the author's own kind.
+        assertThat(SectionRouter.naturalShape(module(CvKind.PARAGRAPH)))
+                .isInstanceOf(ParagraphSection.class);
+        assertThat(SectionRouter.naturalShape(module(CvKind.ENTRIES)))
+                .isInstanceOf(EntriesSection.class);
+        assertThat(SectionRouter.naturalShape(module(CvKind.ENTRIES_DATED)))
+                .isInstanceOf(EntriesSection.class);
+        assertThat(SectionRouter.naturalShape(module(CvKind.BULLETS)))
+                .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.type(RowsSection.class))
+                .extracting(RowsSection::style)
+                .isEqualTo(RowStyle.BULLETED);
+        assertThat(SectionRouter.naturalShape(module(CvKind.BULLETS_STACKED)))
+                .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.type(RowsSection.class))
+                .extracting(RowsSection::style)
+                .isEqualTo(RowStyle.BULLETED_STACKED);
+        assertThat(SectionRouter.naturalShape(module(CvKind.INLINE_LIST)))
+                .asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.type(RowsSection.class))
+                .extracting(RowsSection::style)
+                .isEqualTo(RowStyle.PLAIN);
+    }
+
+    @Test
+    void naturalShapeLeavesASectionThatAlreadyHasAShapeAlone() {
+        ParagraphSection prose = new ParagraphSection("Publications", "One paper.");
+        assertThat(SectionRouter.naturalShape(prose)).isSameAs(prose);
+    }
+
+    private static ModuleSection module(CvKind kind) {
+        return ModuleSection.builder("Volunteering", SectionRole.OTHER, kind)
+                .item(CvItem.of("Mentor").at("Rails Girls Berlin")
+                        .period("2019-2021").paragraphs("Ran three workshops."))
+                .build();
+    }
 }

@@ -111,6 +111,36 @@ follow semantic versioning; release dates are ISO 8601.
   page width the sidebar column has no room for the photo and the layout fails instead of
   drawing it over the main column.
 
+- **Monogram Sidebar renders the whole CV it is handed too.** The same shape as Sidebar
+  Portrait, and the same caps: two jobs, two degrees, seven skills, three projects, three
+  additional rows, with everything past them dropped in silence because the body was one
+  atomic row that had to fit its page. The body is a column flow now, the caps are gone,
+  and the preset reserves the same half-inch safe area on the pages it continues onto —
+  its recommended margin is zero so the sidebar fill can reach the paper edge.
+
+  Two visual changes ride along. The rule under each main-column section title fills the
+  column instead of drawing a fixed 355pt: that width fit A4's 360.83pt content box with
+  5.8pt to spare and stopped fitting below a page width of about 587pt, where a row slot
+  drew it over the sidebar without a word — a fixed slot does not check a child's measured
+  width, and a column does. Filling also ends the rule on the column's own edge rather
+  than 5.8pt short of it. And both columns' section headings are now kept with the block
+  they introduce, as in every single-column preset; wrapping the sidebar heading in its
+  own group tightens that column's rhythm slightly, which is visible in the re-recorded
+  baseline.
+
+  One behaviour is newly strict: the monogram badge is a fixed 122pt, so a page narrower
+  than about 450pt no longer has a sidebar column wide enough for it and the layout says
+  so. The same page used to come out with the badge drawn over the main column.
+
+  `MonogramSidebarPaginationTest` renders a career denser than one page and asserts every
+  degree, skill, position, project and additional row reached the PDF; that the sidebar
+  carried onto page 2 while the main column finished on page 1 — each column taking the
+  pages it needs; that a continuation page keeps its first line off the trimmed edge,
+  measured again with the rule taken back off so the number is attributable to it; that
+  page 1 is laid out identically either way; and that every heading is bound to the block
+  it introduces. Baseline and committed preview re-recorded; the canonical CV now runs to
+  two pages.
+
 - **A safe area on the pages a body continues onto.** A container's padding is an edge of
   the container: reserved once, at the top of the page it opens on and the bottom of the
   page it closes on. The page margin is the inset applied once per page. In an ordinary
@@ -146,9 +176,9 @@ follow semantic versioning; release dates are ISO 8601.
   Sidebar Portrait asks for half an inch (`CONTINUATION_TOP_SAFE_AREA`), which adds 36pt to
   wherever a continuation page's first line landed — 3pt becomes 39pt in that CV — and
   leaves page 1 laid out identically; its visual baseline and committed preview are
-  re-recorded again. Monogram Sidebar recommends the same zero margin and will need the
-  same call when its body moves onto a column flow; Mint Editorial's 48pt margin already
-  clears the safe area, so the helper would leave it alone. This covers the top edge only:
+  re-recorded again. Monogram Sidebar takes the same call in the entry above; Mint
+  Editorial's 48pt margin already clears the safe area, so the helper would leave it
+  alone. This covers the top edge only:
   content still flows to the bottom of every page it fills, and a bottom safe area is a
   bottom inset on `margin(...)` itself, because unlike the top it has to apply to page 1 as
   well and changes where page 1 breaks.

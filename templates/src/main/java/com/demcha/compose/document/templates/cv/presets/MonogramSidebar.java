@@ -3,6 +3,7 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.document.templates.core.identity.Link;
 
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.core.page.ContinuationSafeArea;
 import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 
@@ -42,6 +43,28 @@ import java.util.*;
  * any preset-side filler logic. The preset draws its visual ornaments
  * (monogram ring, section rules) inline because none of these visuals
  * are shared with another v2 preset today.</p>
+ *
+ * <p>The body is a column flow, so each column continues on the next page and the
+ * preset draws every entry of the sections it recognises. It used to be a row —
+ * one atomic band that had to fit the page it started on — and carried per-section
+ * caps (two jobs, two degrees, seven skills, three projects, three additional rows)
+ * to stay under that bound; the rest was dropped without a word. Both are gone. A
+ * section this preset has no slot for is still dropped, as in every preset that
+ * composes a fixed layout.</p>
+ *
+ * <p>{@code compose(...)} sets two session-wide settings and <strong>replaces</strong>
+ * whatever the caller had set: the page backgrounds above, and a page-margin rule
+ * reserving a printer-safe top inset on the pages after the first. The columns'
+ * padding is an edge of the columns rather than of each page, so without that rule a
+ * body running past page one would resume at the trimmed edge — the safe area a zero
+ * {@link #RECOMMENDED_MARGIN} gives up along the top of the sheet as well as the
+ * sides.</p>
+ *
+ * <p>The monogram badge is sized for A4 and needs a page about 450pt wide or more:
+ * below that the sidebar column is narrower than the {@value #MONOGRAM_DIAMETER}pt
+ * badge and the layout fails rather than drawing it. A row slot did not check a
+ * child's measured width, so a narrower page used to come out with the badge laid
+ * over the main column.</p>
  */
 public final class MonogramSidebar {
 
@@ -94,6 +117,13 @@ public final class MonogramSidebar {
 
     private static final double MONOGRAM_DIAMETER = 122;
     private static final double SIDEBAR_RULE_WIDTH = 118;
+
+    /**
+     * Vertical spacing inside each column. The heading groups repeat their column's
+     * value, so wrapping a heading in its own section leaves the rhythm as it was.
+     */
+    private static final double SIDEBAR_SPACING = 8.0;
+    private static final double MAIN_CONTENT_SPACING = 5.0;
     private static final double CONTACT_ICON_SIZE = 22;
 
     /**
@@ -101,13 +131,7 @@ public final class MonogramSidebar {
      */
     private static final double SIDEBAR_WIDTH_RATIO = 0.33;
 
-    private static final double MAIN_SECTION_RULE_WIDTH = 355.0;
 
-    private static final int EDUCATION_LIMIT = 2;
-    private static final int SKILL_LIMIT = 7;
-    private static final int EXPERIENCE_LIMIT = 2;
-    private static final int PROJECT_LIMIT = 3;
-    private static final int ADDITIONAL_LIMIT = 3;
 
     private static final String CONTACT_ICON_ROOT =
             "/templates/cv/monogram-sidebar/icons/";
@@ -316,18 +340,10 @@ public final class MonogramSidebar {
             Objects.requireNonNull(doc, "doc");
 
             double pageInnerWidth = document.canvas().innerWidth();
-            double sidebarOuterWidth = pageInnerWidth * 0.33;
+            double sidebarOuterWidth = pageInnerWidth * SIDEBAR_WIDTH_RATIO;
             double sidebarHorizontalPadding = 13.0 * 2.0;
             double sidebarInnerWidth = Math.max(0.0,
                     sidebarOuterWidth - sidebarHorizontalPadding);
-            double mainOuterWidth = pageInnerWidth - sidebarOuterWidth;
-            // Main section has 20pt left + 18pt right padding (see addMain).
-            // Spacer width must be the content-area width so the inner
-            // content fills exactly the section's allocated outer width
-            // (= mainOuterWidth) — passing the outer width directly
-            // would overflow because outer = content + padding.
-            double mainContentWidth = Math.max(0.0,
-                    mainOuterWidth - (20.0 + 18.0));
             List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
 
             // Paint the two-column chrome via pageBackgrounds — the
@@ -340,21 +356,30 @@ public final class MonogramSidebar {
                     PageBackgroundFill.rightColumn(1.0 - SIDEBAR_WIDTH_RATIO,
                             mainFill)));
 
+            // The columns' padding is an edge of the columns, not of each page, so
+            // it holds the first page's content off the trimmed edge and says
+            // nothing about the second's. RECOMMENDED_MARGIN is zero so the sidebar
+            // fill can reach the paper edge; this buys back the top of it on the
+            // pages the body continues onto.
+            ContinuationSafeArea.applyTo(document, 2, ContinuationSafeArea.PRINTER_SAFE_TOP);
+
             document.dsl()
                     .pageFlow()
                     .name("CvV2MonogramSidebarRoot")
                     .spacing(theme.spacing().pageFlowSpacing())
                     .padding(DocumentInsets.zero())
-                    .addRow("CvV2MonogramSidebarFrame", row -> row
-                            .spacing(0)
+                    // A column flow rather than a row: both columns keep flowing
+                    // onto the next page instead of having to fit the first one.
+                    .addColumnFlow("CvV2MonogramSidebarBody", body -> body
+                            .gap(0)
                             .weights(SIDEBAR_WIDTH_RATIO,
                                     1.0 - SIDEBAR_WIDTH_RATIO)
-                            .addSection("CvV2MonogramSidebarSidebar",
+                            .addColumn("CvV2MonogramSidebarSidebar",
                                     section -> addSidebar(section, doc, sections,
                                             sidebarInnerWidth))
-                            .addSection("CvV2MonogramSidebarMain",
+                            .addColumn("CvV2MonogramSidebarMain",
                                     section -> addMain(section, doc.identity(),
-                                            sections, mainContentWidth)))
+                                            sections)))
                     .build();
         }
 
@@ -367,7 +392,7 @@ public final class MonogramSidebar {
             // edge-to-edge on every page, including continuation
             // pages. Top padding establishes the breathing room above
             // the monogram badge.
-            section.spacing(8)
+            section.spacing(SIDEBAR_SPACING)
                     .padding(new DocumentInsets(36, 13, 0, 13));
 
             addMonogramBlock(section, initials(doc.identity().name()),
@@ -419,24 +444,33 @@ public final class MonogramSidebar {
                     .layer(badge, LayerAlign.TOP_CENTER));
         }
 
+        /**
+         * Heading + rule as one keep-with-next group. The sidebar is the column that
+         * outgrows the page on a dense CV, so a heading here is the one most likely
+         * to be left at the foot of a page with its list overleaf — or to be parted
+         * from its own rule, which an atomic row could never do.
+         */
         private void addSidebarHeader(SectionBuilder section, String title,
                                       double innerWidth) {
             if (title == null || title.isBlank()) {
                 return;
             }
-            section.addParagraph(paragraph -> paragraph
-                    .text(TextOrnaments.spacedUpper(title))
-                    .textStyle(sidebarHeaderStyle())
-                    .align(TextAlign.CENTER)
-                    .lineSpacing(1.2)
-                    .margin(DocumentInsets.top(6)));
             double ruleWidth = Math.min(innerWidth, SIDEBAR_RULE_WIDTH);
             double sideInset = Math.max(0.0, (innerWidth - ruleWidth) / 2.0);
-            section.addLine(line -> line
-                    .horizontal(ruleWidth)
-                    .color(theme.palette().rule())
-                    .thickness(0.45)
-                    .margin(new DocumentInsets(1, sideInset, 2, sideInset)));
+            section.addSection("CvV2MonogramSidebarSidebarHeading", heading -> heading
+                    .spacing(SIDEBAR_SPACING)
+                    .keepWithNext()
+                    .addParagraph(paragraph -> paragraph
+                            .text(TextOrnaments.spacedUpper(title))
+                            .textStyle(sidebarHeaderStyle())
+                            .align(TextAlign.CENTER)
+                            .lineSpacing(1.2)
+                            .margin(DocumentInsets.top(6)))
+                    .addLine(line -> line
+                            .horizontal(ruleWidth)
+                            .color(theme.palette().rule())
+                            .thickness(0.45)
+                            .margin(new DocumentInsets(1, sideInset, 2, sideInset))));
         }
 
         private void addContactBlock(SectionBuilder section, CvIdentity identity) {
@@ -485,7 +519,7 @@ public final class MonogramSidebar {
             DocumentTextStyle metaStyle = sidebarEntryDateStyle();
 
             List<CvEntry> list = entries.entries();
-            for (int i = 0; i < Math.min(list.size(), EDUCATION_LIMIT); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
                         .textStyle(headingStyle)
@@ -518,7 +552,7 @@ public final class MonogramSidebar {
             }
             DocumentTextStyle skillStyle = sidebarSkillStyle();
             List<String> tokens = skillTokens(skills);
-            for (String token : tokens.stream().limit(SKILL_LIMIT).toList()) {
+            for (String token : tokens) {
                 section.addParagraph(paragraph -> paragraph
                         .text(MarkdownInline.plainText(token))
                         .textStyle(skillStyle)
@@ -531,10 +565,10 @@ public final class MonogramSidebar {
         // -- Main column ---------------------------------------------------
 
         private void addMain(SectionBuilder section, CvIdentity identity,
-                             List<CvSection> sections, double anchorWidth) {
+                             List<CvSection> sections) {
             // No fillColor — the page background defaults to white, so
             // the right column is naturally white from top to bottom.
-            section.spacing(5)
+            section.spacing(MAIN_CONTENT_SPACING)
                     .padding(new DocumentInsets(38, 20, 24, 18));
 
             addNameBlock(section, identity);
@@ -585,7 +619,7 @@ public final class MonogramSidebar {
             DocumentTextStyle stackStyle = mainEntryDateStyle();
             DocumentTextStyle bodyStyle = mainBodyStyle();
             List<CvRow> list = rows.rows();
-            for (int i = 0; i < Math.min(list.size(), PROJECT_LIMIT); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 ProjectRenderer.inline(section, list.get(i),
                         titleStyle, stackStyle, bodyStyle,
                         theme.typography().bodyLineSpacing(),
@@ -601,7 +635,7 @@ public final class MonogramSidebar {
             DocumentTextStyle labelStyle = mainEntryTitleStyle();
             DocumentTextStyle valueStyle = mainBodyStyle();
             List<CvRow> list = rows.rows();
-            for (int i = 0; i < Math.min(list.size(), ADDITIONAL_LIMIT); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 CvRow row = list.get(i);
                 LabelValueRenderer.render(section, row.label(), row.body(),
                         labelStyle, valueStyle,
@@ -648,20 +682,35 @@ public final class MonogramSidebar {
                     .margin(new DocumentInsets(12, 0, 22, 0)));
         }
 
+        /**
+         * Title + rule as one keep-with-next group, so the pair moves to the next
+         * page rather than closing this one with a heading whose body is overleaf —
+         * reachable only now that the column breaks at all.
+         */
         private void addMainSectionHeader(SectionBuilder section, String title) {
             if (title == null || title.isBlank()) {
                 return;
             }
-            section.addParagraph(paragraph -> paragraph
-                    .text(TextOrnaments.spacedUpper(title))
-                    .textStyle(mainHeaderStyle())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.top(6)));
-            section.addLine(line -> line
-                    .horizontal(MAIN_SECTION_RULE_WIDTH)
-                    .color(MAIN_RULE)
-                    .thickness(theme.spacing().accentRuleWidth())
-                    .margin(new DocumentInsets(1, 0, 4, 0)));
+            section.addSection("CvV2MonogramSidebarMainHeading", heading -> heading
+                    .spacing(MAIN_CONTENT_SPACING)
+                    .keepWithNext()
+                    .addParagraph(paragraph -> paragraph
+                            .text(TextOrnaments.spacedUpper(title))
+                            .textStyle(mainHeaderStyle())
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.top(6)))
+                    .addLine(line -> line
+                            // Fills the main column rather than carrying a width of
+                            // its own: the fixed 355pt this used to draw was wider
+                            // than the column's 354.88pt content box on A4 and wider
+                            // still on a narrower page, and a row slot never said so.
+                            // horizontal(0) first so thickness() still reserves the
+                            // stroke's height.
+                            .horizontal(0)
+                            .fill()
+                            .color(MAIN_RULE)
+                            .thickness(theme.spacing().accentRuleWidth())
+                            .margin(new DocumentInsets(1, 0, 4, 0))));
         }
 
         private void addProfileBody(SectionBuilder section,
@@ -692,7 +741,7 @@ public final class MonogramSidebar {
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
             List<CvEntry> list = entries.entries();
-            for (int i = 0; i < Math.min(list.size(), EXPERIENCE_LIMIT); i++) {
+            for (int i = 0; i < list.size(); i++) {
                 CvEntry entry = list.get(i);
                 section.addParagraph(paragraph -> paragraph
                         .textStyle(positionStyle)

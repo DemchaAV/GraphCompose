@@ -125,7 +125,7 @@ public final class LayoutCompiler {
         return layoutGraph;
     }
 
-    private void compileNode(PreparedNode<DocumentNode> prepared,
+    void compileNode(PreparedNode<DocumentNode> prepared,
                              String parentPath,
                              int childIndex,
                              int depth,
@@ -242,6 +242,16 @@ public final class LayoutCompiler {
             compileHorizontalRow(prepared, definition, path, semanticName, parentPath, childIndex, depth,
                     regionX, regionWidth, state, prepareContext, fragmentContext, nodes, fragments,
                     margin, padding, availableWidth, layoutSpec, naturalMeasure);
+            return;
+        }
+
+        if (layoutSpec.axis() == CompositeLayoutSpec.Axis.COLUMN_FLOW) {
+            // Columns that each flow down their own column across pages. No
+            // admitAtomicBlock: unlike a row band, this node is page-spanning by
+            // construction, so there is no height it must fit inside.
+            ColumnFlowCompiler.compile(this, prepared, definition, path, semanticName, parentPath,
+                    childIndex, depth, regionX, state, prepareContext, fragmentContext, nodes,
+                    fragments, margin, padding, availableWidth, layoutSpec, naturalMeasure);
             return;
         }
 
@@ -830,6 +840,19 @@ public final class LayoutCompiler {
             // STACK composites (e.g. LayerStackNode) are always allowed
             // because they are atomic and anchor their children inside
             // the existing slot.
+            // A column flow advances pages; a fixed slot pins one. Placed here
+            // it would quietly stack its columns down the slot and run past the
+            // band, overlapping whatever follows — so it is rejected in both
+            // slot kinds rather than rendered wrong.
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.COLUMN_FLOW) {
+                throw new IllegalStateException("Node '" + path
+                        + "' cannot contain a column flow: a "
+                        + (kind == FixedSlotKind.ROW_SLOT ? "row slot" : "stack layer")
+                        + " is pinned to one page, and a column flow spans pages. "
+                        + "Put the column flow on the page flow, or use a row for "
+                        + "side-by-side content that fits one page.");
+            }
+
             if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL
                 && kind == FixedSlotKind.ROW_SLOT) {
                 throw new IllegalStateException("Row '" + path
@@ -1019,7 +1042,7 @@ public final class LayoutCompiler {
         return measure.height() + margin.vertical();
     }
 
-    private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
+    PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
                                                              DocumentNode node,
                                                              double regionWidth) {
         return prepareContext.prepare(node, BoxConstraints.natural(childAvailableWidth(regionWidth, node)));
@@ -1076,11 +1099,25 @@ public final class LayoutCompiler {
             List<DocumentNode> children = definition.children(node);
             // A horizontal row or layer stack is atomic (never splits) and an empty
             // vertical box has no first line — the whole box is the leading unit.
-            if (layoutSpec.axis() != CompositeLayoutSpec.Axis.VERTICAL || children.isEmpty()) {
+            // A column flow is neither: it spans pages by construction, so its
+            // measured height is not what a preceding keep-with-next run has to
+            // fit beside. Its leading unit is its first column's, exactly as a
+            // vertical box's is its first child's — otherwise a heading above a
+            // multi-page flow hoists itself to the next page and wastes this one.
+            boolean columnFlow = layoutSpec.axis() == CompositeLayoutSpec.Axis.COLUMN_FLOW;
+            if ((layoutSpec.axis() != CompositeLayoutSpec.Axis.VERTICAL && !columnFlow)
+                || children.isEmpty()) {
                 return prepared.measureResult().height() + margin.vertical();
             }
             double availableWidth = childAvailableWidth(regionWidth, node);
             double innerRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+            if (columnFlow) {
+                // The first column occupies its slot, not the whole flow: asking a
+                // paragraph how tall its first line is at four times its real width
+                // would answer for a line it never gets.
+                innerRegionWidth = RowSlots.distributeRowSlotWidths(
+                        children, layoutSpec.weights(), layoutSpec.spacing(), innerRegionWidth)[0];
+            }
             return topReservation + leadingUnitHeight(children.get(0), innerRegionWidth, prepareContext,
                                                       pageInnerHeight);
         }

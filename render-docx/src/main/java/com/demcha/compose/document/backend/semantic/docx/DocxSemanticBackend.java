@@ -182,10 +182,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeList(document, list);
         } else if (node instanceof ContainerNode || node instanceof SectionNode
                    || node instanceof com.demcha.compose.document.node.LayerStackNode
-                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode) {
+                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+                   || node instanceof com.demcha.compose.document.node.ColumnFlowNode) {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
-            // render them sequentially rather than dropping the subtree.
+            // render them sequentially rather than dropping the subtree. A
+            // column flow lands here too: Word reflows its own columns, so the
+            // page-spanning geometry is meaningless there, but the text is not.
             for (DocumentNode child : node.children()) {
                 writeNode(document, child);
             }

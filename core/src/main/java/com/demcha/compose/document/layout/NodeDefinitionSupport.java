@@ -442,6 +442,44 @@ public final class NodeDefinitionSupport {
     }
 
     /**
+     * Measures a multi-column flow: each column at its resolved slot width,
+     * the flow as tall as its tallest column.
+     *
+     * <p>That height is what the flow would occupy if a page were tall enough
+     * to hold it, and it routinely is not — the node exists to span pages.
+     * Nothing admits the flow onto a page on the strength of this number; the
+     * columns admit themselves child by child as they flow, exactly as a
+     * section does.</p>
+     *
+     * @param node        column flow node
+     * @param padding     engine padding
+     * @param ctx         prepare context
+     * @param constraints parent constraints
+     * @return measured outer flow size
+     */
+    public static MeasureResult measureColumnFlow(ColumnFlowNode node,
+                                                  Padding padding,
+                                                  PrepareContext ctx,
+                                                  BoxConstraints constraints) {
+        double availableWidth = Math.max(0.0, constraints.availableWidth() - padding.horizontal());
+        List<DocumentNode> children = node.children();
+        if (children.isEmpty()) {
+            return new MeasureResult(constraints.availableWidth(), padding.vertical());
+        }
+        double[] slotWidths = RowSlots.distributeRowSlotWidths(
+                children, node.weights(), node.gap(), availableWidth);
+        double tallest = 0.0;
+        for (int index = 0; index < children.size(); index++) {
+            DocumentNode child = children.get(index);
+            double childInner = Math.max(0.0, slotWidths[index] - child.margin().horizontal());
+            PreparedNode<DocumentNode> prepared = ctx.prepare(child, BoxConstraints.natural(childInner));
+            tallest = Math.max(tallest,
+                    prepared.measureResult().height() + child.margin().vertical());
+        }
+        return new MeasureResult(constraints.availableWidth(), padding.vertical() + tallest);
+    }
+
+    /**
      * Measures a stack by preparing each layer inside the padding-adjusted
      * available width and taking the largest child outer box.
      *

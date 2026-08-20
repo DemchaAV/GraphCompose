@@ -58,6 +58,32 @@ follow semantic versioning; release dates are ISO 8601.
   trusting it, so a preset that ships without being registered fails the build instead
   of being invisible to every caller that looks a template up by id.
 
+- **Columns that continue on the next page.** A row places its children in one band and
+  is atomic: the band must fit the page it starts on. That is right for a row of cells
+  and fatal for a document body — a two-column layout built from a row holds exactly one
+  page, and the moment it holds more the compiler throws `AtomicNodeTooLargeException`,
+  which is why such layouts carry truncation limits to stay under it.
+
+  `addColumnFlow(...)` places the same columns and lets each break where it runs out of
+  page. The mechanism is the one the engine already had rather than a new one: a section
+  spans pages because the compiler places its children one at a time against a page
+  cursor and any child may start a new page, so a column flow gives each column its own
+  cursor from the flow's entry position and rejoins them at the end — everything inside a
+  column breaks exactly as it does anywhere else. The flow ends on the last page any
+  column reached, and what follows continues below the longest one.
+
+  Rows are untouched and stay atomic; the new node is a sibling, not a change of
+  behaviour, and every existing layout snapshot and visual baseline is byte-identical.
+  `ColumnFlowPaginationTest` renders the same content twice — through a row, which
+  throws, and through a column flow, which paginates — then pins what the flow has to
+  hold while doing it: nothing dropped, reordered, or skipped over a page; a short
+  column neither stretches nor pulls the next block up; a panelled column is repainted
+  on every page it reaches; and a `keepWithNext` heading above the flow stays on the
+  page it was reached on rather than jumping and stranding the rest of that page. A
+  column flow inside a row slot or a stack layer is refused with the reason: those
+  layers are pinned to one page, and a flow that advances pages would have run past the
+  band and overlapped what followed.
+
 - **Presets route by what a section means, not by the language it is written in.** A
   preset with a designed layout places sections into fixed slots, and it chose what went
   where by matching the heading against a list of English words each preset kept

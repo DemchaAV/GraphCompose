@@ -38,6 +38,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new ContainerDefinition())
                 .register(new SectionDefinition())
                 .register(new RowDefinition())
+                .register(new ColumnFlowDefinition())
                 .register(new PageReferenceDefinition())
                 .register(new LayerStackDefinition())
                 .register(new ShapeContainerDefinition())

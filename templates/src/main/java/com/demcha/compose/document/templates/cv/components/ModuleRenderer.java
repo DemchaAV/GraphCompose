@@ -37,23 +37,43 @@ public final class ModuleRenderer {
     }
 
     /**
-     * Renders every item of {@code module} into {@code host}.
+     * Renders every item of {@code module} into {@code host}, drawing the
+     * canonical way.
      *
      * @param host   host section receiving the body
      * @param module the module supplying items, kind, and role
      * @param theme  the active theme supplying palette, typography, and spacing
      */
     public static void render(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        render(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * Renders every item of {@code module} into {@code host}, drawing
+     * through {@code kit}.
+     *
+     * <p>The lowering below is the same whoever draws: which fields a kind
+     * reads, how a linked title is spelled, what an empty description does
+     * to a trailing colon. Only the three drawing calls go to the kit, so a
+     * preset can restyle its modules without re-deciding any of that.</p>
+     *
+     * @param host   host section receiving the body
+     * @param module the module supplying items, kind, and role
+     * @param theme  the active theme supplying palette, typography, and spacing
+     * @param kit    how this template draws paragraphs, rows, and entries
+     */
+    public static void render(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                              CvRenderKit kit) {
         List<CvItem> items = module.items();
         for (int i = 0; i < items.size(); i++) {
             CvItem item = items.get(i);
             switch (module.kind()) {
-                case PARAGRAPH -> paragraph(host, item, theme);
-                case BULLETS -> bullet(host, item, theme);
-                case BULLETS_STACKED -> stackedBullet(host, item, theme, i > 0);
-                case INLINE_LIST -> inlineList(host, item, theme);
-                case ENTRIES -> entry(host, item, "", theme, i > 0);
-                case ENTRIES_DATED -> entry(host, item, item.period(), theme, i > 0);
+                case PARAGRAPH -> paragraph(host, item, theme, kit);
+                case BULLETS -> bullet(host, item, theme, kit);
+                case BULLETS_STACKED -> stackedBullet(host, item, theme, kit, i > 0);
+                case INLINE_LIST -> inlineList(host, item, theme, kit);
+                case ENTRIES -> entry(host, item, "", theme, kit, i > 0);
+                case ENTRIES_DATED -> entry(host, item, item.period(), theme, kit, i > 0);
             }
         }
     }
@@ -63,12 +83,13 @@ public final class ModuleRenderer {
      * {@code CvKind.PARAGRAPH}). A bulleted body still bullets — the
      * body style is the author's second choice, independent of kind.
      */
-    private static void paragraph(SectionBuilder host, CvItem item, BrandTheme theme) {
+    private static void paragraph(SectionBuilder host, CvItem item, BrandTheme theme,
+                                  CvRenderKit kit) {
         for (String line : item.body()) {
             if (item.bodyStyle() == BodyStyle.BULLETS) {
                 bulletedLine(host, line, theme.bodyStyle(), theme);
             } else {
-                ParagraphRenderer.render(host, line, theme);
+                kit.paragraph(host, line, theme);
             }
         }
     }
@@ -79,7 +100,8 @@ public final class ModuleRenderer {
      * as its label alone: {@link RowStyle#PLAIN} would leave a colon
      * pointing at nothing.
      */
-    private static void inlineList(SectionBuilder host, CvItem item, BrandTheme theme) {
+    private static void inlineList(SectionBuilder host, CvItem item, BrandTheme theme,
+                                   CvRenderKit kit) {
         // The title, not linkedTitle: this kind documents that it ignores the
         // link, and RowRenderer bolds a label by wrapping it in markdown
         // markers — which would nest around a link and print as literal
@@ -88,7 +110,7 @@ public final class ModuleRenderer {
             ParagraphPrimitive.writeBody(host, item.title(), theme.bodyBoldStyle(), theme);
             return;
         }
-        RowRenderer.render(host, new CvRow(item.title(), String.join(", ", item.body())),
+        kit.row(host, new CvRow(item.title(), String.join(", ", item.body())),
                 RowStyle.PLAIN, theme);
     }
 
@@ -102,7 +124,8 @@ public final class ModuleRenderer {
      * links wants {@link CvKind#BULLETS_STACKED}, which bolds through the
      * text style and leaves the link intact.</p>
      */
-    private static void bullet(SectionBuilder host, CvItem item, BrandTheme theme) {
+    private static void bullet(SectionBuilder host, CvItem item, BrandTheme theme,
+                               CvRenderKit kit) {
         if (item.body().isEmpty()) {
             // PLAIN/BULLETED end the label with a colon, which would point at
             // nothing. A title-only entry is a plain bullet.
@@ -111,7 +134,7 @@ public final class ModuleRenderer {
                     DocumentInsets.top((float) theme.spacing().paragraphMarginTop()), theme);
             return;
         }
-        RowRenderer.render(host, new CvRow(item.title(), String.join(" ", item.body())),
+        kit.row(host, new CvRow(item.title(), String.join(" ", item.body())),
                 RowStyle.BULLETED, theme);
     }
 
@@ -120,15 +143,14 @@ public final class ModuleRenderer {
      * the title ({@link RowStyle#BULLETED_STACKED}).
      */
     private static void stackedBullet(SectionBuilder host, CvItem item, BrandTheme theme,
-                                      boolean separate) {
+                                      CvRenderKit kit, boolean separate) {
         // Stacked items are multi-line blocks, so they get the same gap the
         // dispatcher puts between stacked rows — without it consecutive items
         // read as one.
         if (separate) {
             host.spacer(0, theme.spacing().entrySeparation());
         }
-        RowRenderer.render(host, new CvRow(linkedTitle(item), ""),
-                RowStyle.BULLETED_STACKED, theme);
+        kit.row(host, new CvRow(linkedTitle(item), ""), RowStyle.BULLETED_STACKED, theme);
         // A bulleted body nests a bullet under the item's own; prose is indented
         // to the title instead of carrying a second glyph.
         String glyph = item.bodyStyle() == BodyStyle.BULLETS
@@ -147,11 +169,11 @@ public final class ModuleRenderer {
      * in the style the item asked for.
      */
     private static void entry(SectionBuilder host, CvItem item, String date,
-                              BrandTheme theme, boolean separate) {
+                              BrandTheme theme, CvRenderKit kit, boolean separate) {
         if (separate) {
             host.spacer(0, theme.spacing().entrySeparation());
         }
-        EntryRenderer.render(host,
+        kit.entry(host,
                 new CvEntry(linkedTitle(item), subtitleWithLocation(item), date, ""), theme);
         for (String line : item.body()) {
             if (item.bodyStyle() == BodyStyle.BULLETS) {

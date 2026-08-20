@@ -12,6 +12,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.cv.components.*;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -87,7 +88,7 @@ public final class EditorialBlue {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -121,7 +122,7 @@ public final class EditorialBlue {
                     CvSection section = sections.get(i);
                     String name = "CvV2EditorialBlue_" + i;
                     FlowSectionHeader.label(pageFlow, name + "_Title",
-                            displayTitle(section.title()), width, theme,
+                            headingFor(section), width, theme,
                             sectionTitleStyle(), new DocumentInsets(8, 0, 0, 0),
                             new DocumentInsets(7, 0, 5, 0),
                             DocumentInsets.zero(), true);
@@ -152,7 +153,7 @@ public final class EditorialBlue {
                     // would render as nothing at all: an empty heading over blank
                     // space, which reads as a finished CV that quietly lost a
                     // section.
-                    SectionDispatcher.renderBody(section, cvSection, theme);
+                    SectionDispatcher.renderBody(section, cvSection, theme, kit());
                 }
             }
 
@@ -170,6 +171,43 @@ public final class EditorialBlue {
                         renderExperienceEntry(section, entries.entries().get(i));
                     }
                 }
+            }
+
+            /**
+             * This preset's own drawing, so a runtime module gets the
+             * editorial entry, project, and key/value shapes.
+             *
+             * <p>Entries take the experience styling. The preset picks
+             * between its experience and education variants by sniffing a
+             * section's heading, which is exactly what a module carries a
+             * role to avoid; until the kit is handed that role, one of the
+             * two has to be the answer, and experience is the shape most
+             * modules take.</p>
+             */
+            @Override
+            public CvRenderKit kit() {
+                return new CvRenderKit() {
+
+                    @Override
+                    public void entry(SectionBuilder host, CvEntry entry, BrandTheme unused) {
+                        renderExperienceEntry(host, entry);
+                    }
+
+                    @Override
+                    public void row(SectionBuilder host, CvRow row, RowStyle style,
+                                    BrandTheme unused) {
+                        if (style == RowStyle.BULLETED_STACKED) {
+                            renderProject(host, row);
+                            return;
+                        }
+                        renderKeyValue(host, row);
+                    }
+
+                    @Override
+                    public void paragraph(SectionBuilder host, String text, BrandTheme unused) {
+                        renderParagraph(host, text, 1.6);
+                    }
+                };
             }
 
             private void renderExperienceEntry(SectionBuilder section, CvEntry entry) {
@@ -279,6 +317,21 @@ public final class EditorialBlue {
                                         theme.palette().muted()))
                                 .align(TextAlign.CENTER)
                                 .margin(DocumentInsets.top(2))));
+            }
+
+            /**
+             * The heading to print. A module carries a heading the author
+             * chose and a role that already says what the section is, so it
+             * prints as written; the keyword rename below exists to give the
+             * canonical sections this preset's editorial vocabulary, and
+             * applying it to a module would retitle "Certifications & Awards"
+             * as "EDUCATION" — which is exactly the promise
+             * {@code ModularCvTemplate} makes it must not do.
+             */
+            private String headingFor(CvSection section) {
+                return section instanceof ModuleSection
+                        ? section.title().toUpperCase(Locale.ROOT)
+                        : displayTitle(section.title());
             }
 
             private String displayTitle(String title) {

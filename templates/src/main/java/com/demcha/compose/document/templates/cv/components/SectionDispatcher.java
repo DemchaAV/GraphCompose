@@ -34,11 +34,31 @@ public final class SectionDispatcher {
      * @throws IllegalStateException if the section subtype is unhandled
      */
     public static void renderBody(SectionBuilder host, CvSection section, BrandTheme theme) {
+        renderBody(host, section, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * Renders the section body, drawing through {@code kit}.
+     *
+     * <p>The routing is identical to the three-argument form; only who draws
+     * differs. A preset with its own entry or row style passes its kit here
+     * so a runtime module looks like the rest of its document instead of
+     * like the canonical components.</p>
+     *
+     * @param host    host section receiving the body
+     * @param section the section whose subtype selects the renderer
+     * @param theme   the active theme supplying palette, typography, and spacing
+     * @param kit     how this template draws paragraphs, rows, and entries
+     * @throws IllegalStateException if the section subtype is unhandled
+     * @since 2.3.0
+     */
+    public static void renderBody(SectionBuilder host, CvSection section, BrandTheme theme,
+                                  CvRenderKit kit) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .padding(theme.spacing().sectionBodyPadding());
 
         if (section instanceof ParagraphSection p) {
-            ParagraphRenderer.render(host, p.body(), theme);
+            kit.paragraph(host, p.body(), theme);
         } else if (section instanceof SkillsSection s) {
             SkillsRenderer.render(host, s, theme);
         } else if (section instanceof RowsSection r) {
@@ -52,13 +72,13 @@ public final class SectionDispatcher {
                 if (i > 0 && stackedNeedsSeparator) {
                     host.spacer(0, theme.spacing().entrySeparation());
                 }
-                RowRenderer.render(host, r.rows().get(i), r.style(), theme);
+                kit.row(host, r.rows().get(i), r.style(), theme);
             }
         } else if (section instanceof ModuleSection m) {
             // Runtime-assembled module. The kind decides which of the
             // renderers above each item lands on, so this branch draws
             // nothing of its own — see ModuleRenderer.
-            ModuleRenderer.render(host, m, theme);
+            ModuleRenderer.render(host, m, theme, kit);
         } else if (section instanceof EntriesSection e) {
             // Timeline entries (Education, Experience) get a spacer
             // between items — each entry is a multi-line block
@@ -68,7 +88,7 @@ public final class SectionDispatcher {
                 if (i > 0) {
                     host.spacer(0, theme.spacing().entrySeparation());
                 }
-                EntryRenderer.render(host, e.entries().get(i), theme);
+                kit.entry(host, e.entries().get(i), theme);
             }
         } else {
             throw new IllegalStateException(

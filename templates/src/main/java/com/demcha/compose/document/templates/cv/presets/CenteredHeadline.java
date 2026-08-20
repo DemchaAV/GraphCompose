@@ -8,7 +8,9 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.cv.components.ProjectRenderer;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -109,7 +111,7 @@ public final class CenteredHeadline {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -119,6 +121,13 @@ public final class CenteredHeadline {
             @Override
             public String displayName() {
                 return DISPLAY_NAME;
+            }
+
+            @Override
+            public CvRenderKit kit() {
+                // This preset renders bodies through the shared dispatcher, so a
+                // runtime module already looks like the rest of its document.
+                return CvRenderKit.defaults();
             }
 
             @Override
@@ -184,7 +193,7 @@ public final class CenteredHeadline {
                     }
                     return;
                 }
-                SectionDispatcher.renderBody(host, sec, theme);
+                SectionDispatcher.renderBody(host, sec, theme, kit());
             }
 
             private void renderStackedProject(SectionBuilder host, CvRow row) {

@@ -6,6 +6,8 @@ import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvSection;
@@ -109,7 +111,7 @@ public final class ModernProfessional {
         return new Template(theme);
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    private record Template(BrandTheme theme) implements ModularCvTemplate {
 
         @Override
             public String id() {
@@ -119,6 +121,13 @@ public final class ModernProfessional {
             @Override
             public String displayName() {
                 return DISPLAY_NAME;
+            }
+
+            @Override
+            public CvRenderKit kit() {
+                // This preset renders bodies through the shared dispatcher, so a
+                // runtime module already looks like the rest of its document.
+                return CvRenderKit.defaults();
             }
 
             @Override
@@ -178,7 +187,7 @@ public final class ModernProfessional {
                         SectionHeader.flat(host, sec.title(), SECTION_TITLE_COLOR, theme);
                     });
                     pageFlow.addSection("Body_" + idx, host ->
-                            SectionDispatcher.renderBody(host, sec, theme));
+                            SectionDispatcher.renderBody(host, sec, theme, kit()));
                 }
 
                 pageFlow.build();

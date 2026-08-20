@@ -212,6 +212,41 @@ Modules and the four fixed types mix freely in one document, and both
 render through the same components — a module drawn as `ENTRIES_DATED`
 lays out exactly like the `EntriesSection` carrying the same content.
 
+### Which preset can you hand a runtime module to?
+
+Not every preset. Several compose a fixed set of modules and find each by
+matching headings, so a section they do not recognise never reaches a
+renderer; the CV still comes out, minus a section, looking finished. The
+ones that render whatever they are handed say so in the type system:
+
+```java
+List<ModularCvTemplate> safe = CvTemplates.modular();   // offer these
+
+CvTemplates.byId("modern-professional")                 // or look one up
+           .orElseThrow()
+           .compose(session, doc);
+```
+
+`CvTemplates` also answers `all()`, `ids()`, and `recommendedMargin(id)` —
+the margin a preset was designed at, which you need while building the
+session, before you have a template.
+
+Declaring `ModularCvTemplate` is not free: a fidelity suite renders a
+document carrying every kind, an invented heading, a heading in a script no
+keyword list contains, and a heading that *does* match one, through each
+template that declares it, and asserts every item reached the page under the
+author's own words.
+
+The promise covers `Slot.MAIN`, which is where sections go unless you say
+otherwise. Every shipped preset composes a single main column, so a section
+placed in `Slot.SIDEBAR` is dropped — by these templates as by every other.
+
+A template also says *how* it draws through `CvRenderKit`. The shared
+lowering turns a module into paragraphs, rows, and entries; the kit draws
+them, so a preset with its own entry style renders your runtime module in
+that style rather than the canonical one. Presets whose bodies already use
+the shared components return `CvRenderKit.defaults()`.
+
 ---
 
 <a id="slots"></a>

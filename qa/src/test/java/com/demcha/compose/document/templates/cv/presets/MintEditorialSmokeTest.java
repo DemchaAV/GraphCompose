@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.within;
 
 /**
  * Smoke test for the v2 Mint Editorial preset. Covers stable identity,
- * the two-page atomic-row composition against the full canonical sample
+ * the two-column composition against the full canonical sample
  * (including level-driven skill bars and the Awards / References grids),
  * and graceful degradation when the optional sidebar/main sections are
  * absent.
@@ -48,9 +48,9 @@ class MintEditorialSmokeTest {
             MintEditorial.create().compose(session, fullDocument());
             assertThat(session.roots()).isNotEmpty();
             LayoutGraph layout = session.layoutGraph();
-            // The preset emits two atomic page rows. The dense fullDocument
-            // fills page 1, so the second (atomic) row flows whole onto
-            // page 2 — a clean two-page document with neither row overflowing.
+            // Two pages is a property of this fixture rather than of the
+            // preset: the body is one column flow now, so the page count is
+            // whatever the content needs.
             assertThat(layout.totalPages()).isEqualTo(2);
         }
     }
@@ -70,7 +70,7 @@ class MintEditorialSmokeTest {
     @Test
     void custom_colour_options_render_two_pages() throws Exception {
         // Dark header band + white name + a contrasting rule and accent —
-        // exercises every Options knob at once. Still a clean two-page render.
+        // exercises every Options knob at once, and still renders clean.
         MintEditorial.Options options = MintEditorial.Options.builder()
                 .headerBandColor(DocumentColor.rgb(24, 24, 24))
                 .nameColor(DocumentColor.WHITE)
@@ -129,21 +129,21 @@ class MintEditorialSmokeTest {
     }
 
     @Test
-    void banded_and_bandless_place_first_row_identically() throws Exception {
-        // Complementary guard: the band must not shift the body. The first
-        // page-1 content row must start at the same y with and without a band.
-        double bandless = firstPageOneRowTop(MintEditorial.create());
-        double banded = firstPageOneRowTop(MintEditorial.create(
+    void banded_and_bandless_place_the_body_identically() throws Exception {
+        // Complementary guard: the band must not shift the body. The body's first
+        // line must start at the same y with and without a band.
+        double bandless = firstBodyTop(MintEditorial.create());
+        double banded = firstBodyTop(MintEditorial.create(
                 MintEditorial.Options.builder()
                         .headerBandColor(DocumentColor.rgb(228, 217, 198))
                         .build()));
         assertThat(banded)
-                .as("banded masthead must place the first row at the same y as "
+                .as("banded masthead must place the body at the same y as "
                         + "the bandless masthead")
                 .isCloseTo(bandless, within(0.5));
     }
 
-    private static double firstPageOneRowTop(DocumentTemplate<CvDocument> template)
+    private static double firstBodyTop(DocumentTemplate<CvDocument> template)
             throws Exception {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
@@ -154,11 +154,11 @@ class MintEditorialSmokeTest {
             double pageHeight = session.canvas().height();
             return layout.fragments().stream()
                     .filter(f -> f.pageIndex() == 0)
-                    .filter(f -> f.path().contains("CvV2MintEditorialPageOne"))
+                    .filter(f -> f.path().contains("CvV2MintEditorialBody"))
                     .mapToDouble(f -> pageHeight - (f.y() + f.height()))
                     .min()
                     .orElseThrow(() -> new AssertionError(
-                            "page-1 row fragments not found"));
+                            "body fragments not found"));
         }
     }
 

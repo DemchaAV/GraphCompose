@@ -3,6 +3,8 @@ package com.demcha.compose.document.templates.cv.presets;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.layout.LayoutGraph;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -38,6 +40,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * columns, so a cap reintroduced anywhere fails here rather than shipping.</p>
  */
 class SidebarPortraitContentFidelityTest {
+
+    /**
+     * The floor a continuation page has to clear regardless of what the preset
+     * chooses to reserve — roughly 8.5mm, past the widest non-printable band in
+     * common consumer printers. Stated here as a literal so the guard measures the
+     * requirement rather than the preset's own constant.
+     */
+    private static final double PRINTER_SAFE_MINIMUM = 24.0;
 
     @Test
     void everyEntryOfADenseCvSurvivesIntoThePdf() throws Exception {
@@ -113,7 +123,95 @@ class SidebarPortraitContentFidelityTest {
                 .isEqualTo(main.startPage());
     }
 
+    @Test
+    void aContinuationPageKeepsItsFirstLineOffTheTrimmedEdge() throws Exception {
+        // RECOMMENDED_MARGIN is 0 so the sidebar fill reaches the paper edge, and
+        // the columns' padding is an edge of the columns rather than of each page:
+        // it holds page one's content down and says nothing about page two's. The
+        // preset asks for a page-margin rule to cover the difference; this is the
+        // measurement that says it arrived.
+        try (DocumentSession session = newSession()) {
+            SidebarPortrait.create().compose(session, denseDocument());
+            LayoutGraph graph = session.layoutGraph();
+            double pageHeight = session.canvas().height();
+
+            assertThat(graph.totalPages())
+                    .describedAs("the fixture has to reach a second page for this to mean anything")
+                    .isGreaterThan(1);
+            for (int page = 1; page < graph.totalPages(); page++) {
+                double gap = firstLineTopGap(graph, pageHeight, page);
+                // Two floors, deliberately. The literal is the requirement — it
+                // does not move when the preset's constant does, so lowering
+                // CONTINUATION_TOP_SAFE_AREA to zero fails here rather than
+                // quietly turning this assertion into `>= 0`. The constant is the
+                // preset's advertised promise, checked separately so a preset that
+                // reserves less than it documents is named as that.
+                assertThat(gap)
+                        .describedAs("page %d clears the widest common non-printable band", page + 1)
+                        .isGreaterThanOrEqualTo(PRINTER_SAFE_MINIMUM);
+                assertThat(gap)
+                        .describedAs("page %d gets the inset the preset advertises", page + 1)
+                        .isGreaterThanOrEqualTo(SidebarPortrait.CONTINUATION_TOP_SAFE_AREA);
+            }
+        }
+
+        // The same document with the preset's rule taken back off, so the number
+        // above is attributed to the rule and not to whatever else is on the page.
+        // A preset that stopped asking for the safe area fails the loop above; a
+        // preset whose padding silently started covering it fails here.
+        try (DocumentSession session = newSession()) {
+            SidebarPortrait.create().compose(session, denseDocument());
+            session.pageMargins(List.of());
+            LayoutGraph graph = session.layoutGraph();
+
+            assertThat(firstLineTopGap(graph, session.canvas().height(), 1))
+                    .describedAs("without the rule the first line lands on the trimmed edge")
+                    .isLessThan(6.0);
+        }
+    }
+
+    @Test
+    void theFirstPageKeepsTheTopEdgeItsOwnDesignGaveIt() throws Exception {
+        // A safe area applied to every page rather than to the continuations would
+        // push the portrait, the hero strip and the whole first page down with it.
+        try (DocumentSession session = newSession()) {
+            SidebarPortrait.create().compose(session, denseDocument());
+            double withRule = firstLineTopGap(
+                    session.layoutGraph(), session.canvas().height(), 0);
+
+            session.pageMargins(List.of());
+            double withoutRule = firstLineTopGap(
+                    session.layoutGraph(), session.canvas().height(), 0);
+
+            assertThat(withRule)
+                    .describedAs("page one is laid out identically either way")
+                    .isCloseTo(withoutRule, org.assertj.core.data.Offset.offset(0.01));
+            // Pinned as a number too: comparing the two runs alone would pass just
+            // as well if the preset had stopped asking for a safe area at all. The
+            // hero strip's 59pt top margin plus its 19pt padding is what puts the
+            // first glyph here, and no page rule may move it.
+            assertThat(withRule)
+                    .describedAs("and it is the hero strip's own top edge, 59 + 19")
+                    .isCloseTo(78.0, org.assertj.core.data.Offset.offset(0.5));
+        }
+    }
+
     // -- helpers -----------------------------------------------------------
+
+    /**
+     * Distance from the trimmed top edge to the top of the highest line of text on
+     * a page. Measured on text fragments rather than placed nodes: a paragraph that
+     * broke across the page boundary belongs to a node that started on the previous
+     * page, and it is exactly that line the reader sees at the top of this one.
+     */
+    private static double firstLineTopGap(LayoutGraph graph, double pageHeight, int pageIndex) {
+        return graph.fragments().stream()
+                .filter(fragment -> fragment.pageIndex() == pageIndex)
+                .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
+                .mapToDouble(fragment -> pageHeight - (fragment.y() + fragment.height()))
+                .min()
+                .orElseThrow(() -> new AssertionError("no text on page " + (pageIndex + 1)));
+    }
 
     private static LayoutNodeSnapshot column(LayoutSnapshot snapshot, String name) {
         return snapshot.nodes().stream()

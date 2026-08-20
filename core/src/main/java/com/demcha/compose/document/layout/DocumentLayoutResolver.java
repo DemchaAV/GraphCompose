@@ -68,7 +68,12 @@ public final class DocumentLayoutResolver {
      */
     public LayoutGraph resolve() {
         PageGeometry geometry = context.pageGeometry();
-        boolean hasMargins = geometry != null;
+        // Only a horizontal difference makes the loop load-bearing: a block's
+        // assigned start page feeds nothing but the page's content width and left
+        // edge. Overrides that move the top or bottom margin — a continuation-page
+        // safe area, say — leave one width for the whole document, which the first
+        // pass already used, so re-running it would return the same graph.
+        boolean hasMargins = geometry != null && geometry.hasHorizontalOverrides();
         boolean hasPageReference = context.hasPageReference();
 
         LayoutGraph graph = compilePass(Map.of(), geometry, Map.of());

@@ -3,6 +3,7 @@ package com.demcha.compose.document.api;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
@@ -308,5 +309,115 @@ class PageMarginTest {
             assertThat(doc.sectionSnapshots()).hasSize(2);
         }
         assertThat(out).exists();
+    }
+
+    // -- continuation safe area ------------------------------------------
+
+    @Test
+    void aFullBleedDocumentResumesAtTheTrimmedEdgeWithoutASafeArea() throws Exception {
+        // The defect the safe area exists for, stated as a measurement. A page
+        // margin is the only inset applied once per page; the section's padding is
+        // an edge of the section, so it holds page 1 off the top and page 2 gets
+        // nothing. Without this case the safe-area test below would still pass if
+        // the padding had been doing the work all along.
+        try (DocumentSession session = fullBleedSession()) {
+            fillPastOnePage(session);
+
+            assertThat(firstLineTopGap(session, 1))
+                    .as("page 2 opens on whatever spacing preceded the break, nowhere near "
+                        + "the section's 30pt padding — that padding is an edge of the "
+                        + "section and was already spent on page 1")
+                    .isLessThan(12.0);
+            assertThat(firstLineTopGap(session, 0))
+                    .as("while page 1 sits on the section's own top padding")
+                    .isCloseTo(30.0, within(0.5));
+        }
+    }
+
+    @Test
+    void aTopOnlyRuleInsetsEveryPageItCovers() {
+        // The mechanism the templates-side safe area is built on, pinned at the
+        // engine level: raising only the top margin from page 2 leaves page 1 alone.
+        try (DocumentSession session = fullBleedSession()) {
+            session.pageMargins(List.of(
+                    PageMarginRule.from(2, new DocumentInsets(36, 0, 0, 0))));
+            fillPastOnePage(session);
+
+            assertThat(session.layoutGraph().totalPages())
+                    .as("the fixture has to actually continue for this to mean anything")
+                    .isGreaterThan(1);
+            for (int page = 1; page < session.layoutGraph().totalPages(); page++) {
+                assertThat(firstLineTopGap(session, page))
+                        .as("page %d clears the safe area", page + 1)
+                        .isGreaterThanOrEqualTo(36.0);
+            }
+            assertThat(firstLineTopGap(session, 0))
+                    .as("and page 1 keeps the top edge its own design gave it")
+                    .isCloseTo(30.0, within(0.5));
+        }
+    }
+
+    @Test
+    void aVerticalOnlyRuleStillLaysOutLikeItsSinglePassSelf() {
+        // A top-only rule cannot change any page's width, so the resolver settles it
+        // in one pass. This pins that the shortcut did not change the answer: the
+        // same rule expressed with a horizontal difference — which does take the
+        // fixed point — puts the same first line in the same place vertically.
+        try (DocumentSession shortcut = fullBleedSession();
+             DocumentSession fixedPoint = fullBleedSession()) {
+            shortcut.pageMargins(List.of(
+                    PageMarginRule.from(2, new DocumentInsets(36, 0, 0, 0))));
+            fixedPoint.pageMargins(List.of(
+                    PageMarginRule.from(1, new DocumentInsets(0, 0, 0, 0)),
+                    PageMarginRule.from(2, new DocumentInsets(36, 0, 0, 0))));
+            fillPastOnePage(shortcut);
+            fillPastOnePage(fixedPoint);
+
+            assertThat(shortcut.layoutGraph().totalPages())
+                    .isEqualTo(fixedPoint.layoutGraph().totalPages());
+            assertThat(firstLineTopGap(shortcut, 1))
+                    .isCloseTo(firstLineTopGap(fixedPoint, 1), within(0.01));
+        }
+    }
+
+    private static DocumentSession fullBleedSession() {
+        return GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(DocumentInsets.zero())
+                .create();
+    }
+
+    /** A padded section long enough to need a second page, as a column flow does. */
+    private static void fillPastOnePage(DocumentSession session) {
+        session.dsl().pageFlow()
+                .name("Root")
+                .padding(DocumentInsets.zero())
+                .addColumnFlow("Body", body -> body
+                        .addColumn("Only", column -> {
+                            column.padding(DocumentInsets.of(30)).spacing(6);
+                            for (int index = 0; index < 60; index++) {
+                                int current = index;
+                                column.addParagraph(p -> p
+                                        .name("line-" + current)
+                                        .text("line " + current + " with enough words to occupy a line"));
+                            }
+                        }))
+                .build();
+    }
+
+    /**
+     * Distance from the trimmed top edge to the top of the highest line of text on
+     * a page. Measured on text fragments rather than nodes: a paragraph that broke
+     * across the page boundary still belongs to a node that started on the previous
+     * page, and it is exactly that line the reader sees at the top.
+     */
+    private static double firstLineTopGap(DocumentSession session, int pageIndex) {
+        double pageHeight = session.canvas().height();
+        return session.layoutGraph().fragments().stream()
+                .filter(fragment -> fragment.pageIndex() == pageIndex)
+                .filter(fragment -> fragment.payload() instanceof ParagraphFragmentPayload)
+                .mapToDouble(fragment -> pageHeight - (fragment.y() + fragment.height()))
+                .min()
+                .orElseThrow(() -> new AssertionError("no text on page " + (pageIndex + 1)));
     }
 }

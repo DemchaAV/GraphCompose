@@ -82,6 +82,77 @@ down the gutter — belongs in a [page background](page-backgrounds.md), which
 paints on every page by definition and does not care where the content
 broke.
 
+## Safe areas on continuation pages
+
+A column's padding is an edge of the **column**, not of each page. It is
+reserved once, at the top of the page the column opens on and the bottom of
+the page it closes on. Every page in between — and the top of every page the
+column continues onto — gets nothing from it.
+
+The page margin is the inset that applies once per page, so in an ordinary
+document this never comes up: the margin is already holding content away from
+the paper edge on every page, and the padding is decoration on top of it. It
+shows up in a **full-bleed** layout. Setting the margin to zero so a page
+background can reach the paper edge gives up the safe area on all four sides,
+when only the two horizontal ones had to go — and the first line of page 2
+lands inside the band most printers cannot reach:
+
+```
+  page 1                    page 2
+  ┌────────┬─────────┐      ┌────────┬─────────┐
+  │        │         │      │ side…  │ main…   │ ← first line on the trim
+  │ side   │ main    │      │ …cont. │ …cont.  │
+  └────────┴─────────┘      └────────┴─────────┘
+    ↑ the column padding held this page down, and only this page
+```
+
+Restore the top of the margin on the continuation pages only — a page-margin
+rule is the one inset the engine applies per page:
+
+<!-- doc-example: id=column-flow-continuation-safe-area mode=method imports=com.demcha.compose.GraphCompose,com.demcha.compose.document.api.DocumentPageSize,com.demcha.compose.document.api.DocumentSession,com.demcha.compose.document.api.PageMarginRule,com.demcha.compose.document.style.DocumentInsets,java.util.List -->
+```java
+try (DocumentSession session = GraphCompose.document()
+        .pageSize(DocumentPageSize.A4)
+        .margin(DocumentInsets.zero())        // full bleed on all four sides…
+        .create()) {
+    // …but half an inch of safe area at the top of page 2 onward
+    session.pageMargins(List.of(
+            PageMarginRule.from(2, new DocumentInsets(36, 0, 0, 0))));
+}
+```
+
+Keep the other three edges of the margin you chose, so the layout stays
+full-bleed horizontally and the page backgrounds — which are ratios of the
+*page*, not of the content box — keep bleeding on every page. Page 1 is
+deliberately not covered: a body's first page owns its own top edge, and a rule
+that covered it would push that whole page down.
+
+Which page and which edge is a design decision rather than an engine one, so
+the ready-made version lives in `templates`:
+`ContinuationSafeArea.applyTo(session, 2, ContinuationSafeArea.PRINTER_SAFE_TOP)`
+derives the rule from `session.margin()`, names the first page to inset (`2`
+for a body that opens the document, `3` when a cover comes first), and does
+nothing at all when the margin already provides the safe area — so a template
+can call it unconditionally without turning an ordinary document into a
+per-page one, or deleting rules its caller set. `pageMargins(...)` replaces
+rather than merges, so a template that wants rules of its own writes them
+together rather than calling both.
+
+It guards the **top** edge only. Content still flows to the bottom of every
+page it fills, which in a full-bleed layout is the trimmed bottom edge. A
+bottom safe area is a bottom inset on `margin(...)` itself rather than a rule
+like this one, because unlike the top it has to apply to page 1 as well — and
+giving page 1 less height changes where it breaks.
+
+A rule that moves only the top or bottom margin costs nothing extra to lay out:
+per-page margins are resolved through a fixed point only when a page's *width*
+can differ, and a vertical-only rule leaves one width for the whole document.
+
+Keeping the horizontal edges is not only about the bleed. Column widths are
+resolved once, at the flow's entry, so a rule that narrowed the pages the flow
+continues onto would inset the *page* without narrowing the columns drawn on
+it — see [Widths](#widths).
+
 ## Widths
 
 Widths come from `weights` (or split evenly when you pass none) and are

@@ -689,6 +689,23 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Returns the document-wide page margin — whatever was last passed to
+     * {@link #margin(DocumentInsets)}, or zero insets when none was.
+     *
+     * <p>Composition code that has to reason about the page's own edges reads it
+     * here rather than through {@link #canvas()}, whose margin is an engine type.
+     * A template that derives per-page geometry from it — see
+     * {@link PageMarginRule#continuationSafeArea(DocumentInsets, double)} — keeps
+     * working when the caller chooses a margin other than the one it recommends.</p>
+     *
+     * @return the current page margin
+     * @since 2.3.0
+     */
+    public DocumentInsets margin() {
+        return margin;
+    }
+
+    /**
      * Returns the usable content height of the page in points — the page height
      * minus the top and bottom margins. Convenience alias for
      * {@code canvas().innerHeight()}: the value a composition reads to decide how

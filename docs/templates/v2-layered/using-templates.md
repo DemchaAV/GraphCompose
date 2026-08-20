@@ -253,10 +253,17 @@ The presets outside that list are not broken, they are *designed*: each
 composes a fixed set of slots, so it renders the roles it has a place for
 and drops a section it has no slot for. Give such a preset a CV whose
 sections map onto roles and it renders them all; give it an extra
-"Volunteering" module and that one is lost. The reason is structural — the
-whole body of those presets is one atomic block that cannot break across
-pages, so there is nowhere to put an extra section — and lifting it needs
-pagination work, not routing.
+"Volunteering" module and that one is lost. For most of them the reason is
+structural — the whole body is one atomic block that cannot break across
+pages, so there is nowhere to put an extra section, and lifting that needs
+pagination work rather than routing.
+
+`SidebarPortrait` is past that point: its body is a column flow, so both
+columns continue on the next page and it renders as much of a career as it
+is handed. It no longer caps its blocks — it used to draw two jobs, two
+degrees, five skills, three languages and two projects, and silently drop
+the rest. What it still does not have is a place for a section it does not
+recognise, which is why it is not on the modular list yet.
 
 A template also says *how* it draws through `CvRenderKit`. The shared
 lowering turns a module into paragraphs, rows, and entries; the kit draws

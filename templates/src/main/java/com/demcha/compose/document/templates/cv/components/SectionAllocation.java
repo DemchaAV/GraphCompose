@@ -1,14 +1,20 @@
 package com.demcha.compose.document.templates.cv.components;
 
 import com.demcha.compose.document.templates.cv.data.CvSection;
+import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ModuleSection;
+import com.demcha.compose.document.templates.cv.data.ParagraphSection;
+import com.demcha.compose.document.templates.cv.data.RowStyle;
+import com.demcha.compose.document.templates.cv.data.RowsSection;
 import com.demcha.compose.document.templates.cv.data.SectionRole;
+import com.demcha.compose.document.templates.cv.data.SkillsSection;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 /**
  * Assigns a CV's sections to a preset's fixed modules and keeps whatever is
@@ -36,7 +42,7 @@ import java.util.Objects;
 public final class SectionAllocation {
 
     private final List<CvSection> sections;
-    private final Map<CvSection, Boolean> claimed = new IdentityHashMap<>();
+    private final Map<CvSection, Boolean> claimedSections = new IdentityHashMap<>();
 
     private SectionAllocation(List<CvSection> sections) {
         this.sections = sections;
@@ -79,17 +85,18 @@ public final class SectionAllocation {
     public CvSection claim(SectionRole role, List<String> keys) {
         if (role != null && role != SectionRole.OTHER) {
             for (CvSection section : sections) {
-                if (claimed.containsKey(section)) {
+                if (claimedSections.containsKey(section)) {
                     continue;
                 }
-                if (section instanceof ModuleSection module && module.role() == role) {
-                    claimed.put(section, Boolean.TRUE);
+                if (section instanceof ModuleSection module && module.role() == role
+                        && SectionLookup.hasContent(section)) {
+                    claimedSections.put(section, Boolean.TRUE);
                     return section;
                 }
             }
         }
         for (CvSection section : sections) {
-            if (claimed.containsKey(section)) {
+            if (claimedSections.containsKey(section)) {
                 continue;
             }
             if (section instanceof ModuleSection module
@@ -99,7 +106,7 @@ public final class SectionAllocation {
             String title = SectionLookup.normalize(section.title());
             for (String key : keys == null ? List.<String>of() : keys) {
                 if (title.contains(SectionLookup.normalize(key))) {
-                    claimed.put(section, Boolean.TRUE);
+                    claimedSections.put(section, Boolean.TRUE);
                     return section;
                 }
             }
@@ -127,17 +134,102 @@ public final class SectionAllocation {
             return null;
         }
         for (CvSection section : sections) {
-            if (claimed.containsKey(section)) {
+            if (claimedSections.containsKey(section)) {
                 continue;
             }
             String title = SectionLookup.normalize(section.title());
             for (String key : keys) {
                 if (title.contains(SectionLookup.normalize(key))) {
-                    claimed.put(section, Boolean.TRUE);
+                    claimedSections.put(section, Boolean.TRUE);
                     return section;
                 }
             }
         }
+        return null;
+    }
+
+    /**
+     * Claims a slot's section and hands it back as dated entries.
+     *
+     * <p>{@link SectionRouter} answers the same question but does not record
+     * that the section is spoken for, so a preset built on it cannot say what
+     * is left over. These four methods are that pairing: the role-first choice
+     * of {@link #claim(SectionRole, List)} with the shape lowering of the
+     * router, and the claim recorded so {@link #remaining()} is the truth.</p>
+     *
+     * @param role the role this slot holds
+     * @param keys heading fragments to fall back on
+     * @return the section as entries, or {@code null} when nothing matches
+     * @since 2.3.0
+     */
+    public CvSection entries(SectionRole role, List<String> keys) {
+        return claimAs(role, keys, SectionRouter::asEntries, EntriesSection.class);
+    }
+
+    /**
+     * Claims a slot's section and hands it back as label/value rows.
+     *
+     * @param role  the role this slot holds
+     * @param keys  heading fragments to fall back on
+     * @param style the decoration this slot draws rows with
+     * @return the section as rows, or {@code null} when nothing matches
+     * @since 2.3.0
+     */
+    public CvSection rows(SectionRole role, List<String> keys, RowStyle style) {
+        return claimAs(role, keys, section -> SectionRouter.asRows(section, style),
+                RowsSection.class);
+    }
+
+    /**
+     * Claims a slot's section and hands it back as one paragraph.
+     *
+     * @param role the role this slot holds
+     * @param keys heading fragments to fall back on
+     * @return the section as prose, or {@code null} when nothing matches
+     * @since 2.3.0
+     */
+    public CvSection paragraph(SectionRole role, List<String> keys) {
+        return claimAs(role, keys, SectionRouter::asParagraph, ParagraphSection.class);
+    }
+
+    /**
+     * Claims a slot's section and hands it back as grouped skills.
+     *
+     * @param role the role this slot holds
+     * @param keys heading fragments to fall back on
+     * @return the section as skill groups, or {@code null} when nothing matches
+     * @since 2.3.0
+     */
+    public CvSection skills(SectionRole role, List<String> keys) {
+        return claimAs(role, keys, SectionRouter::asSkills, SkillsSection.class);
+    }
+
+    /**
+     * Claims a section for a slot only if the slot can draw what it gets.
+     *
+     * <p>A slot's renderer is written against one section type and returns on
+     * anything else — {@code if (!(section instanceof RowsSection rows)) return;}.
+     * A keyword can match a section of the wrong type all the same: "Selected
+     * Projects" written as timeline entries matches a projects slot that draws
+     * rows. Claiming it there would draw the heading, draw nothing under it, and
+     * take the section out of {@link #remaining()} — the loss this class exists
+     * to prevent, one layer further in.</p>
+     *
+     * <p>So the claim is provisional: a section whose lowered shape is not the
+     * one the slot draws, or which lowers to nothing, is handed back and stays
+     * available to the next slot and to the leftover tail.</p>
+     */
+    private CvSection claimAs(SectionRole role, List<String> keys,
+                              UnaryOperator<CvSection> lowering, Class<?> drawable) {
+        CvSection claimed = claim(role, keys);
+        if (claimed == null) {
+            return null;
+        }
+        CvSection shaped = lowering.apply(claimed);
+        if (drawable.isInstance(shaped) && SectionLookup.hasContent(shaped)) {
+            return shaped;
+        }
+        claimedSections.remove(claimed);
         return null;
     }
 
@@ -154,7 +246,7 @@ public final class SectionAllocation {
     public List<CvSection> remaining() {
         List<CvSection> rest = new ArrayList<>();
         for (CvSection section : sections) {
-            if (!claimed.containsKey(section) && SectionLookup.hasContent(section)) {
+            if (!claimedSections.containsKey(section) && SectionLookup.hasContent(section)) {
                 rest.add(section);
             }
         }

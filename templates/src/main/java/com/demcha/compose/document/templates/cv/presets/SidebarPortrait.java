@@ -18,6 +18,7 @@ import com.demcha.compose.document.templates.core.page.ContinuationSafeArea;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
+import com.demcha.compose.document.templates.cv.components.SectionAllocation;
 import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
@@ -364,7 +365,8 @@ public final class SidebarPortrait {
             Objects.requireNonNull(document, "document");
             Objects.requireNonNull(doc, "doc");
 
-            List<CvSection> sections = doc.sectionsIn(Slot.MAIN);
+            SectionAllocation allocation =
+                    SectionAllocation.of(doc.sectionsIn(Slot.MAIN));
 
             // Paint the two-column chrome via pageBackgrounds — the
             // engine emits both fills on every page automatically, so
@@ -400,13 +402,13 @@ public final class SidebarPortrait {
                                     1.0 - SIDEBAR_WIDTH_RATIO)
                             .addColumn("CvV2SidebarPortraitSidebar",
                                     section -> addSidebar(section, doc,
-                                            sections))
+                                            allocation))
                             .addColumn("CvV2SidebarPortraitMain",
                                     section -> {
                                         section.spacing(0)
                                                 .padding(DocumentInsets.zero());
                                         addNameBlock(section, doc.identity());
-                                        addMain(section, sections);
+                                        addMain(section, allocation);
                                     }))
                     .build();
         }
@@ -414,7 +416,7 @@ public final class SidebarPortrait {
         // -- Sidebar -------------------------------------------------------
 
         private void addSidebar(SectionBuilder section, CvDocument doc,
-                                List<CvSection> sections) {
+                                SectionAllocation allocation) {
             // Sidebar section deliberately has no fillColor — the
             // pageBackgrounds emitted in compose() paint the pale fill
             // edge-to-edge on every page.
@@ -424,19 +426,19 @@ public final class SidebarPortrait {
             addPhotoBlock(section);
             addContactBlock(section, doc.identity());
 
-            CvSection education = SectionRouter.entries(sections, SectionRole.EDUCATION, EDUCATION_KEYS);
+            CvSection education = allocation.entries(SectionRole.EDUCATION, EDUCATION_KEYS);
             if (hasContent(education)) {
                 addSidebarHeader(section, "Education");
                 addEducationEntries(section, education);
             }
 
-            CvSection skills = SectionRouter.skills(sections, SectionRole.SKILLS, SKILL_KEYS);
+            CvSection skills = allocation.skills(SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
                 addSidebarHeader(section, "Key Skills");
                 addSkillsList(section, skills);
             }
 
-            CvSection languages = SectionRouter.rows(sections, SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
+            CvSection languages = allocation.rows(SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
             if (hasContent(languages)) {
                 addSidebarHeader(section, "Languages");
                 addLanguageList(section, languages);
@@ -640,29 +642,69 @@ public final class SidebarPortrait {
                             .margin(DocumentInsets.zero())));
         }
 
-        private void addMain(SectionBuilder section, List<CvSection> sections) {
+        private void addMain(SectionBuilder section, SectionAllocation allocation) {
             section.addSection("CvV2SidebarPortraitContent", content -> {
                 content.spacing(MAIN_CONTENT_SPACING)
                         .padding(new DocumentInsets(24, 34, 24, 34));
 
-                CvSection profile = SectionRouter.paragraph(sections, SectionRole.SUMMARY, SUMMARY_KEYS);
+                CvSection profile = allocation.paragraph(SectionRole.SUMMARY, SUMMARY_KEYS);
                 if (hasContent(profile)) {
                     addMainSectionHeader(content, "Professional Profile");
                     addProfileBody(content, profile);
                 }
 
-                CvSection experience = SectionRouter.entries(sections, SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
+                CvSection experience = allocation.entries(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
                 if (hasContent(experience)) {
                     addMainSectionHeader(content, "Experience");
                     addExperienceEntries(content, experience);
                 }
 
-                CvSection projects = SectionRouter.rows(sections, SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
+                CvSection projects = allocation.rows(SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
                 if (hasContent(projects)) {
                     addMainSectionHeader(content, "Projects");
                     addProjectsList(content, projects);
                 }
+
+                // Whatever no slot claimed — an "Awards", a "Publications", a
+                // module the catalogue has no role for — under the title its
+                // author wrote. This preset has a place for six categories and a
+                // CV is not obliged to have exactly those; before the body
+                // paginated there was nowhere to put the rest, and dropping it
+                // looked like a finished page.
+                for (CvSection leftover : allocation.remaining()) {
+                    CvSection shaped = SectionRouter.naturalShape(leftover);
+                    // A module with items but nothing in them lowers to an empty
+                    // shape; a heading over nothing is worse than the drop.
+                    if (!hasContent(shaped)) {
+                        continue;
+                    }
+                    addMainSectionHeader(content, leftover.title());
+                    addLeftoverBody(content, shaped);
+                }
             });
+        }
+
+        /**
+         * Draws a section this preset has no slot for, in the shape its author
+         * chose, using the main column's own renderers.
+         */
+        private void addLeftoverBody(SectionBuilder content, CvSection shaped) {
+            if (shaped instanceof ParagraphSection) {
+                addProfileBody(content, shaped);
+            } else if (shaped instanceof EntriesSection) {
+                addExperienceEntries(content, shaped);
+            } else if (shaped instanceof RowsSection) {
+                addProjectsList(content, shaped);
+            } else if (shaped instanceof SkillsSection skills) {
+                // Grouped skills read as one labelled row per category, which is
+                // what the projects renderer draws.
+                List<CvRow> rows = new ArrayList<>();
+                for (SkillGroup group : skills.groups()) {
+                    rows.add(new CvRow(group.category(), group.skillsInline()));
+                }
+                addProjectsList(content, new RowsSection(skills.title(), rows,
+                        RowStyle.BULLETED_STACKED));
+            }
         }
 
         /**

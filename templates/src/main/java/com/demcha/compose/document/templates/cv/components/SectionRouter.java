@@ -46,10 +46,12 @@ import java.util.List;
  * are joined where the target type holds one string, and a bulleted
  * description reads as prose.</p>
  *
- * <p>These presets still drop a section that matches no slot at all — their
- * whole body is one atomic row that cannot paginate, so there is nowhere to
- * put it. Routing by role fixes the sections that were lost while a slot
- * for them sat empty; the rest waits on pagination.</p>
+ * <p>A section that matches no slot at all is a different question, and one
+ * this class cannot answer: it keeps no memory of what a previous slot took.
+ * {@link SectionAllocation} does, so a preset that wants to draw the leftovers
+ * claims through it and reads {@link SectionAllocation#remaining()} — with
+ * {@link #naturalShape(CvSection)} for the shape those sections have no slot
+ * to give them.</p>
  *
  * @since 2.3.0
  */
@@ -76,7 +78,22 @@ public final class SectionRouter {
      */
     public static CvSection entries(List<CvSection> sections, SectionRole role,
                                     List<String> keys) {
-        CvSection found = find(sections, role, keys);
+        return asEntries(find(sections, role, keys));
+    }
+
+    /**
+     * The entries shape of an already-chosen section.
+     *
+     * <p>The lowering half of {@link #entries(List, SectionRole, List)}, split
+     * out so a caller that picked the section itself — {@link SectionAllocation},
+     * which has to record the claim to know what is left over — draws it the
+     * same way rather than routing twice.</p>
+     *
+     * @param found the section a slot claimed, or {@code null}
+     * @return the section as entries, or {@code null}
+     * @since 2.3.0
+     */
+    public static CvSection asEntries(CvSection found) {
         if (!(found instanceof ModuleSection module)) {
             return found;
         }
@@ -105,7 +122,18 @@ public final class SectionRouter {
      */
     public static CvSection rows(List<CvSection> sections, SectionRole role,
                                  List<String> keys, RowStyle style) {
-        CvSection found = find(sections, role, keys);
+        return asRows(find(sections, role, keys), style);
+    }
+
+    /**
+     * The rows shape of an already-chosen section.
+     *
+     * @param found the section a slot claimed, or {@code null}
+     * @param style the decoration this slot draws rows with
+     * @return the section as rows, or {@code null}
+     * @since 2.3.0
+     */
+    public static CvSection asRows(CvSection found, RowStyle style) {
         if (!(found instanceof ModuleSection module)) {
             return found;
         }
@@ -139,7 +167,17 @@ public final class SectionRouter {
      */
     public static CvSection paragraph(List<CvSection> sections, SectionRole role,
                                       List<String> keys) {
-        CvSection found = find(sections, role, keys);
+        return asParagraph(find(sections, role, keys));
+    }
+
+    /**
+     * The prose shape of an already-chosen section.
+     *
+     * @param found the section a slot claimed, or {@code null}
+     * @return the section as one paragraph, or {@code null}
+     * @since 2.3.0
+     */
+    public static CvSection asParagraph(CvSection found) {
         if (!(found instanceof ModuleSection module)) {
             return found;
         }
@@ -168,7 +206,17 @@ public final class SectionRouter {
      */
     public static CvSection skills(List<CvSection> sections, SectionRole role,
                                    List<String> keys) {
-        CvSection found = find(sections, role, keys);
+        return asSkills(find(sections, role, keys));
+    }
+
+    /**
+     * The grouped-skills shape of an already-chosen section.
+     *
+     * @param found the section a slot claimed, or {@code null}
+     * @return the section as skill groups, or {@code null}
+     * @since 2.3.0
+     */
+    public static CvSection asSkills(CvSection found) {
         if (!(found instanceof ModuleSection module)) {
             return found;
         }
@@ -187,6 +235,33 @@ public final class SectionRouter {
             groups.add(SkillGroup.ofNames(module.title(), loose));
         }
         return new SkillsSection(module.title(), groups);
+    }
+
+    /**
+     * The shape the section's own author asked for.
+     *
+     * <p>A slot lowers a module to the shape <em>it</em> draws. A section no
+     * slot claimed has no such answer, so this asks the module instead: its
+     * {@link CvKind} is the shape it was built as, which is the only reading
+     * that cannot be wrong for a category the preset does not know about.
+     * Anything that is not a module is already a shape and comes back
+     * unchanged.</p>
+     *
+     * @param section a section, typically one from {@link SectionAllocation#remaining()}
+     * @return the section in the shape its kind names
+     * @since 2.3.0
+     */
+    public static CvSection naturalShape(CvSection section) {
+        if (!(section instanceof ModuleSection module)) {
+            return section;
+        }
+        return switch (module.kind()) {
+            case PARAGRAPH -> asParagraph(section);
+            case ENTRIES, ENTRIES_DATED -> asEntries(section);
+            case BULLETS -> asRows(section, RowStyle.BULLETED);
+            case BULLETS_STACKED -> asRows(section, RowStyle.BULLETED_STACKED);
+            case INLINE_LIST -> asRows(section, RowStyle.PLAIN);
+        };
     }
 
     /**

@@ -111,6 +111,47 @@ follow semantic versioning; release dates are ISO 8601.
   page width the sidebar column has no room for the photo and the layout fails instead of
   drawing it over the main column.
 
+- **A section a preset has no slot for is drawn instead of dropped.** The three
+  two-column presets place sections into a designed layout — a portrait sidebar, a main
+  narrative — and rendered the six or seven categories they thought to ask about. An
+  "Awards", a "Publications", a runtime module the catalogue has no role for: never looked
+  at, and invisible in the output, because the page came out looking finished. That was the
+  last silent loss left in these presets, and it could not be fixed while their body was
+  one atomic row, because there was nowhere to put an extra section.
+
+  Each of them now ends its main column with whatever no slot claimed, under the heading
+  its author wrote — the only label that can be right for a category the preset does not
+  know about. Sidebar Portrait and Monogram Sidebar draw it through their own block
+  renderers so it looks like the rest of the document; Mint Editorial draws entries through
+  its experience block and flattens rows to label/value lines rather than into its awards
+  grid, which is a two-column table and the wrong shape for a category of unknown size. `SectionAllocation` gained the four shaped claims (`entries`, `rows`,
+  `paragraph`, `skills`) that pair its role-first choice with `SectionRouter`'s shape
+  lowering, so a preset gets the section in the form its slot draws *and* the claim is
+  recorded — which is what makes `remaining()` the truth rather than a guess.
+  `SectionRouter.naturalShape(...)` answers the question a leftover raises and a slot never
+  does: what shape did this section's own author ask for.
+
+  A claim is provisional, which is what makes the tail complete rather than nearly so. A
+  slot's renderer is written against one section type and returns on anything else, so a
+  keyword could match a section of the wrong shape — "Selected Projects" written as
+  timeline entries matching a projects slot that draws rows — and the claim would take it
+  out of reach of the tail while drawing nothing under its heading. A section whose lowered
+  shape is not the one the slot draws is handed back and stays available to the next slot
+  and to the leftovers. The same guard closes a second case: a module that names a role and
+  carries nothing no longer shadows the section that has the content.
+
+  `LeftoverSectionTest` renders a CV carrying four unrecognised categories — prose, rows,
+  entries, and a module whose role is `OTHER` — through all three presets and asserts each
+  one reached the PDF under the author's heading, that a section a slot did claim is still
+  drawn exactly once, that a section a slot matched but cannot draw still reaches the page,
+  and that an empty role-bearing module leaves the real section in its slot rather than in
+  the tail. Removing the tails, or either half of the provisional claim, turns cases red.
+
+  Mint Editorial's visual baseline is re-recorded: the canonical sample carries a Projects
+  and an Additional Information section that this preset has no block for, and it drew
+  neither until now. The other two presets' baselines are unchanged — the sample has
+  nothing they do not recognise.
+
 - **Mint Editorial flows instead of dealing its pages.** This preset did not cap its body
   the way its siblings did — it dealt it. Each page was a separate atomic row filled by
   hand: profile and the first two jobs on page 1, the remaining jobs plus awards and

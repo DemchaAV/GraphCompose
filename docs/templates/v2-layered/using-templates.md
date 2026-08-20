@@ -266,9 +266,13 @@ any more —
 languages and two projects, `MonogramSidebar` two jobs, two degrees, seven
 skills, three projects and three additional rows, and `MintEditorial` six
 expertise labels and six skill bars — and all of them silently dropped the rest.
-`MintEditorial` also stopped dealing its content two pages at a time. What they
-still do not have is a place for a section they do not recognise, which is why
-none of them is on the modular list yet.
+`MintEditorial` also stopped dealing its content two pages at a time. A section
+they have no slot for is no longer dropped either: it is drawn at the end of the
+main column under the heading its author wrote. What still keeps them off the
+modular list is the other half of that promise: each of them prints its own label
+over at least some claimed sections, so a heading the author wrote can still be
+renamed — `SidebarPortrait` labels all six of its slots, and a
+"Certifications & Awards" routed into its education slot reads as "EDUCATION".
 
 A template also says *how* it draws through `CvRenderKit`. The shared
 lowering turns a module into paragraphs, rows, and entries; the kit draws

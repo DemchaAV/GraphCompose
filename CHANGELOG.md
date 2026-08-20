@@ -111,6 +111,29 @@ follow semantic versioning; release dates are ISO 8601.
   page width the sidebar column has no room for the photo and the layout fails instead of
   drawing it over the main column.
 
+- **Mint Editorial flows instead of dealing its pages.** This preset did not cap its body
+  the way its siblings did — it dealt it. Each page was a separate atomic row filled by
+  hand: profile and the first two jobs on page 1, the remaining jobs plus awards and
+  references on page 2, with the sidebar split to match. A career needing a third page had
+  nowhere to go, and the layout of a short CV was decided in advance rather than by what
+  fit. Two blocks were capped outright on top of that: six expertise labels and six skill
+  bars, with the rest dropped in silence.
+
+  The body is a single column flow now. Each column runs the whole document and breaks
+  where it runs out of page, so what lands on a later page is what did not fit; the
+  hand-slicing and both caps are gone, and block headings are kept with the block they
+  introduce. A CV with many skills is therefore longer than it used to be, and honestly
+  so — the canonical sample now runs to three pages, because its sidebar draws all
+  thirty-odd skill bars rather than the first six. Awards and References keep their place
+  in the main column, where they always lived; they sat inside the section rather than the
+  row precisely because a row could not host a table, and a column has no such rule.
+
+  `MintEditorialPaginationTest` asserts every expertise label and skill bar reached the
+  PDF, that every job did — by employer, since two of the titles are substrings of other
+  entries the preset draws — that no per-page row node survives, that the sidebar carries
+  past the first page, and that every block heading is bound to its block. Baselines and
+  both committed previews re-recorded.
+
 - **Monogram Sidebar renders the whole CV it is handed too.** The same shape as Sidebar
   Portrait, and the same caps: two jobs, two degrees, seven skills, three projects, three
   additional rows, with everything past them dropped in silence because the body was one

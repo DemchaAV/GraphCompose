@@ -258,14 +258,17 @@ structural — the whole body is one atomic block that cannot break across
 pages, so there is nowhere to put an extra section, and lifting that needs
 pagination work rather than routing.
 
-`SidebarPortrait` and `MonogramSidebar` are past that point: their bodies are
-column flows, so both columns continue on the next page and each renders as
-much of a career as it is handed. Neither caps its blocks any more —
+`SidebarPortrait`, `MonogramSidebar` and `MintEditorial` are past that point:
+their bodies are column flows, so both columns continue on the next page and
+each renders as much of a career as it is handed. None of them caps its blocks
+any more —
 `SidebarPortrait` used to draw two jobs, two degrees, five skills, three
 languages and two projects, `MonogramSidebar` two jobs, two degrees, seven
-skills, three projects and three additional rows, and both silently dropped
-the rest. What they still do not have is a place for a section they do not
-recognise, which is why neither is on the modular list yet.
+skills, three projects and three additional rows, and `MintEditorial` six
+expertise labels and six skill bars — and all of them silently dropped the rest.
+`MintEditorial` also stopped dealing its content two pages at a time. What they
+still do not have is a place for a section they do not recognise, which is why
+none of them is on the modular list yet.
 
 A template also says *how* it draws through `CvRenderKit`. The shared
 lowering turns a module into paragraphs, rows, and entries; the kit draws

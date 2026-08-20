@@ -41,36 +41,31 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * v2 "Mint Editorial" CV preset — a two-page, two-column editorial resume
- * ported from the flat canonical {@code MintEditorialCvTemplate}.
+ * v2 "Mint Editorial" CV preset — a two-column editorial resume ported from
+ * the flat canonical {@code MintEditorialCvTemplate}.
  *
  * <p>Visual signature: a centred spaced-caps name with a soft mint accent
- * tagline, a full-width 6pt mint accent rule, then two pages that each lay
- * out a narrow left sidebar (weight {@value #SIDEBAR_WEIGHT}) beside a wide
- * main column. Page 1 sidebar carries Contact (icon rows), Interests and
- * Education; page 1 main carries Profile and the first slice of Experience.
- * Page 2 sidebar carries Expertise (badge + label list), level-driven Skill
- * bars and Social rows; page 2 main carries the rest of Experience plus
- * Awards and References two-column grids. Poppins throughout; the mint
- * accent lives in {@code theme.palette().banner()}.</p>
+ * tagline, a full-width 6pt mint accent rule, then a narrow left sidebar
+ * (weight {@value #SIDEBAR_WEIGHT}) beside a wide main column. The sidebar
+ * carries Contact (icon rows), Interests, Education, Expertise (badge + label
+ * list), level-driven Skill bars and Social rows; the main column carries
+ * Profile, Experience, and the Awards and References two-column grids.
+ * Poppins throughout; the mint accent lives in
+ * {@code theme.palette().banner()}.</p>
  *
- * <h2>Atomic-row partitioning</h2>
+ * <h2>One flow, not a page each</h2>
  *
- * <p>Each page's sidebar+main grid is a single {@code addRow}, which the
- * canonical paginator treats as <strong>atomic</strong> — the whole row must
- * fit on one page or it raises {@code AtomicNodeTooLargeException} (rows do
- * not page-break, and a row cannot host a table directly, so the Awards /
- * References tables live inside the main <em>section</em> column, not the row).
- * To keep each page's row inside the page bound the preset slices Experience
- * across the two pages ({@value #EXPERIENCE_PAGE_ONE} entries on page 1, the
- * remainder on page 2), mirroring the blueprint's
- * {@code experiencePage1 / experiencePage2} split.</p>
+ * <p>The sidebar and main columns are a single {@code addColumnFlow}: each column
+ * runs the whole document and breaks where it runs out of page, so what lands on a
+ * later page is what did not fit. The preset used to compose one atomic
+ * {@code addRow} per page and fill each by hand — the first two jobs on page 1, the
+ * rest on page 2 — which meant a career needing a third page had nowhere to go, and
+ * which is why the Awards / References tables had to live inside the main
+ * <em>section</em> rather than the row. Both bounded blocks are gone with it: the
+ * expertise list and the skill bars are drawn in full.</p>
  *
- * <p>The two rows reach two pages by <strong>natural atomic overflow</strong>,
- * not an explicit page break: the page-1 row fills page 1, so the page-2 row —
- * being atomic — moves whole onto page 2. An explicit {@code addPageBreak} is
- * deliberately avoided because a break landing on an already-full page-1
- * emits a blank intermediate page.</p>
+ * <p>A CV with many skills is therefore longer than it used to be, and honestly so:
+ * the sidebar draws every bar it is given rather than the first six.</p>
  *
  * <h2>Section mapping &amp; graceful degradation</h2>
  *
@@ -91,8 +86,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *       render as a label.</li>
  *   <li><b>Social</b> ← {@link CvIdentity#links()} as icon rows.</li>
  *   <li><b>Profile</b> ← the summary / profile {@link ParagraphSection}.</li>
- *   <li><b>Experience</b> ← the Experience {@link EntriesSection}, split
- *       across the two pages.</li>
+ *   <li><b>Experience</b> ← the Experience {@link EntriesSection}, drawn
+ *       whole; the flow decides where it breaks.</li>
  *   <li><b>Awards</b> ← a {@link RowsSection} titled "awards" (name = row
  *       label, meta = row body); absent → skipped.</li>
  *   <li><b>References</b> ← a {@link RowsSection} titled "references"; absent
@@ -106,8 +101,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <h2>Page chrome</h2>
  *
  * <p>Unlike the sidebar presets, Mint draws no {@code pageBackgrounds}: the
- * page is white and the two-column structure comes purely from the per-page
- * weighted {@code addRow}. The reusable drawing — icon rows, skill bars — is
+ * page is white and the two-column structure comes purely from the weighted
+ * column flow. The reusable drawing — icon rows, skill bars — is
  * delegated to {@link IconTextRow} and {@link SkillBar}; the preset only
  * orchestrates page composition, section mapping, and the Awards / References
  * grids (which are page-composition concerns local to this layout).</p>
@@ -149,8 +144,8 @@ public final class MintEditorial {
      * Each block is wrapped in its own sub-section so this gap applies
      * <em>between</em> blocks only — never between the leaf paragraphs /
      * lines inside a block (whose rhythm is margin-driven). Flattening all
-     * leaves into one section would multiply this gap across every child
-     * and overflow the atomic page row.
+     * leaves into one section would multiply this gap across every child and
+     * stretch the column.
      */
     private static final double BLOCK_GAP = 22.0;
 
@@ -158,21 +153,6 @@ public final class MintEditorial {
      * Visual gap (points) between the two grid columns in Awards / References.
      */
     private static final double GRID_COLUMN_GAP = 24.0;
-
-    /**
-     * Experience entries rendered on page 1; the rest go to page 2.
-     */
-    private static final int EXPERIENCE_PAGE_ONE = 2;
-
-    /**
-     * Expertise category labels shown beneath the badge.
-     */
-    private static final int EXPERTISE_LIMIT = 6;
-
-    /**
-     * Skill bars rendered in the page-2 sidebar.
-     */
-    private static final int SKILL_LIMIT = 6;
 
     /**
      * Inline contact / social icon edge length (points).
@@ -497,11 +477,6 @@ public final class MintEditorial {
             CvSection references = SectionRouter.rows(sections, SectionRole.OTHER, REFERENCES_KEYS, RowStyle.PLAIN);
 
             List<CvEntry> experienceEntries = entriesOf(experience);
-            List<CvEntry> experiencePage1 = experienceEntries.stream()
-                    .limit(EXPERIENCE_PAGE_ONE).toList();
-            List<CvEntry> experiencePage2 = experienceEntries.stream()
-                    .skip(EXPERIENCE_PAGE_ONE).toList();
-
             PageFlowBuilder flow = document.dsl()
                     .pageFlow()
                     .name("CvV2MintEditorialRoot")
@@ -521,31 +496,25 @@ public final class MintEditorial {
                         .margin(new DocumentInsets(8, -ruleBleed, 14, -ruleBleed)));
             }
             flow
-                    .addRow("CvV2MintEditorialPageOne", row -> {
-                        row.spacing(COLUMN_GAP).weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
-                        row.addSection("CvV2MintEditorialPageOneSidebar", sidebar -> {
+                    // One flow, not a page's worth of content per row. Each column
+                    // runs the whole document and breaks where it runs out of page,
+                    // so what lands on page 2 is whatever did not fit — rather than
+                    // whatever this preset decided in advance belonged there.
+                    .addColumnFlow("CvV2MintEditorialBody", body -> {
+                        body.gap(COLUMN_GAP).weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
+                        body.addColumn("CvV2MintEditorialSidebar", sidebar -> {
                             sidebar.spacing(BLOCK_GAP).padding(DocumentInsets.zero());
                             addContact(sidebar, identity);
                             addInterests(sidebar, interests);
                             addEducation(sidebar, education);
-                        });
-                        row.addSection("CvV2MintEditorialPageOneMain", main -> {
-                            main.spacing(BLOCK_GAP).padding(DocumentInsets.zero());
-                            addProfile(main, profile);
-                            addExperience(main, "Experience", experiencePage1);
-                        });
-                    })
-                    .addRow("CvV2MintEditorialPageTwo", row -> {
-                        row.spacing(COLUMN_GAP).weights(SIDEBAR_WEIGHT, MAIN_WEIGHT);
-                        row.addSection("CvV2MintEditorialPageTwoSidebar", sidebar -> {
-                            sidebar.spacing(BLOCK_GAP).padding(DocumentInsets.zero());
                             addExpertise(sidebar, skills);
                             addSkills(sidebar, skills, sidebarInner);
                             addSocial(sidebar, identity);
                         });
-                        row.addSection("CvV2MintEditorialPageTwoMain", main -> {
+                        body.addColumn("CvV2MintEditorialMain", main -> {
                             main.spacing(BLOCK_GAP).padding(DocumentInsets.zero());
-                            addExperience(main, "Experience", experiencePage2);
+                            addProfile(main, profile);
+                            addExperience(main, "Experience", experienceEntries);
                             addAwards(main, awards, gridColumnWidth);
                             addReferences(main, references, gridColumnWidth);
                         });
@@ -589,7 +558,7 @@ public final class MintEditorial {
          * free-canvas primitive) with {@link ClipPolicy#OVERFLOW_VISIBLE}. The
          * canvas reserves only {@value #MASTHEAD_CANVAS_HEIGHT}pt in the flow —
          * its declared height — so the masthead footprint stays small and the
-         * dense page-1 row still fits, keeping the document at two pages.
+         * body starts as high on page one as it does without a band.
          *
          * <p>Inside the canvas (origin top-left, y down):</p>
          * <ul>
@@ -789,7 +758,7 @@ public final class MintEditorial {
                         .name("CvV2MintEditorialExpertiseBadge")
                         .margin(DocumentInsets.bottom(18))
                         .layer(badgeIcon().node(BADGE_SIZE)));
-                for (String category : categories.stream().limit(EXPERTISE_LIMIT).toList()) {
+                for (String category : categories) {
                     addLabel(block, category);
                 }
             });
@@ -812,7 +781,7 @@ public final class MintEditorial {
             section.addSection("CvV2MintEditorialSkills", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
                 addBlockHeading(block, "Skills");
-                for (CvSkill skill : flattened.stream().limit(SKILL_LIMIT).toList()) {
+                for (CvSkill skill : flattened) {
                     SkillBar.render(block, skill, trackWidth, theme);
                 }
             });
@@ -1091,15 +1060,22 @@ public final class MintEditorial {
 
         // -- Shared block heading (spaced-caps accent title) --------------
 
+        /**
+         * The block's heading, bound to what follows it. A column breaks between
+         * its children, so without this a heading can close a page and leave its
+         * block to open the next one — which an atomic row could not do.
+         */
         private void addBlockHeading(SectionBuilder block, String title) {
             if (title == null || title.isBlank()) {
                 return;
             }
-            block.addParagraph(p -> p
-                    .text(TextOrnaments.spacedUpper(title))
-                    .textStyle(headingStyle())
-                    .align(TextAlign.LEFT)
-                    .margin(DocumentInsets.bottom(18)));
+            block.addSection("CvV2MintEditorialBlockHeading", heading -> heading
+                    .keepWithNext()
+                    .addParagraph(p -> p
+                            .text(TextOrnaments.spacedUpper(title))
+                            .textStyle(headingStyle())
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.bottom(18))));
         }
 
         private void addLabel(SectionBuilder section, String text) {

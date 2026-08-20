@@ -197,24 +197,55 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 
 The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
-profile on the engine module during `verify`.
+profile during `verify` on the two modules whose packages the § 4 map lists as Stable
+authoring surface: the engine (`graph-compose-core`) and the templates
+(`graph-compose-templates`).
 
-- **Baseline:** the published `graph-compose-core` on Maven Central, pinned by the
-  `japicmp.baseline` property in `core/pom.xml`. It is the current major's **floor** —
-  `2.0.0` for the whole 2.x line — and advances only at the next major. Holding it at
-  the floor (rather than the previous release) is what enforces the Stable promise:
-  every 2.x build must stay binary-compatible with the `2.0.0` public surface, not
-  merely with the last minor.
+- **Two baselines, both published artifacts of the same module on Maven Central,
+  pinned in that module's own pom** (`core/pom.xml`, `templates/pom.xml`) and diffed in
+  their own execution of the profile:
+  - `japicmp.baseline.floor` — the current major's **floor** (`2.0.0` for the whole 2.x
+    line), advancing only at the next major. It holds the surface the major shipped
+    with: every 2.x build stays binary-compatible with `2.0.0`.
+  - `japicmp.baseline.previous` — the **latest published release**, moved to the version
+    just cut by `scripts/cut-release.ps1 -PostReleaseOnly`. It holds everything added
+    *since* the floor.
+
+  Both are needed, and the floor alone is the weaker half of the promise, not the
+  whole of it. A method that first ships in `2.2.0` is absent from `2.0.0`, so a
+  `2.2.1` that deletes it diffs clean against the floor — while an application compiled
+  against `2.2.0` gets `NoSuchMethodError`. The floor catches a regression against the
+  GA surface; the previous-release pin catches a regression against everything added
+  after it. `VersionConsistencyGuardTest` derives both pins rather than trusting them —
+  the floor from the module's own version (`<major>.0.0`), the previous pin from the
+  CHANGELOG (the newest dated release of that major older than the working version) —
+  and also asserts both `<execution>`s are still in the pom, so neither a pin the cut
+  forgot to move nor a deleted execution can widen the gap while CI stays green.
 - **What fails the build:** any binary-incompatible change to the public surface
-  against the baseline — a removed or less-accessible public method/field/type, a
+  against either baseline — a removed or less-accessible public method/field/type, a
   changed signature, and so on. `@Internal` packages (`com.demcha.compose.engine.*`,
   `com.demcha.compose.document.layout.*` and its render-handoff payload records) are
-  excluded; they carry no compatibility promise (§ 1). Source-only incompatibilities
-  (e.g. adding a default method to an interface) are reported but do not fail, pending
-  a finalized 2.x source-compatibility policy.
-- **Activity window:** the gate compares the working version against the baseline, so
-  it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
-  active for every `-SNAPSHOT` development cycle across the 2.x line that follows.
+  excluded; they carry no compatibility promise (§ 1). The templates module has no
+  Internal package tree — every `templates.*` package is Stable — so its gate excludes
+  only elements carrying the per-element `@Internal` marker. Source-only
+  incompatibilities (e.g. adding a default method to an interface) are reported but do
+  not fail, pending a finalized 2.x source-compatibility policy.
+- **Activity window:** both diffs run on every build of the line — the previous pin
+  names the release *before* the working version, so it never compares a jar with
+  itself, and the floor is a no-op only on the `2.0.0` release commit. The pin moves
+  in `-PostReleaseOnly`, after the cut, because that is when the release it names is
+  on Central.
+- **At a major boundary the gate stands down, by construction.** Both pins stay inside
+  the working major. Opening `3.0.0-SNAPSHOT` sets the floor to `3.0.0` and leaves the
+  previous pin with no 3.x release to name, so it falls back to the floor: neither
+  version is published, both executions skip (`ignoreMissingOldVersion`), and the 3.0
+  cycle is free to make the breaks a major is for. Pinning back to `2.x` instead would
+  fail the build on every intentional break. Enforcement resumes at the first
+  `-PostReleaseOnly` of the new major, once `3.0.0` is on Central. This is the
+  report-only posture the 2.0 transition ran under, without a hand-edited pom.
+- **Where it runs:** the PR-time `Binary Compatibility` CI job (when the core or
+  templates sources or pom changed), `scripts/cut-release.ps1` step 5b before the tag
+  is cut, and the publish workflow on the tagged commit.
 
 During the 2.0 major transition the gate ran report-only (the major intentionally
 broke 1.x binary compatibility); it enforces from the `2.0.0` baseline forward.

@@ -89,16 +89,23 @@
         <enforcer.requireMavenVersion>3.8.0</enforcer.requireMavenVersion>
         <enforcer.requireJavaVersion>17</enforcer.requireJavaVersion>
 
-        <!-- Binary compatibility baseline (japicmp profile) -->
+        <!-- Binary compatibility baselines (japicmp profile). Keep japicmp.version in
+             lockstep with templates/pom.xml (VersionConsistencyGuardTest enforces). -->
         <japicmp.version>0.26.1</japicmp.version>
-        <!-- 2.x binary-compatibility baseline: the published graph-compose-core on
-             Maven Central. The 2.0 major transition is complete, so the gate now
-             enforces binary compatibility against 2.0.0 (see the japicmp profile).
-             The gate is a no-op while the working version equals the baseline
-             (2.0.0) and becomes active the moment the version bumps to the next
-             -SNAPSHOT — proven: 2.0.1-SNAPSHOT + a reduced-access public method
-             fails with METHOD_LESS_ACCESSIBLE. -->
-        <japicmp.baseline>2.0.0</japicmp.baseline>
+        <!-- Two published graph-compose-core baselines on Maven Central, diffed in two
+             executions of the japicmp profile:
+             * floor — the first release of the current major (2.0.0 for the whole 2.x
+               line), advancing only at the next major. Holds the GA surface.
+             * previous — the latest published release. Holds everything added since
+               the floor: a method that first shipped in 2.2.0 is absent from BOTH
+               2.0.0 and a 2.2.1 that removes it, so the floor diff alone stays green
+               while a caller compiled against 2.2.0 gets NoSuchMethodError. This pin
+               moves to the just-published version in `cut-release.ps1
+               -PostReleaseOnly`; VersionConsistencyGuardTest holds it to the newest
+               dated CHANGELOG release older than the working version, so a forgotten
+               move fails the guard job rather than silently widening the hole. -->
+        <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
+        <japicmp.baseline.previous>2.2.0</japicmp.baseline.previous>
 
         <!--
             GPG signing — opted in via -Dgpg.skip=false (the publish
@@ -663,15 +670,17 @@
         </profile>
 
         <!--
-            Binary-compatibility gate. Activated with `-P japicmp`. Resolves the
-            baseline artifact (the published graph-compose-core pinned by the
-            japicmp.baseline property) from Maven Central — no extra repository, so
-            consumers inherit nothing. The baseline is the current major's floor
-            (2.0.0 for the whole 2.x line), advancing only at the next major, so the
-            gate holds every 2.x build binary-compatible with the 2.0.0 public
-            surface. Fails the build on any binary-incompatible modification to the
-            public surface; source-incompatible changes are reported but do not fail
-            (yet) so the policy can be phased in.
+            Binary-compatibility gate. Activated with `-P japicmp`. Resolves the two
+            baseline artifacts (the published graph-compose-core pinned by the
+            japicmp.baseline.floor / japicmp.baseline.previous properties) from Maven
+            Central — no extra repository, so consumers inherit nothing — and diffs
+            the freshly built jar against each in its own execution: the major floor
+            (2.0.0 for the whole 2.x line) holds the GA surface, the previous release
+            holds every public element added since. Together they hold every 2.x
+            build binary-compatible with every 2.x release before it. Fails the build
+            on any binary-incompatible modification to the public surface;
+            source-incompatible changes are reported but do not fail (yet) so the
+            policy can be phased in.
         -->
         <profile>
             <id>japicmp</id>
@@ -683,27 +692,59 @@
                         <version>${japicmp.version}</version>
                         <executions>
                             <execution>
-                                <id>japicmp-against-baseline</id>
+                                <id>japicmp-against-major-floor</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>cmp</goal>
                                 </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-core</artifactId>
+                                            <version>${japicmp.baseline.floor}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>japicmp-against-previous-release</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>cmp</goal>
+                                </goals>
+                                <configuration>
+                                    <oldVersion>
+                                        <dependency>
+                                            <groupId>io.github.demchaav</groupId>
+                                            <artifactId>graph-compose-core</artifactId>
+                                            <version>${japicmp.baseline.previous}</version>
+                                        </dependency>
+                                    </oldVersion>
+                                </configuration>
                             </execution>
                         </executions>
                         <configuration>
-                            <oldVersion>
-                                <dependency>
-                                    <groupId>io.github.demchaav</groupId>
-                                    <artifactId>graph-compose-core</artifactId>
-                                    <version>${japicmp.baseline}</version>
-                                </dependency>
-                            </oldVersion>
                             <newVersion>
                                 <file>
                                     <path>${project.build.directory}/${project.build.finalName}.jar</path>
                                 </file>
                             </newVersion>
                             <parameter>
+                                <!--
+                                    A baseline that is not on Central yet skips its
+                                    execution instead of failing the build. This is the
+                                    pre-GA window of a NEW major and nothing else: on
+                                    3.0.0-SNAPSHOT both pins name 3.0.0, which nobody has
+                                    published, and the major is allowed to break 2.x
+                                    anyway — the same report-only posture the 2.0 cycle
+                                    ran under, now automatic instead of hand-edited. It
+                                    cannot mask a typo: VersionConsistencyGuardTest pins
+                                    both properties to exact values derived from the pom
+                                    version and the CHANGELOG, so a baseline that names
+                                    something unintended fails the guard job.
+                                -->
+                                <ignoreMissingOldVersion>true</ignoreMissingOldVersion>
                                 <onlyModified>true</onlyModified>
                                 <!--
                                     2.x binary-compatibility gate. The 2.0 major transition is

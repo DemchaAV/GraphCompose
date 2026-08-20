@@ -49,7 +49,7 @@ The **v1.9.x** line receives critical fixes only.
 Committed internal direction for the post-2.0 line: refactors, scale work, and tooling that do **not** change the public authoring API. Tracked in [docs/roadmaps/post-2.0-engineering.md](docs/roadmaps/post-2.0-engineering.md).
 
 - **Decompose the layout hot files** &mdash; split `LayoutCompiler` and `TextFlowSupport` along their natural seams into individually-tested collaborators, with layout output unchanged.
-- **Per-module binary-compatibility baselines** &mdash; now that the 2.0 GA artifacts are published, switch `japicmp` from the single-artifact baseline to per-module baselines in break-on-incompatible mode.
+- **Per-module binary-compatibility baselines** &mdash; `japicmp` gates `graph-compose-core` and `graph-compose-templates` against their 2.0.0 floors in break-on-incompatible mode; the remaining published modules join once each has a documented Stable / Internal split.
 
 ## Later (directional)
 

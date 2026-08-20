@@ -694,9 +694,9 @@ public final class DocumentSession implements AutoCloseable {
      *
      * <p>Composition code that has to reason about the page's own edges reads it
      * here rather than through {@link #canvas()}, whose margin is an engine type.
-     * A template that derives per-page geometry from it — see
-     * {@link PageMarginRule#continuationSafeArea(DocumentInsets, double)} — keeps
-     * working when the caller chooses a margin other than the one it recommends.</p>
+     * A template that derives a {@link PageMarginRule} from it — reserving a safe
+     * area on continuation pages, say — keeps working when the caller chooses a
+     * margin other than the one the template recommends.</p>
      *
      * @return the current page margin
      * @since 2.3.0

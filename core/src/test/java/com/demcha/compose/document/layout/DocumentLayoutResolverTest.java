@@ -100,7 +100,8 @@ class DocumentLayoutResolverTest {
     void perPageMarginRecompilesUntilStartPagesStabilize() {
         LayoutGraph first = graphWith(placed("body", 0));
         LayoutGraph settled = graphWith(placed("body", 0));
-        when(context.pageGeometry()).thenReturn(mock(PageGeometry.class));
+        PageGeometry geometry = widthChangingGeometry();
+        when(context.pageGeometry()).thenReturn(geometry);
         when(context.hasPageReference()).thenReturn(false);
         when(compiler.compile(any(), any(), any())).thenReturn(first, settled);
 
@@ -118,7 +119,8 @@ class DocumentLayoutResolverTest {
         LayoutGraph pass0 = graphWith(placed("body", 0));
         LayoutGraph pass1 = graphWith(placed("body", 1));
         LayoutGraph pass2 = graphWith(placed("body", 1));
-        when(context.pageGeometry()).thenReturn(mock(PageGeometry.class));
+        PageGeometry geometry = widthChangingGeometry();
+        when(context.pageGeometry()).thenReturn(geometry);
         when(context.hasPageReference()).thenReturn(true);
         when(compiler.compile(any(), any(), any())).thenReturn(pass0, pass1, pass2);
         // Page numbers are stable from the first read; only the start-pages keep
@@ -129,6 +131,25 @@ class DocumentLayoutResolverTest {
 
         assertThat(result).isSameAs(pass2);
         verify(compiler, times(3)).compile(any(), any(), any());
+    }
+
+    @Test
+    void marginsThatOnlyMoveVerticallySettleInOnePass() {
+        // A block's assigned start page feeds nothing but the page's content width
+        // and left edge, so overrides that leave the width alone — a continuation
+        // safe area, say — cannot change the second pass's answer. Recompiling to
+        // reach the graph the first pass already produced is pure cost.
+        LayoutGraph only = graphWith(placed("body", 0));
+        PageGeometry verticalOnly = mock(PageGeometry.class);
+        when(verticalOnly.hasHorizontalOverrides()).thenReturn(false);
+        when(context.pageGeometry()).thenReturn(verticalOnly);
+        when(context.hasPageReference()).thenReturn(false);
+        when(compiler.compile(any(), any(), any())).thenReturn(only);
+
+        LayoutGraph result = new DocumentLayoutResolver(context).resolve();
+
+        assertThat(result).isSameAs(only);
+        verify(compiler, times(1)).compile(any(), any(), any());
     }
 
     @Test
@@ -174,5 +195,12 @@ class DocumentLayoutResolverTest {
                 System.setProperty(property, previous);
             }
         }
+    }
+
+    /** Per-page margins that change a page's width — what drives the fixed point. */
+    private static PageGeometry widthChangingGeometry() {
+        PageGeometry geometry = mock(PageGeometry.class);
+        when(geometry.hasHorizontalOverrides()).thenReturn(true);
+        return geometry;
     }
 }

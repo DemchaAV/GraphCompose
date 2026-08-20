@@ -22,6 +22,8 @@ import java.util.Objects;
  */
 public final class PageGeometry {
 
+    private static final double EPS = 1e-6;
+
     private final LayoutCanvas canvas;
     private final List<PageMarginOverride> overrides;
 
@@ -55,6 +57,30 @@ public final class PageGeometry {
             }
         }
         return resolved;
+    }
+
+    /**
+     * Whether any override changes the horizontal geometry — the left margin or the
+     * content width — against the canvas.
+     *
+     * <p>Per-page margins are resolved through a fixed point: a block's start page
+     * decides which page's width it is measured against, and its measured height
+     * decides where the next block starts. That loop is only load-bearing when the
+     * width can actually differ between pages. A document whose overrides move only
+     * the top or bottom margin has one width throughout, so its layout is settled in
+     * a single pass and the resolver skips the loop.</p>
+     *
+     * @return {@code true} when some override differs horizontally from the canvas
+     */
+    public boolean hasHorizontalOverrides() {
+        for (PageMarginOverride override : overrides) {
+            Margin margin = override.margin();
+            if (Math.abs(margin.left() - canvas.margin().left()) > EPS
+                || Math.abs(margin.right() - canvas.margin().right()) > EPS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

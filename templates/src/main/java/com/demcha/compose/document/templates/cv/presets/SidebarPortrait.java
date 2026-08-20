@@ -14,6 +14,7 @@ import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.page.ContinuationSafeArea;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
@@ -49,6 +50,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * filler logic. Use {@link Options} to override the sidebar fill,
  * main fill or accent colour without forking the theme.</p>
  *
+ * <p>Both session-wide settings are set by {@code compose(...)} and replace
+ * whatever the caller had set: the page backgrounds above, and a page-margin rule
+ * that reserves {@link #CONTINUATION_TOP_SAFE_AREA} at the top of every page after
+ * the first. The columns' padding is an edge of the columns rather than of each
+ * page, so without that rule a body running past page one resumed at the trimmed
+ * edge — the safe area a zero {@link #RECOMMENDED_MARGIN} gives up along the top
+ * of the sheet as well as the sides.</p>
+ *
  * <p>The body is a column flow, so each column continues on the next page and
  * the preset draws every entry of the sections it recognises. It used to be a
  * row — one atomic band that had to fit the page it started on — and carried
@@ -80,6 +89,22 @@ public final class SidebarPortrait {
      * Recommended page margin (in points) — 0 so the sidebar bleeds to the edge.
      */
     public static final double RECOMMENDED_MARGIN = 0.0;
+
+    /**
+     * Top inset (in points) the body reserves on the pages it continues onto.
+     *
+     * <p>Half an inch: the safe area every common printer's non-printable band
+     * fits inside. {@link #RECOMMENDED_MARGIN} is zero so the sidebar fill reaches
+     * the paper edge, and a zero margin gives up the safe area at the top of the
+     * sheet along with the one at the sides — which only matters now that the body
+     * paginates and there is a page whose top edge the columns' own padding does
+     * not cover. Page one is unaffected: it opens where its own design puts it —
+     * 54pt into the sidebar column, and 59pt into the main one, where the hero
+     * strip's top margin starts.</p>
+     *
+     * @since 2.3.0
+     */
+    public static final double CONTINUATION_TOP_SAFE_AREA = 36.0;
 
     /**
      * Ratio of the page width allocated to the left sidebar column.
@@ -350,6 +375,14 @@ public final class SidebarPortrait {
                             sidebarFill),
                     PageBackgroundFill.rightColumn(1.0 - SIDEBAR_WIDTH_RATIO,
                             mainFill)));
+
+            // The columns' padding is an edge of the columns, not of each page, so
+            // it holds the first page's content off the trimmed edge and says
+            // nothing about the second's. Reserve the safe area the zero page
+            // margin gave up, on the pages the body continues onto only. Derived
+            // from the caller's own margin, so a caller who chose a margin of their
+            // own keeps it and a caller who already clears 36pt gets no rule at all.
+            ContinuationSafeArea.applyTo(document, 2, CONTINUATION_TOP_SAFE_AREA);
 
             document.dsl()
                     .pageFlow()

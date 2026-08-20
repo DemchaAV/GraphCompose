@@ -111,6 +111,59 @@ follow semantic versioning; release dates are ISO 8601.
   page width the sidebar column has no room for the photo and the layout fails instead of
   drawing it over the main column.
 
+- **A safe area on the pages a body continues onto.** A container's padding is an edge of
+  the container: reserved once, at the top of the page it opens on and the bottom of the
+  page it closes on. The page margin is the inset applied once per page. In an ordinary
+  document the distinction never surfaces, because the margin is already holding content
+  off the paper edge everywhere. It surfaces in a full-bleed layout, which sets the margin
+  to zero so a page background can reach the paper edge — giving up the safe area on all
+  four sides when only the two horizontal ones had to go. A continuation page then opens
+  wherever the break happened to leave the first line — 3pt from the trimmed edge in the
+  dense CV the tests measure, inside the band most printers cannot reach; before the body
+  paginated there was no second page for it to happen on.
+
+  `ContinuationSafeArea.applyTo(session, firstContinuationPage, topSafeArea)` (in
+  `templates`) raises the top margin from the page you name onward and keeps the other
+  three edges of whatever margin the caller chose, so the layout stays full-bleed
+  horizontally and page backgrounds — ratios of the page, not of the content box — keep
+  bleeding on every page. The pages before it are left alone: a body's first page owns its
+  own top edge. It does nothing at all when the margin already provides the safe area, so a
+  template can call it unconditionally without turning an ordinary document into a per-page
+  one — and, because it does nothing rather than handing back an empty rule list, without
+  clearing rules its caller set. The mechanism it writes is the existing
+  `PageMarginRule.from(...)`; what the helper adds is the decision, which is why it sits in
+  `templates` rather than in the engine. `DocumentSession.margin()` reads the document
+  margin back, which is what lets it derive the rule from the margin the caller actually
+  chose rather than the one the template recommends.
+
+  A rule that moves only the top or bottom margin now costs nothing extra to lay out.
+  Per-page margins are resolved through a fixed point — a block's start page decides which
+  page's width it is measured against — and a block's assigned start page feeds nothing but
+  the page's content width and left edge. A vertical-only rule leaves one width for the
+  whole document, so the resolver settles it in a single pass instead of recompiling to
+  reach the answer it already had.
+
+  Sidebar Portrait asks for half an inch (`CONTINUATION_TOP_SAFE_AREA`), which adds 36pt to
+  wherever a continuation page's first line landed — 3pt becomes 39pt in that CV — and
+  leaves page 1 laid out identically; its visual baseline and committed preview are
+  re-recorded again. Monogram Sidebar recommends the same zero margin and will need the
+  same call when its body moves onto a column flow; Mint Editorial's 48pt margin already
+  clears the safe area, so the helper would leave it alone. This covers the top edge only:
+  content still flows to the bottom of every page it fills, and a bottom safe area is a
+  bottom inset on `margin(...)` itself, because unlike the top it has to apply to page 1 as
+  well and changes where page 1 breaks.
+
+  `PageMarginTest` measures the defect before asserting the fix — a full-bleed column flow
+  whose second page opens on nothing but the spacing that preceded the break — so the guard
+  cannot pass on padding that was doing the work all along, and pins that a top-only rule
+  lays out identically to the same geometry expressed in a form that does take the fixed
+  point. `ContinuationSafeAreaTest` covers the helper's own decisions: the horizontal edges
+  it must keep, the no-op that leaves a caller's rules standing, a body that starts on page
+  2 and is inset from page 3, and the arguments it refuses.
+  `SidebarPortraitContentFidelityTest` pins the first line's distance from the page top on
+  every continuation page of a dense CV, takes the rule back off to attribute the number to
+  it, and pins page 1's own 78pt opening either way.
+
 - **Presets route by what a section means, not by the language it is written in.** A
   preset with a designed layout places sections into fixed slots, and it chose what went
   where by matching the heading against a list of English words each preset kept

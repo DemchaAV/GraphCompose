@@ -17,13 +17,21 @@ package com.demcha.compose.document.templates.cv.data;
  *       items with four fields (title, subtitle, date, body).</li>
  *   <li>{@link SkillsSection} — grouped skill categories where each
  *       category owns an ordered list of skill labels.</li>
+ *   <li>{@link ModuleSection} — a section whose shape is a value
+ *       rather than a type: one {@link CvItem} record plus a
+ *       {@link CvKind} chosen at runtime. The four above stay the
+ *       natural choice for a CV written in Java, where the author
+ *       picks the record and the compiler checks it; this one is for a
+ *       CV assembled from data, where the shape is not known until it
+ *       arrives. It renders through the same components, so both
+ *       routes lay out the same content identically.</li>
  * </ul>
  *
  * <p>Every implementation carries a {@code title} — the banner text
  * the renderer wraps in a styled panel above the section body.</p>
  */
 public sealed interface CvSection
-        permits ParagraphSection, RowsSection, EntriesSection, SkillsSection {
+        permits ParagraphSection, RowsSection, EntriesSection, SkillsSection, ModuleSection {
 
     /**
      * Banner heading shown above this section's body.

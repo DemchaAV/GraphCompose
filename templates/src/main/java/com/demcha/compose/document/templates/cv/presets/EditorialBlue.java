@@ -146,6 +146,13 @@ public final class EditorialBlue {
                     renderEntries(section, entries);
                 } else if (cvSection instanceof RowsSection rows) {
                     renderRows(section, rows);
+                } else {
+                    // A shape this preset has no editorial-styled path for — today
+                    // the runtime ModuleSection. Without this branch the section
+                    // would render as nothing at all: an empty heading over blank
+                    // space, which reads as a finished CV that quietly lost a
+                    // section.
+                    SectionDispatcher.renderBody(section, cvSection, theme);
                 }
             }
 

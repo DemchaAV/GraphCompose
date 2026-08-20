@@ -40,7 +40,32 @@
  *       — grouped skills: category plus ordered skill labels. This
  *       keeps skills semantic so presets can render them as tables,
  *       sidebar chips, or inline rows without reparsing text.</li>
+ *   <li>{@link com.demcha.compose.document.templates.cv.data.ModuleSection}
+ *       — the shape as a <em>value</em>: one
+ *       {@link com.demcha.compose.document.templates.cv.data.CvItem}
+ *       record carrying every optional field, plus a
+ *       {@link com.demcha.compose.document.templates.cv.data.CvKind}
+ *       that decides which of them are read. For CVs assembled at
+ *       runtime, where the author picks "dated entries" or "bullets"
+ *       from a menu and no compile-time type can be chosen per
+ *       choice.</li>
  * </ul>
+ *
+ * <h3>Which one to reach for</h3>
+ *
+ * <p>Writing a CV in Java: the four fixed shapes. The compiler checks
+ * the record you picked, and a project is visibly a
+ * {@code RowsSection} rather than a section that happens to hold
+ * rows.</p>
+ *
+ * <p>Assembling one from data — a form, a JSON payload, an LLM: the
+ * module. The section's shape and meaning arrive as values
+ * ({@code CvKind}, {@code SectionRole}), so a heading nobody
+ * anticipated — "Volunteering", shaped like Education — needs no new
+ * type and no new branch. Both routes render through the same
+ * components, and the parity suite holds them to laying out the same
+ * content identically, so the choice is about how the CV is authored,
+ * not about what it can look like.</p>
  *
  * <h3>Placement</h3>
  *

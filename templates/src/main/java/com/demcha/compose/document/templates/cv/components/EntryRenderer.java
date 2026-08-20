@@ -44,28 +44,39 @@ public final class EntryRenderer {
         DocumentTextStyle subtitleStyle = theme.entrySubtitleStyle();
         DocumentTextStyle bodyStyle = theme.bodyStyle();
 
-        // -- title + date row -------------------------------------------
-        // The two-column header is a row layout, not a paragraph, so it
-        // does not go through ParagraphPrimitive — its DSL shape is
-        // genuinely different.
-        section.addRow("CvV2EntryHeader", row -> row
-                .spacing(theme.spacing().entryHeaderRowSpacing())
-                .weights(theme.spacing().entryTitleWeight(),
-                        theme.spacing().entryDateWeight())
-                .addSection("Title", titleColumn -> titleColumn
-                        .padding(DocumentInsets.zero())
-                        .addParagraph(p -> p
-                                .textStyle(titleStyle)
-                                .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.zero())
-                                .rich(rich -> MarkdownInline.append(rich, entry.title(), titleStyle))))
-                .addSection("Date", dateColumn -> dateColumn
-                        .padding(DocumentInsets.zero())
-                        .addParagraph(p -> p
-                                .text(entry.date())
-                                .textStyle(dateStyle)
-                                .align(TextAlign.RIGHT)
-                                .margin(DocumentInsets.zero()))));
+        // -- title (+ date) header --------------------------------------
+        // With a date this is a two-column row, not a paragraph, so it does
+        // not go through ParagraphPrimitive — its DSL shape is genuinely
+        // different. Without one the row is dropped entirely rather than
+        // reserving an empty column: an undated entry — a certification, a
+        // project, anything a runtime module renders without dates — would
+        // otherwise have its title wrapped early to leave room for nothing.
+        if (entry.date().isBlank()) {
+            section.addParagraph(p -> p
+                    .textStyle(titleStyle)
+                    .align(TextAlign.LEFT)
+                    .margin(DocumentInsets.zero())
+                    .rich(rich -> MarkdownInline.append(rich, entry.title(), titleStyle)));
+        } else {
+            section.addRow("CvV2EntryHeader", row -> row
+                    .spacing(theme.spacing().entryHeaderRowSpacing())
+                    .weights(theme.spacing().entryTitleWeight(),
+                            theme.spacing().entryDateWeight())
+                    .addSection("Title", titleColumn -> titleColumn
+                            .padding(DocumentInsets.zero())
+                            .addParagraph(p -> p
+                                    .textStyle(titleStyle)
+                                    .align(TextAlign.LEFT)
+                                    .margin(DocumentInsets.zero())
+                                    .rich(rich -> MarkdownInline.append(rich, entry.title(), titleStyle))))
+                    .addSection("Date", dateColumn -> dateColumn
+                            .padding(DocumentInsets.zero())
+                            .addParagraph(p -> p
+                                    .text(entry.date())
+                                    .textStyle(dateStyle)
+                                    .align(TextAlign.RIGHT)
+                                    .margin(DocumentInsets.zero()))));
+        }
 
         // -- italic subtitle --------------------------------------------
         if (!entry.subtitle().isBlank()) {

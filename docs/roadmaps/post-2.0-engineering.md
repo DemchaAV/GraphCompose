@@ -111,7 +111,7 @@ exercise it. Report-only; thresholds can follow after a baseline read.
 `japicmp` ran report-only through the 2.0 major — the major intentionally broke
 binary compatibility. With the 2.0.0 GA artifacts on Central the gate switched to
 per-module baselines pinned at the major's floor (2.0.0) in break-on-incompatible
-mode: `graph-compose-core` first, `graph-compose-templates` since 2.2.1 — each
+mode: `graph-compose-core` first, `graph-compose-templates` since 2.3.0 — each
 module's `japicmp` profile lives in its own pom and runs in the PR-time
 `Binary Compatibility` job, in `cut-release.ps1` step 5b, and in the publish
 workflow. The remaining published modules (`render-pdf` / `render-docx` /

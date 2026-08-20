@@ -161,8 +161,13 @@ public final class BlueBanner {
                 renderEntry(host, entry, theme);
             }
         } else {
-            throw new IllegalStateException(
-                    "Unknown CvSection subtype: " + section.getClass().getName());
+            // A shape this preset has no styled path for — today the runtime
+            // ModuleSection. Hand it to the canonical dispatcher rather than
+            // throwing: a section the author put in the document reaches the
+            // page, which matters more than matching this preset's flavour of
+            // entry. A preset that wants its own module styling overrides this
+            // branch, it does not lose the content by omission.
+            SectionDispatcher.renderBody(host, section, theme);
         }
     }
 

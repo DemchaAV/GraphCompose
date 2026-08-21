@@ -199,6 +199,10 @@ ignored, so the same item renders with or without its dates depending
 on the kind alone — which is what lets a "Volunteering" module be
 shaped exactly like Education without a new type.
 
+`CvRuntimeModulesExample` in the examples module renders all of this from
+a payload standing in for parsed JSON, and its PDF is the shortest way to
+see what each kind does to the same item.
+
 `SectionRole` says what a section *means*, separately from how it
 draws — and it is the first thing a preset routes on. A preset with a designed
 layout places sections into fixed slots, and it used to choose what

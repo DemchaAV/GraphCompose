@@ -140,8 +140,8 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvMonogramSidebarExample.generate());
         System.out.println("Generated: " + CvNordicCleanExample.generate());
         System.out.println("Generated: " + CvPanelExample.generate());
-        System.out.println("Generated: " + CvSidebarPortraitExample.generate());
         System.out.println("Generated: " + CvRuntimeModulesExample.generate());
+        System.out.println("Generated: " + CvSidebarPortraitExample.generate());
         System.out.println("Generated: " + CvTimelineMinimalExample.generate());
 
         // Cover letters (v2 layered — 15 paired letters, one per CV preset)

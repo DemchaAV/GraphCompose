@@ -100,7 +100,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | Example | What it shows | Preview · Source |
 |---|---|---|
 | [CV — single template](#cv--single-template) | One CV via `ModernProfessional.create()` on a `CvDocument` | [PDF](../assets/readme/examples/cv-modern-professional-v2.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/v2/CvModernV2Example.java) |
-| [CV — assembled at runtime](#cv--assembled-at-runtime) | A CV whose sections arrive as data: each carries the `CvKind` its author picked, and a category the catalogue has no name for renders like any other | [PDF](../assets/readme/examples/cv-runtime-modules-v2.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/v2/CvRuntimeModulesExample.java) |
+| [CV — assembled at runtime](#cv--assembled-at-runtime) | A CV whose sections arrive as data: the `CvKind` its author picked decides which fields are read, and a category the catalogue has no name for needs no new type | [PDF](../assets/readme/examples/cv-runtime-modules-v2.pdf) · [Source](src/main/java/com/demcha/examples/templates/cv/v2/CvRuntimeModulesExample.java) |
 | [Invoice — cinematic V2](#invoice--cinematic-v2) | `ModernInvoice + BrandTheme.invoiceModern()` — the recommended invoice path | [PDF](../assets/readme/examples/invoice-cinematic.pdf) · [Source](src/main/java/com/demcha/examples/templates/invoice/InvoiceCinematicFileExample.java) |
 | [Cover Letter](#cover-letter) | One-page cover letter composed in the canonical DSL, section presets carrying the hierarchy | [PDF](../assets/readme/examples/cover-letter.pdf) · [Source](src/main/java/com/demcha/examples/templates/coverletter/CoverLetterFileExample.java) |
 | [Module-first Profile](#module-first-profile) | Authoring directly against `DocumentSession.module(...).paragraph(...)` — DSL-direct, no template | [PDF](../assets/readme/examples/module-first-profile.pdf) · [Source](src/main/java/com/demcha/examples/flagships/ModuleFirstFileExample.java) |
@@ -266,21 +266,24 @@ not known until it does.
 
 `ModuleSection` moves that choice into a value. This example builds every
 section from a payload standing in for parsed JSON, and the whole mapping
-layer is one method. Three things to look for in the PDF:
+layer is one method. Three claims, each checkable in the PDF:
 
-- **Certifications** and **Experience** carry the same item fields. The
-  first is `CvKind.ENTRIES` and prints no dates; the second is
-  `ENTRIES_DATED` and prints them. Same data, one value different.
-- **Volunteering** is a category the catalogue has no role for
-  (`SectionRole.OTHER`) and is shaped exactly like Certifications —
-  without a new type existing for it.
-- Every heading is the author's own; nothing is renamed to the preset's
-  vocabulary.
+- **The kind decides which fields are read.** *Experience* and
+  *Certifications* carry identical items — same subtitle, same location,
+  same period, same body. The only difference is `ENTRIES_DATED` against
+  `ENTRIES`, and the only difference in the PDF is the date column.
+- **A category the catalogue has no name for needs no new type.**
+  *Volunteering* carries `SectionRole.OTHER` and is built exactly like
+  *Experience*, so it renders exactly like it.
+- **The heading stays the author's.** This preset renames a classic
+  section by keyword — a `CvSection` titled "Certifications" prints as
+  EDUCATION — and deliberately does not do that to a module. The PDF says
+  CERTIFICATIONS.
 
-The design is picked at runtime too — `CvTemplates.byId(...)` takes an id
-and returns a template. `CvTemplates.modular()` is the list to offer a
-user when a CV is assembled this way: those presets promise to draw a
-module they were not written for.
+The design is picked at runtime too, from `CvTemplates.modular()`. That
+list, rather than `CvTemplates.ids()`, is the one to offer a user: a
+template outside it composes a fixed set of slots and silently drops a
+module it was not written for.
 
 [📄 View PDF](../assets/readme/examples/cv-runtime-modules-v2.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/templates/cv/v2/CvRuntimeModulesExample.java)

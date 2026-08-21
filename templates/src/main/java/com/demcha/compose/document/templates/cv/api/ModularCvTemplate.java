@@ -12,8 +12,10 @@ import com.demcha.compose.document.templates.cv.data.Slot;
  * every {@link CvKind}, under whatever heading the author wrote.
  *
  * <p><strong>The promise is exactly that, and the slot is part of it.</strong>
- * Every shipped preset composes a single main column and reads
- * {@code sectionsIn(Slot.MAIN)}; a section placed in {@link Slot#SIDEBAR} or
+ * Every shipped preset reads {@code sectionsIn(Slot.MAIN)} and no other
+ * slot — including the ones that compose a sidebar of their own, which fill
+ * it from the identity and from the main-slot sections their routing sends
+ * there; a section placed in {@link Slot#SIDEBAR} or
  * {@link Slot#FOOTER} is dropped, by these templates as by every other, which
  * is the behaviour {@link com.demcha.compose.document.templates.cv.data.CvDocument}
  * has always documented. Saying so here rather than leaving "whatever the

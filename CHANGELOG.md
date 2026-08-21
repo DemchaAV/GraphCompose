@@ -49,10 +49,11 @@ follow semantic versioning; release dates are ISO 8601.
   the author wrote — the last case because `EditorialBlue` renamed any heading
   matching "certification" to EDUCATION, so "Certifications & Awards" arrived as a
   word nobody had written. The promise covers `Slot.MAIN`, and says so: every shipped
-  preset composes a single main column, so a sidebar section is dropped by these
-  templates as by every other. Seven presets qualify today. `ClassicSerif` does not,
-  and finding that out is what the gate is for — it draws any shape it is given, but
-  only gives itself the sections it recognises.
+  preset reads that slot and no other, so a sidebar section is dropped by these
+  templates as by every other — including the ones that do compose a sidebar, which
+  fill it from the identity and from sections routed there by role. Ten presets
+  qualify. `ClassicSerif` does not, and finding that out is what the gate is for — it
+  draws any shape it is given, but only gives itself the sections it recognises.
 
   `CvTemplatesCoverageTest` derives the catalogue from the presets package rather than
   trusting it, so a preset that ships without being registered fails the build instead
@@ -290,6 +291,35 @@ follow semantic versioning; release dates are ISO 8601.
 
   Nine presets and every slot they compose changed; a CV written in Russian and German
   now renders on all sixteen, which `RoleRoutingTest` holds by rendering one.
+
+- **The three column-flow presets keep the modular promise too.** `SidebarPortrait`,
+  `MonogramSidebar`, and `MintEditorial` declare `ModularCvTemplate`, so
+  `CvTemplates.modular()` now offers a two-column design to a CV assembled at runtime
+  rather than only single-column ones. They earn it through their own renderers: a
+  module is lowered by `SectionRouter` and drawn by whichever slot claimed it, or by
+  the leftover tail under the author's heading, which is why it already comes out in
+  the preset's own style.
+
+  Declaring it cost two of them a habit. Sidebar Portrait and Monogram Sidebar drew a
+  grouped skills section as one flat run of every skill in the CV — twelve unlabelled
+  items in the shipped fixture — so the group names the author wrote reached no page at
+  all, and a module whose only label was its group name arrived anonymous. Each group
+  is now headed by its own name, which is both what the contract asks and easier to
+  read; a section that was never grouped carries a blank category and gets no label.
+
+  `kit()` returns the canonical kit for all three, and says why: a kit draws one body
+  style and these presets have two — the sidebar's and the main column's — with nothing
+  in `CvRenderKit` to say which column it is drawing into. Nothing in these templates
+  routes a body through `SectionDispatcher`, so the kit is what a caller outside them
+  would draw with, and canonical is the honest answer there.
+
+  `ModularCvTemplateFidelityTest` grew two corrections in the process. Its item
+  assertions read raw composed text while its heading assertion dropped spacing, so a
+  preset that letter-spaces an entry title failed for its typography rather than for
+  losing anything — items are now normalised the same way headings always were. And it
+  required the canonical `"Java 21, Kotlin"` join for a skills group, which is a
+  rendering style rather than a promise: it asserts every skill and the group's name
+  reach the page, and leaves the join to the preset drawing bars, chips, or a list.
 
 - **A preset can draw runtime modules in its own style.** `CvRenderKit` is the three
   shapes a section body reduces to — a paragraph, a label/value row, a timeline entry —

@@ -8,11 +8,15 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.CvComposedText;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
+import com.demcha.compose.document.templates.cv.data.CvItem;
+import com.demcha.compose.document.templates.cv.data.CvKind;
 import com.demcha.compose.document.templates.cv.data.CvSection;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
+import com.demcha.compose.document.templates.cv.data.ModuleSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
 import com.demcha.compose.document.templates.cv.data.RowStyle;
 import com.demcha.compose.document.templates.cv.data.RowsSection;
+import com.demcha.compose.document.templates.cv.data.SectionRole;
 import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.data.Slot;
 import org.junit.jupiter.api.Test;
@@ -62,7 +66,7 @@ class SlotHeadingFidelityTest {
                                                  DocumentTemplate<CvDocument> preset,
                                                  CvDocument doc,
                                                  List<String> retiredLabels) {
-        String text = squash(CvComposedText.of(preset, doc));
+        String text = CvComposedText.squashedNodes(preset, doc);
         int tail = text.indexOf(squash(TAIL_MARKER));
 
         assertThat(tail)
@@ -122,7 +126,7 @@ class SlotHeadingFidelityTest {
                 .row("Speaking", "JVM Summit 2024")
                 .build());
 
-        String text = squash(CvComposedText.of(SidebarPortrait.create(), doc));
+        String text = CvComposedText.squashedNodes(SidebarPortrait.create(), doc);
 
         assertThat(text)
                 .as("a block showing three rows of four keeps its own label, over "
@@ -142,7 +146,7 @@ class SlotHeadingFidelityTest {
                 .row("German", "(Intermediate)")
                 .build());
 
-        String text = squash(CvComposedText.of(SidebarPortrait.create(), doc));
+        String text = CvComposedText.squashedNodes(SidebarPortrait.create(), doc);
 
         assertThat(text)
                 .as("a block showing the whole section carries its title")
@@ -154,7 +158,7 @@ class SlotHeadingFidelityTest {
         // One section, two adjacent blocks. The author's words go over the one
         // the reader reaches first, so the section opens in their language even
         // if the column flow puts the bars on the next page.
-        String text = squash(CvComposedText.of(MintEditorial.create(), mintEditorialCv()));
+        String text = CvComposedText.squashedNodes(MintEditorial.create(), mintEditorialCv());
 
         assertThat(CvComposedText.occurrences(text, squash("Technical Expertise")))
                 .as("the author's title heads the index, and heads it once")
@@ -173,11 +177,37 @@ class SlotHeadingFidelityTest {
                 .group("Platform", "Java 21", "Kotlin")
                 .build());
 
-        String text = squash(CvComposedText.of(MintEditorial.create(), doc));
+        String text = CvComposedText.squashedNodes(MintEditorial.create(), doc);
 
         assertThat(CvComposedText.occurrences(text, squash("Skills")))
                 .as("one heading, not the same word twice in a row")
                 .isEqualTo(1);
+    }
+
+    @Test
+    void anUngroupedSkillsModuleDoesNotPrintItsHeadingTwice() {
+        // A module whose items carry no bodies of their own is lowered into a
+        // single group named after the module itself — see
+        // SectionRouter.asSkills — which is the natural shape for a flat list
+        // of skills assembled at runtime. A sidebar that labels every group
+        // would then print the section's title directly under its heading.
+        CvDocument doc = cv(ModuleSection.builder("Core Skills",
+                        SectionRole.SKILLS, CvKind.INLINE_LIST)
+                .item(CvItem.of("Java 21"))
+                .item(CvItem.of("Kotlin"))
+                .build());
+
+        for (DocumentTemplate<CvDocument> preset
+                : List.of(SidebarPortrait.create(), MonogramSidebar.create())) {
+            String text = CvComposedText.squashedNodes(preset, doc);
+
+            assertThat(CvComposedText.occurrences(text, squash("Core Skills")))
+                    .as("%s heads this section once, not twice in a row", preset.id())
+                    .isEqualTo(1);
+            assertThat(text)
+                    .as("%s still draws every skill under it", preset.id())
+                    .contains(squash("Java 21"), squash("Kotlin"));
+        }
     }
 
     @Test

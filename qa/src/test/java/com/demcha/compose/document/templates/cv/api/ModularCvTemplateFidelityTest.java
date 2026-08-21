@@ -53,17 +53,21 @@ class ModularCvTemplateFidelityTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("modularTemplates")
     void everyModularTemplateRendersEveryKind(ModularCvTemplate template) {
-        String text = CvComposedText.of(template, everyKindDocument());
+        String text = CvComposedText.squashedNodes(template, everyKindDocument());
 
         for (CvKind kind : CvKind.values()) {
-            // Case-insensitively: a preset that upper-cases its entry titles is
-            // styling them, not losing them.
+            // Spacing and case dropped, for items as for headings: a preset
+            // that upper-cases an entry title or letter-spaces it is styling
+            // it, not losing it. What still has to hold is that the letters and
+            // punctuation arrive in order inside a single paragraph — the text
+            // is squashed per node, so a match cannot be assembled out of two
+            // that merely sit next to each other.
             assertThat(text)
                     .as("%s must render the %s module's item", template.id(), kind)
-                    .containsIgnoringCase(itemTitle(kind));
+                    .contains(CvComposedText.squash(itemTitle(kind)));
             assertThat(text)
                     .as("%s must render the %s module's description", template.id(), kind)
-                    .contains(bodyLine(kind));
+                    .contains(CvComposedText.squash(bodyLine(kind)));
         }
     }
 
@@ -79,15 +83,15 @@ class ModularCvTemplateFidelityTest {
                         .period("2019 - 2021").bullets("Ran three weekend workshops"))
                 .build());
 
-        String text = CvComposedText.of(template, doc);
+        String text = CvComposedText.squashedNodes(template, doc);
 
         assertThatHeading(text, "Volunteering", template);
         assertThat(text)
                 .as("%s must render the invented section's entry", template.id())
-                .containsIgnoringCase("Mentor, Rails Girls");
+                .contains(CvComposedText.squash("Mentor, Rails Girls"));
         assertThat(text)
                 .as("%s must render the invented section's description", template.id())
-                .contains("Ran three weekend workshops");
+                .contains(CvComposedText.squash("Ran three weekend workshops"));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -98,12 +102,19 @@ class ModularCvTemplateFidelityTest {
                 .item(CvItem.of("Языки").paragraphs("Java 21", "Kotlin"))
                 .build());
 
-        String text = CvComposedText.of(template, doc);
+        String text = CvComposedText.squashedNodes(template, doc);
 
         assertThatHeading(text, "Навыки", template);
+        // Each skill on its own, not the canonical "Java 21, Kotlin" join: a
+        // preset draws a skills group as a list, a row of chips or a bar per
+        // skill, and which of those it picks is its business. That every skill
+        // and the name of the group they belong to reach the page is not.
         assertThat(text)
-                .as("%s must render the section's items", template.id())
-                .contains("Языки", "Java 21, Kotlin");
+                .as("%s must render the group's name, then its skills in order",
+                        template.id())
+                .containsSubsequence(CvComposedText.squash("Языки"),
+                        CvComposedText.squash("Java 21"),
+                        CvComposedText.squash("Kotlin"));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -119,19 +130,21 @@ class ModularCvTemplateFidelityTest {
                 .item(CvItem.of("AWS Solutions Architect").paragraphs("2024"))
                 .build());
 
-        String text = CvComposedText.of(template, doc);
+        String text = CvComposedText.squashedNodes(template, doc);
 
         assertThatHeading(text, "Certifications & Awards", template);
         assertThat(text)
                 .as("%s must render the section's item", template.id())
-                .containsIgnoringCase("AWS Solutions Architect");
+                .contains(CvComposedText.squash("AWS Solutions Architect"));
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("modularTemplates")
     void aSidebarSectionIsNotRenderedAndTheContractSaysSo(ModularCvTemplate template) {
-        // Pinning a limitation, not a feature. Every shipped preset composes one
-        // main column and reads Slot.MAIN, so a section placed in the sidebar is
+        // Pinning a limitation, not a feature. Every shipped preset reads
+        // Slot.MAIN and no other — including the ones that compose a sidebar,
+        // which fill it from the identity and from the main-slot sections their
+        // own routing sends there — so a section placed in Slot.SIDEBAR is
         // dropped — which ModularCvTemplate's contract states rather than leaving
         // "renders whatever it is handed" to be read generously. When slots go
         // live this test goes red, which is the point: the promise and the code
@@ -144,9 +157,9 @@ class ModularCvTemplateFidelityTest {
                         .build())
                 .build();
 
-        assertThat(CvComposedText.of(template, doc))
+        assertThat(CvComposedText.squashedNodes(template, doc))
                 .as("%s reads Slot.MAIN, as its contract says", template.id())
-                .doesNotContain("Spoken");
+                .doesNotContain(CvComposedText.squash("Spoken"));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -170,14 +183,14 @@ class ModularCvTemplateFidelityTest {
     }
 
     /**
-     * Asserts the heading reached the page, ignoring how the preset styled
-     * it: several letter-space and upper-case their headings, so
-     * "Volunteering" arrives as "V O L U N T E E R I N G". The words are the
-     * template's to keep; the typography is the template's to choose.
+     * Asserts the heading reached the page in already-squashed text — several
+     * presets letter-space and upper-case their headings, so "Volunteering"
+     * arrives as "V O L U N T E E R I N G". The words are the template's to
+     * keep; the typography is the template's to choose.
      */
     private static void assertThatHeading(String text, String heading,
                                           ModularCvTemplate template) {
-        assertThat(CvComposedText.squash(text))
+        assertThat(text)
                 .as("%s must render the section under its own heading (%s)",
                         template.id(), heading)
                 .contains(CvComposedText.squash(heading));
@@ -203,7 +216,7 @@ class ModularCvTemplateFidelityTest {
     }
 
     private static String sectionTitle(CvKind kind) {
-        return "Section " + marker(kind);
+        return marker(kind) + " section";
     }
 
     /**
@@ -218,11 +231,15 @@ class ModularCvTemplateFidelityTest {
     private static String itemTitle(CvKind kind) {
         // PARAGRAPH reads the body alone, so its item title never reaches the
         // page; the body carries the marker for that kind instead.
-        return kind == CvKind.PARAGRAPH ? bodyLine(kind) : "Item " + marker(kind);
+        // The kind's name leads and a fixed word follows, so that no marker
+        // is a prefix of another: written the other way round, "Item ENTRIES"
+        // lives inside "Item ENTRIES DATED", and a preset could drop the
+        // ENTRIES module entirely with this still green.
+        return kind == CvKind.PARAGRAPH ? bodyLine(kind) : marker(kind) + " item";
     }
 
     private static String bodyLine(CvKind kind) {
-        return "Body of " + marker(kind);
+        return marker(kind) + " body";
     }
 
     private static CvDocument document(ModuleSection module) {

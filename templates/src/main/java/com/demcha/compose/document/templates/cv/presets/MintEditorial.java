@@ -18,6 +18,8 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionAllocation;
 import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
@@ -399,7 +401,8 @@ public final class MintEditorial {
         }
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
+    private static final class Template implements ModularCvTemplate {
+
 
         private final BrandTheme theme;
         /**
@@ -444,6 +447,25 @@ public final class MintEditorial {
         @Override
         public String displayName() {
             return DISPLAY_NAME;
+        }
+
+        /**
+         * The canonical kit, and this template never consults it.
+         *
+         * <p>A kit is how a preset styles the bodies it routes through
+         * {@code SectionDispatcher}. This one routes none: a module is lowered
+         * by {@code SectionRouter} to the shape its slot draws, and the slot's
+         * own renderer draws it — which is why a runtime module already comes
+         * out in this preset's style rather than the canonical one. The kit is
+         * the value an outside caller would draw with, and the canonical
+         * shapes are the honest answer for a caller this template knows
+         * nothing about.</p>
+         *
+         * @return the canonical kit
+         */
+        @Override
+        public CvRenderKit kit() {
+            return CvRenderKit.defaults();
         }
 
         @Override
@@ -520,8 +542,7 @@ public final class MintEditorial {
                                     SectionAllocation.titleOr(skills, "Expertise");
                             boolean indexed = hasSkillCategories(skills);
                             String barsHeading = indexed ? "Skills" : skillsHeading;
-                            if (indexed && SectionLookup.normalize(barsHeading)
-                                    .equals(SectionLookup.normalize(skillsHeading))) {
+                            if (indexed && barsHeading.equalsIgnoreCase(skillsHeading)) {
                                 barsHeading = null;
                             }
                             addExpertise(sidebar, skills, skillsHeading);

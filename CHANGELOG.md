@@ -332,6 +332,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Sidebar Portrait's language block threw away the rows it did not recognise.** The
+  block accepts a wider "Additional Information" section and picks the language rows out
+  of it, matching a row whose label names the category or whose body carries a bracket or
+  a pipe. It had a fallback for a section where *nothing* matched — then it drew every row
+  — so the loss needed a mixture: one row that looked like a language suppressed the
+  fallback, and every row that did not look like one reached no page at all. Because the
+  section counted as claimed it never reached the leftover tail either, so three of the
+  shipped example's four rows were simply gone: work eligibility, open source, speaking.
+  A section routed here by `SectionRole.LANGUAGES` was no safer — "English (C1)" beside a
+  plain "Deutsch B2" was enough to lose the Deutsch.
+
+  The slot now claims in two steps and knows which it got. A section that is entirely
+  languages — routed by the role, or titled for the job — is drawn whole, whatever its
+  rows look like. A wider section is still picked over, and the rows the block does not
+  draw are handed to the main column, which prints them under the title their author wrote
+  and in the place the document gave them. No row of a claimed section is dropped on
+  either path; a wider section with no language in it at all now goes to the main column
+  whole rather than being drawn in the sidebar under a heading of its own.
+
+  A level written without brackets is drawn as a level, too: the block used to hand the
+  renderer one joined string and the renderer looked for a bracket to split it again, so
+  "Deutsch B2" came out as one upper-cased name. The pair travels separated now.
+
+  The example's second page grows an "Additional Information" section that was always in
+  the data and never on the page; the sidebar is unchanged.
+
 - **Three presets printed their own words over the author's sections.** Sidebar Portrait
   headed all six of its slots with a label chosen when the preset was written, Monogram
   Sidebar its sidebar skills block, Mint Editorial its profile and its skill bars — so a

@@ -56,6 +56,7 @@ final class ShowcaseMetadata {
         cv("cv-editorial-blue-v2", "CvEditorialBlueExample", "Editorial Blue", "Magazine-style editorial layout with two-column body and tinted skills table.", "editorial", "blue");
         cv("cv-panel-v2", "CvPanelExample", "Panel", "Soft-tinted panels per section, Product-Leader feel — was ProductLeader in v1.5.", "panel");
         cv("cv-sidebar-portrait-v2", "CvSidebarPortraitExample", "Sidebar Portrait", "Edge-to-edge grey sidebar with portrait photo, contact stack, and skills.", "sidebar", "portrait");
+        cv("cv-runtime-modules-v2", "CvRuntimeModulesExample", "Runtime Modules", "Editorial blue rules over sections built from data, dated and undated entries side by side.", "runtime", "modules");
         cv("cv-monogram-sidebar-v2", "CvMonogramSidebarExample", "Monogram Sidebar", "Sidebar with monogram badge, accent rule, and structured contact + skills column.", "sidebar", "monogram");
         cv("cv-minimal-underlined-v2", "CvMinimalUnderlinedExample", "Minimal Underlined", "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.", "minimal");
         cv("cv-mint-editorial-v2", "CvMintEditorialExample", "Mint Editorial", "Magazine-style editorial CV with mint accent palette and two-column body.", "editorial", "mint");

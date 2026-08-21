@@ -111,6 +111,17 @@ follow semantic versioning; release dates are ISO 8601.
   page width the sidebar column has no room for the photo and the layout fails instead of
   drawing it over the main column.
 
+- **An example for the CV constructor.** The runtime layer shipped over several changes and
+  had nothing showing it: a feature whose premise is that a CV *arrives* as data had no
+  example anywhere. `CvRuntimeModulesExample` builds every section from a payload standing
+  in for parsed JSON, in one mapping method, and renders it through a template looked up in
+  `CvTemplates.modular()`. Its PDF is arranged so the claims are checkable rather than
+  asserted: Experience and Certifications carry identical items and differ only by
+  `ENTRIES_DATED` against `ENTRIES`, so only the date column differs; a `SectionRole.OTHER`
+  module is built exactly like Experience and renders exactly like it; and the preset used
+  is one that renames a classic section by keyword, so the module keeping the author's
+  "Certifications" heading is visible rather than a non-event.
+
 - **A section a preset has no slot for is drawn instead of dropped.** The three
   two-column presets place sections into a designed layout — a portrait sidebar, a main
   narrative — and rendered the six or seven categories they thought to ask about. An

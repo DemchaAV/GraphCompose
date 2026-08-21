@@ -15,6 +15,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.page.ContinuationSafeArea;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
@@ -181,6 +182,7 @@ public final class SidebarPortrait {
     private static final String CONTACT_ICON_ROOT =
             TEMPLATE_ASSET_ROOT + "icons/";
     private static final String PORTRAIT_FILE = "portrait.svg";
+
     private static final Map<String, SvgIcon> PORTRAIT_CACHE =
             new ConcurrentHashMap<>();
 
@@ -428,20 +430,28 @@ public final class SidebarPortrait {
 
             CvSection education = allocation.entries(SectionRole.EDUCATION, EDUCATION_KEYS);
             if (hasContent(education)) {
-                addSidebarHeader(section, "Education");
+                addSidebarHeader(section, education.title());
                 addEducationEntries(section, education);
             }
 
             CvSection skills = allocation.skills(SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
-                addSidebarHeader(section, "Key Skills");
+                addSidebarHeader(section, skills.title());
                 addSkillsList(section, skills);
             }
 
             CvSection languages = allocation.rows(SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
             if (hasContent(languages)) {
-                addSidebarHeader(section, "Languages");
-                addLanguageList(section, languages);
+                LanguageBlock block = languageBlock(languages);
+                // The one heading here that is not always the author's. This
+                // block also accepts an "Additional Information" section and
+                // shows the language rows it finds inside it, so over a
+                // three-of-four subset the section's own title would name
+                // content the reader cannot see. When every row reached the
+                // block there is nothing to disown and the title stands.
+                addSidebarHeader(section,
+                        block.complete() ? languages.title() : "Languages");
+                addLanguageList(section, block.items());
             }
         }
 
@@ -521,7 +531,7 @@ public final class SidebarPortrait {
                             .thickness(0.75)
                             .margin(new DocumentInsets(12, 0, 7, 0)))
                     .addParagraph(paragraph -> paragraph
-                            .text(spacedUpper(title))
+                            .text(TextOrnaments.spacedUpper(title))
                             .textStyle(sidebarHeaderStyle())
                             .align(TextAlign.LEFT)
                             .margin(DocumentInsets.zero())));
@@ -578,10 +588,10 @@ public final class SidebarPortrait {
         }
 
         private void addLanguageList(SectionBuilder section,
-                                     CvSection langSection) {
+                                     List<String> items) {
             DocumentTextStyle nameStyle = sidebarLanguageNameStyle();
             DocumentTextStyle metaStyle = sidebarLanguageMetaStyle();
-            for (String item : languageItems(langSection)) {
+            for (String item : items) {
                 String text = MarkdownInline.plainText(item);
                 int paren = text.indexOf('(');
                 String langName = paren > 0
@@ -636,7 +646,7 @@ public final class SidebarPortrait {
                             .lineSpacing(1.0)
                             .margin(DocumentInsets.zero()))
                     .addParagraph(paragraph -> paragraph
-                            .text(spacedUpper(subline))
+                            .text(TextOrnaments.spacedUpper(subline))
                             .textStyle(subtitleStyle())
                             .align(TextAlign.CENTER)
                             .margin(DocumentInsets.zero())));
@@ -649,19 +659,19 @@ public final class SidebarPortrait {
 
                 CvSection profile = allocation.paragraph(SectionRole.SUMMARY, SUMMARY_KEYS);
                 if (hasContent(profile)) {
-                    addMainSectionHeader(content, "Professional Profile");
+                    addMainSectionHeader(content, profile.title());
                     addProfileBody(content, profile);
                 }
 
                 CvSection experience = allocation.entries(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
                 if (hasContent(experience)) {
-                    addMainSectionHeader(content, "Experience");
+                    addMainSectionHeader(content, experience.title());
                     addExperienceEntries(content, experience);
                 }
 
                 CvSection projects = allocation.rows(SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
                 if (hasContent(projects)) {
-                    addMainSectionHeader(content, "Projects");
+                    addMainSectionHeader(content, projects.title());
                     addProjectsList(content, projects);
                 }
 
@@ -720,7 +730,7 @@ public final class SidebarPortrait {
                     .spacing(MAIN_CONTENT_SPACING)
                     .keepWithNext()
                     .addParagraph(paragraph -> paragraph
-                            .text(spacedUpper(title))
+                            .text(TextOrnaments.spacedUpper(title))
                             .textStyle(mainHeaderStyle())
                             .align(TextAlign.LEFT)
                             .margin(DocumentInsets.top(8)))
@@ -1064,18 +1074,29 @@ public final class SidebarPortrait {
     }
 
     /**
-     * Extracts language strings out of a section. Accepts either an
-     * explicit {@code RowsSection} with a "Languages: ..." row or any
-     * row whose body looks like an inline list, plus a fallback that
-     * parses {@code SkillsSection.groups()} when languages are stored
-     * as a single group inside the additional-information slot.
+     * What the language block draws, and whether that is the whole section.
+     *
+     * @param items    the language strings, in the order they were found
+     * @param complete whether every row of the section reached the block. The
+     *                 heading reads from this: a block showing a subset cannot
+     *                 carry the section's title without naming content it does
+     *                 not show.
      */
-    private static List<String> languageItems(CvSection section) {
+    private record LanguageBlock(List<String> items, boolean complete) {
+    }
+
+    /**
+     * Extracts language strings out of a section: either the rows of an
+     * explicit "Languages: ..." row, or any row whose body looks like an
+     * inline list, or — when neither matched — every row it was given.
+     */
+    private static LanguageBlock languageBlock(CvSection section) {
         if (section == null) {
-            return List.of();
+            return new LanguageBlock(List.of(), true);
         }
         List<String> result = new ArrayList<>();
         if (section instanceof RowsSection rows) {
+            int drawn = 0;
             for (CvRow row : rows.rows()) {
                 String label = MarkdownInline.plainText(row.label()).trim();
                 String body = MarkdownInline.plainText(row.body()).trim();
@@ -1087,56 +1108,33 @@ public final class SidebarPortrait {
                             result.add(p);
                         }
                     }
+                    drawn++;
                 } else if (!label.isBlank()
                            && (body.contains("(") || body.contains("|"))) {
                     result.add(label + " " + body);
+                    drawn++;
                 }
             }
-            if (result.isEmpty()) {
-                // The sniffing above exists because this slot also accepts an
-                // "Additional Information" section and has to pick the language
-                // rows out of it. A section routed here by its role is entirely
-                // languages, and nothing in it needs to look like one — without
-                // this the block draws its heading over nothing, which is worse
-                // than the drop it replaced.
-                for (CvRow row : rows.rows()) {
-                    String label = MarkdownInline.plainText(row.label()).trim();
-                    String body = MarkdownInline.plainText(row.body()).trim();
-                    if (label.isBlank() && body.isBlank()) {
-                        continue;
-                    }
-                    result.add(body.isBlank() ? label : label + " " + body);
-                }
+            if (!result.isEmpty()) {
+                return new LanguageBlock(result, drawn == rows.rows().size());
             }
-        } else if (section instanceof SkillsSection skills) {
-            for (SkillGroup group : skills.groups()) {
-                String inline = MarkdownInline.plainText(group.skillsInline());
-                for (String part : inline.split(",")) {
-                    String p = part.trim();
-                    if (!p.isBlank()) {
-                        result.add(p);
-                    }
+            // The sniffing above exists because this slot also accepts an
+            // "Additional Information" section and has to pick the language
+            // rows out of it. A section routed here by its role is entirely
+            // languages, and nothing in it needs to look like one — without
+            // this the block draws its heading over nothing, which is worse
+            // than the drop it replaced. Nothing was picked over here, so the
+            // block draws the section whole.
+            for (CvRow row : rows.rows()) {
+                String label = MarkdownInline.plainText(row.label()).trim();
+                String body = MarkdownInline.plainText(row.body()).trim();
+                if (label.isBlank() && body.isBlank()) {
+                    continue;
                 }
+                result.add(body.isBlank() ? label : label + " " + body);
             }
         }
-        return result;
-    }
-
-    private static String spacedUpper(String value) {
-        String upper = (value == null ? "" : value).toUpperCase(Locale.ROOT);
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < upper.length(); i++) {
-            char current = upper.charAt(i);
-            builder.append(current);
-            if (Character.isLetterOrDigit(current)
-                && i + 1 < upper.length()
-                && Character.isLetterOrDigit(upper.charAt(i + 1))) {
-                builder.append(' ');
-            } else if (Character.isWhitespace(current)) {
-                builder.append("  ");
-            }
-        }
-        return builder.toString();
+        return new LanguageBlock(result, true);
     }
 
     private record ContactItem(String iconFile, String text,

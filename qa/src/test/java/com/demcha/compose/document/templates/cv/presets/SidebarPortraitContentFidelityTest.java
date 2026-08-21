@@ -159,14 +159,30 @@ class SidebarPortraitContentFidelityTest {
         // above is attributed to the rule and not to whatever else is on the page.
         // A preset that stopped asking for the safe area fails the loop above; a
         // preset whose padding silently started covering it fails here.
+        //
+        // Measured as the difference between the two, not as a bound on either:
+        // what starts a continuation page — a body line, a heading carrying a
+        // top margin — moves whenever the fixture's content does, and a literal
+        // read off one rendering has to be loosened every time it does. The
+        // difference is the rule's own contribution and nothing else's.
         try (DocumentSession session = newSession()) {
             SidebarPortrait.create().compose(session, denseDocument());
-            session.pageMargins(List.of());
-            LayoutGraph graph = session.layoutGraph();
+            double withRule = firstLineTopGap(
+                    session.layoutGraph(), session.canvas().height(), 1);
 
-            assertThat(firstLineTopGap(graph, session.canvas().height(), 1))
-                    .describedAs("without the rule the first line lands on the trimmed edge")
-                    .isLessThan(6.0);
+            session.pageMargins(List.of());
+            double withoutRule = firstLineTopGap(
+                    session.layoutGraph(), session.canvas().height(), 1);
+
+            assertThat(withRule - withoutRule)
+                    .describedAs("the inset on page two is the page-margin rule's, "
+                            + "not something else on the page")
+                    .isCloseTo(SidebarPortrait.CONTINUATION_TOP_SAFE_AREA,
+                            org.assertj.core.data.Offset.offset(0.01));
+            assertThat(withoutRule)
+                    .describedAs("without the rule the first line lands inside the "
+                            + "band a printer will not print")
+                    .isLessThan(PRINTER_SAFE_MINIMUM);
         }
     }
 

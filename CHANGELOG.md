@@ -302,6 +302,54 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Three presets printed their own words over the author's sections.** Sidebar Portrait
+  headed all six of its slots with a label chosen when the preset was written, Monogram
+  Sidebar its sidebar skills block, Mint Editorial its profile and its skill bars — so a
+  section titled "Employment History" reached the page as EXPERIENCE and "Education &
+  Certifications" as EDUCATION. The rename is invisible in a CV whose headings happen to
+  match the preset's vocabulary and wrong in every other one — and a CV assembled at
+  runtime carries headings nobody in the library chose, which is the reason its author
+  wrote them. Every slot that draws a section now prints that section's title, with the
+  two exceptions below. The three column-flow presets are the ones covered because they
+  are the ones about to declare `ModularCvTemplate`.
+
+  Two blocks keep a label of their own. Sidebar Portrait's language list picks the
+  language rows out of an "Additional Information" section, so that section's title would
+  head content the reader cannot see; it switches to the title whenever every row it was
+  given reached the page, which is the normal case for a section routed there by its role
+  rather than by a keyword. And Mint Editorial draws one skills section as two adjacent
+  blocks — an index of the group names, then a bar per skill — which cannot both carry one
+  title: the author's heads the index, the block a reader reaches first, so the section
+  opens in their words even when the column flow puts the bars on the next page. The bars
+  carry this preset's own "Skills", and nothing at all when the section is itself titled
+  that, since the same heading twice over different content reads as a fault.
+
+  Monogram Sidebar's four main slots already read the title, through a
+  `title().isBlank() ? "..." : title()` whose blank branch could not run: every
+  `CvSection` rejects a blank title in its constructor. The dead branches are gone.
+
+  A longer heading also has to fit a narrower column, and Sidebar Portrait's did not:
+  letter-spacing inserts a space between every pair of letters and wrapping breaks on
+  whitespace, so "EDUCATION & CERTIFICATIONS" came out as "EDUCATION & CERTI /
+  FICATIONS". `TextOrnaments.spacedUpper` — the one every preset letter-spaces through —
+  now uses U+00A0 for the gap inside a word. `Character.isWhitespace` is false for it, so
+  a break falls between words wherever a boundary exists; a single word wider than its
+  column is still split, as it has to be. The glyph is the same space: a heading that
+  already fitted moves by zero pixels, measured against the recorded baselines rather
+  than assumed. Sidebar Portrait's own character-for-character copy of that helper is
+  gone, which is what let the two diverge.
+
+  The three presets move their pixel baselines and their committed previews; no other
+  preset's output changes. The pixel gate passed throughout — 12,652 changed pixels on
+  the Sidebar Portrait page against a 50,000 budget sized for cross-platform font drift —
+  which is worth knowing about that gate rather than about this change.
+
+  The moved content also cost `SidebarPortraitContentFidelityTest` its negative control,
+  which pinned the un-ruled continuation page to a literal read off one rendering. It now
+  measures the difference the page-margin rule makes rather than a bound on either side of
+  it, so it attributes the inset to the rule exactly and does not need loosening the next
+  time the fixture's content shifts.
+
 - **A section shape a preset did not recognise was lost three different ways.**
   `BlueBanner` and `ClassicSerif` each kept a private copy of the section dispatcher
   whose final `else` threw `IllegalStateException`; `EditorialBlue`'s had no `else` at

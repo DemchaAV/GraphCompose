@@ -509,14 +509,35 @@ public final class MintEditorial {
                             addContact(sidebar, identity);
                             addInterests(sidebar, interests);
                             addEducation(sidebar, education);
-                            addExpertise(sidebar, skills);
-                            addSkills(sidebar, skills, sidebarInner);
+                            // The expertise index and the skill bars draw one
+                            // section between them. The author's heading goes
+                            // over the block the reader reaches first, so the
+                            // section opens in their words even when the column
+                            // flow splits the pair across pages; the second
+                            // block carries this preset's own word, and none at
+                            // all when that would repeat the heading above it.
+                            String skillsHeading =
+                                    SectionAllocation.titleOr(skills, "Expertise");
+                            boolean indexed = hasSkillCategories(skills);
+                            String barsHeading = indexed ? "Skills" : skillsHeading;
+                            if (indexed && SectionLookup.normalize(barsHeading)
+                                    .equals(SectionLookup.normalize(skillsHeading))) {
+                                barsHeading = null;
+                            }
+                            addExpertise(sidebar, skills, skillsHeading);
+                            addSkills(sidebar, skills, sidebarInner, barsHeading);
                             addSocial(sidebar, identity);
                         });
                         body.addColumn("CvV2MintEditorialMain", main -> {
                             main.spacing(BLOCK_GAP).padding(DocumentInsets.zero());
                             addProfile(main, profile);
-                            addExperience(main, "Experience", experienceEntries);
+                            // titleOr, not title(): nothing claimed this slot in a
+                            // CV with no experience section, and the block below
+                            // draws nothing at all in that case — so the fallback
+                            // names the slot without ever reaching a page.
+                            addExperience(main,
+                                    SectionAllocation.titleOr(experience, "Experience"),
+                                    experienceEntries);
                             addAwards(main, awards, gridColumnWidth);
                             addReferences(main, references, gridColumnWidth);
                             // Whatever no block claimed — an author's own
@@ -742,7 +763,21 @@ public final class MintEditorial {
 
         // -- Sidebar: Expertise -------------------------------------------
 
-        private void addExpertise(SectionBuilder section, CvSection skills) {
+        /** Whether the expertise index has anything to draw. */
+        private boolean hasSkillCategories(CvSection skills) {
+            if (!(skills instanceof SkillsSection skillsSection)) {
+                return false;
+            }
+            for (SkillGroup group : skillsSection.groups()) {
+                if (!group.category().isBlank()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void addExpertise(SectionBuilder section, CvSection skills,
+                                  String heading) {
             if (!(skills instanceof SkillsSection skillsSection)) {
                 return;
             }
@@ -757,7 +792,7 @@ public final class MintEditorial {
             }
             section.addSection("CvV2MintEditorialExpertise", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
-                addBlockHeading(block, "Expertise");
+                addBlockHeading(block, heading);
                 // Badge is a stroked multi-path SVG (a checkmark in a ring),
                 // so it renders through SvgIcon.node — preserving its authored
                 // stroke — rather than being flattened to a recoloured glyph.
@@ -776,7 +811,7 @@ public final class MintEditorial {
         // -- Sidebar: Skills (bars) ---------------------------------------
 
         private void addSkills(SectionBuilder section, CvSection skills,
-                               double trackWidth) {
+                               double trackWidth, String heading) {
             if (!(skills instanceof SkillsSection skillsSection)) {
                 return;
             }
@@ -789,7 +824,9 @@ public final class MintEditorial {
             }
             section.addSection("CvV2MintEditorialSkills", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
-                addBlockHeading(block, "Skills");
+                // null when the index above already printed these words;
+                // addBlockHeading draws nothing for it.
+                addBlockHeading(block, heading);
                 for (CvSkill skill : flattened) {
                     SkillBar.render(block, skill, trackWidth, theme);
                 }
@@ -829,7 +866,7 @@ public final class MintEditorial {
             }
             section.addSection("CvV2MintEditorialProfile", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
-                addBlockHeading(block, "Profile");
+                addBlockHeading(block, profile.title());
                 DocumentTextStyle bodyStyle = bodyStyle();
                 block.addParagraph(p -> p
                         .textStyle(bodyStyle)

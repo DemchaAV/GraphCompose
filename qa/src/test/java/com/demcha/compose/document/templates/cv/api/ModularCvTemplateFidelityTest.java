@@ -1,11 +1,7 @@
 package com.demcha.compose.document.templates.cv.api;
 
-import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.api.DocumentPageSize;
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.CvComposedText;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvItem;
@@ -57,7 +53,7 @@ class ModularCvTemplateFidelityTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("modularTemplates")
     void everyModularTemplateRendersEveryKind(ModularCvTemplate template) {
-        String text = composedText(template, everyKindDocument());
+        String text = CvComposedText.of(template, everyKindDocument());
 
         for (CvKind kind : CvKind.values()) {
             // Case-insensitively: a preset that upper-cases its entry titles is
@@ -83,7 +79,7 @@ class ModularCvTemplateFidelityTest {
                         .period("2019 - 2021").bullets("Ran three weekend workshops"))
                 .build());
 
-        String text = composedText(template, doc);
+        String text = CvComposedText.of(template, doc);
 
         assertThatHeading(text, "Volunteering", template);
         assertThat(text)
@@ -102,7 +98,7 @@ class ModularCvTemplateFidelityTest {
                 .item(CvItem.of("Языки").paragraphs("Java 21", "Kotlin"))
                 .build());
 
-        String text = composedText(template, doc);
+        String text = CvComposedText.of(template, doc);
 
         assertThatHeading(text, "Навыки", template);
         assertThat(text)
@@ -123,7 +119,7 @@ class ModularCvTemplateFidelityTest {
                 .item(CvItem.of("AWS Solutions Architect").paragraphs("2024"))
                 .build());
 
-        String text = composedText(template, doc);
+        String text = CvComposedText.of(template, doc);
 
         assertThatHeading(text, "Certifications & Awards", template);
         assertThat(text)
@@ -148,7 +144,7 @@ class ModularCvTemplateFidelityTest {
                         .build())
                 .build();
 
-        assertThat(composedText(template, doc))
+        assertThat(CvComposedText.of(template, doc))
                 .as("%s reads Slot.MAIN, as its contract says", template.id())
                 .doesNotContain("Spoken");
     }
@@ -181,10 +177,10 @@ class ModularCvTemplateFidelityTest {
      */
     private static void assertThatHeading(String text, String heading,
                                           ModularCvTemplate template) {
-        assertThat(text.replace(" ", ""))
+        assertThat(CvComposedText.squash(text))
                 .as("%s must render the section under its own heading (%s)",
                         template.id(), heading)
-                .containsIgnoringCase(heading.replace(" ", ""));
+                .contains(CvComposedText.squash(heading));
     }
 
     // -- fixtures --------------------------------------------------------
@@ -241,25 +237,4 @@ class ModularCvTemplateFidelityTest {
                 .build();
     }
 
-    /** Every string the composed layout carries, joined. */
-    private static String composedText(DocumentTemplate<CvDocument> template, CvDocument doc) {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(DocumentPageSize.A4)
-                .margin(24, 24, 24, 24)
-                .create()) {
-            template.compose(session, doc);
-            StringBuilder text = new StringBuilder();
-            collectText(session.roots(), text);
-            return text.toString();
-        }
-    }
-
-    private static void collectText(List<DocumentNode> nodes, StringBuilder out) {
-        for (DocumentNode node : nodes) {
-            if (node instanceof ParagraphNode paragraph) {
-                out.append(paragraph.text()).append(' ');
-            }
-            collectText(node.children(), out);
-        }
-    }
 }

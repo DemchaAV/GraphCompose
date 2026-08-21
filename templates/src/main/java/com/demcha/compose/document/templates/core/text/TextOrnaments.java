@@ -14,12 +14,24 @@ import java.util.Locale;
  */
 public final class TextOrnaments {
 
+    /** Letter gap inside a word: a space the line wrapper cannot break on. */
+    private static final char NON_BREAKING_SPACE = '\u00A0';
+
     private TextOrnaments() {
     }
 
     /**
      * Letter-spaced uppercase rendering (e.g.
      * {@code spacedUpper("Jane Doe") -> "J A N E   D O E"}).
+     *
+     * <p>The gap between two letters of one word is a non-breaking space.
+     * Wrapping breaks on whitespace and every letter here is separated by
+     * some, so an ordinary space lets a heading too wide for its column break
+     * anywhere: "EDUCATION &amp; CERTIFICATIONS" came out as "EDUCATION &amp;
+     * CERTI / FICATIONS" in a sidebar. {@code Character.isWhitespace} is false
+     * for U+00A0, so a break falls between words wherever one exists — a word
+     * wider than the column is still split, as it has to be. The glyph is the
+     * same space, so a heading that already fitted does not move.</p>
      *
      * @param value source text (null tolerated, returned as empty)
      * @return spaced-caps representation
@@ -36,7 +48,7 @@ public final class TextOrnaments {
             if (Character.isLetterOrDigit(current)
                 && i + 1 < upper.length()
                 && Character.isLetterOrDigit(upper.charAt(i + 1))) {
-                out.append(' ');
+                out.append(NON_BREAKING_SPACE);
             } else if (Character.isWhitespace(current)) {
                 out.append("  ");
             }

@@ -148,9 +148,14 @@ class LeftoverSectionTest {
         // A module may name a role and carry nothing. Claiming it for the slot
         // leaves the real, keyword-matching section unclaimed — it survives, but
         // in the leftover tail at the bottom of the CV rather than in the slot
-        // its content belongs to. Sidebar Portrait draws its own label over a
-        // claimed section and the author's title over a leftover, so which of
-        // the two headings appears says where the section was drawn.
+        // its content belongs to.
+        //
+        // Both places head a section with its author's title, so the words alone
+        // cannot say which one drew it. The order can: "Awards" matches no slot
+        // in this preset, so it can only be in the tail, and it is declared
+        // first. Drawn in its slot, the experience section comes out above it;
+        // swept into the tail, it comes out below — the tail keeps document
+        // order.
         CvDocument doc = CvDocument.builder()
                 .identity(CvIdentity.builder()
                         .name("Jordan", "Rivera")
@@ -160,6 +165,9 @@ class LeftoverSectionTest {
                 .section(new ParagraphSection("Professional Summary", "Builds pipelines."))
                 .section(ModuleSection.of("Experience", SectionRole.EXPERIENCE,
                         CvKind.ENTRIES_DATED))
+                .section(RowsSection.builder("Awards", RowStyle.PLAIN)
+                        .row("Duke's Choice", "2024")
+                        .build())
                 .section(EntriesSection.builder("Professional Experience")
                         .entry("Principal Engineer", "Acme Rendering", "2022-present",
                                 "Owns the rendering pipeline.")
@@ -172,10 +180,15 @@ class LeftoverSectionTest {
         assertThat(text)
                 .describedAs("the job survives the empty module that named its role")
                 .contains("Ownstherenderingpipeline");
-        assertThat(text)
-                .describedAs("and it is drawn in the experience slot, not swept into "
-                        + "the leftover tail under its own title")
-                .doesNotContain("PROFESSIONALEXPERIENCE");
+        assertThat(text.indexOf("AWARDS"))
+                .describedAs("the tail drew the section no slot claimed — it is what "
+                        + "the experience section's position is read against")
+                .isGreaterThanOrEqualTo(0);
+        assertThat(text.indexOf("PROFESSIONALEXPERIENCE"))
+                .describedAs("and the experience section is drawn in its slot, above "
+                        + "the leftover tail rather than inside it")
+                .isGreaterThanOrEqualTo(0)
+                .isLessThan(text.indexOf("AWARDS"));
     }
 
     private static Stream<Arguments> presets() {

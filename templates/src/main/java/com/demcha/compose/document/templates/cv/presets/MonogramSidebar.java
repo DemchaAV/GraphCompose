@@ -410,7 +410,7 @@ public final class MonogramSidebar {
 
             CvSection skills = allocation.skills(SectionRole.SKILLS, SKILL_KEYS);
             if (hasContent(skills)) {
-                addSidebarHeader(section, "EXPERTISE", innerWidth);
+                addSidebarHeader(section, skills.title(), innerWidth);
                 addSkillsList(section, skills);
             }
         }
@@ -576,37 +576,25 @@ public final class MonogramSidebar {
 
             CvSection profile = allocation.paragraph(SectionRole.SUMMARY, SUMMARY_KEYS);
             if (hasContent(profile)) {
-                addMainSectionHeader(section,
-                        profile.title().isBlank()
-                                ? "Professional Profile"
-                                : profile.title());
+                addMainSectionHeader(section, profile.title());
                 addProfileBody(section, profile);
             }
 
             CvSection experience = allocation.entries(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
             if (hasContent(experience)) {
-                addMainSectionHeader(section,
-                        experience.title().isBlank()
-                                ? "Experience"
-                                : experience.title());
+                addMainSectionHeader(section, experience.title());
                 addExperienceEntries(section, experience);
             }
 
             CvSection projects = allocation.rows(SectionRole.PROJECTS, PROJECT_KEYS, RowStyle.BULLETED_STACKED);
             if (hasContent(projects)) {
-                addMainSectionHeader(section,
-                        projects.title().isBlank()
-                                ? "Projects"
-                                : projects.title());
+                addMainSectionHeader(section, projects.title());
                 addProjectsList(section, projects);
             }
 
             CvSection additional = allocation.rows(SectionRole.OTHER, ADDITIONAL_KEYS, RowStyle.PLAIN);
             if (hasContent(additional)) {
-                addMainSectionHeader(section,
-                        additional.title().isBlank()
-                                ? "Additional Information"
-                                : additional.title());
+                addMainSectionHeader(section, additional.title());
                 addAdditionalList(section, additional);
             }
 

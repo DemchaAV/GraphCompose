@@ -3,8 +3,6 @@ package com.demcha.compose.document.templates.cv.components;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
@@ -201,35 +199,6 @@ class ModuleSectionKindCoverageTest {
             try (PDDocument pdf = Loader.loadPDF(session.toPdfBytes())) {
                 return new PDFTextStripper().getText(pdf).replaceAll("\\s+", " ").trim();
             }
-        }
-    }
-
-    /**
-     * Every string the composed layout carries, joined — the text before a font
-     * gets a say in whether it can draw it.
-     */
-    private static String composedText(DocumentTemplate<CvDocument> preset, ModuleSection module) {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(DocumentPageSize.A4)
-                .margin(24, 24, 24, 24)
-                .create()) {
-            preset.compose(session, CvDocument.builder()
-                    .identity(identity()).sections(List.of(module)).build());
-            StringBuilder text = new StringBuilder();
-            collectText(session.roots(), text);
-            return text.toString();
-        }
-    }
-
-    private static void collectText(List<DocumentNode> nodes, StringBuilder out) {
-        for (DocumentNode node : nodes) {
-            if (node instanceof ParagraphNode paragraph) {
-                // text() carries the plain string AND the concatenation of any
-                // rich runs, so it sees both a header written with .text(...) and
-                // a body assembled from markdown runs.
-                out.append(paragraph.text()).append(' ');
-            }
-            collectText(node.children(), out);
         }
     }
 

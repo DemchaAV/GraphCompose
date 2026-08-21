@@ -1,11 +1,7 @@
 package com.demcha.compose.document.templates.cv.components;
 
-import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.api.DocumentPageSize;
-import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.node.DocumentNode;
-import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.CvComposedText;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvItem;
@@ -48,7 +44,7 @@ class RoleRoutingTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("everyPreset")
     void aCvWrittenInAnotherLanguageRendersOnEveryPreset(DocumentTemplate<CvDocument> preset) {
-        String text = composedText(preset, foreignLanguageCv());
+        String text = CvComposedText.of(preset, foreignLanguageCv());
 
         assertRendered(text, "Ведущий инженер", preset, "experience");
         assertRendered(text, "Информатика", preset, "education");
@@ -74,7 +70,7 @@ class RoleRoutingTest {
                         .build())
                 .build();
 
-        String text = composedText(preset, doc);
+        String text = CvComposedText.of(preset, doc);
 
         assertRendered(text, "Senior Engineer", preset, "EXPERIENCE");
         assertRendered(text, "Java 21", preset, "SKILLS");
@@ -123,9 +119,9 @@ class RoleRoutingTest {
      */
     private static void assertRendered(String text, String words,
                                        DocumentTemplate<CvDocument> preset, String slot) {
-        assertThat(text.replace(" ", ""))
+        assertThat(CvComposedText.squash(text))
                 .as("%s must render the %s module routed by role", preset.id(), slot)
-                .containsIgnoringCase(words.replace(" ", ""));
+                .contains(CvComposedText.squash(words));
     }
 
     // -- fixtures --------------------------------------------------------
@@ -156,30 +152,4 @@ class RoleRoutingTest {
                 .build();
     }
 
-    /**
-     * Every string the composed layout carries. Read from the layout rather
-     * than the PDF text layer: the CV themes draw with the standard-14
-     * Helvetica, which has no Cyrillic glyphs, and where the section was
-     * placed is what routing owes — the font is the caller's choice.
-     */
-    private static String composedText(DocumentTemplate<CvDocument> preset, CvDocument doc) {
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(DocumentPageSize.A4)
-                .margin(24, 24, 24, 24)
-                .create()) {
-            preset.compose(session, doc);
-            StringBuilder text = new StringBuilder();
-            collectText(session.roots(), text);
-            return text.toString();
-        }
-    }
-
-    private static void collectText(List<DocumentNode> nodes, StringBuilder out) {
-        for (DocumentNode node : nodes) {
-            if (node instanceof ParagraphNode paragraph) {
-                out.append(paragraph.text()).append(' ');
-            }
-            collectText(node.children(), out);
-        }
-    }
 }

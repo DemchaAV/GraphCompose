@@ -192,8 +192,26 @@ public final class SidebarPortrait {
             List.of("education", "certifications");
     private static final List<String> SKILL_KEYS =
             List.of("skills", "technical skills");
-    private static final List<String> LANGUAGE_KEYS =
-            List.of("languages", "additional information", "additional");
+    /**
+     * A section that is entirely languages, whatever else it may be called.
+     *
+     * <p>Plural only. A key matches as a substring of the title with its
+     * spacing stripped, so the singular would claim "Natural Language
+     * Processing" and "Sign Language Interpreting" for this block and draw
+     * them as an upper-cased list in a third of a page's width. The plural
+     * still reaches "Language Skills", whose stripped title starts with
+     * it.</p>
+     */
+    private static final List<String> LANGUAGE_KEYS = List.of("languages");
+
+    /**
+     * A wider section this block also accepts, and picks the language rows out
+     * of. Kept apart from {@link #LANGUAGE_KEYS} because the two are drawn
+     * differently: everything in a languages section belongs in this block,
+     * while everything in an "Additional Information" section does not.
+     */
+    private static final List<String> ADDITIONAL_KEYS =
+            List.of("additional information", "additional");
     private static final List<String> SUMMARY_KEYS =
             List.of("profile", "professional profile", "summary",
                     "professional summary");
@@ -391,6 +409,12 @@ public final class SidebarPortrait {
 
             SectionAllocation allocation =
                     SectionAllocation.of(doc.sectionsIn(Slot.MAIN));
+            // What the sidebar's language block was handed and did not draw.
+            // A local, so two compositions of one template never share it: the
+            // sidebar column fills it and the main column reads it, in that
+            // order — ColumnFlowBuilder runs each column's spec as addColumn is
+            // called, and nothing clears the list afterwards.
+            List<LanguageRemainder> languageRemainder = new ArrayList<>();
 
             // Paint the two-column chrome via pageBackgrounds — the
             // engine emits both fills on every page automatically, so
@@ -426,13 +450,14 @@ public final class SidebarPortrait {
                                     1.0 - SIDEBAR_WIDTH_RATIO)
                             .addColumn("CvV2SidebarPortraitSidebar",
                                     section -> addSidebar(section, doc,
-                                            allocation))
+                                            allocation, languageRemainder))
                             .addColumn("CvV2SidebarPortraitMain",
                                     section -> {
                                         section.spacing(0)
                                                 .padding(DocumentInsets.zero());
                                         addNameBlock(section, doc.identity());
-                                        addMain(section, allocation);
+                                        addMain(section, doc, allocation,
+                                                languageRemainder);
                                     }))
                     .build();
         }
@@ -440,7 +465,8 @@ public final class SidebarPortrait {
         // -- Sidebar -------------------------------------------------------
 
         private void addSidebar(SectionBuilder section, CvDocument doc,
-                                SectionAllocation allocation) {
+                                SectionAllocation allocation,
+                                List<LanguageRemainder> remainder) {
             // Sidebar section deliberately has no fillColor — the
             // pageBackgrounds emitted in compose() paint the pale fill
             // edge-to-edge on every page.
@@ -462,18 +488,34 @@ public final class SidebarPortrait {
                 addSkillsList(section, skills);
             }
 
-            CvSection languages = allocation.rows(SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
+            // Claimed in two steps so the block knows what it got. A section
+            // routed here by its role, or titled for the job, is entirely
+            // languages and is drawn whole; an "Additional Information" section
+            // is a wider thing this block picks over, and what it leaves behind
+            // is drawn by the main column rather than dropped.
+            CvSection languages =
+                    allocation.rows(SectionRole.LANGUAGES, LANGUAGE_KEYS, RowStyle.PLAIN);
+            boolean whole = languages != null;
+            if (languages == null) {
+                languages = allocation.rows(SectionRole.OTHER, ADDITIONAL_KEYS,
+                        RowStyle.PLAIN);
+            }
             if (hasContent(languages)) {
-                LanguageBlock block = languageBlock(languages);
-                // The one heading here that is not always the author's. This
-                // block also accepts an "Additional Information" section and
-                // shows the language rows it finds inside it, so over a
-                // three-of-four subset the section's own title would name
-                // content the reader cannot see. When every row reached the
-                // block there is nothing to disown and the title stands.
-                addSidebarHeader(section,
-                        block.complete() ? languages.title() : "Languages");
-                addLanguageList(section, block.items());
+                LanguageBlock block = languageBlock(languages, whole);
+                if (!block.items().isEmpty()) {
+                    // The one heading here that is not always the author's:
+                    // over a subset, the section's own title would name content
+                    // the reader cannot see. When nothing was left behind there
+                    // is nothing to disown and the title stands.
+                    addSidebarHeader(section,
+                            block.complete() ? languages.title() : "Languages");
+                    addLanguageList(section, block.items());
+                }
+                if (!block.unshown().isEmpty()) {
+                    remainder.add(new LanguageRemainder(languages,
+                            new RowsSection(languages.title(), block.unshown(),
+                                    RowStyle.PLAIN)));
+                }
             }
         }
 
@@ -639,18 +681,15 @@ public final class SidebarPortrait {
         }
 
         private void addLanguageList(SectionBuilder section,
-                                     List<String> items) {
+                                     List<LanguageItem> items) {
             DocumentTextStyle nameStyle = sidebarLanguageNameStyle();
             DocumentTextStyle metaStyle = sidebarLanguageMetaStyle();
-            for (String item : items) {
-                String text = MarkdownInline.plainText(item);
-                int paren = text.indexOf('(');
-                String langName = paren > 0
-                        ? text.substring(0, paren).trim()
-                        : text.trim();
-                String level = paren > 0
-                        ? text.substring(paren).trim()
-                        : "";
+            for (LanguageItem item : items) {
+                // Taken as the block separated them rather than parsed back out
+                // of a joined string: a level written without brackets — "B2" —
+                // used to be swallowed into the upper-cased name.
+                String langName = item.name();
+                String level = item.level();
                 if (langName.isBlank()) {
                     continue;
                 }
@@ -703,7 +742,9 @@ public final class SidebarPortrait {
                             .margin(DocumentInsets.zero())));
         }
 
-        private void addMain(SectionBuilder section, SectionAllocation allocation) {
+        private void addMain(SectionBuilder section, CvDocument doc,
+                             SectionAllocation allocation,
+                             List<LanguageRemainder> languageRemainder) {
             section.addSection("CvV2SidebarPortraitContent", content -> {
                 content.spacing(MAIN_CONTENT_SPACING)
                         .padding(new DocumentInsets(24, 34, 24, 34));
@@ -732,7 +773,29 @@ public final class SidebarPortrait {
                 // CV is not obliged to have exactly those; before the body
                 // paginated there was nowhere to put the rest, and dropping it
                 // looked like a finished page.
-                for (CvSection leftover : allocation.remaining()) {
+                // The sidebar's language block claims a wider section to find
+                // the languages in it; the rows it did not draw are the rest of
+                // that section, and they belong on the page under its own
+                // heading rather than nowhere. Walked in document order rather
+                // than appended, so the rest of an "Additional Information"
+                // section keeps the place its author gave it among the other
+                // sections no slot claimed.
+                Set<CvSection> unclaimed =
+                        Collections.newSetFromMap(new IdentityHashMap<>());
+                unclaimed.addAll(allocation.remaining());
+                List<CvSection> tail = new ArrayList<>();
+                for (CvSection candidate : doc.sectionsIn(Slot.MAIN)) {
+                    if (unclaimed.contains(candidate)) {
+                        tail.add(candidate);
+                        continue;
+                    }
+                    for (LanguageRemainder rest : languageRemainder) {
+                        if (rest.source() == candidate) {
+                            tail.add(rest.rows());
+                        }
+                    }
+                }
+                for (CvSection leftover : tail) {
                     CvSection shaped = SectionRouter.naturalShape(leftover);
                     // A module with items but nothing in them lowers to an empty
                     // shape; a heading over nothing is worse than the drop.
@@ -1133,67 +1196,122 @@ public final class SidebarPortrait {
     }
 
     /**
+     * One language and the level written next to it, already separated so the
+     * renderer does not have to guess where one ends. A blank level draws
+     * nothing.
+     *
+     * @param name  the language
+     * @param level the proficiency beside it, or blank
+     */
+    private record LanguageItem(String name, String level) {
+    }
+
+    /**
      * What the language block draws, and whether that is the whole section.
      *
-     * @param items    the language strings, in the order they were found
+     * @param items    the languages, in the order they were found
      * @param complete whether every row of the section reached the block. The
      *                 heading reads from this: a block showing a subset cannot
      *                 carry the section's title without naming content it does
      *                 not show.
+     * @param unshown  the rows the block did not draw, for the main column to
+     *                 print under the section's own title
      */
-    private record LanguageBlock(List<String> items, boolean complete) {
+    private record LanguageBlock(List<LanguageItem> items, boolean complete,
+                                 List<CvRow> unshown) {
     }
 
     /**
-     * Extracts language strings out of a section: either the rows of an
-     * explicit "Languages: ..." row, or any row whose body looks like an
-     * inline list, or — when neither matched — every row it was given.
+     * A section the language block picked over, and the rows it left behind.
+     *
+     * @param source the section as the document held it, for placing the rest
+     *               back in document order
+     * @param rows   the rows the block did not draw
      */
-    private static LanguageBlock languageBlock(CvSection section) {
-        if (section == null) {
-            return new LanguageBlock(List.of(), true);
+    private record LanguageRemainder(CvSection source, CvSection rows) {
+    }
+
+    /**
+     * Splits a section into the languages this block draws and the rows it
+     * does not.
+     *
+     * <p>A row that names the category — "Languages: English, German" —
+     * becomes one language per comma. When the section is drawn {@code whole}
+     * every remaining row is a language whatever it looks like; otherwise only
+     * a row shaped like "German (B2)" is, and the rest are handed back in
+     * {@link LanguageBlock#unshown()} for the caller to place. No row is
+     * dropped on either path.</p>
+     *
+     * @param section the claimed section
+     * @param whole   whether the section is entirely languages
+     * @return what to draw, and what was left over
+     */
+    private static LanguageBlock languageBlock(CvSection section, boolean whole) {
+        if (!(section instanceof RowsSection rows)) {
+            return new LanguageBlock(List.of(), true, List.of());
         }
-        List<String> result = new ArrayList<>();
-        if (section instanceof RowsSection rows) {
-            int drawn = 0;
-            for (CvRow row : rows.rows()) {
-                String label = MarkdownInline.plainText(row.label()).trim();
-                String body = MarkdownInline.plainText(row.body()).trim();
-                String lower = label.toLowerCase(Locale.ROOT);
-                if (lower.contains("language") && !body.isBlank()) {
-                    for (String part : body.split(",")) {
-                        String p = part.trim();
-                        if (!p.isBlank()) {
-                            result.add(p);
-                        }
+        List<LanguageItem> result = new ArrayList<>();
+        List<CvRow> unshown = new ArrayList<>();
+        for (CvRow row : rows.rows()) {
+            String label = MarkdownInline.plainText(row.label()).trim();
+            String body = MarkdownInline.plainText(row.body()).trim();
+            if (label.isBlank() && body.isBlank()) {
+                continue;
+            }
+            // The label IS the category word, not merely contains it: a row
+            // labelled "Sign Language" is one language, and expanding it would
+            // print its body and lose its name.
+            String normalized = SectionLookup.normalize(label);
+            boolean namesTheCategory =
+                    normalized.equals("languages") || normalized.equals("language");
+            int before = result.size();
+            if (namesTheCategory && !body.isBlank()) {
+                // "Languages: English (native), German (B2)" — the label names
+                // the category and the body is the content, so the row becomes
+                // one language per comma.
+                for (String part : body.split(",")) {
+                    String p = part.trim();
+                    if (!p.isBlank()) {
+                        result.add(splitLevel(p));
                     }
-                    drawn++;
-                } else if (!label.isBlank()
-                           && (body.contains("(") || body.contains("|"))) {
-                    result.add(label + " " + body);
-                    drawn++;
                 }
             }
-            if (!result.isEmpty()) {
-                return new LanguageBlock(result, drawn == rows.rows().size());
+            if (result.size() > before) {
+                continue;
             }
-            // The sniffing above exists because this slot also accepts an
-            // "Additional Information" section and has to pick the language
-            // rows out of it. A section routed here by its role is entirely
-            // languages, and nothing in it needs to look like one — without
-            // this the block draws its heading over nothing, which is worse
-            // than the drop it replaced. Nothing was picked over here, so the
-            // block draws the section whole.
-            for (CvRow row : rows.rows()) {
-                String label = MarkdownInline.plainText(row.label()).trim();
-                String body = MarkdownInline.plainText(row.body()).trim();
-                if (label.isBlank() && body.isBlank()) {
-                    continue;
-                }
-                result.add(body.isBlank() ? label : label + " " + body);
+            // Nothing came of the split, so the row falls through here rather
+            // than being swallowed by a branch that consumed it and drew
+            // nothing.
+            if (whole
+                || (!label.isBlank()
+                    && (body.contains("(") || body.contains("|")))) {
+                // Drawn whole, or shaped like "German (B2)". The sniffing is
+                // only for the wider section: everything in a languages section
+                // belongs here whether or not it looks like one.
+                result.add(label.isBlank()
+                        ? splitLevel(body)
+                        : new LanguageItem(label, body));
+            } else {
+                unshown.add(row);
             }
         }
-        return new LanguageBlock(result, true);
+        return new LanguageBlock(result, unshown.isEmpty(), unshown);
+    }
+
+    /**
+     * Separates "English (native)" into the language and its level. Text with
+     * no bracket is all language.
+     *
+     * @param text one language as it was written
+     * @return the language and its level
+     */
+    private static LanguageItem splitLevel(String text) {
+        String plain = MarkdownInline.plainText(text);
+        int paren = plain.indexOf('(');
+        return paren > 0
+                ? new LanguageItem(plain.substring(0, paren).trim(),
+                        plain.substring(paren).trim())
+                : new LanguageItem(plain.trim(), "");
     }
 
     private record ContactItem(String iconFile, String text,

@@ -60,6 +60,13 @@ class SlotHeadingFidelityTest {
     /** Claimed by no slot in any of the three presets, so it can only be in the tail. */
     private static final String TAIL_MARKER = "Publications";
 
+    /**
+     * The identity name, which Sidebar Portrait draws at the top of its main
+     * column and nowhere in its sidebar. The sidebar column is composed first,
+     * so this is where one column ends and the other begins.
+     */
+    private static final String COLUMN_BOUNDARY = "Jordan Rivera";
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("presets")
     void everySlotPrintsTheHeadingItsAuthorWrote(String id,
@@ -116,9 +123,11 @@ class SlotHeadingFidelityTest {
     @Test
     void theLanguageBlockKeepsItsLabelWhenItShowsPartOfASection() {
         // Sidebar Portrait's language block also accepts an "Additional
-        // Information" section and picks the language rows out of it. Three of
-        // the four rows below never reach the page, so the section's own title
-        // would head content the reader cannot see.
+        // Information" section and picks the language rows out of it. It keeps
+        // its own label over that subset — the section's title would name
+        // content this block does not show — and the rows it did not draw are
+        // the rest of the section, which the main column draws under the title
+        // its author wrote instead of losing them.
         CvDocument doc = cv(RowsSection.builder("Additional Information", RowStyle.PLAIN)
                 .row("Languages", "English (Fluent), German (Intermediate)")
                 .row("Work Eligibility", "Eligible to work in the UK")
@@ -128,13 +137,64 @@ class SlotHeadingFidelityTest {
 
         String text = CvComposedText.squashedNodes(SidebarPortrait.create(), doc);
 
+        // COLUMN_BOUNDARY is drawn by the main column, and the sidebar is
+        // composed before it, so what precedes it is in the sidebar and what
+        // follows it is not. Without that the two halves of this are
+        // indistinguishable: the same words on the page either way.
+        assertBoundaryIsOne(text);
         assertThat(text)
-                .as("a block showing three rows of four keeps its own label, over "
-                    + "the languages it did find")
-                .contains(squash("Languages"))
-                .contains(squash("English"))
-                .contains(squash("German"))
-                .doesNotContain(squash("Additional Information"));
+                .as("the block keeps its own label over the languages it found, "
+                    + "in the sidebar")
+                .containsSubsequence(squash("Languages"), squash("English"),
+                        squash("German"), squash(COLUMN_BOUNDARY));
+        assertThat(text)
+                .as("and the rows it did not draw reach the main column under "
+                    + "the section's own heading, in the order it had them")
+                .containsSubsequence(squash(COLUMN_BOUNDARY),
+                        squash("Additional Information"),
+                        squash("Work Eligibility"),
+                        squash("Maintainer of GraphCompose"),
+                        squash("JVM Summit 2024"));
+        assertThat(CvComposedText.occurrences(text, squash("Work Eligibility")))
+                .as("handed to the main column, not drawn in both")
+                .isEqualTo(1);
+        assertThat(CvComposedText.occurrences(text, squash("Additional Information")))
+                .as("and its heading is drawn once")
+                .isEqualTo(1);
+    }
+
+    @Test
+    void aLanguagesModuleKeepsEveryRowEvenWhenNoneLooksLikeALanguage() {
+        // The block sniffs for language-shaped rows because it also accepts a
+        // wider section. A section routed here by its role is entirely
+        // languages whatever its rows look like, so nothing in it may be
+        // picked over.
+        //
+        // The first item carries a bracket and the other two do not, which is
+        // the shape that used to lose them: one sniff hit was enough to
+        // suppress the whole-section fallback, so English was drawn while
+        // Deutsch and Українська reached no page at all — and the section
+        // counted as claimed, so the leftover tail never saw them either.
+        // Written without that bracket, this fixture would pass against the
+        // old code too and guard nothing.
+        CvDocument doc = cv(ModuleSection.builder("Языки", SectionRole.LANGUAGES,
+                        CvKind.INLINE_LIST)
+                .item(CvItem.of("English").paragraphs("(C1 advanced)"))
+                .item(CvItem.of("Deutsch").paragraphs("B2"))
+                .item(CvItem.of("Українська").paragraphs("рідна"))
+                .build());
+
+        String text = CvComposedText.squashedNodes(SidebarPortrait.create(), doc);
+
+        assertBoundaryIsOne(text);
+        assertThat(text)
+                .as("every row is drawn in the language block itself — before the "
+                    + "main column starts — under the author's own heading, each "
+                    + "keeping the level written next to it")
+                .containsSubsequence(squash("Языки"), squash("English"),
+                        squash("Deutsch"), squash("B2"),
+                        squash("Українська"), squash("рідна"),
+                        squash(COLUMN_BOUNDARY));
     }
 
     @Test
@@ -181,6 +241,30 @@ class SlotHeadingFidelityTest {
 
         assertThat(CvComposedText.occurrences(text, squash("Skills")))
                 .as("one heading, not the same word twice in a row")
+                .isEqualTo(1);
+    }
+
+    @Test
+    void aWiderSectionWithNoLanguageInItIsLeftWholeToTheMainColumn() {
+        // Nothing here looks like a language, so the sidebar block draws no
+        // heading over an empty list and the section reaches the main column
+        // intact. The old code drew the whole of it in the sidebar under the
+        // section's own title instead, in a third of a page's width.
+        CvDocument doc = cv(RowsSection.builder("Additional Information", RowStyle.PLAIN)
+                .row("Work Eligibility", "Eligible to work in the UK")
+                .row("Speaking", "JVM Summit 2024")
+                .build());
+
+        String text = CvComposedText.squashedNodes(SidebarPortrait.create(), doc);
+
+        assertBoundaryIsOne(text);
+        assertThat(text)
+                .as("the whole section is drawn in the main column, under its own title")
+                .containsSubsequence(squash(COLUMN_BOUNDARY),
+                        squash("Additional Information"),
+                        squash("Work Eligibility"), squash("Speaking"));
+        assertThat(CvComposedText.occurrences(text, squash("Work Eligibility")))
+                .as("once, not in both columns")
                 .isEqualTo(1);
     }
 
@@ -349,6 +433,18 @@ class SlotHeadingFidelityTest {
         return RowsSection.builder("Project Work", RowStyle.BULLETED_STACKED)
                 .row("GraphCompose", "Declarative Java PDF layout engine")
                 .build();
+    }
+
+    /**
+     * The column boundary separates the columns only while it is drawn once.
+     * Asserted where it is used, so a preset that started repeating the name
+     * fails here rather than quietly making every placement assertion
+     * meaningless.
+     */
+    private static void assertBoundaryIsOne(String text) {
+        assertThat(CvComposedText.occurrences(text, squash(COLUMN_BOUNDARY)))
+                .as("the boundary is a boundary only while the name is drawn once")
+                .isEqualTo(1);
     }
 
     private static CvDocument cv(CvSection section) {

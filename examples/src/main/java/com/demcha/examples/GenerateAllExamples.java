@@ -94,6 +94,7 @@ import com.demcha.examples.templates.cv.v2.CvModernV2Example;
 import com.demcha.examples.templates.cv.v2.CvMonogramSidebarExample;
 import com.demcha.examples.templates.cv.v2.CvNordicCleanExample;
 import com.demcha.examples.templates.cv.v2.CvPanelExample;
+import com.demcha.examples.templates.cv.v2.CvRuntimeModulesExample;
 import com.demcha.examples.templates.cv.v2.CvSidebarPortraitExample;
 import com.demcha.examples.templates.cv.v2.CvTimelineMinimalExample;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
@@ -140,6 +141,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvNordicCleanExample.generate());
         System.out.println("Generated: " + CvPanelExample.generate());
         System.out.println("Generated: " + CvSidebarPortraitExample.generate());
+        System.out.println("Generated: " + CvRuntimeModulesExample.generate());
         System.out.println("Generated: " + CvTimelineMinimalExample.generate());
 
         // Cover letters (v2 layered — 15 paired letters, one per CV preset)

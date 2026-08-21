@@ -19,6 +19,8 @@ import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
+import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
+import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.components.SectionAllocation;
 import com.demcha.compose.document.templates.cv.components.SectionRouter;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
@@ -332,7 +334,8 @@ public final class SidebarPortrait {
         }
     }
 
-    private static final class Template implements DocumentTemplate<CvDocument> {
+    private static final class Template implements ModularCvTemplate {
+
 
         private final BrandTheme theme;
         private final DocumentColor sidebarFill;
@@ -360,6 +363,25 @@ public final class SidebarPortrait {
         @Override
         public String displayName() {
             return DISPLAY_NAME;
+        }
+
+        /**
+         * The canonical kit, and this template never consults it.
+         *
+         * <p>A kit is how a preset styles the bodies it routes through
+         * {@code SectionDispatcher}. This one routes none: a module is lowered
+         * by {@code SectionRouter} to the shape its slot draws, and the slot's
+         * own renderer draws it — which is why a runtime module already comes
+         * out in this preset's style rather than the canonical one. The kit is
+         * the value an outside caller would draw with, and the canonical
+         * shapes are the honest answer for a caller this template knows
+         * nothing about.</p>
+         *
+         * @return the canonical kit
+         */
+        @Override
+        public CvRenderKit kit() {
+            return CvRenderKit.defaults();
         }
 
         @Override
@@ -576,14 +598,43 @@ public final class SidebarPortrait {
             if (!(skillSection instanceof SkillsSection skills)) {
                 return;
             }
+            DocumentTextStyle groupStyle = sidebarEntryTitleStyle();
             DocumentTextStyle skillStyle = sidebarSkillStyle();
-            for (String token : skillTokens(skills)) {
-                section.addParagraph(paragraph -> paragraph
-                        .text(MarkdownInline.plainText(token))
-                        .textStyle(skillStyle)
-                        .lineSpacing(1.35)
-                        .align(TextAlign.LEFT)
-                        .margin(DocumentInsets.top(3)));
+            for (SkillGroup group : skills.groups()) {
+                // The author grouped these, and the group's name is the word
+                // that says what they are: a flat run of every skill in the CV
+                // reads as one undifferentiated list, and a module routed here
+                // loses the only label it carried.
+                //
+                // Skipped when it would repeat the heading this block already
+                // drew. A module whose items carry no bodies is lowered into a
+                // single group named after the module itself — see
+                // SectionRouter.asSkills — so the label would print the
+                // section's own title directly underneath it. (A category
+                // cannot be blank: SkillGroup rejects that in its constructor.
+                // The check survives for a category that is pure markdown.)
+                // Compared as written, not through SectionLookup.normalize:
+                // that strips every character outside [a-z0-9] because it
+                // matches English keyword lists, so two Cyrillic titles both
+                // reduce to "" and every non-Latin CV would lose this label.
+                String category = MarkdownInline.plainText(group.category()).trim();
+                String heading = MarkdownInline.plainText(skills.title()).trim();
+                if (!category.isBlank() && !category.equalsIgnoreCase(heading)) {
+                    section.addParagraph(paragraph -> paragraph
+                            .text(category)
+                            .textStyle(groupStyle)
+                            .lineSpacing(1.35)
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.top(8)));
+                }
+                for (String token : groupTokens(group)) {
+                    section.addParagraph(paragraph -> paragraph
+                            .text(MarkdownInline.plainText(token))
+                            .textStyle(skillStyle)
+                            .lineSpacing(1.35)
+                            .align(TextAlign.LEFT)
+                            .margin(DocumentInsets.top(3)));
+                }
             }
         }
 
@@ -1059,15 +1110,23 @@ public final class SidebarPortrait {
         }
     }
 
-    private static List<String> skillTokens(SkillsSection skills) {
+    /**
+     * One group's skills.
+     *
+     * <p>Read from {@link SkillGroup#skills()} rather than by splitting
+     * {@code skillsInline()} back apart on commas: the group already holds
+     * them as a list, and the round trip through the joined form cut a skill
+     * that carries a comma of its own in half.</p>
+     *
+     * @param group the group to read
+     * @return its skills in order, blanks dropped
+     */
+    private static List<String> groupTokens(SkillGroup group) {
         List<String> tokens = new ArrayList<>();
-        for (SkillGroup group : skills.groups()) {
-            String inline = MarkdownInline.plainText(group.skillsInline());
-            for (String token : inline.split(",")) {
-                String clean = token.trim();
-                if (!clean.isBlank()) {
-                    tokens.add(clean);
-                }
+        for (String skill : group.skills()) {
+            String clean = skill.trim();
+            if (!clean.isBlank()) {
+                tokens.add(clean);
             }
         }
         return tokens;

@@ -44,7 +44,7 @@ class RoleRoutingTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("everyPreset")
     void aCvWrittenInAnotherLanguageRendersOnEveryPreset(DocumentTemplate<CvDocument> preset) {
-        String text = CvComposedText.of(preset, foreignLanguageCv());
+        String text = CvComposedText.squashedNodes(preset, foreignLanguageCv());
 
         assertRendered(text, "Ведущий инженер", preset, "experience");
         assertRendered(text, "Информатика", preset, "education");
@@ -70,7 +70,7 @@ class RoleRoutingTest {
                         .build())
                 .build();
 
-        String text = CvComposedText.of(preset, doc);
+        String text = CvComposedText.squashedNodes(preset, doc);
 
         assertRendered(text, "Senior Engineer", preset, "EXPERIENCE");
         assertRendered(text, "Java 21", preset, "SKILLS");
@@ -119,7 +119,7 @@ class RoleRoutingTest {
      */
     private static void assertRendered(String text, String words,
                                        DocumentTemplate<CvDocument> preset, String slot) {
-        assertThat(CvComposedText.squash(text))
+        assertThat(text)
                 .as("%s must render the %s module routed by role", preset.id(), slot)
                 .contains(CvComposedText.squash(words));
     }

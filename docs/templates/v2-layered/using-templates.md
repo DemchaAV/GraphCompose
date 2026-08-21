@@ -250,8 +250,10 @@ template that declares it, and asserts every item reached the page under the
 author's own words.
 
 The promise covers `Slot.MAIN`, which is where sections go unless you say
-otherwise. Every shipped preset composes a single main column, so a section
-placed in `Slot.SIDEBAR` is dropped — by these templates as by every other.
+otherwise. Every shipped preset reads that slot and no other — including the
+ones that compose a sidebar, which fill it from the identity and from the
+main-slot sections their own routing sends there — so a section placed in
+`Slot.SIDEBAR` is dropped, by these templates as by every other.
 
 The presets outside that list are not broken, they are *designed*: each
 composes a fixed set of slots, so it renders the roles it has a place for
@@ -272,17 +274,25 @@ skills, three projects and three additional rows, and `MintEditorial` six
 expertise labels and six skill bars — and all of them silently dropped the rest.
 `MintEditorial` also stopped dealing its content two pages at a time. A section
 they have no slot for is no longer dropped either: it is drawn at the end of the
-main column under the heading its author wrote. What still keeps them off the
-modular list is the other half of that promise: each of them prints its own label
-over at least some claimed sections, so a heading the author wrote can still be
-renamed — `SidebarPortrait` labels all six of its slots, and a
-"Certifications & Awards" routed into its education slot reads as "EDUCATION".
+main column under the heading its author wrote.
+
+They are on the modular list now. The last thing keeping them off it was the
+other half of the promise — each printed its own label over claimed sections, so
+"Certifications & Awards" routed into Sidebar Portrait's education slot read as
+"EDUCATION" — and every slot prints the section's own title today. Two blocks
+keep a label of their own, both because they draw part of a section rather than
+the section: Sidebar Portrait's language list, which picks the language rows out
+of an "Additional Information" section, and Mint Editorial's skill-bar block,
+whose group index above it already carries the author's heading.
 
 A template also says *how* it draws through `CvRenderKit`. The shared
 lowering turns a module into paragraphs, rows, and entries; the kit draws
 them, so a preset with its own entry style renders your runtime module in
 that style rather than the canonical one. Presets whose bodies already use
-the shared components return `CvRenderKit.defaults()`.
+the shared components return `CvRenderKit.defaults()` — and so do the three
+column-flow presets, which never route a body through the kit at all: each
+lowers a module to the shape its slot draws and lets that slot's own renderer
+draw it, which is why a runtime module already comes out in their style.
 
 ---
 

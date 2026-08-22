@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.cv.api.CvConstructor;
 import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.cv.components.*;
 import com.demcha.compose.document.templates.cv.data.*;
@@ -107,8 +108,33 @@ public final class BlueBanner {
             }
 
             @Override
-            public CvRenderKit kit() {
-                return KIT;
+            public void paragraph(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.paragraph(host, module, theme, KIT);
+            }
+
+            @Override
+            public void bullets(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bullets(host, module, theme, KIT);
+            }
+
+            @Override
+            public void bulletsStacked(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bulletsStacked(host, module, theme, KIT);
+            }
+
+            @Override
+            public void inlineList(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.inlineList(host, module, theme, KIT);
+            }
+
+            @Override
+            public void entries(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entries(host, module, theme, KIT);
+            }
+
+            @Override
+            public void entriesDated(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entriesDated(host, module, theme, KIT);
             }
 
             @Override
@@ -143,7 +169,7 @@ public final class BlueBanner {
                             new DocumentInsets(1, BANNER_RULE_HORIZONTAL_INSET,
                                     1, BANNER_RULE_HORIZONTAL_INSET));
                     pageFlow.addSection("BlueBannerBody_" + idx, host ->
-                            renderBody(host, sec, theme));
+                            renderBody(host, sec, theme, this));
                 }
 
                 pageFlow.build();
@@ -152,7 +178,8 @@ public final class BlueBanner {
 
     private static void renderBody(SectionBuilder host,
                                    CvSection section,
-                                   BrandTheme theme) {
+                                   BrandTheme theme,
+                                   CvConstructor constructor) {
         host.spacing(theme.spacing().sectionBodySpacing())
                 .padding(theme.spacing().sectionBodyPadding());
 
@@ -166,14 +193,10 @@ public final class BlueBanner {
             for (CvEntry entry : e.entries()) {
                 renderEntry(host, entry, theme);
             }
+        } else if (section instanceof ModuleSection module) {
+            constructor.render(host, module, theme);
         } else {
-            // A shape this preset has no styled path for — today the runtime
-            // ModuleSection. Hand it to the canonical dispatcher rather than
-            // throwing: a section the author put in the document reaches the
-            // page, which matters more than matching this preset's flavour of
-            // entry. A preset that wants its own module styling overrides this
-            // branch, it does not lose the content by omission.
-            SectionDispatcher.renderBody(host, section, theme, KIT);
+            SectionDispatcher.renderBody(host, section, theme);
         }
     }
 

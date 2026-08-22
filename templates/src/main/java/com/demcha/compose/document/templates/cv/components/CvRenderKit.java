@@ -3,33 +3,21 @@ package com.demcha.compose.document.templates.cv.components;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
-import com.demcha.compose.document.templates.cv.data.CvItem;
 import com.demcha.compose.document.templates.cv.data.CvKind;
 import com.demcha.compose.document.templates.cv.data.CvRow;
 import com.demcha.compose.document.templates.cv.data.RowStyle;
 
 /**
- * How one template draws the three shapes a CV section body reduces to:
+ * Primitive drawing a {@link ModuleRenderer} kind method can restyle:
  * a paragraph of prose, a label/value row, a timeline entry.
  *
- * <p>A preset that wants runtime {@code ModuleSection}s to look like the
- * rest of its own document implements this and hands it back through
- * {@link com.demcha.compose.document.templates.cv.api.ModularCvTemplate};
- * {@link #defaults()} draws them the canonical way, and every method has a
- * default, so a preset overrides only the shapes it actually styles
- * differently.</p>
- *
- * <p><strong>Why the primitives and not the kinds.</strong> The obvious
- * alternative is a function per {@link CvKind}. It puts the wrong work on
- * the preset: turning a {@link CvItem} into an entry or a row means
- * deciding what a linked title looks like, how a subtitle and a location
- * join, which fields the kind ignores, what an empty description does to a
- * trailing colon — rules that belong to the model and must not be
- * re-decided sixteen times. {@link ModuleRenderer} keeps that lowering and
- * asks the kit only to draw what came out of it, which is exactly the part
- * a preset has an opinion about. It is also the shape the presets already
- * have: their private renderers take a {@code CvEntry} or a {@code CvRow}
- * today.</p>
+ * <p>This is not the template contract. A modular template implements
+ * {@link com.demcha.compose.document.templates.cv.api.CvConstructor} —
+ * one method per {@link CvKind}. The kit is the optional hook underneath
+ * a kind method that wants its own entry or row look without re-deciding
+ * which fields the kind reads. {@link #defaults()} is the canonical
+ * drawing; every method has a default, so a preset overrides only the
+ * primitives it actually styles differently.</p>
  *
  * <p>Implementations draw into the host and return; they do not set the
  * host's spacing or padding, which the caller has already settled, and

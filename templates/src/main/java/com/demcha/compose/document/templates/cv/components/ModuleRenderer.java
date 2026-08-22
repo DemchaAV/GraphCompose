@@ -52,10 +52,11 @@ public final class ModuleRenderer {
      * Renders every item of {@code module} into {@code host}, drawing
      * through {@code kit}.
      *
-     * <p>The lowering below is the same whoever draws: which fields a kind
-     * reads, how a linked title is spelled, what an empty description does
-     * to a trailing colon. Only the three drawing calls go to the kit, so a
-     * preset can restyle its modules without re-deciding any of that.</p>
+     * <p>Prefers the kind methods below. A template that implements
+     * {@code CvConstructor} should call those (or {@code render} on
+     * itself) rather than this overload: this one exists so a kit can
+     * restyle the three drawing primitives without re-deciding which
+     * fields a kind reads.</p>
      *
      * @param host   host section receiving the body
      * @param module the module supplying items, kind, and role
@@ -64,17 +65,173 @@ public final class ModuleRenderer {
      */
     public static void render(SectionBuilder host, ModuleSection module, BrandTheme theme,
                               CvRenderKit kit) {
+        switch (module.kind()) {
+            case PARAGRAPH -> paragraph(host, module, theme, kit);
+            case BULLETS -> bullets(host, module, theme, kit);
+            case BULLETS_STACKED -> bulletsStacked(host, module, theme, kit);
+            case INLINE_LIST -> inlineList(host, module, theme, kit);
+            case ENTRIES -> entries(host, module, theme, kit);
+            case ENTRIES_DATED -> entriesDated(host, module, theme, kit);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#PARAGRAPH}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void paragraph(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        paragraph(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#PARAGRAPH} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void paragraph(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                                 CvRenderKit kit) {
+        for (CvItem item : module.items()) {
+            paragraph(host, item, theme, kit);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#BULLETS}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void bullets(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        bullets(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#BULLETS} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void bullets(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                               CvRenderKit kit) {
+        for (CvItem item : module.items()) {
+            bullet(host, item, theme, kit);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#BULLETS_STACKED}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void bulletsStacked(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        bulletsStacked(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#BULLETS_STACKED} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void bulletsStacked(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                                      CvRenderKit kit) {
+        List<CvItem> items = module.items();
+        for (int i = 0; i < items.size(); i++) {
+            stackedBullet(host, items.get(i), theme, kit, i > 0);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#INLINE_LIST}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void inlineList(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        inlineList(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#INLINE_LIST} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void inlineList(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                                  CvRenderKit kit) {
+        for (CvItem item : module.items()) {
+            inlineList(host, item, theme, kit);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#ENTRIES}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void entries(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        entries(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#ENTRIES} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void entries(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                               CvRenderKit kit) {
+        List<CvItem> items = module.items();
+        for (int i = 0; i < items.size(); i++) {
+            entry(host, items.get(i), "", theme, kit, i > 0);
+        }
+    }
+
+    /**
+     * Canonical {@link com.demcha.compose.document.templates.cv.data.CvKind#ENTRIES_DATED}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     */
+    public static void entriesDated(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+        entriesDated(host, module, theme, CvRenderKit.defaults());
+    }
+
+    /**
+     * {@link com.demcha.compose.document.templates.cv.data.CvKind#ENTRIES_DATED} drawn through {@code kit}.
+     *
+     * @param host   host section receiving the body
+     * @param module the module
+     * @param theme  the active theme
+     * @param kit    drawing primitives
+     */
+    public static void entriesDated(SectionBuilder host, ModuleSection module, BrandTheme theme,
+                                    CvRenderKit kit) {
         List<CvItem> items = module.items();
         for (int i = 0; i < items.size(); i++) {
             CvItem item = items.get(i);
-            switch (module.kind()) {
-                case PARAGRAPH -> paragraph(host, item, theme, kit);
-                case BULLETS -> bullet(host, item, theme, kit);
-                case BULLETS_STACKED -> stackedBullet(host, item, theme, kit, i > 0);
-                case INLINE_LIST -> inlineList(host, item, theme, kit);
-                case ENTRIES -> entry(host, item, "", theme, kit, i > 0);
-                case ENTRIES_DATED -> entry(host, item, item.period(), theme, kit, i > 0);
-            }
+            entry(host, item, item.period(), theme, kit, i > 0);
         }
     }
 

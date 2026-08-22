@@ -1,6 +1,8 @@
 package com.demcha.compose.document.templates.cv.api;
 
+import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.cv.CvComposedText;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
@@ -164,10 +166,19 @@ class ModularCvTemplateFidelityTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("modularTemplates")
-    void everyModularTemplateDeclaresAKit(ModularCvTemplate template) {
-        assertThat(template.kit())
-                .as("%s must hand back a kit — the drawing half of the promise", template.id())
-                .isNotNull();
+    void everyModularTemplateImplementsEveryKind(ModularCvTemplate template)
+            throws NoSuchMethodException {
+        Class<?> type = template.getClass();
+        for (CvKind kind : CvKind.values()) {
+            assertThat(type.getMethod(
+                    CvConstructor.methodName(kind),
+                    SectionBuilder.class,
+                    ModuleSection.class,
+                    BrandTheme.class)
+                    .getDeclaringClass())
+                    .as("%s must implement %s", template.id(), kind)
+                    .isNotEqualTo(CvConstructor.class);
+        }
     }
 
     @Test

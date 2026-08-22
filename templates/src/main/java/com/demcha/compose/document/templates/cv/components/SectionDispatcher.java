@@ -1,6 +1,7 @@
 package com.demcha.compose.document.templates.cv.components;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.templates.cv.api.CvConstructor;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
@@ -38,12 +39,40 @@ public final class SectionDispatcher {
     }
 
     /**
+     * Renders the section body, sending a runtime module through
+     * {@code constructor} so each kind lands on the method the template
+     * implemented for it.
+     *
+     * <p>Typed sections still take the canonical path: the constructor
+     * is the module contract, not a second dispatcher for
+     * {@code EntriesSection}.</p>
+     *
+     * @param host         host section receiving the body
+     * @param section      the section whose subtype selects the renderer
+     * @param theme        the active theme supplying palette, typography, and spacing
+     * @param constructor  the template's kind methods
+     * @throws IllegalStateException if the section subtype is unhandled
+     * @since 2.3.0
+     */
+    public static void renderBody(SectionBuilder host, CvSection section, BrandTheme theme,
+                                  CvConstructor constructor) {
+        if (section instanceof ModuleSection module) {
+            host.spacing(theme.spacing().sectionBodySpacing())
+                    .padding(theme.spacing().sectionBodyPadding());
+            constructor.render(host, module, theme);
+            return;
+        }
+        renderBody(host, section, theme);
+    }
+
+    /**
      * Renders the section body, drawing through {@code kit}.
      *
      * <p>The routing is identical to the three-argument form; only who draws
-     * differs. A preset with its own entry or row style passes its kit here
-     * so a runtime module looks like the rest of its document instead of
-     * like the canonical components.</p>
+     * differs. Prefer the {@link CvConstructor} overload for a modular
+     * template: that is the kind contract. This overload remains for a
+     * preset that is not yet on that contract and restyles the three
+     * drawing primitives.</p>
      *
      * @param host    host section receiving the body
      * @param section the section whose subtype selects the renderer

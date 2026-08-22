@@ -307,11 +307,13 @@ follow semantic versioning; release dates are ISO 8601.
   is now headed by its own name, which is both what the contract asks and easier to
   read; a section that was never grouped carries a blank category and gets no label.
 
-  `kit()` returns the canonical kit for all three, and says why: a kit draws one body
-  style and these presets have two — the sidebar's and the main column's — with nothing
-  in `CvRenderKit` to say which column it is drawing into. Nothing in these templates
-  routes a body through `SectionDispatcher`, so the kit is what a caller outside them
-  would draw with, and canonical is the honest answer there.
+  Their `CvConstructor` methods forward to the canonical `ModuleRenderer` for the
+  same reason: a kit (and now a constructor method) draws one body style, and these
+  presets have two — the sidebar's and the main column's. Claimed modules still
+  lower through `SectionRouter` onto the slot's own renderer, which is why they
+  already come out in the preset's style. The constructor methods are the contract
+  a leftover or unclaimed module will use, and the canonical look is the honest
+  answer for a caller that is not sitting in a slot.
 
   `ModularCvTemplateFidelityTest` grew two corrections in the process. Its item
   assertions read raw composed text while its heading assertion dropped spacing, so a
@@ -321,14 +323,27 @@ follow semantic versioning; release dates are ISO 8601.
   rendering style rather than a promise: it asserts every skill and the group's name
   reach the page, and leaves the join to the preset drawing bars, chips, or a list.
 
-- **A preset can draw runtime modules in its own style.** `CvRenderKit` is the three
-  shapes a section body reduces to — a paragraph, a label/value row, a timeline entry —
-  and a template hands back the kit it draws them with. The lowering from `CvItem`
-  stays shared, because deciding what a linked title looks like or which fields a kind
-  reads belongs to the model and must not be re-decided per preset; only the drawing is
-  the preset's. `BlueBanner`, `ClassicSerif`, and `EditorialBlue` now render modules
-  with their own entry and project shapes rather than the canonical ones — the
-  limitation the entry above left open.
+- **The constructor contract is the module shapes, not CV meanings.** A template
+  that can be handed a runtime CV implements `CvConstructor`: one method per
+  `CvKind` (`paragraph`, `bullets`, `bulletsStacked`, `inlineList`, `entries`,
+  `entriesDated`) and no defaults. JSON (or any mapper) picks the kind; the
+  template draws the kind. It does not know whether the section is Experience or
+  a heading nobody anticipated — that knowledge is not in the contract. Adding a
+  kind is adding a method, and every `ModularCvTemplate` fails to compile until
+  it implements it. `CvConstructorKindGateTest` holds the bijection and that
+  every modular template declares the methods rather than inheriting a default.
+
+  The shared `ModuleRenderer` still owns which fields a kind reads, so a
+  template that wants the canonical look of a kind forwards to it. A template
+  that already had its own entry or project drawing implements the kind
+  methods onto that drawing (`BlueBanner`, `EditorialBlue`). `CvRenderKit`
+  remains the optional primitive hook underneath a kind method, not the
+  template contract: `ModularCvTemplate` no longer has `kit()`.
+
+- **A preset can draw runtime modules in its own style.** `BlueBanner` and
+  `EditorialBlue` implement the kind methods through their own entry and
+  project shapes rather than the canonical ones. `ClassicSerif` is not on
+  `ModularCvTemplate` yet and still restyles through a private `CvRenderKit`.
 
 ### Fixed
 

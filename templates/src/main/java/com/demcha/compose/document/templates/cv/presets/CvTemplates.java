@@ -32,8 +32,10 @@ import java.util.function.Supplier;
  * templates, they are templates with a fixed idea of what a CV contains.</p>
  *
  * <p>Every lookup builds a fresh template with the preset's own default
- * theme; a caller wanting a variant calls that preset's
- * {@code create(BrandTheme)} directly. {@code CvTemplatesCoverageTest} holds
+ * theme and default layout; a caller wanting a variant calls that preset's
+ * own factory directly — {@code create(BrandTheme)}, or {@code create(Options)}
+ * where the preset offers one, as {@code NordicClean} and
+ * {@code TimelineMinimal} do. {@code CvTemplatesCoverageTest} holds
  * this catalogue to the presets package, so a preset added and not
  * registered fails the build rather than staying invisible to every runtime
  * caller.</p>

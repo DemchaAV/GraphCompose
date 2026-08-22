@@ -292,6 +292,24 @@ follow semantic versioning; release dates are ISO 8601.
   Nine presets and every slot they compose changed; a CV written in Russian and German
   now renders on all sixteen, which `RoleRoutingTest` holds by rendering one.
 
+- **Timeline Minimal can draw its projects in the wide column.** The preset puts them in
+  the narrow sidebar beside education and skills, which suits a list of short labels and
+  not a CV whose projects carry a paragraph each: twelve such projects take the sidebar
+  three slices where the main column takes one, and every technical line wraps its way
+  there while the wide column ends half empty.
+
+  `TimelineMinimal.Options.builder().projectsColumn(TimelineMinimal.Column.MAIN)` moves
+  them under the work history, where a reader meets the career first and the projects that
+  came out of it second. `create(Options)` and `create(BrandTheme, Options)` join the
+  existing factories and reject a null `Options`, as every other preset carrying one does.
+  The moved block is measured against the column it lands in, so the wrapping estimate
+  follows it.
+
+  The sidebar arrangement stays the default and is held to the pixel by its own baseline;
+  the variant has a baseline of its own. Which column projects belong in is a property of
+  the CV rather than of the design, which is why it is a caller's choice rather than a
+  second preset.
+
 - **The three column-flow presets keep the modular promise too.** `SidebarPortrait`,
   `MonogramSidebar`, and `MintEditorial` declare `ModularCvTemplate`, so
   `CvTemplates.modular()` now offers a two-column design to a CV assembled at runtime

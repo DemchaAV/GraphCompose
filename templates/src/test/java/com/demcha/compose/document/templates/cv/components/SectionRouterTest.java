@@ -37,21 +37,23 @@ class SectionRouterTest {
     // -- role beats heading, heading still works ------------------------
 
     @Test
-    void aModuleIsFoundByItsRoleWhateverItsHeadingSays() {
+    void aModuleIsNotASlotClaim() {
         CvSection module = ModuleSection.builder("Berufserfahrung", SectionRole.EXPERIENCE,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
 
         assertThat(SectionRouter.find(only(module), SectionRole.EXPERIENCE, List.of("experience")))
-                .isSameAs(module);
+                .as("a runtime module is a shape, not a CV meaning")
+                .isNull();
+        assertThat(SectionRouter.find(only(module), SectionRole.PROJECTS, List.of("beruf")))
+                .as("nor is its heading a slot claim")
+                .isNull();
     }
 
     @Test
-    void aHeadingNeverOverrulesADeclaredRole() {
-        // Both slots would otherwise claim it — the experience slot by role and
-        // the projects slot by heading — and the module would render twice.
-        CvSection module = ModuleSection.builder("Projects", SectionRole.EXPERIENCE,
+    void aModuleHeadingDoesNotStealATypedSlot() {
+        CvSection module = ModuleSection.builder("Projects", SectionRole.OTHER,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
@@ -131,11 +133,11 @@ class SectionRouterTest {
 
     @Test
     void aPlainListOfSkillsArrivesAsSkillsNotAsCategoriesHoldingThemselves() {
-        CvSection lowered = SectionRouter.skills(only(ModuleSection
+        CvSection lowered = SectionRouter.asSkills(ModuleSection
                 .builder("Kenntnisse", SectionRole.SKILLS, CvKind.BULLETS)
                 .item("Java 21")
                 .item("Kotlin")
-                .build()), SectionRole.SKILLS, List.of("skills"));
+                .build());
 
         assertThat(lowered).asInstanceOf(type(SkillsSection.class))
                 .extracting(SkillsSection::groups, org.assertj.core.api.InstanceOfAssertFactories.LIST)
@@ -149,11 +151,11 @@ class SectionRouterTest {
 
     @Test
     void anItemWithADescriptionBecomesItsOwnSkillCategory() {
-        CvSection lowered = SectionRouter.skills(only(ModuleSection
+        CvSection lowered = SectionRouter.asSkills(ModuleSection
                 .builder("Technical Skills", SectionRole.SKILLS, CvKind.INLINE_LIST)
                 .item(CvItem.of("Languages").paragraphs("Java 21", "Kotlin"))
                 .item("Docker")
-                .build()), SectionRole.SKILLS, List.of("skills"));
+                .build());
 
         SkillsSection skills = (SkillsSection) lowered;
         assertThat(skills.groups()).extracting(SkillGroup::category)
@@ -164,10 +166,10 @@ class SectionRouterTest {
 
     @Test
     void proseJoinsEveryItemsDescriptionIntoOneBlock() {
-        CvSection lowered = SectionRouter.paragraph(only(ModuleSection
+        CvSection lowered = SectionRouter.asParagraph(ModuleSection
                 .builder("Profile", SectionRole.SUMMARY, CvKind.PARAGRAPH)
                 .item(CvItem.of("first").paragraphs("Backend engineer.", "Ten years of it."))
-                .build()), SectionRole.SUMMARY, List.of("summary"));
+                .build());
 
         assertThat(lowered).asInstanceOf(type(ParagraphSection.class))
                 .extracting(ParagraphSection::body)
@@ -200,16 +202,14 @@ class SectionRouterTest {
     // -- helpers ---------------------------------------------------------
 
     private static List<CvEntry> entriesOf(CvKind kind, CvItem item) {
-        CvSection lowered = SectionRouter.entries(only(ModuleSection
-                        .of("Experience", SectionRole.EXPERIENCE, kind, item)),
-                SectionRole.EXPERIENCE, List.of("experience"));
+        CvSection lowered = SectionRouter.asEntries(ModuleSection
+                .of("Experience", SectionRole.EXPERIENCE, kind, item));
         return ((EntriesSection) lowered).entries();
     }
 
     private static CvSection rowsOf(RowStyle style, CvItem item) {
-        return SectionRouter.rows(only(ModuleSection
-                        .of("Section", SectionRole.OTHER, CvKind.BULLETS, item)),
-                SectionRole.OTHER, List.of("section"), style);
+        return SectionRouter.asRows(ModuleSection
+                .of("Section", SectionRole.OTHER, CvKind.BULLETS, item), style);
     }
 
     private static String rowBody(CvSection section) {

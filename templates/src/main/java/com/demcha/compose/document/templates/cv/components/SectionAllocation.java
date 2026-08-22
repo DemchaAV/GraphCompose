@@ -67,51 +67,20 @@ public final class SectionAllocation {
     }
 
     /**
-     * Claims the section this slot means, preferring a module that named the
-     * role over one whose heading happens to match.
+     * Claims the typed section this slot's keywords match.
      *
-     * <p>Headings are the fallback because a section that carries no role —
-     * every hand-written one — has nothing else to be found by. A module that
-     * <em>did</em> name a role is never claimed by a different slot's
-     * keywords: it would then render in two places, which is a worse failure
-     * than the one role routing exists to fix.</p>
+     * <p>A {@link ModuleSection} is never claimed. Runtime modules are
+     * shapes, not CV meanings, so they stay in {@link #remaining()} and
+     * draw through the constructor. The {@code role} argument is the
+     * slot's label for typed sections and does not inspect a module.</p>
      *
-     * @param role the role this slot holds; {@code null} or
-     *             {@link SectionRole#OTHER} means "keywords only"
+     * @param role the role this slot holds; unused for modules
      * @param keys candidate heading fragments
      * @return the claimed section, or {@code null} when nothing matches
      * @since 2.3.0
      */
     public CvSection claim(SectionRole role, List<String> keys) {
-        if (role != null && role != SectionRole.OTHER) {
-            for (CvSection section : sections) {
-                if (claimedSections.containsKey(section)) {
-                    continue;
-                }
-                if (section instanceof ModuleSection module && module.role() == role
-                        && SectionLookup.hasContent(section)) {
-                    claimedSections.put(section, Boolean.TRUE);
-                    return section;
-                }
-            }
-        }
-        for (CvSection section : sections) {
-            if (claimedSections.containsKey(section)) {
-                continue;
-            }
-            if (section instanceof ModuleSection module
-                    && module.role() != SectionRole.OTHER) {
-                continue;
-            }
-            String title = SectionLookup.normalize(section.title());
-            for (String key : keys == null ? List.<String>of() : keys) {
-                if (title.contains(SectionLookup.normalize(key))) {
-                    claimedSections.put(section, Boolean.TRUE);
-                    return section;
-                }
-            }
-        }
-        return null;
+        return claim(keys);
     }
 
     /**
@@ -135,6 +104,9 @@ public final class SectionAllocation {
         }
         for (CvSection section : sections) {
             if (claimedSections.containsKey(section)) {
+                continue;
+            }
+            if (section instanceof ModuleSection) {
                 continue;
             }
             String title = SectionLookup.normalize(section.title());

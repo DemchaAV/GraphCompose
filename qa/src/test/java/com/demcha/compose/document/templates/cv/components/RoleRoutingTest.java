@@ -20,51 +20,42 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A CV whose headings are in the author's own language reaches the page on
- * every preset.
+ * A runtime module reaches the page on every modular template, whatever
+ * language its heading is written in — because it is a shape, not a CV
+ * meaning.
  *
- * <p>Presets with a designed layout place sections into fixed slots, and they
- * chose what goes where by matching the heading against a list of English
- * words each kept privately. A CV headed {@code Berufserfahrung} or
- * {@code Опыт работы} matched nothing: the section was dropped and the slot
- * that wanted it rendered empty. Nothing failed — the CV came out looking
- * finished, one job short.</p>
- *
- * <p>A module states its {@link SectionRole}, so the routing has an answer
- * that does not depend on the language the CV is written in. Every heading
- * here is deliberately in Russian and German: if any preset still routes by
- * keyword, its slot stays empty and this goes red.</p>
+ * <p>Slots that still ask for Experience or Skills only see the four
+ * hand-written section types. A {@link ModuleSection} is not a slot claim:
+ * it stays in document order (or the leftover tail) and draws through
+ * {@link com.demcha.compose.document.templates.cv.api.CvConstructor}. This
+ * suite holds that promise for headings no English keyword list contains.</p>
  */
 class RoleRoutingTest {
 
-    private static Stream<Named<DocumentTemplate<CvDocument>>> everyPreset() {
-        return CvTemplates.all().stream().map(t -> Named.of(t.id(), t));
+    private static Stream<Named<DocumentTemplate<CvDocument>>> modularPresets() {
+        return CvTemplates.modular().stream().map(t -> Named.of(t.id(), t));
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("everyPreset")
-    void aCvWrittenInAnotherLanguageRendersOnEveryPreset(DocumentTemplate<CvDocument> preset) {
+    @MethodSource("modularPresets")
+    void aCvWrittenInAnotherLanguageRendersOnEveryModularPreset(
+            DocumentTemplate<CvDocument> preset) {
         String text = CvComposedText.squashedNodes(preset, foreignLanguageCv());
 
-        assertRendered(text, "Ведущий инженер", preset, "experience");
-        assertRendered(text, "Информатика", preset, "education");
+        assertRendered(text, "Ведущий инженер", preset, "entries-dated");
+        assertRendered(text, "Информатика", preset, "entries-dated");
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("everyPreset")
-    void aRoleRoutedModuleRendersWhateverItsKind(DocumentTemplate<CvDocument> preset) {
-        // The slots were guarded on the section's Java type as well as its
-        // heading, so a module routed correctly was dropped anyway. Kinds here
-        // are deliberately the "wrong" shape for the slot each role names —
-        // experience as bullets, education as an inline list — because the
-        // author picks the kind and the preset does not get a veto.
+    @MethodSource("modularPresets")
+    void aModuleRendersWhateverItsKind(DocumentTemplate<CvDocument> preset) {
         CvDocument doc = CvDocument.builder()
                 .identity(identity())
-                .section(ModuleSection.builder("Berufserfahrung", SectionRole.EXPERIENCE,
+                .section(ModuleSection.builder("Berufserfahrung", SectionRole.OTHER,
                                 CvKind.BULLETS)
                         .item(CvItem.of("Senior Engineer").paragraphs("Acme GmbH, 2021-2025"))
                         .build())
-                .section(ModuleSection.builder("Kenntnisse", SectionRole.SKILLS,
+                .section(ModuleSection.builder("Kenntnisse", SectionRole.OTHER,
                                 CvKind.INLINE_LIST)
                         .item(CvItem.of("Sprachen").paragraphs("Java 21", "Kotlin"))
                         .build())
@@ -72,23 +63,21 @@ class RoleRoutingTest {
 
         String text = CvComposedText.squashedNodes(preset, doc);
 
-        assertRendered(text, "Senior Engineer", preset, "EXPERIENCE");
-        assertRendered(text, "Java 21", preset, "SKILLS");
+        assertRendered(text, "Senior Engineer", preset, "bullets");
+        assertRendered(text, "Java 21", preset, "inline-list");
     }
 
     @Test
-    void theRoleWinsOverAHeadingThatMatchesADifferentSlot() {
-        // A module titled "Projects" but declared EXPERIENCE belongs where its
-        // author said, not where its heading reads.
+    void aModuleIsNotClaimedByRoleOrHeading() {
         List<com.demcha.compose.document.templates.cv.data.CvSection> sections = List.of(
                 ModuleSection.builder("Projects", SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
                         .item(CvItem.of("Senior Engineer").period("2021")).build());
 
         assertThat(SectionRouter.find(sections, SectionRole.EXPERIENCE, List.of("experience")))
-                .as("the role names the slot")
-                .isNotNull();
+                .as("a module is not a CV meaning")
+                .isNull();
         assertThat(SectionRouter.find(sections, SectionRole.PROJECTS, List.of("projects")))
-                .as("...and the heading no longer claims a slot the role did not name")
+                .as("nor a heading the slot happens to recognise")
                 .isNull();
     }
 
@@ -107,8 +96,8 @@ class RoleRoutingTest {
                 .as("a hand-written section still matches by heading")
                 .isNotNull();
         assertThat(SectionRouter.find(sections, SectionRole.OTHER, List.of("awards")))
-                .as("SectionRole.OTHER claims no slot and falls through to the heading")
-                .isNotNull();
+                .as("a runtime module is not claimed by heading either")
+                .isNull();
     }
 
     /**
@@ -120,7 +109,7 @@ class RoleRoutingTest {
     private static void assertRendered(String text, String words,
                                        DocumentTemplate<CvDocument> preset, String slot) {
         assertThat(text)
-                .as("%s must render the %s module routed by role", preset.id(), slot)
+                .as("%s must render the %s module", preset.id(), slot)
                 .contains(CvComposedText.squash(words));
     }
 

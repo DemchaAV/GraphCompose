@@ -14,7 +14,9 @@ import java.util.Locale;
  * {@code rgba()} with numbers or percentages, the CSS named-colour table,
  * {@code none}, {@code currentColor}), absolute CSS lengths
  * ({@code px} = user units, {@code pt}, {@code in}, {@code mm}, {@code cm},
- * {@code pc}), and the stroke style trio {@code stroke-linecap} /
+ * {@code pc}), opacity values ({@code opacity} / {@code fill-opacity} /
+ * {@code stroke-opacity} — a number or percentage, clamped into [0,1]),
+ * and the stroke style trio {@code stroke-linecap} /
  * {@code stroke-linejoin} / {@code stroke-dasharray}.
  *
  * <p>Everything unsupported fails loudly with the supported alternatives
@@ -79,14 +81,19 @@ final class SvgStyles {
         if (expanded == null) {
             return null;
         }
-        DocumentColor color = DocumentColor.rgb(
-                Integer.parseInt(expanded.substring(0, 2), 16),
-                Integer.parseInt(expanded.substring(2, 4), 16),
-                Integer.parseInt(expanded.substring(4, 6), 16));
-        if (expanded.length() == 8) {
-            color = color.withOpacity(Integer.parseInt(expanded.substring(6, 8), 16) / 255.0);
+        try {
+            DocumentColor color = DocumentColor.rgb(
+                    Integer.parseInt(expanded.substring(0, 2), 16),
+                    Integer.parseInt(expanded.substring(2, 4), 16),
+                    Integer.parseInt(expanded.substring(4, 6), 16));
+            if (expanded.length() == 8) {
+                color = color.withOpacity(Integer.parseInt(expanded.substring(6, 8), 16) / 255.0);
+            }
+            return color;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "invalid hex colour '#" + hex + "' — digits must be 0-9 / a-f", e);
         }
-        return color;
     }
 
     private static DocumentColor rgbColor(String v) {
@@ -108,20 +115,58 @@ final class SvgStyles {
     private static int channel(String value) {
         String t = value.trim();
         if (t.endsWith("%")) {
-            double pct = Math.max(0, Math.min(100, Double.parseDouble(t.substring(0, t.length() - 1))));
+            double pct = Math.max(0, Math.min(100,
+                    number(t.substring(0, t.length() - 1), "rgb() channel percentage")));
             // pct/100*255 keeps 50% exact (127.5 → 128); pct*2.55 drifts to 127.
             return (int) Math.round(pct / 100.0 * 255.0);
         }
-        return Math.max(0, Math.min(255, (int) Math.round(Double.parseDouble(t))));
+        return Math.max(0, Math.min(255, (int) Math.round(number(t, "rgb() channel"))));
     }
 
     /** rgba() alpha: 0–1 number or percentage, clamped. */
     private static double alpha(String value) {
         String t = value.trim();
         double a = t.endsWith("%")
-                ? Double.parseDouble(t.substring(0, t.length() - 1)) / 100.0
-                : Double.parseDouble(t);
+                ? number(t.substring(0, t.length() - 1), "rgba() alpha percentage") / 100.0
+                : number(t, "rgba() alpha");
         return Math.max(0.0, Math.min(1.0, a));
+    }
+
+    /**
+     * Parses an opacity value ({@code opacity} / {@code fill-opacity} /
+     * {@code stroke-opacity}): a number in [0,1] or a percentage, clamped
+     * per SVG rather than refused.
+     *
+     * @param value   raw attribute value
+     * @param context attribute name for the error message
+     * @return opacity in [0,1]
+     * @throws IllegalArgumentException when the value is not numeric
+     */
+    static double opacity(String value, String context) {
+        String t = value.trim();
+        double a = t.endsWith("%")
+                ? number(t.substring(0, t.length() - 1), context) / 100.0
+                : number(t, context);
+        if (Double.isNaN(a)) {
+            // Double.parseDouble accepts the literal "NaN"; letting it through
+            // would silently hide the subtree (NaN fails every > 0 check).
+            throw new IllegalArgumentException(
+                    context + " must be a number, got '" + value + "'");
+        }
+        return Math.max(0.0, Math.min(1.0, a));
+    }
+
+    /**
+     * Returns the colour with its alpha multiplied by {@code factor} — the
+     * compositing step for {@code fill-opacity} / {@code stroke-opacity} /
+     * group {@code opacity} on top of any alpha the colour already carries
+     * (e.g. from an 8-digit hex or {@code rgba()}).
+     */
+    static DocumentColor multiplyAlpha(DocumentColor color, double factor) {
+        if (factor >= 1.0) {
+            return color;
+        }
+        return color.withOpacity(color.color().getAlpha() / 255.0 * factor);
     }
 
     // ------------------------------------------------------------------
@@ -144,7 +189,7 @@ final class SvgStyles {
             unitStart--;
         }
         String unit = v.substring(unitStart);
-        double number = Double.parseDouble(v.substring(0, unitStart).trim());
+        double number = number(v.substring(0, unitStart).trim(), context);
         return switch (unit) {
             case "", "px" -> number;
             case "pt" -> number * (96.0 / 72.0);
@@ -233,5 +278,21 @@ final class SvgStyles {
             lengths.addAll(new ArrayList<>(lengths));
         }
         return List.copyOf(lengths);
+    }
+
+    /**
+     * Parses a numeric presentation value, naming what failed and the
+     * offending input instead of leaking the raw
+     * {@link NumberFormatException} message ("For input string: …") — the
+     * same convention {@code SvgIconReader} and {@code SvgGradients} use.
+     * The cause is chained so the JDK detail survives.
+     */
+    private static double number(String value, String what) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    what + " must be a number, got '" + value + "'", e);
+        }
     }
 }

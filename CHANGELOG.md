@@ -5,6 +5,61 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.1 — Planned
 
+### Fixed
+
+- **The SVG reader honours the opacity family.** `opacity`, `fill-opacity` and
+  `stroke-opacity` — attribute or `style=""`, number or percentage, with SVG's
+  inheritance for the paint slots and composition for group `opacity` — now
+  multiply into each layer's flat paint alpha, on top of any alpha the colour
+  already carries from an 8-digit hex or `rgba()`. They were read from nowhere
+  before: a translucent logo landed on the page fully opaque, and the only fix
+  was editing the SVG. A slot whose product reaches zero is treated like
+  `fill="none"`, so an `opacity="0"` guide layer no longer paints at all. A
+  *partial* opacity cannot reach a gradient slot — the `DocumentPaint` contract
+  refuses translucent stops because shadings carry no alpha — so a gradient
+  under `fill-opacity="0.5"` still paints opaque, now with a one-line warning
+  naming the approximation. Group opacity is the per-layer approximation of SVG's
+  offscreen compositing — overlapping siblings inside one translucent group
+  darken where a browser would flatten them first — which is the same trade
+  every lightweight icon reader makes.
+
+- **What the SVG reader cannot honour now says so.** `fill-rule="evenodd"` was
+  read from nowhere and filled with non-zero winding — a donut whose hole is cut
+  by a same-direction subpath came out solid, silently; it still renders the
+  same way, but the icon now logs one warning naming the approximation (a
+  `fill-rule` value outside nonzero / evenodd / inherit, previously unread, is
+  now refused like any other bad presentation value). A `mask="url(#id)"` or
+  `filter="url(#id)"` attribute — whose definition sits in `<defs>`, where the
+  walk never looks — paints unmasked / unfiltered as before, but the
+  referencing attribute is now read and warned about, because that attribute is
+  the only place the divergence is observable. Element kinds outside the
+  reader's vocabulary (`mask`, `pattern`, `marker`, `<style>` CSS, `<a>`
+  wrappers…) joined the skip tally that previously only counted
+  text / image / `use` — one warning per kind, and a blank icon's "no drawable
+  geometry" error names them. The DOCX export gained the inline mirror of its
+  block-level drop warning: image / shape / SVG runs (emoji included) vanish
+  from a paragraph by contract, and now say so once per export instead of only
+  the block path warning.
+
+- **SVG reader errors keep their house style at the edges.** A malformed hex
+  colour (`#zzz`), a non-numeric `rgb()` channel or `rgba()` alpha, and a
+  unit-only length (`stroke-width="px"`) leaked the raw
+  `NumberFormatException` ("For input string: …") past the reader's
+  name-the-field-and-the-element convention; each now reports what was being
+  parsed and the offending input, with the JDK detail chained as the cause.
+
+### Documentation
+
+- **The SVG Javadoc stopped describing a younger reader.** `SvgGradients` claimed
+  focal radials and `stop-opacity` are "loudly refused" — both degrade
+  deliberately (centred-radial approximation, opaque stops, alpha-only overlay
+  layers dropped) and the class doc now says what actually happens. `SvgIcon`
+  still listed clip paths as out of scope and the skip-tally warning said "no
+  clips" — `clip-path:url(#id)` has rendered since 1.9.0, so the supported list
+  gained it (with its innermost-wins nesting rule) and the out-of-scope list,
+  the warning, and the empty-icon error text shrank to what is actually
+  dropped.
+
 ### Build
 
 - **The weekly benchmark run builds the modules it measures.** The JMH workflow

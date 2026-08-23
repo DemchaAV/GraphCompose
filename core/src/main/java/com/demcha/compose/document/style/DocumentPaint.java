@@ -227,8 +227,11 @@ public sealed interface DocumentPaint
      * radial shadings, which carry no alpha channel, so a translucent stop
      * would silently render opaque. Rather than render wrong, a stop with
      * alpha below 255 is rejected at construction — flatten transparency into
-     * the stop colour, or apply opacity to the whole shape instead. This
-     * mirrors the SVG reader, which already refuses {@code stop-opacity}.
+     * the stop colour, or apply opacity to the whole shape instead. The SVG
+     * reader honours the same constraint from its side: {@code stop-opacity}
+     * and a partial element opacity on a gradient-painted shape paint opaque
+     * (warned once per icon), so no translucent stop ever reaches this
+     * constructor.
      *
      * @param offset position along the gradient axis in [0,1]
      * @param color  fully-opaque colour at this offset

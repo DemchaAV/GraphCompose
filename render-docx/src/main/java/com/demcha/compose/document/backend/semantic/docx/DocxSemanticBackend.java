@@ -19,6 +19,8 @@ import com.demcha.compose.document.output.DocumentOutputOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.ImageNode;
 import com.demcha.compose.document.node.PageBreakNode;
+import com.demcha.compose.document.node.InlineHighlightRun;
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.InlineTextRun;
 import com.demcha.compose.document.node.ParagraphNode;
 import com.demcha.compose.document.node.TextDirection;
@@ -208,6 +210,28 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
+     * One warning per dropped inline-run kind, deduplicated across the
+     * export — the inline mirror of {@link #warnUnsupported(DocumentNode)}.
+     * {@code inlineTextRuns()} keeps text and highlight chips but drops
+     * image / shape / SVG runs (emoji lower to SVG runs, so they drop too);
+     * without this the paragraph text survives while its icons vanish with
+     * no signal at all, weaker than the block-level drop path.
+     */
+    private void warnDroppedInlineRuns(ParagraphNode node) {
+        for (InlineRun run : node.inlineRuns()) {
+            if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
+                continue;
+            }
+            String kind = run.getClass().getSimpleName();
+            if (warnedNodeKinds.add("inline:" + kind)) {
+                LOG.warn("DocxSemanticBackend: dropping inline '{}' run(s) — no semantic Word "
+                         + "analogue; the paragraph text renders without them, use the PDF "
+                         + "backend for full fidelity", kind);
+            }
+        }
+    }
+
+    /**
      * Semantic list mapping: each item becomes a marker-prefixed paragraph in
      * the list's text style. Flat items run through the same
      * {@code ListMarker.normalizeItemText} step as fixed-layout rendering
@@ -392,6 +416,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * {@code inlineTextRuns()} returns, highlight chips included.</p>
      */
     private void writeParagraphRuns(XWPFParagraph para, ParagraphNode node, boolean rightToLeft) {
+        warnDroppedInlineRuns(node);
         List<InlineTextRun> runs = node.inlineTextRuns();
         if (runs.isEmpty()) {
             XWPFRun docRun = para.createRun();

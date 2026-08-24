@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Fair Comparative Benchmark (CPU & RAM)
+ * Fair Comparative Benchmark (CPU &amp; RAM)
  * Compares GraphCompose canonical semantic composition, iText, and JasperReports by isolating the compilation phase
  * and enforcing layout calculations.
  */

@@ -26,10 +26,13 @@ import java.util.Set;
  * (DOCTYPE refused, so XXE cannot reach the file system), viewBox
  * resolution, recursive {@code <g>} traversal with affine accumulation and
  * paint inheritance, shape-to-path lowering (every basic shape becomes
- * synthesized path data fed through the one tested parser), the icon
- * colour subset ({@code #rgb}, {@code #rrggbb}, {@code rgb(r,g,b)},
- * {@code none}, {@code currentColor} → default ink), and {@code url(#id)}
- * gradient references resolved through {@link SvgGradients}.
+ * synthesized path data fed through the one tested parser), the
+ * presentation-attribute grammar in {@link SvgStyles} (colours including
+ * alpha, lengths, stroke style), the opacity family ({@code opacity} /
+ * {@code fill-opacity} / {@code stroke-opacity}, multiplied down the tree
+ * into per-layer paint alpha), {@code clip-path:url(#id)} resolution, and
+ * {@code url(#id)} gradient references resolved through
+ * {@link SvgGradients}.
  */
 final class SvgIconReader {
 
@@ -43,6 +46,23 @@ final class SvgIconReader {
      */
     private static final Set<String> DROPS_CONTENT = Set.of(
             "text", "tspan", "textPath", "image", "use", "foreignObject");
+
+    /** Shape elements the walk lowers to path data. */
+    private static final Set<String> KNOWN_SHAPES = Set.of(
+            "path", "rect", "circle", "ellipse", "line", "polyline", "polygon");
+
+    /**
+     * Elements that hold no direct geometry of their own — definitions the
+     * reader consumes elsewhere ({@code defs} content, gradients, stops,
+     * {@code clipPath}), document metadata, or {@code symbol} content that
+     * only becomes visible through a {@code <use>} (which warns on its own).
+     * Skipping these loses nothing, so they never reach the tally. Anything
+     * outside this set, {@link #KNOWN_SHAPES} and {@link #DROPS_CONTENT}
+     * is an element kind the reader does not know and is tallied.
+     */
+    private static final Set<String> STRUCTURE_ONLY = Set.of(
+            "defs", "title", "desc", "metadata", "symbol", "clipPath",
+            "linearGradient", "radialGradient", "stop");
 
     private SvgIconReader() {
     }
@@ -60,7 +80,8 @@ final class SvgIconReader {
         SkipTally skipped = new SkipTally();
         walk(root, identity(),
                 new Paint(new PaintValue(DocumentColor.rgb(0, 0, 0), null), PaintValue.NONE, 1.0,
-                        DocumentLineCap.BUTT, DocumentLineJoin.MITER, List.of()),
+                        DocumentLineCap.BUTT, DocumentLineJoin.MITER, List.of(),
+                        1.0, 1.0, 1.0, false),
                 null, box, gradients, ids, skipped, layers);
         if (layers.isEmpty()) {
             throw new IllegalArgumentException(
@@ -160,6 +181,7 @@ final class SvgIconReader {
             if (ownClip != null) {
                 activeClip = ownClip;
             }
+            noteIgnoredEffects(element, skipped);
             String d = switch (name) {
                 case "path" -> element.getAttribute("d");
                 case "rect" -> SvgShapeLowering.rect(num(element, "x"), num(element, "y"),
@@ -177,10 +199,17 @@ final class SvgIconReader {
             };
 
             if (d != null && !d.isBlank()) {
-                emitLayer(element, d, paint, matrix, activeClip, box, gradients, out);
+                emitLayer(element, d, paint, matrix, activeClip, box, gradients, skipped, out);
             } else if (DROPS_CONTENT.contains(name)) {
                 // A shape kind we deliberately don't render — count it so the icon
                 // surfaces one warning per kind instead of silently losing pixels.
+                skipped.note(name);
+            } else if (!name.equals("svg") && !name.equals("g")
+                       && !KNOWN_SHAPES.contains(name) && !STRUCTURE_ONLY.contains(name)) {
+                // An element kind the reader does not know (mask, filter, pattern,
+                // marker, <style> CSS, <a> wrappers…). Its subtree is not walked,
+                // so any ink it carries is lost — tally it like the known drops
+                // instead of losing it silently.
                 skipped.note(name);
             }
         } catch (IllegalArgumentException e) {
@@ -204,9 +233,15 @@ final class SvgIconReader {
     /** Builds and appends the layer for a drawable element (curve geometry + paint). */
     private static void emitLayer(Element element, String d, Paint paint,
                                   double[] matrix, SvgPath clip, double[] box, Map<String, Element> gradients,
-                                  List<SvgIcon.Layer> out) {
-        boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0;
-        if (!paint.fill().visible() && !strokeVisible) {
+                                  SkipTally skipped, List<SvgIcon.Layer> out) {
+        // Group opacity multiplies into both paint slots; fill-opacity and
+        // stroke-opacity multiply into theirs. A slot whose product reaches
+        // zero is invisible — the same fast-path as fill="none".
+        double fillAlpha = paint.fillOpacity() * paint.groupOpacity();
+        double strokeAlpha = paint.strokeOpacity() * paint.groupOpacity();
+        boolean fillVisible = paint.fill().visible() && fillAlpha > 0;
+        boolean strokeVisible = paint.stroke().visible() && paint.strokeWidth() > 0 && strokeAlpha > 0;
+        if (!fillVisible && !strokeVisible) {
             return;
         }
         SvgPath geometry = SvgPath.parseTransformed(d, matrix, box[0], box[1], box[2], box[3]);
@@ -222,33 +257,78 @@ final class SvgIconReader {
         // objectBoundingBox reference) and accumulated affine exist. The flat
         // colour keeps the gradient's first stop so backends without shadings
         // degrade per the DocumentPaint contract.
-        DocumentColor fillColor = paint.fill().color();
+        DocumentColor fillColor = null;
         DocumentPaint fillPaint = null;
-        if (paint.fill().gradient() != null) {
-            if (!strokeVisible && SvgGradients.isAlphaOnlyOverlay(paint.fill().gradient(), gradients)) {
-                // A same-colour translucent gradient is a pure alpha overlay (a
-                // soft shadow or edge highlight, e.g. the hair-edge darkening on
-                // the vampire glyphs). With no shading-alpha in the backend,
-                // painting it opaque would cover the art beneath it — drop the
-                // layer rather than blot out a face.
-                return;
+        if (fillVisible) {
+            if (paint.fill().gradient() != null) {
+                if (!strokeVisible && SvgGradients.isAlphaOnlyOverlay(paint.fill().gradient(), gradients)) {
+                    // A same-colour translucent gradient is a pure alpha overlay (a
+                    // soft shadow or edge highlight, e.g. the hair-edge darkening on
+                    // the vampire glyphs). With no shading-alpha in the backend,
+                    // painting it opaque would cover the art beneath it — drop the
+                    // layer rather than blot out a face.
+                    return;
+                }
+                if (fillAlpha < 1.0) {
+                    // The DocumentPaint contract refuses translucent stops
+                    // (shadings carry no alpha), so a partial opacity cannot
+                    // reach a gradient fill — it paints opaque, said once.
+                    // Zero opacity already hid the slot above.
+                    skipped.noteDegraded("opacity on a gradient fill (gradient paints opaque)");
+                }
+                fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients, matrix, box, geometry);
+                fillColor = fillPaint.primaryColor();
+            } else {
+                fillColor = SvgStyles.multiplyAlpha(paint.fill().color(), fillAlpha);
             }
-            fillPaint = SvgGradients.paint(paint.fill().gradient(), gradients, matrix, box, geometry);
-            fillColor = fillPaint.primaryColor();
         }
         DocumentStroke stroke = null;
         DocumentPaint strokePaint = null;
         if (strokeVisible) {
             if (paint.stroke().gradient() != null) {
+                if (strokeAlpha < 1.0) {
+                    skipped.noteDegraded("opacity on a gradient stroke (gradient paints opaque)");
+                }
                 strokePaint = SvgGradients.paint(paint.stroke().gradient(), gradients, matrix, box, geometry);
                 stroke = DocumentStroke.of(strokePaint.primaryColor(), paint.strokeWidth());
             } else {
-                stroke = DocumentStroke.of(paint.stroke().color(), paint.strokeWidth());
+                stroke = DocumentStroke.of(
+                        SvgStyles.multiplyAlpha(paint.stroke().color(), strokeAlpha),
+                        paint.strokeWidth());
             }
+        }
+        if (fillColor != null && paint.evenOddFill()) {
+            // The engine's fill contract is non-zero winding only. Most icons
+            // fill identically under both rules; the ones that differ (donut
+            // holes cut by same-direction subpaths) come out solid — say so
+            // once instead of silently filling the hole. Noted here, after the
+            // degenerate-geometry and overlay drops, so the tally never names
+            // a layer that was not actually painted.
+            skipped.noteDegraded("fill-rule=evenodd (filled with non-zero winding)");
         }
         out.add(new SvgIcon.Layer(geometry, fillColor, fillPaint, stroke, strokePaint,
                 paint.lineCap(), paint.lineJoin(), paint.dashArray(),
                 clip != null && clip.hasDrawingSegment() ? clip : null));
+    }
+
+    /**
+     * Tallies raster effects the reader deliberately ignores on the element it
+     * is about to paint: a {@code mask="url(#id)"} paints unmasked and a
+     * {@code filter="url(#id)"} paints unfiltered. The {@code <mask>} /
+     * {@code <filter>} definitions themselves usually sit inside
+     * {@code <defs>}, which the walk never visits — the referencing attribute
+     * is the only place the divergence is observable, so it is what gets
+     * warned about.
+     */
+    private static void noteIgnoredEffects(Element element, SkipTally skipped) {
+        String mask = attrOrStyle(element, "mask");
+        if (mask != null && !mask.trim().equalsIgnoreCase("none")) {
+            skipped.noteDegraded("mask (painted unmasked)");
+        }
+        String filter = attrOrStyle(element, "filter");
+        if (filter != null && !filter.trim().equalsIgnoreCase("none")) {
+            skipped.noteDegraded("filter (painted unfiltered)");
+        }
     }
 
     // ------------------------------------------------------------------
@@ -379,6 +459,10 @@ final class SvgIconReader {
         DocumentLineCap lineCap = inherited.lineCap();
         DocumentLineJoin lineJoin = inherited.lineJoin();
         List<Double> dashArray = inherited.dashArray();
+        double fillOpacity = inherited.fillOpacity();
+        double strokeOpacity = inherited.strokeOpacity();
+        double groupOpacity = inherited.groupOpacity();
+        boolean evenOddFill = inherited.evenOddFill();
 
         String fillAttr = attrOrStyle(element, "fill");
         if (fillAttr != null) {
@@ -408,7 +492,36 @@ final class SvgIconReader {
                     ? inherited.dashArray()
                     : SvgStyles.dashArray(dashAttr);
         }
-        return new Paint(fill, stroke, strokeWidth, lineCap, lineJoin, dashArray);
+        // fill-opacity and stroke-opacity are inherited properties — an
+        // attribute replaces the inherited value. opacity is not inherited:
+        // it composites, so each carrier multiplies into the accumulated
+        // product (the per-layer approximation of SVG's offscreen group
+        // compositing; overlapping siblings inside one translucent group
+        // darken where a browser would flatten them first).
+        String fillOpacityAttr = attrOrStyle(element, "fill-opacity");
+        if (fillOpacityAttr != null && !fillOpacityAttr.equalsIgnoreCase("inherit")) {
+            fillOpacity = SvgStyles.opacity(fillOpacityAttr, "fill-opacity");
+        }
+        String strokeOpacityAttr = attrOrStyle(element, "stroke-opacity");
+        if (strokeOpacityAttr != null && !strokeOpacityAttr.equalsIgnoreCase("inherit")) {
+            strokeOpacity = SvgStyles.opacity(strokeOpacityAttr, "stroke-opacity");
+        }
+        String opacityAttr = attrOrStyle(element, "opacity");
+        if (opacityAttr != null && !opacityAttr.equalsIgnoreCase("inherit")) {
+            groupOpacity = groupOpacity * SvgStyles.opacity(opacityAttr, "opacity");
+        }
+        String fillRuleAttr = attrOrStyle(element, "fill-rule");
+        if (fillRuleAttr != null) {
+            evenOddFill = switch (fillRuleAttr.trim().toLowerCase(java.util.Locale.ROOT)) {
+                case "nonzero" -> false;
+                case "evenodd" -> true;
+                case "inherit" -> inherited.evenOddFill();
+                default -> throw new IllegalArgumentException(
+                        "unsupported fill-rule '" + fillRuleAttr + "' — use nonzero, evenodd, or inherit");
+            };
+        }
+        return new Paint(fill, stroke, strokeWidth, lineCap, lineJoin, dashArray,
+                fillOpacity, strokeOpacity, groupOpacity, evenOddFill);
     }
 
     /**
@@ -576,30 +689,47 @@ final class SvgIconReader {
 
     /**
      * Inherited paint state: SVG fills default to black, strokes to none.
-     * Stroke style (cap / join / dash) is inheritable too, so it rides here.
+     * Stroke style (cap / join / dash), the opacity slots and the fill rule
+     * are inheritable too, so they ride here. {@code groupOpacity} is the
+     * accumulated product of every {@code opacity} on the ancestor chain
+     * (opacity composites rather than inherits).
      */
     private record Paint(PaintValue fill, PaintValue stroke, double strokeWidth,
                          DocumentLineCap lineCap, DocumentLineJoin lineJoin,
-                         List<Double> dashArray) {
+                         List<Double> dashArray,
+                         double fillOpacity, double strokeOpacity, double groupOpacity,
+                         boolean evenOddFill) {
     }
 
     /**
-     * One-warning-per-kind tally for shape elements we deliberately drop
-     * (text, images, embedded references). Emitted once after the walk so a
-     * busy icon doesn't flood the log.
+     * One-warning-per-kind tally for elements we drop (text, images,
+     * embedded references, element kinds the reader does not know) and for
+     * features that render approximately rather than exactly
+     * ({@code fill-rule="evenodd"}). Emitted once after the walk so a busy
+     * icon doesn't flood the log.
      */
     private static final class SkipTally {
         private final Set<String> kinds = new java.util.LinkedHashSet<>();
+        private final Set<String> degraded = new java.util.LinkedHashSet<>();
 
         void note(String kind) {
             kinds.add(kind);
         }
 
+        void noteDegraded(String feature) {
+            degraded.add(feature);
+        }
+
         void flush() {
             if (!kinds.isEmpty()) {
                 LOG.warn("SvgIcon: skipped unsupported element(s) {} — this icon reader renders "
-                         + "vector geometry only (no text, images, <use>, masks, clips or filters)",
+                         + "vector shape geometry only (no text, images, <use> references, "
+                         + "masks, filters or CSS stylesheets)",
                         kinds);
+            }
+            if (!degraded.isEmpty()) {
+                LOG.warn("SvgIcon: approximated unsupported feature(s) {} — the geometry "
+                         + "renders, but not exactly as a browser paints it", degraded);
             }
         }
 
@@ -613,8 +743,8 @@ final class SvgIconReader {
                 return "";
             }
             return " — skipped " + String.join(", ", kinds)
-                   + "; this reader renders vector shapes only (no text, images, <use>, "
-                   + "masks, clips or filters)";
+                   + "; this reader renders vector shapes only (no text, images, <use> "
+                   + "references, masks, filters or CSS stylesheets)";
         }
     }
 }

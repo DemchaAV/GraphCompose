@@ -205,7 +205,7 @@ class SvgPathTest {
         // Regression: an operand-less Z/z followed by a non-command token used
         // to spin forever (the close op consumes no characters, so the scanner
         // never advanced), appending a close op per iteration until OOM. A
-        // single malformed/hostile 'd' string would DoS the @Beta reader.
+        // single malformed/hostile 'd' string would DoS the reader.
         // Each call must fail fast; the assertTimeout pins that it cannot hang.
         Assertions.assertTimeoutPreemptively(
                 Duration.ofSeconds(2), () -> {

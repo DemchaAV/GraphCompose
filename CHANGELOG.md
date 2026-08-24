@@ -5,6 +5,25 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.1 — Planned
 
+### Public API
+
+- **The SVG surface graduates from `@Beta` to Stable.** `SvgPath`, `SvgIcon`,
+  `PathBuilder.svg(svgPath)`, both `addSvgIcon(...)` flow adders,
+  `ShapeContainerBuilder.path(w, h, svgPath)`, and the gradient paints the
+  reader emits (`DocumentPaint.LinearAxis` / `RadialCircle`) drop the
+  annotation and join the Stable tier — additive-only changes in minors from
+  here on. The surface shipped in 1.8.0 marked `@Beta` "while it hardens
+  against real-world exporter output"; that hardening is done — the stroke,
+  colour and unit work, per-element error context, the clip-path support
+  added in 1.9.0, and the opacity-family + warning pass in this release —
+  and the API shape itself has not moved since 1.9.0, four minors of real
+  use. The annotation drop also closes an inconsistency: `inlineSvgIcon` /
+  `RichText.svgIcon` and the emoji pipeline were built on `@Beta` `SvgIcon`
+  without carrying the marker themselves; now no SVG entry point does. No
+  binary or source change for callers — the remaining `@Beta` carriers are
+  the `NodeDefinition` Extension SPI seam and the PPTX backend, exactly as
+  [docs/api-stability.md](docs/api-stability.md) lists them.
+
 ### Fixed
 
 - **The SVG reader honours the opacity family.** `opacity`, `fill-opacity` and

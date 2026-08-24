@@ -225,7 +225,6 @@ public final class ShapeContainerBuilder implements Transformable<ShapeContainer
      * @return this builder
      * @since 1.8.0
      */
-    @com.demcha.compose.document.api.Beta
     public ShapeContainerBuilder path(double width, double height,
                                       com.demcha.compose.document.svg.SvgPath svgPath) {
         Objects.requireNonNull(svgPath, "svgPath");

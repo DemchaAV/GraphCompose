@@ -47,10 +47,18 @@ follow semantic versioning; release dates are ISO 8601.
   vertical y-cursor, right for a section or a container and wrong for a row.
   It now resolves slot widths through the same `RowSlots` path the page-level
   row band uses, so a nested row honours weights, fixed columns, flex
-  arrangement and vertical alignment identically, and a nested *horizontal*
-  row is still rejected with the same diagnostic as at page level. Vertical
-  composites in a fixed rectangle are unchanged. Found while composing a row
-  into a table cell, which is the second rectangle this walk fills.
+  arrangement and vertical alignment identically. Vertical composites in a
+  fixed rectangle are unchanged. Found while composing a row into a table
+  cell, which is the second rectangle this walk fills.
+
+  **Behaviour note:** a row nested *directly inside another row* in a fixed
+  rectangle now raises the same `IllegalStateException` the page-level row
+  band has always raised (`"cannot contain a nested horizontal row"`, which
+  names the fix: wrap the inner row in its own layer). It previously
+  produced a layout instead — but not a usable one: with a two-child inner
+  row inside a two-child outer row in a layer, two of the three leaves
+  landed on the same point, 17pt below the layer's own bottom edge. Wrapping
+  the inner row in its own `LayerStackNode` layer lays it out correctly.
 
 - **The SVG reader honours the opacity family.** `opacity`, `fill-opacity` and
   `stroke-opacity` — attribute or `style=""`, number or percentage, with SVG's

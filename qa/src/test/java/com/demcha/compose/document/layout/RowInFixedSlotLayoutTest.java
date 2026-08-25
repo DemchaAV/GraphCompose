@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /**
@@ -108,6 +109,29 @@ class RowInFixedSlotLayoutTest {
         assertThat(right.x())
                 .describedAs("a row in a cell splits the cell width, so the second child sits to the right")
                 .isGreaterThan(left.x());
+    }
+
+    @Test
+    void aRowNestedInsideAnotherRowIsRejectedInsideAFixedRectangleToo() {
+        RowNode inner = new RowNode("Inner",
+                List.of(paragraph("InnerLeft", "I-A"), paragraph("InnerRight", "I-B")),
+                List.of(1.0, 1.0), 4.0,
+                DocumentInsets.zero(), DocumentInsets.zero(),
+                null, null, DocumentCornerRadius.ZERO);
+        RowNode outer = new RowNode("Outer",
+                List.of(inner, paragraph("OuterRight", "O-B")),
+                List.of(1.0, 1.0), 4.0,
+                DocumentInsets.zero(), DocumentInsets.zero(),
+                null, null, DocumentCornerRadius.ZERO);
+
+        assertThatThrownBy(() -> paragraphFragments(new LayerStackNode(
+                "Stack",
+                List.of(new LayerStackNode.Layer(outer)),
+                DocumentInsets.zero(), DocumentInsets.zero())))
+                .describedAs("a fixed-rectangle row must reject a nested horizontal row "
+                             + "with the same diagnostic the page-level row band gives")
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nested horizontal row");
     }
 
     @Test

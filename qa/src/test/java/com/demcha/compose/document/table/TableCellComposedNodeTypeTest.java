@@ -10,17 +10,23 @@ import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.HorizontalAlign;
+import com.demcha.compose.document.node.RowNode;
 import com.demcha.compose.document.node.SectionNode;
+import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.style.ClipPolicy;
+import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.style.ShapeOutline;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -144,6 +150,61 @@ class TableCellComposedNodeTypeTest {
                     .describedAs("%s composed into a cell must reach the rendered page", label)
                     .contains(expectedText);
             assertThat(extracted).contains("Neighbour");
+        }
+    }
+
+    /**
+     * A clipping composite writes graphics state that has to be handed back:
+     * {@code ShapeClipBegin} … children … {@code ShapeClipEnd}. If the cell
+     * walk dropped the closing marker, the clip would leak onto whatever the
+     * backend paints next — a mispaint several fragments later, with nothing
+     * missing from the page and no exception anywhere. Pinned against the same
+     * container rendered at page level.
+     */
+    @Test
+    void aClippingCompositeInACellKeepsItsClipPairBalanced() throws Exception {
+        List<String> inCell = payloadKinds(new TableNode(
+                "ClipCellTable",
+                List.of(DocumentTableColumn.fixed(200), DocumentTableColumn.fixed(140)),
+                List.of(List.of(
+                        DocumentTableCell.node(clippedContainer("CellClip")),
+                        DocumentTableCell.text("Neighbour"))),
+                DocumentTableStyle.empty(),
+                340.0,
+                DocumentInsets.zero(),
+                DocumentInsets.zero()));
+        List<String> atPageLevel = payloadKinds(clippedContainer("PageClip"));
+
+        assertThat(inCell)
+                .describedAs("a clipping container in a cell must emit the same ordered "
+                             + "fragment sequence it emits at page level, plus the table's own row")
+                .containsSubsequence(atPageLevel);
+        assertThat(inCell).filteredOn("ShapeClipBeginPayload"::equals).hasSize(1);
+        assertThat(inCell).filteredOn("ShapeClipEndPayload"::equals).hasSize(1);
+        assertThat(inCell.indexOf("ShapeClipEndPayload"))
+                .describedAs("the clip must close after the child it wraps")
+                .isGreaterThan(inCell.indexOf("ParagraphFragmentPayload"));
+    }
+
+    private static ShapeContainerNode clippedContainer(String name) {
+        return new ShapeContainerNode(name,
+                new ShapeOutline.RoundedRectangle(140, 40, 8),
+                List.of(new LayerStackNode.Layer(paragraph("Clipped", "MARK-CLIPPED"))),
+                ClipPolicy.CLIP_PATH,
+                DocumentColor.rgb(240, 244, 252),
+                DocumentStroke.of(DocumentColor.rgb(20, 60, 75), 1.0),
+                DocumentInsets.zero(), DocumentInsets.zero());
+    }
+
+    private static List<String> payloadKinds(DocumentNode root) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(420, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.add(root);
+            return session.layoutGraph().fragments().stream()
+                    .map(fragment -> fragment.payload().getClass().getSimpleName())
+                    .toList();
         }
     }
 }

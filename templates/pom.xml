@@ -17,7 +17,7 @@
     -->
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-templates</artifactId>
-    <version>2.2.1</version>
+    <version>2.2.2-SNAPSHOT</version>
 
     <name>GraphCompose Templates</name>
     <description>Built-in CV, cover-letter, invoice, and proposal document templates for GraphCompose.</description>

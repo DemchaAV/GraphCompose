@@ -6,7 +6,7 @@
 
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose-core</artifactId>
-    <version>2.2.1</version>
+    <version>2.2.2-SNAPSHOT</version>
 
     <name>GraphCompose Core</name>
     <description>A declarative layout engine for programmatic document generation, implemented primarily in Java. This is the lean engine coordinate; depend on the `graph-compose` artifact for the drop-in, PDF-capable install.</description>

@@ -72,7 +72,7 @@ The harness prints one `RESULT <scenario> PASS|FAIL` line per project and ends
 with a machine-readable `SUMMARY {"version":"…","passed":N,"failed":M,"total":T}`
 line. Exit code is non-zero if any scenario fails.
 
-The version under test defaults to the current published release (`2.2.0`) and is
+The version under test defaults to the current published release (`2.2.1`) and is
 overridable with `--version` / `-Version` (or the workflow's `version` input); it
 is passed to Maven as `-Dgc.version`, overriding the `gc.version` property in each
 pom. Release smoke always tests **published** artifacts — never a `-SNAPSHOT`.

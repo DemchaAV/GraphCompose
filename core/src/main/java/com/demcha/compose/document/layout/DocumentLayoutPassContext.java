@@ -4,6 +4,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 import com.demcha.compose.font.FontLibrary;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,14 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
     private final PageGeometry pageGeometry;
     private final Map<String, Integer> nodeStartPages;
     private final Map<PreparedNodeCacheKey, PreparedNode<?>> preparedNodes = new HashMap<>();
+    /**
+     * Compiler used to lay out a composite child inside a box its parent owns
+     * (see {@link #emitChildFragments}). Created on first use so a pass with no
+     * composed cells never builds one; a pass is single-threaded, and the
+     * compiler carries no state beyond the registry, so one instance serves
+     * every box in the pass.
+     */
+    private LayoutCompiler subtreeCompiler;
 
     /**
      * Creates a layout-pass context with no resolved page numbers — the first
@@ -165,8 +174,59 @@ public final class DocumentLayoutPassContext implements PrepareContext, Fragment
             FragmentPlacement placement) {
         Objects.requireNonNull(child, "child");
         Objects.requireNonNull(placement, "placement");
+        if (child.isComposite()) {
+            return emitCompositeSubtree((PreparedNode<DocumentNode>) child, placement);
+        }
         NodeDefinition<E> definition = (NodeDefinition<E>) registry.definitionFor(child.node());
         return definition.emitFragments(child, this, placement);
+    }
+
+    /**
+     * Lays out a composite child's whole sub-tree inside {@code placement} and
+     * returns its fragments in the placement's local coordinate space.
+     *
+     * <p>A composite's own {@code emitFragments} yields nothing but its
+     * decoration — the section background, the container border — because the
+     * compiler, not the definition, walks {@link NodeDefinition#children}.
+     * Dispatching to it alone would leave the caller with a correctly measured
+     * but empty box. The fixed-box walk applies the same column / row / stack
+     * layout the sub-tree would get at document level, then the absolute
+     * coordinates it produces are rebased onto the placement so the caller can
+     * translate them into its own fragment space exactly as it does for a leaf
+     * child.</p>
+     */
+    private List<LayoutFragment> emitCompositeSubtree(PreparedNode<DocumentNode> child,
+                                                      FragmentPlacement placement) {
+        if (subtreeCompiler == null) {
+            subtreeCompiler = new LayoutCompiler(registry);
+        }
+        List<PlacedFragment> placed = subtreeCompiler.compileFixedBoxSubtree(
+                child,
+                placement.parentPath(),
+                placement.childIndex(),
+                placement.depth(),
+                placement.x(),
+                placement.y() + placement.height(),
+                placement.width(),
+                placement.pageIndex(),
+                canvas,
+                this,
+                this);
+        if (placed.isEmpty()) {
+            return List.of();
+        }
+        List<LayoutFragment> local = new ArrayList<>(placed.size());
+        for (PlacedFragment fragment : placed) {
+            local.add(new LayoutFragment(
+                    fragment.path(),
+                    fragment.fragmentIndex(),
+                    fragment.x() - placement.x(),
+                    fragment.y() - placement.y(),
+                    fragment.width(),
+                    fragment.height(),
+                    fragment.payload()));
+        }
+        return List.copyOf(local);
     }
 
     private long normalizeWidth(double value) {

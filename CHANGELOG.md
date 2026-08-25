@@ -26,6 +26,40 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A composite node inside a composed table cell renders its children.**
+  `DocumentTableCell.node(...)` holding a `SectionNode`, `ContainerNode`,
+  `RowNode` or `LayerStackNode` measured the child, reserved its full height,
+  and then drew nothing inside it — a correctly-sized blank hole in the table.
+  A composite leaves its children to the compiler and emits only its own
+  decoration from `emitFragments`, so dispatching a composed cell straight at
+  the child's `emitFragments` picked up the section background and dropped
+  every paragraph under it. The cell now lays the child's whole sub-tree out
+  inside the cell box, with the same column / row / stack layout the sub-tree
+  gets anywhere else on the page. Leaf children (paragraph, list) and nested
+  tables already worked and are unchanged. The row stays atomic: a composed
+  cell still does not split across a page break.
+
+- **A row nested in a fixed rectangle keeps its horizontal band.** A `RowNode`
+  inside a `LayerStackNode` layer — allowed since 1.6.2 — stacked its children
+  downwards instead of seating them side by side, and because the band was
+  measured as one row tall, every child after the first spilled out of the
+  layer. The fixed-rectangle walk had no horizontal branch at all: it is a
+  vertical y-cursor, right for a section or a container and wrong for a row.
+  It now resolves slot widths through the same `RowSlots` path the page-level
+  row band uses, so a nested row honours weights, fixed columns, flex
+  arrangement and vertical alignment identically. Vertical composites in a
+  fixed rectangle are unchanged. Found while composing a row into a table
+  cell, which is the second rectangle this walk fills.
+
+  **Behaviour note:** a row nested *directly inside another row* in a fixed
+  rectangle now raises the same `IllegalStateException` the page-level row
+  band has always raised (`"cannot contain a nested horizontal row"`, which
+  names the fix: wrap the inner row in its own layer). It previously
+  produced a layout instead — but not a usable one: with a two-child inner
+  row inside a two-child outer row in a layer, two of the three leaves
+  landed on the same point, 17pt below the layer's own bottom edge. Wrapping
+  the inner row in its own `LayerStackNode` layer lays it out correctly.
+
 - **The SVG reader honours the opacity family.** `opacity`, `fill-opacity` and
   `stroke-opacity` — attribute or `style=""`, number or percentage, with SVG's
   inheritance for the paint slots and composition for group `opacity` — now
@@ -68,6 +102,17 @@ follow semantic versioning; release dates are ISO 8601.
   parsed and the offending input, with the JDK detail chained as the cause.
 
 ### Documentation
+
+- **`DocumentTableCell.text("a\nb")` is one line, and now says so.** The
+  advanced-tables recipe demonstrated a multi-line cell by putting `\n` inside
+  `text(...)`, which renders as a single line — the newline is whitespace
+  between two words there. The recipe and the `DocumentTableCell` Javadoc now
+  name the three cell shapes explicitly: `text(...)` for one line,
+  `lines(...)` for several, `node(...)` for any registered node (and
+  `ParagraphNode` *does* honour `\n` as a hard break, inside a cell as
+  anywhere else). The two examples that showed the misleading form were
+  switched to `lines(...)`, and the composed-cell showcase gained a section
+  and a row inside table cells.
 
 - **The SVG Javadoc stopped describing a younger reader.** `SvgGradients` claimed
   focal radials and `stop-opacity` are "loudly refused" — both degrade

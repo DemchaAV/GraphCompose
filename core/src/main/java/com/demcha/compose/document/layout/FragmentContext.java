@@ -42,8 +42,8 @@ public interface FragmentContext {
     }
 
     /**
-     * Dispatches fragment emission to a previously-prepared child node
-     * via the active {@code NodeRegistry}.
+     * Emits the fragments of a previously-prepared child sub-tree, laid out
+     * inside {@code placement}.
      *
      * <p>Used by composite primitives (e.g. {@code TableNode} cells with
      * {@code content}) that hold a prepared child sub-tree and need to
@@ -53,12 +53,23 @@ public interface FragmentContext {
      * {@code FragmentContext} implementations have to opt-in to the
      * recursion.</p>
      *
+     * <p>A <em>leaf</em> child is dispatched straight to its
+     * {@link NodeDefinition#emitFragments}. A <em>composite</em> child is laid
+     * out whole: its own {@code emitFragments} yields nothing but decoration
+     * (a section background, a container border) because the compiler, not the
+     * definition, walks {@link NodeDefinition#children} — so the implementation
+     * seats the sub-tree inside the placement with the same column / row /
+     * stack layout it would get at document level and returns every fragment
+     * the walk produced, not just the child's own. The returned fragments are
+     * local to {@code placement}, as for a leaf, so callers translate them
+     * into their own fragment space the same way either way.</p>
+     *
      * @param child     prepared child node previously obtained from
      *                  {@link PrepareContext#prepare(DocumentNode, BoxConstraints)}
      * @param placement placement assigned to the child within the
      *                  composite parent's geometry
      * @param <E>       child node type
-     * @return fragments emitted by the child's {@code NodeDefinition}
+     * @return fragments of the child sub-tree, local to {@code placement}
      * @throws UnsupportedOperationException when the
      *                                       {@code FragmentContext} implementation does not back
      *                                       child-fragment emission

@@ -8,6 +8,8 @@ patterns:
 | --- | --- |
 | Column span | `DocumentTableCell.text(...).colSpan(int)` |
 | Row span | `DocumentTableCell.text(...).rowSpan(int)` |
+| Several lines in one cell | `DocumentTableCell.lines(String...)` |
+| Any node in one cell | `DocumentTableCell.node(DocumentNode)` |
 | Header row alias | `TableBuilder.headerRow(String...)` |
 | Totals row | `TableBuilder.totalRow(String...)` |
 | Zebra rows | `TableBuilder.zebra(odd, even)` |
@@ -17,6 +19,46 @@ All the new pieces compose. A table can have a row-spanning side cell,
 zebra striping on the data rows, a bold totals row at the bottom, and
 a header that re-emits at the top of every continuation page when the
 table paginates.
+
+## Cell content — one line, several lines, or a node
+
+Three factories, three shapes. Pick by what the cell holds, not by
+what the text looks like:
+
+<!-- doc-example: id=table-cell-content-shapes mode=method imports=com.demcha.compose.document.table.DocumentTableCell,com.demcha.compose.document.node.ParagraphNode,com.demcha.compose.document.node.TextAlign,com.demcha.compose.document.style.DocumentInsets,com.demcha.compose.document.style.DocumentTextStyle -->
+```java
+// One line. The argument is the line — a "\n" inside it is not a
+// line break, it is just whitespace between two words.
+DocumentTableCell.text("Design review");
+
+// Several lines. One argument per line.
+DocumentTableCell.lines("Design review", "2 h 30 m");
+
+// Any registered node: paragraph, list, section, container, row,
+// layer stack, or a nested table.
+DocumentTableCell.node(new ParagraphNode(
+        "Note", "**Blocked** — waiting on legal",
+        DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0.0,
+        DocumentInsets.zero(), DocumentInsets.zero()));
+```
+
+`text("Design review\n2 h 30 m")` renders as the single line
+`Design review 2 h 30 m`. That is the plain-text cell's contract: a
+cell's line list is what the author passed, and `text(...)` passes
+exactly one. Use `lines(...)` when the break is part of the content,
+or `node(...)` when the cell needs styling, markdown, or structure
+around it.
+
+Paragraph content is a different story: `ParagraphNode` **does** treat
+`\n` as a hard line break, inside a cell exactly as it does anywhere
+else on the page. So a composed cell built from a paragraph whose text
+contains `\n` breaks where the author wrote it.
+
+A composed cell reserves the child's measured height and renders the
+child's whole sub-tree, so a `SectionNode` of three paragraphs is three
+paragraphs in the cell, not just the section's background. The row stays
+atomic: a composed cell does not split across a page break, so keep the
+child shorter than one page's content area.
 
 ## Row span — merge a cell vertically
 
@@ -38,7 +80,7 @@ addTable(table -> table
         // Row 0: Tall middle cell spans BOTH rows below it.
         .rowCells(
                 DocumentTableCell.text("A0"),
-                DocumentTableCell.text("Tall middle\n(spans 3 rows)").rowSpan(3),
+                DocumentTableCell.lines("Tall middle", "(spans 3 rows)").rowSpan(3),
                 DocumentTableCell.text("C0"))
         // Row 1: only A1 + C1 — middle is occupied by the spanning cell.
         .rowCells(

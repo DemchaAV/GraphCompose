@@ -100,7 +100,14 @@ public record DocumentTableCell(
     /**
      * Creates a one-line text cell.
      *
-     * @param text cell text
+     * <p>The argument <em>is</em> the line. A {@code "\n"} inside it does not
+     * break the cell in two — the cell carries one line and the newline lays
+     * out as whitespace between two words. Use {@link #lines(String...)} when
+     * the break belongs to the content, or {@link #node(DocumentNode)} with a
+     * {@code ParagraphNode}, which does honour {@code "\n"} as a hard
+     * break.</p>
+     *
+     * @param text cell text, rendered as exactly one line
      * @return table cell
      */
     public static DocumentTableCell text(String text) {
@@ -108,9 +115,12 @@ public record DocumentTableCell(
     }
 
     /**
-     * Creates a multi-line text cell.
+     * Creates a multi-line text cell — one argument per rendered line.
      *
-     * @param lines text lines
+     * <p>This is how a plain-text cell breaks across lines;
+     * {@code text("a\nb")} does not.</p>
+     *
+     * @param lines text lines, one per rendered line
      * @return table cell
      */
     public static DocumentTableCell lines(String... lines) {
@@ -126,6 +136,13 @@ public record DocumentTableCell(
      * its own style, alignment, padding, and inline runs) inside
      * the cell's bounds; the cell's own {@code lines} are unused
      * when {@code content} is non-null.
+     *
+     * <p>Any registered node type works, leaf or composite: a paragraph, a
+     * list, a nested table, and equally a {@code SectionNode},
+     * {@code ContainerNode}, {@code RowNode}, or {@code LayerStackNode} —
+     * the cell lays out the child's whole sub-tree, not just the child's own
+     * decoration. The row stays atomic, so the child must fit within one
+     * page's content area.</p>
      *
      * @param child composed child node, must not be {@code null}
      * @return table cell carrying the composed child

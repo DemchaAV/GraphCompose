@@ -17,7 +17,9 @@ import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.output.*;
+import com.demcha.compose.document.snapshot.LayoutDiagnosticSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshotOptions;
 import com.demcha.compose.document.snapshot.PageIndex;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -776,6 +778,29 @@ public final class DocumentSession implements AutoCloseable {
         Map<String, Integer> pages = new HashMap<>();
         PageIndexExtractor.from(graph).all().forEach((anchor, reference) -> pages.put(anchor, reference.pageNumber()));
         return pages;
+    }
+
+    /**
+     * Extracts the current deterministic layout snapshot, including whichever
+     * optional diagnostic sections {@code options} asks for.
+     *
+     * <p>Returns a different type from {@link #layoutSnapshot()} on purpose.
+     * {@link LayoutDiagnosticSnapshot#layout()} is byte-for-byte the snapshot the
+     * no-argument overload returns, so committed baselines of that shape are
+     * untouched by anything added here.</p>
+     *
+     * <p>Not cached: diagnostics are computed on each call, which keeps the
+     * revision-keyed cache holding exactly one thing.</p>
+     *
+     * @param options which optional diagnostic sections to include
+     * @return layout snapshot plus the requested diagnostics
+     * @throws IllegalStateException if this session has already been closed
+     * @since 2.2.2
+     */
+    public LayoutDiagnosticSnapshot layoutSnapshot(LayoutSnapshotOptions options) {
+        Objects.requireNonNull(options, "options");
+        ensureOpen();
+        return LayoutGraphSnapshotExtractor.extractDiagnostics(layoutGraph(), options);
     }
 
     /**

@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 260.0,
     "pageHeight" : 180.0,
@@ -163,5 +163,75 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "ShapeContainerCircleFixture[0]/CircleCaption[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 8.5,
+    "lineCount" : 1,
+    "textX" : 18.0,
+    "textY" : 34.137,
+    "textWidth" : 198.892,
+    "textHeight" : 7.863,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 18.0,
+      "y" : 34.137,
+      "width" : 198.892,
+      "height" : 7.863,
+      "baseline" : 35.897,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/InitialCircle[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica-Bold",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : true,
+    "fontSize" : 22.0,
+    "lineCount" : 1,
+    "textX" : 57.5,
+    "textY" : 95.825,
+    "textWidth" : 33.0,
+    "textHeight" : 20.35,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 57.5,
+      "y" : 95.825,
+      "width" : 33.0,
+      "height" : 20.35,
+      "baseline" : 100.379,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "ShapeContainerCircleFixture[0]/InitialCircle[0]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica-Bold",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : true,
+    "fontSize" : 7.0,
+    "lineCount" : 1,
+    "textX" : 66.027,
+    "textY" : 70.0,
+    "textWidth" : 15.946,
+    "textHeight" : 6.475,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 66.027,
+      "y" : 70.0,
+      "width" : 15.946,
+      "height" : 6.475,
+      "baseline" : 71.449,
+      "baselineExact" : true
+    } ]
   } ]
 }

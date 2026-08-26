@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 595.276,
     "pageHeight" : 841.89,
@@ -823,5 +823,579 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "WorldScripts[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 22.0,
+    "lineCount" : 1,
+    "textX" : 48.0,
+    "textY" : 769.54,
+    "textWidth" : 302.038,
+    "textHeight" : 20.35,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 48.0,
+      "y" : 769.54,
+      "width" : 302.038,
+      "height" : 20.35,
+      "baseline" : 774.094,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[10]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 8.0,
+    "lineCount" : 1,
+    "textX" : 48.0,
+    "textY" : 344.179,
+    "textWidth" : 154.272,
+    "textHeight" : 7.4,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 48.0,
+      "y" : 344.179,
+      "width" : 154.272,
+      "height" : 7.4,
+      "baseline" : 345.835,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 11.0,
+    "lineCount" : 2,
+    "textX" : 48.0,
+    "textY" : 740.19,
+    "textWidth" : 466.466,
+    "textHeight" : 20.35,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 48.0,
+      "y" : 750.365,
+      "width" : 466.466,
+      "height" : 10.175,
+      "baseline" : 752.642,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 48.0,
+      "y" : 740.19,
+      "width" : 84.018,
+      "height" : 10.175,
+      "baseline" : 742.467,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/ParagraphNode[9]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 2,
+    "textX" : 48.0,
+    "textY" : 360.579,
+    "textWidth" : 499.239,
+    "textHeight" : 16.65,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 48.0,
+      "y" : 368.904,
+      "width" : 499.239,
+      "height" : 8.325,
+      "baseline" : 370.767,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 48.0,
+      "y" : 360.579,
+      "width" : 418.653,
+      "height" : 8.325,
+      "baseline" : 362.442,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 62.0,
+    "textY" : 686.09,
+    "textWidth" : 101.208,
+    "textHeight" : 11.1,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 62.0,
+      "y" : 686.09,
+      "width" : 101.208,
+      "height" : 11.1,
+      "baseline" : 688.574,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 17.0,
+    "lineCount" : 1,
+    "textX" : 315.825,
+    "textY" : 667.304,
+    "textWidth" : 68.646,
+    "textHeight" : 29.886,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 315.825,
+      "y" : 667.304,
+      "width" : 68.646,
+      "height" : 29.886,
+      "baseline" : 678.082,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[3]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 3,
+    "textX" : 400.471,
+    "textY" : 672.215,
+    "textWidth" : 116.559,
+    "textHeight" : 24.975,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 400.471,
+      "y" : 688.865,
+      "width" : 116.559,
+      "height" : 8.325,
+      "baseline" : 690.728,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 400.471,
+      "y" : 680.54,
+      "width" : 112.554,
+      "height" : 8.325,
+      "baseline" : 682.403,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 400.471,
+      "y" : 672.215,
+      "width" : 43.515,
+      "height" : 8.325,
+      "baseline" : 674.078,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 2,
+    "textX" : 62.0,
+    "textY" : 612.644,
+    "textWidth" : 96.0,
+    "textHeight" : 21.66,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 62.0,
+      "y" : 623.204,
+      "width" : 41.34,
+      "height" : 11.1,
+      "baseline" : 625.688,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 62.0,
+      "y" : 612.644,
+      "width" : 96.0,
+      "height" : 10.56,
+      "baseline" : 615.044,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "David Libre",
+    "resolvedFont" : "David Libre",
+    "fontSubstituted" : false,
+    "fontSize" : 17.0,
+    "lineCount" : 1,
+    "textX" : 310.963,
+    "textY" : 617.304,
+    "textWidth" : 73.508,
+    "textHeight" : 17.0,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 310.963,
+      "y" : 617.304,
+      "width" : 73.508,
+      "height" : 17.0,
+      "baseline" : 621.031,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[4]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 3,
+    "textX" : 400.471,
+    "textY" : 609.329,
+    "textWidth" : 125.559,
+    "textHeight" : 24.975,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 400.471,
+      "y" : 625.979,
+      "width" : 125.559,
+      "height" : 8.325,
+      "baseline" : 627.842,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 400.471,
+      "y" : 617.654,
+      "width" : 101.556,
+      "height" : 8.325,
+      "baseline" : 619.517,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 400.471,
+      "y" : 609.329,
+      "width" : 69.525,
+      "height" : 8.325,
+      "baseline" : 611.192,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 3,
+    "textX" : 62.0,
+    "textY" : 544.109,
+    "textWidth" : 86.4,
+    "textHeight" : 32.22,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 62.0,
+      "y" : 565.229,
+      "width" : 49.356,
+      "height" : 11.1,
+      "baseline" : 567.713,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 62.0,
+      "y" : 554.669,
+      "width" : 43.2,
+      "height" : 10.56,
+      "baseline" : 557.069,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 62.0,
+      "y" : 544.109,
+      "width" : 86.4,
+      "height" : 10.56,
+      "baseline" : 546.509,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Noto Sans Georgian",
+    "resolvedFont" : "Noto Sans Georgian",
+    "fontSubstituted" : false,
+    "fontSize" : 17.0,
+    "lineCount" : 1,
+    "textX" : 195.481,
+    "textY" : 553.209,
+    "textWidth" : 95.659,
+    "textHeight" : 23.12,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 195.481,
+      "y" : 553.209,
+      "width" : 95.659,
+      "height" : 23.12,
+      "baseline" : 558.173,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[5]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 3,
+    "textX" : 400.471,
+    "textY" : 551.354,
+    "textWidth" : 124.02,
+    "textHeight" : 24.975,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 400.471,
+      "y" : 568.004,
+      "width" : 124.02,
+      "height" : 8.325,
+      "baseline" : 569.867,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 400.471,
+      "y" : 559.679,
+      "width" : 123.066,
+      "height" : 8.325,
+      "baseline" : 561.542,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 400.471,
+      "y" : 551.354,
+      "width" : 64.026,
+      "height" : 8.325,
+      "baseline" : 553.217,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 3,
+    "textX" : 62.0,
+    "textY" : 478.889,
+    "textWidth" : 86.4,
+    "textHeight" : 32.22,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 62.0,
+      "y" : 500.009,
+      "width" : 51.348,
+      "height" : 11.1,
+      "baseline" : 502.493,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 62.0,
+      "y" : 489.449,
+      "width" : 43.2,
+      "height" : 10.56,
+      "baseline" : 491.849,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 62.0,
+      "y" : 478.889,
+      "width" : 86.4,
+      "height" : 10.56,
+      "baseline" : 481.289,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Noto Sans Armenian",
+    "resolvedFont" : "Noto Sans Armenian",
+    "fontSubstituted" : false,
+    "fontSize" : 17.0,
+    "lineCount" : 1,
+    "textX" : 195.481,
+    "textY" : 487.989,
+    "textWidth" : 126.412,
+    "textHeight" : 23.12,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 195.481,
+      "y" : 487.989,
+      "width" : 126.412,
+      "height" : 23.12,
+      "baseline" : 492.953,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[6]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 3,
+    "textX" : 400.471,
+    "textY" : 486.134,
+    "textWidth" : 117.558,
+    "textHeight" : 24.975,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 400.471,
+      "y" : 502.784,
+      "width" : 117.558,
+      "height" : 8.325,
+      "baseline" : 504.647,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 400.471,
+      "y" : 494.459,
+      "width" : 112.05,
+      "height" : 8.325,
+      "baseline" : 496.322,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 400.471,
+      "y" : 486.134,
+      "width" : 58.914,
+      "height" : 8.325,
+      "baseline" : 487.997,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 2,
+    "textX" : 62.0,
+    "textY" : 424.229,
+    "textWidth" : 86.4,
+    "textHeight" : 21.66,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 62.0,
+      "y" : 434.789,
+      "width" : 38.688,
+      "height" : 11.1,
+      "baseline" : 437.273,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 62.0,
+      "y" : 424.229,
+      "width" : 86.4,
+      "height" : 10.56,
+      "baseline" : 426.629,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Gothic A1",
+    "resolvedFont" : "Gothic A1",
+    "fontSubstituted" : false,
+    "fontSize" : 17.0,
+    "lineCount" : 1,
+    "textX" : 195.481,
+    "textY" : 428.889,
+    "textWidth" : 144.262,
+    "textHeight" : 17.0,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 195.481,
+      "y" : 428.889,
+      "width" : 144.262,
+      "height" : 17.0,
+      "baseline" : 432.325,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "WorldScripts[0]/RowNode[7]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 9.0,
+    "lineCount" : 2,
+    "textX" : 400.471,
+    "textY" : 429.239,
+    "textWidth" : 130.554,
+    "textHeight" : 16.65,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 400.471,
+      "y" : 437.564,
+      "width" : 112.059,
+      "height" : 8.325,
+      "baseline" : 439.427,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 400.471,
+      "y" : 429.239,
+      "width" : 130.554,
+      "height" : 8.325,
+      "baseline" : 431.102,
+      "baselineExact" : true
+    } ]
   } ]
 }

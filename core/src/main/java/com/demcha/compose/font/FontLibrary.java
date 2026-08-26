@@ -22,6 +22,8 @@ import java.util.function.Supplier;
  *
  * <p>The library supports both eagerly registered fonts and lazily created
  * fonts through factories.</p>
+ *
+ * @author Artem Demchyshyn
  */
 public class FontLibrary {
 
@@ -155,16 +157,43 @@ public class FontLibrary {
         return Collections.unmodifiableSet(all);
     }
 
-    private FontName resolveBaseFont(FontName fontName) {
+    /**
+     * Returns the family a declared font name is actually laid out in.
+     *
+     * <p>Two kinds of name resolve to something other than themselves. {@code DEFAULT}
+     * (and {@code null}) become {@code HELVETICA}. A standard-14 <em>face</em> such as
+     * {@code HELVETICA_BOLD} becomes its family, because the face is chosen later from
+     * the style's decoration — so a style that names the bold face and sets no
+     * decoration renders regular.</p>
+     *
+     * <p>Both rewrites lay out and draw without error, which is what makes them
+     * expensive: the authoring code is correct, the document is not, and nothing in the
+     * output says so. Exposing the rule lets the layout snapshot report the declared and
+     * the resolved name side by side.</p>
+     *
+     * <p>Pure and side-effect free, unlike the internal path it backs: a diagnostic
+     * projection has no business emitting warnings while it looks.</p>
+     *
+     * @param fontName declared font name, or {@code null}
+     * @return the font family the text is laid out in
+     * @since 2.2.2
+     */
+    public static FontName resolveFamily(FontName fontName) {
         if (fontName == null || FontName.DEFAULT.equals(fontName)) {
             return FontName.HELVETICA;
         }
         FontName base = FONT_ALIASES.get(fontName);
-        if (base == null) {
-            return fontName;
+        return base == null ? fontName : base;
+    }
+
+    private FontName resolveBaseFont(FontName fontName) {
+        FontName resolved = resolveFamily(fontName);
+        // DEFAULT is not a face alias — it is the absence of a choice, and warning
+        // about it would fire on every document that never named a font at all.
+        if (fontName != null && !FontName.DEFAULT.equals(fontName) && !resolved.equals(fontName)) {
+            warnOnceAboutFaceAlias(fontName, resolved);
         }
-        warnOnceAboutFaceAlias(fontName, base);
-        return base;
+        return resolved;
     }
 
     /**

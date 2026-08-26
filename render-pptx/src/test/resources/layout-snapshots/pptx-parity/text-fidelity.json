@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 540.0,
     "pageHeight" : 300.0,
@@ -193,5 +193,121 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "TextFidelity[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "PptxParityLato",
+    "resolvedFont" : "PptxParityLato",
+    "fontSubstituted" : false,
+    "fontSize" : 22.0,
+    "lineCount" : 1,
+    "textX" : 28.0,
+    "textY" : 245.6,
+    "textWidth" : 298.364,
+    "textHeight" : 26.4,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 28.0,
+      "y" : 245.6,
+      "width" : 298.364,
+      "height" : 26.4,
+      "baseline" : 250.286,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "TextFidelity[0]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "PptxParityLato",
+    "resolvedFont" : "PptxParityLato",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 28.0,
+    "textY" : 215.8,
+    "textWidth" : 401.226,
+    "textHeight" : 16.8,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 28.0,
+      "y" : 215.8,
+      "width" : 401.226,
+      "height" : 16.8,
+      "baseline" : 218.782,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "TextFidelity[0]/ParagraphNode[2]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "PptxParityLato",
+    "resolvedFont" : "PptxParityLato",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 28.0,
+    "textY" : 186.0,
+    "textWidth" : 409.972,
+    "textHeight" : 16.8,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 28.0,
+      "y" : 186.0,
+      "width" : 409.972,
+      "height" : 16.8,
+      "baseline" : 188.982,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "TextFidelity[0]/ParagraphNode[3]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "PptxParityLato",
+    "resolvedFont" : "PptxParityLato",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 1,
+    "textX" : 234.528,
+    "textY" : 157.4,
+    "textWidth" : 277.472,
+    "textHeight" : 15.6,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 234.528,
+      "y" : 157.4,
+      "width" : 277.472,
+      "height" : 15.6,
+      "baseline" : 160.169,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "TextFidelity[0]/ParagraphNode[4]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "PptxParityLato",
+    "resolvedFont" : "PptxParityLato",
+    "fontSubstituted" : false,
+    "fontSize" : 11.0,
+    "lineCount" : 1,
+    "textX" : 156.139,
+    "textY" : 131.2,
+    "textWidth" : 227.722,
+    "textHeight" : 13.2,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 156.139,
+      "y" : 131.2,
+      "width" : 227.722,
+      "height" : 13.2,
+      "baseline" : 133.543,
+      "baselineExact" : true
+    } ]
   } ]
 }

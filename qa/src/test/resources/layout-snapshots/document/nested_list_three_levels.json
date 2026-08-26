@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 320.0,
     "pageHeight" : 320.0,
@@ -73,5 +73,75 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "NestedListSnapshot[0]/Tree[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 12.0,
+    "textY" : 295.05,
+    "textWidth" : 32.914,
+    "textHeight" : 12.95,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 12.0,
+      "y" : 295.05,
+      "width" : 32.914,
+      "height" : 12.95,
+      "baseline" : 297.948,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "NestedListSnapshot[0]/Tree[0]",
+    "fragmentIndex" : 1,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 12.0,
+    "textY" : 282.1,
+    "textWidth" : 42.014,
+    "textHeight" : 12.95,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 12.0,
+      "y" : 282.1,
+      "width" : 42.014,
+      "height" : 12.95,
+      "baseline" : 284.998,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "NestedListSnapshot[0]/Tree[0]",
+    "fragmentIndex" : 2,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 1,
+    "textX" : 12.0,
+    "textY" : 269.15,
+    "textWidth" : 54.488,
+    "textHeight" : 12.95,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 12.0,
+      "y" : 269.15,
+      "width" : 54.488,
+      "height" : 12.95,
+      "baseline" : 272.048,
+      "baselineExact" : true
+    } ]
   } ]
 }

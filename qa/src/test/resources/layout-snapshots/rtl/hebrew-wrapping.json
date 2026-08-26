@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 300.0,
     "pageHeight" : 240.0,
@@ -73,5 +73,61 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "David Libre",
+    "resolvedFont" : "David Libre",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 5,
+    "textX" : 25.224,
+    "textY" : 157.0,
+    "textWidth" : 256.776,
+    "textHeight" : 65.0,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 25.224,
+      "y" : 209.0,
+      "width" : 256.776,
+      "height" : 13.0,
+      "baseline" : 211.85,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 48.936,
+      "y" : 196.0,
+      "width" : 233.064,
+      "height" : 13.0,
+      "baseline" : 198.85,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 39.953,
+      "y" : 183.0,
+      "width" : 242.047,
+      "height" : 13.0,
+      "baseline" : 185.85,
+      "baselineExact" : true
+    }, {
+      "index" : 3,
+      "x" : 58.309,
+      "y" : 170.0,
+      "width" : 223.691,
+      "height" : 13.0,
+      "baseline" : 172.85,
+      "baselineExact" : true
+    }, {
+      "index" : 4,
+      "x" : 95.528,
+      "y" : 157.0,
+      "width" : 186.472,
+      "height" : 13.0,
+      "baseline" : 159.85,
+      "baselineExact" : true
+    } ]
   } ]
 }

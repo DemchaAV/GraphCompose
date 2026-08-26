@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 400.0,
     "pageHeight" : 200.0,
@@ -43,5 +43,37 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "SnapshotTable[0]",
+    "fragmentIndex" : 1,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 2,
+    "textX" : 24.0,
+    "textY" : 150.1,
+    "textWidth" : 150.178,
+    "textHeight" : 25.9,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 24.0,
+      "y" : 163.05,
+      "width" : 150.178,
+      "height" : 12.95,
+      "baseline" : 165.948,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 24.0,
+      "y" : 150.1,
+      "width" : 36.568,
+      "height" : 12.95,
+      "baseline" : 152.998,
+      "baselineExact" : true
+    } ]
   } ]
 }

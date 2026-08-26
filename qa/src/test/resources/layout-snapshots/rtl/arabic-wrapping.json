@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 300.0,
     "pageHeight" : 260.0,
@@ -73,5 +73,69 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 6,
+    "textX" : 20.674,
+    "textY" : 104.876,
+    "textWidth" : 261.326,
+    "textHeight" : 137.124,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 20.674,
+      "y" : 219.146,
+      "width" : 261.326,
+      "height" : 22.854,
+      "baseline" : 227.388,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 41.929,
+      "y" : 196.292,
+      "width" : 240.071,
+      "height" : 22.854,
+      "baseline" : 204.534,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 36.989,
+      "y" : 173.438,
+      "width" : 245.011,
+      "height" : 22.854,
+      "baseline" : 181.68,
+      "baselineExact" : true
+    }, {
+      "index" : 3,
+      "x" : 30.554,
+      "y" : 150.584,
+      "width" : 251.446,
+      "height" : 22.854,
+      "baseline" : 158.826,
+      "baselineExact" : true
+    }, {
+      "index" : 4,
+      "x" : 36.768,
+      "y" : 127.73,
+      "width" : 245.232,
+      "height" : 22.854,
+      "baseline" : 135.972,
+      "baselineExact" : true
+    }, {
+      "index" : 5,
+      "x" : 227.101,
+      "y" : 104.876,
+      "width" : 54.899,
+      "height" : 22.854,
+      "baseline" : 113.118,
+      "baselineExact" : true
+    } ]
   } ]
 }

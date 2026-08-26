@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 380.0,
     "pageHeight" : 240.0,
@@ -133,5 +133,6 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
-  } ]
+  } ],
+  "typography" : [ ]
 }

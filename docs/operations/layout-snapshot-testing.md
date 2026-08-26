@@ -226,10 +226,36 @@ The snapshot intentionally contains stable layout data only:
 - content size
 - margin and padding
 
+Since 2.2.2 it also carries a parallel `typography` list, one entry per resolved
+paragraph fragment:
+
+- the **declared** font and the **resolved** font, plus a `fontSubstituted` flag
+- font size and line count
+- the box the ink occupies
+- one entry per line: index, bounds, and baseline, in absolute page coordinates
+
+It hangs off fragments rather than nodes because that is what text is: a paragraph
+broken across a page boundary has one fragment per page, each with its own lines.
+Join it to `nodes` on `path`. Node entries did not change when it was added, so a
+reader that only looks at nodes needs no update; `formatVersion` moved from `2.0`
+to `2.1` to announce the list.
+
+`declaredFont` and `resolvedFont` differ when the style named a font the document is
+not set in — `DEFAULT` resolves to Helvetica, and a standard-14 face such as
+`HELVETICA_BOLD` resolves to its family because the face comes from the style's
+decoration. Both lay out and draw without error, so this pair is the only thing that
+makes the mismatch visible.
+
+`baselineExact` is `false` for a paragraph using a non-default `TextVerticalAlign`:
+that mode shifts the baseline by a correction derived from the backend font's cap
+height, and a renderer-neutral snapshot has no backend font to ask. Treat those
+baselines as unusable rather than approximate.
+
 It intentionally excludes unstable or noisy values such as:
 
 - UUIDs
-- raw text payload
+- raw text payload — including the text of each line, which is why a line is
+  identified by its index
 - colors
 - PDF resource ids
 

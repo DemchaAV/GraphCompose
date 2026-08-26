@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 300.0,
     "pageHeight" : 170.0,
@@ -103,5 +103,162 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 0,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 5,
+    "textX" : 18.0,
+    "textY" : 37.73,
+    "textWidth" : 261.326,
+    "textHeight" : 114.27,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 18.0,
+      "y" : 129.146,
+      "width" : 261.326,
+      "height" : 22.854,
+      "baseline" : 137.388,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 39.255,
+      "y" : 106.292,
+      "width" : 240.071,
+      "height" : 22.854,
+      "baseline" : 114.534,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 34.315,
+      "y" : 83.438,
+      "width" : 245.011,
+      "height" : 22.854,
+      "baseline" : 91.68,
+      "baselineExact" : true
+    }, {
+      "index" : 3,
+      "x" : 27.88,
+      "y" : 60.584,
+      "width" : 251.446,
+      "height" : 22.854,
+      "baseline" : 68.826,
+      "baselineExact" : true
+    }, {
+      "index" : 4,
+      "x" : 34.094,
+      "y" : 37.73,
+      "width" : 245.232,
+      "height" : 22.854,
+      "baseline" : 45.972,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[0]",
+    "fragmentIndex" : 0,
+    "page" : 1,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 1,
+    "textX" : 18.0,
+    "textY" : 129.146,
+    "textWidth" : 54.899,
+    "textHeight" : 22.854,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 18.0,
+      "y" : 129.146,
+      "width" : 54.899,
+      "height" : 22.854,
+      "baseline" : 137.388,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 1,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 4,
+    "textX" : 18.0,
+    "textY" : 37.73,
+    "textWidth" : 261.326,
+    "textHeight" : 91.416,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 18.0,
+      "y" : 106.292,
+      "width" : 261.326,
+      "height" : 22.854,
+      "baseline" : 114.534,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 39.255,
+      "y" : 83.438,
+      "width" : 240.071,
+      "height" : 22.854,
+      "baseline" : 91.68,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 34.315,
+      "y" : 60.584,
+      "width" : 245.011,
+      "height" : 22.854,
+      "baseline" : 68.826,
+      "baselineExact" : true
+    }, {
+      "index" : 3,
+      "x" : 27.88,
+      "y" : 37.73,
+      "width" : 251.446,
+      "height" : 22.854,
+      "baseline" : 45.972,
+      "baselineExact" : true
+    } ]
+  }, {
+    "path" : "ContainerNode[0]/ParagraphNode[1]",
+    "fragmentIndex" : 0,
+    "page" : 2,
+    "declaredFont" : "Amiri",
+    "resolvedFont" : "Amiri",
+    "fontSubstituted" : false,
+    "fontSize" : 13.0,
+    "lineCount" : 2,
+    "textX" : 18.0,
+    "textY" : 106.292,
+    "textWidth" : 245.232,
+    "textHeight" : 45.708,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 18.0,
+      "y" : 129.146,
+      "width" : 245.232,
+      "height" : 22.854,
+      "baseline" : 137.388,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 208.333,
+      "y" : 106.292,
+      "width" : 54.899,
+      "height" : 22.854,
+      "baseline" : 114.534,
+      "baselineExact" : true
+    } ]
   } ]
 }

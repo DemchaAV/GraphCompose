@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.0",
+  "formatVersion" : "2.1",
   "canvas" : {
     "pageWidth" : 220.0,
     "pageHeight" : 200.0,
@@ -43,5 +43,101 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
+  } ],
+  "typography" : [ {
+    "path" : "CodeTable[0]",
+    "fragmentIndex" : 1,
+    "page" : 0,
+    "declaredFont" : "Helvetica",
+    "resolvedFont" : "Helvetica",
+    "fontSubstituted" : false,
+    "fontSize" : 14.0,
+    "lineCount" : 10,
+    "textX" : 54.0,
+    "textY" : 75.96,
+    "textWidth" : 42.0,
+    "textHeight" : 110.04,
+    "verticalAlign" : "DEFAULT",
+    "lines" : [ {
+      "index" : 0,
+      "x" : 54.0,
+      "y" : 174.996,
+      "width" : 37.6,
+      "height" : 11.004,
+      "baseline" : 177.194,
+      "baselineExact" : true
+    }, {
+      "index" : 1,
+      "x" : 54.0,
+      "y" : 163.992,
+      "width" : 42.0,
+      "height" : 11.004,
+      "baseline" : 166.19,
+      "baselineExact" : true
+    }, {
+      "index" : 2,
+      "x" : 54.0,
+      "y" : 152.988,
+      "width" : 8.4,
+      "height" : 11.004,
+      "baseline" : 155.186,
+      "baselineExact" : true
+    }, {
+      "index" : 3,
+      "x" : 54.0,
+      "y" : 141.984,
+      "width" : 42.0,
+      "height" : 11.004,
+      "baseline" : 144.182,
+      "baselineExact" : true
+    }, {
+      "index" : 4,
+      "x" : 54.0,
+      "y" : 130.98,
+      "width" : 25.2,
+      "height" : 11.004,
+      "baseline" : 133.178,
+      "baselineExact" : true
+    }, {
+      "index" : 5,
+      "x" : 54.0,
+      "y" : 119.976,
+      "width" : 42.0,
+      "height" : 11.004,
+      "baseline" : 122.174,
+      "baselineExact" : true
+    }, {
+      "index" : 6,
+      "x" : 54.0,
+      "y" : 108.972,
+      "width" : 8.4,
+      "height" : 11.004,
+      "baseline" : 111.17,
+      "baselineExact" : true
+    }, {
+      "index" : 7,
+      "x" : 54.0,
+      "y" : 97.968,
+      "width" : 42.0,
+      "height" : 11.004,
+      "baseline" : 100.166,
+      "baselineExact" : true
+    }, {
+      "index" : 8,
+      "x" : 54.0,
+      "y" : 86.964,
+      "width" : 42.0,
+      "height" : 11.004,
+      "baseline" : 89.162,
+      "baselineExact" : true
+    }, {
+      "index" : 9,
+      "x" : 54.0,
+      "y" : 75.96,
+      "width" : 37.6,
+      "height" : 11.004,
+      "baseline" : 78.158,
+      "baselineExact" : true
+    } ]
   } ]
 }

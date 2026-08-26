@@ -3,6 +3,58 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.2.2 — Planned
+
+### Public API
+
+- **The layout snapshot can now say what the text became.** It could already say that a
+  block moved; it could never say why the block is the size it is, because the thing that
+  decides that — which font, at what size, broken into how many lines — was measured
+  during layout and then discarded. A wrong font and a wrong padding produce the same
+  symptom on the page, and telling them apart by eye is exactly the guessing a measured
+  snapshot exists to end.
+
+  `LayoutSnapshot.typography()` is a new list of `LayoutTypographySnapshot`, one entry per
+  resolved paragraph fragment: the declared font, the resolved font, the size, the line
+  count, the box the ink occupies, and a `LayoutTextLineSnapshot` per line carrying its
+  own bounds and baseline in absolute page coordinates.
+
+  It hangs off fragments rather than nodes because that is what text is — a paragraph
+  broken across a page boundary has one fragment per page, each with its own lines, and a
+  per-node projection would have to keep one and discard the other. Join it to `nodes()`
+  on `path`. Node entries are byte-identical to before, so a reader that only looks at
+  nodes needs no change; `formatVersion` moves to `2.1` to say the list is there.
+
+  **`declaredFont` and `resolvedFont` are separate on purpose.** Two rewrites put a
+  document in a font its author did not name, and both are silent: `DEFAULT` resolves to
+  the Helvetica family, and a standard-14 face such as `HELVETICA_BOLD` resolves to its
+  family, because the face is chosen from the style's decoration — so a style that names
+  the bold face and sets no decoration renders regular. Both lay out, both draw, neither
+  fails. `fontSubstituted` is the flag that makes them visible, and the rule behind it is
+  now reachable as `FontLibrary.resolveFamily(FontName)` — pure, and deliberately silent,
+  so taking a snapshot never consumes the once-per-name warning the render still owes. A
+  font that is neither registered nor aliased never reaches the snapshot: measurement
+  fails first, loudly.
+
+  **One honest limit.** A paragraph using a non-default `TextVerticalAlign` has every
+  baseline shifted by a correction read from the backend font's cap height, and a
+  renderer-neutral snapshot has no backend font to ask. Those lines report the unseated
+  baseline with `baselineExact = false`; a consumer that needs the true baseline has to
+  decline rather than use it. Default seating — nearly every paragraph — is exact.
+
+  The line's own text is deliberately not included. A snapshot excludes raw text payload,
+  the words are already in the document that produced it, and a line is identified by its
+  index within the fragment.
+
+  The vertical line walk moved into `ParagraphLineGeometry` (`contentTop`, `nextLineTop`,
+  `baselineY`) and the PDF handler now draws through it, so the snapshot and the page
+  cannot describe different lines. That helper already existed for the horizontal half,
+  for exactly this reason.
+
+  Every committed layout-snapshot baseline was regenerated to carry the new list. No node
+  entry changed, and no rendered output changed.
+
+
 ## v2.2.1 — 2026-08-25
 
 ### Public API

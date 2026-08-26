@@ -14,33 +14,42 @@ follow semantic versioning; release dates are ISO 8601.
   symptom on the page, and telling them apart by eye is exactly the guessing a measured
   snapshot exists to end.
 
-  **It is opt-in, and `layoutSnapshot()` is untouched.** A diagnostic section that
+  **It is opt-in, and `LayoutSnapshot` did not change shape.** A diagnostic section that
   appeared on its own would turn every consumer's snapshot suite red on an upgrade that
-  moved nothing in their document, so it does not appear on its own:
+  moved nothing in their document:
 
   ```java
   LayoutSnapshot plain = document.layoutSnapshot();               // exactly as before
 
-  LayoutSnapshot rich = document.layoutSnapshot(
+  LayoutDiagnosticSnapshot rich = document.layoutSnapshot(
           LayoutSnapshotOptions.builder().typography(true).build());
+
+  rich.layout().equals(plain);                                    // true
   ```
 
-  `layoutSnapshot()` still emits `formatVersion` `2.0`, no `typography` key, and byte-for-byte
-  the JSON it emitted before — no committed baseline in this repo changed, and none of
-  yours has to. `LayoutSnapshotOptions` is a builder rather than an overload so the next
-  section costs a method rather than a new `layoutSnapshot(...)` signature. Only a
-  snapshot that asked for a section reports `2.1`.
+  The diagnostics live on a new `LayoutDiagnosticSnapshot` that *wraps* the layout
+  snapshot rather than on `LayoutSnapshot` itself. That distinction is the guarantee:
+  `LayoutSnapshot` still has exactly the four components it had in 2.0, so its JSON, its
+  `toString()` and its `equals` are unchanged however you serialize it — through
+  `LayoutSnapshotJson`, through an `ObjectMapper` of your own, or by hand. Every committed
+  baseline in this repo is unchanged, and nothing added here can reach one of yours.
 
-  `LayoutSnapshot.typography()` is a list of `LayoutTypographySnapshot`, one entry per
-  resolved paragraph fragment: the declared font, the resolved family, the decoration, the
-  size, the line count, the bounds of the laid-out line boxes, and a
+  `LayoutDiagnosticSnapshot.formatVersion` versions the envelope independently of the
+  layout snapshot's `2.0`, so a section added later moves one number and not the other.
+  `LayoutSnapshotOptions` is a builder rather than an overload so that next section costs
+  a method rather than a new `layoutSnapshot(...)` signature.
+
+  `LayoutDiagnosticSnapshot.typography()` is a list of `LayoutTypographySnapshot`, one
+  entry per resolved paragraph fragment: the declared font, the resolved family, the
+  decoration, the size, the line count, the bounds of the laid-out line boxes, and a
   `LayoutTextLineSnapshot` per line carrying its own bounds and baseline in absolute page
   coordinates.
 
   It hangs off fragments rather than nodes because that is what text is — a paragraph
   broken across a page boundary has one fragment per page, each with its own lines, and a
-  per-node projection would have to keep one and discard the other. Join it to `nodes()`
-  on `path`, one-to-many. Entries are ordered by path, then page, then emission ordinal:
+  per-node projection would have to keep one and discard the other. Join it to
+  `layout().nodes()` on `path`, one-to-many. Entries are ordered by path, then page, then
+  emission ordinal:
   a split paragraph restarts its ordinal at zero on each page, so page has to be in the
   key or the order falls back to whatever order pagination emitted fragments in.
 

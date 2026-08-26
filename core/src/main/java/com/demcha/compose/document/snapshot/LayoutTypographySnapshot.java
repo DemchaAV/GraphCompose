@@ -6,10 +6,11 @@ import java.util.List;
  * What a run of text actually became: which font it ended up in, at what size,
  * broken into how many lines, and where each of those lines sits.
  *
- * <p>Opt-in: this record only appears in a snapshot taken with
- * {@link LayoutSnapshotOptions.Builder#typography(boolean)} enabled. The default
- * snapshot does not carry it, so a baseline recorded before it existed stays
- * byte-identical.</p>
+ * <p>Opt-in, and reached through {@link LayoutDiagnosticSnapshot} rather than
+ * through {@link LayoutSnapshot}: it appears only when
+ * {@link LayoutSnapshotOptions.Builder#typography(boolean)} was enabled. The
+ * layout snapshot itself has no field for it, so a baseline recorded before this
+ * record existed stays byte-identical under any serializer.</p>
  *
  * <p>Attached to a <em>fragment</em> rather than to a node, because that is what
  * text is. A paragraph that breaks across a page boundary emits one fragment per
@@ -89,7 +90,8 @@ import java.util.List;
  *
  * <h2>Identifying a run</h2>
  *
- * <p>{@code path} is the owning <em>node</em>, so the join to {@code nodes} is
+ * <p>{@code path} is the owning <em>node</em>, so the join to
+ * {@link LayoutDiagnosticSnapshot#layout()}'s {@code nodes} is
  * one-to-many: a chart emits one entry per label, and a paragraph composed into a
  * table cell reports the table's path. {@code fragmentIndex} is the owner's
  * emission ordinal, which separates runs on one page but is not a stable

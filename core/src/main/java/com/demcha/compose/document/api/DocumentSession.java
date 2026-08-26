@@ -17,6 +17,7 @@ import com.demcha.compose.document.node.ContainerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.output.*;
+import com.demcha.compose.document.snapshot.LayoutDiagnosticSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshotOptions;
 import com.demcha.compose.document.snapshot.PageIndex;
@@ -780,33 +781,35 @@ public final class DocumentSession implements AutoCloseable {
     }
 
     /**
+     * Extracts the current deterministic layout snapshot, including whichever
+     * optional diagnostic sections {@code options} asks for.
+     *
+     * <p>Returns a different type from {@link #layoutSnapshot()} on purpose.
+     * {@link LayoutDiagnosticSnapshot#layout()} is byte-for-byte the snapshot the
+     * no-argument overload returns, so committed baselines of that shape are
+     * untouched by anything added here.</p>
+     *
+     * <p>Not cached: diagnostics are computed on each call, which keeps the
+     * revision-keyed cache holding exactly one thing.</p>
+     *
+     * @param options which optional diagnostic sections to include
+     * @return layout snapshot plus the requested diagnostics
+     * @throws IllegalStateException if this session has already been closed
+     * @since 2.2.2
+     */
+    public LayoutDiagnosticSnapshot layoutSnapshot(LayoutSnapshotOptions options) {
+        Objects.requireNonNull(options, "options");
+        ensureOpen();
+        return LayoutGraphSnapshotExtractor.extractDiagnostics(layoutGraph(), options);
+    }
+
+    /**
      * Extracts the current deterministic layout snapshot used by regression tests.
      *
      * @return layout snapshot derived from the current layout graph
      */
     public LayoutSnapshot layoutSnapshot() {
-        return layoutSnapshot(LayoutSnapshotOptions.defaults());
-    }
-
-    /**
-     * Extracts the current deterministic layout snapshot, including whichever
-     * optional diagnostic sections {@code options} asks for.
-     *
-     * <p>Only the default snapshot is cached per layout revision. A snapshot with
-     * sections enabled is computed on each call, so a diagnostic pass can never
-     * hand its richer result to a later caller that asked for the default one.</p>
-     *
-     * @param options which optional diagnostic sections to include
-     * @return layout snapshot derived from the current layout graph
-     * @throws IllegalStateException if this session has already been closed
-     * @since 2.2.2
-     */
-    public LayoutSnapshot layoutSnapshot(LayoutSnapshotOptions options) {
-        Objects.requireNonNull(options, "options");
         ensureOpen();
-        if (!options.isDefault()) {
-            return LayoutGraphSnapshotExtractor.extract(layoutGraph(), options);
-        }
         long revision = layoutCache.revision();
         if (layoutCache.isSnapshotCached()) {
             LayoutSnapshot cached = layoutCache.snapshot(() -> {

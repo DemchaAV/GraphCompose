@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
+import com.demcha.compose.testing.layout.LayoutSnapshotJson;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -82,7 +83,7 @@ class TypographySnapshotTest {
         return only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Terms");
     }
 
-    private static LayoutTypographySnapshot only(LayoutSnapshot snapshot, String name) {
+    private static LayoutTypographySnapshot only(LayoutDiagnosticSnapshot snapshot, String name) {
         List<LayoutTypographySnapshot> matches = snapshot.typography().stream()
                 .filter(run -> run.path().contains(name))
                 .toList();
@@ -95,60 +96,70 @@ class TypographySnapshotTest {
     // ------------------------------------------------------------------- opt-in ---
 
     @Test
-    void theDefaultSnapshotCarriesNoTypographyAndKeepsItsFormatVersion() throws Exception {
-        // The whole backward-compatibility contract in one assertion: a consumer who
-        // upgrades and re-runs an existing snapshot test must see the same bytes. A new
-        // key or a bumped formatVersion would fail every baseline they have on disk for
-        // a document whose layout did not move.
+    void theDefaultSnapshotShowsNoTraceOfDiagnostics() throws Exception {
+        // The whole backward-compatibility contract. LayoutSnapshot is what consumers
+        // hold baselines of, so it must carry no diagnostic field at all — not an empty
+        // one. toString() is the cheapest proof that the record's own shape is clean,
+        // which is what a hand-rolled ObjectMapper would serialize too.
         try (DocumentSession document = page()) {
             compose(document);
 
             LayoutSnapshot snapshot = document.layoutSnapshot();
 
-            assertThat(snapshot.typography()).isEmpty();
             assertThat(snapshot.formatVersion()).isEqualTo("2.0");
+            assertThat(snapshot.toString())
+                    .describedAs("a diagnostic field would leak into every consumer's serializer")
+                    .doesNotContain("typography");
+            assertThat(LayoutSnapshotJson.toJson(snapshot)).doesNotContain("typography");
         }
     }
 
     @Test
-    void askingForTypographyAddsTheSectionAndSaysSoInTheFormatVersion() throws Exception {
-        try (DocumentSession document = page()) {
-            compose(document);
-
-            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
-
-            assertThat(snapshot.typography()).isNotEmpty();
-            assertThat(snapshot.formatVersion()).isEqualTo("2.1");
-        }
-    }
-
-    @Test
-    void askingForTypographyChangesNothingElseAboutTheSnapshot() throws Exception {
-        // Typography is a projection, not a layout switch: enabling it must not move a
-        // node, a page count or a canvas value.
+    void askingForTypographyAddsTheSectionWithoutTouchingTheLayoutSnapshot() throws Exception {
         try (DocumentSession document = page()) {
             compose(document);
 
             LayoutSnapshot plain = document.layoutSnapshot();
-            LayoutSnapshot rich = document.layoutSnapshot(WITH_TYPOGRAPHY);
+            LayoutDiagnosticSnapshot rich = document.layoutSnapshot(WITH_TYPOGRAPHY);
 
-            assertThat(rich.nodes()).isEqualTo(plain.nodes());
-            assertThat(rich.canvas()).isEqualTo(plain.canvas());
-            assertThat(rich.totalPages()).isEqualTo(plain.totalPages());
+            assertThat(rich.typography()).isNotEmpty();
+            assertThat(rich.formatVersion())
+                    .describedAs("the envelope versions itself, not the layout snapshot")
+                    .isEqualTo("1.0");
+            assertThat(rich.layout())
+                    .describedAs("the nested snapshot is the plain one, whole and unchanged")
+                    .isEqualTo(plain);
+            assertThat(LayoutSnapshotJson.toJson(rich.layout()))
+                    .isEqualTo(LayoutSnapshotJson.toJson(plain));
+        }
+    }
+
+    @Test
+    void notAskingForASectionLeavesItEmpty() throws Exception {
+        // Options are per-section: an envelope requested with everything off still wraps
+        // the same layout snapshot and reports nothing.
+        try (DocumentSession document = page()) {
+            compose(document);
+
+            LayoutDiagnosticSnapshot empty = document.layoutSnapshot(LayoutSnapshotOptions.defaults());
+
+            assertThat(empty.typography()).isEmpty();
+            assertThat(empty.layout()).isEqualTo(document.layoutSnapshot());
         }
     }
 
     @Test
     void takingARichSnapshotDoesNotPoisonTheCachedDefaultOne() throws Exception {
-        // The default snapshot is memoized per layout revision. If the opt-in one shared
-        // that slot, one diagnostic call would hand typography to every later caller —
-        // including the assertion helper that compares against a committed baseline.
+        // The default snapshot is memoized per layout revision. If the diagnostic call
+        // shared that slot, one diagnostic pass would change what every later caller
+        // sees — including the assertion helper comparing against a committed baseline.
         try (DocumentSession document = page()) {
             compose(document);
+            LayoutSnapshot before = document.layoutSnapshot();
 
             document.layoutSnapshot(WITH_TYPOGRAPHY);
 
-            assertThat(document.layoutSnapshot().typography()).isEmpty();
+            assertThat(document.layoutSnapshot()).isEqualTo(before);
             assertThat(document.layoutSnapshot().formatVersion()).isEqualTo("2.0");
         }
     }
@@ -397,7 +408,7 @@ class TypographySnapshotTest {
                             .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
                     .build();
 
-            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
+            LayoutDiagnosticSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
             LayoutTextLineSnapshot left = only(snapshot, "Left").lines().get(0);
             LayoutTextLineSnapshot right = only(snapshot, "Right").lines().get(0);
 
@@ -548,8 +559,9 @@ class TypographySnapshotTest {
         try (DocumentSession document = page()) {
             compose(document);
 
-            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
-            List<String> nodePaths = snapshot.nodes().stream().map(LayoutNodeSnapshot::path).toList();
+            LayoutDiagnosticSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
+            List<String> nodePaths = snapshot.layout().nodes().stream()
+                    .map(LayoutNodeSnapshot::path).toList();
 
             assertThat(snapshot.typography()).isNotEmpty();
             assertThat(snapshot.typography()).allSatisfy(run ->

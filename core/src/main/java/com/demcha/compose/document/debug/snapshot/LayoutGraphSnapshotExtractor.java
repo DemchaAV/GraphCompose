@@ -10,6 +10,7 @@ import com.demcha.compose.document.layout.payloads.ParagraphSpan;
 import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.snapshot.LayoutCanvasSnapshot;
+import com.demcha.compose.document.snapshot.LayoutDiagnosticSnapshot;
 import com.demcha.compose.document.snapshot.LayoutInsetsSnapshot;
 import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
@@ -38,24 +39,24 @@ import java.util.Objects;
  */
 public final class LayoutGraphSnapshotExtractor {
     /**
-     * Snapshot format version emitted for a default snapshot.
+     * Snapshot format version emitted by the canonical graph extractor.
      *
-     * <p>Unchanged since 2.0, and deliberately so: optional diagnostic sections
-     * are opt-in, so upgrading GraphCompose never rewrites a baseline a consumer
-     * already has on disk.</p>
+     * <p>Unchanged since 2.0, and deliberately so: optional diagnostics live on
+     * {@link LayoutDiagnosticSnapshot} rather than in this shape, so upgrading
+     * GraphCompose never rewrites a baseline a consumer already has on disk.</p>
      */
     public static final String FORMAT_VERSION = "2.0";
 
     /**
-     * Snapshot format version emitted when an optional diagnostic section is
-     * requested through {@link LayoutSnapshotOptions}.
+     * Schema version of the diagnostic envelope produced by
+     * {@link #extractDiagnostics(LayoutGraph, LayoutSnapshotOptions)}.
      *
-     * <p>Node entries are identical to {@link #FORMAT_VERSION}; the higher number
-     * only says extra sections are present.</p>
+     * <p>Versioned independently of {@link #FORMAT_VERSION}: adding a diagnostic
+     * section moves this number and leaves the layout snapshot's alone.</p>
      *
      * @since 2.2.2
      */
-    public static final String DIAGNOSTIC_FORMAT_VERSION = "2.1";
+    public static final String DIAGNOSTIC_FORMAT_VERSION = "1.0";
 
     /**
      * The decoration each standard-14 face alias asks for. Naming
@@ -80,30 +81,16 @@ public final class LayoutGraphSnapshotExtractor {
     /**
      * Converts a canonical layout graph into a stable snapshot model.
      *
-     * <p>Emits the default shape: no optional diagnostic section. This is the
-     * snapshot every committed baseline was recorded against.</p>
+     * <p>This is the snapshot every committed baseline was recorded against, and
+     * its shape does not change when diagnostics are requested.</p>
      *
      * @param graph resolved layout graph
      * @return layout snapshot
      */
     public static LayoutSnapshot extract(LayoutGraph graph) {
-        return extract(graph, LayoutSnapshotOptions.defaults());
-    }
-
-    /**
-     * Converts a canonical layout graph into a stable snapshot model, including
-     * whichever optional diagnostic sections {@code options} asks for.
-     *
-     * @param graph   resolved layout graph
-     * @param options which optional sections to include
-     * @return layout snapshot
-     * @since 2.2.2
-     */
-    public static LayoutSnapshot extract(LayoutGraph graph, LayoutSnapshotOptions options) {
         Objects.requireNonNull(graph, "graph");
-        Objects.requireNonNull(options, "options");
         return new LayoutSnapshot(
-                options.isDefault() ? FORMAT_VERSION : DIAGNOSTIC_FORMAT_VERSION,
+                FORMAT_VERSION,
                 new LayoutCanvasSnapshot(
                         normalize(graph.canvas().width()),
                         normalize(graph.canvas().height()),
@@ -113,7 +100,29 @@ public final class LayoutGraphSnapshotExtractor {
                 graph.totalPages(),
                 graph.nodes().stream()
                         .map(LayoutGraphSnapshotExtractor::toNodeSnapshot)
-                        .toList(),
+                        .toList());
+    }
+
+    /**
+     * Converts a canonical layout graph into a layout snapshot plus whichever
+     * optional diagnostic sections {@code options} asks for.
+     *
+     * <p>{@link LayoutDiagnosticSnapshot#layout()} is byte-for-byte the snapshot
+     * {@link #extract(LayoutGraph)} returns; a section a caller did not ask for is
+     * an empty list.</p>
+     *
+     * @param graph   resolved layout graph
+     * @param options which optional sections to include
+     * @return layout snapshot wrapped with its diagnostics
+     * @since 2.2.2
+     */
+    public static LayoutDiagnosticSnapshot extractDiagnostics(LayoutGraph graph,
+                                                              LayoutSnapshotOptions options) {
+        Objects.requireNonNull(graph, "graph");
+        Objects.requireNonNull(options, "options");
+        return new LayoutDiagnosticSnapshot(
+                DIAGNOSTIC_FORMAT_VERSION,
+                extract(graph),
                 options.typography() ? toTypography(graph) : List.of());
     }
 

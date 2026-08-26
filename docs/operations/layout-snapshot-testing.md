@@ -228,17 +228,26 @@ The snapshot intentionally contains stable layout data only:
 
 ## Optional diagnostics: typography
 
-Since 2.2.2 a snapshot can also carry a `typography` list. It is **opt-in**, so
-`layoutSnapshot()` keeps emitting `formatVersion` `2.0` and exactly the JSON it
-always did — upgrading GraphCompose never forces you to regenerate a baseline for
-a document whose layout did not move.
+Since 2.2.2 `layoutSnapshot(...)` can also report typography. It is **opt-in**,
+and it does not live on `LayoutSnapshot`:
 
 ```java
-LayoutSnapshot rich = document.layoutSnapshot(
+LayoutDiagnosticSnapshot rich = document.layoutSnapshot(
         LayoutSnapshotOptions.builder().typography(true).build());
+
+LayoutSnapshot layout = rich.layout();   // identical to document.layoutSnapshot()
 ```
 
-Only a snapshot that asked for a section reports `formatVersion` `2.1`.
+`LayoutSnapshot` still has exactly the four components it had in 2.0, so its
+JSON, its `toString()` and its `equals` are unchanged **however you serialize
+it** — through `LayoutSnapshotJson`, through an `ObjectMapper` of your own, or
+by hand. Nothing added here can reach a baseline you already have on disk.
+
+`LayoutDiagnosticSnapshot` wraps that snapshot and carries the sections you
+asked for. Its `formatVersion` versions the envelope, independently of the
+layout snapshot's `2.0`: adding a section later moves one and not the other.
+`LayoutSnapshotOptions` is a builder so that next section costs a method rather
+than a new `layoutSnapshot(...)` overload.
 `LayoutSnapshotOptions` is a builder so a later section — links, paint,
 accessibility — is one more method rather than one more overload.
 

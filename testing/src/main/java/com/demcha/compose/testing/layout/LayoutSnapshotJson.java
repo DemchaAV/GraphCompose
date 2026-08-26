@@ -1,14 +1,12 @@
 package com.demcha.compose.testing.layout;
 
+import com.demcha.compose.document.snapshot.LayoutDiagnosticSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
-import com.demcha.compose.document.snapshot.LayoutTypographySnapshot;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * JSON helpers for deterministic layout snapshot baselines.
@@ -19,24 +17,24 @@ import java.util.List;
 public final class LayoutSnapshotJson {
     private static final ObjectWriter WRITER = new ObjectMapper()
             .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-            .addMixIn(LayoutSnapshot.class, OptionalSectionsMixin.class)
             .writerWithDefaultPrettyPrinter();
 
     private LayoutSnapshotJson() {
     }
 
     /**
-     * Keeps an optional diagnostic section out of the JSON entirely when it was
-     * not requested.
+     * Serializes a diagnostic snapshot into normalized pretty-printed JSON.
      *
-     * <p>Serializing {@code "typography": []} would add a key to every baseline
-     * ever recorded without one, so a consumer who upgraded and changed nothing
-     * about their document would still have to regenerate. Absent means "not
-     * asked for"; present means there is something to read.</p>
+     * <p>The {@code layout} object nested inside is byte-for-byte what
+     * {@link #toJson(LayoutSnapshot)} produces for the same document.</p>
+     *
+     * @param snapshot resolved diagnostic snapshot to serialize
+     * @return normalized JSON payload with trailing newline
+     * @throws IOException if JSON serialization fails
+     * @since 2.2.2
      */
-    private abstract static class OptionalSectionsMixin {
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        abstract List<LayoutTypographySnapshot> typography();
+    public static String toJson(LayoutDiagnosticSnapshot snapshot) throws IOException {
+        return normalizeLineEndings(WRITER.writeValueAsString(snapshot)) + "\n";
     }
 
     /**

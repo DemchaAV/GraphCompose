@@ -6,13 +6,17 @@ import com.demcha.compose.document.layout.PlacedNode;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.ParagraphLine;
 import com.demcha.compose.document.layout.payloads.ParagraphLineGeometry;
+import com.demcha.compose.document.layout.payloads.ParagraphSpan;
+import com.demcha.compose.document.layout.payloads.ParagraphTextSpan;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.snapshot.LayoutCanvasSnapshot;
 import com.demcha.compose.document.snapshot.LayoutInsetsSnapshot;
 import com.demcha.compose.document.snapshot.LayoutNodeSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshotOptions;
 import com.demcha.compose.document.snapshot.LayoutTextLineSnapshot;
 import com.demcha.compose.document.snapshot.LayoutTypographySnapshot;
+import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.components.style.Padding;
@@ -24,6 +28,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -33,12 +38,41 @@ import java.util.Objects;
  */
 public final class LayoutGraphSnapshotExtractor {
     /**
-     * Snapshot format version emitted by the canonical graph extractor.
+     * Snapshot format version emitted for a default snapshot.
      *
-     * <p>2.1 adds the {@code typography} list. Node entries are unchanged, so a
-     * reader that only looks at nodes needs no update.</p>
+     * <p>Unchanged since 2.0, and deliberately so: optional diagnostic sections
+     * are opt-in, so upgrading GraphCompose never rewrites a baseline a consumer
+     * already has on disk.</p>
      */
-    public static final String FORMAT_VERSION = "2.1";
+    public static final String FORMAT_VERSION = "2.0";
+
+    /**
+     * Snapshot format version emitted when an optional diagnostic section is
+     * requested through {@link LayoutSnapshotOptions}.
+     *
+     * <p>Node entries are identical to {@link #FORMAT_VERSION}; the higher number
+     * only says extra sections are present.</p>
+     *
+     * @since 2.2.2
+     */
+    public static final String DIAGNOSTIC_FORMAT_VERSION = "2.1";
+
+    /**
+     * The decoration each standard-14 face alias asks for. Naming
+     * {@code HELVETICA_BOLD} selects the {@code HELVETICA} family and nothing
+     * else — the bold comes from the decoration — so the alias is only a
+     * substitution when the decoration does not supply the face it named.
+     */
+    private static final Map<FontName, TextDecoration> FACE_ALIAS_DECORATIONS = Map.ofEntries(
+            Map.entry(FontName.HELVETICA_BOLD, TextDecoration.BOLD),
+            Map.entry(FontName.HELVETICA_OBLIQUE, TextDecoration.ITALIC),
+            Map.entry(FontName.HELVETICA_BOLD_OBLIQUE, TextDecoration.BOLD_ITALIC),
+            Map.entry(FontName.TIMES_BOLD, TextDecoration.BOLD),
+            Map.entry(FontName.TIMES_ITALIC, TextDecoration.ITALIC),
+            Map.entry(FontName.TIMES_BOLD_ITALIC, TextDecoration.BOLD_ITALIC),
+            Map.entry(FontName.COURIER_BOLD, TextDecoration.BOLD),
+            Map.entry(FontName.COURIER_OBLIQUE, TextDecoration.ITALIC),
+            Map.entry(FontName.COURIER_BOLD_OBLIQUE, TextDecoration.BOLD_ITALIC));
 
     private LayoutGraphSnapshotExtractor() {
     }
@@ -46,13 +80,30 @@ public final class LayoutGraphSnapshotExtractor {
     /**
      * Converts a canonical layout graph into a stable snapshot model.
      *
+     * <p>Emits the default shape: no optional diagnostic section. This is the
+     * snapshot every committed baseline was recorded against.</p>
+     *
      * @param graph resolved layout graph
      * @return layout snapshot
      */
     public static LayoutSnapshot extract(LayoutGraph graph) {
+        return extract(graph, LayoutSnapshotOptions.defaults());
+    }
+
+    /**
+     * Converts a canonical layout graph into a stable snapshot model, including
+     * whichever optional diagnostic sections {@code options} asks for.
+     *
+     * @param graph   resolved layout graph
+     * @param options which optional sections to include
+     * @return layout snapshot
+     * @since 2.2.2
+     */
+    public static LayoutSnapshot extract(LayoutGraph graph, LayoutSnapshotOptions options) {
         Objects.requireNonNull(graph, "graph");
+        Objects.requireNonNull(options, "options");
         return new LayoutSnapshot(
-                FORMAT_VERSION,
+                options.isDefault() ? FORMAT_VERSION : DIAGNOSTIC_FORMAT_VERSION,
                 new LayoutCanvasSnapshot(
                         normalize(graph.canvas().width()),
                         normalize(graph.canvas().height()),
@@ -63,7 +114,7 @@ public final class LayoutGraphSnapshotExtractor {
                 graph.nodes().stream()
                         .map(LayoutGraphSnapshotExtractor::toNodeSnapshot)
                         .toList(),
-                toTypography(graph));
+                options.typography() ? toTypography(graph) : List.of());
     }
 
     /**
@@ -71,10 +122,16 @@ public final class LayoutGraphSnapshotExtractor {
      *
      * <p>Text is read off fragments rather than nodes because that is where it
      * lives: a paragraph split across a page boundary emits one fragment per
-     * page, each with its own lines. Sorted by path then fragment index so the
-     * list is deterministic regardless of the order pagination emitted them in —
-     * a snapshot whose ordering depended on that would churn its baseline every
-     * time an unrelated node moved between pages.</p>
+     * page, each with its own lines.</p>
+     *
+     * <p>Ordered by path, then page, then emission ordinal, so the list does not
+     * depend on the order pagination emitted fragments in — a snapshot whose
+     * ordering did would churn its baseline every time an unrelated node moved
+     * between pages. Page has to come before the ordinal, and has to be in the
+     * key at all: a split paragraph restarts {@code fragmentIndex} at zero on
+     * each page, so {@code (path, fragmentIndex)} alone is not unique and leaves
+     * the tie to emission order, and a split list numbered per page would
+     * interleave its pages.</p>
      */
     private static List<LayoutTypographySnapshot> toTypography(LayoutGraph graph) {
         List<LayoutTypographySnapshot> runs = new ArrayList<>();
@@ -84,6 +141,7 @@ public final class LayoutGraphSnapshotExtractor {
             }
         }
         runs.sort(Comparator.comparing(LayoutTypographySnapshot::path)
+                .thenComparingInt(LayoutTypographySnapshot::page)
                 .thenComparingInt(LayoutTypographySnapshot::fragmentIndex));
         return List.copyOf(runs);
     }
@@ -95,64 +153,114 @@ public final class LayoutGraphSnapshotExtractor {
         double innerWidth = Math.max(0.0d, fragment.width() - padding.horizontal());
         double contentTop = ParagraphLineGeometry.contentTop(fragment.y(), fragment.height(), padding.top());
 
-        TextStyle style = paragraph.textStyle() == null ? TextStyle.DEFAULT_STYLE : paragraph.textStyle();
-        FontName declared = style.fontName();
-        FontName resolved = FontLibrary.resolveFamily(declared);
+        TextStyle base = paragraph.textStyle() == null ? TextStyle.DEFAULT_STYLE : paragraph.textStyle();
+        // The base style is what the author declared; the first span is what the engine
+        // actually measured, after an autoSize shrink and after any span-level override.
+        // Reporting the base size beside line boxes measured at a different one would be
+        // a record that contradicts itself.
+        TextStyle effective = firstSpanStyle(paragraph, base);
+        FontName declared = base.fontName();
+        FontName resolvedFamily = FontLibrary.resolveFamily(effective.fontName());
+        TextDecoration decoration = effective.decoration() == null
+                ? TextDecoration.DEFAULT
+                : effective.decoration();
+        TextVerticalAlign verticalAlign = paragraph.verticalAlign() == null
+                ? TextVerticalAlign.DEFAULT
+                : paragraph.verticalAlign();
         // A non-default vertical alignment shifts every baseline in the fragment by a
         // correction read from the backend font's cap height. Nothing renderer-neutral
         // can compute it, so the baselines below are the unseated ones and say so.
-        boolean baselineExact = paragraph.verticalAlign() == TextVerticalAlign.DEFAULT;
+        boolean baselineExact = verticalAlign == TextVerticalAlign.DEFAULT;
 
         List<LayoutTextLineSnapshot> lines = new ArrayList<>(paragraph.lines().size());
         double lineTop = contentTop;
-        // The text box is the box the ink occupies, not the box it was laid out into.
-        // Mixing the two — a content-box x beside an ink width — produced a rectangle
-        // that did not contain its own lines whenever alignment moved them.
-        double inkLeft = Double.POSITIVE_INFINITY;
-        double inkRight = Double.NEGATIVE_INFINITY;
-        double inkTop = contentTop;
-        double inkBottom = contentTop;
         for (int index = 0; index < paragraph.lines().size(); index++) {
             ParagraphLine line = paragraph.lines().get(index);
             double lineHeight = line.lineHeight();
             double lineX = ParagraphLineGeometry.lineStartX(paragraph.align(), innerX, innerWidth, line.width());
-            double lineBottom = lineTop - lineHeight;
             lines.add(new LayoutTextLineSnapshot(
                     index,
                     normalize(lineX),
-                    normalize(lineBottom),
+                    normalize(lineTop - lineHeight),
                     normalize(line.width()),
                     normalize(lineHeight),
                     normalize(ParagraphLineGeometry.baselineY(lineTop, lineHeight, line.baselineOffsetFromBottom())),
                     baselineExact));
-            if (index == 0) {
-                inkTop = lineTop;
-            }
-            inkLeft = Math.min(inkLeft, lineX);
-            inkRight = Math.max(inkRight, lineX + line.width());
-            inkBottom = lineBottom;
             lineTop = ParagraphLineGeometry.nextLineTop(lineTop, lineHeight, paragraph.lineGap());
         }
-        if (paragraph.lines().isEmpty()) {
-            inkLeft = innerX;
-            inkRight = innerX;
-        }
+
+        // Derived from the rounded lines, not from a parallel accumulation of raw
+        // doubles: rounding the box and its lines independently let a line sit a
+        // thousandth outside the box that reports it.
+        double boxLeft = lines.stream().mapToDouble(LayoutTextLineSnapshot::x).min()
+                .orElseGet(() -> normalize(innerX));
+        double boxRight = lines.stream().mapToDouble(line -> line.x() + line.width()).max()
+                .orElseGet(() -> normalize(innerX));
+        double boxBottom = lines.isEmpty()
+                ? normalize(contentTop)
+                : lines.get(lines.size() - 1).y();
+        double boxTop = lines.isEmpty()
+                ? normalize(contentTop)
+                : lines.get(0).y() + lines.get(0).height();
 
         return new LayoutTypographySnapshot(
                 fragment.path(),
                 fragment.fragmentIndex(),
                 fragment.pageIndex(),
                 declared == null ? null : declared.name(),
-                resolved.name(),
-                declared != null && !resolved.equals(declared),
-                normalize(style.size()),
+                resolvedFamily.name(),
+                decoration.name(),
+                isFontSubstituted(declared, resolvedFamily, decoration),
+                normalize(effective.size()),
                 paragraph.lines().size(),
-                normalize(inkLeft),
-                normalize(inkBottom),
-                normalize(inkRight - inkLeft),
-                normalize(inkTop - inkBottom),
-                (paragraph.verticalAlign() == null ? TextVerticalAlign.DEFAULT : paragraph.verticalAlign()).name(),
+                boxLeft,
+                boxBottom,
+                normalize(boxRight - boxLeft),
+                normalize(boxTop - boxBottom),
+                verticalAlign.name(),
                 List.copyOf(lines));
+    }
+
+    /**
+     * Returns the style the engine actually measured this fragment's text with,
+     * falling back to the paragraph's base style when it has no text spans.
+     */
+    private static TextStyle firstSpanStyle(ParagraphFragmentPayload paragraph, TextStyle base) {
+        for (ParagraphLine line : paragraph.lines()) {
+            for (ParagraphSpan span : line.spans()) {
+                if (span instanceof ParagraphTextSpan textSpan) {
+                    return textSpan.textStyle();
+                }
+            }
+        }
+        return base;
+    }
+
+    /**
+     * Reports whether the face the declaration asks for is not the face the text
+     * was laid out in.
+     *
+     * <p>Naming no font at all resolves to Helvetica, which is a rewrite worth
+     * reporting. Naming a standard-14 <em>face</em> resolves to its family and
+     * leaves the face to the decoration, so it is a rewrite only when the
+     * decoration does not supply that face: {@code HELVETICA_BOLD} with
+     * {@code BOLD} draws exactly what it named, while {@code HELVETICA_BOLD} with
+     * no decoration draws regular.</p>
+     */
+    private static boolean isFontSubstituted(FontName declared,
+                                             FontName resolvedFamily,
+                                             TextDecoration decoration) {
+        if (declared == null || FontName.DEFAULT.equals(declared)) {
+            return true;
+        }
+        if (resolvedFamily.equals(declared)) {
+            return false;
+        }
+        TextDecoration implied = FACE_ALIAS_DECORATIONS.get(declared);
+        if (implied == null) {
+            return true;
+        }
+        return implied != decoration;
     }
 
     private static LayoutNodeSnapshot toNodeSnapshot(PlacedNode node) {

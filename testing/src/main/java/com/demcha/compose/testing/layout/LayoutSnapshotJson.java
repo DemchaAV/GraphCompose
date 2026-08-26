@@ -1,11 +1,14 @@
 package com.demcha.compose.testing.layout;
 
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutTypographySnapshot;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * JSON helpers for deterministic layout snapshot baselines.
@@ -16,9 +19,24 @@ import java.io.IOException;
 public final class LayoutSnapshotJson {
     private static final ObjectWriter WRITER = new ObjectMapper()
             .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+            .addMixIn(LayoutSnapshot.class, OptionalSectionsMixin.class)
             .writerWithDefaultPrettyPrinter();
 
     private LayoutSnapshotJson() {
+    }
+
+    /**
+     * Keeps an optional diagnostic section out of the JSON entirely when it was
+     * not requested.
+     *
+     * <p>Serializing {@code "typography": []} would add a key to every baseline
+     * ever recorded without one, so a consumer who upgraded and changed nothing
+     * about their document would still have to regenerate. Absent means "not
+     * asked for"; present means there is something to read.</p>
+     */
+    private abstract static class OptionalSectionsMixin {
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        abstract List<LayoutTypographySnapshot> typography();
     }
 
     /**

@@ -226,30 +226,57 @@ The snapshot intentionally contains stable layout data only:
 - content size
 - margin and padding
 
-Since 2.2.2 it also carries a parallel `typography` list, one entry per resolved
-paragraph fragment:
+## Optional diagnostics: typography
 
-- the **declared** font and the **resolved** font, plus a `fontSubstituted` flag
+Since 2.2.2 a snapshot can also carry a `typography` list. It is **opt-in**, so
+`layoutSnapshot()` keeps emitting `formatVersion` `2.0` and exactly the JSON it
+always did — upgrading GraphCompose never forces you to regenerate a baseline for
+a document whose layout did not move.
+
+```java
+LayoutSnapshot rich = document.layoutSnapshot(
+        LayoutSnapshotOptions.builder().typography(true).build());
+```
+
+Only a snapshot that asked for a section reports `formatVersion` `2.1`.
+`LayoutSnapshotOptions` is a builder so a later section — links, paint,
+accessibility — is one more method rather than one more overload.
+
+Each entry describes one resolved paragraph fragment:
+
+- the **declared** font, the **resolved family**, and the **decoration** that picks
+  the face within it, plus a `fontSubstituted` flag
 - font size and line count
-- the box the ink occupies
+- the bounds of the laid-out line boxes
 - one entry per line: index, bounds, and baseline, in absolute page coordinates
 
 It hangs off fragments rather than nodes because that is what text is: a paragraph
 broken across a page boundary has one fragment per page, each with its own lines.
-Join it to `nodes` on `path`. Node entries did not change when it was added, so a
-reader that only looks at nodes needs no update; `formatVersion` moved from `2.0`
-to `2.1` to announce the list.
+Join it to `nodes` on `path` — one-to-many, since a node such as a chart owns many
+text fragments. Entries are ordered by path, then page, then emission ordinal.
 
-`declaredFont` and `resolvedFont` differ when the style named a font the document is
-not set in — `DEFAULT` resolves to Helvetica, and a standard-14 face such as
-`HELVETICA_BOLD` resolves to its family because the face comes from the style's
-decoration. Both lay out and draw without error, so this pair is the only thing that
-makes the mismatch visible.
+All three font fields are needed to identify a face. `HELVETICA_BOLD` is an alias of
+its family and contributes nothing on its own — the bold comes from the decoration —
+so `fontSubstituted` is `true` for `HELVETICA_BOLD` with no decoration (it renders
+regular) and `false` for `HELVETICA_BOLD` with `BOLD` (it renders exactly what it
+named). `resolvedFamily`, `decoration` and `fontSize` describe the text the engine
+measured, after any `autoSize` shrink or span override.
 
-`baselineExact` is `false` for a paragraph using a non-default `TextVerticalAlign`:
-that mode shifts the baseline by a correction derived from the backend font's cap
-height, and a renderer-neutral snapshot has no backend font to ask. Treat those
-baselines as unusable rather than approximate.
+### What it does not cover
+
+- `baselineExact` is `false` for a paragraph using a non-default `TextVerticalAlign`:
+  that mode shifts the **glyphs** by a correction derived from the backend font's cap
+  height, and a renderer-neutral snapshot has no backend font to ask. The line box is
+  not shifted with them, so treat the whole entry as positional there, not as a bound
+  on painted output.
+- Bounds are laid-out line boxes, not tight glyph ink. A code chip's fill extends past
+  them by its own padding, and an inline graphic on the baseline can rise above them.
+- Text drawn outside the paragraph pipeline — a table cell written as a plain string,
+  a header, a watermark — produces no entry. An empty list means "no paragraph text",
+  not "no text".
+- Coordinates are the laid-out ones, so a shape container carrying a `transform`, or
+  one that clips its children, is not reflected.
+- A paragraph whose spans mix fonts is described by its first span.
 
 It intentionally excludes unstable or noisy values such as:
 

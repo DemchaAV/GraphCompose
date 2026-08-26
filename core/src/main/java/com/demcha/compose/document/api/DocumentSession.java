@@ -18,6 +18,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageReferenceNode;
 import com.demcha.compose.document.output.*;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
+import com.demcha.compose.document.snapshot.LayoutSnapshotOptions;
 import com.demcha.compose.document.snapshot.PageIndex;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -784,7 +785,28 @@ public final class DocumentSession implements AutoCloseable {
      * @return layout snapshot derived from the current layout graph
      */
     public LayoutSnapshot layoutSnapshot() {
+        return layoutSnapshot(LayoutSnapshotOptions.defaults());
+    }
+
+    /**
+     * Extracts the current deterministic layout snapshot, including whichever
+     * optional diagnostic sections {@code options} asks for.
+     *
+     * <p>Only the default snapshot is cached per layout revision. A snapshot with
+     * sections enabled is computed on each call, so a diagnostic pass can never
+     * hand its richer result to a later caller that asked for the default one.</p>
+     *
+     * @param options which optional diagnostic sections to include
+     * @return layout snapshot derived from the current layout graph
+     * @throws IllegalStateException if this session has already been closed
+     * @since 2.2.2
+     */
+    public LayoutSnapshot layoutSnapshot(LayoutSnapshotOptions options) {
+        Objects.requireNonNull(options, "options");
         ensureOpen();
+        if (!options.isDefault()) {
+            return LayoutGraphSnapshotExtractor.extract(layoutGraph(), options);
+        }
         long revision = layoutCache.revision();
         if (layoutCache.isSnapshotCached()) {
             LayoutSnapshot cached = layoutCache.snapshot(() -> {

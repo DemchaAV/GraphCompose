@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.1",
+  "formatVersion" : "2.0",
   "canvas" : {
     "pageWidth" : 360.0,
     "pageHeight" : 200.0,
@@ -133,75 +133,5 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
-  } ],
-  "typography" : [ {
-    "path" : "ContainerNode[0]/ParagraphNode[0]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "David Libre",
-    "resolvedFont" : "David Libre",
-    "fontSubstituted" : false,
-    "fontSize" : 15.0,
-    "lineCount" : 1,
-    "textX" : 144.12,
-    "textY" : 167.0,
-    "textWidth" : 197.88,
-    "textHeight" : 15.0,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 144.12,
-      "y" : 167.0,
-      "width" : 197.88,
-      "height" : 15.0,
-      "baseline" : 170.289,
-      "baselineExact" : true
-    } ]
-  }, {
-    "path" : "ContainerNode[0]/ParagraphNode[1]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "Amiri",
-    "resolvedFont" : "Amiri",
-    "fontSubstituted" : false,
-    "fontSize" : 15.0,
-    "lineCount" : 1,
-    "textX" : 170.34,
-    "textY" : 140.63,
-    "textWidth" : 171.66,
-    "textHeight" : 26.37,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 170.34,
-      "y" : 140.63,
-      "width" : 171.66,
-      "height" : 26.37,
-      "baseline" : 150.14,
-      "baselineExact" : true
-    } ]
-  }, {
-    "path" : "ContainerNode[0]/ParagraphNode[2]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "David Libre",
-    "resolvedFont" : "David Libre",
-    "fontSubstituted" : false,
-    "fontSize" : 15.0,
-    "lineCount" : 1,
-    "textX" : 249.63,
-    "textY" : 125.63,
-    "textWidth" : 92.37,
-    "textHeight" : 15.0,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 249.63,
-      "y" : 125.63,
-      "width" : 92.37,
-      "height" : 15.0,
-      "baseline" : 128.919,
-      "baselineExact" : true
-    } ]
   } ]
 }

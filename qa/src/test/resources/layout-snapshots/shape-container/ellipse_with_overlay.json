@@ -1,5 +1,5 @@
 {
-  "formatVersion" : "2.1",
+  "formatVersion" : "2.0",
   "canvas" : {
     "pageWidth" : 320.0,
     "pageHeight" : 210.0,
@@ -193,75 +193,5 @@
       "bottom" : 0.0,
       "left" : 0.0
     }
-  } ],
-  "typography" : [ {
-    "path" : "ShapeContainerEllipseFixture[0]/EllipseCaption[1]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "Helvetica",
-    "resolvedFont" : "Helvetica",
-    "fontSubstituted" : false,
-    "fontSize" : 8.5,
-    "lineCount" : 1,
-    "textX" : 20.0,
-    "textY" : 68.137,
-    "textWidth" : 260.789,
-    "textHeight" : 7.863,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 20.0,
-      "y" : 68.137,
-      "width" : 260.789,
-      "height" : 7.863,
-      "baseline" : 69.897,
-      "baselineExact" : true
-    } ]
-  }, {
-    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]/ParagraphNode[0]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "Helvetica-Bold",
-    "resolvedFont" : "Helvetica",
-    "fontSubstituted" : true,
-    "fontSize" : 15.0,
-    "lineCount" : 1,
-    "textX" : 86.483,
-    "textY" : 131.063,
-    "textWidth" : 55.035,
-    "textHeight" : 13.875,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 86.483,
-      "y" : 131.063,
-      "width" : 55.035,
-      "height" : 13.875,
-      "baseline" : 134.168,
-      "baselineExact" : true
-    } ]
-  }, {
-    "path" : "ShapeContainerEllipseFixture[0]/OffsetEllipse[0]/ParagraphNode[2]",
-    "fragmentIndex" : 0,
-    "page" : 0,
-    "declaredFont" : "Helvetica-Bold",
-    "resolvedFont" : "Helvetica",
-    "fontSubstituted" : true,
-    "fontSize" : 7.0,
-    "lineCount" : 1,
-    "textX" : 100.804,
-    "textY" : 169.525,
-    "textWidth" : 14.392,
-    "textHeight" : 6.475,
-    "verticalAlign" : "DEFAULT",
-    "lines" : [ {
-      "index" : 0,
-      "x" : 100.804,
-      "y" : 169.525,
-      "width" : 14.392,
-      "height" : 6.475,
-      "baseline" : 170.974,
-      "baselineExact" : true
-    } ]
   } ]
 }

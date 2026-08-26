@@ -14,33 +14,62 @@ follow semantic versioning; release dates are ISO 8601.
   symptom on the page, and telling them apart by eye is exactly the guessing a measured
   snapshot exists to end.
 
-  `LayoutSnapshot.typography()` is a new list of `LayoutTypographySnapshot`, one entry per
-  resolved paragraph fragment: the declared font, the resolved font, the size, the line
-  count, the box the ink occupies, and a `LayoutTextLineSnapshot` per line carrying its
-  own bounds and baseline in absolute page coordinates.
+  **It is opt-in, and `layoutSnapshot()` is untouched.** A diagnostic section that
+  appeared on its own would turn every consumer's snapshot suite red on an upgrade that
+  moved nothing in their document, so it does not appear on its own:
+
+  ```java
+  LayoutSnapshot plain = document.layoutSnapshot();               // exactly as before
+
+  LayoutSnapshot rich = document.layoutSnapshot(
+          LayoutSnapshotOptions.builder().typography(true).build());
+  ```
+
+  `layoutSnapshot()` still emits `formatVersion` `2.0`, no `typography` key, and byte-for-byte
+  the JSON it emitted before — no committed baseline in this repo changed, and none of
+  yours has to. `LayoutSnapshotOptions` is a builder rather than an overload so the next
+  section costs a method rather than a new `layoutSnapshot(...)` signature. Only a
+  snapshot that asked for a section reports `2.1`.
+
+  `LayoutSnapshot.typography()` is a list of `LayoutTypographySnapshot`, one entry per
+  resolved paragraph fragment: the declared font, the resolved family, the decoration, the
+  size, the line count, the bounds of the laid-out line boxes, and a
+  `LayoutTextLineSnapshot` per line carrying its own bounds and baseline in absolute page
+  coordinates.
 
   It hangs off fragments rather than nodes because that is what text is — a paragraph
   broken across a page boundary has one fragment per page, each with its own lines, and a
   per-node projection would have to keep one and discard the other. Join it to `nodes()`
-  on `path`. Node entries are byte-identical to before, so a reader that only looks at
-  nodes needs no change; `formatVersion` moves to `2.1` to say the list is there.
+  on `path`, one-to-many. Entries are ordered by path, then page, then emission ordinal:
+  a split paragraph restarts its ordinal at zero on each page, so page has to be in the
+  key or the order falls back to whatever order pagination emitted fragments in.
 
-  **`declaredFont` and `resolvedFont` are separate on purpose.** Two rewrites put a
-  document in a font its author did not name, and both are silent: `DEFAULT` resolves to
-  the Helvetica family, and a standard-14 face such as `HELVETICA_BOLD` resolves to its
-  family, because the face is chosen from the style's decoration — so a style that names
-  the bold face and sets no decoration renders regular. Both lay out, both draw, neither
-  fails. `fontSubstituted` is the flag that makes them visible, and the rule behind it is
-  now reachable as `FontLibrary.resolveFamily(FontName)` — pure, and deliberately silent,
-  so taking a snapshot never consumes the once-per-name warning the render still owes. A
-  font that is neither registered nor aliased never reaches the snapshot: measurement
-  fails first, loudly.
+  **`declaredFont`, `resolvedFamily` and `decoration` are three fields because the face
+  needs all three.** A standard-14 face such as `HELVETICA_BOLD` is an alias of its family
+  and contributes nothing on its own — the face comes from the decoration — so a style
+  that names the bold face and sets no decoration renders regular, silently.
+  `fontSubstituted` reports that, and *only* that: naming the bold face **and** asking for
+  bold draws exactly what it named and is not flagged. Reporting the family alone could
+  not tell those two apart, nor `Helvetica + DEFAULT` from `Helvetica + BOLD`. The family
+  rule is reachable as `FontLibrary.resolveFamily(FontName)`, pure and silent so a
+  diagnostic pass emits no warnings of its own. A font that is neither registered nor
+  aliased never reaches the snapshot: measurement fails first, loudly.
 
-  **One honest limit.** A paragraph using a non-default `TextVerticalAlign` has every
-  baseline shifted by a correction read from the backend font's cap height, and a
-  renderer-neutral snapshot has no backend font to ask. Those lines report the unseated
-  baseline with `baselineExact = false`; a consumer that needs the true baseline has to
-  decline rather than use it. Default seating — nearly every paragraph — is exact.
+  `resolvedFamily`, `decoration` and `fontSize` describe the text the engine actually
+  measured — after an `autoSize` shrink, and after a span-level override — so the reported
+  size always matches the line boxes beside it. `declaredFont` stays what the paragraph
+  asked for.
+
+  **The limits, stated rather than implied.** A paragraph using a non-default
+  `TextVerticalAlign` has its glyphs shifted by a correction read from the backend font's
+  cap height, which nothing renderer-neutral can compute; those lines carry
+  `baselineExact = false`, and because the shift moves the glyphs and not the line box the
+  whole entry is positional there rather than a bound on painted output. The bounds are
+  laid-out line boxes, not tight glyph ink — a code chip's fill extends past them by its
+  own padding. Text drawn outside the paragraph pipeline, such as a table cell written as
+  a plain string, produces no entry, so an empty list means "no paragraph text" rather
+  than "no text". Coordinates are the laid-out ones, so a transformed or clipped container
+  is not reflected. A paragraph whose spans mix fonts is described by its first span.
 
   The line's own text is deliberately not included. A snapshot excludes raw text payload,
   the words are already in the document that produced it, and a line is identified by its
@@ -51,8 +80,7 @@ follow semantic versioning; release dates are ISO 8601.
   cannot describe different lines. That helper already existed for the horizontal half,
   for exactly this reason.
 
-  Every committed layout-snapshot baseline was regenerated to carry the new list. No node
-  entry changed, and no rendered output changed.
+  No rendered output changed, and no layout, pagination or render behaviour changed.
 
 
 ## v2.2.1 — 2026-08-25

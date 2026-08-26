@@ -4,14 +4,23 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.node.TextVerticalAlign;
+import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
 import com.demcha.testing.VisualTestOutputs;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +34,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  * A wrong font and a wrong padding produce the same symptom, and telling them apart by
  * eye is the guessing this data exists to end.</p>
  *
- * <p>Two properties carry most of the weight here.</p>
+ * <p>Three properties carry most of the weight here.</p>
  *
- * <p><b>Declared versus resolved.</b> A style may name a font the document is not set in,
- * and both rewrites that cause it are silent — {@code DEFAULT} becomes {@code HELVETICA},
- * and a standard-14 face becomes its family. The document renders, the Java reads
- * correctly, and the type is wrong. That is the case worth a test of its own.</p>
+ * <p><b>It is opt-in.</b> A snapshot taken the ordinary way must be byte-identical to the
+ * one baselines were recorded against, or every consumer's suite goes red on an upgrade
+ * that changed nothing about their document.</p>
+ *
+ * <p><b>Declared versus resolved, including the face.</b> A style may name a font the
+ * document is not set in, and the rewrites that cause it are silent. The family alone
+ * does not settle it either: the face comes from the decoration, so the wrong document
+ * and the right one are only distinguishable once both are reported.</p>
  *
  * <p><b>The geometry agrees with the renderer.</b> Line positions are computed through
  * the same {@code ParagraphLineGeometry} helper the PDF handler draws with. A snapshot
@@ -46,11 +59,27 @@ class TypographySnapshotTest {
                     + "balance accrues interest at the statutory rate applicable in the "
                     + "jurisdiction named above.";
 
+    private static final LayoutSnapshotOptions WITH_TYPOGRAPHY =
+            LayoutSnapshotOptions.builder().typography(true).build();
+
     private static DocumentSession page() {
         return GraphCompose.document()
                 .pageSize(DocumentPageSize.A4)
                 .margin(36, 36, 36, 36)
                 .create();
+    }
+
+    private static DocumentTextStyle style(FontName font, double size, DocumentTextDecoration decoration) {
+        return DocumentTextStyle.builder().fontName(font).size(size).decoration(decoration).build();
+    }
+
+    /** Lays out {@code LONG_TEXT} as a single named paragraph and returns its run. */
+    private static LayoutTypographySnapshot terms(DocumentSession document) {
+        document.dsl().pageFlow().name("Root")
+                .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
+                        .textStyle(style(FontName.HELVETICA, 11, DocumentTextDecoration.DEFAULT)))
+                .build();
+        return only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Terms");
     }
 
     private static LayoutTypographySnapshot only(LayoutSnapshot snapshot, String name) {
@@ -63,6 +92,67 @@ class TypographySnapshotTest {
         return matches.get(0);
     }
 
+    // ------------------------------------------------------------------- opt-in ---
+
+    @Test
+    void theDefaultSnapshotCarriesNoTypographyAndKeepsItsFormatVersion() throws Exception {
+        // The whole backward-compatibility contract in one assertion: a consumer who
+        // upgrades and re-runs an existing snapshot test must see the same bytes. A new
+        // key or a bumped formatVersion would fail every baseline they have on disk for
+        // a document whose layout did not move.
+        try (DocumentSession document = page()) {
+            compose(document);
+
+            LayoutSnapshot snapshot = document.layoutSnapshot();
+
+            assertThat(snapshot.typography()).isEmpty();
+            assertThat(snapshot.formatVersion()).isEqualTo("2.0");
+        }
+    }
+
+    @Test
+    void askingForTypographyAddsTheSectionAndSaysSoInTheFormatVersion() throws Exception {
+        try (DocumentSession document = page()) {
+            compose(document);
+
+            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
+
+            assertThat(snapshot.typography()).isNotEmpty();
+            assertThat(snapshot.formatVersion()).isEqualTo("2.1");
+        }
+    }
+
+    @Test
+    void askingForTypographyChangesNothingElseAboutTheSnapshot() throws Exception {
+        // Typography is a projection, not a layout switch: enabling it must not move a
+        // node, a page count or a canvas value.
+        try (DocumentSession document = page()) {
+            compose(document);
+
+            LayoutSnapshot plain = document.layoutSnapshot();
+            LayoutSnapshot rich = document.layoutSnapshot(WITH_TYPOGRAPHY);
+
+            assertThat(rich.nodes()).isEqualTo(plain.nodes());
+            assertThat(rich.canvas()).isEqualTo(plain.canvas());
+            assertThat(rich.totalPages()).isEqualTo(plain.totalPages());
+        }
+    }
+
+    @Test
+    void takingARichSnapshotDoesNotPoisonTheCachedDefaultOne() throws Exception {
+        // The default snapshot is memoized per layout revision. If the opt-in one shared
+        // that slot, one diagnostic call would hand typography to every later caller —
+        // including the assertion helper that compares against a committed baseline.
+        try (DocumentSession document = page()) {
+            compose(document);
+
+            document.layoutSnapshot(WITH_TYPOGRAPHY);
+
+            assertThat(document.layoutSnapshot().typography()).isEmpty();
+            assertThat(document.layoutSnapshot().formatVersion()).isEqualTo("2.0");
+        }
+    }
+
     // ------------------------------------------------------------- what it reports ---
 
     @Test
@@ -70,13 +160,14 @@ class TypographySnapshotTest {
         try (DocumentSession document = page()) {
             document.dsl().pageFlow().name("Root")
                     .addParagraph(p -> p.name("Body").text("Handgloves 0123")
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.LATO).size(18).build()))
+                            .textStyle(style(FontName.LATO, 18, DocumentTextDecoration.DEFAULT)))
                     .build();
 
-            LayoutTypographySnapshot run = only(document.layoutSnapshot(), "Body");
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Body");
 
             assertThat(run.declaredFont()).isEqualTo(FontName.LATO.name());
-            assertThat(run.resolvedFont()).isEqualTo(FontName.LATO.name());
+            assertThat(run.resolvedFamily()).isEqualTo(FontName.LATO.name());
+            assertThat(run.decoration()).isEqualTo("DEFAULT");
             assertThat(run.fontSubstituted()).isFalse();
             assertThat(run.fontSize()).isEqualTo(18.0);
             assertThat(run.lineCount()).isEqualTo(1);
@@ -84,25 +175,94 @@ class TypographySnapshotTest {
         }
     }
 
+    @ParameterizedTest(name = "{0} is reported as {1}")
+    @CsvSource({"DEFAULT,DEFAULT", "BOLD,BOLD", "ITALIC,ITALIC", "BOLD_ITALIC,BOLD_ITALIC"})
+    void theDecorationThatPicksTheFaceIsReported(String declared, String expected) throws Exception {
+        // Without this field Helvetica+DEFAULT and Helvetica+BOLD are the same two
+        // strings in the snapshot, while the page measures and draws two different faces.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Face").text("Handgloves")
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.valueOf(declared))))
+                    .build();
+
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Face");
+
+            assertThat(run.decoration()).isEqualTo(expected);
+            assertThat(run.resolvedFamily()).isEqualTo(FontName.HELVETICA.name());
+            assertThat(run.fontSubstituted())
+                    .describedAs("asking a family for a face it has is not a substitution")
+                    .isFalse();
+        }
+    }
+
     @Test
-    void namingAFaceIsReportedAsASubstitution() throws Exception {
-        // The whole reason declared and resolved are separate fields. HELVETICA_BOLD is
-        // an alias of its family, so this document is set in regular Helvetica — it
-        // renders, it measures, and nothing about the output says the bold never
-        // arrived.
+    void namingABoldFaceWithoutTheDecorationIsReportedAsASubstitution() throws Exception {
+        // The expensive case. HELVETICA_BOLD is an alias of its family and contributes
+        // nothing on its own, so this document is set in regular Helvetica — it renders,
+        // it measures, and nothing about the output says the bold never arrived.
         try (DocumentSession document = page()) {
             document.dsl().pageFlow().name("Root")
                     .addParagraph(p -> p.name("Heading").text("Quarterly report")
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(20).build()))
+                            .textStyle(style(FontName.HELVETICA_BOLD, 20, DocumentTextDecoration.DEFAULT)))
                     .build();
 
-            LayoutTypographySnapshot run = only(document.layoutSnapshot(), "Heading");
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Heading");
 
             assertThat(run.declaredFont()).isEqualTo(FontName.HELVETICA_BOLD.name());
-            assertThat(run.resolvedFont()).isEqualTo(FontName.HELVETICA.name());
+            assertThat(run.resolvedFamily()).isEqualTo(FontName.HELVETICA.name());
+            assertThat(run.decoration()).isEqualTo("DEFAULT");
             assertThat(run.fontSubstituted())
                     .describedAs("a document set in a font its author did not name must say so")
                     .isTrue();
+        }
+    }
+
+    @Test
+    void namingABoldFaceAndAskingForBoldIsNotASubstitution() throws Exception {
+        // The other half, and the reason substitution cannot be decided from the family
+        // alone: the face this style named is the face the page draws, so flagging it
+        // would cry wolf on a correct document.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Heading").text("Quarterly report")
+                            .textStyle(style(FontName.HELVETICA_BOLD, 20, DocumentTextDecoration.BOLD)))
+                    .build();
+
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Heading");
+
+            assertThat(run.declaredFont()).isEqualTo(FontName.HELVETICA_BOLD.name());
+            assertThat(run.resolvedFamily()).isEqualTo(FontName.HELVETICA.name());
+            assertThat(run.decoration()).isEqualTo("BOLD");
+            assertThat(run.fontSubstituted())
+                    .describedAs("the named face is the face drawn — nothing was substituted")
+                    .isFalse();
+        }
+    }
+
+    static Stream<Arguments> faceAliasCases() {
+        return Stream.of(
+                Arguments.of(FontName.TIMES_BOLD, DocumentTextDecoration.BOLD, false),
+                Arguments.of(FontName.TIMES_BOLD, DocumentTextDecoration.DEFAULT, true),
+                Arguments.of(FontName.TIMES_ITALIC, DocumentTextDecoration.ITALIC, false),
+                Arguments.of(FontName.TIMES_ITALIC, DocumentTextDecoration.BOLD, true),
+                Arguments.of(FontName.COURIER_BOLD_OBLIQUE, DocumentTextDecoration.BOLD_ITALIC, false),
+                Arguments.of(FontName.COURIER_BOLD_OBLIQUE, DocumentTextDecoration.BOLD, true));
+    }
+
+    @ParameterizedTest(name = "{0} + {1} substituted={2}")
+    @MethodSource("faceAliasCases")
+    void everyFaceAliasIsJudgedAgainstTheDecorationThatWouldRecoverIt(FontName font,
+                                                                      DocumentTextDecoration decoration,
+                                                                      boolean substituted) throws Exception {
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Alias").text("Handgloves")
+                            .textStyle(style(font, 12, decoration)))
+                    .build();
+
+            assertThat(only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Alias").fontSubstituted())
+                    .isEqualTo(substituted);
         }
     }
 
@@ -111,14 +271,36 @@ class TypographySnapshotTest {
         try (DocumentSession document = page()) {
             document.dsl().pageFlow().name("Root")
                     .addParagraph(p -> p.name("Plain").text("No font named")
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.DEFAULT).size(12).build()))
+                            .textStyle(style(FontName.DEFAULT, 12, DocumentTextDecoration.DEFAULT)))
                     .build();
 
-            LayoutTypographySnapshot run = only(document.layoutSnapshot(), "Plain");
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Plain");
 
             assertThat(run.declaredFont()).isEqualTo(FontName.DEFAULT.name());
-            assertThat(run.resolvedFont()).isEqualTo(FontName.HELVETICA.name());
+            assertThat(run.resolvedFamily()).isEqualTo(FontName.HELVETICA.name());
             assertThat(run.fontSubstituted()).isTrue();
+        }
+    }
+
+    @Test
+    void anAutoSizedParagraphReportsTheSizeItWasActuallyLaidOutAt() throws Exception {
+        // autoSize shrinks the text to fit and the engine measures the shrunk style.
+        // Reporting the declared size beside line boxes measured at another one would
+        // make the record contradict itself, and would answer "why is this block this
+        // size" with the one number that is wrong.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Shrunk")
+                            .text("A headline far too wide to fit on one line at its declared size")
+                            .autoSize(40.0, 6.0)
+                            .textStyle(style(FontName.HELVETICA, 40, DocumentTextDecoration.DEFAULT)))
+                    .build();
+
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Shrunk");
+
+            assertThat(run.fontSize())
+                    .describedAs("the reported size is the one the lines were measured at")
+                    .isLessThan(40.0);
         }
     }
 
@@ -131,7 +313,7 @@ class TypographySnapshotTest {
                     .addShape(shape -> shape.name("Box").size(100, 40))
                     .build();
 
-            assertThat(document.layoutSnapshot().typography()).isEmpty();
+            assertThat(document.layoutSnapshot(WITH_TYPOGRAPHY).typography()).isEmpty();
         }
     }
 
@@ -140,17 +322,12 @@ class TypographySnapshotTest {
     @Test
     void wrappedTextReportsEveryLineItBrokeInto() throws Exception {
         try (DocumentSession document = page()) {
-            document.dsl().pageFlow().name("Root")
-                    .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(11).build()))
-                    .build();
-
-            LayoutTypographySnapshot run = only(document.layoutSnapshot(), "Terms");
+            LayoutTypographySnapshot run = terms(document);
 
             assertThat(run.lineCount()).isGreaterThan(1);
             assertThat(run.lines()).hasSize(run.lineCount());
             assertThat(run.lines()).extracting(LayoutTextLineSnapshot::index)
-                    .containsExactlyElementsOf(java.util.stream.IntStream.range(0, run.lineCount()).boxed().toList());
+                    .containsExactlyElementsOf(IntStream.range(0, run.lineCount()).boxed().toList());
             assertThat(run.lines()).allSatisfy(line -> {
                 assertThat(line.width()).isPositive();
                 assertThat(line.height()).isPositive();
@@ -161,12 +338,7 @@ class TypographySnapshotTest {
     @Test
     void linesStackDownTheStackTheRendererWalks() throws Exception {
         try (DocumentSession document = page()) {
-            document.dsl().pageFlow().name("Root")
-                    .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(11).build()))
-                    .build();
-
-            List<LayoutTextLineSnapshot> lines = only(document.layoutSnapshot(), "Terms").lines();
+            List<LayoutTextLineSnapshot> lines = terms(document).lines();
 
             for (int i = 1; i < lines.size(); i++) {
                 assertThat(lines.get(i).y())
@@ -182,17 +354,34 @@ class TypographySnapshotTest {
         // its box would draw the line into its neighbour, and every line would still
         // "have a baseline".
         try (DocumentSession document = page()) {
-            document.dsl().pageFlow().name("Root")
-                    .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(11).build()))
-                    .build();
-
-            assertThat(only(document.layoutSnapshot(), "Terms").lines()).allSatisfy(line -> {
+            assertThat(terms(document).lines()).allSatisfy(line -> {
                 assertThat(line.baseline()).isBetween(line.y(), line.y() + line.height());
                 assertThat(line.baselineExact())
                         .describedAs("default vertical seating needs no backend font, so it is exact")
                         .isTrue();
             });
+        }
+    }
+
+    @ParameterizedTest(name = "{0} seating reports baselineExact={1}")
+    @CsvSource({"DEFAULT,true", "TOP,false", "CENTER,false", "BOTTOM,false"})
+    void onlyDefaultSeatingYieldsAnExactBaseline(String align, boolean exact) throws Exception {
+        // A non-default seating shifts the drawn baseline by a correction read from the
+        // backend font's cap height, which nothing renderer-neutral can compute. Without
+        // this case the false branch is unreachable and the flag could be hardcoded true.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Seated").text("Handgloves")
+                            .verticalAlign(TextVerticalAlign.valueOf(align))
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
+                    .build();
+
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "Seated");
+
+            assertThat(run.verticalAlign()).isEqualTo(align);
+            assertThat(run.lines()).isNotEmpty();
+            assertThat(run.lines()).allSatisfy(line ->
+                    assertThat(line.baselineExact()).isEqualTo(exact));
         }
     }
 
@@ -202,13 +391,13 @@ class TypographySnapshotTest {
             document.dsl().pageFlow().name("Root")
                     .addParagraph(p -> p.name("Left").text("Aligned")
                             .align(TextAlign.LEFT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(12).build()))
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
                     .addParagraph(p -> p.name("Right").text("Aligned")
                             .align(TextAlign.RIGHT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(12).build()))
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
                     .build();
 
-            LayoutSnapshot snapshot = document.layoutSnapshot();
+            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
             LayoutTextLineSnapshot left = only(snapshot, "Left").lines().get(0);
             LayoutTextLineSnapshot right = only(snapshot, "Right").lines().get(0);
 
@@ -220,31 +409,95 @@ class TypographySnapshotTest {
     }
 
     @Test
-    void theTextBoxCoversTheLinesItReports() throws Exception {
+    void theTextBoxCoversTheLinesItReportsExactly() throws Exception {
         try (DocumentSession document = page()) {
-            document.dsl().pageFlow().name("Root")
-                    .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
-                            .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(11).build()))
-                    .build();
+            LayoutTypographySnapshot run = terms(document);
 
-            LayoutTypographySnapshot run = only(document.layoutSnapshot(), "Terms");
-
-            // The box bounds the ink, so it contains every line it reports. A box that
-            // mixed the layout column's left edge with the ink's width would contain
-            // none of them as soon as alignment moved a line.
+            // No epsilon on purpose. The box is derived from the same rounded line values
+            // it is compared against, so the containment holds exactly; a tolerance here
+            // would hide the rounding drift that made it not.
             for (LayoutTextLineSnapshot line : run.lines()) {
                 assertThat(line.x())
                         .describedAs("line %d starts at or after the text box left", line.index())
-                        .isGreaterThanOrEqualTo(run.textX() - 0.001);
+                        .isGreaterThanOrEqualTo(run.textX());
                 assertThat(line.x() + line.width())
                         .describedAs("line %d ends at or before the text box right", line.index())
-                        .isLessThanOrEqualTo(run.textX() + run.textWidth() + 0.001);
+                        .isLessThanOrEqualTo(run.textX() + run.textWidth());
                 assertThat(line.y())
-                        .isGreaterThanOrEqualTo(run.textY() - 0.001);
+                        .isGreaterThanOrEqualTo(run.textY());
                 assertThat(line.y() + line.height())
                         .describedAs("line %d sits at or below the text box top", line.index())
-                        .isLessThanOrEqualTo(run.textY() + run.textHeight() + 0.001);
+                        .isLessThanOrEqualTo(run.textY() + run.textHeight());
             }
+        }
+    }
+
+    @Test
+    void aSingleLineRunsBoxIsExactlyItsLine() throws Exception {
+        // Deriving the box from a parallel accumulation of raw doubles let
+        // (x + width) - x round a thousandth away from width, so a one-line run reported
+        // a box its own only line escaped.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("One").text("Handgloves 0123")
+                            .align(TextAlign.RIGHT)
+                            .textStyle(style(FontName.HELVETICA, 11, DocumentTextDecoration.DEFAULT)))
+                    .build();
+
+            LayoutTypographySnapshot run = only(document.layoutSnapshot(WITH_TYPOGRAPHY), "One");
+            LayoutTextLineSnapshot line = run.lines().get(0);
+
+            assertThat(run.textX()).isEqualTo(line.x());
+            assertThat(run.textWidth()).isEqualTo(line.width());
+            assertThat(run.textY()).isEqualTo(line.y());
+            assertThat(run.textHeight()).isEqualTo(line.height());
+        }
+    }
+
+    // -------------------------------------------------------------------- paging ---
+
+    @Test
+    void aParagraphSplitAcrossPagesReportsOneRunPerPage() throws Exception {
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Long").text(LONG_TEXT.repeat(40))
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
+                    .build();
+
+            List<LayoutTypographySnapshot> runs = document.layoutSnapshot(WITH_TYPOGRAPHY).typography().stream()
+                    .filter(run -> run.path().contains("Long"))
+                    .toList();
+
+            assertThat(runs).hasSizeGreaterThan(1);
+            assertThat(runs).extracting(LayoutTypographySnapshot::path).containsOnly(runs.get(0).path());
+            assertThat(runs).extracting(LayoutTypographySnapshot::page)
+                    .describedAs("one run per page, in page order")
+                    .isSorted();
+            assertThat(runs).extracting(LayoutTypographySnapshot::page).doesNotHaveDuplicates();
+            assertThat(runs).allSatisfy(run -> {
+                assertThat(run.lineCount()).isPositive();
+                assertThat(run.lines()).hasSize(run.lineCount());
+            });
+        }
+    }
+
+    @Test
+    void aSplitParagraphIsOrderedByPageNotByEmissionOrder() throws Exception {
+        // Every page-slice of a split paragraph carries fragmentIndex 0, so (path,
+        // fragmentIndex) is not a unique key: without page in the sort the tie falls back
+        // to the order pagination happened to emit the fragments in.
+        try (DocumentSession document = page()) {
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Long").text(LONG_TEXT.repeat(40))
+                            .textStyle(style(FontName.HELVETICA, 12, DocumentTextDecoration.DEFAULT)))
+                    .build();
+
+            List<LayoutTypographySnapshot> runs = document.layoutSnapshot(WITH_TYPOGRAPHY).typography();
+
+            assertThat(runs).isSortedAccordingTo(
+                    Comparator.comparing(LayoutTypographySnapshot::path)
+                            .thenComparingInt(LayoutTypographySnapshot::page)
+                            .thenComparingInt(LayoutTypographySnapshot::fragmentIndex));
         }
     }
 
@@ -252,33 +505,39 @@ class TypographySnapshotTest {
 
     @Test
     void theSameDocumentProducesTheSameTypographyTwice() throws Exception {
-        // The snapshot's whole value as a baseline. Fragments are emitted in pagination
-        // order, which is not stable across unrelated changes, so the list is sorted —
-        // without that a paragraph moving pages would churn the file.
         String first;
         String second;
         try (DocumentSession document = page()) {
             compose(document);
-            first = document.layoutSnapshot().typography().toString();
+            first = document.layoutSnapshot(WITH_TYPOGRAPHY).typography().toString();
         }
         try (DocumentSession document = page()) {
             compose(document);
-            second = document.layoutSnapshot().typography().toString();
+            second = document.layoutSnapshot(WITH_TYPOGRAPHY).typography().toString();
         }
 
         assertThat(second).isEqualTo(first);
     }
 
     @Test
-    void typographyIsOrderedByPathThenFragment() throws Exception {
+    void orderingDoesNotDependOnTheOrderFragmentsWereEmittedIn() throws Exception {
+        // The fixture is named so that emission order and sorted order disagree: a
+        // document composed Zulu, Alpha must come back Alpha, Zulu. A test whose fixture
+        // is already in sorted order cannot tell a sort from no sort at all.
         try (DocumentSession document = page()) {
-            compose(document);
+            document.dsl().pageFlow().name("Root")
+                    .addParagraph(p -> p.name("Zulu").text("last by name, first on the page")
+                            .textStyle(style(FontName.HELVETICA, 11, DocumentTextDecoration.DEFAULT)))
+                    .addParagraph(p -> p.name("Alpha").text("first by name, last on the page")
+                            .textStyle(style(FontName.HELVETICA, 11, DocumentTextDecoration.DEFAULT)))
+                    .build();
 
-            List<LayoutTypographySnapshot> runs = document.layoutSnapshot().typography();
+            List<String> paths = document.layoutSnapshot(WITH_TYPOGRAPHY).typography().stream()
+                    .map(LayoutTypographySnapshot::path)
+                    .toList();
 
-            assertThat(runs).isSortedAccordingTo(
-                    java.util.Comparator.comparing(LayoutTypographySnapshot::path)
-                            .thenComparingInt(LayoutTypographySnapshot::fragmentIndex));
+            assertThat(paths).isSorted();
+            assertThat(paths.get(0)).contains("Alpha");
         }
     }
 
@@ -289,7 +548,7 @@ class TypographySnapshotTest {
         try (DocumentSession document = page()) {
             compose(document);
 
-            LayoutSnapshot snapshot = document.layoutSnapshot();
+            LayoutSnapshot snapshot = document.layoutSnapshot(WITH_TYPOGRAPHY);
             List<String> nodePaths = snapshot.nodes().stream().map(LayoutNodeSnapshot::path).toList();
 
             assertThat(snapshot.typography()).isNotEmpty();
@@ -299,21 +558,10 @@ class TypographySnapshotTest {
     }
 
     @Test
-    void theFormatVersionSaysTypographyIsThere() throws Exception {
-        try (DocumentSession document = page()) {
-            compose(document);
-
-            assertThat(document.layoutSnapshot().formatVersion())
-                    .describedAs("a reader has to be able to tell a snapshot that carries text from one that does not")
-                    .isEqualTo("2.1");
-        }
-    }
-
-    @Test
     void theDocumentStillRenders() throws Exception {
         // The projection reads the same fragments the PDF handler draws from, and the
         // PDF handler now shares its line walk with it. Rendering proves the shared
-        // helper did not change what the page looks like.
+        // helper still produces a page.
         try (DocumentSession document = page()) {
             compose(document);
 
@@ -321,6 +569,7 @@ class TypographySnapshotTest {
             byte[] bytes = document.toPdfBytes();
             Files.write(output, bytes);
 
+            assertThat(bytes.length).isGreaterThan(8);
             assertThat(new String(bytes, 0, 8, US_ASCII)).startsWith("%PDF-");
             assertThat(output).exists();
         }
@@ -329,9 +578,9 @@ class TypographySnapshotTest {
     private static void compose(DocumentSession document) {
         document.dsl().pageFlow().name("Root").spacing(8)
                 .addParagraph(p -> p.name("Heading").text("Quarterly report")
-                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA_BOLD).size(20).build()))
+                        .textStyle(style(FontName.HELVETICA_BOLD, 20, DocumentTextDecoration.BOLD)))
                 .addParagraph(p -> p.name("Terms").text(LONG_TEXT)
-                        .textStyle(DocumentTextStyle.builder().fontName(FontName.HELVETICA).size(11).build()))
+                        .textStyle(style(FontName.HELVETICA, 11, DocumentTextDecoration.DEFAULT)))
                 .addShape(shape -> shape.name("Rule").size(200, 2))
                 .build();
     }

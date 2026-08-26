@@ -20,8 +20,8 @@
 </p>
 
 > **Release status** &mdash;
-> 🟢 **Latest stable**: [v2.2.1](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.2.1) &mdash; the **right-to-left** release: Hebrew and Arabic lay out, shape, join and mirror through PDF, PowerPoint and Word &mdash; in paragraphs and in table cells &mdash; with the fonts to render them. See [CHANGELOG.md](./CHANGELOG.md).
-> &nbsp;·&nbsp; 🟡 **In development**: v2.2.2 on `develop` &mdash; the layout snapshot can now say **what the text became**: opt-in typography diagnostics report the font a paragraph was actually set in, the face its decoration selected, and where every line landed &mdash; without changing a byte of the snapshot your baselines already hold. See [CHANGELOG.md](./CHANGELOG.md).
+> 🟢 **Latest stable**: [v2.2.2](https://github.com/DemchaAV/GraphCompose/releases/tag/v2.2.2) &mdash; the layout snapshot can now say **what the text became**: opt-in typography diagnostics report the font a paragraph was actually set in, the face its decoration selected, and where every line landed &mdash; without changing a byte of the snapshot your baselines already hold. See [CHANGELOG.md](./CHANGELOG.md).
+> &nbsp;·&nbsp; 🟡 **In development**: v2.2.3 on `develop` &mdash; see [CHANGELOG.md](./CHANGELOG.md).
 
 <p align="center">
   <a href="https://demchaav.github.io/GraphCompose/"><b>Live Showcase</b></a>
@@ -59,12 +59,12 @@ Sits between **iText** (low-level page primitives) and **JasperReports** (XML-te
 <dependency>
     <groupId>io.github.demchaav</groupId>
     <artifactId>graph-compose</artifactId>
-    <version>2.2.1</version>
+    <version>2.2.2</version>
 </dependency>
 ```
 
 ```kotlin
-dependencies { implementation("io.github.demchaav:graph-compose:2.2.1") }
+dependencies { implementation("io.github.demchaav:graph-compose:2.2.2") }
 ```
 
 That coordinate renders PDF out of the box: it aggregates the lean `graph-compose-core`

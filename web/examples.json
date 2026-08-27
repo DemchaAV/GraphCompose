@@ -626,11 +626,11 @@
             {
               "id": "text-direction",
               "title": "Text Direction",
-              "description": "Generated showcase for features / text.",
-              "tags": ["features", "text"],
+              "description": "ParagraphBuilder.direction(TextDirection) beside the call that produced each row — including the rows where direction and alignment disagree, and the mixed line where a Latin word and a number keep running forwards inside right-to-left text.",
+              "tags": ["text", "rtl", "v2.2"],
               "pdf": "showcase/pdf/features/text/text-direction.pdf",
               "screenshot": "showcase/screenshots/features/text/text-direction.png",
-              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples"
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/text/TextDirectionExample.java"
             },
             {
               "id": "world-scripts",

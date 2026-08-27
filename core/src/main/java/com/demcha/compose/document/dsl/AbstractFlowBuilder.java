@@ -626,7 +626,6 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * @return this builder
      * @since 1.8.0
      */
-    @com.demcha.compose.document.api.Beta
     public T addSvgIcon(com.demcha.compose.document.svg.SvgIcon icon, double width) {
         Objects.requireNonNull(icon, "icon");
         return add(icon.node(width));
@@ -643,7 +642,6 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      * @return this builder
      * @since 1.8.0
      */
-    @com.demcha.compose.document.api.Beta
     public T addSvgIcon(com.demcha.compose.document.svg.SvgIcon icon, double width,
                         com.demcha.compose.document.node.HorizontalAlign align) {
         Objects.requireNonNull(icon, "icon");

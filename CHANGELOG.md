@@ -332,6 +332,12 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
+  the date and the description, and never `CvEntry.subtitle()` — so every company name
+  was missing from the rendered CV while the education block, which does render its
+  subtitle, looked complete. The employer is now drawn between the position and the date,
+  in the shared theme entry-subtitle style.
+
 - **Sidebar Portrait's language block threw away the rows it did not recognise.** The
   block accepts a wider "Additional Information" section and picks the language rows out
   of it, matching a row whose label names the category or whose body carries a bracket or
@@ -455,6 +461,266 @@ follow semantic versioning; release dates are ISO 8601.
   `MarkdownInline.appendTransformed` fails the build with `METHOD_REMOVED` against the
   2.2.0 pin while the 2.0.0 diff stays green, which is the hole the second baseline
   closes.
+
+- **The weekly benchmark run builds the modules it measures.** The JMH workflow
+  installed the engine from source and then let Maven resolve the rest from Central,
+  and one of them is not there to resolve: the benchmarks read their document fixtures
+  out of the `tests`-classifier jar of `graph-compose-templates`, which the templates
+  release profile unbinds precisely so it is never published. The job died at
+  dependency resolution before a single benchmark ran: five of the six weekly runs
+  since the 2.0 module split reached the default branch failed that way, on four
+  different versions, each looking for the jar under the version the release before it
+  had just published. It now installs `render-pdf` and `templates` from source the way
+  the two benchmark jobs in the main pipeline already do.
+
+  `BenchmarkDependencyInstallGuardTest` reads every workflow and fails when a job
+  builds `benchmarks/pom.xml` without first installing each first-party dependency the
+  benchmarks pom declares. It takes that list from the pom rather than a copy of it, so
+  a new sibling dependency is guarded the day it is added, and it runs in the guard job
+  on every pull request — which is what the workflow itself cannot do, running only
+  from the default branch on a schedule.
+
+## v2.2.2 — 2026-08-27
+
+### Public API
+
+- **The layout snapshot can now say what the text became.** It could already say that a
+  block moved; it could never say why the block is the size it is, because the thing that
+  decides that — which font, at what size, broken into how many lines — was measured
+  during layout and then discarded. A wrong font and a wrong padding produce the same
+  symptom on the page, and telling them apart by eye is exactly the guessing a measured
+  snapshot exists to end.
+
+  **It is opt-in, and `LayoutSnapshot` did not change shape.** A diagnostic section that
+  appeared on its own would turn every consumer's snapshot suite red on an upgrade that
+  moved nothing in their document:
+
+  ```java
+  LayoutSnapshot plain = document.layoutSnapshot();               // exactly as before
+
+  LayoutDiagnosticSnapshot rich = document.layoutSnapshot(
+          LayoutSnapshotOptions.builder().typography(true).build());
+
+  rich.layout().equals(plain);                                    // true
+  ```
+
+  The diagnostics live on a new `LayoutDiagnosticSnapshot` that *wraps* the layout
+  snapshot rather than on `LayoutSnapshot` itself. That distinction is the guarantee:
+  `LayoutSnapshot` still has exactly the four components it had in 2.0, so its JSON, its
+  `toString()` and its `equals` are unchanged however you serialize it — through
+  `LayoutSnapshotJson`, through an `ObjectMapper` of your own, or by hand. Every committed
+  baseline in this repo is unchanged, and nothing added here can reach one of yours.
+
+  `LayoutDiagnosticSnapshot.formatVersion` versions the envelope independently of the
+  layout snapshot's `2.0`, so a section added later moves one number and not the other.
+  `LayoutSnapshotOptions` is a builder rather than an overload so that next section costs
+  a method rather than a new `layoutSnapshot(...)` signature.
+
+  `LayoutDiagnosticSnapshot.typography()` is a list of `LayoutTypographySnapshot`, one
+  entry per resolved paragraph fragment: the declared font, the resolved family, the
+  decoration, the size, the line count, the bounds of the laid-out line boxes, and a
+  `LayoutTextLineSnapshot` per line carrying its own bounds and baseline in absolute page
+  coordinates.
+
+  It hangs off fragments rather than nodes because that is what text is — a paragraph
+  broken across a page boundary has one fragment per page, each with its own lines, and a
+  per-node projection would have to keep one and discard the other. Join it to
+  `layout().nodes()` on `path`, one-to-many. Entries are ordered by path, then page, then
+  emission ordinal:
+  a split paragraph restarts its ordinal at zero on each page, so page has to be in the
+  key or the order falls back to whatever order pagination emitted fragments in.
+
+  **`declaredFont`, `resolvedFamily` and `decoration` are three fields because the face
+  needs all three.** A standard-14 face such as `HELVETICA_BOLD` is an alias of its family
+  and contributes nothing on its own — the face comes from the decoration — so a style
+  that names the bold face and sets no decoration renders regular, silently.
+  `fontSubstituted` reports that, and *only* that: naming the bold face **and** asking for
+  bold draws exactly what it named and is not flagged. Reporting the family alone could
+  not tell those two apart, nor `Helvetica + DEFAULT` from `Helvetica + BOLD`. The family
+  rule is reachable as `FontLibrary.resolveFamily(FontName)`, pure and silent so a
+  diagnostic pass emits no warnings of its own. A font that is neither registered nor
+  aliased never reaches the snapshot: measurement fails first, loudly.
+
+  `resolvedFamily`, `decoration` and `fontSize` describe the text the engine actually
+  measured — after an `autoSize` shrink, and after a span-level override — so the reported
+  size always matches the line boxes beside it. `declaredFont` stays what the paragraph
+  asked for.
+
+  **The limits, stated rather than implied.** A paragraph using a non-default
+  `TextVerticalAlign` has its glyphs shifted by a correction read from the backend font's
+  cap height, which nothing renderer-neutral can compute; those lines carry
+  `baselineExact = false`, and because the shift moves the glyphs and not the line box the
+  whole entry is positional there rather than a bound on painted output. The bounds are
+  laid-out line boxes, not tight glyph ink — a code chip's fill extends past them by its
+  own padding. Text drawn outside the paragraph pipeline, such as a table cell written as
+  a plain string, produces no entry, so an empty list means "no paragraph text" rather
+  than "no text". Coordinates are the laid-out ones, so a transformed or clipped container
+  is not reflected. A paragraph whose spans mix fonts is described by its first span.
+
+  The line's own text is deliberately not included. A snapshot excludes raw text payload,
+  the words are already in the document that produced it, and a line is identified by its
+  index within the fragment.
+
+  The vertical line walk moved into `ParagraphLineGeometry` (`contentTop`, `nextLineTop`,
+  `baselineY`) and the PDF handler now draws through it, so the snapshot and the page
+  cannot describe different lines. That helper already existed for the horizontal half,
+  for exactly this reason.
+
+  No rendered output changed, and no layout, pagination or render behaviour changed.
+
+
+## v2.2.1 — 2026-08-25
+
+### Public API
+
+- **The SVG surface graduates from `@Beta` to Stable.** `SvgPath`, `SvgIcon`,
+  `PathBuilder.svg(svgPath)`, both `addSvgIcon(...)` flow adders,
+  `ShapeContainerBuilder.path(w, h, svgPath)`, and the gradient paints the
+  reader emits (`DocumentPaint.LinearAxis` / `RadialCircle`) drop the
+  annotation and join the Stable tier — additive-only changes in minors from
+  here on. The surface shipped in 1.8.0 marked `@Beta` "while it hardens
+  against real-world exporter output"; that hardening is done — the stroke,
+  colour and unit work, per-element error context, the clip-path support
+  added in 1.9.0, and the opacity-family + warning pass in this release —
+  and the API shape itself has not moved since 1.9.0, four minors of real
+  use. The annotation drop also closes an inconsistency: `inlineSvgIcon` /
+  `RichText.svgIcon` and the emoji pipeline were built on `@Beta` `SvgIcon`
+  without carrying the marker themselves; now no SVG entry point does. No
+  binary or source change for callers — the remaining `@Beta` carriers are
+  the `NodeDefinition` Extension SPI seam and the PPTX backend, exactly as
+  [docs/api-stability.md](docs/api-stability.md) lists them.
+
+### Fixed
+
+- **A PDF now carries the words it draws.** Text set in a bundled TrueType family lost
+  letters from its text layer: `Platform` extracted as `Pla orm`, `certification` as
+  `cer fica on`. The page looked right, so nothing showed it — but the text layer is what
+  a search box, a copy-and-paste, a screen reader and an applicant tracking system all
+  read, so a CV rendered through one of these families quietly failed to contain the
+  words printed on it.
+
+  PDFBox applies a font's `GSUB` substitutions itself whenever a face carrying them is
+  made current on a content stream, and most of the bundled families define ligatures
+  over the commonest English letter pairs — `ti`, `tf`, `ft`. Each pair was drawn as a
+  single glyph, and the map that says what a glyph stands for is built by reading the
+  font's character map backwards, where a ligature is reachable from no character at all.
+  The entry was therefore absent and both letters were lost. The families whose ligatures
+  happen to have code points of their own (`fi`, `fl`) survived, which is why the damage
+  looked arbitrary.
+
+  A Latin face is now handed to PDFBox with nothing to substitute. That is also what the
+  engine already assumed: layout measures a string ligature-blind, so a line drawn with
+  ligatures was slightly narrower than the box measured for it, and the DOCX and PPTX
+  backends never substituted. Non-Latin faces are untouched — PDFBox shapes Devanagari,
+  Bengali and Gujarati through the same mechanism, and there the substitutions are how
+  the script renders rather than a flourish on top of it.
+
+  Visible consequence: text set in a bundled family no longer forms ligatures, so `fi`
+  and `fl` are drawn as two letters. PDFBox applies `ccmp`, `liga` and `clig` together
+  and offers no way to keep one without the others, but in the bundled families the
+  Latin `ccmp` changes nothing — decomposed combining sequences and precomposed letters
+  are drawn exactly as before. The committed visual baselines for the layered CV and
+  cover-letter presets moved by the ligatures alone and were re-recorded.
+
+- **A composite node inside a composed table cell renders its children.**
+  `DocumentTableCell.node(...)` holding a `SectionNode`, `ContainerNode`,
+  `RowNode` or `LayerStackNode` measured the child, reserved its full height,
+  and then drew nothing inside it — a correctly-sized blank hole in the table.
+  A composite leaves its children to the compiler and emits only its own
+  decoration from `emitFragments`, so dispatching a composed cell straight at
+  the child's `emitFragments` picked up the section background and dropped
+  every paragraph under it. The cell now lays the child's whole sub-tree out
+  inside the cell box, with the same column / row / stack layout the sub-tree
+  gets anywhere else on the page. Leaf children (paragraph, list) and nested
+  tables already worked and are unchanged. The row stays atomic: a composed
+  cell still does not split across a page break.
+
+- **A row nested in a fixed rectangle keeps its horizontal band.** A `RowNode`
+  inside a `LayerStackNode` layer — allowed since 1.6.2 — stacked its children
+  downwards instead of seating them side by side, and because the band was
+  measured as one row tall, every child after the first spilled out of the
+  layer. The fixed-rectangle walk had no horizontal branch at all: it is a
+  vertical y-cursor, right for a section or a container and wrong for a row.
+  It now resolves slot widths through the same `RowSlots` path the page-level
+  row band uses, so a nested row honours weights, fixed columns, flex
+  arrangement and vertical alignment identically. Vertical composites in a
+  fixed rectangle are unchanged. Found while composing a row into a table
+  cell, which is the second rectangle this walk fills.
+
+  **Behaviour note:** a row nested *directly inside another row* in a fixed
+  rectangle now raises the same `IllegalStateException` the page-level row
+  band has always raised (`"cannot contain a nested horizontal row"`, which
+  names the fix: wrap the inner row in its own layer). It previously
+  produced a layout instead — but not a usable one: with a two-child inner
+  row inside a two-child outer row in a layer, two of the three leaves
+  landed on the same point, 17pt below the layer's own bottom edge. Wrapping
+  the inner row in its own `LayerStackNode` layer lays it out correctly.
+
+- **The SVG reader honours the opacity family.** `opacity`, `fill-opacity` and
+  `stroke-opacity` — attribute or `style=""`, number or percentage, with SVG's
+  inheritance for the paint slots and composition for group `opacity` — now
+  multiply into each layer's flat paint alpha, on top of any alpha the colour
+  already carries from an 8-digit hex or `rgba()`. They were read from nowhere
+  before: a translucent logo landed on the page fully opaque, and the only fix
+  was editing the SVG. A slot whose product reaches zero is treated like
+  `fill="none"`, so an `opacity="0"` guide layer no longer paints at all. A
+  *partial* opacity cannot reach a gradient slot — the `DocumentPaint` contract
+  refuses translucent stops because shadings carry no alpha — so a gradient
+  under `fill-opacity="0.5"` still paints opaque, now with a one-line warning
+  naming the approximation. Group opacity is the per-layer approximation of SVG's
+  offscreen compositing — overlapping siblings inside one translucent group
+  darken where a browser would flatten them first — which is the same trade
+  every lightweight icon reader makes.
+
+- **What the SVG reader cannot honour now says so.** `fill-rule="evenodd"` was
+  read from nowhere and filled with non-zero winding — a donut whose hole is cut
+  by a same-direction subpath came out solid, silently; it still renders the
+  same way, but the icon now logs one warning naming the approximation (a
+  `fill-rule` value outside nonzero / evenodd / inherit, previously unread, is
+  now refused like any other bad presentation value). A `mask="url(#id)"` or
+  `filter="url(#id)"` attribute — whose definition sits in `<defs>`, where the
+  walk never looks — paints unmasked / unfiltered as before, but the
+  referencing attribute is now read and warned about, because that attribute is
+  the only place the divergence is observable. Element kinds outside the
+  reader's vocabulary (`mask`, `pattern`, `marker`, `<style>` CSS, `<a>`
+  wrappers…) joined the skip tally that previously only counted
+  text / image / `use` — one warning per kind, and a blank icon's "no drawable
+  geometry" error names them. The DOCX export gained the inline mirror of its
+  block-level drop warning: image / shape / SVG runs (emoji included) vanish
+  from a paragraph by contract, and now say so once per export instead of only
+  the block path warning.
+
+- **SVG reader errors keep their house style at the edges.** A malformed hex
+  colour (`#zzz`), a non-numeric `rgb()` channel or `rgba()` alpha, and a
+  unit-only length (`stroke-width="px"`) leaked the raw
+  `NumberFormatException` ("For input string: …") past the reader's
+  name-the-field-and-the-element convention; each now reports what was being
+  parsed and the offending input, with the JDK detail chained as the cause.
+
+### Documentation
+
+- **`DocumentTableCell.text("a\nb")` is one line, and now says so.** The
+  advanced-tables recipe demonstrated a multi-line cell by putting `\n` inside
+  `text(...)`, which renders as a single line — the newline is whitespace
+  between two words there. The recipe and the `DocumentTableCell` Javadoc now
+  name the three cell shapes explicitly: `text(...)` for one line,
+  `lines(...)` for several, `node(...)` for any registered node (and
+  `ParagraphNode` *does* honour `\n` as a hard break, inside a cell as
+  anywhere else). The two examples that showed the misleading form were
+  switched to `lines(...)`, and the composed-cell showcase gained a section
+  and a row inside table cells.
+
+- **The SVG Javadoc stopped describing a younger reader.** `SvgGradients` claimed
+  focal radials and `stop-opacity` are "loudly refused" — both degrade
+  deliberately (centred-radial approximation, opaque stops, alpha-only overlay
+  layers dropped) and the class doc now says what actually happens. `SvgIcon`
+  still listed clip paths as out of scope and the skip-tally warning said "no
+  clips" — `clip-path:url(#id)` has rendered since 1.9.0, so the supported list
+  gained it (with its innermost-wins nesting rule) and the out-of-scope list,
+  the warning, and the empty-icon error text shrank to what is actually
+  dropped.
+
+### Build
 
 - **The weekly benchmark run builds the modules it measures.** The JMH workflow
   installed the engine from source and then let Maven resolve the rest from Central,

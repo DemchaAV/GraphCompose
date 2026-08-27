@@ -778,6 +778,68 @@ public final class LayoutCompiler {
     }
 
     /**
+     * Lays out a prepared sub-tree inside a fixed rectangle and returns the
+     * fragments it produced, without touching the surrounding document's
+     * placement state.
+     *
+     * <p>Used by primitives that own a child sub-tree inside their own
+     * geometry — a {@code TableNode} cell built with
+     * {@link com.demcha.compose.document.table.DocumentTableCell#node} — and
+     * therefore have to place that sub-tree themselves during fragment
+     * emission. Dispatching to the child's own
+     * {@link NodeDefinition#emitFragments} is not enough for a composite
+     * child: a composite emits only its decoration and leaves its children
+     * to the compiler, so the sub-tree would be measured, reserved, and then
+     * silently dropped. Routing through {@link #compileNodeInFixedSlot} gives
+     * such a child the same column / row / stack layout it gets anywhere else
+     * in the document.</p>
+     *
+     * <p>The placed nodes the walk produces are discarded: the box already
+     * exists inside its owner's geometry, so re-publishing its interior into
+     * the document's semantic node list would double-count it.</p>
+     *
+     * @param prepared        prepared sub-tree root
+     * @param parentPath      path of the node that owns the box
+     * @param childIndex      index of the box within its owner
+     * @param depth           depth of the box within its owner
+     * @param slotX           left edge of the box, in absolute page coordinates
+     * @param slotTopY        top edge of the box, in absolute page coordinates
+     * @param slotWidth       width of the box
+     * @param pageIndex       page the box lands on
+     * @param canvas          active layout canvas
+     * @param prepareContext  prepare context used to (re)measure descendants
+     * @param fragmentContext fragment context forwarded to descendant definitions
+     * @return fragments placed inside the box, in absolute page coordinates
+     */
+    List<PlacedFragment> compileFixedBoxSubtree(PreparedNode<DocumentNode> prepared,
+                                                String parentPath,
+                                                int childIndex,
+                                                int depth,
+                                                double slotX,
+                                                double slotTopY,
+                                                double slotWidth,
+                                                int pageIndex,
+                                                LayoutCanvas canvas,
+                                                PrepareContext prepareContext,
+                                                FragmentContext fragmentContext) {
+        List<PlacedNode> discardedNodes = new ArrayList<>();
+        List<PlacedFragment> fragments = new ArrayList<>();
+        PlacementContext ctx = new FixedSlotPlacementContext(
+                pageIndex, canvas, prepareContext, fragmentContext, discardedNodes, fragments);
+        compileNodeInFixedSlot(
+                prepared,
+                parentPath,
+                childIndex,
+                depth,
+                slotX,
+                slotTopY,
+                slotWidth,
+                FixedSlotKind.FIXED_BOX_SLOT,
+                ctx);
+        return List.copyOf(fragments);
+    }
+
+    /**
      * Compiles a composite or leaf node inside a fixed slot.
      *
      * <p>The slot is constrained to a single page: composite children are
@@ -967,26 +1029,41 @@ public final class LayoutCompiler {
             double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
             double childTopY = placementTopY - padding.top();
 
-            for (int i = 0; i < children.size(); i++) {
-                DocumentNode child = children.get(i);
-                PreparedNode<DocumentNode> childPrepared =
-                        prepareForRegionWidth(prepareContext, child, childRegionWidth);
-                // Propagate the parent's slot kind so a STACK layer
-                // descendant (column → row → ...) keeps the relaxed
-                // validation policy all the way down.
-                double consumed = compileNodeInFixedSlot(
-                        childPrepared,
+            if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
+                placeRowBandInFixedSlot(
+                        node,
+                        children,
+                        layoutSpec,
+                        semanticName,
                         path,
-                        i,
-                        depth + 1,
+                        depth,
                         childRegionX,
                         childTopY,
                         childRegionWidth,
-                        kind,
+                        measure.height() - padding.vertical(),
                         ctx);
-                childTopY -= consumed;
-                if (i < children.size() - 1) {
-                    childTopY -= layoutSpec.spacing();
+            } else {
+                for (int i = 0; i < children.size(); i++) {
+                    DocumentNode child = children.get(i);
+                    PreparedNode<DocumentNode> childPrepared =
+                            prepareForRegionWidth(prepareContext, child, childRegionWidth);
+                    // Propagate the parent's slot kind so a STACK layer
+                    // descendant (column → row → ...) keeps the relaxed
+                    // validation policy all the way down.
+                    double consumed = compileNodeInFixedSlot(
+                            childPrepared,
+                            path,
+                            i,
+                            depth + 1,
+                            childRegionX,
+                            childTopY,
+                            childRegionWidth,
+                            kind,
+                            ctx);
+                    childTopY -= consumed;
+                    if (i < children.size() - 1) {
+                        childTopY -= layoutSpec.spacing();
+                    }
                 }
             }
 
@@ -1040,6 +1117,91 @@ public final class LayoutCompiler {
                 prepared, definition, path, semanticName, parentPath, childIndex, depth,
                 placementX, placementY, margin, padding, measure, ctx);
         return measure.height() + margin.vertical();
+    }
+
+    /**
+     * Seats a horizontal composite's children side by side inside a fixed slot.
+     *
+     * <p>The fixed-slot walk is otherwise a vertical y-cursor, which is the
+     * right model for a section or a container but the wrong one for a row: a
+     * row's children share one band and split its width. Without this branch a
+     * row nested in a fixed rectangle — a
+     * {@link com.demcha.compose.document.node.LayerStackNode} layer, or a
+     * {@code TableNode} cell built with
+     * {@link com.demcha.compose.document.table.DocumentTableCell#node} — stacks
+     * its children downwards and overflows the rectangle by the height of every
+     * child after the first, because the band was measured as one row tall.</p>
+     *
+     * <p>Slot widths come from the same {@link RowSlots#resolveLayout} the
+     * page-flow row band uses, so a fixed-slot row honours weights, fixed
+     * columns, flex arrangement and vertical alignment identically. Children are
+     * compiled as {@link FixedSlotKind#ROW_SLOT} so a nested horizontal row is
+     * rejected here exactly as it is at page level.</p>
+     *
+     * @param node              the horizontal composite being seated
+     * @param children          its children, in source order
+     * @param layoutSpec        the composite's resolved layout spec
+     * @param semanticName      name used in the slot-resolution diagnostics
+     * @param path              layout path of the composite
+     * @param depth             depth of the composite; children sit one below
+     * @param bandStartX        left edge of the band's content area
+     * @param bandTopY          top edge of the band's content area
+     * @param bandWidth         width available to the children
+     * @param bandContentHeight height of the band, used to seat non-TOP children
+     * @param ctx               placement context the children append to
+     */
+    private void placeRowBandInFixedSlot(DocumentNode node,
+                                         List<DocumentNode> children,
+                                         CompositeLayoutSpec layoutSpec,
+                                         String semanticName,
+                                         String path,
+                                         int depth,
+                                         double bandStartX,
+                                         double bandTopY,
+                                         double bandWidth,
+                                         double bandContentHeight,
+                                         PlacementContext ctx) {
+        if (children.isEmpty()) {
+            return;
+        }
+        PrepareContext prepareContext = ctx.prepareContext();
+        RowSlots.SlotLayout slotLayout = RowSlots.resolveLayout(
+                node, children, layoutSpec, bandWidth, prepareContext, semanticName);
+        double[] slotWidths = slotLayout.widths();
+        RowVerticalAlign verticalAlign = node instanceof RowNode rowNode
+                ? rowNode.verticalAlign() : RowVerticalAlign.TOP;
+        double cursorX = bandStartX + slotLayout.leading();
+
+        for (int index = 0; index < children.size(); index++) {
+            DocumentNode child = children.get(index);
+            Margin childMargin = toMargin(child.margin());
+            double slotWidth = slotWidths[index];
+            double childInnerWidth = Math.max(0.0, slotWidth - childMargin.horizontal());
+            PreparedNode<DocumentNode> childPrepared =
+                    prepareForRegionWidth(prepareContext, child, childInnerWidth);
+
+            // Cross-axis seating, identical to the page-level row band: TOP
+            // yields offset 0.0, so a TOP row places exactly where the plain
+            // vertical walk used to put its first child.
+            double verticalOffset = verticalAlign == RowVerticalAlign.TOP
+                    ? 0.0
+                    : (bandContentHeight - childMargin.vertical() - childPrepared.measureResult().height())
+                      * (verticalAlign == RowVerticalAlign.CENTER ? 0.5 : 1.0);
+
+            compileNodeInFixedSlot(
+                    childPrepared,
+                    path,
+                    index,
+                    depth + 1,
+                    cursorX,
+                    bandTopY - verticalOffset,
+                    slotWidth,
+                    FixedSlotKind.ROW_SLOT,
+                    ctx);
+
+            cursorX += slotWidth + layoutSpec.spacing()
+                       + (index < children.size() - 1 ? slotLayout.extraGap() : 0.0);
+        }
     }
 
     PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
@@ -1200,7 +1362,15 @@ public final class LayoutCompiler {
         /**
          * Child sits inside a {@link LayerStackNode} layer rectangle.
          */
-        STACK_LAYER_SLOT
+        STACK_LAYER_SLOT,
+        /**
+         * Child sits inside a rectangle a primitive owns within its own
+         * geometry — a composed {@code TableNode} cell. Like a stack layer,
+         * the surrounding rectangle is already fixed, so a horizontal row
+         * inside it is a normal column-row rather than a band competing with
+         * a parent row.
+         */
+        FIXED_BOX_SLOT
     }
 
 }

@@ -18,7 +18,7 @@
 
     <properties>
         <graphcompose.version>${project.version}</graphcompose.version>
-        <logback.version>1.6.2</logback.version>
+        <logback.version>1.6.3</logback.version>
         <maven.compiler.release>17</maven.compiler.release>
 
         <!--
@@ -34,7 +34,7 @@
             pre-release cut leaves both alone: the version they would carry is this
             one's qualifier stripped, which names a release that does not exist yet.
         -->
-        <graphcompose.examples.assetVersion>2.2.0</graphcompose.examples.assetVersion>
+        <graphcompose.examples.assetVersion>2.2.2</graphcompose.examples.assetVersion>
 
         <!--
             The date the committed previews print where an example demonstrates the

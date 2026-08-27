@@ -817,6 +817,7 @@ public final class MonogramSidebar {
                 return;
             }
             DocumentTextStyle positionStyle = mainEntryTitleStyle();
+            DocumentTextStyle employerStyle = theme.entrySubtitleStyle();
             DocumentTextStyle dateStyle = mainEntryDateStyle();
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
@@ -829,6 +830,17 @@ public final class MonogramSidebar {
                         .lineSpacing(1.15)
                         .margin(DocumentInsets.top(5))
                         .rich(rich -> MarkdownInline.appendUpperCased(rich, entry.title(), positionStyle)));
+                if (!entry.subtitle().isBlank()) {
+                    // The employer. Drawn on its own line between the position and the
+                    // date, as the sidebar's education block draws the institution, so
+                    // the two entry kinds read the same way down the page.
+                    section.addParagraph(paragraph -> paragraph
+                            .textStyle(employerStyle)
+                            .align(TextAlign.LEFT)
+                            .lineSpacing(1.15)
+                            .margin(DocumentInsets.zero())
+                            .rich(rich -> MarkdownInline.append(rich, entry.subtitle(), employerStyle)));
+                }
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
                             .text(TextOrnaments.spacedUpper(

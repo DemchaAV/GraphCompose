@@ -47,7 +47,7 @@
 
         <!-- Runtime / library dependencies -->
         <flexmark.version>0.64.8</flexmark.version>
-        <logback.version>1.6.2</logback.version>
+        <logback.version>1.6.3</logback.version>
         <lombok.version>1.18.46</lombok.version>
         <slf4j.version>2.0.18</slf4j.version>
 
@@ -55,7 +55,7 @@
         <assertj.version>3.27.7</assertj.version>
         <junit.bom.version>6.1.3</junit.bom.version>
         <mockito.version>5.23.0</mockito.version>
-        <byteBuddy.version>1.18.11</byteBuddy.version>
+        <byteBuddy.version>1.18.12</byteBuddy.version>
         <archunit.version>1.5.0</archunit.version>
         <jqwik.version>1.10.1</jqwik.version>
 
@@ -105,7 +105,7 @@
                dated CHANGELOG release older than the working version, so a forgotten
                move fails the guard job rather than silently widening the hole. -->
         <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
-        <japicmp.baseline.previous>2.2.0</japicmp.baseline.previous>
+        <japicmp.baseline.previous>2.2.2</japicmp.baseline.previous>
 
         <!--
             GPG signing — opted in via -Dgpg.skip=false (the publish

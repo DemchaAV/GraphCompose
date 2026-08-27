@@ -308,7 +308,8 @@ public final class PdfParagraphFragmentRenderHandler
         FontLibrary fonts = environment.fonts();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
-        double contentTop = fragment.y() + fragment.height() - payload.padding().top();
+        double contentTop = ParagraphLineGeometry.contentTop(
+                fragment.y(), fragment.height(), payload.padding().top());
         PDPageContentStream stream = environment.pageSurface(fragment.pageIndex());
 
         stream.saveGraphicsState();
@@ -323,7 +324,8 @@ public final class PdfParagraphFragmentRenderHandler
                 ParagraphLine line = payload.lines().get(lineIndex);
                 double lineTop = cursorTop;
                 double resolvedLineHeight = line.lineHeight();
-                double baselineY = lineTop - resolvedLineHeight + line.baselineOffsetFromBottom();
+                double baselineY = ParagraphLineGeometry.baselineY(
+                    lineTop, resolvedLineHeight, line.baselineOffsetFromBottom());
                 if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
                     baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
                 }
@@ -332,7 +334,8 @@ public final class PdfParagraphFragmentRenderHandler
 
                 renderLine(stream, fonts, line, lineX, baselineY, environment, textState, fragment.pageIndex());
 
-                cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
+                cursorTop = ParagraphLineGeometry.nextLineTop(
+                    lineTop, resolvedLineHeight, payload.lineGap());
             }
         } finally {
             stream.restoreGraphicsState();

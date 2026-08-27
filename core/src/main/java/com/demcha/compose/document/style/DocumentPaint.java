@@ -1,6 +1,5 @@
 package com.demcha.compose.document.style;
 
-import com.demcha.compose.document.api.Beta;
 
 import java.util.List;
 import java.util.Objects;
@@ -134,9 +133,6 @@ public sealed interface DocumentPaint
      * exact: colour runs from the first stop at {@code (x0, y0)} to the last
      * stop at {@code (x1, y1)} and clamps beyond (pad spread).
      *
-     * <p>Marked {@link Beta} — emitted by the beta SVG gradient reader; the
-     * endpoint normalization contract may shift while that reader hardens.</p>
-     *
      * @param stops ordered colour stops, offsets in [0,1]; at least two
      * @param x0    axis start x, normalized to the box width
      * @param y0    axis start y, normalized to the box height
@@ -144,7 +140,6 @@ public sealed interface DocumentPaint
      * @param y1    axis end y, normalized to the box height
      * @since 1.8.0
      */
-    @Beta
     record LinearAxis(List<Stop> stops, double x0, double y0, double x1, double y1)
             implements DocumentPaint {
         /**
@@ -179,16 +174,12 @@ public sealed interface DocumentPaint
      * a circle when the box preserves the source's aspect ratio (the SVG
      * icon frame contract). Colour clamps beyond the last stop (pad spread).
      *
-     * <p>Marked {@link Beta} — emitted by the beta SVG gradient reader; the
-     * centre/radius normalization contract may shift while that reader hardens.</p>
-     *
      * @param stops ordered colour stops, offsets in [0,1]; at least two
      * @param cx    centre x, normalized to the box width
      * @param cy    centre y, normalized to the box height
      * @param r     radius as a fraction of the box width; positive
      * @since 1.8.0
      */
-    @Beta
     record RadialCircle(List<Stop> stops, double cx, double cy, double r)
             implements DocumentPaint {
         /**
@@ -227,8 +218,11 @@ public sealed interface DocumentPaint
      * radial shadings, which carry no alpha channel, so a translucent stop
      * would silently render opaque. Rather than render wrong, a stop with
      * alpha below 255 is rejected at construction — flatten transparency into
-     * the stop colour, or apply opacity to the whole shape instead. This
-     * mirrors the SVG reader, which already refuses {@code stop-opacity}.
+     * the stop colour, or apply opacity to the whole shape instead. The SVG
+     * reader honours the same constraint from its side: {@code stop-opacity}
+     * and a partial element opacity on a gradient-painted shape paint opaque
+     * (warned once per icon), so no translucent stop ever reaches this
+     * constructor.
      *
      * @param offset position along the gradient axis in [0,1]
      * @param color  fully-opaque colour at this offset

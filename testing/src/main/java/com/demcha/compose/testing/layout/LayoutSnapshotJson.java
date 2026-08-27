@@ -1,5 +1,6 @@
 package com.demcha.compose.testing.layout;
 
+import com.demcha.compose.document.snapshot.LayoutDiagnosticSnapshot;
 import com.demcha.compose.document.snapshot.LayoutSnapshot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -19,6 +20,21 @@ public final class LayoutSnapshotJson {
             .writerWithDefaultPrettyPrinter();
 
     private LayoutSnapshotJson() {
+    }
+
+    /**
+     * Serializes a diagnostic snapshot into normalized pretty-printed JSON.
+     *
+     * <p>The {@code layout} object nested inside is byte-for-byte what
+     * {@link #toJson(LayoutSnapshot)} produces for the same document.</p>
+     *
+     * @param snapshot resolved diagnostic snapshot to serialize
+     * @return normalized JSON payload with trailing newline
+     * @throws IOException if JSON serialization fails
+     * @since 2.2.2
+     */
+    public static String toJson(LayoutDiagnosticSnapshot snapshot) throws IOException {
+        return normalizeLineEndings(WRITER.writeValueAsString(snapshot)) + "\n";
     }
 
     /**

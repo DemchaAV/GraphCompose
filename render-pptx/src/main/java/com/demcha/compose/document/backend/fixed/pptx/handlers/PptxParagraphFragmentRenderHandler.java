@@ -47,17 +47,19 @@ public final class PptxParagraphFragmentRenderHandler
         FontLibrary fonts = environment.fonts();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
-        double cursorTop = fragment.y() + fragment.height() - payload.padding().top();
+        double cursorTop = ParagraphLineGeometry.contentTop(
+                fragment.y(), fragment.height(), payload.padding().top());
 
         for (ParagraphLine line : payload.lines()) {
-            double baselineY = cursorTop - line.lineHeight() + line.baselineOffsetFromBottom();
+            double baselineY = ParagraphLineGeometry.baselineY(
+                    cursorTop, line.lineHeight(), line.baselineOffsetFromBottom());
             if (payload.verticalAlign() != TextVerticalAlign.DEFAULT) {
                 baselineY += verticalSeatShift(line, fonts, payload.verticalAlign());
             }
             double lineX = ParagraphLineGeometry.lineStartX(
                     payload.align(), innerX, innerWidth, line.width());
             renderLine(fragment.pageIndex(), line, lineX, baselineY, cursorTop, payload, fonts, environment);
-            cursorTop -= line.lineHeight() + payload.lineGap();
+            cursorTop = ParagraphLineGeometry.nextLineTop(cursorTop, line.lineHeight(), payload.lineGap());
         }
     }
 

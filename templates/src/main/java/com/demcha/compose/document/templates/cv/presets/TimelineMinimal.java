@@ -34,7 +34,8 @@ import java.util.stream.Stream;
  * <p>Minimal two-column CV with a vertical timeline axis between the
  * sidebar (Education / Skills / Expertise / Languages / Interests /
  * References) and the main column (Professional Profile / Work
- * Experience). Visual signature ported from the v1
+ * Experience) — the default arrangement, which {@link Options} lets a
+ * caller change for the projects. Visual signature ported from the v1
  * {@code TimelineMinimalCvTemplateComposer}: spaced caps name in
  * Barlow Condensed, contact stack with PNG icons, all-grey palette,
  * three timeline dots between four axis segments.</p>
@@ -63,6 +64,21 @@ import java.util.stream.Stream;
  * and emits one row per page, letting each finished row overflow naturally.
  * What it holds back for the masthead is measured from the identity, because
  * the contact stack grows a row per link.</p>
+ *
+ * <h2>Choosing the projects column</h2>
+ *
+ * <p>The sidebar suits a list of short project labels. A CV whose projects
+ * carry a paragraph each fills it long before the wide column fills, so the
+ * default draws them onto a second page while the main column ends half
+ * empty. Which column they belong in is a property of the CV rather than of
+ * the design:</p>
+ *
+ * <pre>{@code
+ * TimelineMinimal.create(
+ *         TimelineMinimal.Options.builder()
+ *                 .projectsColumn(TimelineMinimal.Column.MAIN)
+ *                 .build());
+ * }</pre>
  */
 public final class TimelineMinimal {
 
@@ -184,7 +200,7 @@ public final class TimelineMinimal {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create() {
-        return create(BrandTheme.timelineMinimal());
+        return create(BrandTheme.timelineMinimal(), Options.defaults());
     }
 
     /**
@@ -194,11 +210,134 @@ public final class TimelineMinimal {
      * @return ready-to-use template
      */
     public static DocumentTemplate<CvDocument> create(BrandTheme theme) {
-        Objects.requireNonNull(theme, "theme");
-        return new Template(theme);
+        return create(theme, Options.defaults());
     }
 
-    private record Template(BrandTheme theme) implements DocumentTemplate<CvDocument> {
+    /**
+     * Builds the preset with its own theme and caller-supplied options.
+     *
+     * <p>Ambiguous against {@link #create(BrandTheme)} for a bare
+     * {@code null} literal; pass {@link Options#defaults()} rather than
+     * {@code null} to ask for the stock layout.</p>
+     *
+     * @param options placement options
+     * @return ready-to-use template
+     * @throws NullPointerException if {@code options} is null
+     * @since 2.3.0
+     */
+    public static DocumentTemplate<CvDocument> create(Options options) {
+        return create(BrandTheme.timelineMinimal(), options);
+    }
+
+    /**
+     * Builds the preset with a caller-supplied theme and options.
+     *
+     * @param theme   active theme
+     * @param options placement options
+     * @return ready-to-use template
+     * @throws NullPointerException if either argument is null
+     * @since 2.3.0
+     */
+    public static DocumentTemplate<CvDocument> create(BrandTheme theme, Options options) {
+        Objects.requireNonNull(theme, "theme");
+        // Rejected rather than defaulted, which is what every other preset
+        // carrying an Options record does: a null arriving from a caller's
+        // configuration is a dropped value, and rendering the stock layout for
+        // it hides that until somebody asks why the projects never moved.
+        Objects.requireNonNull(options, "options");
+        return new Template(theme, options);
+    }
+
+     /**
+     * Which of this preset's two columns a section is drawn in.
+     *
+     * <p>Not to be confused with
+     * {@link com.demcha.compose.document.templates.cv.data.Slot}, which shares
+     * two of these names: a slot is where the <em>author</em> of the CV put a
+     * section, and every preset here reads {@code Slot.MAIN}. This is where
+     * <em>this preset</em> then draws one of them.</p>
+     *
+     * @since 2.3.0
+     */
+    public enum Column {
+        /** The narrow left column, beside Education and Skills. */
+        SIDEBAR,
+        /** The wide right column, under the profile and the work history. */
+        MAIN
+    }
+
+    /**
+     * Placement this preset accepts from the caller.
+     *
+     * <p>The narrow column suits a list of short labels. A CV whose projects
+     * carry a paragraph each fills it faster than the wide column fills, so
+     * the projects run onto a page of their own while the main column ends
+     * half empty and every technical line wraps three times. Moving them is a
+     * property of the CV, not of the design, which is why it is a caller's
+     * choice rather than a second preset.</p>
+     *
+     * @param projectsColumn where the projects section is drawn;
+     *                       {@code null} means {@link Column#SIDEBAR}
+     * @since 2.3.0
+     */
+    public record Options(Column projectsColumn) {
+
+        /** Normalises a null column to the default. */
+        public Options {
+            projectsColumn = projectsColumn == null ? Column.SIDEBAR : projectsColumn;
+        }
+
+        /**
+         * The layout this preset has always drawn: projects in the sidebar.
+         *
+         * @return the default options
+         */
+        public static Options defaults() {
+            return new Options(Column.SIDEBAR);
+        }
+
+        /**
+         * Starts a mutable builder.
+         *
+         * @return new builder
+         */
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        /**
+         * Builder for {@link Options}.
+         */
+        public static final class Builder {
+            private Column projectsColumn = Column.SIDEBAR;
+
+            private Builder() {
+            }
+
+            /**
+             * Sets the column the projects section is drawn in.
+             *
+             * @param value target column
+             * @return this builder
+             */
+            public Builder projectsColumn(Column value) {
+                this.projectsColumn = value;
+                return this;
+            }
+
+            /**
+             * Builds the configured options.
+             *
+             * @return a new {@link Options}
+             */
+            public Options build() {
+                return new Options(projectsColumn);
+            }
+        }
+    }
+
+    private record Template(BrandTheme theme, Options options)
+            implements DocumentTemplate<CvDocument> {
 
         @Override
             public String id() {
@@ -229,15 +368,29 @@ public final class TimelineMinimal {
                 CvSection summary = allocation.claim(SectionRole.SUMMARY, SUMMARY_KEYS);
                 CvSection experience = allocation.claim(SectionRole.EXPERIENCE, EXPERIENCE_KEYS);
 
-                List<ColumnPagination.Block> sidebar = modules(
-                        module(education, "Education"),
-                        module(skills, "Skills"),
-                        module(projects, "Expertise"),
-                        module(additional, "Languages"));
+                // Built once and placed in one column or the other, so the
+                // default is the same block in the same list it always was.
+                ColumnPagination.Block projectsBlock = module(projects, "Expertise");
+                boolean projectsInMain = options.projectsColumn() == Column.MAIN;
+
+                List<ColumnPagination.Block> sidebar = projectsInMain
+                        ? modules(module(education, "Education"),
+                                module(skills, "Skills"),
+                                module(additional, "Languages"))
+                        : modules(module(education, "Education"),
+                                module(skills, "Skills"),
+                                projectsBlock,
+                                module(additional, "Languages"));
 
                 List<ColumnPagination.Block> main = new ArrayList<>();
                 addModule(main, prose(summary, "Professional Profile"));
                 addModule(main, module(experience, "Work Experience"));
+                // After the work history and before the leftover tail: a reader
+                // scanning the wide column meets the career first and the
+                // projects that came out of it second.
+                if (projectsInMain) {
+                    addModule(main, projectsBlock);
+                }
                 // Whatever no module claimed — a user's own "Awards", a second
                 // prose section — goes into the main column under its own
                 // title rather than off the page. A paragraph keeps reading as

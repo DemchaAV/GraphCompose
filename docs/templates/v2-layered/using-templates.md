@@ -372,6 +372,18 @@ NordicClean.create(
         .build());
 ```
 
+`TimelineMinimal` exposes one for the same reason: which column its projects
+belong in is a property of the CV, not of the design. The narrow sidebar suits
+a list of short labels, and a CV whose projects carry a paragraph each fills it
+long before the wide column fills.
+
+```java
+TimelineMinimal.create(
+    TimelineMinimal.Options.builder()
+        .projectsColumn(TimelineMinimal.Column.MAIN)   // under the work history
+        .build());
+```
+
 ---
 
 <a id="customising-a-theme"></a>

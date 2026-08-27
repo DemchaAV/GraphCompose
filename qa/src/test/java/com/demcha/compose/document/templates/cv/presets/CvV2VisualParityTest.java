@@ -123,6 +123,15 @@ class CvV2VisualParityTest {
                 Arguments.of("timeline_minimal",
                         TimelineMinimal.RECOMMENDED_MARGIN,
                         (Supplier<DocumentTemplate<CvDocument>>) TimelineMinimal::create),
+                // The same preset with its projects moved to the wide column —
+                // a caller's option, so it needs a baseline of its own rather
+                // than being read off the default one.
+                Arguments.of("timeline_minimal_projects_main",
+                        TimelineMinimal.RECOMMENDED_MARGIN,
+                        (Supplier<DocumentTemplate<CvDocument>>) () -> TimelineMinimal.create(
+                                TimelineMinimal.Options.builder()
+                                        .projectsColumn(TimelineMinimal.Column.MAIN)
+                                        .build())),
                 Arguments.of("engineering_resume",
                         EngineeringResume.RECOMMENDED_MARGIN,
                         (Supplier<DocumentTemplate<CvDocument>>) EngineeringResume::create),

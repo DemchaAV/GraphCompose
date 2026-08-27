@@ -154,7 +154,10 @@ Some presets also expose narrow preset-specific options when the
 visual decision is structural rather than a reusable widget. Example:
 `NordicClean.Options` lets authors move the skills rail to the right
 and override the accent colour, rail fill, or profile-band fill
-without mutating shared `BrandTheme` defaults or changing other presets.
+without mutating shared `BrandTheme` defaults or changing other presets;
+`TimelineMinimal.Options` moves its projects out of the narrow sidebar
+for a project-heavy CV. Both keep the preset's own arrangement as the
+default, so a caller who asks for nothing gets what shipped.
 
 ---
 

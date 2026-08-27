@@ -161,15 +161,20 @@ class SectionAllocationTest {
     }
 
     @Test
-    void aModuleHeadingDoesNotClaimATypedSlot() {
+    void aModuleHeadingClaimsTheSlotAndLeavesTheTail() {
         ModuleSection module = ModuleSection.builder("Projects", SectionRole.OTHER,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
         SectionAllocation allocation = SectionAllocation.of(List.of(module));
 
-        assertThat(allocation.claim(SectionRole.PROJECTS, List.of("projects"))).isNull();
-        assertThat(allocation.remaining()).containsExactly(module);
+        assertThat(allocation.claim(SectionRole.PROJECTS, List.of("projects")))
+                .describedAs("the heading matches, so the module fills the slot")
+                .isSameAs(module);
+        assertThat(allocation.remaining())
+                .describedAs("and a claimed section is out of the leftover tail, so it "
+                        + "cannot be drawn a second time at the bottom")
+                .isEmpty();
     }
 
     @Test

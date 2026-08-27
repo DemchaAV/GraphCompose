@@ -250,21 +250,31 @@ public final class SectionRouter {
     }
 
     /**
-     * The typed section this slot should hold, or {@code null} when the
-     * document has none: the first hand-written section whose heading
-     * matches one of the keys.
+     * The section this slot should hold, or {@code null} when the document
+     * has none: the first section whose heading matches one of the keys.
      *
-     * <p>A {@link ModuleSection} is never claimed here. A runtime module is
-     * a shape, not a CV meaning — the template does not know Experience
-     * from Projects — so slots that still ask for a {@link SectionRole}
-     * only see the four compile-time records. Modules stay in document
-     * order (or in {@link SectionAllocation#remaining()}) and draw through
-     * {@link com.demcha.compose.document.templates.cv.api.CvConstructor}.</p>
+     * <p>The {@code role} is deliberately not consulted. A runtime module is
+     * a shape, not a CV meaning — the template does not know Experience from
+     * Projects, and a module that declared itself {@code EXPERIENCE} would be
+     * telling the template a meaning it has no business acting on.</p>
+     *
+     * <p>A {@link ModuleSection} is still matched <em>by heading</em>, on the
+     * same terms as a hand-written section. The heading is the document
+     * author's own word for the block, not a meaning the template inferred,
+     * so honouring it costs nothing this method is trying to avoid — and
+     * skipping it cost a great deal: a preset that composes fixed slots and
+     * keeps no {@link SectionAllocation#remaining()} tail (ClassicSerif,
+     * CompactMono, EngineeringResume, NordicClean, Panel) dropped every module
+     * handed to it, heading and all, without a word.</p>
+     *
+     * <p>Only sections that have content are considered, which is what stops an
+     * empty section — module or record — from taking a slot away from a
+     * populated one that matches the same keys. A slot filled by an empty
+     * section renders nothing and hides the section that would have rendered.</p>
      *
      * @param sections the document's sections for this slot's column
-     * @param role     unused for modules; kept so existing slot call sites
-     *                 compile while they still name a role for typed sections
-     * @param keys     heading fragments to match against typed sections
+     * @param role     unused; kept so existing slot call sites compile
+     * @param keys     heading fragments to match against section headings
      * @return the section, or {@code null} when nothing matches
      */
     public static CvSection find(List<CvSection> sections, SectionRole role,
@@ -272,18 +282,18 @@ public final class SectionRouter {
         if (sections == null) {
             return null;
         }
-        return SectionLookup.firstMatching(typedOnly(sections), keys);
+        return SectionLookup.firstMatching(withContent(sections), keys);
     }
 
-    /** Hand-written sections only — a runtime module is not a slot claim. */
-    private static List<CvSection> typedOnly(List<CvSection> sections) {
-        List<CvSection> typed = new ArrayList<>(sections.size());
+    /** Sections that would draw something — an empty one must not claim a slot. */
+    private static List<CvSection> withContent(List<CvSection> sections) {
+        List<CvSection> populated = new ArrayList<>(sections.size());
         for (CvSection section : sections) {
-            if (!(section instanceof ModuleSection)) {
-                typed.add(section);
+            if (SectionLookup.hasContent(section)) {
+                populated.add(section);
             }
         }
-        return typed;
+        return populated;
     }
 
     /** The title, as markdown link syntax when the item carries a link. */

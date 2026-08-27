@@ -68,17 +68,19 @@ class RoleRoutingTest {
     }
 
     @Test
-    void aModuleIsNotClaimedByRoleOrHeading() {
+    void aModuleIsClaimedByItsHeadingButNeverByItsRole() {
         List<com.demcha.compose.document.templates.cv.data.CvSection> sections = List.of(
                 ModuleSection.builder("Projects", SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
                         .item(CvItem.of("Senior Engineer").period("2021")).build());
 
         assertThat(SectionRouter.find(sections, SectionRole.EXPERIENCE, List.of("experience")))
-                .as("a module is not a CV meaning")
+                .as("the module declares role EXPERIENCE, and the slot asks for it — but "
+                        + "the heading reads Projects, and the role is not consulted")
                 .isNull();
         assertThat(SectionRouter.find(sections, SectionRole.PROJECTS, List.of("projects")))
-                .as("nor a heading the slot happens to recognise")
-                .isNull();
+                .as("the heading does match, so the module fills the slot; a preset with "
+                        + "no leftover tail would otherwise drop it entirely")
+                .isNotNull();
     }
 
     @Test
@@ -96,8 +98,9 @@ class RoleRoutingTest {
                 .as("a hand-written section still matches by heading")
                 .isNotNull();
         assertThat(SectionRouter.find(sections, SectionRole.OTHER, List.of("awards")))
-                .as("a runtime module is not claimed by heading either")
-                .isNull();
+                .as("a runtime module matches by heading on the same terms — the heading "
+                        + "is the author's word for the block, not a meaning inferred")
+                .isNotNull();
     }
 
     /**

@@ -91,9 +91,12 @@ public final class SectionAllocation {
      * <em>different</em> section instead of the same one twice, and what moves
      * the section out of {@link #remaining()}.</p>
      *
-     * <p>Heading-only. A slot that knows which {@link SectionRole} it holds
-     * should call {@link #claim(SectionRole, List)}, so a CV written in another
-     * language routes on what its sections mean.</p>
+     * <p>Heading-only, and that includes a {@link ModuleSection}: a runtime
+     * module claims a slot on the same terms as a hand-written section, by the
+     * heading its author wrote. The module's {@code role} is not consulted —
+     * the template does not read a CV meaning off a module — but its heading is
+     * the author's own word and is honoured. A module excluded here reached no
+     * slot and, in a preset that keeps no {@link #remaining()} tail, no page.</p>
      *
      * @param keys candidate title fragments; {@code null} claims nothing
      * @return the claimed section, or {@code null} when nothing matches
@@ -106,7 +109,10 @@ public final class SectionAllocation {
             if (claimedSections.containsKey(section)) {
                 continue;
             }
-            if (section instanceof ModuleSection) {
+            if (!SectionLookup.hasContent(section)) {
+                // An empty section takes the slot and draws nothing, leaving the
+                // populated section that matches the same keys to the leftover
+                // tail. Skipping it here is what keeps the two in the right order.
                 continue;
             }
             String title = SectionLookup.normalize(section.title());

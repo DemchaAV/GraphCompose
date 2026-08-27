@@ -21,8 +21,11 @@ follow semantic versioning; release dates are ISO 8601.
   alone. `BodyStyle` decides whether a description reads as prose or as bullets, and
   `SectionRole` states what a section *means* — the decision multi-column presets make
   by matching headings against English keywords, which a CV headed `Ausbildung` or
-  `Навыки` never matches. The presets do not read the role yet; it travels with the
-  section now so a document built today needs no rewrite when the routing work lands.
+  `Навыки` never matches. The presets deliberately do **not** read the role: a module is a
+  shape, and inferring a CV meaning from a field the document declares is exactly what a
+  template has no business doing. A module reaches a slot by its **heading**, on the same
+  terms a hand-written section does — the heading is the author's own word for the block.
+  The role travels with the section for a consumer that wants it.
 
   The existing four records are untouched and mix with modules in the same document.
   A module renders through the existing components rather than beside them, so one
@@ -137,7 +140,7 @@ follow semantic versioning; release dates are ISO 8601.
   renderers so it looks like the rest of the document; Mint Editorial draws entries through
   its experience block and flattens rows to label/value lines rather than into its awards
   grid, which is a two-column table and the wrong shape for a category of unknown size. `SectionAllocation` gained the four shaped claims (`entries`, `rows`,
-  `paragraph`, `skills`) that pair its role-first choice with `SectionRouter`'s shape
+  `paragraph`, `skills`) that pair its heading claim with `SectionRouter`'s shape
   lowering, so a preset gets the section in the form its slot draws *and* the claim is
   recorded — which is what makes `remaining()` the truth rather than a guess.
   `SectionRouter.naturalShape(...)` answers the question a leftover raises and a slot never
@@ -359,7 +362,7 @@ follow semantic versioning; release dates are ISO 8601.
   plain "Deutsch B2" was enough to lose the Deutsch.
 
   The slot now claims in two steps and knows which it got. A section that is entirely
-  languages — routed by the role, or titled for the job — is drawn whole, whatever its
+  languages — titled for the job — is drawn whole, whatever its
   rows look like. A wider section is still picked over, and the rows the block does not
   draw are handed to the main column, which prints them under the title their author wrote
   and in the place the document gave them. No row of a claimed section is dropped on

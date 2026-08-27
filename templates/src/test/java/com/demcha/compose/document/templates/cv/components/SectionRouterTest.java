@@ -37,29 +37,41 @@ class SectionRouterTest {
     // -- role beats heading, heading still works ------------------------
 
     @Test
-    void aModuleIsNotASlotClaim() {
+    void aModuleClaimsASlotByItsHeadingAndNotByItsRole() {
         CvSection module = ModuleSection.builder("Berufserfahrung", SectionRole.EXPERIENCE,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
 
         assertThat(SectionRouter.find(only(module), SectionRole.EXPERIENCE, List.of("experience")))
-                .as("a runtime module is a shape, not a CV meaning")
+                .as("the role says EXPERIENCE and the heading does not match the keys — "
+                        + "a runtime module is a shape, and the template reads no CV "
+                        + "meaning off it")
                 .isNull();
         assertThat(SectionRouter.find(only(module), SectionRole.PROJECTS, List.of("beruf")))
-                .as("nor is its heading a slot claim")
-                .isNull();
+                .as("the heading is the author's own word for the block, so it claims the "
+                        + "slot on the same terms a hand-written section would — and the "
+                        + "role, which says PROJECTS here, is not consulted either way")
+                .isSameAs(module);
     }
 
     @Test
-    void aModuleHeadingDoesNotStealATypedSlot() {
+    void aTypedSectionAheadOfAModuleKeepsTheSlot() {
+        // Both match the keys, so this pins the order rather than the type: find
+        // returns the first section in document order, which is the one the author
+        // put first. The module is not preferred for being a module, nor skipped
+        // for being one.
+        CvSection typed = EntriesSection.builder("Projects")
+                .entry("Ported the renderer", "Acme", "2021", "")
+                .build();
         CvSection module = ModuleSection.builder("Projects", SectionRole.OTHER,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
 
-        assertThat(SectionRouter.find(only(module), SectionRole.PROJECTS, List.of("projects")))
-                .isNull();
+        assertThat(SectionRouter.find(List.of(typed, module), SectionRole.PROJECTS,
+                List.of("projects")))
+                .isSameAs(typed);
     }
 
     @Test

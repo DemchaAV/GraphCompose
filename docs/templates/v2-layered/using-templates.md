@@ -356,6 +356,25 @@ BoxedSections.create(BrandTheme.boxedClassic())    // explicit
 BoxedSections.create(myCustomTheme)             // your own
 ```
 
+`NordicClean` also exposes preset-specific options because its
+signature has a structural rail and three editable colour surfaces:
+the accent rules/links/name underline, the rail fill, and the profile
+band fill.
+
+```java
+NordicClean.create(
+    BrandTheme.nordicClean(),
+    NordicClean.Options.builder()
+        .railSide(NordicClean.RailSide.RIGHT)   // skills rail on the right
+        .accentColor(DocumentColor.rgb(40, 110, 120))
+        .railFillColor(DocumentColor.rgb(244, 249, 249))
+        .profileFillColor(DocumentColor.rgb(226, 244, 245))
+        .build());
+```
+
+---
+
+<a id="customising-a-theme"></a>
 ## Customising a theme
 
 Themes are records made of four sub-records:

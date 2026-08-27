@@ -3,6 +3,28 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.2.3 — Planned
+
+### Templates
+
+- **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
+  the date and the description, and never `CvEntry.subtitle()` — so every company name
+  was missing from the rendered CV while the education block, which does render its
+  subtitle, looked complete. The employer is now drawn between the position and the date,
+  in the shared theme entry-subtitle style.
+
+### Documentation
+
+- **The presets that cap content say so.** `MonogramSidebar`, `SidebarPortrait` and
+  `MintEditorial` compose a fixed amount of content: entries past a per-block cap are not
+  rendered, do not move to a continuation page, and are reported nowhere. Each preset's
+  class documentation now names its caps, explains that they are load-bearing — the
+  columns are one atomic `addRow`, so an uncapped block raises
+  `AtomicNodeTooLargeException` instead of spilling onto a second page — and points at
+  `TimelineMinimal`, which splits its own columns. `docs/templates/v2-layered/using-templates.md`
+  carries the same table under *Picking a preset*. The caps themselves are unchanged.
+
+
 ## v2.2.2 — 2026-08-27
 
 ### Public API

@@ -115,7 +115,9 @@ public final class TableAdvancedExample {
                                     .defaultCellStyle(bordered)
                                     .rowCells(
                                             DocumentTableCell.text("Q1"),
-                                            DocumentTableCell.text("Quarterly note\nspans the next two rows so the\nsidebar text breathes")
+                                            DocumentTableCell.lines("Quarterly note",
+                                                            "spans the next two rows so the",
+                                                            "sidebar text breathes")
                                                     .rowSpan(3)
                                                     .withStyle(mergedNote),
                                             DocumentTableCell.text("$1,200"))

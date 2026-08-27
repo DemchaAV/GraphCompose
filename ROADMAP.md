@@ -8,7 +8,7 @@ Consolidation ahead of the next patch: the documentation and contributor surface
 
 ## Current stable — 2.2
 
-**2.2.0** brings **right-to-left text**: a paragraph says which way it runs, and Hebrew and
+**2.2.2** brings **right-to-left text**: a paragraph says which way it runs, and Hebrew and
 Arabic lay out, shape, join and mirror correctly through all three backends. The paragraph
 is the unit that carries it, including inside a table cell composed as one; a cell written
 as a plain string still has no direction. The PDF is painted, so the engine resolves the line itself with the

@@ -6,9 +6,12 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
 import com.demcha.compose.document.node.ParagraphNode;
+import com.demcha.compose.document.node.RowNode;
+import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.TableNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentCornerRadius;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
@@ -258,6 +261,65 @@ public final class ComposedTableCellExample {
                                             DocumentInsets.zero(), DocumentInsets.zero()))
                                             .withStyle(tintedCellStyle),
                                     DocumentTableCell.text("Legal").withStyle(tintedCellStyle))),
+                    bodyCellStyle,
+                    Map.of(),
+                    Map.of(),
+                    488.0,
+                    null,
+                    null,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero(),
+                    1));
+
+            // 4) Composite node in a cell — the child's whole sub-tree renders.
+            document.pageFlow()
+                    .name("CompositeCellSection")
+                    .spacing(6)
+                    .addParagraph("4. Composite nodes in a cell", sectionHeading)
+                    .addParagraph(
+                            "A SectionNode or RowNode owns its children rather than drawing them "
+                                    + "itself, so a composed cell lays out the child's whole sub-tree: "
+                                    + "the section stacks its paragraphs, the row splits its band.", caption)
+                    .build();
+
+            document.add(new TableNode(
+                    "CompositeCellTable",
+                    List.of(DocumentTableColumn.fixed(244), DocumentTableColumn.fixed(244)),
+                    List.of(
+                            List.of(
+                                    DocumentTableCell.text("Section in a cell").withStyle(headerStyle),
+                                    DocumentTableCell.text("Row in a cell").withStyle(headerStyle)),
+                            List.of(
+                                    DocumentTableCell.node(new SectionNode(
+                                                    "CellSection",
+                                                    List.of(
+                                                            new ParagraphNode("SectionTitle",
+                                                                    "**Renewal readiness**",
+                                                                    body, TextAlign.LEFT, 1.0,
+                                                                    DocumentInsets.zero(), DocumentInsets.zero()),
+                                                            new ParagraphNode("SectionDetail",
+                                                                    "Contracts countersigned, pricing locked, "
+                                                                            + "handover deck in review.",
+                                                                    body, TextAlign.LEFT, 1.0,
+                                                                    DocumentInsets.zero(), DocumentInsets.zero())),
+                                                    4.0,
+                                                    DocumentInsets.zero(), DocumentInsets.zero(),
+                                                    null, null))
+                                            .withStyle(bodyCellStyle),
+                                    DocumentTableCell.node(new RowNode(
+                                                    "CellRow",
+                                                    List.of(
+                                                            new ParagraphNode("RowLeft", "**Owner**\nLegal",
+                                                                    body, TextAlign.LEFT, 1.0,
+                                                                    DocumentInsets.zero(), DocumentInsets.zero()),
+                                                            new ParagraphNode("RowRight", "**Due**\nNov 28",
+                                                                    body, TextAlign.LEFT, 1.0,
+                                                                    DocumentInsets.zero(), DocumentInsets.zero())),
+                                                    List.of(1.0, 1.0),
+                                                    8.0,
+                                                    DocumentInsets.zero(), DocumentInsets.zero(),
+                                                    null, null, DocumentCornerRadius.ZERO))
+                                            .withStyle(tintedCellStyle))),
                     bodyCellStyle,
                     Map.of(),
                     Map.of(),

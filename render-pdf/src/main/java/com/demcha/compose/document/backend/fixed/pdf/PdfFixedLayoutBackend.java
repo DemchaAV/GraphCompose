@@ -174,7 +174,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         // Inline-graphic baseline placement, kept in lockstep with
         // PdfParagraphFragmentRenderHandler.resolveInlineGraphicBottom — both
         // place an inline image or shape on the text baseline identically.
-        double baselineY = lineTop - lineHeight + baselineOffsetFromBottom;
+        double baselineY = ParagraphLineGeometry.baselineY(lineTop, lineHeight, baselineOffsetFromBottom);
         double lineBottom = baselineY - baselineOffsetFromBottom;
         double base = switch (alignment == null
                 ? com.demcha.compose.document.node.InlineImageAlignment.CENTER
@@ -725,7 +725,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
         var paragraphLink = payload.linkTarget();
         double innerX = fragment.x() + payload.padding().left();
         double innerWidth = Math.max(0.0, fragment.width() - payload.padding().horizontal());
-        double contentTop = fragment.y() + fragment.height() - payload.padding().top();
+        double contentTop = ParagraphLineGeometry.contentTop(
+                fragment.y(), fragment.height(), payload.padding().top());
 
         double cursorTop = contentTop;
         for (int lineIndex = 0; lineIndex < payload.lines().size(); lineIndex++) {
@@ -769,7 +770,7 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                 }
                 spanX += span.width();
             }
-            cursorTop = lineTop - resolvedLineHeight - payload.lineGap();
+            cursorTop = ParagraphLineGeometry.nextLineTop(lineTop, resolvedLineHeight, payload.lineGap());
         }
     }
 

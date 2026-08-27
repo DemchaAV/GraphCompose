@@ -102,4 +102,50 @@ class SvgStylesTest {
         assertThatThrownBy(() -> dashes.add(1.0))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void malformedHexDigitsFailWithContextNotARawNumberFormatException() {
+        assertThatThrownBy(() -> SvgStyles.color("#zzz", INK))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("invalid hex colour '#zzz'")
+                .hasCauseInstanceOf(NumberFormatException.class);
+    }
+
+    @Test
+    void malformedRgbChannelsFailWithContextNotARawNumberFormatException() {
+        assertThatThrownBy(() -> SvgStyles.color("rgb(1, 2, wide)", INK))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("rgb() channel")
+                .hasMessageContaining("must be a number");
+        assertThatThrownBy(() -> SvgStyles.color("rgba(1, 2, 3, dim)", INK))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("rgba() alpha");
+    }
+
+    @Test
+    void rgbChannelsClampIntoRange() {
+        Color clamped = SvgStyles.color("rgb(300, -20, 128)", INK).color();
+        assertThat(clamped.getRed()).isEqualTo(255);
+        assertThat(clamped.getGreen()).isZero();
+        assertThat(clamped.getBlue()).isEqualTo(128);
+    }
+
+    @Test
+    void lengthWithoutANumberNamesTheAttribute() {
+        assertThatThrownBy(() -> SvgStyles.length("px", "stroke-width"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("stroke-width")
+                .hasMessageContaining("must be a number");
+    }
+
+    @Test
+    void opacityParsesNumbersAndPercentagesAndClamps() {
+        assertThat(SvgStyles.opacity("0.5", "opacity")).isCloseTo(0.5, within(1e-9));
+        assertThat(SvgStyles.opacity("50%", "opacity")).isCloseTo(0.5, within(1e-9));
+        assertThat(SvgStyles.opacity("1.5", "opacity")).isCloseTo(1.0, within(1e-9));
+        assertThat(SvgStyles.opacity("-0.5", "opacity")).isCloseTo(0.0, within(1e-9));
+        assertThatThrownBy(() -> SvgStyles.opacity("solid", "fill-opacity"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("fill-opacity");
+    }
 }

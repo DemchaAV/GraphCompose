@@ -26,9 +26,14 @@ import java.util.Map;
  * One level of {@code href} / {@code xlink:href} indirection supplies
  * stops for the split-definition style Inkscape and Figma emit.</p>
  *
- * <p>Out of PDF reach and loudly refused: focal radials ({@code fx} /
- * {@code fy}), {@code spreadMethod} other than pad, and translucent stops
- * ({@code stop-opacity}).</p>
+ * <p>Loudly refused because PDF shadings cannot express it:
+ * {@code spreadMethod} other than pad. Approximated instead of refused,
+ * matching how real-world icons use them: focal radials ({@code fx} /
+ * {@code fy}) collapse to a plain radial about the centre, and translucent
+ * stops ({@code stop-opacity}) paint opaque — except a same-colour
+ * translucent gradient (a pure alpha overlay), which
+ * {@link #isAlphaOnlyOverlay} lets the reader drop entirely rather than
+ * blot out the art beneath it.</p>
  */
 final class SvgGradients {
 

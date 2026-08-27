@@ -53,4 +53,61 @@ class ParagraphLineGeometryTest {
         assertThat(ParagraphLineGeometry.lineStartX(null, INNER_X, INNER_WIDTH, LINE_WIDTH))
                 .isEqualTo(ParagraphLineGeometry.lineStartX(TextAlign.LEFT, INNER_X, INNER_WIDTH, LINE_WIDTH));
     }
+
+    // ------------------------------------------------------------ the vertical walk ---
+
+    @Test
+    void contentStartsBelowTheTopPadding() {
+        // The fragment box is measured from its bottom, so its top is y + height and the
+        // padding comes off that. Getting the sign wrong here puts every line of every
+        // paragraph one padding out, in the same direction, which reads as a global
+        // offset rather than as a bug in one expression.
+        assertThat(ParagraphLineGeometry.contentTop(100.0, 60.0, 8.0)).isEqualTo(152.0);
+    }
+
+    @Test
+    void linesStackDownward() {
+        double first = ParagraphLineGeometry.contentTop(100.0, 60.0, 0.0);
+        double second = ParagraphLineGeometry.nextLineTop(first, 12.0, 4.0);
+
+        assertThat(second)
+                .describedAs("y grows upward, so the next line's top is lower")
+                .isEqualTo(first - 16.0);
+        assertThat(second).isLessThan(first);
+    }
+
+    @Test
+    void theBaselineSitsInsideItsOwnLineBox() {
+        double lineTop = 200.0;
+        double lineHeight = 14.0;
+        double descent = 3.0;
+
+        double baseline = ParagraphLineGeometry.baselineY(lineTop, lineHeight, descent);
+
+        assertThat(baseline).isEqualTo(189.0);
+        assertThat(baseline)
+                .describedAs("a baseline outside its box would draw the line into its neighbour")
+                .isBetween(lineTop - lineHeight, lineTop);
+    }
+
+    @Test
+    void aBaselineIsMeasuredFromTheLineBottom() {
+        // The descent is the whole of the offset: two lines of the same height with
+        // different descents share a box top and sit at different baselines.
+        double lineTop = 200.0;
+
+        assertThat(ParagraphLineGeometry.baselineY(lineTop, 14.0, 5.0)
+                - ParagraphLineGeometry.baselineY(lineTop, 14.0, 3.0))
+                .isEqualTo(2.0);
+    }
+
+    @Test
+    void aGaplessStackLeavesNoSpaceBetweenLines() {
+        double first = 300.0;
+        double second = ParagraphLineGeometry.nextLineTop(first, 12.0, 0.0);
+
+        assertThat(second)
+                .describedAs("the next line's top meets the previous line's bottom exactly")
+                .isEqualTo(first - 12.0);
+    }
 }

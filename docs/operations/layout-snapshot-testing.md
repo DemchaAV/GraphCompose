@@ -226,10 +226,72 @@ The snapshot intentionally contains stable layout data only:
 - content size
 - margin and padding
 
+## Optional diagnostics: typography
+
+Since 2.2.2 `layoutSnapshot(...)` can also report typography. It is **opt-in**,
+and it does not live on `LayoutSnapshot`:
+
+```java
+LayoutDiagnosticSnapshot rich = document.layoutSnapshot(
+        LayoutSnapshotOptions.builder().typography(true).build());
+
+LayoutSnapshot layout = rich.layout();   // identical to document.layoutSnapshot()
+```
+
+`LayoutSnapshot` still has exactly the four components it had in 2.0, so its
+JSON, its `toString()` and its `equals` are unchanged **however you serialize
+it** — through `LayoutSnapshotJson`, through an `ObjectMapper` of your own, or
+by hand. Nothing added here can reach a baseline you already have on disk.
+
+`LayoutDiagnosticSnapshot` wraps that snapshot and carries the sections you
+asked for. Its `formatVersion` versions the envelope, independently of the
+layout snapshot's `2.0`: adding a section later moves one and not the other.
+`LayoutSnapshotOptions` is a builder so that next section costs a method rather
+than a new `layoutSnapshot(...)` overload.
+`LayoutSnapshotOptions` is a builder so a later section — links, paint,
+accessibility — is one more method rather than one more overload.
+
+Each entry describes one resolved paragraph fragment:
+
+- the **declared** font, the **resolved family**, and the **decoration** that picks
+  the face within it, plus a `fontSubstituted` flag
+- font size and line count
+- the bounds of the laid-out line boxes
+- one entry per line: index, bounds, and baseline, in absolute page coordinates
+
+It hangs off fragments rather than nodes because that is what text is: a paragraph
+broken across a page boundary has one fragment per page, each with its own lines.
+Join it to `nodes` on `path` — one-to-many, since a node such as a chart owns many
+text fragments. Entries are ordered by path, then page, then emission ordinal.
+
+All three font fields are needed to identify a face. `HELVETICA_BOLD` is an alias of
+its family and contributes nothing on its own — the bold comes from the decoration —
+so `fontSubstituted` is `true` for `HELVETICA_BOLD` with no decoration (it renders
+regular) and `false` for `HELVETICA_BOLD` with `BOLD` (it renders exactly what it
+named). `resolvedFamily`, `decoration` and `fontSize` describe the text the engine
+measured, after any `autoSize` shrink or span override.
+
+### What it does not cover
+
+- `baselineExact` is `false` for a paragraph using a non-default `TextVerticalAlign`:
+  that mode shifts the **glyphs** by a correction derived from the backend font's cap
+  height, and a renderer-neutral snapshot has no backend font to ask. The line box is
+  not shifted with them, so treat the whole entry as positional there, not as a bound
+  on painted output.
+- Bounds are laid-out line boxes, not tight glyph ink. A code chip's fill extends past
+  them by its own padding, and an inline graphic on the baseline can rise above them.
+- Text drawn outside the paragraph pipeline — a table cell written as a plain string,
+  a header, a watermark — produces no entry. An empty list means "no paragraph text",
+  not "no text".
+- Coordinates are the laid-out ones, so a shape container carrying a `transform`, or
+  one that clips its children, is not reflected.
+- A paragraph whose spans mix fonts is described by its first span.
+
 It intentionally excludes unstable or noisy values such as:
 
 - UUIDs
-- raw text payload
+- raw text payload — including the text of each line, which is why a line is
+  identified by its index
 - colors
 - PDF resource ids
 

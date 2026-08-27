@@ -1610,6 +1610,22 @@ try {
             $commitFiles += $modulePom
         }
     }
+    # The consumer-smoke projects' own poms carry the same fallback version
+    # Update-ReleaseSmokeDefaultVersion bumps in run.sh / run.ps1 above, and
+    # VersionConsistencyGuardTest holds every one of them to the published release.
+    # Enumerated rather than listed, so a project added under scripts/release-smoke/
+    # is staged the day it appears: listing them by hand is how they were left out of
+    # the v2.2.1 commit, which bumped them in the working tree, passed Step 5 against
+    # that tree, and then tagged a commit the same guard fails on.
+    $smokeRoot = Join-Path $repoRoot 'scripts/release-smoke'
+    if (Test-Path $smokeRoot) {
+        foreach ($project in Get-ChildItem -Path $smokeRoot -Directory | Sort-Object Name) {
+            $smokePom = "scripts/release-smoke/$($project.Name)/pom.xml"
+            if (Test-Path (Join-Path $repoRoot $smokePom)) {
+                $commitFiles += $smokePom
+            }
+        }
+    }
     # Per-module READMEs carry version-bumped install snippets (2.0 layout only).
     foreach ($moduleReadme in @('core/README.md', 'render-pdf/README.md', 'render-docx/README.md',
             'render-pptx/README.md', 'templates/README.md', 'testing/README.md',

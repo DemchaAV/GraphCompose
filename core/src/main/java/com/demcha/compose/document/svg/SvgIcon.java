@@ -1,6 +1,5 @@
 package com.demcha.compose.document.svg;
 
-import com.demcha.compose.document.api.Beta;
 import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.node.PathNode;
 import com.demcha.compose.document.style.DocumentColor;
@@ -27,9 +26,18 @@ import java.util.Objects;
  * {@code rotate} / {@code matrix} — affine maps are exact on Bézier control
  * points), per-element {@code fill} / {@code stroke} / {@code stroke-width}
  * styling with SVG's inheritance and defaults (missing {@code fill} paints
- * black, {@code fill="none"} skips the fill), and {@code linearGradient} /
- * {@code radialGradient} paints referenced via {@code url(#id)} — on fills
- * and strokes alike, rendered as native PDF shadings.
+ * black, {@code fill="none"} skips the fill), the opacity family
+ * ({@code opacity} / {@code fill-opacity} / {@code stroke-opacity},
+ * multiplied down the tree into each layer's paint alpha — the per-layer
+ * approximation of SVG's offscreen group compositing; zero hides the slot,
+ * and a partial opacity cannot reach a gradient slot because shadings carry
+ * no alpha — the gradient paints opaque, with a one-line warning),
+ * {@code clip-path:url(#id)} clipping (a clip on an element or group clips
+ * it and its descendants; nested clips are not intersected — the innermost
+ * wins, and a clip that cannot be resolved paints unclipped), and
+ * {@code linearGradient} / {@code radialGradient} paints referenced via
+ * {@code url(#id)} — on fills and strokes alike, rendered as native PDF
+ * shadings.
  *
  * <p>Each layer is one {@link SvgPath} with its resolved paint, in document
  * order — render them back-to-front. {@link #node(double)} packages the
@@ -38,11 +46,15 @@ import java.util.Objects;
  * requested width with the icon's own aspect ratio.</p>
  *
  * <p>Out of scope (deliberately, this is an icon reader, not a browser):
- * CSS stylesheets and classes, text, masks, clip paths, filters,
+ * CSS stylesheets and classes, text, masks, filters,
  * {@code <use>} references, nested {@code <svg>} viewBoxes (inner frames
  * recurse but their coordinates stay in the outer space), animations, and
- * the gradient corners that have no PDF analogue (focal points,
- * {@code spreadMethod} other than pad, stop opacity). A gradient's
+ * the gradient corners that have no PDF analogue ({@code spreadMethod}
+ * other than pad is refused; focal points collapse to a centred radial and
+ * translucent stops paint opaque). Fills always use non-zero winding —
+ * {@code fill-rule="evenodd"} renders, with a one-line warning, as if it
+ * were {@code nonzero}. Dropped elements and approximated features are
+ * each warned once per icon rather than silently ignored. A gradient's
  * {@code href} / {@code xlink:href} indirection inherits only the referenced
  * {@code <stop>} list — not its geometry attributes ({@code x1}/{@code y1}/
  * {@code x2}/{@code y2}, {@code cx}/{@code cy}/{@code r}, {@code gradientUnits},
@@ -56,13 +68,9 @@ import java.util.Objects;
  * card.center(logo.node(48));         // node form for layer anchors
  * }</pre>
  *
- * <p><b>Beta:</b> the SVG surface is new in 1.8.0 and marked {@link Beta}
- * while it hardens against real-world exporter output.</p>
- *
  * @author Artem Demchyshyn
  * @since 1.8.0
  */
-@Beta
 public final class SvgIcon {
 
     private final List<Layer> layers;

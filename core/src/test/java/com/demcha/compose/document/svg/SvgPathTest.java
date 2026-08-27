@@ -205,7 +205,7 @@ class SvgPathTest {
         // Regression: an operand-less Z/z followed by a non-command token used
         // to spin forever (the close op consumes no characters, so the scanner
         // never advanced), appending a close op per iteration until OOM. A
-        // single malformed/hostile 'd' string would DoS the @Beta reader.
+        // single malformed/hostile 'd' string would DoS the reader.
         // Each call must fail fast; the assertTimeout pins that it cannot hang.
         Assertions.assertTimeoutPreemptively(
                 Duration.ofSeconds(2), () -> {
@@ -216,5 +216,38 @@ class SvgPathTest {
                             .isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("position");
                 });
+    }
+
+    @Test
+    void scientificNotationNumbersParse() {
+        // Optimizing exporters (SVGO) emit exponents: 1e1 = 10, 2E1 = 20,
+        // 5e-1 = 0.5. Same square as "M0 0 L10 0 L10 10 L0 10 Z".
+        SvgPath path = SvgPath.parse("M0 0 L1e1 0 L1E1 1e+1 L0 10 Z", 0, 0, 10, 10);
+
+        List<DocumentPathSegment> s = path.segments();
+        assertThat(s).hasSize(5);
+        LineTo corner = (LineTo) s.get(2);
+        assertThat(corner.x()).isCloseTo(1.0, within(1e-9));
+        // SVG y=10 is the viewBox bottom → flipped to 0.
+        assertThat(corner.y()).isCloseTo(0.0, within(1e-9));
+        LineTo half = (LineTo) SvgPath.parse("M0 0 L5e-1 0 L0.5 1 Z", 0, 0, 1, 1)
+                .segments().get(1);
+        assertThat(half.x()).isCloseTo(0.5, within(1e-9));
+    }
+
+    @Test
+    void rotatedArcLandsOnItsEndpoint() {
+        // x-axis-rotation only shapes the interior of the arc; the endpoint
+        // contract holds regardless. Pin it for a non-zero rotation, which no
+        // other test exercises.
+        SvgPath path = SvgPath.parse("M0 5 A5 2.5 45 0 1 10 5", 0, 0, 10, 10);
+
+        List<DocumentPathSegment> s = path.segments();
+        assertThat(s.get(0)).isInstanceOf(MoveTo.class);
+        assertThat(s.size()).isGreaterThanOrEqualTo(2);
+        assertThat(s.subList(1, s.size())).allMatch(segment -> segment instanceof CubicTo);
+        CubicTo last = (CubicTo) s.get(s.size() - 1);
+        assertThat(last.x()).isCloseTo(1.0, within(1e-9));
+        assertThat(last.y()).isCloseTo(0.5, within(1e-9));
     }
 }

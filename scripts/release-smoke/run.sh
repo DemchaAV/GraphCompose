@@ -13,7 +13,7 @@
 # release.
 #
 # Usage:
-#   ./scripts/release-smoke/run.sh                 # isolated, tests gc.version=2.2.0
+#   ./scripts/release-smoke/run.sh                 # isolated, tests gc.version=2.2.2
 #   ./scripts/release-smoke/run.sh --version 2.0.1 # test a different published version
 #   ./scripts/release-smoke/run.sh --warm          # keep everything cached (fast dev iteration)
 #
@@ -29,7 +29,7 @@ REPO="$REPO_ROOT/target/release-smoke-m2/repo"
 
 # Default version under test: the currently published release. Release smoke must
 # test PUBLISHED artifacts — never a -SNAPSHOT.
-GC_VERSION="2.2.0"
+GC_VERSION="2.2.2"
 WARM=0
 while [ $# -gt 0 ]; do
   case "$1" in

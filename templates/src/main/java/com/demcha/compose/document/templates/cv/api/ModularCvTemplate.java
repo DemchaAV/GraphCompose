@@ -1,17 +1,23 @@
 package com.demcha.compose.document.templates.cv.api;
 
 import com.demcha.compose.document.templates.api.DocumentTemplate;
-import com.demcha.compose.document.templates.cv.components.CvRenderKit;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
 import com.demcha.compose.document.templates.cv.data.CvKind;
-import com.demcha.compose.document.templates.cv.data.ModuleSection;
 import com.demcha.compose.document.templates.cv.data.Slot;
 
 /**
- * A CV template that renders every section placed in {@link Slot#MAIN} —
- * every {@link CvKind}, under whatever heading the author wrote.
+ * A CV template that implements every constructor shape and renders every
+ * section placed in {@link Slot#MAIN} — every {@link CvKind}, under
+ * whatever heading the author wrote.
  *
- * <p><strong>The promise is exactly that, and the slot is part of it.</strong>
+ * <p>The constructor half is {@link CvConstructor}: one method per module
+ * shape, no defaults. A JSON mapper (or any runtime assembler) picks a
+ * kind; this template draws that kind. It does not know whether the
+ * section is Experience or a heading nobody anticipated — that knowledge
+ * is not in the contract.</p>
+ *
+ * <p><strong>The placement promise is exactly {@link Slot#MAIN}, and the
+ * slot is part of it.</strong>
  * Every shipped preset reads {@code sectionsIn(Slot.MAIN)} and no other
  * slot — including the ones that compose a sidebar of their own, which fill
  * it from the identity and from the main-slot sections their routing sends
@@ -40,22 +46,10 @@ import com.demcha.compose.document.templates.cv.data.Slot;
  * last because a preset with an editorial vocabulary of its own is the one
  * likely to rename what the author wrote. Each item must reach the page, so
  * the interface cannot be worn by a template that would drop or retitle
- * one.</p>
- *
- * <p>{@link #kit()} is how the promise stays compatible with a preset's own
- * look: the shared lowering turns a {@link ModuleSection} into paragraphs,
- * rows, and entries, and the kit draws them the way this template draws
- * everything else.</p>
+ * one. {@code CvConstructorKindGateTest} holds the other half: every kind
+ * has a non-default method, and every modular template declares it.</p>
  *
  * @since 2.3.0
  */
-public interface ModularCvTemplate extends DocumentTemplate<CvDocument> {
-
-    /**
-     * How this template draws the shapes a module lowers to.
-     *
-     * @return this template's kit; {@link CvRenderKit#defaults()} for a
-     * template whose modules look like the canonical components
-     */
-    CvRenderKit kit();
+public interface ModularCvTemplate extends DocumentTemplate<CvDocument>, CvConstructor {
 }

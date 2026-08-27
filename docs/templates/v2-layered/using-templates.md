@@ -285,14 +285,20 @@ the section: Sidebar Portrait's language list, which picks the language rows out
 of an "Additional Information" section, and Mint Editorial's skill-bar block,
 whose group index above it already carries the author's heading.
 
-A template also says *how* it draws through `CvRenderKit`. The shared
-lowering turns a module into paragraphs, rows, and entries; the kit draws
-them, so a preset with its own entry style renders your runtime module in
-that style rather than the canonical one. Presets whose bodies already use
-the shared components return `CvRenderKit.defaults()` — and so do the three
-column-flow presets, which never route a body through the kit at all: each
-lowers a module to the shape its slot draws and lets that slot's own renderer
-draw it, which is why a runtime module already comes out in their style.
+A template also says *how* it draws through `CvConstructor`: one method per
+`CvKind` (`paragraph`, `bullets`, `bulletsStacked`, `inlineList`, `entries`,
+`entriesDated`), no defaults. JSON picks the kind; the template implements
+the kind. It does not know whether the section is Experience or a heading
+the author invented. Adding a kind is adding a method, and every modular
+template has to draw it.
+
+The shared `ModuleRenderer` is what a template forwards to when it wants
+the canonical look of that kind. A preset with its own entry style
+implements the kind methods itself (or forwards through a `CvRenderKit` of
+primitives) so a runtime module takes that style rather than the canonical
+one. The three column-flow presets still lower a claimed module to the
+shape their slot already draws; their constructor methods are the same
+contract, ready for a leftover or unclaimed module that has no slot.
 
 ---
 

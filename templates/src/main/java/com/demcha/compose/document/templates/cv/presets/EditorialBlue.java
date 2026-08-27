@@ -153,7 +153,7 @@ public final class EditorialBlue {
                     // would render as nothing at all: an empty heading over blank
                     // space, which reads as a finished CV that quietly lost a
                     // section.
-                    SectionDispatcher.renderBody(section, cvSection, theme, kit());
+                    SectionDispatcher.renderBody(section, cvSection, theme, this);
                 }
             }
 
@@ -174,18 +174,48 @@ public final class EditorialBlue {
             }
 
             /**
-             * This preset's own drawing, so a runtime module gets the
-             * editorial entry, project, and key/value shapes.
-             *
-             * <p>Entries take the experience styling. The preset picks
-             * between its experience and education variants by sniffing a
-             * section's heading, which is exactly what a module carries a
-             * role to avoid; until the kit is handed that role, one of the
-             * two has to be the answer, and experience is the shape most
-             * modules take.</p>
+             * Constructor kinds. Each one lowers through {@link ModuleRenderer}
+             * onto this preset's editorial drawing, so a runtime module is a
+             * shape, not a CV meaning — {@code ENTRIES_DATED} is the
+             * experience-styled timeline whether the heading says
+             * Experience or something else.
              */
             @Override
-            public CvRenderKit kit() {
+            public void paragraph(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.paragraph(host, module, theme, drawing());
+            }
+
+            @Override
+            public void bullets(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bullets(host, module, theme, drawing());
+            }
+
+            @Override
+            public void bulletsStacked(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bulletsStacked(host, module, theme, drawing());
+            }
+
+            @Override
+            public void inlineList(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.inlineList(host, module, theme, drawing());
+            }
+
+            @Override
+            public void entries(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entries(host, module, theme, drawing());
+            }
+
+            @Override
+            public void entriesDated(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entriesDated(host, module, theme, drawing());
+            }
+
+            /**
+             * Primitive drawing this preset already had for entries, projects,
+             * and key/value rows. Kind methods lower through {@link ModuleRenderer}
+             * onto these, so a runtime module takes the editorial shapes.
+             */
+            private CvRenderKit drawing() {
                 return new CvRenderKit() {
 
                     @Override

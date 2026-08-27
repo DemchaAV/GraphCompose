@@ -20,38 +20,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Finds the section a preset's slot should hold, by what it means rather
- * than by what it is called — and hands it back in the shape that slot
- * knows how to draw.
+ * Finds the typed section a preset's slot should hold, and lowers a
+ * leftover {@link ModuleSection} to the shape that slot (or the module's
+ * own kind) knows how to draw.
  *
- * <p>Presets with a designed layout place their sections into fixed slots,
- * and they have been choosing what goes where by matching the section's
- * heading against a list of English words each preset keeps privately. That
- * works for a CV written in English by someone who used the expected
- * headings. A CV headed {@code Ausbildung} or {@code Навыки} matches
- * nothing and loses the section; so does {@code "Volunteering"}, and so does
- * a second section whose heading matched a word the first one took.</p>
+ * <p>Slots that still ask for Experience or Skills only see the four
+ * compile-time records, matched by heading. A runtime module is a shape,
+ * not a CV meaning — the template does not know Experience from Projects
+ * — so {@link #find} never claims one. Modules stay in document order, or
+ * in {@link SectionAllocation#remaining()}, and draw through
+ * {@link com.demcha.compose.document.templates.cv.api.CvConstructor}.</p>
  *
- * <p>A {@link ModuleSection} carries a {@link SectionRole} because the
- * author already knew the answer, so the role is asked first and the
- * keywords are the fallback for the sections that have no role to give.</p>
- *
- * <p>The second half is the shape. These slots are written against a
- * particular section type — {@code if (!(section instanceof EntriesSection
- * entries)) return;} — because each draws its content its own way, and a
- * module reaching one would be dropped by that guard however well it was
- * routed. Each finder below therefore lowers a matched module to the type
- * its slot expects, so the preset draws it exactly as it draws everything
- * else. What that costs is stated per method: a module's description lines
- * are joined where the target type holds one string, and a bulleted
- * description reads as prose.</p>
- *
- * <p>A section that matches no slot at all is a different question, and one
- * this class cannot answer: it keeps no memory of what a previous slot took.
- * {@link SectionAllocation} does, so a preset that wants to draw the leftovers
- * claims through it and reads {@link SectionAllocation#remaining()} — with
- * {@link #naturalShape(CvSection)} for the shape those sections have no slot
- * to give them.</p>
+ * <p>The lowering half is for a leftover that has no slot of its own:
+ * {@link #naturalShape(CvSection)} and {@link #asEntries}, {@link #asRows},
+ * {@link #asParagraph}, {@link #asSkills} turn a module into the record
+ * a preset's existing renderer already takes. What that costs is stated
+ * per method: a module's description lines are joined where the target
+ * type holds one string, and a bulleted description reads as prose.</p>
  *
  * @since 2.3.0
  */
@@ -266,17 +251,30 @@ public final class SectionRouter {
 
     /**
      * The section this slot should hold, or {@code null} when the document
-     * has none: the first module whose role is the slot's, else the first
-     * section whose heading matches one of the keys.
+     * has none: the first section whose heading matches one of the keys.
      *
-     * <p>Role first, and only a role the author actually chose —
-     * {@link SectionRole#OTHER} is what a module carries when the catalogue
-     * has no name for it, so it never claims a slot and falls through to the
-     * headings like any other section.</p>
+     * <p>The {@code role} is deliberately not consulted. A runtime module is
+     * a shape, not a CV meaning — the template does not know Experience from
+     * Projects, and a module that declared itself {@code EXPERIENCE} would be
+     * telling the template a meaning it has no business acting on.</p>
+     *
+     * <p>A {@link ModuleSection} is still matched <em>by heading</em>, on the
+     * same terms as a hand-written section. The heading is the document
+     * author's own word for the block, not a meaning the template inferred,
+     * so honouring it costs nothing this method is trying to avoid — and
+     * skipping it cost a great deal: a preset that composes fixed slots and
+     * keeps no {@link SectionAllocation#remaining()} tail (ClassicSerif,
+     * CompactMono, EngineeringResume, NordicClean, Panel) dropped every module
+     * handed to it, heading and all, without a word.</p>
+     *
+     * <p>Only sections that have content are considered, which is what stops an
+     * empty section — module or record — from taking a slot away from a
+     * populated one that matches the same keys. A slot filled by an empty
+     * section renders nothing and hides the section that would have rendered.</p>
      *
      * @param sections the document's sections for this slot's column
-     * @param role     the role this slot holds
-     * @param keys     heading fragments to fall back on
+     * @param role     unused; kept so existing slot call sites compile
+     * @param keys     heading fragments to match against section headings
      * @return the section, or {@code null} when nothing matches
      */
     public static CvSection find(List<CvSection> sections, SectionRole role,
@@ -284,31 +282,18 @@ public final class SectionRouter {
         if (sections == null) {
             return null;
         }
-        if (role != null && role != SectionRole.OTHER) {
-            for (CvSection section : sections) {
-                if (section instanceof ModuleSection module && module.role() == role
-                        && SectionLookup.hasContent(section)) {
-                    return section;
-                }
-            }
-        }
-        // The heading is the fallback, and it may not overrule a role. A module
-        // declared EXPERIENCE and headed "Projects" belongs where its author put
-        // it; letting the projects slot claim it by heading would render it in
-        // both places, which is worse than the drop this routing exists to fix.
-        return SectionLookup.firstMatching(spokenFor(sections), keys);
+        return SectionLookup.firstMatching(withContent(sections), keys);
     }
 
-    /** The sections a keyword slot may still claim: everything but a module that named its own role. */
-    private static List<CvSection> spokenFor(List<CvSection> sections) {
-        List<CvSection> open = new ArrayList<>(sections.size());
+    /** Sections that would draw something — an empty one must not claim a slot. */
+    private static List<CvSection> withContent(List<CvSection> sections) {
+        List<CvSection> populated = new ArrayList<>(sections.size());
         for (CvSection section : sections) {
-            if (section instanceof ModuleSection module && module.role() != SectionRole.OTHER) {
-                continue;
+            if (SectionLookup.hasContent(section)) {
+                populated.add(section);
             }
-            open.add(section);
         }
-        return open;
+        return populated;
     }
 
     /** The title, as markdown link syntax when the item carries a link. */

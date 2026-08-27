@@ -136,7 +136,7 @@ class SectionAllocationTest {
     }
 
     @Test
-    void aRoleClaimTakesTheModuleThatNamedTheRole() {
+    void aModuleIsNeverClaimedAndStaysInTheLeftovers() {
         ModuleSection experience = ModuleSection.builder("Опыт работы",
                         SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Ведущий инженер").period("2021"))
@@ -144,11 +144,11 @@ class SectionAllocationTest {
         SectionAllocation allocation = SectionAllocation.of(List.of(SUMMARY, experience));
 
         assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
-                .as("the heading matches no English keyword; the role is the answer")
-                .isSameAs(experience);
+                .as("a runtime module is a shape, not a slot")
+                .isNull();
         assertThat(allocation.remaining())
-                .as("a role-claimed section is claimed, so it is not also a leftover")
-                .doesNotContain(experience);
+                .as("so it is drawn with the leftovers, under the author's heading")
+                .contains(experience);
     }
 
     @Test
@@ -161,33 +161,33 @@ class SectionAllocationTest {
     }
 
     @Test
-    void aDeclaredRoleIsNotClaimableByAnotherSlotsKeywords() {
-        // Otherwise the experience slot takes it by role and the projects slot
-        // takes it by heading, and the same module renders twice.
-        ModuleSection module = ModuleSection.builder("Projects", SectionRole.EXPERIENCE,
+    void aModuleHeadingClaimsTheSlotAndLeavesTheTail() {
+        ModuleSection module = ModuleSection.builder("Projects", SectionRole.OTHER,
                         CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Senior Engineer").period("2021"))
                 .build();
         SectionAllocation allocation = SectionAllocation.of(List.of(module));
 
-        assertThat(allocation.claim(SectionRole.PROJECTS, List.of("projects"))).isNull();
-        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
+        assertThat(allocation.claim(SectionRole.PROJECTS, List.of("projects")))
+                .describedAs("the heading matches, so the module fills the slot")
                 .isSameAs(module);
+        assertThat(allocation.remaining())
+                .describedAs("and a claimed section is out of the leftover tail, so it "
+                        + "cannot be drawn a second time at the bottom")
+                .isEmpty();
     }
 
     @Test
-    void aRoleClaimsAtMostOneSectionSoASecondSlotSeesTheNextOne() {
-        ModuleSection first = ModuleSection.builder("Erfahrung", SectionRole.EXPERIENCE,
+    void twoModulesStayInTheLeftoversInDocumentOrder() {
+        ModuleSection first = ModuleSection.builder("Erfahrung", SectionRole.OTHER,
                         CvKind.ENTRIES_DATED).item(CvItem.of("First").period("2021")).build();
         ModuleSection second = ModuleSection.builder("Weitere Erfahrung",
-                        SectionRole.EXPERIENCE, CvKind.ENTRIES_DATED)
+                        SectionRole.OTHER, CvKind.ENTRIES_DATED)
                 .item(CvItem.of("Second").period("2019")).build();
         SectionAllocation allocation = SectionAllocation.of(List.of(first, second));
 
-        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience"))).isSameAs(first);
-        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience")))
-                .as("claiming hands each section out once")
-                .isSameAs(second);
+        assertThat(allocation.claim(SectionRole.EXPERIENCE, List.of("experience"))).isNull();
+        assertThat(allocation.remaining()).containsExactly(first, second);
     }
 
     @Test

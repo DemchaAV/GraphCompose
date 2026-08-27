@@ -14,7 +14,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.cv.api.ModularCvTemplate;
 import com.demcha.compose.document.templates.core.text.TextStyles;
-import com.demcha.compose.document.templates.cv.components.CvRenderKit;
+import com.demcha.compose.document.templates.cv.components.ModuleRenderer;
 import com.demcha.compose.document.templates.cv.components.SectionDispatcher;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
@@ -111,10 +111,33 @@ public final class Executive {
             }
 
             @Override
-            public CvRenderKit kit() {
-                // This preset renders bodies through the shared dispatcher, so a
-                // runtime module already looks like the rest of its document.
-                return CvRenderKit.defaults();
+            public void paragraph(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.paragraph(host, module, theme);
+            }
+
+            @Override
+            public void bullets(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bullets(host, module, theme);
+            }
+
+            @Override
+            public void bulletsStacked(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.bulletsStacked(host, module, theme);
+            }
+
+            @Override
+            public void inlineList(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.inlineList(host, module, theme);
+            }
+
+            @Override
+            public void entries(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entries(host, module, theme);
+            }
+
+            @Override
+            public void entriesDated(SectionBuilder host, ModuleSection module, BrandTheme theme) {
+                ModuleRenderer.entriesDated(host, module, theme);
             }
 
             @Override
@@ -141,7 +164,7 @@ public final class Executive {
                                 ACCENT, theme);
                     });
                     flow.addSection("CvV2ExecutiveBody_" + idx, host ->
-                            SectionDispatcher.renderBody(host, sec, theme, kit()));
+                            SectionDispatcher.renderBody(host, sec, theme, this));
                 }
 
                 flow.build();

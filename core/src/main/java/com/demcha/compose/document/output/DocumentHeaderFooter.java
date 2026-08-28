@@ -48,6 +48,25 @@ public final class DocumentHeaderFooter {
     @Builder.Default
     private final DocumentColor textColor = DocumentColor.GRAY;
 
+    /**
+     * Whether this zone's {@link #height} is taken out of the page's content area.
+     *
+     * <p>{@code false} by default, which is how a zone has always behaved: the
+     * height positions the text and nothing more, the body is laid out as if no
+     * zone existed, and whether the two collide is left to the page margin.
+     * Setting it makes the guarantee explicit — the body never runs under the
+     * zone. The content area is inset to the larger of the page margin and this
+     * height, so a zone that already fits inside the margin reserves nothing and
+     * reflows nothing.</p>
+     *
+     * <p>It follows that turning this on can add pages to a document that was
+     * relying on the overlap. That is why it is opt-in.</p>
+     *
+     * @since 2.2.3
+     */
+    @Builder.Default
+    private final boolean reserveSpace = false;
+
     @Builder.Default
     private final boolean showSeparator = false;
 
@@ -69,6 +88,7 @@ public final class DocumentHeaderFooter {
         this.fontSize = 9f;
         this.fontName = FontName.HELVETICA;
         this.textColor = DocumentColor.GRAY;
+        this.reserveSpace = false;
         this.showSeparator = false;
         this.separatorColor = DocumentColor.LIGHT_GRAY;
         this.separatorThickness = 0.5f;

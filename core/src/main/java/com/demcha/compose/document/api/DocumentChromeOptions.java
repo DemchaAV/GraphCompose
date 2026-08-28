@@ -69,6 +69,26 @@ final class DocumentChromeOptions {
     }
 
     /**
+     * The height the given zone claims from the page's content area — the tallest
+     * of the space-reserving zones registered for it, or zero when none reserves.
+     *
+     * <p>The tallest rather than the sum: zones in the same band are drawn on top
+     * of one another, not stacked, so the band is as deep as its deepest member.</p>
+     *
+     * @param zone the band to measure
+     * @return reserved height in points, never negative
+     */
+    double reservedHeight(DocumentHeaderFooterZone zone) {
+        double reserved = 0.0;
+        for (DocumentHeaderFooter entry : headersAndFooters) {
+            if (entry.getZone() == zone && entry.isReserveSpace()) {
+                reserved = Math.max(reserved, entry.getHeight());
+            }
+        }
+        return reserved;
+    }
+
+    /**
      * Indicates whether at least one chrome option is configured.
      *
      * @return {@code true} when the session has metadata / watermark /

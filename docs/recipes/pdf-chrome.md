@@ -87,6 +87,29 @@ The flagship `BusinessReportExample` uses exactly this footer in a
 real document — `"Confidential and proprietary"` on the left,
 `"Page {page} of {pages}"` on the right, with a 0.5pt separator rule.
 
+### Reserving the zone's height
+
+A zone's `height` positions its text; by default it takes nothing away from the
+page's content area, so whether the body runs under the footer is decided by the
+page margin. Ask for the space explicitly:
+
+```java
+document.footer(DocumentHeaderFooter.builder()
+        .centerText("Page {page} of {pages}")
+        .height(48f)
+        .reserveSpace(true)
+        .build());
+```
+
+The content area is inset to the **larger** of the page margin and the zone's
+height — not their sum — so a zone that already fits inside the margin reserves
+nothing and moves nothing. `DocumentSession.availableHeight()` reports the
+reduced area, which is what a composition sizing itself against the page should
+read.
+
+Off by default, because turning it on can add pages to a document that was
+relying on the overlap.
+
 ### Choosing the zone's font
 
 A zone is typeset in `FontName.HELVETICA` unless it says otherwise. That

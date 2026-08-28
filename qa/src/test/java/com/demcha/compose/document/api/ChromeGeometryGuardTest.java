@@ -49,8 +49,12 @@ class ChromeGeometryGuardTest {
     /** Half a point: below what a reader can see, above float noise. */
     private static final float EPSILON = 0.5f;
 
-    /** A quarter of the page — reserving this could not go unnoticed. */
-    private static final float TALL_FOOTER_HEIGHT = 60f;
+    /**
+     * Deep enough that reserving it cannot be absorbed by rounding: it takes more
+     * than half the content area of a {@value #PAGE_HEIGHT}pt page, so the page
+     * count has to move rather than landing on the same number by luck.
+     */
+    private static final float TALL_FOOTER_HEIGHT = 100f;
 
     /** {@code DocumentHeaderFooter} defaults, restated so the maths below reads. */
     private static final float ZONE_HEIGHT = 30f;
@@ -189,22 +193,82 @@ class ChromeGeometryGuardTest {
 
     /**
      * The same body, optionally under a footer tall enough that reserving its
-     * height would have to reflow the document.
+     * height has to reflow the document.
      */
     private static byte[] renderBody(boolean withTallFooter) throws Exception {
+        return renderBody(withTallFooter, false, TALL_FOOTER_HEIGHT);
+    }
+
+    private static byte[] renderBody(boolean withFooter, boolean reserveSpace, float footerHeight)
+            throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
                 .margin(DocumentInsets.of(MARGIN))
                 .create()) {
 
-            if (withTallFooter) {
+            if (withFooter) {
                 document.chrome().footer(DocumentHeaderFooter.builder()
                         .leftText(FOOTER_LEFT)
-                        .height(TALL_FOOTER_HEIGHT)
+                        .height(footerHeight)
+                        .reserveSpace(reserveSpace)
                         .build());
             }
             fillBody(document);
             return document.toPdfBytes();
+        }
+    }
+
+    /**
+     * The opposite pin to {@link #aTallFooterDoesNotPushTheBodyAtAll}: asked to
+     * reserve, the same zone takes its band out of the content area and the body
+     * has to go somewhere else.
+     */
+    @Test
+    void aReservingFooterTakesItsBandOutOfTheContentArea() throws Exception {
+        try (PDDocument unreserved = Loader.loadPDF(renderBody(true, false, TALL_FOOTER_HEIGHT));
+             PDDocument reserved = Loader.loadPDF(renderBody(true, true, TALL_FOOTER_HEIGHT))) {
+
+            assertThat(reserved.getNumberOfPages())
+                    .as("a %.0fpt band out of a %.0fpt page has to cost the body pages",
+                            TALL_FOOTER_HEIGHT, PAGE_HEIGHT)
+                    .isGreaterThan(unreserved.getNumberOfPages());
+
+            Glyphs glyphs = new Glyphs();
+            glyphs.getText(reserved);
+            // The zone's own text sits inside the band by construction, so the scan
+            // has to stop above it — otherwise it measures the footer and always fails.
+            float footerBaseline = Run.locate(glyphs.page(1), FOOTER_LEFT).baselineY;
+            float lowestBodyBaseline = glyphs.page(1).stream()
+                    .map(TextPosition::getYDirAdj)
+                    .filter(baseline -> baseline < footerBaseline - EPSILON)
+                    .max(Float::compare)
+                    .orElseThrow();
+            assertThat(lowestBodyBaseline)
+                    .as("and no body line is laid out into the band the footer paints")
+                    .isLessThanOrEqualTo(PAGE_HEIGHT - TALL_FOOTER_HEIGHT);
+        }
+    }
+
+    /**
+     * Reserving takes the larger of margin and zone height, not their sum, so the
+     * common case — a zone that already fits inside the margin — moves nothing.
+     */
+    @Test
+    void aZoneThatFitsInsideTheMarginReservesNothing() throws Exception {
+        float shorterThanMargin = MARGIN - 4f;
+
+        try (PDDocument off = Loader.loadPDF(renderBody(true, false, shorterThanMargin));
+             PDDocument on = Loader.loadPDF(renderBody(true, true, shorterThanMargin))) {
+
+            assertThat(on.getNumberOfPages()).isEqualTo(off.getNumberOfPages());
+
+            Glyphs offGlyphs = new Glyphs();
+            offGlyphs.getText(off);
+            Glyphs onGlyphs = new Glyphs();
+            onGlyphs.getText(on);
+            assertThat(Run.locate(onGlyphs.page(1), "Body line 0").baselineY)
+                    .as("asking to reserve a band the margin already clears changes nothing")
+                    .isCloseTo(Run.locate(offGlyphs.page(1), "Body line 0").baselineY, offset(EPSILON));
         }
     }
 

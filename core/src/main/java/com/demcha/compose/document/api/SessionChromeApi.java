@@ -122,6 +122,7 @@ public final class SessionChromeApi {
     public SessionChromeApi header(DocumentHeaderFooter header) {
         ensureOpen();
         chromeOptions.addHeader(header);
+        session.chromeReservationChanged();
         return this;
     }
 
@@ -135,6 +136,7 @@ public final class SessionChromeApi {
     public SessionChromeApi footer(DocumentHeaderFooter footer) {
         ensureOpen();
         chromeOptions.addFooter(footer);
+        session.chromeReservationChanged();
         return this;
     }
 
@@ -147,6 +149,7 @@ public final class SessionChromeApi {
     public SessionChromeApi clearHeadersAndFooters() {
         ensureOpen();
         chromeOptions.clearHeadersAndFooters();
+        session.chromeReservationChanged();
         return this;
     }
 

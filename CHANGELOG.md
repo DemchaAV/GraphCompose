@@ -18,6 +18,19 @@ follow semantic versioning; release dates are ISO 8601.
   than there is in the body, so a code point the chosen family cannot encode is still
   substituted with `?`.
 
+- **A header or footer can reserve its height from the content area.**
+  `DocumentHeaderFooter.reserveSpace(true)` insets the page's content area so the body
+  is never laid out into the band the zone paints. Until now `height` positioned the
+  zone's text and nothing else — it was never subtracted from the content area, so
+  whether a footer collided with the last line of body text was decided by whichever
+  page margin the author happened to pick. The content area is inset to the larger of
+  the margin and the zone's height, not their sum, so a zone that already fits inside
+  the margin reserves nothing and reflows nothing. `DocumentSession.availableHeight()`
+  (and `canvas().innerHeight()`, which it still aliases) report the reduced area, so a
+  composition that sizes itself against the page — `TimelineMinimal` splits its columns
+  this way — sees the space it actually has. Off by default: turning it on can add pages
+  to a document that was relying on the overlap.
+
 ### Tests
 
 - **Header and footer placement is now guarded.** `ChromeGeometryGuardTest` pins the

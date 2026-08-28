@@ -24,6 +24,25 @@ follow semantic versioning; release dates are ISO 8601.
   `TimelineMinimal`, which splits its own columns. `docs/templates/v2-layered/using-templates.md`
   carries the same table under *Picking a preset*. The caps themselves are unchanged.
 
+- **The PDF backend's engine packages carry the `@Internal` marker the policy already
+  promised.** `docs/api-stability.md` has always put the whole
+  `com.demcha.compose.engine` tree in the Internal tier — removable in any release, no
+  deprecation window — and names `engine.render.pdf.*` as the part of it that ships from
+  `graph-compose-render-pdf`. The annotation itself had stayed behind in the engine
+  artifact, so nothing in the published `graph-compose-render-pdf` Javadoc said so.
+  `engine.render.pdf` and `engine.render.pdf.helpers` now carry the marker at the package
+  level, the way `document.layout` does, and `PdfFont`, `GlyphFallbackLogger`,
+  `PdfHeaderFooterRenderer` and `PdfWatermarkRenderer` carry it on the type as well —
+  Javadoc renders a package annotation on the package page and nowhere else, so the
+  package marker alone leaves each class page reading as a plain public class.
+
+  `InternalEnginePackageMarkerTest` enforces the package half module-locally, in
+  `graph-compose-render-pdf` and `graph-compose-render-pptx`. A guard in the engine
+  cannot: it only sees the engine's own classpath. It reads its package list from the
+  source tree rather than a fixed probe set, so a newly added engine package fails the
+  build until it is marked. Annotation and documentation only; no signature or behaviour
+  changed.
+
 
 ## v2.2.2 — 2026-08-27
 

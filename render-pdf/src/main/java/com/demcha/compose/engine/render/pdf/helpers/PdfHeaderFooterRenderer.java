@@ -1,5 +1,6 @@
 package com.demcha.compose.engine.render.pdf.helpers;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone;
 import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
@@ -24,6 +25,7 @@ import java.util.List;
  *
  * @author Artem Demchyshyn
  */
+@Internal
 @Slf4j
 public final class PdfHeaderFooterRenderer {
 

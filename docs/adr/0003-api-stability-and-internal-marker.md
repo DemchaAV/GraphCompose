@@ -77,6 +77,24 @@ right next to `DocumentSession`, so it is discoverable.
   and the source-level Javadoc contract (the phrase
   *"may change in any release without notice"* and the link to the
   issue tracker).
+- The Internal tier does not stop at the engine artifact: the 2.0 module
+  split moved `com.demcha.compose.engine.render.pdf` and its `helpers`
+  sub-package into `graph-compose-render-pdf`, and both carry `@Internal`
+  at the package level. Package annotations do not nest, so the parent
+  marker does not cover `helpers` — each package declares its own.
+- The four public types in those packages (`PdfFont`, `GlyphFallbackLogger`,
+  `PdfHeaderFooterRenderer`, `PdfWatermarkRenderer`) also carry an explicit
+  `@Internal`, for the same reason the `BuiltInNodeDefinitions` payload
+  records do: Javadoc renders a package annotation on the package-summary
+  page and nowhere else, so a package marker on its own leaves every class
+  page reading as an unqualified public class.
+- `InternalEnginePackageMarkerTest` enforces that, module-locally, in
+  [`graph-compose-render-pdf`](../../render-pdf/src/test/java/com/demcha/documentation/InternalEnginePackageMarkerTest.java)
+  and [`graph-compose-render-pptx`](../../render-pptx/src/test/java/com/demcha/documentation/InternalEnginePackageMarkerTest.java).
+  A single test in the engine cannot do this job: it only sees the engine's
+  classpath. The guard reads its package list from `src/main/java` instead of
+  a hard-coded probe set, so a *new* engine package is caught rather than only
+  a marker deleted from a known one.
 
 ## Consequences
 

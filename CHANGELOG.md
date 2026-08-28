@@ -5,6 +5,33 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.3 — Planned
 
+### Layout
+
+- **A composed table cell sits where its anchor says, and a spanning one stops
+  falling to the foot of its span.** `emitComposedCellFragments` accepted the
+  cell's height and never read it: a child authored with
+  `DocumentTableCell.node(...)` was placed at `cellLocalY + padding.bottom()`
+  whatever the cell's `textAnchor` said. On an ordinary row that is invisible,
+  because the row is as tall as its tallest cell and the bottom of the box is
+  also the top of it. On a cell with `rowSpan(2)` it is not: the cell's height is
+  the whole span, so a badge beside a two-row block sat level with the second
+  row, and `TOP_LEFT` moved it nowhere — `defaultCellStyle`, `rowStyle` and the
+  cell's own `withStyle` all did nothing, because no branch read the anchor at
+  all. Composed content and text in one table disagreed for the same reason: text
+  is anchored in `resolveTextLines` and centres by default, a node was bottomed.
+
+  The anchor is now applied to composed content the way it already was to text —
+  same default (`centerLeft`, from `TableCellLayoutStyle.DEFAULT`), same mapping
+  of `BOTTOM` and `DEFAULT` onto the bottom edge. Slack is clamped at zero, so a
+  child taller than its cell still starts at the bottom rather than being pushed
+  below it by a negative offset.
+
+  **This changes existing output.** A composed cell shorter than its row moved
+  from the bottom of the row to its middle — that is what it takes for a node and
+  the text beside it to sit on one line. A document that wants the old placement
+  asks for it: `DocumentTableStyle.builder().textAnchor(BOTTOM_LEFT)`.
+
+
 ### Templates
 
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,

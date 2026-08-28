@@ -87,6 +87,7 @@ final class PdfOptionsAdapter {
                 .centerText(options.getCenterText())
                 .rightText(options.getRightText())
                 .fontSize(options.getFontSize())
+                .fontName(options.getFontName())
                 .textColor(options.getTextColor())
                 .showSeparator(options.isShowSeparator())
                 .separatorColor(options.getSeparatorColor())

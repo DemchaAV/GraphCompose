@@ -87,6 +87,27 @@ The flagship `BusinessReportExample` uses exactly this footer in a
 real document — `"Confidential and proprietary"` on the left,
 `"Page {page} of {pages}"` on the right, with a 0.5pt separator rule.
 
+### Choosing the zone's font
+
+A zone is typeset in `FontName.HELVETICA` unless it says otherwise. That
+is standard-14 Helvetica, whose WinAnsi encoding has no Cyrillic, Greek,
+Hebrew or Arabic — so a footer written in one of those scripts renders as
+a row of `?`. Name the family the text needs:
+
+```java
+import com.demcha.compose.font.FontName;
+
+document.footer(DocumentHeaderFooter.builder()
+        .centerText("Стр. {page} из {pages}")
+        .fontName(FontName.PT_SANS)
+        .build());
+```
+
+There is no automatic fallback — not in a zone, and not in body text
+either. The engine draws what the family you named can encode and
+substitutes `?` for the rest, so the family has to cover the script.
+Custom families registered on the session are resolved here too.
+
 ## Protection (passwords and permissions)
 
 ```java

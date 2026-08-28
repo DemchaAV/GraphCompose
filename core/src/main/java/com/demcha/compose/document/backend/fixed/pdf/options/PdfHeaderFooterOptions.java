@@ -1,6 +1,7 @@
 package com.demcha.compose.document.backend.fixed.pdf.options;
 
 import com.demcha.compose.document.output.DocumentPageNumbering;
+import com.demcha.compose.font.FontName;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,6 +32,14 @@ public final class PdfHeaderFooterOptions {
     @Builder.Default
     private final float fontSize = 9f;
 
+    /**
+     * Font family for the zone's text; standard-14 Helvetica by default.
+     *
+     * @since 2.2.3
+     */
+    @Builder.Default
+    private final FontName fontName = FontName.HELVETICA;
+
     @Builder.Default
     private final Color textColor = new Color(128, 128, 128);
 
@@ -53,6 +62,7 @@ public final class PdfHeaderFooterOptions {
         this.centerText = null;
         this.rightText = null;
         this.fontSize = 9f;
+        this.fontName = FontName.HELVETICA;
         this.textColor = new Color(128, 128, 128);
         this.showSeparator = false;
         this.separatorColor = new Color(200, 200, 200);

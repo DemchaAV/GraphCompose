@@ -1,6 +1,7 @@
 package com.demcha.compose.document.output;
 
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.font.FontName;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,18 @@ public final class DocumentHeaderFooter {
     @Builder.Default
     private final float fontSize = 9f;
 
+    /**
+     * Font family for the zone's text. Standard-14 Helvetica by default — the face
+     * the zone has always drawn — so an existing header or footer is unchanged.
+     * Set it to reach a family with the coverage the text needs: the engine has no
+     * automatic fallback, here or in the body, so a code point the chosen family
+     * cannot encode is substituted with {@code ?}.
+     *
+     * @since 2.2.3
+     */
+    @Builder.Default
+    private final FontName fontName = FontName.HELVETICA;
+
     @Builder.Default
     private final DocumentColor textColor = DocumentColor.GRAY;
 
@@ -54,6 +67,7 @@ public final class DocumentHeaderFooter {
         this.centerText = null;
         this.rightText = null;
         this.fontSize = 9f;
+        this.fontName = FontName.HELVETICA;
         this.textColor = DocumentColor.GRAY;
         this.showSeparator = false;
         this.separatorColor = DocumentColor.LIGHT_GRAY;

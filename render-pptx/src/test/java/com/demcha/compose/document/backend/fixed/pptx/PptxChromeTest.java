@@ -11,6 +11,8 @@ import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.output.DocumentWatermarkLayer;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping;
+import com.demcha.compose.font.FontName;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFConnectorShape;
 import org.apache.poi.xslf.usermodel.XSLFShape;
@@ -178,6 +180,31 @@ class PptxChromeTest {
                 XSLFShape separator = findShape(show.getSlides().get(0), "GraphCompose Header Separator");
                 assertThat(separator).isInstanceOf(XSLFConnectorShape.class);
                 assertThat(separator.getAnchor().getY()).isEqualTo(30.0);
+            }
+        }
+    }
+
+    @Test
+    void aZoneNamingAFamilyTypesetsItsSlideRunInThatFamily() throws Exception {
+        try (DocumentSession session = composeTwoPages()) {
+            byte[] pptx = session.render(PptxFixedLayoutBackend.builder()
+                    .footer(DocumentHeaderFooter.builder()
+                            .centerText("Стр. {page}")
+                            .fontName(FontName.PT_SANS)
+                            .build())
+                    .build());
+
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                XSLFTextBox footer = (XSLFTextBox) findShape(show.getSlides().get(0), "GraphCompose Footer");
+
+                assertThat(footer.getTextParagraphs().get(0).getTextRuns().get(0).getFontFamily())
+                        .as("the family the zone named has to reach the slide run, or PowerPoint"
+                                + " typesets the footer in the theme font")
+                        .isEqualTo(PptxFontMapping.familyFor(FontName.PT_SANS))
+                        .isNotEqualTo(PptxFontMapping.familyFor(FontName.HELVETICA));
+                assertThat(footer.getText())
+                        .as("and the text survives, rather than being substituted glyph by glyph")
+                        .contains("Стр.");
             }
         }
     }

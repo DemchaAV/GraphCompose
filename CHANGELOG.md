@@ -5,6 +5,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.3 — Planned
 
+### Public API
+
+- **A header or footer can name its font family.** `DocumentHeaderFooter.fontName(...)`
+  picks the family the zone is typeset in; the PDF and PPTX backends resolve it through
+  the document's own font library, the same way body text is resolved. Until now a zone
+  was drawn in standard-14 Helvetica and nothing else, so a footer outside WinAnsi — a
+  Cyrillic page counter, a Greek imprint — came out as a row of `?`. The default is
+  still `FontName.HELVETICA` and resolves to the same standard-14 face the zone drew
+  before, so an existing header or footer renders unchanged down to its placement.
+  Naming a family is the whole mechanism: there is no automatic fallback here any more
+  than there is in the body, so a code point the chosen family cannot encode is still
+  substituted with `?`.
+
+### Tests
+
+- **Header and footer placement is now guarded.** `ChromeGeometryGuardTest` pins the
+  rules a zone is drawn by — left slot flush to the left margin, right slot flush to the
+  right, centre slot centred between them, one baseline per zone at a fixed offset from
+  the zone's edge, repeated identically on every page — and records that a zone's
+  `height` reserves nothing from the content area. No template registers a header or
+  footer, so none of the committed visual baselines covered chrome: a change to how a
+  zone is positioned used to move text in every consumer's document while passing every
+  gate in the repository.
+
 ### Templates
 
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,

@@ -83,7 +83,7 @@ final class DocumentPageZones {
 
         List<PlacedFragment> combined = new ArrayList<>(base.fragments());
         for (int page = 0; page < base.totalPages(); page++) {
-            PageContext context = new PageContext(page + 1, base.totalPages());
+            PageContext context = PageContext.paginated(page + 1, base.totalPages());
             for (int index = 0; index < zones.size(); index++) {
                 DocumentPageZone zone = zones.get(index);
                 if (!zone.appliesTo(context)) {

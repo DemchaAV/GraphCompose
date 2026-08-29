@@ -18,6 +18,18 @@ follow semantic versioning; release dates are ISO 8601.
   than there is in the body, so a code point the chosen family cannot encode is still
   substituted with `?`.
 
+- **DOCX exports a page zone as a real Word footer.** The zone the PDF and PPTX backends
+  draw is now written into a `w:ftr` / `w:hdr` part, which is the first header/footer support
+  the DOCX exporter has had. The band's children become runs on one Word line: a paragraph
+  contributes its runs, a flex spacer becomes the right tab stop. Page numbers are the part
+  that could not simply be copied over — a semantic export hands the node tree to Word and
+  *Word* paginates, so a number written as text would be right on one page and wrong on the
+  rest. `PageContext.pageNumber()` and `pageTotal()` return a node instead of an `int`:
+  resolved text on a fixed-layout export, a live `PAGE` / `NUMPAGES` field in Word. The same
+  zone definition therefore serves both lanes. Reading `PageContext.number()` on a semantic
+  export raises `UnsupportedOperationException` naming the alternative rather than returning
+  a plausible lie. Node kinds outside the mapped set are skipped and reported.
+
 - **A page zone draws a node subtree instead of text slots.** `DocumentPageZone`, registered
   through `document.chrome().zone(...)`, takes a content function called once per page with
   that page's `PageContext` and returns any `DocumentNode`. The subtree is laid out against a

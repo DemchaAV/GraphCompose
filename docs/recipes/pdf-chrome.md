@@ -168,6 +168,26 @@ on the last page are ordinary Java in the same lambda.
   raises `AtomicNodeTooLargeException` naming the zone, rather than silently
   losing half of what it was given.
 
+### The same zone in DOCX
+
+A zone also exports to Word, as a real `w:ftr` part. One thing cannot be copied
+across, though: a semantic export hands the node tree to Word and **Word**
+paginates, so there is no page number to write. Ask for it as a node rather than
+an `int` and both lanes can answer:
+
+```java
+document.chrome().zone(DocumentPageZone.footer(32, page -> new RowBuilder()
+        .addParagraph(p -> p.text("Confidential"))
+        .flexSpacer()
+        .add(page.pageNumber())      // text in a PDF, a live PAGE field in Word
+        .build()));
+```
+
+`page.number()` and `page.total()` stay available for fixed-layout output, where
+they are real values — but they raise `UnsupportedOperationException` on a
+semantic export instead of baking in a number that would be wrong on every page
+but one.
+
 ## Protection (passwords and permissions)
 
 ```java

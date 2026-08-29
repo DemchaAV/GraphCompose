@@ -63,6 +63,10 @@ public final class RowBuilder {
                // number of an anchor), so it slots into a row like a paragraph —
                // it is the number column of a table-of-contents row.
                || child instanceof PageReferenceNode
+               // PageFieldNode is the same shape of leaf, asking the consuming
+               // format for the number instead of the document: a zone's footer
+               // line is a row, and the page field is one of its columns.
+               || child instanceof PageFieldNode
                || child instanceof SectionNode
                || child instanceof ContainerNode
                // ShapeContainerNode is the same shape of thing as

@@ -120,7 +120,8 @@ final class DocumentChromeOptions {
                && watermark == null
                && protection == null
                && viewerPreferences == null
-               && headersAndFooters.isEmpty();
+               && headersAndFooters.isEmpty()
+               && zones.isEmpty();
     }
 
     /**
@@ -134,7 +135,7 @@ final class DocumentChromeOptions {
             return DocumentOutputOptions.EMPTY;
         }
         return new DocumentOutputOptions(metadata, watermark, protection, viewerPreferences,
-                List.copyOf(headersAndFooters));
+                List.copyOf(headersAndFooters), List.copyOf(zones));
     }
 
     /**

@@ -30,6 +30,7 @@ import java.util.Objects;
  */
 final class DocumentChromeOptions {
     private final List<DocumentHeaderFooter> headersAndFooters = new ArrayList<>();
+    private final List<DocumentPageZone> zones = new ArrayList<>();
     private DocumentMetadata metadata;
     private DocumentWatermark watermark;
     private DocumentProtection protection;
@@ -66,6 +67,21 @@ final class DocumentChromeOptions {
 
     void clearHeadersAndFooters() {
         this.headersAndFooters.clear();
+        this.zones.clear();
+    }
+
+    void addZone(DocumentPageZone zone) {
+        Objects.requireNonNull(zone, "zone");
+        if (zone.getContent() == null) {
+            throw new IllegalArgumentException(
+                    "A page zone needs a content function; DocumentPageZone.footer(height, page -> ...)"
+                            + " builds one.");
+        }
+        this.zones.add(zone);
+    }
+
+    List<DocumentPageZone> zones() {
+        return List.copyOf(zones);
     }
 
     /**
@@ -81,6 +97,11 @@ final class DocumentChromeOptions {
     double reservedHeight(DocumentHeaderFooterZone zone) {
         double reserved = 0.0;
         for (DocumentHeaderFooter entry : headersAndFooters) {
+            if (entry.getZone() == zone && entry.isReserveSpace()) {
+                reserved = Math.max(reserved, entry.getHeight());
+            }
+        }
+        for (DocumentPageZone entry : zones) {
             if (entry.getZone() == zone && entry.isReserveSpace()) {
                 reserved = Math.max(reserved, entry.getHeight());
             }

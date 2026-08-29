@@ -131,6 +131,43 @@ either. The engine draws what the family you named can encode and
 substitutes `?` for the rest, so the family has to cover the script.
 Custom families registered on the session are resolved here too.
 
+## A zone: nodes in the band, not text slots
+
+`DocumentHeaderFooter` gives three text slots and three tokens. When the band
+needs a badge, a link, a logo or a layout, register a **zone** instead: its
+content is a node subtree, built per page from that page's `PageContext`.
+
+```java
+import com.demcha.compose.document.output.DocumentPageZone;
+
+document.chrome().zone(DocumentPageZone.footer(36, page -> new RowBuilder()
+        .gap(10)
+        .addParagraph(p -> p.text("Confidential"))
+        .flexSpacer()
+        .addParagraph(p -> p.inlineChip("v2.4", ink, fill))
+        .addParagraph(p -> p.text(page.number() + " / " + page.total()))
+        .build()));
+```
+
+The subtree goes through the same layout and render path as the body, so the
+fonts, the bidi reordering, the inline chips and the link annotations are the
+ones the body already gets — the backends need no zone-specific code, and the
+PPTX deck carries the band for the same reason the PDF does.
+
+There are no placeholder tokens here and none are needed: `page.number()` and
+`page.total()` are the values, and roman numerals, an offset or a different line
+on the last page are ordinary Java in the same lambda.
+
+- **`appliesTo(page -> !page.isFirst())`** decides which pages carry the zone.
+  It is a separate question from numbering, so "no number on the cover, keep the
+  logo" is one zone with a predicate rather than two zones.
+- **A zone reserves its height by default** — the opposite of
+  `DocumentHeaderFooter`, which cannot, because it has to keep rendering
+  documents written before the flag existed.
+- **A zone does not paginate.** Content that needs more than the declared height
+  raises `AtomicNodeTooLargeException` naming the zone, rather than silently
+  losing half of what it was given.
+
 ## Protection (passwords and permissions)
 
 ```java

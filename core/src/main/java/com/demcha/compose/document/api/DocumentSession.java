@@ -750,7 +750,13 @@ public final class DocumentSession implements AutoCloseable {
      * run inside the cache compute, so the result is cached once per revision.
      */
     private LayoutGraph computeLayout() {
-        return DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+        // Backgrounds go under the body, zones over it, so the two splices bracket
+        // the compiled graph in that order.
+        LayoutGraph withBackgrounds =
+                DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+        return DocumentPageZones.apply(
+                withBackgrounds, chromeOptions.zones(), compiler, registry,
+                measurementResources, markdown, sessionId);
     }
 
     private PageGeometry buildPageGeometry() {

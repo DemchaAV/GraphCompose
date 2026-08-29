@@ -18,6 +18,22 @@ follow semantic versioning; release dates are ISO 8601.
   than there is in the body, so a code point the chosen family cannot encode is still
   substituted with `?`.
 
+- **A page zone draws a node subtree instead of text slots.** `DocumentPageZone`, registered
+  through `document.chrome().zone(...)`, takes a content function called once per page with
+  that page's `PageContext` and returns any `DocumentNode`. The subtree is laid out against a
+  canvas the size of the band and spliced into the compiled layout graph, so every
+  fixed-layout backend draws it with no code of its own: a badge, a link annotation, an image,
+  a shape, a table, right-to-left text and any font the document has all work in a zone
+  because it is the body's machinery, not a second copy of it. Page numbers come from the
+  context — `page.number() + " / " + page.total()` — so the band needs no placeholder tokens,
+  and anything the tokens could not express (roman numerals, an offset, a different line on
+  the last page) is ordinary Java in the same lambda. `appliesTo(page -> ...)` decides which
+  pages carry the zone, which separates "is this page numbered" from "is the band drawn" —
+  the two that `DocumentPageNumbering` conflates. A zone reserves its height by default and
+  does not paginate: content that needs more than the band raises
+  `AtomicNodeTooLargeException` naming the zone and its height rather than being dropped.
+  `DocumentHeaderFooter` is unchanged and unaffected.
+
 - **A header or footer can reserve its height from the content area.**
   `DocumentHeaderFooter.reserveSpace(true)` insets the page's content area so the body
   is never laid out into the band the zone paints. Until now `height` positioned the

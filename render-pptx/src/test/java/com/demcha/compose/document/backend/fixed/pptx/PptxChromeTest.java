@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.PageBreakNode;
 import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentMetadata;
 import com.demcha.compose.document.output.DocumentPageNumbering;
+import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.output.DocumentPageNumberStyle;
 import com.demcha.compose.document.output.DocumentWatermark;
 import com.demcha.compose.document.output.DocumentWatermarkLayer;
@@ -207,6 +208,44 @@ class PptxChromeTest {
                         .contains("Стр.");
             }
         }
+    }
+
+    /**
+     * A node zone is spliced into the layout graph in core, and this backend draws
+     * every fragment of that graph — so the band arrives on the slide without the
+     * PPTX side knowing a zone exists. That is the whole reason the zone is
+     * content rather than a second chrome renderer.
+     */
+    @Test
+    void aNodeZoneReachesTheDeckWithoutBackendSpecificCode() throws Exception {
+        try (DocumentSession session = composeTwoPages()) {
+            session.chrome().zone(DocumentPageZone.footer(36, page ->
+                    session.dsl().paragraph()
+                            .name("ZoneCounter")
+                            .text("Slide " + page.number() + " of " + page.total())
+                            .build()));
+
+            byte[] pptx = session.render(PptxFixedLayoutBackend.builder().build());
+
+            try (XMLSlideShow show = new XMLSlideShow(new ByteArrayInputStream(pptx))) {
+                assertThat(slideText(show.getSlides().get(0)))
+                        .as("the zone's own text is on the first slide")
+                        .contains("Slide 1 of 2");
+                assertThat(slideText(show.getSlides().get(1)))
+                        .as("and the second slide carries its own page's numbers")
+                        .contains("Slide 2 of 2");
+            }
+        }
+    }
+
+    private static String slideText(XSLFSlide slide) {
+        StringBuilder text = new StringBuilder();
+        for (XSLFShape shape : slide.getShapes()) {
+            if (shape instanceof XSLFTextBox box) {
+                text.append(box.getText()).append(" ");
+            }
+        }
+        return text.toString();
     }
 
     private static List<String> zoneTexts(XSLFSlide slide, String shapeName) {

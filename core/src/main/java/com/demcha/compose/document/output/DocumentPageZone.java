@@ -46,6 +46,10 @@ import java.util.function.Predicate;
  * page's content area by default — a zone exists to hold content, and content
  * the body can overlap is not what anyone means by it.</p>
  *
+ * <p>The two types coexist deliberately rather than one replacing the other;
+ * {@code docs/adr/0017-page-chrome-two-paths.md} records why, and what evidence
+ * would justify revisiting it.</p>
+ *
  * @author Artem Demchyshyn
  * @since 2.2.3
  */

@@ -14,6 +14,13 @@ import lombok.Getter;
  * backend: {@code {page}}, {@code {pages}}, and {@code {date}}. Backends that
  * cannot evaluate the tokens may render them verbatim.</p>
  *
+ * <p>This is the text band: three slots, three tokens, painted after the page is
+ * laid out. When the band needs to hold something — a badge, a link, a logo, a
+ * layout — reach for {@link DocumentPageZone} instead, whose content is a node
+ * subtree the engine lays out and paints the way it does the body, and which
+ * exports to DOCX as a real Word header or footer. The two coexist and neither
+ * changes the other: an existing header or footer renders exactly as it did.</p>
+ *
  * @author Artem Demchyshyn
  */
 @Getter

@@ -19,6 +19,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.function.Consumer;
@@ -320,6 +321,43 @@ class InlineHighlightRenderTest {
             String rendered = new PDFTextStripper().getText(document).replaceAll("\\s+", " ").trim();
             assertThat(rendered).isEqualTo("Tags: alpha beta gamma delta epsilon end");
         }
+    }
+
+    @Test
+    void chipFollowsTheParagraphSizeInsteadOfTheDefault() throws Exception {
+        // A chip is glyphs on a fill, so it has to be sized like the glyphs around
+        // it: in a 9 pt paragraph the badge measures 9 pt, not the 14 pt default.
+        DocumentTextStyle small = DocumentTextStyle.builder().size(9).build();
+        List<ParagraphTextSpan> spans = textSpans(p -> p
+                .textStyle(small)
+                .inlineText("Build ")
+                .inlineChip(" Paid ", DocumentColor.rgb(22, 101, 52), FILL));
+
+        ParagraphTextSpan plain = spans.stream().filter(s -> s.background() == null).findFirst().orElseThrow();
+        ParagraphTextSpan chip = spans.stream().filter(s -> s.background() != null).findFirst().orElseThrow();
+        assertThat(plain.textStyle().size()).isEqualTo(9.0, within(1e-9));
+        assertThat(chip.textStyle().size())
+                .as("the chip is drawn at the paragraph size, not the 14 pt default")
+                .isEqualTo(9.0, within(1e-9));
+        assertThat(chip.textStyle().color()).isEqualTo(new Color(22, 101, 52));
+
+        // Measured, not just declared: the same chip in a default-styled paragraph
+        // is wider, because its glyphs really are bigger.
+        List<ParagraphTextSpan> defaultSized = textSpans(p -> p
+                .inlineChip(" Paid ", DocumentColor.rgb(22, 101, 52), FILL));
+        double wide = defaultSized.stream().filter(s -> s.background() != null).findFirst().orElseThrow().width();
+        assertThat(chip.width()).as("a 9 pt chip measures narrower than a 14 pt one").isLessThan(wide);
+    }
+
+    @Test
+    void explicitlyStyledChipKeepsItsOwnSize() throws Exception {
+        List<ParagraphTextSpan> spans = textSpans(p -> p
+                .textStyle(DocumentTextStyle.builder().size(9).build())
+                .inlineStyledChip("BIG", DocumentTextStyle.builder().size(18).build(), FILL));
+        ParagraphTextSpan chip = spans.stream().filter(s -> s.background() != null).findFirst().orElseThrow();
+        assertThat(chip.textStyle().size())
+                .as("an explicit chip style overrides the paragraph, both ways")
+                .isEqualTo(18.0, within(1e-9));
     }
 
     @Test

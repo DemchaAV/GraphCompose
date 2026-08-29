@@ -5,6 +5,44 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.3.0 — Planned
 
+### Public API
+
+- **A chip is sized like the text around it.** `ParagraphBuilder.inlineChip(text, fg, bg)`
+  built its glyph style from scratch — `DocumentTextStyle.builder().color(fg)` — so the
+  badge came out at the 14 pt Helvetica default whatever the paragraph said. In a 9 pt
+  footer the words rendered at 9 pt and the chip between them rendered half again as
+  large, which reads as a rendering fault rather than a choice.
+
+  The colour-only overload now derives its style from the paragraph's `textStyle` and
+  replaces only the colour:
+
+  ```java
+  paragraph.textStyle(DocumentTextStyle.builder().size(9).build())
+          .inlineText("Build ")
+          .inlineChip(" Paid ", GREEN_INK, GREEN_FILL);   // a 9 pt chip
+  ```
+
+  That is how the rest of the builder already behaves. `inlineText`, `inlineLink` and
+  `inlineLinkTo` pass a `null` run style, which the layout resolves to the paragraph's,
+  and `inlineHighlight` documents that fallback on its `textStyle` parameter. The chip
+  sugar was the one call that opted out of it.
+
+  **This moves rendered output** wherever a chip sits in a paragraph that is not at the
+  default style: the glyphs — and with them the chip's measured width — now follow the
+  paragraph. The paragraph style is read at the point of the call, so `textStyle(...)`
+  has to come before the chip.
+
+- **`inlineStyledChip(text, textStyle, bg)`** styles a chip that is meant to differ from
+  its paragraph: an explicit glyph style on a custom fill, keeping the default chip
+  radius and padding, which previously meant restating both through `inlineHighlight`.
+  It carries its own name rather than overloading `inlineChip` on the second parameter,
+  which would have made a literal `inlineChip(text, null, bg)` ambiguous and stopped it
+  compiling.
+
+  `RichText.chip(...)` is unchanged and still draws at the default size: a rich-text
+  builder is assembled without a paragraph to read. Its documentation now says so, and
+  points at `highlight(...)` for an explicitly sized chip.
+
 ### Templates
 
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,

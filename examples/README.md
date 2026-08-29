@@ -156,6 +156,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
 | [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
+| [Page zone](#page-zone) | `DocumentPageZone` — a footer built from nodes: a notice, an inline chip, a real link annotation and `page.pageNumber()` | [PDF](../assets/readme/examples/page-zone.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java) |
 | [Viewer preferences](#viewer-preferences) | `chrome().viewerPreferences(...)` — open with the bookmark panel (`USE_OUTLINES`), set page layout, or show the doc title in the window | [PDF](../assets/readme/examples/viewer-preferences.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java) |
 | [In-PDF navigation](#in-pdf-navigation) | `anchor(...)` destinations + internal `linkTo(...)` / `inlineLinkTo(...)` / `shapeLinkTo(...)` — clickable cross-references and footnotes as native PDF GoTo actions; forward references resolve in a deferred pass | [PDF](../assets/readme/examples/in-pdf-navigation.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
@@ -945,6 +946,30 @@ session.chrome().footer(DocumentHeaderFooter.builder()
 
 [📄 View PDF](../assets/readme/examples/page-numbering.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java)
+
+### Page zone
+
+A zone's content is a node subtree rather than three text slots, so the band can
+hold a badge, a link and the page number on one line — laid out and painted by
+the same engine as the body, which is why the chip is a real chip and the link a
+real annotation. `page.pageNumber()` returns a node rather than an `int`, so the
+same zone also exports to DOCX, where it becomes Word's live `PAGE` field.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+session.chrome().zone(DocumentPageZone.footer(34, page -> new RowBuilder()
+    .gap(8)
+    .addParagraph(p -> p.text("Confidential").textStyle(chrome))
+    .flexSpacer()
+    .addParagraph(p -> p.textStyle(chrome).inlineChip("v2.4", chipInk, chipFill))
+    .addParagraph(p -> p.textStyle(chrome).inlineLink("acme.example",
+            new DocumentLinkOptions("https://acme.example")))
+    .add(page.pageNumber(chrome))
+    .build()));
+```
+
+[📄 View PDF](../assets/readme/examples/page-zone.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java)
 
 ### Viewer preferences
 

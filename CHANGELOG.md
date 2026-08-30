@@ -7,6 +7,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A structured invoice document model.** The invoice family's data layer knew one
+  shape — an invoice as pre-formatted display strings, with one address block per
+  party, line items whose quantity and money are already rendered, and a flat list of
+  summary rows. That cannot carry the structured business invoice: a brand lockup with
+  the sender's own logo, labelled masthead metadata, a contact block with a business
+  registration, priced service lines carrying `BigDecimal` figures and the unit they
+  are counted in, a totals stack with its own total band, bank payment fields, and a
+  footer line. `templates.data.invoice` now carries that second model —
+  `StructuredInvoiceData` (+ its section records) wrapped by
+  `StructuredInvoiceDocumentSpec` — alongside the display one; a preset consumes the
+  model whose shape it renders. The brand logo arrives as `DocumentImageData`, because
+  the logo is caller-supplied content rather than template chrome, and it stays
+  optional so a wordmark-only lockup composes. Every component normalizes `null` to
+  its empty form, money and quantities default to zero, and collections are frozen.
+
 - **A structured proposal document model.** The proposal family's data layer knew one
   shape — a titled run of prose sections with a flat timeline and pricing list — which
   cannot carry the structured business proposal: brand marks, an authored multi-line
@@ -20,6 +35,19 @@ follow semantic versioning; release dates are ISO 8601.
   form and freezes its collections, matching the family's existing records.
 
 ### Templates
+
+- **A professional-services invoice preset: `ConsultingInvoice`.** A corporate masthead
+  — brand lockup and contact channels beside the document title and its metadata —
+  over priced service lines that carry a service period and a unit per line, closing
+  with an emphasized total band and the bank details beside the notes and the due-by
+  chip. Ships as `invoice.presets.ConsultingInvoice` consuming the new structured
+  invoice model, with its contact marks, bank badge and calendar packaged in the
+  templates artifact, porting the rendered layout of the published standalone
+  `northpoint-consulting-invoice` template. Long invoices flow: the line-items table
+  repeats its header and the totals stack stays whole. Guarded by a smoke test
+  (including the empty document, the wordmark fallback, the rendered figures and the
+  repeated header), exact layout snapshots for the single page and the overflow, and a
+  pixel-parity gate; the examples showcase gains `invoice-consulting-v2`.
 
 - **A second invoice preset: `ClassicInvoice`.** The letterhead-style invoice — a header
   band with the company name and a 28pt INVOICE title, a TOTAL DUE hero strip,

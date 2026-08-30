@@ -47,7 +47,7 @@ public final class NavySidebarSampleData {
                         .name("Priya", "Raghavan")
                         .jobTitle("Marketing Manager")
                         .contact(new Contact("+44 20 7946 0812",
-                                "priya.raghavan@example.com",
+                                "priya.r@example.com",
                                 "Bristol, United Kingdom"))
                         .link(new Link("linkedin.com/in/praghavan",
                                 "https://linkedin.com/in/praghavan"))

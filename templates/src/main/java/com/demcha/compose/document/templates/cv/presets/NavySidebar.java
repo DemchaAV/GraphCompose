@@ -81,6 +81,12 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles
  * is; a document that lists more than one profile should say which is which
  * in the label.</p>
  *
+ * <p>A channel is one paragraph, the mark and the value sharing a line, so a
+ * value wider than the sidebar's text column wraps under the mark and leaves
+ * it alone on the first line. The column is about 124pt, which at this type
+ * size is a little over twenty characters — long addresses want shortening
+ * rather than a wider column.</p>
+ *
  * <h2>Fonts</h2>
  *
  * <p>The sheet is set in Lato. The templates artifact does not carry it —

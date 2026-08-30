@@ -94,6 +94,7 @@ final class ShowcaseMetadata {
         proposal("proposal-cinematic", "ProposalCinematicFileExample", "Cinematic Proposal", "Layered ModernProposal layout with cover panel, hero spread, and rich typography.", "proposal", "cinematic");
         proposal("project-proposal-cinematic", "CinematicProposalFileExample", "Project Proposal (cinematic)", "End-to-end project proposal with mountain hero, scope panels, and pricing summary.", "proposal", "cinematic");
         proposal("proposal-modern-v2", "v2/ModernProposalV2Example", "Modern Proposal", "The ModernProposal preset composed straight from its document spec — cover, scope sections and pricing table themed through BrandTheme.", "proposal");
+        proposal("proposal-northline-v2", "v2/NorthlineProposalV2Example", "Northline Proposal", "The NorthlineProposal preset on the structured proposal model — brand header, stacked title, glance card, goal cells, numbered scope, phase grid, investment table and signing card across two pages.", "proposal");
 
         // ===== Templates / Schedule =====
         schedule("weekly-schedule", "Weekly Schedule", "Multi-day weekly schedule with shift assignments, category fills, and repeated header.", "schedule", "table");

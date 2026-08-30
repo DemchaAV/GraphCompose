@@ -7,6 +7,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CvIdentity` carries an optional portrait.** A CV design with a photograph in it
+  had nowhere to put one: the identity record held the name, the title, the contact
+  triple and the links, and a preset that wanted a face had to ship a silhouette of its
+  own. `CvIdentity` now carries `Optional<DocumentImageData> portrait` — the image
+  itself, because a photograph is caller-supplied content rather than template chrome —
+  reachable through `CvIdentity.Builder.portrait(...)`. The four- and three-argument
+  constructors are kept explicitly, so existing calls compile and link unchanged; only a
+  record deconstruction pattern over `CvIdentity` sees the extra component. A document
+  carrying a portrait still renders through every preset in the family — the ones with
+  nowhere to draw it ignore it.
+
 - **A structured invoice document model.** The invoice family's data layer knew one
   shape — an invoice as pre-formatted display strings, with one address block per
   party, line items whose quantity and money are already rendered, and a flat list of
@@ -35,6 +46,24 @@ follow semantic versioning; release dates are ISO 8601.
   form and freezes its collections, matching the family's existing records.
 
 ### Templates
+
+- **A portrait CV preset: `NavySidebar`.** A one-page A4 CV in two columns on Lato —
+  a navy plate carrying a ringed portrait, the contact channels behind their marks, the
+  degrees, the skills and the languages, beside a white column of the name, the summary,
+  the roles held on a timeline rail with a filled marker at each one, and the
+  achievements and certifications behind badged headings. Ships as
+  `cv.presets.NavySidebar` on the existing `CvDocument` model, porting the rendered
+  layout of the published standalone `navy-sidebar-cv` template. Like its sibling it
+  owns its page and holds one: the two columns are a single atomic row, so a CV longer
+  than the sheet raises `AtomicNodeTooLargeException` rather than flowing or dropping
+  entries. Sections reach their berth by title rather than by `Slot`; languages are a
+  `RowsSection` because this design writes the proficiency out — "Native", "Advanced" —
+  which a levelled skill could not carry back. The photograph comes from the new
+  `CvIdentity.portrait()`; an identity without one draws the ring around an empty navy
+  disc. Guarded by a smoke test (including the missing portrait, the capitals this
+  design imposes, the one-page limit and the fields it has no place for), an exact
+  layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-navy-sidebar-v2`.
 
 - **The first CV preset that owns its page: `ProfessionalSidebar`.** A one-page CV
   in two columns on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a

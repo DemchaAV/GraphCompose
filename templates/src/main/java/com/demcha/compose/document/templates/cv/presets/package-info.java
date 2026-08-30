@@ -21,11 +21,11 @@
  * fed a different theme.</p>
  *
  * <p>The package holds a second shape as well. A preset that reproduces a
- * specific drawn sheet — {@code ProfessionalSidebar} is the one here — takes
- * no {@code BrandTheme} and calls no shared renderer: its geometry, palette
- * and type scale are measured constants of its own, and it sets its own page.
- * The data model is the same {@code CvDocument}; what differs is that the
- * cosmetics cannot be swapped, because moving them would stop it being the
- * sheet it reproduces.</p>
+ * specific drawn sheet — {@code ProfessionalSidebar} and {@code NavySidebar}
+ * are the ones here — takes no {@code BrandTheme} and calls no shared
+ * renderer: its geometry, palette and type scale are measured constants of
+ * its own, and it sets its own page. The data model is the same
+ * {@code CvDocument}; what differs is that the cosmetics cannot be swapped,
+ * because moving them would stop it being the sheet it reproduces.</p>
  */
 package com.demcha.compose.document.templates.cv.presets;

@@ -6,20 +6,25 @@ import java.util.Objects;
 /**
  * The billed-to block of a structured invoice.
  *
- * <p>The block owns its heading, and everything under the recipient's name
- * is an authored line — department, street, city, country — so the caller
- * decides how many lines the address takes and in what order.</p>
+ * <p>The block owns its heading, and the lines under the recipient's name
+ * come in two groups because a preset sets them apart: the {@code subline}
+ * is the single attention line — a department, a contact, a cost centre —
+ * that sits directly under the name, and {@code addressLines} is the
+ * address block under that.</p>
  *
- * @param heading    the block heading (e.g. {@code "BILLED TO"})
- * @param name       the recipient's name, set apart from the lines below
- * @param lines      the address lines under the name, in order
- * @param emailLabel the label printed before the email address
- * @param email      the recipient's email address
+ * @param heading      the block heading (e.g. {@code "BILLED TO"})
+ * @param name         the recipient's name, set apart from the lines below
+ * @param subline      the attention line under the name; empty when the
+ *                     recipient has none
+ * @param addressLines the address lines, in order
+ * @param emailLabel   the label printed before the email address
+ * @param email        the recipient's email address
  */
 public record InvoiceRecipient(
         String heading,
         String name,
-        List<String> lines,
+        String subline,
+        List<String> addressLines,
         String emailLabel,
         String email) {
 
@@ -29,7 +34,8 @@ public record InvoiceRecipient(
     public InvoiceRecipient {
         heading = Objects.requireNonNullElse(heading, "");
         name = Objects.requireNonNullElse(name, "");
-        lines = List.copyOf(Objects.requireNonNullElse(lines, List.of()));
+        subline = Objects.requireNonNullElse(subline, "");
+        addressLines = List.copyOf(Objects.requireNonNullElse(addressLines, List.of()));
         emailLabel = Objects.requireNonNullElse(emailLabel, "");
         email = Objects.requireNonNullElse(email, "");
     }

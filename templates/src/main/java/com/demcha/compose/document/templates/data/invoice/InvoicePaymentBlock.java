@@ -14,16 +14,22 @@ import java.util.Objects;
  * them one field at a time. The labels are content — they differ by
  * banking system.</p>
  *
- * @param heading     the block heading (e.g. {@code "PAYMENT INFORMATION"})
- * @param fields      the labelled payment fields, in print order
- * @param instruction the sentence under the fields
- * @param dueNotice   the short due-by notice set apart from the rest
+ * @param heading           the block heading
+ *                          (e.g. {@code "PAYMENT INFORMATION"})
+ * @param fields            the labelled payment fields, in print order
+ * @param instruction       the sentence under the fields
+ * @param dueNotice         the short due-by notice set apart from the rest
+ * @param dueNoticeEmphasis the run inside {@code dueNotice} that carries
+ *                          the emphasis — usually the term itself, as in
+ *                          {@code "30 days"}; empty leaves the notice
+ *                          evenly set
  */
 public record InvoicePaymentBlock(
         String heading,
         List<Field> fields,
         String instruction,
-        String dueNotice) {
+        String dueNotice,
+        String dueNoticeEmphasis) {
 
     /**
      * Normalizes optional fields and freezes the field list.
@@ -33,6 +39,7 @@ public record InvoicePaymentBlock(
         fields = List.copyOf(Objects.requireNonNullElse(fields, List.of()));
         instruction = Objects.requireNonNullElse(instruction, "");
         dueNotice = Objects.requireNonNullElse(dueNotice, "");
+        dueNoticeEmphasis = Objects.requireNonNullElse(dueNoticeEmphasis, "");
     }
 
     /**

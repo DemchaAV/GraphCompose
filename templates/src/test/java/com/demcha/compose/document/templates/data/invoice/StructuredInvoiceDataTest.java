@@ -26,7 +26,7 @@ class StructuredInvoiceDataTest {
         assertThat(data.brand().hasLogo()).isFalse();
         assertThat(data.supplier().addressLines()).isEmpty();
         assertThat(data.masthead().entries()).isEmpty();
-        assertThat(data.billTo().lines()).isEmpty();
+        assertThat(data.billTo().addressLines()).isEmpty();
         assertThat(data.summary().intro()).isEmpty();
         assertThat(data.serviceLines().lines()).isEmpty();
         assertThat(data.serviceLines().columns().amount()).isEmpty();
@@ -34,7 +34,6 @@ class StructuredInvoiceDataTest {
         assertThat(data.totals().totalAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(data.payment().fields()).isEmpty();
         assertThat(data.notes().paragraphs()).isEmpty();
-        assertThat(data.footer().legalName()).isEmpty();
         assertThat(data.currencyCode()).isEmpty();
     }
 
@@ -55,16 +54,14 @@ class StructuredInvoiceDataTest {
         assertThat(entry.label()).isEmpty();
         assertThat(entry.value()).isEmpty();
 
-        InvoiceRecipient recipient = new InvoiceRecipient(null, null, null, null, null);
+        InvoiceRecipient recipient = new InvoiceRecipient(null, null, null, null, null, null);
         assertThat(recipient.heading()).isEmpty();
         assertThat(recipient.emailLabel()).isEmpty();
+        assertThat(recipient.subline()).isEmpty();
 
         InvoicePaymentBlock.Field field = new InvoicePaymentBlock.Field(null, null);
         assertThat(field.label()).isEmpty();
         assertThat(field.value()).isEmpty();
-
-        InvoiceFooterLine footer = new InvoiceFooterLine(null, null);
-        assertThat(footer.registrationText()).isEmpty();
     }
 
     @Test
@@ -103,10 +100,10 @@ class StructuredInvoiceDataTest {
         List<List<?>> frozen = List.of(
                 supplier.addressLines(),
                 new InvoiceMasthead("INVOICE", new ArrayList<>()).entries(),
-                new InvoiceRecipient("BILLED TO", "N", new ArrayList<>(), "", "").lines(),
+                new InvoiceRecipient("BILLED TO", "N", "", new ArrayList<>(), "", "").addressLines(),
                 new InvoiceServiceLines(null, new ArrayList<>()).lines(),
                 new InvoiceTotalsBlock(new ArrayList<>(), "TOTAL", BigDecimal.ONE).rows(),
-                new InvoicePaymentBlock("PAY", new ArrayList<>(), "", "").fields(),
+                new InvoicePaymentBlock("PAY", new ArrayList<>(), "", "", "").fields(),
                 new InvoiceNotesBlock("NOTES", new ArrayList<>(), "", "").paragraphs());
         for (List<?> list : frozen) {
             assertThatThrownBy(() -> list.add(null))
@@ -122,7 +119,7 @@ class StructuredInvoiceDataTest {
         InvoiceMasthead masthead = new InvoiceMasthead("INVOICE",
                 List.of(new InvoiceMasthead.Entry("Due Date:", "25 June 2025", true)));
         InvoiceRecipient billTo = new InvoiceRecipient("BILLED TO", "Greenfield",
-                List.of("12 Innovation Drive"), "Email:", "ap@example.com");
+                "Accounts Payable", List.of("12 Innovation Drive"), "Email:", "ap@example.com");
         InvoiceSummaryBlock summary =
                 new InvoiceSummaryBlock("INVOICE SUMMARY", "Services rendered.", "1–25 May");
         InvoiceServiceLines serviceLines = new InvoiceServiceLines(
@@ -136,12 +133,9 @@ class StructuredInvoiceDataTest {
                 "TOTAL DUE", new BigDecimal("15400"));
         InvoicePaymentBlock payment = new InvoicePaymentBlock("PAYMENT INFORMATION",
                 List.of(new InvoicePaymentBlock.Field("BSB:", "123-456")),
-                "Include the invoice number.", "Payment is due within 30 days.");
+                "Include the invoice number.", "Payment is due within 30 days.", "30 days");
         InvoiceNotesBlock notes = new InvoiceNotesBlock("NOTES",
                 List.of("Thank you."), "accounts@example.com", "+61");
-        InvoiceFooterLine footer =
-                new InvoiceFooterLine("Northpoint Pty Ltd", "ABN 12 345 678 901");
-
         StructuredInvoiceData data = StructuredInvoiceData.builder()
                 .brand(brand)
                 .supplier(supplier)
@@ -152,7 +146,6 @@ class StructuredInvoiceDataTest {
                 .totals(totals)
                 .payment(payment)
                 .notes(notes)
-                .footer(footer)
                 .currencyCode("AUD")
                 .build();
 
@@ -165,7 +158,6 @@ class StructuredInvoiceDataTest {
         assertThat(data.totals()).isSameAs(totals);
         assertThat(data.payment()).isSameAs(payment);
         assertThat(data.notes()).isSameAs(notes);
-        assertThat(data.footer()).isSameAs(footer);
         assertThat(data.currencyCode()).isEqualTo("AUD");
         assertThat(data.masthead().entries().get(0).emphasized()).isTrue();
     }

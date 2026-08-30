@@ -3,7 +3,7 @@ package com.demcha.compose.document.templates.data.invoice;
 import java.util.Objects;
 
 /**
- * Display-oriented input for structured invoice documents.
+ * Structured input for business invoice documents.
  *
  * <p>The display model ({@link InvoiceData}) carries an invoice as
  * pre-formatted strings: one address block per party, line items whose
@@ -31,7 +31,6 @@ import java.util.Objects;
  * @param totals       the totals stack and its total band
  * @param payment      where to send the money, and by when
  * @param notes        the closing notes and query channels
- * @param footer       the page-foot line
  * @param currencyCode the ISO currency code the figures are stated in
  */
 public record StructuredInvoiceData(
@@ -44,7 +43,6 @@ public record StructuredInvoiceData(
         InvoiceTotalsBlock totals,
         InvoicePaymentBlock payment,
         InvoiceNotesBlock notes,
-        InvoiceFooterLine footer,
         String currencyCode) {
 
     /**
@@ -55,15 +53,15 @@ public record StructuredInvoiceData(
         supplier = supplier == null
                 ? new InvoiceContactBlock(null, null, null, null, null, null, null) : supplier;
         masthead = masthead == null ? new InvoiceMasthead(null, null) : masthead;
-        billTo = billTo == null ? new InvoiceRecipient(null, null, null, null, null) : billTo;
+        billTo = billTo == null
+                ? new InvoiceRecipient(null, null, null, null, null, null) : billTo;
         summary = summary == null ? new InvoiceSummaryBlock(null, null, null) : summary;
         serviceLines = serviceLines == null
                 ? new InvoiceServiceLines(null, null) : serviceLines;
         totals = totals == null ? new InvoiceTotalsBlock(null, null, null) : totals;
         payment = payment == null
-                ? new InvoicePaymentBlock(null, null, null, null) : payment;
+                ? new InvoicePaymentBlock(null, null, null, null, null) : payment;
         notes = notes == null ? new InvoiceNotesBlock(null, null, null, null) : notes;
-        footer = footer == null ? new InvoiceFooterLine(null, null) : footer;
         currencyCode = Objects.requireNonNullElse(currencyCode, "");
     }
 
@@ -89,7 +87,6 @@ public record StructuredInvoiceData(
         private InvoiceTotalsBlock totals;
         private InvoicePaymentBlock payment;
         private InvoiceNotesBlock notes;
-        private InvoiceFooterLine footer;
         private String currencyCode;
 
         private Builder() {
@@ -195,17 +192,6 @@ public record StructuredInvoiceData(
         }
 
         /**
-         * Sets the page-foot line.
-         *
-         * @param footer footer line
-         * @return this builder
-         */
-        public Builder footer(InvoiceFooterLine footer) {
-            this.footer = footer;
-            return this;
-        }
-
-        /**
          * Sets the ISO currency code the figures are stated in.
          *
          * @param currencyCode currency code
@@ -223,7 +209,7 @@ public record StructuredInvoiceData(
          */
         public StructuredInvoiceData build() {
             return new StructuredInvoiceData(brand, supplier, masthead, billTo, summary,
-                    serviceLines, totals, payment, notes, footer, currencyCode);
+                    serviceLines, totals, payment, notes, currencyCode);
         }
     }
 }

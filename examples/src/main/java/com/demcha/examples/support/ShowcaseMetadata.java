@@ -87,6 +87,7 @@ final class ShowcaseMetadata {
 
         // ===== Templates / Invoice =====
         invoice("invoice-cinematic", "InvoiceCinematicFileExample", "Cinematic Invoice", "Layered ModernInvoice preset with theme-driven layout, advanced tables, and totals.", "invoice", "cinematic");
+        invoice("invoice-consulting-v2", "v2/ConsultingInvoiceV2Example", "Consulting Invoice", "The ConsultingInvoice preset on the structured invoice model — brand lockup with the caller's logo, labelled masthead metadata, priced service lines with service periods, a totals stack and bank payment fields.", "invoice");
         invoice("invoice-modern-v2", "v2/ModernInvoiceV2Example", "Modern Invoice", "The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.", "invoice");
 
         // ===== Templates / Proposal =====

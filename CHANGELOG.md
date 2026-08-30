@@ -148,6 +148,20 @@ follow semantic versioning; release dates are ISO 8601.
   subtitle, looked complete. The employer is now drawn between the position and the date,
   in the shared theme entry-subtitle style.
 
+### Tests
+
+- **The sidebar CV samples are held to the width of the column they are drawn in.**
+  A contact channel in `ProfessionalSidebar` and `NavySidebar` is one paragraph — the
+  mark and the value share a line — so a value wider than the sidebar's text column
+  wraps and leaves the mark alone on the first line. The promotion gates could not see
+  it: they measure the published template's own fixture, whose addresses fit, while the
+  example sample data is written for the repository and can outgrow the column with
+  every test still green. It shipped that way once, spotted in the rendered preview
+  rather than by a build. `SidebarContactRowsFitTest` now measures the shape of the row
+  instead of the length of the string — a single-line channel is as tall as its mark,
+  a wrapped one close to twice that — and the two sample addresses were shortened to
+  fit.
+
 ### Documentation
 
 - **The presets that cap content say so.** `MonogramSidebar`, `SidebarPortrait` and

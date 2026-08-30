@@ -36,6 +36,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A second structured proposal preset: `EditorialProposal`.** The same document the
+  `NorthlineProposal` preset renders, in a different hand: an orange accent, section
+  headings set in the display serif over short accent rules instead of in the body sans
+  inside icon badges, a brand mark drawn from vector paths instead of a monogram letter,
+  an untitled fact card, a scope ordinal set in plain accent text, and a hairline page
+  foot. Moving a document between the two presets is a one-line change plus two data
+  checks — the badge and goal icon tokens are preset-scoped (the four `fact-*` tokens
+  are not), and headings are drawn as authored, so the sibling's tracked capitals stay
+  capitals here. Ships as
+  `proposal.presets.EditorialProposal` on the structured proposal model, porting the
+  rendered layout of the published standalone `northline-proposal-orange` template,
+  with its SVG icon set packaged in the artifact. Guarded by a smoke test (including
+  the empty document, both data contracts, and the proof that one document renders
+  through both proposal presets), an exact two-page layout snapshot, and a
+  pixel-parity gate; the examples showcase gains `proposal-editorial-v2`.
+
 - **A professional-services invoice preset: `ConsultingInvoice`.** A corporate masthead
   — brand lockup and contact channels beside the document title and its metadata —
   over priced service lines that carry a service period and a unit per line, closing

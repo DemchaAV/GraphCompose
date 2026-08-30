@@ -32,6 +32,20 @@ follow semantic versioning; release dates are ISO 8601.
   overflow that freezes the two-page table continuation), and the invoice pixel-parity
   gate; the examples showcase gains `invoice-classic-v2`.
 
+- **The first structured proposal preset: `NorthlineProposal`.** A two-page
+  teal-and-navy business proposal on the Spectral/Lato pair — brand header with logo
+  mark and wordmark, three stacked title lines on the reference's own pitch, the
+  executive summary beside an at-a-glance fact card, icon goal cells, a numbered
+  scope list, deliverable columns, the phase grid, an investment table with subtotal /
+  optional / total row styling, and a signing card — with the navy footer band, the
+  teal page-number block and the `01`/`02` page numbers as page chrome rather than
+  flow content. Ships as `proposal.presets.NorthlineProposal` consuming the new
+  structured proposal model, with its icon set packaged in the templates artifact,
+  porting the rendered layout of the published standalone `northline-proposal`
+  template. Guarded by a smoke test (including the empty document and the
+  phase-grid header-count contract), an exact two-page layout snapshot, and a
+  pixel-parity gate; the examples showcase gains `proposal-northline-v2`.
+
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
   the date and the description, and never `CvEntry.subtitle()` — so every company name
   was missing from the rendered CV while the education block, which does render its

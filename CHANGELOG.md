@@ -5,6 +5,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.2.3 — Planned
 
+### Public API
+
+- **A structured proposal document model.** The proposal family's data layer knew one
+  shape — a titled run of prose sections with a flat timeline and pricing list — which
+  cannot carry the structured business proposal: brand marks, an authored multi-line
+  title, an at-a-glance fact card, goal cells, a numbered scope list, authored
+  deliverable columns, a phase grid with its own headers, priced rows with a
+  `Role` (`NONE` / `SUBTOTAL` / `OPTIONAL`) and a total band, and a signing card.
+  `templates.data.proposal` now carries that second model —
+  `StructuredProposalData` (+ its section records) wrapped by
+  `StructuredProposalDocumentSpec` — alongside the narrative one; a preset consumes
+  the model whose shape it renders. Every component normalizes `null` to its empty
+  form and freezes its collections, matching the family's existing records.
+
 ### Templates
 
 - **A second invoice preset: `ClassicInvoice`.** The letterhead-style invoice — a header

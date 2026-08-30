@@ -88,6 +88,7 @@ final class ShowcaseMetadata {
         // ===== Templates / Invoice =====
         invoice("invoice-cinematic", "InvoiceCinematicFileExample", "Cinematic Invoice", "Layered ModernInvoice preset with theme-driven layout, advanced tables, and totals.", "invoice", "cinematic");
         invoice("invoice-modern-v2", "v2/ModernInvoiceV2Example", "Modern Invoice", "The ModernInvoice preset composed straight from an InvoiceDocumentSpec — line items, totals and payment block driven by the BrandTheme rather than per-document styling.", "invoice");
+        invoice("invoice-classic-v2", "v2/ClassicInvoiceV2Example", "Classic Invoice", "The ClassicInvoice preset — letterhead header band, TOTAL DUE hero strip, BILL TO / FROM columns, and a dedicated Summary table after the line items.", "invoice");
 
         // ===== Templates / Proposal =====
         proposal("proposal-cinematic", "ProposalCinematicFileExample", "Cinematic Proposal", "Layered ModernProposal layout with cover panel, hero spread, and rich typography.", "proposal", "cinematic");

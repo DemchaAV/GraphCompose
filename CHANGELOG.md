@@ -7,6 +7,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A second invoice preset: `ClassicInvoice`.** The letterhead-style invoice — a header
+  band with the company name and a 28pt INVOICE title, a TOTAL DUE hero strip,
+  BILL&nbsp;TO / FROM party columns, and a dedicated Summary table composed after the
+  line items (subtotal / tax / TOTAL, the last row emphasized) — now ships as
+  `invoice.presets.ClassicInvoice` on the layered stack, with the same
+  `create()` / `create(BrandTheme)` contract as `ModernInvoice`, porting the rendered
+  layout of the published standalone `invoice-classic` template. Guarded by a smoke
+  test, exact layout snapshots (the canonical single page plus a forty-line-item
+  overflow that freezes the two-page table continuation), and the invoice pixel-parity
+  gate; the examples showcase gains `invoice-classic-v2`.
+
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
   the date and the description, and never `CvEntry.subtitle()` — so every company name
   was missing from the rendered CV while the education block, which does render its

@@ -60,6 +60,7 @@ final class ShowcaseMetadata {
         cv("cv-minimal-underlined-v2", "CvMinimalUnderlinedExample", "Minimal Underlined", "Single-column layout with underlined section titles and tight whitespace — minimalist reference shape.", "minimal");
         cv("cv-mint-editorial-v2", "CvMintEditorialExample", "Mint Editorial", "Magazine-style editorial CV with mint accent palette and two-column body.", "editorial", "mint");
         cv("cv-mint-editorial-v2-custom", "CvMintEditorialCustomExample", "Mint Editorial (custom band)", "The same preset with one colour changed through its Options — a kraft-paper masthead band, everything else left at the preset's defaults.", "editorial", "mint");
+        cv("cv-professional-sidebar-v2", "ProfessionalSidebarExample", "Professional Sidebar", "Navy monogram plate over a pale sidebar of contact marks, skill meters, an education rail and language ratings, beside a white column of profile, roles and projects.", "sidebar", "navy");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
         // Registered directly: letter() points at the layered preset examples under

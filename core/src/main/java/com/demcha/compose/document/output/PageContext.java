@@ -3,12 +3,8 @@ package com.demcha.compose.document.output;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.PageFieldKind;
 import com.demcha.compose.document.node.PageFieldNode;
-import com.demcha.compose.document.node.ParagraphNode;
-import com.demcha.compose.document.node.TextAlign;
-import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
-import java.util.List;
 
 /**
  * What a page zone knows about the page it is being drawn on.
@@ -33,8 +29,8 @@ import java.util.List;
  * lane {@link #number()} and {@link #total()} refuse rather than return a
  * plausible lie, and {@link #pageNumber()} / {@link #pageTotal()} — which give
  * back a node rather than an {@code int} — are the way to place a number that
- * survives export. They work in both lanes: resolved text in one, a live
- * {@code PAGE} field in the other.</p>
+ * survives export. One node type serves both lanes: a paginated render resolves
+ * it to the number, a semantic export maps it onto a live {@code PAGE} field.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.2.3
@@ -134,8 +130,9 @@ public final class PageContext {
     }
 
     /**
-     * The page number as a node — resolved text on a fixed-layout export, a live
-     * field on a semantic one.
+     * The page number as a node, which each lane resolves for itself: a paginated
+     * render draws the number, a semantic export maps it onto the format's own
+     * field.
      *
      * @return a node that renders this page's number
      */
@@ -150,14 +147,13 @@ public final class PageContext {
      * @return a node that renders this page's number
      */
     public DocumentNode pageNumber(DocumentTextStyle textStyle) {
-        return paginated
-                ? text(String.valueOf(number), textStyle)
-                : new PageFieldNode(PageFieldKind.NUMBER, textStyle);
+        return new PageFieldNode(PageFieldKind.NUMBER, textStyle);
     }
 
     /**
-     * The page count as a node — resolved text on a fixed-layout export, a live
-     * field on a semantic one.
+     * The page count as a node, which each lane resolves for itself: a paginated
+     * render draws the count, a semantic export maps it onto the format's own
+     * field.
      *
      * @return a node that renders the page count
      */
@@ -172,9 +168,7 @@ public final class PageContext {
      * @return a node that renders the page count
      */
     public DocumentNode pageTotal(DocumentTextStyle textStyle) {
-        return paginated
-                ? text(String.valueOf(total), textStyle)
-                : new PageFieldNode(PageFieldKind.TOTAL, textStyle);
+        return new PageFieldNode(PageFieldKind.TOTAL, textStyle);
     }
 
     private void requirePaginated(String accessor) {
@@ -188,11 +182,4 @@ public final class PageContext {
         }
     }
 
-    private static ParagraphNode text(String value, DocumentTextStyle textStyle) {
-        return new ParagraphNode(
-                "", value, List.of(),
-                textStyle == null ? DocumentTextStyle.DEFAULT : textStyle,
-                TextAlign.LEFT, 1.0, null, null, (com.demcha.compose.document.node.DocumentLinkOptions) null,
-                null, DocumentInsets.zero(), DocumentInsets.zero(), null);
-    }
 }

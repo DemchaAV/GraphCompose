@@ -8,6 +8,7 @@ import com.demcha.compose.document.layout.LayoutCanvas;
 import com.demcha.compose.document.layout.LayoutCompiler;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.NodeRegistry;
+import com.demcha.compose.document.layout.definitions.PageFieldDefinition;
 import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.output.DocumentHeaderFooterZone;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Lays out each page zone's node subtree and splices the result into a compiled
@@ -115,8 +117,13 @@ final class DocumentPageZones {
         }
 
         LayoutCanvas band = LayoutCanvas.from(bandWidth, zone.getHeight(), zone.getPadding());
+        // A page field carries the question rather than the answer, so the band
+        // publishes the page it is drawing through the channel a page reference
+        // already uses; PageFieldDefinition reads it back and renders the number.
         DocumentLayoutPassContext pass = new DocumentLayoutPassContext(
-                registry, band, resources.fontLibrary(), resources.textMeasurementSystem(), markdown);
+                registry, band, resources.fontLibrary(), resources.textMeasurementSystem(), markdown,
+                Map.of(PageFieldDefinition.NUMBER_KEY, context.number(),
+                        PageFieldDefinition.TOTAL_KEY, context.total()));
         LayoutGraph laidOut;
         try {
             laidOut = compiler.compile(new DocumentGraph(List.of(content)), pass, pass);

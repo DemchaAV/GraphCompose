@@ -201,6 +201,35 @@ class DocumentPageZoneTest {
         }
     }
 
+    /**
+     * A page field is a node like any other, so it has to survive being handed to
+     * the compiler from outside a zone — the case that used to reach the registry
+     * with no definition for its kind. Rendered where nothing publishes a page
+     * number, it draws a blank rather than failing the document.
+     */
+    @Test
+    void aPageFieldOutsideAZoneRendersBlankRatherThanFailing() throws Exception {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(320, 240)
+                .margin(DocumentInsets.of(24))
+                .create()) {
+
+            document.add(new com.demcha.compose.document.node.PageFieldNode(
+                    com.demcha.compose.document.node.PageFieldKind.NUMBER,
+                    com.demcha.compose.document.style.DocumentTextStyle.DEFAULT));
+            document.dsl().pageFlow()
+                    .name("StrayField")
+                    .addParagraph(paragraph -> paragraph.name("Body").text("Body copy."))
+                    .build();
+
+            try (PDDocument rendered = Loader.loadPDF(document.toPdfBytes())) {
+                assertThat(new PDFTextStripper().getText(rendered))
+                        .as("the document still renders; the field simply has nothing to say")
+                        .contains("Body copy.");
+            }
+        }
+    }
+
     @Test
     void writesAShowcaseSheetForReview() throws Exception {
         byte[] pdf = render(DocumentPageZone.footer(40, page -> new RowBuilder()

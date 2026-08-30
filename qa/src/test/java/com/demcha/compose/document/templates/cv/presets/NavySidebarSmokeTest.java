@@ -17,9 +17,14 @@ import com.demcha.compose.document.templates.cv.data.SkillGroup;
 import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +56,21 @@ class NavySidebarSmokeTest {
         }
     }
 
+    private static List<String> linkUris(byte[] pdfBytes) throws Exception {
+        List<String> uris = new ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            for (PDPage page : document.getPages()) {
+                for (PDAnnotation annotation : page.getAnnotations()) {
+                    if (annotation instanceof PDAnnotationLink link
+                            && link.getAction() instanceof PDActionURI action) {
+                        uris.add(action.getURI());
+                    }
+                }
+            }
+        }
+        return uris;
+    }
+
     @Test
     void exposesStableIdentity() {
         DocumentTemplate<CvDocument> template = NavySidebar.create();
@@ -75,6 +95,18 @@ class NavySidebarSmokeTest {
                 .contains("BrightWave Solutions, New York, NY")
                 .contains("Increased website traffic by 60%")
                 .contains("HubSpot Content Marketing Certification");
+    }
+
+    @Test
+    void channelsReachThePdfAsLinks() throws Exception {
+        // The dial and mail targets are built from the values, so nothing in
+        // the document carries them and nothing but the PDF can show them.
+        // They are annotations, so they move no pixel and no layout node —
+        // which is why the parity gates cannot see them either.
+        assertThat(linkUris(render(NavySidebarFixtures.canonicalCv())))
+                .contains("tel:+15551234567",
+                        "mailto:your.email@gmail.com",
+                        "https://linkedin.com/in/yourname");
     }
 
     @Test

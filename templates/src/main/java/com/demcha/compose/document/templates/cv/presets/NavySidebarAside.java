@@ -6,6 +6,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
 import com.demcha.compose.document.image.DocumentImageData;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.LayerAlign;
@@ -147,9 +148,11 @@ final class NavySidebarAside {
      * The contact channels, in the order the design sets them: phone, email,
      * address, then whatever links the identity carries.
      *
-     * <p>The rows carry no link targets. The design draws them as text, and
-     * the promotion keeps that — a clickable channel would be a change to
-     * the sheet rather than a port of it.</p>
+     * <p>The phone, the email and each link are reachable from the PDF: the
+     * dial and mail targets are built from the values, so a document does
+     * not carry the same address twice. The annotations sit beside the
+     * content stream and draw nothing, which is why a clickable channel is
+     * the same ink as a plain one.</p>
      */
     private static void renderContact(SectionBuilder section, CvIdentity identity) {
         sidebarHeading(section, CONTACT_HEADING, true);
@@ -160,34 +163,55 @@ final class NavySidebarAside {
 
     private static void renderChannel(SectionBuilder section, Channel channel) {
         double size = NavySidebarIcons.size(channel.token());
-        section.addParagraph(p -> p
+        DocumentLinkOptions link = channel.href() == null
+                ? null
+                : new DocumentLinkOptions(channel.href());
+        ParagraphBuilder row = new ParagraphBuilder()
                 .name("Contact_" + compact(channel.token()))
                 .textStyle(sidebarBody())
                 .inlineImage(NavySidebarIcons.image(channel.token()), size, size,
-                        InlineImageAlignment.CENTER, 0.0, null)
-                // The gap between the mark and the value is set as spaces
-                // rather than an indent: the row is one paragraph, so the
-                // mark and the text share a baseline and wrap together.
-                .inlineText("   " + channel.value(), sidebarBody())
-                .margin(new DocumentInsets(0, 0, CONTACT_ROW_GAP, 0)));
+                        InlineImageAlignment.CENTER, 0.0, link);
+        // The gap between the mark and the value is set as spaces rather than
+        // an indent: the row is one paragraph, so the mark and the text share
+        // a baseline and wrap together.
+        if (link == null) {
+            row.inlineText("   " + channel.value(), sidebarBody());
+        } else {
+            row.inlineText("   " + channel.value(), sidebarBody(), link);
+        }
+        section.add(row.margin(new DocumentInsets(0, 0, CONTACT_ROW_GAP, 0)).build());
     }
 
     private static List<Channel> channels(CvIdentity identity) {
         List<Channel> channels = new ArrayList<>();
-        channels.add(new Channel(NavySidebarIcons.PHONE, identity.contact().phone()));
-        channels.add(new Channel(NavySidebarIcons.EMAIL, identity.contact().email()));
-        channels.add(new Channel(NavySidebarIcons.LOCATION, identity.contact().address()));
+        String phone = identity.contact().phone();
+        channels.add(new Channel(NavySidebarIcons.PHONE, phone, telUri(phone)));
+        String email = identity.contact().email();
+        channels.add(new Channel(NavySidebarIcons.EMAIL, email, "mailto:" + email));
+        channels.add(new Channel(NavySidebarIcons.LOCATION,
+                identity.contact().address(), null));
         for (Link link : identity.links()) {
-            channels.add(new Channel(NavySidebarIcons.LINKEDIN, link.label()));
+            channels.add(new Channel(NavySidebarIcons.LINKEDIN, link.label(), link.url()));
         }
         return channels;
+    }
+
+    /**
+     * The dial target for a phone number: its digits, keeping a leading
+     * {@code +} so an international number stays international.
+     */
+    private static String telUri(String phone) {
+        String digits = phone.replaceAll("[^0-9]", "");
+        return digits.isEmpty()
+                ? null
+                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     /**
      * A contact row. The packaged set has one network mark, so every link
      * takes it — this design ships no globe.
      */
-    private record Channel(String token, String value) {
+    private record Channel(String token, String value, String href) {
     }
 
     // -- education -------------------------------------------------------

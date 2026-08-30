@@ -234,6 +234,13 @@ whole or the paginator raises `AtomicNodeTooLargeException`. Lifting a
 cap without teaching the preset to pick its own page boundaries turns a
 CV that silently lost an entry into one that fails to render.
 
+`ProfessionalSidebar.create()` is the fourth composition for a fixed
+amount of content and the one that caps nothing: it reproduces a
+specific one-page sheet, so a CV longer than that sheet raises
+`AtomicNodeTooLargeException` instead of losing an entry to a cap. Size
+the document to it — roughly five or six roles with three or four
+highlights each, alongside the sidebar blocks.
+
 If the document's length is the author's rather than the template's,
 pick a preset that paginates — `TimelineMinimal` splits its own columns
 and carries every entry it is given onto as many pages as it needs.

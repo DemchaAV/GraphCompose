@@ -36,6 +36,29 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **The first CV preset that owns its page: `ProfessionalSidebar`.** A one-page CV
+  in two columns on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a
+  pale sidebar carrying the contact channels, meter-bar skills, an education rail with
+  dot markers and five-dot language ratings, beside a white column of the tracked name,
+  the profile, the roles held with bulleted highlights, the projects and the references
+  note. Ships as `cv.presets.ProfessionalSidebar` on the existing `CvDocument` model —
+  no model change was needed — porting the rendered layout of the published standalone
+  `professional-sidebar-cv` template. The preset owns its page: a 491.6&nbsp;x&nbsp;737.28pt
+  sheet with no margin, the page fill and the pale sidebar painted as page backgrounds. The
+  sheet holds one page — its two columns are a single atomic row, so a CV longer than the
+  sheet raises `AtomicNodeTooLargeException` rather than flowing onto a second page or
+  silently dropping entries the way the capped sidebar presets do. The class documentation
+  says so, points at `TimelineMinimal` for a preset that splits its own columns, and
+  `docs/templates/v2-layered/using-templates.md` carries it beside the capped presets.
+  Sections reach their berth by title rather than by `Slot`,
+  because the columns are fixed; skills and languages are both `SkillsSection`s drawn
+  differently, and a level the document omits draws the name alone. The contact channels
+  come off `CvIdentity`, with `tel:` and `mailto:` targets built from the values and the
+  packaged marks chosen per channel. Guarded by a smoke test (including the identity-only
+  document, the unlevelled skill, the PDF link targets, the one-page limit and the fields
+  this design has no place for), an exact layout snapshot and a pixel-parity gate; the
+  examples showcase gains `cv-professional-sidebar-v2`.
+
 - **A second structured proposal preset: `EditorialProposal`.** The same document the
   `NorthlineProposal` preset renders, in a different hand: an orange accent, section
   headings set in the display serif over short accent rules instead of in the body sans

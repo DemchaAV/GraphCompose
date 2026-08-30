@@ -60,10 +60,14 @@ follow semantic versioning; release dates are ISO 8601.
   `RowsSection` because this design writes the proficiency out — "Native", "Advanced" —
   which a levelled skill could not carry back. The photograph comes from the new
   `CvIdentity.portrait()`; an identity without one draws the ring around an empty navy
-  disc. Guarded by a smoke test (including the missing portrait, the capitals this
-  design imposes, the one-page limit and the fields it has no place for), an exact
-  layout snapshot and a pixel-parity gate; the examples showcase gains
-  `cv-navy-sidebar-v2`.
+  disc. The phone, the email and each link are reachable from the PDF, with the
+  `tel:` and `mailto:` targets built from the values — the published sheet drew its
+  channels as plain text, and this is the one place the port deliberately improves on
+  it, at no cost to the render: annotations move no pixel and no layout node, which
+  both gates confirm without re-blessing. Guarded by a smoke test (including the link
+  targets, the missing portrait, the capitals this design imposes, the one-page limit
+  and the fields it has no place for), an exact layout snapshot and a pixel-parity
+  gate; the examples showcase gains `cv-navy-sidebar-v2`.
 
 - **The first CV preset that owns its page: `ProfessionalSidebar`.** A one-page CV
   in two columns on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a

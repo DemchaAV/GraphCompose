@@ -75,11 +75,11 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles
  * without one draws the ring around an empty navy disc rather than leaving a
  * hole in the column.</p>
  *
- * <p>The contact rows carry no link targets — the design draws the channels
- * as text, and the port keeps that. The packaged set has one network mark,
- * so every link the identity carries is drawn behind it whatever the network
- * is; a document that lists more than one profile should say which is which
- * in the label.</p>
+ * <p>The phone, the email and each link are reachable from the PDF, with the
+ * {@code tel:} and {@code mailto:} targets built from the values. The
+ * packaged set has one network mark, so every link the identity carries is
+ * drawn behind it whatever the network is; a document that lists more than
+ * one profile should say which is which in the label.</p>
  *
  * <p>A channel is one paragraph, the mark and the value sharing a line, so a
  * value wider than the sidebar's text column wraps under the mark and leaves

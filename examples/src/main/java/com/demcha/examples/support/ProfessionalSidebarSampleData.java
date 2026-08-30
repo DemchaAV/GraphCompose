@@ -42,7 +42,7 @@ public final class ProfessionalSidebarSampleData {
                         .name("MARTA", "LINDQVIST")
                         .jobTitle("SENIOR BACKEND ENGINEER")
                         .contact(new Contact("+46 8 123 456 78",
-                                "marta.lindqvist@example.com",
+                                "marta.l@example.com",
                                 "Stockholm, Sweden"))
                         .link(new Link("linkedin.com/in/mlindqvist",
                                 "https://linkedin.com/in/mlindqvist"))

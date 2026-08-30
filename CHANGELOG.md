@@ -22,6 +22,18 @@ follow semantic versioning; release dates are ISO 8601.
   optional so a wordmark-only lockup composes. Every component normalizes `null` to
   its empty form, money and quantities default to zero, and collections are frozen.
 
+- **A structured proposal document model.** The proposal family's data layer knew one
+  shape — a titled run of prose sections with a flat timeline and pricing list — which
+  cannot carry the structured business proposal: brand marks, an authored multi-line
+  title, an at-a-glance fact card, goal cells, a numbered scope list, authored
+  deliverable columns, a phase grid with its own headers, priced rows with a
+  `Role` (`NONE` / `SUBTOTAL` / `OPTIONAL`) and a total band, and a signing card.
+  `templates.data.proposal` now carries that second model —
+  `StructuredProposalData` (+ its section records) wrapped by
+  `StructuredProposalDocumentSpec` — alongside the narrative one; a preset consumes
+  the model whose shape it renders. Every component normalizes `null` to its empty
+  form and freezes its collections, matching the family's existing records.
+
 ### Templates
 
 - **A professional-services invoice preset: `ConsultingInvoice`.** A corporate masthead
@@ -36,6 +48,17 @@ follow semantic versioning; release dates are ISO 8601.
   (including the empty document, the wordmark fallback, the rendered figures and the
   repeated header), exact layout snapshots for the single page and the overflow, and a
   pixel-parity gate; the examples showcase gains `invoice-consulting-v2`.
+
+- **A second invoice preset: `ClassicInvoice`.** The letterhead-style invoice — a header
+  band with the company name and a 28pt INVOICE title, a TOTAL DUE hero strip,
+  BILL&nbsp;TO / FROM party columns, and a dedicated Summary table composed after the
+  line items (subtotal / tax / TOTAL, the last row emphasized) — now ships as
+  `invoice.presets.ClassicInvoice` on the layered stack, with the same
+  `create()` / `create(BrandTheme)` contract as `ModernInvoice`, porting the rendered
+  layout of the published standalone `invoice-classic` template. Guarded by a smoke
+  test, exact layout snapshots (the canonical single page plus a forty-line-item
+  overflow that freezes the two-page table continuation), and the invoice pixel-parity
+  gate; the examples showcase gains `invoice-classic-v2`.
 
 - **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
   the date and the description, and never `CvEntry.subtitle()` — so every company name

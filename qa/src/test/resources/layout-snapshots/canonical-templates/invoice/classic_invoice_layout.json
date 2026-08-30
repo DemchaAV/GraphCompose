@@ -1,0 +1,1007 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 595.276,
+    "innerHeight" : 841.89,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "Invoice[0]",
+    "entityName" : "Invoice",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 0.0,
+    "computedY" : 191.765,
+    "placementX" : 0.0,
+    "placementY" : 191.765,
+    "placementWidth" : 595.276,
+    "placementHeight" : 650.125,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 650.125,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 24.0,
+      "right" : 24.0,
+      "bottom" : 24.0,
+      "left" : 24.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]",
+    "entityName" : "Header",
+    "entityKind" : "RowNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 769.49,
+    "placementX" : 24.0,
+    "placementY" : 769.49,
+    "placementWidth" : 547.276,
+    "placementHeight" : 48.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 48.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderLeft[0]",
+    "entityName" : "HeaderLeft",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Header[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 790.915,
+    "placementX" : 24.0,
+    "placementY" : 790.915,
+    "placementWidth" : 185.13,
+    "placementHeight" : 26.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 185.13,
+    "contentHeight" : 26.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderLeft[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Header[0]/HeaderLeft[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 802.165,
+    "placementX" : 24.0,
+    "placementY" : 802.165,
+    "placementWidth" : 185.13,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 185.13,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderLeft[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Header[0]/HeaderLeft[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 790.915,
+    "placementX" : 24.0,
+    "placementY" : 790.915,
+    "placementWidth" : 73.38,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 73.38,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderRight[1]",
+    "entityName" : "HeaderRight",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Header[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.638,
+    "computedY" : 769.49,
+    "placementX" : 306.638,
+    "placementY" : 769.49,
+    "placementWidth" : 115.136,
+    "placementHeight" : 48.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.136,
+    "contentHeight" : 48.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderRight[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Header[0]/HeaderRight[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 791.99,
+    "placementX" : 306.638,
+    "placementY" : 791.99,
+    "placementWidth" : 115.136,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.136,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderRight[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Header[0]/HeaderRight[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 780.74,
+    "placementX" : 306.638,
+    "placementY" : 780.74,
+    "placementWidth" : 60.58,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.58,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Header[0]/HeaderRight[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Header[0]/HeaderRight[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 769.49,
+    "placementX" : 306.638,
+    "placementY" : 769.49,
+    "placementWidth" : 86.72,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.72,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Hero[1]",
+    "entityName" : "Hero",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 696.365,
+    "placementX" : 24.0,
+    "placementY" : 696.365,
+    "placementWidth" : 538.468,
+    "placementHeight" : 57.125,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.468,
+    "contentHeight" : 57.125,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 14.0,
+      "right" : 14.0,
+      "bottom" : 14.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "Invoice[0]/Hero[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Hero[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 38.0,
+    "computedY" : 729.315,
+    "placementX" : 38.0,
+    "placementY" : 729.315,
+    "placementWidth" : 62.942,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 62.942,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Hero[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Hero[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 38.0,
+    "computedY" : 710.365,
+    "placementX" : 38.0,
+    "placementY" : 710.365,
+    "placementWidth" : 510.468,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 510.468,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]",
+    "entityName" : "Parties",
+    "entityKind" : "RowNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 599.94,
+    "placementX" : 24.0,
+    "placementY" : 599.94,
+    "placementWidth" : 547.276,
+    "placementHeight" : 80.425,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 80.425,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/BillTo[0]",
+    "entityName" : "BillTo",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Parties[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 599.94,
+    "placementX" : 24.0,
+    "placementY" : 599.94,
+    "placementWidth" : 115.709,
+    "placementHeight" : 80.425,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.709,
+    "contentHeight" : 80.425,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/BillTo[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/BillTo[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 670.19,
+    "placementX" : 24.0,
+    "placementY" : 670.19,
+    "placementWidth" : 42.779,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.779,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/BillTo[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/BillTo[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 658.015,
+    "placementX" : 24.0,
+    "placementY" : 658.015,
+    "placementWidth" : 102.685,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 102.685,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/BillTo[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/BillTo[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 599.94,
+    "placementX" : 24.0,
+    "placementY" : 599.94,
+    "placementWidth" : 115.709,
+    "placementHeight" : 56.075,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.709,
+    "contentHeight" : 56.075,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/From[1]",
+    "entityName" : "From",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Parties[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.638,
+    "computedY" : 599.94,
+    "placementX" : 306.638,
+    "placementY" : 599.94,
+    "placementWidth" : 132.825,
+    "placementHeight" : 80.425,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.825,
+    "contentHeight" : 80.425,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/From[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/From[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 670.19,
+    "placementX" : 306.638,
+    "placementY" : 670.19,
+    "placementWidth" : 32.384,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 32.384,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/From[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/From[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 658.015,
+    "placementX" : 306.638,
+    "placementY" : 658.015,
+    "placementWidth" : 119.79,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.79,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Parties[2]/From[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Parties[2]/From[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 599.94,
+    "placementX" : 306.638,
+    "placementY" : 599.94,
+    "placementWidth" : 132.825,
+    "placementHeight" : 56.075,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.825,
+    "contentHeight" : 56.075,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/LineItems[3]",
+    "entityName" : "LineItems",
+    "entityKind" : "TableNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 449.965,
+    "placementX" : 24.0,
+    "placementY" : 449.965,
+    "placementWidth" : 400.84,
+    "placementHeight" : 133.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 400.84,
+    "contentHeight" : 133.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Summary[4]",
+    "entityName" : "Summary",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 353.89,
+    "placementX" : 24.0,
+    "placementY" : 353.89,
+    "placementWidth" : 262.0,
+    "placementHeight" : 80.075,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 262.0,
+    "contentHeight" : 80.075,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Summary[4]/SummaryTable[0]",
+    "entityName" : "SummaryTable",
+    "entityKind" : "TableNode",
+    "parentPath" : "Invoice[0]/Summary[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 353.89,
+    "placementX" : 24.0,
+    "placementY" : 353.89,
+    "placementWidth" : 262.0,
+    "placementHeight" : 80.075,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 262.0,
+    "contentHeight" : 80.075,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]",
+    "entityName" : "Footer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 24.0,
+    "computedY" : 215.765,
+    "placementX" : 24.0,
+    "placementY" : 215.765,
+    "placementWidth" : 547.276,
+    "placementHeight" : 122.125,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 122.125,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]",
+    "entityName" : "FooterRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "Invoice[0]/Footer[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 247.015,
+    "placementX" : 24.0,
+    "placementY" : 247.015,
+    "placementWidth" : 547.276,
+    "placementHeight" : 90.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 547.276,
+    "contentHeight" : 90.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoiceNotes[0]",
+    "entityName" : "InvoiceNotes",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 24.0,
+    "computedY" : 272.915,
+    "placementX" : 24.0,
+    "placementY" : 272.915,
+    "placementWidth" : 264.214,
+    "placementHeight" : 64.975,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 264.214,
+    "contentHeight" : 64.975,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoiceNotes[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoiceNotes[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 32.0,
+    "computedY" : 327.715,
+    "placementX" : 32.0,
+    "placementY" : 327.715,
+    "placementWidth" : 30.558,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 30.558,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoiceNotes[0]/ListNode[1]",
+    "entityName" : null,
+    "entityKind" : "ListNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoiceNotes[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 32.0,
+    "computedY" : 272.915,
+    "placementX" : 32.0,
+    "placementY" : 272.915,
+    "placementWidth" : 256.214,
+    "placementHeight" : 51.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 256.214,
+    "contentHeight" : 51.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoicePaymentTerms[1]",
+    "entityName" : "InvoicePaymentTerms",
+    "entityKind" : "SectionNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 247.015,
+    "placementX" : 306.638,
+    "placementY" : 247.015,
+    "placementWidth" : 253.35,
+    "placementHeight" : 90.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 253.35,
+    "contentHeight" : 90.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoicePaymentTerms[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoicePaymentTerms[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 314.638,
+    "computedY" : 327.715,
+    "placementX" : 314.638,
+    "placementY" : 327.715,
+    "placementWidth" : 78.859,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 78.859,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoicePaymentTerms[1]/ListNode[1]",
+    "entityName" : null,
+    "entityKind" : "ListNode",
+    "parentPath" : "Invoice[0]/Footer[5]/FooterRow[0]/InvoicePaymentTerms[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 314.638,
+    "computedY" : 247.015,
+    "placementX" : 314.638,
+    "placementY" : 247.015,
+    "placementWidth" : 245.35,
+    "placementHeight" : 77.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 245.35,
+    "contentHeight" : 77.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "Invoice[0]/Footer[5]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "Invoice[0]/Footer[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 24.0,
+    "computedY" : 215.765,
+    "placementX" : 24.0,
+    "placementY" : 215.765,
+    "placementWidth" : 335.71,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 335.71,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 14.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

@@ -97,6 +97,32 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A masthead-and-rail CV preset: `SlateOrange`.** A one-page sheet built as a
+  full-bleed slate band over a two-column body: an orange monogram tile beside the name,
+  the role line and a tracked specialism strip, with the contact lines across an orange
+  hairline; then a narrow column of marked competencies, trophied achievements, rated
+  languages and closing facts, beside a wide column carrying the profile, the roles held
+  on a rail, and a credentials footer of education and certifications. Ships as
+  `cv.presets.SlateOrange` on the existing `CvDocument` model, porting the rendered
+  layout of a published standalone template; it is the first preset to use
+  `CvSkill.note`, which its language rows need to show a rating and name it on the same
+  line. The four fills that reach a paper edge — the slate band, the orange tile and the
+  two column dividers — are page backgrounds rather than section fills, because a fill
+  on a section is bounded by its content. Every horizontal pair inside a body column is
+  a table with fixed widths: a row cannot nest in a row cell and both columns are cells,
+  so mark and label, language and rating, role and dates, and the two credential columns
+  are all tables, and where a cell needs several stacked lines it holds a single-column
+  table of its own. Seven berths reach their sections by title, including a specialism
+  berth whose body is drawn and whose title is not. As on the presets before it, a link
+  is drawn as its own label with the address behind it — the one deliberate departure
+  from the ported sheet, measured at 2 100 of 2 173 720 pixels — and a role or a degree
+  becomes a link when its entry carries one. Guarded by a smoke test (including the
+  unknown-mark data error, an achievement with no mark falling back to the trophy, a
+  language with and without its wording, the monogram and the strip, the link targets,
+  an identity with no links, a document with nothing but an identity, and the refusal of
+  a CV taller than the sheet), an exact layout snapshot and a pixel-parity gate; the
+  examples showcase gains `cv-slate-orange-v2`.
+
 - **A clinical CV preset in five bands: `TealPulse`.** A one-page sheet whose mark is a
   heart crossed by a flat pulse, beside a letter-spaced name over a contact strip
   divided by short rules; then a two-column body carrying the competencies as dotted

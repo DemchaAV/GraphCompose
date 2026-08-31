@@ -25,7 +25,6 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.INFO_LINE_GAP;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.INFO_WEIGHTS;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.INK;
-import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.LINK_SCALE;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MONOGRAM_RULE_TO_CONTACT_GAP;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MONOGRAM_RULE_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.TerracottaRailStyles.MONOGRAM_SIZE;
@@ -125,12 +124,14 @@ final class TerracottaRailAside {
     // -- the channels ------------------------------------------------------
 
     /**
-     * The contact block: each channel behind its mark, and the links beneath
-     * them.
+     * The contact block: the three channels and a row per link, all on one
+     * axis behind their marks.
      *
-     * <p>A link is set smaller than a channel. A URL is one long token that
-     * cannot be broken, so it is the line that outgrows this column first,
-     * while a phone, an address or a city is short enough at full size.</p>
+     * <p>A link shows its own label and carries the address behind it, which
+     * is what keeps the rows the same. Writing the URL out would make that row
+     * as wide as whatever the reader's profile happens to be called — long
+     * enough to need setting smaller than the rows above it, and a different
+     * width for every document.</p>
      */
     private static void renderContact(SectionBuilder side, CvIdentity identity) {
         side.addSection("Contact", block -> {
@@ -139,28 +140,28 @@ final class TerracottaRailAside {
             // channels are always drawn; only the links are optional.
             Contact contact = identity.contact();
             channel(block, 0, TerracottaRailIcons.EMAIL, contact.email(),
-                    "mailto:" + contact.email(), false);
+                    "mailto:" + contact.email());
             channel(block, 1, TerracottaRailIcons.PHONE, contact.phone(),
-                    telUri(contact.phone()), false);
-            channel(block, 2, TerracottaRailIcons.LOCATION, contact.address(), null, false);
+                    telUri(contact.phone()));
+            channel(block, 2, TerracottaRailIcons.LOCATION, contact.address(), null);
             int index = 3;
             for (Link link : identity.links()) {
-                channel(block, index++, markFor(link), link.label(), link.url(), true);
+                channel(block, index++, markFor(link), link.label(), link.url());
             }
         });
     }
 
     private static void channel(SectionBuilder block, int index, String token, String value,
-                                String href, boolean compact) {
+                                String href) {
         block.addParagraph(p -> {
             p.name("Contact_" + index);
             inlineIcon(p, token, TerracottaRailIcons.CONTACT_SIZE);
-            p.inlineText(compact ? " " : "  ");
-            double size = compact ? DETAIL_SIZE * LINK_SCALE : DETAIL_SIZE;
+            p.inlineText("  ");
             if (href == null || href.isBlank()) {
-                p.inlineText(value, text(size, INK, false));
+                p.inlineText(value, text(DETAIL_SIZE, INK, false));
             } else {
-                p.inlineText(value, text(size, INK, false), new DocumentLinkOptions(href));
+                p.inlineText(value, text(DETAIL_SIZE, INK, false),
+                        new DocumentLinkOptions(href));
             }
             p.margin(0f, 0f, (float) CONTACT_ROW_GAP, 0f);
         });

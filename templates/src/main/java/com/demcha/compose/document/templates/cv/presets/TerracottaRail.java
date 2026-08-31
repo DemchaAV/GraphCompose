@@ -78,8 +78,9 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
  *
  * <p>The email, the phone and each link are reachable from the PDF, with the
  * {@code mailto:} and {@code tel:} targets built from the values. A link is
- * set smaller than a channel above it, because a URL is one long token that
- * cannot be broken and is the line that outgrows this column first; it takes
+ * drawn as its own label with the address behind it — {@code Link("LinkedIn",
+ * "https://…")} sets the word and links the URL — so the four contact rows sit
+ * on one axis at one size whatever a profile happens to be called. It takes
  * the mark of the network it points at, or a globe.</p>
  *
  * <h2>Fonts</h2>

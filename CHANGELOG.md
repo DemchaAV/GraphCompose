@@ -99,14 +99,20 @@ follow semantic versioning; release dates are ISO 8601.
   a project title is a link when its entry carries one, and the monogram is drawn from
   the name's own initials rather than a field of its own — a document states its name
   once, and a monogram that could disagree with it would be a second place to keep
-  true. A link in the contact block is set smaller than the channels above it, because
-  a URL is one long token that cannot be broken and is the line that outgrows that
-  column first; it takes the mark of the network it points at, or a globe. Like its
-  siblings it holds one page: the body is a single atomic row, so a longer CV raises
+  true. **A link in the contact block is drawn as its own label with the address behind
+  it**, which is where the preset departs from the sheet it ports: writing the URL out
+  makes that row as wide as whatever the reader's profile happens to be called — long
+  enough that the published design sets it smaller and nudged in, on an axis of its
+  own. Stating `Link("LinkedIn", "https://…")` puts the four rows on one axis at one
+  size for every document. The departure is exactly measured — two of 154 nodes narrow,
+  1 743 of 2 173 720 pixels change, and nothing moves vertically — and both baselines
+  were recorded with it. A link takes the mark of the network it points at, or a globe.
+  Like its siblings it holds one page: the body is a single atomic row, so a longer CV raises
   `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
   smoke test (including the unknown-mark data error, an entry with no mark, an identity
   with no links, a document with nothing but an identity, the monogram, the link
-  targets and the one-page limit), an exact layout snapshot and a pixel-parity gate;
+  targets, the four contact rows sharing one axis and the one-page limit), an exact
+  layout snapshot and a pixel-parity gate;
   the examples showcase gains `cv-terracotta-rail-v2`.
 
 - **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A

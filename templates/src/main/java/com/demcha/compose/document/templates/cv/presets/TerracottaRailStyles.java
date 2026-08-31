@@ -56,13 +56,6 @@ final class TerracottaRailStyles {
     static final double NAME_SIZE = 28.0;
     static final double SUBTITLE_SIZE = 13.0;
 
-    /**
-     * How much smaller a link is set than the channels above it. A URL is one
-     * long token that cannot be broken, so it is the line that outgrows this
-     * sidebar first.
-     */
-    static final double LINK_SCALE = 0.85;
-
     // -- palette ----------------------------------------------------------
 
     static final DocumentColor ACCENT = DocumentColor.rgb(201, 74, 41);

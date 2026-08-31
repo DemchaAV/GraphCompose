@@ -23,7 +23,7 @@ public record LayoutCanvas(double width, double height, double innerWidth, doubl
      * all, and {@code ModuleBoundaryArchTest} enforces it.</p>
      *
      * @return the left margin in points
-     * @since 2.2.3
+     * @since 2.3.0
      */
     public double marginLeft() {
         return margin == null ? 0.0 : margin.left();

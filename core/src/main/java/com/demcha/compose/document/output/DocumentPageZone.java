@@ -51,7 +51,7 @@ import java.util.function.Predicate;
  * would justify revisiting it.</p>
  *
  * @author Artem Demchyshyn
- * @since 2.2.3
+ * @since 2.3.0
  */
 @Getter
 @Builder(toBuilder = true)

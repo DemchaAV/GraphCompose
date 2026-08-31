@@ -149,7 +149,7 @@ public final class SessionChromeApi {
      * @return this facade for chaining
      * @throws IllegalStateException    if the owning session has already been closed
      * @throws IllegalArgumentException if the zone has no content function
-     * @since 2.2.3
+     * @since 2.3.0
      */
     public SessionChromeApi zone(DocumentPageZone zone) {
         ensureOpen();

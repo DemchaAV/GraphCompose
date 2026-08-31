@@ -47,7 +47,7 @@ public final class DocumentHeaderFooter {
      * automatic fallback, here or in the body, so a code point the chosen family
      * cannot encode is substituted with {@code ?}.
      *
-     * @since 2.2.3
+     * @since 2.3.0
      */
     @Builder.Default
     private final FontName fontName = FontName.HELVETICA;
@@ -69,7 +69,7 @@ public final class DocumentHeaderFooter {
      * <p>It follows that turning this on can add pages to a document that was
      * relying on the overlap. That is why it is opt-in.</p>
      *
-     * @since 2.2.3
+     * @since 2.3.0
      */
     @Builder.Default
     private final boolean reserveSpace = false;

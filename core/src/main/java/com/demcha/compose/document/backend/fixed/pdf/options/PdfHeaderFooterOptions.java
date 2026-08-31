@@ -35,7 +35,7 @@ public final class PdfHeaderFooterOptions {
     /**
      * Font family for the zone's text; standard-14 Helvetica by default.
      *
-     * @since 2.2.3
+     * @since 2.3.0
      */
     @Builder.Default
     private final FontName fontName = FontName.HELVETICA;

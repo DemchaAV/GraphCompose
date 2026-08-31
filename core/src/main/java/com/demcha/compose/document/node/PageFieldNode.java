@@ -29,7 +29,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
  * @param padding   inner padding
  * @param margin    outer margin
  * @author Artem Demchyshyn
- * @since 2.2.3
+ * @since 2.3.0
  */
 public record PageFieldNode(
         String name,

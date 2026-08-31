@@ -33,7 +33,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
  * it to the number, a semantic export maps it onto a live {@code PAGE} field.</p>
  *
  * @author Artem Demchyshyn
- * @since 2.2.3
+ * @since 2.3.0
  */
 public final class PageContext {
 

@@ -38,6 +38,7 @@ const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
 const API_DIR = path.join(REPO_ROOT, "knowledge", "api");
 const DOCS_ROOT = path.join(REPO_ROOT, "docs");
 const INDEX_FILE = path.join(REPO_ROOT, "knowledge", "claims", "index.json");
+const PROOFS_FILE = path.join(REPO_ROOT, "knowledge", "proofs", "index.json");
 
 function usage(code = 0) {
   process.stdout.write(
@@ -89,7 +90,7 @@ function loadSurfaces() {
  * kinds that happen to be finished.
  */
 function loadProofTargets() {
-  const tests = new Set();
+  const tests = new Map();
   const walkTests = (dir) => {
     let entries;
     try {
@@ -103,20 +104,26 @@ function loadProofTargets() {
         if (entry.name === "target" || entry.name === ".git" || entry.name === ".claude") continue;
         walkTests(full);
       } else if (entry.name.endsWith(".java") && full.includes(`${path.sep}src${path.sep}test${path.sep}`)) {
-        tests.add(entry.name.slice(0, -".java".length));
+        // Path as well as name: the registry has to say *where* a proof lives,
+        // or a consumer holding the bundle can read that a claim is proven and
+        // still have no way to look at the thing proving it.
+        tests.set(
+          entry.name.slice(0, -".java".length),
+          path.relative(REPO_ROOT, full).split(path.sep).join("/"),
+        );
       }
     }
   };
   walkTests(REPO_ROOT);
 
-  const snippets = new Set();
+  const snippets = new Map();
   const markerRe = /^<!--\s*doc-example:\s*(.+?)\s*-->\s*$/;
   for (const file of docPages()) {
     for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
       const m = line.match(markerRe);
       if (!m) continue;
       const id = m[1].split(/\s+/).find((t) => t.startsWith("id="));
-      if (id) snippets.add(id.slice("id=".length));
+      if (id) snippets.set(id.slice("id=".length), path.relative(REPO_ROOT, file).split(path.sep).join("/"));
     }
   }
 
@@ -299,6 +306,72 @@ const document = {
   },
 };
 
+/**
+ * What backs the claims, and where it lives.
+ *
+ * The claims index says a page asserts something and names its proof; on its own
+ * that is a promissory note. This resolves the note: for every proof a claim
+ * cites, the kind, the file, and everything it holds up.
+ *
+ * Derived rather than authored, so it cannot drift: a claim whose proof does not
+ * resolve has already failed above, and a proof nothing cites never appears. It
+ * is deliberately not a list of every test in the repository — that would be a
+ * directory listing, and the question this answers is "what is holding this
+ * claim up", not "what tests exist".
+ *
+ * `probe:` collapsed into `test:` on contact with reality. The plan had probes
+ * as a separate harness, but a contract probe *is* a JUnit test — it runs in the
+ * reactor gate and needs no harness of its own, so a second scheme would have
+ * been two names for one mechanism.
+ */
+const proofs = {};
+for (const claim of allClaims) {
+  if (!claim.proof) continue;
+  const scheme = claim.proof.slice(0, claim.proof.indexOf(":"));
+  const id = claim.proof.slice(claim.proof.indexOf(":") + 1);
+  const entry = (proofs[claim.proof] ??= {
+    kind: scheme,
+    ...(scheme === "test" ? { path: proofTargets.tests.get(id) ?? null } : {}),
+    ...(scheme === "snippet" ? { page: proofTargets.snippets.get(id) ?? null } : {}),
+    ...(scheme === "probe" || scheme === "render" ? { unresolved: "no registry for this scheme yet" } : {}),
+    holds: [],
+  });
+  entry.holds.push({
+    kind: claim.kind,
+    value: claim.value,
+    page: claim.file,
+    line: claim.line,
+    ...(claim.heading ? { heading: claim.heading } : {}),
+  });
+}
+for (const entry of Object.values(proofs)) {
+  entry.holds.sort((a, b) => a.page.localeCompare(b.page) || a.line - b.line);
+}
+
+// A claim that asserts behaviour and cites nothing cannot appear here at all —
+// the parser refuses it — so the gap this counts is the opposite one: pages
+// making symbol or capability claims with no proof attached. That is coverage
+// to grow, not an error, so it is reported as a number rather than a failure.
+const unproven = allClaims.filter((c) => !c.proof).length;
+
+const proofsDocument = {
+  schemaVersion: 1,
+  note:
+    "Every proof a documentation claim cites, resolved to where it lives and " +
+    "what it holds up. Generated from the claim markers in docs/; a proof that " +
+    "nothing cites does not appear, and a claim whose proof does not resolve " +
+    "fails the check rather than landing here.",
+  generator: "knowledge/tools/claims/check-claims.mjs",
+  counts: {
+    proofs: Object.keys(proofs).length,
+    claimsHeld: allClaims.filter((c) => c.proof).length,
+    claimsWithoutProof: unproven,
+  },
+  proofs: Object.fromEntries(Object.entries(proofs).sort()),
+};
+
+const proofsText = `${JSON.stringify(proofsDocument, null, 2)}\n`;
+
 const text = `${JSON.stringify(document, null, 2)}\n`;
 
 if (errors.length) {
@@ -318,20 +391,30 @@ if (errors.length) {
 }
 
 if (checkOnly) {
-  const actual = fs.existsSync(INDEX_FILE) ? fs.readFileSync(INDEX_FILE, "utf8").replace(/\r\n/g, "\n") : null;
-  if (actual !== text) {
+  const stale = [
+    [INDEX_FILE, text],
+    [PROOFS_FILE, proofsText],
+  ].filter(([file, expected]) => {
+    const actual = fs.existsSync(file) ? fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n") : null;
+    return actual !== expected;
+  });
+  if (stale.length) {
     process.stdout.write(
-      "[check-claims] knowledge/claims/index.json is out of date\n" +
+      `[check-claims] out of date: ${stale.map(([f]) => path.relative(REPO_ROOT, f).split(path.sep).join("/")).join(", ")}\n` +
         "  regenerate: node knowledge/tools/claims/check-claims.mjs\n",
     );
     process.exit(1);
   }
-  process.stdout.write(`[check-claims] ${allClaims.length} claims, index current\n`);
+  process.stdout.write(
+    `[check-claims] ${allClaims.length} claims, ${proofsDocument.counts.proofs} proofs, both current\n`,
+  );
   process.exit(0);
 }
 
 fs.mkdirSync(path.dirname(INDEX_FILE), { recursive: true });
 fs.writeFileSync(INDEX_FILE, text, "utf8");
+fs.mkdirSync(path.dirname(PROOFS_FILE), { recursive: true });
+fs.writeFileSync(PROOFS_FILE, proofsText, "utf8");
 
 if (asJson) {
   process.stdout.write(`${JSON.stringify(document.counts, null, 2)}\n`);
@@ -339,6 +422,8 @@ if (asJson) {
   process.stdout.write(
     `[check-claims] ${allClaims.length} claims on ${document.counts.pagesWithClaims} pages ` +
       `-> knowledge/claims/index.json\n` +
+      `  ${proofsDocument.counts.proofs} proofs holding ${proofsDocument.counts.claimsHeld} of them ` +
+      `-> knowledge/proofs/index.json\n` +
       `  symbol ${document.counts.symbol} · capability ${document.counts.capability} · ` +
       `behavior ${document.counts.behavior}\n`,
   );

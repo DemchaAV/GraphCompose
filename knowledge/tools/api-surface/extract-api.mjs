@@ -49,6 +49,7 @@ import { readAnnotations, memberKeyForMember } from "./lib/annotations.mjs";
 import {
   admit,
   stability,
+  BETA,
   memberStability,
   SURFACES,
   inImplementationRoot,
@@ -537,6 +538,7 @@ function buildSurface({ version, artifacts, javap }) {
       name: type.name,
       binaryName: type.binaryName,
       package: type.package,
+      packageStability: type.packageAnnotations.includes(BETA) ? "beta" : "stable",
       kind: type.kind,
       modifiers: type.modifiers,
       artifact: type.artifact,
@@ -645,10 +647,18 @@ function surfaceDocument({ surface, version, types, artifacts }) {
   for (const type of sorted) {
     let bucket = packages[packages.length - 1];
     if (!bucket || bucket.name !== type.package) {
-      bucket = { name: type.package, types: [] };
+      bucket = {
+        name: type.package,
+        // Recorded rather than inferred. A consumer cannot tell a beta *package*
+        // from a package whose one admitted type happens to be beta, and
+        // `document.layout` is exactly that: everything in it is excluded except
+        // `NodeDefinition`, which is beta.
+        ...(type.packageStability === "beta" ? { stability: "beta" } : {}),
+        types: [],
+      };
       packages.push(bucket);
     }
-    const { package: _drop, ...rest } = type;
+    const { package: _drop, packageStability: _drop2, ...rest } = type;
     bucket.types.push(rest);
   }
 

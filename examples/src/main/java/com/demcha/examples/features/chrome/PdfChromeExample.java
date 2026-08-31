@@ -28,9 +28,11 @@ import java.nio.file.Path;
  *
  * <p>The rendered PDF carries author/title/keywords metadata in the
  * information dictionary, a 45-degree "DRAFT" watermark behind every
- * page, a bordered header + footer with page-number tokens, and three
- * outline bookmarks that a PDF reader exposes as a navigable side
- * panel.</p>
+ * page, a bordered header + footer with page-number tokens — the footer
+ * set in PT Sans through {@code fontName}, counting pages in Cyrillic,
+ * with {@code reserveSpace(true)} keeping the body clear of its band —
+ * and three outline bookmarks that a PDF reader exposes as a navigable
+ * side panel.</p>
  *
  * <p>Document protection (passwords, permissions) is configured the
  * same way through {@link DocumentSession#protect}; this example skips
@@ -92,9 +94,16 @@ public final class PdfChromeExample {
                     .separatorThickness(0.5f)
                     .build());
 
+            //    The footer names its family: PT Sans has the Cyrillic the left
+            //    slot needs, where the default standard-14 Helvetica would draw
+            //    "????". reserveSpace keeps the body out of the band; a margin
+            //    that already clears it (as here) reserves nothing extra.
             document.footer(DocumentHeaderFooter.builder()
                     .zone(DocumentHeaderFooterZone.FOOTER)
+                    .leftText("Стр. {page} из {pages}")
                     .centerText("Page {page} of {pages}")
+                    .fontName(FontName.PT_SANS)
+                    .reserveSpace(true)
                     .fontSize(9f)
                     .textColor(MUTED)
                     .showSeparator(true)
@@ -186,7 +195,13 @@ public final class PdfChromeExample {
                                     .bold("Page {page} of {pages}")
                                     .plain(". Both zones share the same ")
                                     .accent("DocumentHeaderFooter", BRAND)
-                                    .plain(" value type and accept independent fontSize / textColor / separator settings.")))
+                                    .plain(" value type and accept independent fontSize / textColor / separator settings. The footer names ")
+                                    .bold("PT Sans")
+                                    .plain(" through ")
+                                    .bold("fontName")
+                                    .plain(" — its Cyrillic counter keeps its letters where the standard-14 default would substitute — and ")
+                                    .bold("reserveSpace(true)")
+                                    .plain(" keeps the body clear of the band.")))
 
                     .addSection("Bookmarks", section -> section
                             .softPanel(DocumentColor.WHITE, 6, 12)
@@ -224,7 +239,7 @@ public final class PdfChromeExample {
                             .accentTop(THEME.palette().rule(), 0.6)
                             .padding(new DocumentInsets(8, 0, 0, 0))
                             .addParagraph(p -> p
-                                    .text("All five surfaces are renderer-neutral — DOCX honours metadata, ignores watermark/header/footer/bookmarks per Apache POI capability matrix.")
+                                    .text("All five surfaces are renderer-neutral — DOCX honours metadata and node page zones; the text header/footer, watermark and bookmarks stay fixed-layout (PDF/PPTX).")
                                     .textStyle(caption())
                                     .lineSpacing(1.4)
                                     .margin(DocumentInsets.zero())))

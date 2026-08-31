@@ -4,6 +4,7 @@ import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -34,6 +35,13 @@ import java.nio.file.Path;
  * than an {@code int} so the same zone also exports to DOCX, where it becomes
  * Word's live {@code PAGE} field.</p>
  *
+ * <p>The rest of the zone surface rides along: {@code DocumentPageZone.header}
+ * builds the running head from the same row DSL,
+ * {@code appliesTo(page -> !page.isFirst())} keeps it off the cover, and the head
+ * carries an {@code addPageReference} that resolves against the body's anchors —
+ * every page names where the appendix landed without anyone maintaining the
+ * number.</p>
+ *
  * @author Artem Demchyshyn
  */
 public final class PageZoneExample {
@@ -47,8 +55,9 @@ public final class PageZoneExample {
     }
 
     /**
-     * Renders a three-page note whose footer carries a notice, a version badge, a
-     * link and the page number, all as nodes.
+     * Renders a four-page note whose footer carries a notice, a version badge, a
+     * link and the page number, all as nodes — under a running head that skips
+     * the cover and points at the appendix through a body anchor.
      *
      * @return path to the generated PDF
      * @throws Exception if rendering or file IO fails
@@ -76,10 +85,25 @@ public final class PageZoneExample {
                     .add(page.pageNumber(chrome))
                     .build()));
 
+            // The running head skips the cover — appliesTo decides painting per
+            // page — and its right side is a page reference resolved from the
+            // body's "appendix" anchor, so every page names where it landed.
+            session.chrome().zone(DocumentPageZone.header(24, page -> new RowBuilder()
+                            .name("HeaderZone")
+                            .addParagraph(p -> p.text("Page zones").textStyle(chrome))
+                            .flexSpacer()
+                            .addParagraph(p -> p.text("Appendix · p.").textStyle(chrome))
+                            .addPageReference("appendix", chrome, TextAlign.LEFT)
+                            .build())
+                    .toBuilder()
+                    .appliesTo(page -> !page.isFirst())
+                    .build());
+
             session.pageFlow(page -> {
                 page.addParagraph(p -> p.text("Page zones").textStyle(title));
                 page.addParagraph(p -> p.text("The footer below is a row of nodes, not three text "
-                                + "slots: a notice, a badge, a link and this page's number.")
+                                + "slots: a notice, a badge, a link and this page's number. The "
+                                + "running head starts overleaf — appliesTo keeps it off this cover.")
                         .textStyle(body).padding(DocumentInsets.top(6)));
                 page.addPageBreak(b -> b.name("toSecond"));
 
@@ -94,6 +118,17 @@ public final class PageZoneExample {
                 page.addParagraph(p -> p.text("page.pageNumber() returns a node, so this same footer "
                                 + "exports to DOCX as Word's live PAGE field rather than a number "
                                 + "that would be wrong on every page but one.")
+                        .textStyle(body).padding(DocumentInsets.top(6)));
+                page.addPageBreak(b -> b.name("toAppendix"));
+            });
+
+            session.pageFlow(page -> {
+                page.name("Appendix").anchor("appendix");
+                page.addParagraph(p -> p.text("Appendix").textStyle(title));
+                page.addParagraph(p -> p.text("The head's page reference points here. It is the "
+                                + "body's own anchor machinery — the zone compiles with the "
+                                + "document's resolved anchors, so \"Appendix · p.4\" is looked up, "
+                                + "not typed.")
                         .textStyle(body).padding(DocumentInsets.top(6)));
             });
 

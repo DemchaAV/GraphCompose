@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "targetLibrary": "GraphCompose",
   "surface": "extension-spi",
-  "targetVersion": "2.2.x",
-  "verifiedAgainst": "2.2.3-SNAPSHOT",
+  "targetVersion": "2.3.x",
+  "verifiedAgainst": "2.3.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "generatedFrom": [
-    "io.github.demchaav:graph-compose-core:2.2.3-SNAPSHOT",
-    "io.github.demchaav:graph-compose-templates:2.2.3-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pdf:2.2.3-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-docx:2.2.3-SNAPSHOT",
-    "io.github.demchaav:graph-compose-render-pptx:2.2.3-SNAPSHOT",
-    "io.github.demchaav:graph-compose-testing:2.2.3-SNAPSHOT"
+    "io.github.demchaav:graph-compose-core:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.3.0-SNAPSHOT"
   ],
   "parameterNamesFrom": [
     "graph-compose-core:sources",

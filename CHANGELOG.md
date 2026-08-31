@@ -97,6 +97,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A banded single-column CV preset: `VioletGrid`.** A one-page sheet with no page-level
+  grid at all: a two-tone name beside the contact list, three opening lines, a six-up
+  grid of marked skills divided by dotted rules, a strip of tools on inline discs, the
+  roles held on a dated timeline whose dates sit outside the rail, the projects behind
+  tinted tiles, education and languages side by side, and a tinted band closing on a
+  quotation. Ships as `cv.presets.VioletGrid` on the existing `CvDocument` model,
+  porting the rendered layout of a published standalone template; like `SlateOrange` it
+  reads a rated language's wording from `CvSkill.note`. Every split is local to one
+  band — the masthead splits where the contact marks begin, the timeline into dates,
+  rail and content, a project into tile and copy, the credentials into two halves — and
+  none of the four knows about the others, which is why every horizontal arrangement is
+  either a top-level row or a table and none of them nests. Three marks are
+  relationships rather than lengths: a section rule starts where its heading ends
+  because it is a weighted column taking what an auto column leaves; the timeline rail
+  is the left border of every entry but the last, so consecutive entries butt into one
+  line; and a project's hairline is its copy's left border, so it is exactly as tall as
+  the copy. Seven berths reach their sections by title, including a quotation berth
+  whose body is drawn and whose title is not. Unlike its ported siblings this sheet
+  flows: each experience entry is held together, so a longer CV runs onto a second page
+  rather than cutting a role in half. As on the presets before it a link is drawn as its
+  own label with the address behind it, the one deliberate departure from the ported
+  sheet, measured at 1 882 of 2 173 720 pixels. Guarded by a smoke test (including the
+  unknown-mark data error, a skill with no mark, the two-tone name, the quotation's
+  title staying off the sheet, the link targets on every kind of title, an identity with
+  no links, a document with nothing but an identity, and the run onto a second page), an
+  exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-violet-grid-v2`.
+
 - **A masthead-and-rail CV preset: `SlateOrange`.** A one-page sheet built as a
   full-bleed slate band over a two-column body: an orange monogram tile beside the name,
   the role line and a tracked specialism strip, with the contact lines across an orange

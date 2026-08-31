@@ -67,6 +67,7 @@ final class ShowcaseMetadata {
         cv("cv-terracotta-rail-v2", "TerracottaRailExample", "Terracotta Rail", "Serif monogram over a terracotta rule, contact channels behind their marks and two bulleted lists, beside a letter-spaced masthead, roles on a ringed rail, a projects grid and the degrees.", "sidebar", "monogram", "terracotta");
         cv("cv-teal-pulse-v2", "TealPulseExample", "Teal Pulse", "Clinical sheet in five bands: a heart crossed by a pulse beside the name, a contact strip on rules, competencies beside the summary and roles, and a three-column closing band over a tracked tagline.", "clinical", "badges", "teal");
         cv("cv-slate-orange-v2", "SlateOrangeExample", "Slate Orange", "Full-bleed slate masthead with an orange monogram tile, over a sidebar of marked competencies, trophied achievements and rated languages beside a profile, a dated experience rail and a credentials footer.", "sidebar", "masthead", "orange");
+        cv("cv-violet-grid-v2", "VioletGridExample", "Violet Grid", "Single-column sheet in bands: a two-tone name beside the contact list, a six-up grid of marked skills on dotted rules, a tools strip, a dated timeline, tinted project tiles and a closing quotation.", "single-column", "grid", "violet");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
         // Registered directly: letter() points at the layered preset examples under

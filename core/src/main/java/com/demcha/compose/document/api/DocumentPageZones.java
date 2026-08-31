@@ -16,6 +16,7 @@ import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.output.PageContext;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,8 @@ import java.util.Map;
  * content function builds. Because the result is ordinary fragments in the
  * ordinary graph, every fixed-layout backend draws a zone with no code of its
  * own — the fonts, the bidi reordering, the inline chips and the link
- * annotations are the ones the body already gets.</p>
+ * annotations are the ones the body already gets, and a page reference resolves
+ * against the body's own anchors.</p>
  *
  * <p>Zone fragments are appended, so they paint over the body; page backgrounds
  * are prepended and paint under it. That ordering matches the chrome the text
@@ -53,17 +55,20 @@ final class DocumentPageZones {
     /**
      * Emits every applicable zone on every page.
      *
-     * @param base      freshly compiled layout graph
-     * @param zones     zones registered on the session; {@code null}/empty leaves
-     *                  {@code base} unchanged
-     * @param compiler  the session's layout compiler
-     * @param registry  the session's node registry
-     * @param resources the session's measurement resources
-     * @param markdown  whether markdown parsing is enabled for this session
+     * @param base        freshly compiled layout graph
+     * @param zones       zones registered on the session; {@code null}/empty leaves
+     *                    {@code base} unchanged
+     * @param bodyAnchors the body's resolved anchor pages, so a page reference
+     *                    inside a zone answers the same as one in the body
+     * @param compiler    the session's layout compiler
+     * @param registry    the session's node registry
+     * @param resources   the session's measurement resources
+     * @param markdown    whether markdown parsing is enabled for this session
      * @return a layout graph with the zone fragments, or {@code base}
      */
     static LayoutGraph apply(LayoutGraph base,
                              List<DocumentPageZone> zones,
+                             Map<String, Integer> bodyAnchors,
                              LayoutCompiler compiler,
                              NodeRegistry registry,
                              MeasurementResources resources,
@@ -85,7 +90,7 @@ final class DocumentPageZones {
                     continue;
                 }
                 combined.addAll(placeZone(
-                        zone, index, context, page, pageHeight, bandWidth, bandLeft,
+                        zone, index, context, page, pageHeight, bandWidth, bandLeft, bodyAnchors,
                         compiler, registry, resources, markdown));
             }
         }
@@ -99,6 +104,7 @@ final class DocumentPageZones {
                                                   double pageHeight,
                                                   double bandWidth,
                                                   double bandLeft,
+                                                  Map<String, Integer> bodyAnchors,
                                                   LayoutCompiler compiler,
                                                   NodeRegistry registry,
                                                   MeasurementResources resources,
@@ -109,13 +115,16 @@ final class DocumentPageZones {
         }
 
         LayoutCanvas band = LayoutCanvas.from(bandWidth, zone.getHeight(), zone.getPadding());
-        // A page field carries the question rather than the answer, so the band
-        // publishes the page it is drawing through the channel a page reference
-        // already uses; PageFieldDefinition reads it back and renders the number.
+        // The band compiles with the body's resolved anchors, so a page reference
+        // in a zone answers what it answers in the body — plus the page the band
+        // is drawing, published through the same channel under the page-field
+        // keys; PageFieldDefinition reads those back and renders the number.
+        Map<String, Integer> resolvedPages = new HashMap<>(bodyAnchors);
+        resolvedPages.put(PageFieldDefinition.NUMBER_KEY, context.number());
+        resolvedPages.put(PageFieldDefinition.TOTAL_KEY, context.total());
         DocumentLayoutPassContext pass = new DocumentLayoutPassContext(
                 registry, band, resources.fontLibrary(), resources.textMeasurementSystem(), markdown,
-                Map.of(PageFieldDefinition.NUMBER_KEY, context.number(),
-                        PageFieldDefinition.TOTAL_KEY, context.total()));
+                resolvedPages);
         LayoutGraph laidOut;
         try {
             laidOut = compiler.compile(new DocumentGraph(List.of(content)), pass, pass);

@@ -754,8 +754,13 @@ public final class DocumentSession implements AutoCloseable {
         // the compiled graph in that order.
         LayoutGraph withBackgrounds =
                 DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+        List<DocumentPageZone> zones = chromeOptions.zones();
+        // A zone rides the body's machinery, anchors included: a page reference
+        // inside one resolves against the graph the body just settled.
+        Map<String, Integer> bodyAnchors =
+                zones.isEmpty() ? Map.of() : resolvedPageNumbers(withBackgrounds);
         return DocumentPageZones.apply(
-                withBackgrounds, chromeOptions.zones(), compiler, registry,
+                withBackgrounds, zones, bodyAnchors, compiler, registry,
                 measurementResources, markdown);
     }
 

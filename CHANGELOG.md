@@ -39,7 +39,9 @@ follow semantic versioning; release dates are ISO 8601.
   because it is the body's machinery, not a second copy of it. Page numbers come from the
   context — `page.number() + " / " + page.total()` — so the band needs no placeholder tokens,
   and anything the tokens could not express (roman numerals, an offset, a different line on
-  the last page) is ordinary Java in the same lambda. `appliesTo(page -> ...)` decides which
+  the last page) is ordinary Java in the same lambda. A page reference inside a zone
+  resolves against the body's anchors, so a footer can say "appendix on page N" about
+  content it does not itself contain. `appliesTo(page -> ...)` decides which
   pages carry the zone, which separates "is this page numbered" from "is the band drawn" —
   the two that `DocumentPageNumbering` conflates. A zone reserves its height by default and
   does not paginate: content that needs more than the band raises

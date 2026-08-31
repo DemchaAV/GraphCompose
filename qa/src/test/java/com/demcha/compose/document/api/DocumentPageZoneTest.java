@@ -224,6 +224,62 @@ class DocumentPageZoneTest {
     }
 
     /**
+     * The zone rides the body's machinery, and that includes anchors: a page
+     * reference placed in a footer resolves against the same settled graph a
+     * body reference resolves against, so "see appendix on page N" chrome is one
+     * {@code addPageReference} call rather than a hand-maintained number.
+     */
+    @Test
+    void aPageReferenceInsideAZoneResolvesTheBodysAnchors() throws Exception {
+        byte[] pdf;
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(320, 240)
+                .margin(DocumentInsets.of(24))
+                .create()) {
+
+            document.chrome().zone(DocumentPageZone.footer(36, page -> new RowBuilder()
+                    .name("RefFooter")
+                    .addParagraph(paragraph -> paragraph.name("Label").text("See appendix:"))
+                    .addPageReference("appendix")
+                    .build()));
+            fillBody(document);
+            document.dsl().pageFlow()
+                    .name("Appendix")
+                    .anchor("appendix")
+                    .addParagraph(paragraph -> paragraph.name("AppendixBody").text("APPENDIXMARK"))
+                    .build();
+            pdf = document.toPdfBytes();
+        }
+
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            int appendixPage = pageOf(document, "APPENDIXMARK");
+            assertThat(appendixPage)
+                    .as("the anchor has to land past page 1, or the reference resolving"
+                            + " trivially to 1 would prove nothing")
+                    .isGreaterThan(1);
+
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setStartPage(1);
+            stripper.setEndPage(1);
+            assertThat(stripper.getText(document))
+                    .as("the footer on the first page already knows where the appendix went")
+                    .containsPattern("See appendix:\\s*" + appendixPage);
+        }
+    }
+
+    private static int pageOf(PDDocument document, String needle) throws Exception {
+        for (int page = 1; page <= document.getNumberOfPages(); page++) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setStartPage(page);
+            stripper.setEndPage(page);
+            if (stripper.getText(document).contains(needle)) {
+                return page;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * A page field is a node like any other, so it has to survive being handed to
      * the compiler from outside a zone — the case that used to reach the registry
      * with no definition for its kind. Rendered where nothing publishes a page

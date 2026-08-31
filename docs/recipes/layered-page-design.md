@@ -28,6 +28,7 @@ cleanly and one that fights the engine. This page is the decision guide.
 <!-- claim: symbol=DocumentSession.pageBackgrounds -->
 <!-- claim: symbol=PageBackgroundFill.leftColumn -->
 <!-- claim: behavior=row.rejects-a-nested-row proof=test:RowBuilderTest -->
+<!-- claim: behavior=row.auto-column-rejects-right-aligned-text proof=test:AutoColumnRightAlignContractTest -->
 
 A **tinted** sidebar that must repeat on every page is a page background — it
 costs nothing at layout time and never shifts content:

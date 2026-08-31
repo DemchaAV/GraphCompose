@@ -6,7 +6,7 @@
     "pagesWithClaims": 2,
     "symbol": 14,
     "capability": 6,
-    "behavior": 6
+    "behavior": 7
   },
   "claims": {
     "symbol": {
@@ -182,6 +182,14 @@
       ]
     },
     "behavior": {
+      "row.auto-column-rejects-right-aligned-text": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 31,
+          "heading": "Sidebar: page background vs. row",
+          "proof": "test:AutoColumnRightAlignContractTest"
+        }
+      ],
       "row.rejects-a-nested-row": [
         {
           "page": "docs/recipes/layered-page-design.md",

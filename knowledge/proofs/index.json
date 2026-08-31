@@ -3,11 +3,24 @@
   "note": "Every proof a documentation claim cites, resolved to where it lives and what it holds up. Generated from the claim markers in docs/; a proof that nothing cites does not appear, and a claim whose proof does not resolve fails the check rather than landing here.",
   "generator": "knowledge/tools/claims/check-claims.mjs",
   "counts": {
-    "proofs": 5,
-    "claimsHeld": 6,
+    "proofs": 6,
+    "claimsHeld": 7,
     "claimsWithoutProof": 20
   },
   "proofs": {
+    "test:AutoColumnRightAlignContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/AutoColumnRightAlignContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.auto-column-rejects-right-aligned-text",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 31,
+          "heading": "Sidebar: page background vs. row"
+        }
+      ]
+    },
     "test:ComposedCellSnapshotContractTest": {
       "kind": "test",
       "path": "qa/src/test/java/com/demcha/compose/document/table/ComposedCellSnapshotContractTest.java",

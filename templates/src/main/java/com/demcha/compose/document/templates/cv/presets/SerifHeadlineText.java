@@ -1,11 +1,15 @@
 package com.demcha.compose.document.templates.cv.presets;
 
+import com.demcha.compose.document.dsl.ParagraphBuilder;
+import com.demcha.compose.document.node.DocumentLinkOptions;
+import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** Turning a model field into the lines this sheet draws. */
+/** Turning model fields into the runs and lines this sheet draws. */
 final class SerifHeadlineText {
 
     private SerifHeadlineText() {
@@ -27,5 +31,25 @@ final class SerifHeadlineText {
             }
         }
         return out;
+    }
+
+    /**
+     * Writes an entry's title into a paragraph, as a link when the entry
+     * carries one.
+     *
+     * <p>The link is the same ink either way — an annotation draws nothing
+     * and lays out nothing — so a linked title and a plain one are the same
+     * sheet.</p>
+     *
+     * @param paragraph the paragraph being built
+     * @param entry     the entry whose title and link to write
+     * @param style     the style of the title
+     */
+    static void title(ParagraphBuilder paragraph, CvEntry entry, DocumentTextStyle style) {
+        if (entry.link().isBlank()) {
+            paragraph.inlineText(entry.title(), style);
+        } else {
+            paragraph.inlineText(entry.title(), style, new DocumentLinkOptions(entry.link()));
+        }
     }
 }

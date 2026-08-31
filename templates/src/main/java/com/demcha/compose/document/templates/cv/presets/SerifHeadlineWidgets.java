@@ -25,6 +25,7 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.RULE;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.TAIL_GAP;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.TIGHT_LEADING;
+import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.COLUMN_TAIL_GUTTER;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.columnInsets;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.compact;
 import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyles.dashOffset;
@@ -184,8 +185,12 @@ final class SerifHeadlineWidgets {
                     .padding(DocumentInsets.zero())
                     .margin(new DocumentInsets(gapAbove, 0, 0, 0));
             for (int i = 0; i < columns; i++) {
+                // The text keeps a gutter at its right edge; the marks and
+                // the separators do not, since they are placed on the column
+                // boundary rather than filling to it.
                 stack.layer(parts.get(i).text()
-                        .margin(columnInsets(bandWidth, columnWidth, i, 0.0, 0.0))
+                        .margin(columnInsets(bandWidth, columnWidth, i, 0.0, 0.0,
+                                COLUMN_TAIL_GUTTER))
                         .build(), LayerAlign.TOP_LEFT);
             }
             for (int i = 0; i < columns; i++) {

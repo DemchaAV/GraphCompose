@@ -140,6 +140,43 @@ class SerifHeadlineSmokeTest {
     }
 
     @Test
+    void anEntryWithALinkReachesThePdfAsOne() throws Exception {
+        // Every title this preset draws is a link when its entry carries
+        // one. It is an annotation, so it moves no pixel and no layout node
+        // — which is why neither parity gate can see it.
+        byte[] pdf = render(CvDocument.builder()
+                .identity(identity())
+                .section(EntriesSection.builder("Projects")
+                        .entry(CvEntry.builder("Ledgerkit")
+                                .subtitle("Java")
+                                .body("A ledger.")
+                                .icon("api")
+                                .link("https://example.com/ledgerkit")
+                                .build())
+                        .build())
+                .section(EntriesSection.builder("Experience")
+                        .entry(CvEntry.builder("Engineer")
+                                .subtitle("Acme")
+                                .date("2024")
+                                .body("Shipped a thing.")
+                                .link("https://acme.example.com")
+                                .build())
+                        .build())
+                .section(EntriesSection.builder("Achievements")
+                        .entry(CvEntry.builder("Engineer of the Year")
+                                .body("For the platform work.")
+                                .icon("trophy")
+                                .link("https://example.com/award")
+                                .build())
+                        .build())
+                .build());
+        assertThat(linkUris(pdf))
+                .contains("https://example.com/ledgerkit",
+                        "https://acme.example.com",
+                        "https://example.com/award");
+    }
+
+    @Test
     void drawsAnEntryWithoutAMark() throws Exception {
         // No token, no plate — the card is drawn, just unmarked.
         String text = textOf(render(CvDocument.builder()

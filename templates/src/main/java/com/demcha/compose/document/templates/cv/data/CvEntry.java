@@ -12,8 +12,9 @@ import java.util.Objects;
  * <p>Blank fields are honoured: a blank {@code date} omits the date
  * column, a blank {@code subtitle} drops the italic line, a blank
  * {@code body} drops the description paragraph, a blank {@code place}
- * drops the location, and a blank {@code icon} leaves the entry unmarked.
- * A preset draws only what it has somewhere to put.</p>
+ * drops the location, a blank {@code icon} leaves the entry unmarked, and a
+ * blank {@code link} leaves its title plain. A preset draws only what it has
+ * somewhere to put.</p>
  *
  * @param title    bold heading on the left (job title, degree)
  * @param subtitle italic subtitle on the line below (employer,
@@ -32,14 +33,18 @@ import java.util.Objects;
  *                 set — so a token means something only to the preset that
  *                 declares it, and the presets that draw no marks ignore it;
  *                 blank when absent
+ * @param link     where this entry points — a repository, a case study, a
+ *                 company. The presets that honour it make the title a link
+ *                 in the rendered PDF, which costs the layout nothing: a
+ *                 link is an annotation, not ink. Blank when absent
  */
 public record CvEntry(String title, String subtitle, String date, String body,
-                      String place, String icon) {
+                      String place, String icon, String link) {
 
     /**
      * Validates that the four original fields are non-null and that
-     * {@code title} is non-blank, treating a null {@code place} or
-     * {@code icon} as absent.
+     * {@code title} is non-blank, treating a null {@code place},
+     * {@code icon} or {@code link} as absent.
      */
     public CvEntry {
         Objects.requireNonNull(title, "title");
@@ -48,9 +53,25 @@ public record CvEntry(String title, String subtitle, String date, String body,
         Objects.requireNonNull(body, "body");
         place = place == null ? "" : place;
         icon = icon == null ? "" : icon;
+        link = link == null ? "" : link;
         if (title.isBlank()) {
             throw new IllegalArgumentException("title must not be blank");
         }
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the link.
+     *
+     * @param title    bold heading on the left
+     * @param subtitle subtitle on the line below; blank collapses it
+     * @param date     date column next to the title; blank removes it
+     * @param body     prose paragraph beneath the subtitle
+     * @param place    where this happened; blank when absent
+     * @param icon     the mark a preset draws for this entry; blank when absent
+     */
+    public CvEntry(String title, String subtitle, String date, String body,
+                   String place, String icon) {
+        this(title, subtitle, date, body, place, icon, "");
     }
 
     /**
@@ -63,7 +84,7 @@ public record CvEntry(String title, String subtitle, String date, String body,
      * @param body     prose paragraph beneath the subtitle
      */
     public CvEntry(String title, String subtitle, String date, String body) {
-        this(title, subtitle, date, body, "", "");
+        this(title, subtitle, date, body, "", "", "");
     }
 
     /**
@@ -91,6 +112,7 @@ public record CvEntry(String title, String subtitle, String date, String body,
         private String body = "";
         private String place = "";
         private String icon = "";
+        private String link = "";
 
         private Builder(String title) {
             this.title = title;
@@ -165,12 +187,24 @@ public record CvEntry(String title, String subtitle, String date, String body,
         }
 
         /**
+         * Sets where this entry points. The presets that honour it make the
+         * title a link.
+         *
+         * @param value the target URL; null becomes blank
+         * @return this builder for chaining
+         */
+        public Builder link(String value) {
+            this.link = value == null ? "" : value;
+            return this;
+        }
+
+        /**
          * Builds the immutable {@link CvEntry}.
          *
          * @return the assembled entry
          */
         public CvEntry build() {
-            return new CvEntry(title, subtitle, date, body, place, icon);
+            return new CvEntry(title, subtitle, date, body, place, icon, link);
         }
     }
 }

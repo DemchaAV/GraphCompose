@@ -120,12 +120,14 @@ final class SerifHeadlineClosing {
                 // title it stands beside and the two centre on each other.
                 .padding(new DocumentInsets(
                         ACHIEVEMENT_TEXT_DROP, 0, 0, lead + ACHIEVEMENT_GLYPH_TO_TEXT));
-        column.addParagraph(p -> p
-                .name("AchievementTitle_" + compact(achievement.title()))
-                .text(achievement.title())
-                .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
-                .lineSpacing(TIGHT_LEADING)
-                .margin(new DocumentInsets(0, 0, ACHIEVEMENT_TITLE_TO_BODY, 0)));
+        column.addParagraph(p -> {
+            p.name("AchievementTitle_" + compact(achievement.title()))
+                    .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
+                    .lineSpacing(TIGHT_LEADING);
+            SerifHeadlineText.title(p, achievement,
+                    style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+            p.margin(new DocumentInsets(0, 0, ACHIEVEMENT_TITLE_TO_BODY, 0));
+        });
         column.addParagraph(p -> p
                 .name("AchievementBody_" + compact(achievement.title()))
                 .text(achievement.body())

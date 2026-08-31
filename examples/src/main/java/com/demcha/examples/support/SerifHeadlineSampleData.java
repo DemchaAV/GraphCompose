@@ -23,7 +23,10 @@ import java.util.List;
  *
  * <p>The project and achievement marks are this preset's own vocabulary —
  * {@code cart}, {@code api}, {@code trophy}, {@code chart}, {@code rocket} —
- * and each entry names the one it wants.</p>
+ * and each entry names the one it wants. The marks come in two colours:
+ * {@code cart} and {@code api} are drawn in the navy of the design's ink,
+ * the other three in its gold. This sample keeps a band to one colour, since
+ * mixing them inside one row reads as a mistake rather than a choice.</p>
  */
 public final class SerifHeadlineSampleData {
 
@@ -98,13 +101,15 @@ public final class SerifHeadlineSampleData {
                                 .subtitle("Java, PostgreSQL, Testcontainers")
                                 .body("Open-source double-entry ledger for JVM services, with a"
                                         + " property-based suite over the posting rules.")
-                                .icon("api")
+                                .icon("chart")
+                                .link("https://github.com/thalvorsen/ledgerkit")
                                 .build())
                         .entry(CvEntry.builder("Runbook Digest")
                                 .subtitle("Kotlin, Kafka, OpenSearch")
                                 .body("Reads alert history and drafts the retrospective agenda"
                                         + " before the meeting starts.")
-                                .icon("chart")
+                                .icon("rocket")
+                                .link("https://github.com/thalvorsen/runbook-digest")
                                 .build())
                         .build())
                 .section(EntriesSection.builder("Education")

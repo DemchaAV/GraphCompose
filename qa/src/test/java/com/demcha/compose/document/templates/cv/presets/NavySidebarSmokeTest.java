@@ -7,6 +7,7 @@ import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvSkill;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
@@ -141,7 +142,11 @@ class NavySidebarSmokeTest {
         String text = textOf(render(CvDocument.builder()
                 .identity(identity())
                 .section(EntriesSection.builder("Education")
-                        .entry("Master of Science", "Some University", "2019", "Berlin")
+                        .entry(CvEntry.builder("Master of Science")
+                                .subtitle("Some University")
+                                .date("2019")
+                                .place("Berlin")
+                                .build())
                         .build())
                 .build()));
         assertThat(text).contains("MASTER OF SCIENCE").doesNotContain("Master of Science");

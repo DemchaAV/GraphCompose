@@ -4,6 +4,7 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -67,10 +68,16 @@ public final class NavySidebarFixtures {
                                 + " measurable results. Skilled in digital marketing, market"
                                 + " research, and cross-functional collaboration."))
                 .section(Slot.SIDEBAR, EntriesSection.builder("Education")
-                        .entry("Master of Science in Marketing", "New York University",
-                                "2020 - 2022", "New York, NY")
-                        .entry("Bachelor of Business Administration", "University of California",
-                                "2016 - 2020", "Los Angeles, CA")
+                        .entry(CvEntry.builder("Master of Science in Marketing")
+                                .subtitle("New York University")
+                                .date("2020 - 2022")
+                                .place("New York, NY")
+                                .build())
+                        .entry(CvEntry.builder("Bachelor of Business Administration")
+                                .subtitle("University of California")
+                                .date("2016 - 2020")
+                                .place("Los Angeles, CA")
+                                .build())
                         .build())
                 .section(Slot.SIDEBAR, SkillsSection.of("Skills", SkillGroup.of("Core",
                         "Digital Marketing",

@@ -115,15 +115,61 @@ class DocxPageZoneTest {
         }
     }
 
+    /**
+     * A page predicate is a fixed-layout capability: Word paginates the
+     * document, so there is no page to test it against when the zone is
+     * written. The worst answer would be dropping the predicate silently; the
+     * export keeps the zone on every page — content beats absence — and says
+     * what it could not honor.
+     */
+    @Test
+    void aPagePredicateCannotBeEvaluatedSoTheZoneLandsEverywhereAndSaysSo() throws Exception {
+        ch.qos.logback.classic.Logger backendLog = (ch.qos.logback.classic.Logger)
+                org.slf4j.LoggerFactory.getLogger(DocxSemanticBackend.class);
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> seen =
+                new ch.qos.logback.core.read.ListAppender<>();
+        seen.start();
+        backendLog.addAppender(seen);
+        try {
+            byte[] docx = export(DocumentPageZone.builder()
+                    .height(32)
+                    .appliesTo(page -> !page.isFirst())
+                    .content(page -> new RowBuilder()
+                            .name("Conditional")
+                            .addParagraph(paragraph -> paragraph.name("Note").text("Confidential"))
+                            .build())
+                    .build());
+
+            try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+                assertThat(document.getFooterList())
+                        .as("the zone is still exported — omitting it would lose content")
+                        .isNotEmpty();
+                assertThat(document.getFooterList().get(0).getText()).contains("Confidential");
+            }
+            assertThat(seen.list)
+                    .as("and the export names the predicate it could not evaluate")
+                    .anySatisfy(event -> {
+                        assertThat(event.getLevel()).isEqualTo(ch.qos.logback.classic.Level.WARN);
+                        assertThat(event.getFormattedMessage()).contains("appliesTo");
+                    });
+        } finally {
+            backendLog.detachAppender(seen);
+        }
+    }
+
     private static byte[] exportWithFooter(
             java.util.function.Function<com.demcha.compose.document.output.PageContext,
                     com.demcha.compose.document.node.DocumentNode> content) throws Exception {
+        return export(DocumentPageZone.footer(32, content));
+    }
+
+    private static byte[] export(DocumentPageZone zone) throws Exception {
         try (DocumentSession document = GraphCompose.document()
                 .pageSize(420, 300)
                 .margin(DocumentInsets.of(28))
                 .create()) {
 
-            document.chrome().zone(DocumentPageZone.footer(32, content));
+            document.chrome().zone(zone);
             document.dsl().pageFlow()
                     .name("DocxZoneFixture")
                     .addParagraph(paragraph -> paragraph.name("Body").text("Body copy."))

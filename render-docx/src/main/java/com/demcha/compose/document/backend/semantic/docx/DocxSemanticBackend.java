@@ -189,6 +189,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * with an unpaginated {@link PageContext}: a page number baked into text here
      * would be right on one page and wrong on the others, so a zone that needs one
      * places {@code pageNumber()} and gets a live {@code PAGE} field instead.</p>
+     *
+     * <p>A page predicate is the other fixed-layout-only piece: {@code appliesTo}
+     * tests a page, and no page exists here to test — Word owns pagination. The
+     * zone is written on every page rather than silently skipped, content beating
+     * absence, and the export says on the log what it could not honor.</p>
      */
     private void applyPageZones(XWPFDocument document, List<DocumentPageZone> zones) {
         if (zones == null || zones.isEmpty()) {
@@ -199,6 +204,12 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             policy = document.createHeaderFooterPolicy();
         }
         for (DocumentPageZone zone : zones) {
+            if (zone.getAppliesTo() != null) {
+                LOG.warn("docx.zone.pagePredicate zone={} — appliesTo cannot be evaluated in a"
+                        + " semantic export: Word paginates the document, so there is no page to"
+                        + " test. The zone is written on every page; per-page chrome needs a"
+                        + " fixed-layout backend.", zone.getZone());
+            }
             DocumentNode content = zone.getContent() == null
                     ? null
                     : zone.getContent().apply(PageContext.unpaginated());

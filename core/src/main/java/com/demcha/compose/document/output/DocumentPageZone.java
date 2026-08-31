@@ -84,6 +84,11 @@ public final class DocumentPageZone {
      * hides the whole band as a side effect of not counting a page — here the
      * two are separate questions, so "no number on the cover, but keep the
      * logo" is one zone with a predicate rather than two zones.
+     *
+     * <p>A predicate is a fixed-layout capability. A semantic export (DOCX)
+     * writes the zone once as a definition and the consuming format paginates,
+     * so there is no page to test it against: the zone lands on every page and
+     * the export logs a warning.</p>
      */
     private final Predicate<PageContext> appliesTo;
 

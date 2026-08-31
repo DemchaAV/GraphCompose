@@ -28,7 +28,10 @@ follow semantic versioning; release dates are ISO 8601.
   resolved text on a fixed-layout export, a live `PAGE` / `NUMPAGES` field in Word. The same
   zone definition therefore serves both lanes. Reading `PageContext.number()` on a semantic
   export raises `UnsupportedOperationException` naming the alternative rather than returning
-  a plausible lie. Node kinds outside the mapped set are skipped and reported.
+  a plausible lie. Node kinds outside the mapped set are skipped and reported. A page
+  predicate (`appliesTo`) is fixed-layout capability — there is no page to test it against
+  when the definition is written — so a zone that carries one is exported to every page,
+  and the export logs what it could not honor.
 
 - **A page zone draws a node subtree instead of text slots.** `DocumentPageZone`, registered
   through `document.chrome().zone(...)`, takes a content function called once per page with

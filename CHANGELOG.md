@@ -84,6 +84,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **An architect's two-column CV preset: `TerracottaRail`.** A one-page A4 sheet whose
+  narrow column carries a serif monogram over a terracotta rule, the contact channels
+  behind their marks, two bulleted lists and a block of closing facts, beside a wide
+  column carrying a letter-spaced masthead, the summary, the roles held on a ringed
+  rail, a projects grid and the degrees. Ships as `cv.presets.TerracottaRail` on the
+  existing `CvDocument` model with **no model change at all**, porting the rendered
+  layout of a published standalone template. Like `CharcoalGold` it leaves the page to
+  the caller. Eight berths reach their sections by title; the two bulleted lists are
+  skills without levels, because this design writes them as plain lines — one takes a
+  terracotta square and no dash under its heading, the other a disc and a dash, which
+  is how the sheet tells two lists of one-liners apart. Each fact and each project
+  takes the mark its entry names in `CvEntry.icon()` from this preset's own vocabulary,
+  a project title is a link when its entry carries one, and the monogram is drawn from
+  the name's own initials rather than a field of its own — a document states its name
+  once, and a monogram that could disagree with it would be a second place to keep
+  true. A link in the contact block is set smaller than the channels above it, because
+  a URL is one long token that cannot be broken and is the line that outgrows that
+  column first; it takes the mark of the network it points at, or a globe. Like its
+  siblings it holds one page: the body is a single atomic row, so a longer CV raises
+  `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
+  smoke test (including the unknown-mark data error, an entry with no mark, an identity
+  with no links, a document with nothing but an identity, the monogram, the link
+  targets and the one-page limit), an exact layout snapshot and a pixel-parity gate;
+  the examples showcase gains `cv-terracotta-rail-v2`.
+
 - **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A
   studio invoice built around a cream sidebar — the two-line monogram and the wordmark
   on a terracotta block at its head, a tinted quarter-disc, an arch and a sprig running

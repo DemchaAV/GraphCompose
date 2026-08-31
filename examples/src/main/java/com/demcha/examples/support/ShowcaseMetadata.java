@@ -64,6 +64,7 @@ final class ShowcaseMetadata {
         cv("cv-navy-sidebar-v2", "NavySidebarExample", "Navy Sidebar", "Navy plate with a ringed portrait, contact marks, degrees, skills and languages, beside a white column of summary, badged sections and roles strung on a timeline rail.", "sidebar", "navy", "portrait");
         cv("cv-serif-headline-v2", "SerifHeadlineExample", "Serif Headline", "Volkhov masthead over a two-column body: roles on a timeline rail and marked project cards beside degrees and skill meters, closing with full-width certification and achievement bands.", "serif", "two-column");
         cv("cv-charcoal-gold-v2", "CharcoalGoldExample", "Charcoal Gold", "Charcoal sidebar with a ringed photograph, rated skills and languages, beside a paper column with a two-tone name, a dated experience rail and paired credential columns.", "sidebar", "photo", "gold");
+        cv("cv-terracotta-rail-v2", "TerracottaRailExample", "Terracotta Rail", "Serif monogram over a terracotta rule, contact channels behind their marks and two bulleted lists, beside a letter-spaced masthead, roles on a ringed rail, a projects grid and the degrees.", "sidebar", "monogram", "terracotta");
 
         // ===== Templates / Cover Letter (v2 layered, paired 1:1 with CV) =====
         // Registered directly: letter() points at the layered preset examples under

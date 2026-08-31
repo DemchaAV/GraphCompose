@@ -97,6 +97,37 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A two-column operations CV preset: `OrangeOps`.** A one-page sheet in three bands
+  over a split body: a two-tone name above a dark role bar whose right edge and three
+  accent slashes all lean by one ratio, a contact strip whose items sit on one axis
+  between hairlines, then a narrow column of dotted skills, achievement discs, a degree
+  and certifications beside a wide column carrying the profile, the roles held with
+  their dates on the right margin, a four-metric strip on full-height rules, and the
+  closing lines. Ships as `cv.presets.OrangeOps` on the existing `CvDocument` model,
+  porting the rendered layout of a published standalone template. It is the first
+  preset whose display family the engine does not carry: Oswald is not one of the
+  families `graph-compose-fonts` ships, so the preset names it through
+  `OrangeOps.DISPLAY_FONT` and the caller registers it — the gate and the example each
+  register the two faces from their own module's resources, and the class documentation
+  shows the call. Eight berths reach their sections by title, four to a column, and a
+  berth nobody fills takes its heading, its accent rule and its join hairline with it
+  rather than leaving a rule over a gap. Two shapes are what the design shows rather
+  than what a row could hold: the role bar is a layer stack because the plate and the
+  slashes overlap horizontally, and an achievement is a layer stack because a table cell
+  anchors its disc to the foot of the pair instead of the top. A badge is one leaf, not
+  two — the disc is re-emitted around the glyph inside a widened viewBox, because a
+  shape container inside a table cell reserves its box and composes none of its
+  children. A heading's parenthetical is set smaller on the same line, split off at the
+  title's first bracket, which is how `KEY KPI SNAPSHOT (Recent 12 Months)` reaches the
+  page as the design sets it. As on the presets before it a link is drawn as its own
+  label with the address behind it, the one deliberate departure from the ported sheet,
+  measured at 7 241 of 2 173 720 pixels. Guarded by a smoke test (including the unknown
+  mark data error, an entry with no mark, the uppercased name and role bar, the
+  parenthetical heading, a trunk prefix left undialled, the link targets on every kind
+  of title, a dropped berth taking its join rule with it, a document with nothing but an
+  identity, and the run onto a second page), an exact layout snapshot and a pixel-parity
+  gate; the examples showcase gains `cv-orange-ops-v2`.
+
 - **A banded single-column CV preset: `VioletGrid`.** A one-page sheet with no page-level
   grid at all: a two-tone name beside the contact list, three opening lines, a six-up
   grid of marked skills divided by dotted rules, a strip of tools on inline discs, the

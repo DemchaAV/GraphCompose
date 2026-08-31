@@ -36,9 +36,35 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
-const API_DIR = path.join(REPO_ROOT, "knowledge", "api");
-const TASKS_FILE = path.join(REPO_ROOT, "knowledge", "routing", "tasks.json");
+
+/**
+ * Find the knowledge root by walking up and looking for it.
+ *
+ * The same file has to answer from two layouts: `knowledge/` inside a checkout,
+ * and the root of an unpacked release bundle, where there is no repository
+ * around it at all. Hard-coding "three levels up, then knowledge/" works in
+ * exactly one of those, and the bundle is the case where being wrong is worst —
+ * it is the copy running on a machine with no source to fall back on.
+ */
+function findKnowledgeRoot(start) {
+  let dir = start;
+  for (let i = 0; i < 8; i += 1) {
+    for (const candidate of [dir, path.join(dir, "knowledge")]) {
+      if (fs.existsSync(path.join(candidate, "manifest.json")) && fs.existsSync(path.join(candidate, "api"))) {
+        return candidate;
+      }
+    }
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return path.resolve(start, "..", "..", "..", "knowledge");
+}
+
+const KNOWLEDGE_ROOT = process.env.GRAPHCOMPOSE_KNOWLEDGE ?? findKnowledgeRoot(HERE);
+const REPO_ROOT = KNOWLEDGE_ROOT;
+const API_DIR = path.join(KNOWLEDGE_ROOT, "api");
+const TASKS_FILE = path.join(KNOWLEDGE_ROOT, "routing", "tasks.json");
 
 function usage(code = 0) {
   process.stdout.write(

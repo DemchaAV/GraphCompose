@@ -47,6 +47,22 @@ jobs:
       - name: Verify (gate the release on a green build)
         run: ./mvnw -B -ntp clean verify
 
+      # The pack describes the API of the commit being tagged, and `verify`
+      # above has already produced the classes it reads. --check first, so a tag
+      # cannot ship a pack that disagrees with the code it claims to describe;
+      # the write that follows is then a no-op for tracked files and exists only
+      # to produce target/knowledge/provenance.json, which the bundle carries.
+      - name: Set up Node for the knowledge bundle
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build the knowledge bundle
+        run: |
+          node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
+          node knowledge/tools/api-surface/extract-api.mjs --from-reactor
+          node knowledge/tools/bundle/build-bundle.mjs --verify
+
       - name: Extract CHANGELOG section for the tag
         id: notes
         run: |
@@ -99,3 +115,12 @@ jobs:
               --verify-tag \
               ${PRERELEASE_FLAG}
           fi
+
+      # The archive and its checksum go up as two assets. The checksum sits
+      # BESIDE the archive, never inside it: a hash stored in the file it
+      # describes is rewritten by whatever rewrote the file.
+      - name: Attach the knowledge bundle to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}"             target/knowledge/graph-compose-knowledge-*.zip             target/knowledge/graph-compose-knowledge-*.zip.sha256             --clobber

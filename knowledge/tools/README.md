@@ -168,3 +168,46 @@ dropped (this repo describes one tree, not several released lines), the Markdown
 fallback parser was dropped with it (it exists there for packs predating the
 extractor), and `--surface` was added because here the API is split by surface
 rather than by version.
+
+## The release bundle
+
+```powershell
+node knowledge\tools\bundle\build-bundle.mjs --verify
+```
+
+A tracked `knowledge/` directory is not a published pack. Without an archive,
+"the plugin consumes GraphCompose's knowledge" quietly means "the plugin needs a
+GraphCompose checkout on the machine" — the offline problem restated, not solved.
+
+`graph-compose-knowledge-<version>.zip` carries `manifest.json`,
+`provenance.json`, `api/`, `routing/`, `claims/`, a `README.md`, and
+`bin/query.mjs` — **a query CLI of its own**. That last part is not convenience.
+The acceptance test is that the pack answers on a machine with no GraphCompose
+source; without a bundled `--exists` / `--task` there is nothing on that machine
+to run the test *with*, so "self-sufficient" would be asserted rather than
+demonstrated. `--verify` unpacks the archive into a scratch directory well away
+from the repository and queries it there.
+
+Two levels of checksum, and the outer one lives outside:
+
+| File | Where | Answers |
+|---|---|---|
+| `<bundle>.zip.sha256` | beside the archive | is the archive intact |
+| `bundle-checksums.json` | inside the archive | *which* entry is wrong |
+
+A checksum stored inside the archive it describes verifies nothing, because
+whatever rewrote the archive rewrote it too — so the outer hash is published as a
+separate release asset.
+
+The archive is written by `lib/zip-write.mjs`, the companion to the `zip.mjs` the
+extractor already uses for reading, and every build round-trips the result back
+through that reader before reporting success. Timestamps inside are fixed rather
+than taken from the clock: two builds of the same content must produce the same
+archive, or the checksum beside it would describe the moment it was built instead
+of what is in it.
+
+**Distribution is a GitHub Release asset, not a Maven artifact.** Maven would
+give a stable coordinate and dependency resolution, but the consumer is a Node
+plugin that resolves nothing through Maven, and no Java build compiles against a
+documentation pack. It would mean adding an artifact to the Central staging path
+— and its allow-list — for a file nothing on that path needs.

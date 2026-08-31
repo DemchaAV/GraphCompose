@@ -14,15 +14,6 @@ import com.demcha.compose.document.templates.cv.data.SkillGroup;
 import com.demcha.compose.document.templates.cv.data.SkillsSection;
 import com.demcha.compose.document.templates.cv.data.Slot;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-
-import javax.imageio.ImageIO;
 
 /**
  * The canonical fixture for {@link NavySidebar} — the document the design was
@@ -144,30 +135,11 @@ public final class NavySidebarFixtures {
     }
 
     /**
-     * A flat two-tone silhouette, drawn at fixture time.
+     * The silhouette the CV fixtures share.
      *
      * @return the portrait image data
      */
     static DocumentImageData portrait() {
-        BufferedImage image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = image.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setColor(new Color(222, 226, 231));
-            g.fillRect(0, 0, 512, 512);
-            g.setColor(new Color(150, 160, 173));
-            g.fillOval(171, 102, 169, 169);
-            g.fillOval(67, 307, 379, 379);
-        } finally {
-            g.dispose();
-        }
-        ByteArrayOutputStream png = new ByteArrayOutputStream();
-        try {
-            ImageIO.write(image, "png", png);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to draw the fixture portrait", e);
-        }
-        return DocumentImageData.fromBytes(png.toByteArray());
+        return CvFixturePortrait.silhouette();
     }
 }

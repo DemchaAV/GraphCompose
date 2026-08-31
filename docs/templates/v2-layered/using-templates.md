@@ -234,13 +234,13 @@ whole or the paginator raises `AtomicNodeTooLargeException`. Lifting a
 cap without teaching the preset to pick its own page boundaries turns a
 CV that silently lost an entry into one that fails to render.
 
-`ProfessionalSidebar.create()`, `NavySidebar.create()` and
-`SerifHeadline.create()` are compositions for a fixed amount of content
-that cap nothing: each reproduces a specific one-page sheet, so a CV
-longer than that sheet raises `AtomicNodeTooLargeException` instead of
-losing an entry to a cap. Size the document to them — roughly five or
-six roles with three or four highlights each, alongside the other
-blocks.
+`ProfessionalSidebar.create()`, `NavySidebar.create()`,
+`SerifHeadline.create()` and `CharcoalGold.create()` are compositions
+for a fixed amount of content that cap nothing: each reproduces a
+specific one-page sheet, so a CV longer than that sheet raises
+`AtomicNodeTooLargeException` instead of losing an entry to a cap. Size
+the document to them — roughly five or six roles with three or four
+highlights each, alongside the other blocks.
 
 If the document's length is the author's rather than the template's,
 pick a preset that paginates — `TimelineMinimal` splits its own columns

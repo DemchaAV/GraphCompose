@@ -143,6 +143,37 @@ class TerracottaRailSmokeTest {
     }
 
     @Test
+    void aLinkShowsItsLabelAndHidesItsAddress() throws Exception {
+        // The row draws the label, so its width is the same whatever the
+        // profile behind it is called; the address is reachable, not written.
+        byte[] pdfBytes = render(TerracottaRailFixtures.canonicalCv());
+        assertThat(textOf(pdfBytes))
+                .contains("LinkedIn")
+                .doesNotContain("linkedin.com/in/oliverbennett-architect");
+        assertThat(linkTargets(pdfBytes))
+                .contains("https://linkedin.com/in/oliverbennett-architect");
+    }
+
+    @Test
+    void everyContactRowStartsOnTheSameAxis() throws Exception {
+        // Four rows, one mark width and one gap: a link that was set smaller
+        // or nudged in would put its text on an axis of its own.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(DocumentPageSize.A4)
+                .margin(0f, 0f, 0f, 0f)
+                .create()) {
+            TerracottaRail.create().compose(session, TerracottaRailFixtures.canonicalCv());
+            List<Double> heights = session.layoutSnapshot().nodes().stream()
+                    .filter(node -> node.entityName().startsWith("Contact_"))
+                    .map(node -> node.placementHeight())
+                    .toList();
+            assertThat(heights).hasSize(4);
+            assertThat(heights).allMatch(height -> Math.abs(height - heights.get(0)) < 0.01,
+                    "every contact row is as tall as the first");
+        }
+    }
+
+    @Test
     void aProjectTitleBecomesALinkWhenItsEntryCarriesOne() throws Exception {
         EntriesSection linked = new EntriesSection("SELECTED PROJECTS", List.of(
                 CvEntry.builder("Harbour Point")

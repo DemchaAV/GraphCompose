@@ -62,7 +62,7 @@ public final class TerracottaRailSampleData {
                 "SENIOR ARCHITECT",
                 new Contact("+44 7700 900123", "oliver.bennett@email.com",
                         "Bristol, United Kingdom"),
-                List.of(new Link("linkedin.com/in/oliverbennett-architect",
+                List.of(new Link("LinkedIn",
                         "https://linkedin.com/in/oliverbennett-architect")),
                 Optional.empty());
     }

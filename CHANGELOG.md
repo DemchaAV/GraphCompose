@@ -26,7 +26,9 @@ follow semantic versioning; release dates are ISO 8601.
   *Word* paginates, so a number written as text would be right on one page and wrong on the
   rest. `PageContext.pageNumber()` and `pageTotal()` return a node instead of an `int`:
   resolved text on a fixed-layout export, a live `PAGE` / `NUMPAGES` field in Word. The same
-  zone definition therefore serves both lanes. Reading `PageContext.number()` on a semantic
+  zone definition therefore serves both lanes, and the field's placeholder run carries the
+  node's text style, so a styled page number stays styled in Word rather than snapping to
+  the document default. Reading `PageContext.number()` on a semantic
   export raises `UnsupportedOperationException` naming the alternative rather than returning
   a plausible lie. Node kinds outside the mapped set are skipped and reported. A page
   predicate (`appliesTo`) is fixed-layout capability — there is no page to test it against

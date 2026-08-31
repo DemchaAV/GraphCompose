@@ -265,8 +265,13 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         CTSimpleField simple = para.getCTP().addNewFldSimple();
         simple.setInstr(field.kind() == PageFieldKind.TOTAL ? " NUMPAGES " : " PAGE ");
         // Word repaints the field on open; the placeholder run is what a reader
-        // sees before that happens, and what a text extractor finds.
-        simple.addNewR().addNewT().setStringValue("1");
+        // sees before that happens, and what a text extractor finds. It carries
+        // the node's text style like any other run — Word keeps a field result's
+        // formatting when it repaints it, so an unstyled placeholder would snap
+        // a styled page number back to the document default.
+        XWPFRun run = new XWPFRun(simple.addNewR(), para);
+        applyStyle(run, field.textStyle());
+        run.setText("1");
     }
 
     private void warnUnsupportedZoneNode(DocumentNode node) {

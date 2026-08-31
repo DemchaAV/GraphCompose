@@ -8,6 +8,7 @@ import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -112,6 +113,40 @@ class DocxPageZoneTest {
             assertThat(document.getFooterList().get(0)._getHdrFtr().xmlText())
                     .as("the semantic lane does not, so it asks Word for it")
                     .contains("PAGE");
+        }
+    }
+
+    /**
+     * {@code page.pageNumber(textStyle)} takes a style on purpose, and the
+     * fixed-layout lane honors it — so the Word lane has to as well, or "one
+     * zone definition serves both lanes" is only mostly true. The placeholder
+     * run carries the style, and Word keeps a field result's formatting when it
+     * repaints the field.
+     */
+    @Test
+    void aPageFieldCarriesItsTextStyleIntoTheWordRun() throws Exception {
+        com.demcha.compose.document.style.DocumentTextStyle style =
+                com.demcha.compose.document.style.DocumentTextStyle.builder()
+                        .size(9)
+                        .decoration(com.demcha.compose.document.style.DocumentTextDecoration.BOLD)
+                        .build();
+        byte[] docx = exportWithFooter(page -> new RowBuilder()
+                .name("StyledField")
+                .add(page.pageNumber(style))
+                .build());
+
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            XWPFRun fieldRun = document.getFooterList().get(0).getParagraphs().stream()
+                    .flatMap(paragraph -> paragraph.getRuns().stream())
+                    .filter(run -> "1".equals(run.text()))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("no placeholder run found in the footer"));
+            assertThat(fieldRun.getFontSizeAsDouble())
+                    .as("the 9pt the API took reaches the Word run")
+                    .isEqualTo(9.0);
+            assertThat(fieldRun.isBold())
+                    .as("and so does the weight")
+                    .isTrue();
         }
     }
 

@@ -97,6 +97,43 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A navy-plate CV preset: `MidnightNavy`.** A one-page sheet on a full-height navy
+  plate: an outlined monogram over a two-weight name and a tracked role line, then
+  contact, education, metered skills and dotted languages down the plate, beside a
+  paper column carrying the summary, the roles held on a rail, three achievement discs
+  and the certifications in divided columns. Ships as `cv.presets.MidnightNavy` on the
+  existing `CvDocument` model, porting the rendered layout of a published standalone
+  template; it needed no model change. The plate is a page background rather than a
+  section fill — it reaches three paper edges and a fill stops at its own box — sized
+  by the same ratio the body row splits on, so the two cannot drift apart. Every
+  horizontal pair goes through one wrapper: a row nested directly in a row cell is
+  refused and both columns are cells, so a skill and its meter, a language and its
+  dots, a title and its dates, a disc and its line and the certification columns are
+  each a row wrapped in a single layer of a stack. Three marks are relationships rather
+  than lengths: the experience rail is the entry section's left accent, so its height
+  derives from the entry and the inter-entry gap is padding inside the border, which is
+  what makes consecutive rails meet; a certification divider is the column's own
+  accent; and a skill meter is three layers sharing the track's axis rather than three
+  pieces placed apart. The monogram and the role line are built from the identity — two
+  initials and the name's own words — so a document fills neither in twice. Seven
+  berths reach their sections by title, and the contact heading is the preset's own
+  because a document has no section to carry it. Unlike its ported siblings this sheet
+  is one page **strictly**: the body is a single row and a row is atomic, so a longer CV
+  is refused with an `AtomicNodeTooLargeException` naming the node rather than being cut
+  — splitting the row would leave the plate on one page and half the aside on the next.
+  Two things depart from the ported sheet deliberately, and both are measured. A link is
+  drawn as its own label with the address behind it, as on the presets before it. And
+  every rail marker is centred on its rail: an accent is drawn centred on the edge it
+  belongs to, so the section's left edge already is the rail's axis, and the ported
+  sheet's extra half-thickness correction put each marker a rail width to the right of
+  the line it sits on — 0.72 pt, visible at reading size. Together the two come to
+  2 498 of 2 173 720 pixels, of which the centring is 200. Guarded by a smoke test (including the unknown-mark data error, the
+  monogram taken from the name, the uppercased name and tracked role, a language rating
+  rounded to the nearest of five dots, a skill with no level, a trunk prefix left
+  undialled, the link targets on every kind of title, a dropped berth, a document with
+  nothing but an identity, and the refusal past one page), an exact layout snapshot and
+  a pixel-parity gate; the examples showcase gains `cv-midnight-navy-v2`.
+
 - **A two-column operations CV preset: `OrangeOps`.** A one-page sheet in three bands
   over a split body: a two-tone name above a dark role bar whose right edge and three
   accent slashes all lean by one ratio, a contact strip whose items sit on one axis

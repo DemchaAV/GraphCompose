@@ -30,7 +30,12 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { findJavap } from "../lib/javap.mjs";
-import { readAnnotations, memberKey, descriptorParamTypes } from "../lib/annotations.mjs";
+import {
+  readAnnotations,
+  memberKey,
+  memberKeyForMember,
+  descriptorParamTypes,
+} from "../lib/annotations.mjs";
 import { admit, stability, memberStability, INTERNAL, BETA } from "../lib/surfaces.mjs";
 import { openDir } from "../lib/tree.mjs";
 
@@ -61,6 +66,21 @@ public final class BetaType {
     @Beta
     public record NestedBeta(int n) {}
     public record NestedPlain(int n) {}
+}`,
+
+  // Annotated constructors. `@Internal` and `@Beta` both list
+  // ElementType.CONSTRUCTOR, and a class file calls a constructor `<init>`
+  // while javap renames it to the simple type name — so a lookup built from
+  // javap's spelling can never find what the class file recorded.
+  [`${PKG}/AnnotatedCtors.java`]: `package ${PKG};
+import com.demcha.compose.document.api.Beta;
+import com.demcha.compose.document.api.Internal;
+public final class AnnotatedCtors {
+    @Internal
+    public AnnotatedCtors(int hidden) {}
+    @Beta
+    public AnnotatedCtors(String provisional) {}
+    public AnnotatedCtors() {}
 }`,
 
   // A stable type carrying one @Beta member and one @Internal member, plus two
@@ -297,6 +317,47 @@ function run() {
       memberStability(memberAnnotations("overloaded", ["double", "double", "CharSequence"]), "stable"),
       "beta",
     );
+    // --- constructors ---
+    //
+    // Read through the same helper the extractor uses, so the test guards the
+    // extractor's lookup rather than a second copy of the rule. Keying a
+    // constructor by javap's spelling silently loses both annotations: an
+    // @Internal constructor reaches the surface and a @Beta one reads stable.
+    const ctors = asIfAdmitted(`${PKG}.AnnotatedCtors`, PKG);
+    const ctorAnnotations = (params) =>
+      ctors.methods.get(memberKeyForMember({ kind: "constructor", name: "AnnotatedCtors", params })) ?? [];
+
+    check(
+      "C1 @Internal constructor is dropped",
+      memberStability(ctorAnnotations(["int"]), "stable"),
+      null,
+    );
+    check(
+      "C2 @Beta constructor is beta",
+      memberStability(ctorAnnotations(["String"]), "stable"),
+      "beta",
+    );
+    check(
+      "C3 unannotated constructor inherits the type",
+      memberStability(ctorAnnotations([]), "stable"),
+      "stable",
+    );
+
+    // The trap itself, stated as an assertion: javap's spelling finds nothing.
+    // A call site that builds the key from `member.name` therefore drops the
+    // annotation silently, which is why `memberKeyForMember` exists and why the
+    // extractor is required to go through it.
+    check(
+      "javap's constructor spelling finds no annotations (the trap)",
+      ctors.methods.get(memberKey("AnnotatedCtors", ["int"])) ?? null,
+      null,
+    );
+    check(
+      "the class file spells it <init>",
+      memberKeyForMember({ kind: "constructor", name: "AnnotatedCtors", params: ["int"] }),
+      "<init>(int)",
+    );
+
     check(
       "erased-type keying leaves no ambiguity to guess about",
       mixed.ambiguous,

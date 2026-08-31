@@ -61,6 +61,14 @@ jobs:
         run: |
           node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
           node knowledge/tools/api-surface/extract-api.mjs --from-reactor
+          # The bundle carries claims/ and routing/ too, so a correct API surface
+          # is not enough to publish it: a hand-authored route or a stale claims
+          # index would ship as a release asset unchallenged. The tag re-checks
+          # them against the exact commit being tagged rather than trusting that
+          # a PR run covered it. (check-routes has no --check: routes have no
+          # generated counterpart, so validating them is the check.)
+          node knowledge/tools/claims/check-claims.mjs --check
+          node knowledge/tools/routing/check-routes.mjs
           node knowledge/tools/bundle/build-bundle.mjs --verify
 
       - name: Extract CHANGELOG section for the tag

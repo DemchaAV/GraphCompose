@@ -247,6 +247,29 @@ export function memberKey(name, paramTypes) {
 }
 
 /**
+ * A class file always calls a constructor `<init>`. `javap` does not — it
+ * renames one to the simple type name.
+ *
+ * So a member read from javap arrives as `Foo(int)` while the annotations
+ * recorded against it sit under `<init>(int)`, and those keys can never meet.
+ * The failure is silent and in the worst direction: an `@Internal` constructor
+ * reaches the surface as public API, and a `@Beta` one reads as settled. Both
+ * annotations list `ElementType.CONSTRUCTOR`, so this is a declared part of the
+ * contract, not a corner of it.
+ *
+ * Callers go through this rather than calling `memberKey` directly, so the rule
+ * lives in one place instead of being re-derived per call site — which is how it
+ * came to be missing at the only call site that mattered.
+ */
+export const CONSTRUCTOR_NAME = "<init>";
+
+export function memberKeyForMember(member) {
+  const name = member.kind === "constructor" ? CONSTRUCTOR_NAME : member.name;
+  const params = (member.params ?? []).map((p) => (typeof p === "string" ? p : p.type));
+  return memberKey(name, params);
+}
+
+/**
  * Runtime-visible annotations declared on a class and on its methods.
  *
  * Methods are keyed `name(ErasedParam,…)` rather than by raw descriptor,

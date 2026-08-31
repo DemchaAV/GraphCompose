@@ -4,7 +4,6 @@
  * things that make a route trustworthy.
  *
  *   node knowledge/tools/routing/check-routes.mjs
- *   node knowledge/tools/routing/check-routes.mjs --check
  *
  * Exit 0 clean · 1 a route does not hold up · 2 usage.
  *
@@ -51,12 +50,16 @@ const CLAIMS_INDEX = path.join(REPO_ROOT, "knowledge", "claims", "index.json");
 const args = process.argv.slice(2);
 if (args.some((a) => a === "--help" || a === "-h")) {
   process.stdout.write(
-    "usage: node knowledge/tools/routing/check-routes.mjs [--check]\n\n" +
+    "usage: node knowledge/tools/routing/check-routes.mjs\n\n" +
+      "  Routes are hand-authored and have no generated counterpart, so there is\n" +
+      "  no --check mode: validating them IS the check.\n\n" +
       "exit: 0 clean | 1 a route does not hold up | 2 usage\n",
   );
   process.exit(0);
 }
-if (args.some((a) => a !== "--check")) process.exit(2);
+// No --check: it would advertise a mode this tool does not have. Routes have no
+// generated artifact to compare against, so every run is the check.
+if (args.length) process.exit(2);
 
 /** GitHub's heading -> anchor rule, enough of it for our own headings. */
 function anchorOf(heading) {

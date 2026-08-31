@@ -45,7 +45,7 @@ import { openJar } from "./lib/zip.mjs";
 import { openDir, isDirectory, reactorVersion } from "./lib/tree.mjs";
 import { buildProvenance } from "./lib/provenance.mjs";
 import { renderMarkdown } from "./lib/render-markdown.mjs";
-import { readAnnotations, memberKey } from "./lib/annotations.mjs";
+import { readAnnotations, memberKeyForMember } from "./lib/annotations.mjs";
 import {
   admit,
   stability,
@@ -271,8 +271,19 @@ function readPackageAnnotations(jar) {
     if (!inCandidateScope(pkg)) continue;
     try {
       byPackage.set(pkg, readAnnotations(jar.read(entry)).type);
-    } catch {
-      byPackage.set(pkg, []);
+    } catch (error) {
+      // Absent is fine — most packages have no package-info at all, and the
+      // caller defaults to []. Present-but-unreadable is not: the reader throws
+      // on an unknown constant-pool tag precisely because it cannot know what it
+      // is looking at, and swallowing that turns "I could not tell" into "no
+      // annotations here". For a package carrying @Internal that silently
+      // publishes every type inside it, which is the one outcome this pack
+      // exists to prevent.
+      throw new Error(
+        `cannot read package annotations for ${pkg} (${entry}): ${error.message}
+` +
+          "  The file exists but could not be parsed. Refusing to treat it as unannotated.",
+      );
     }
   }
   return byPackage;
@@ -347,6 +358,23 @@ function buildSurface({ version, artifacts, javap }) {
     const packageAnnotations = readPackageAnnotations(jar);
     const raw = readTypes({ javap, classpath: resolved.binary, classNames });
 
+    // javap is run in batches, and a class it cannot read does not stop the
+    // batch: it reports on stderr and returns the rest, so the surface comes out
+    // silently one type smaller and the run still exits 0. A quietly shrinking
+    // allow-list is the exact shape of the drift this pack exists to end, so
+    // every candidate that went in must come back out.
+    const returned = new Set(raw.map((t) => t.binaryName));
+    const dropped = classNames.filter((name) => !returned.has(name));
+    if (dropped.length) {
+      throw new Error(
+        `javap returned nothing for ${dropped.length} class(es) of ${resolved.artifact}:
+` +
+          dropped.map((n) => `    ${n}
+`).join("") +
+          "  They would have vanished from the surface without failing the run.",
+      );
+    }
+
     const names = resolved.sources
       ? indexParameterNames(openArchive(resolved.sources), (entry) =>
           inCandidateScope(entry.slice(0, -".java".length).replace(/\//g, ".")),
@@ -361,12 +389,23 @@ function buildSurface({ version, artifacts, javap }) {
       const simple = simplifyType(type.binaryName);
       const pkg = type.binaryName.replace(/\$.*$/, "").replace(/\.[^.]+$/, "");
 
+      // Same asymmetry as for package-info: a class the archive does not hold
+      // under that name has no annotations to read, but one it holds and cannot
+      // parse must stop the run. A parse failure that degrades to "unannotated"
+      // would let an @Internal type into the surface as public API, and the
+      // whole value of this file is that its "no" can be trusted.
+      const entryName = `${type.binaryName.replace(/\./g, "/")}.class`;
       let annotations = { type: [], methods: new Map(), ambiguous: [] };
-      try {
-        annotations = readAnnotations(jar.read(`${type.binaryName.replace(/\./g, "/")}.class`));
-      } catch {
-        // A class the jar does not hold under that name cannot be annotated
-        // either; it stays unannotated rather than failing the run.
+      if (jar.names.includes(entryName)) {
+        try {
+          annotations = readAnnotations(jar.read(entryName));
+        } catch (error) {
+          throw new Error(
+            `cannot read annotations for ${type.binaryName} (${entryName}): ${error.message}
+` +
+              "  The class exists but could not be parsed. Refusing to treat it as unannotated.",
+          );
+        }
       }
 
       const members = type.members
@@ -382,7 +421,15 @@ function buildSurface({ version, artifacts, javap }) {
               member.kind === "constant"
                 ? []
                 : annotations.methods.get(
-                    memberKey(member.name, member.params.map((prm) => simplifyType(prm.type))),
+                    // Through the shared helper, never memberKey directly: a
+                    // constructor is `<init>` in the class file and the simple
+                    // type name in javap's rendering, and building the key here
+                    // is how that difference went unnoticed.
+                    memberKeyForMember({
+                      kind: member.kind,
+                      name: member.name,
+                      params: member.params.map((prm) => simplifyType(prm.type)),
+                    }),
                   ) ?? [],
             ...(member.kind === "constant"
               ? { type: simplifyType(member.type) }

@@ -55,14 +55,14 @@
           "kind": "behavior",
           "value": "table.header-repeats-on-every-continuation-page",
           "page": "docs/recipes/tables.md",
-          "line": 188,
+          "line": 192,
           "heading": "Repeated header on page break"
         },
         {
           "kind": "behavior",
           "value": "table.repeat-header-defaults-to-zero",
           "page": "docs/recipes/tables.md",
-          "line": 189,
+          "line": 193,
           "heading": "Repeated header on page break"
         }
       ]
@@ -88,7 +88,7 @@
           "kind": "behavior",
           "value": "table.explicit-row-style-beats-zebra",
           "page": "docs/recipes/tables.md",
-          "line": 112,
+          "line": 113,
           "heading": "Zebra — alternating row fills"
         }
       ]

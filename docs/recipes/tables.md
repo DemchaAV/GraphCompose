@@ -76,6 +76,7 @@ The layout layer skips occupied grid positions when interpreting
 subsequent source rows, so authors only specify the cells that are
 not yet covered by a prior spanning cell.
 
+<!-- doc-example-ignore: a fragment shown inside a flow — addTable is called on an ambient builder, and giving it a receiver here would bury the cell API this section is about -->
 ```java
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
@@ -115,6 +116,7 @@ remaining rows / columns, or leaves a gap.
 fifth visually) in one fill and even-indexed rows (1, 3, 5) in
 another. Either argument may be `null` to skip painting that parity.
 
+<!-- doc-example-ignore: the two zebra colours compile, the ambient addTable call around them does not -->
 ```java
 import com.demcha.compose.document.style.DocumentColor;
 
@@ -135,6 +137,7 @@ addTable(table -> table
 A two-arg overload accepts full `DocumentTableStyle` values when the
 zebra row needs more than just a fill colour:
 
+<!-- doc-example-ignore: a continuation of the builder chain above, deliberately shown without its receiver -->
 ```java
 .zebra(
         DocumentTableStyle.builder().fillColor(zebraOdd).padding(DocumentInsets.of(8)).build(),
@@ -154,6 +157,7 @@ assigns a default totals style (bold text + a subtle gray-blue fill).
 A two-arg overload takes a custom `DocumentTableStyle` for branded
 totals rows.
 
+<!-- doc-example-ignore: reads rule, ink and bordered from the surrounding recipe so the totals style stays the subject -->
 ```java
 DocumentTableStyle goldenTotal = DocumentTableStyle.builder()
         .fillColor(DocumentColor.rgb(232, 220, 180))
@@ -193,6 +197,7 @@ continuation page when the table is split across pages.
 `repeatHeader(int)` repeats N leading rows — useful when you have
 both a title row AND a column-header row that should both repeat.
 
+<!-- doc-example-ignore: the put-it-together fragment, on an ambient builder like the rest of this page -->
 ```java
 addTable(table -> {
     TableBuilder t = table

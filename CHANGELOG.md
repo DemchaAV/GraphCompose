@@ -7,6 +7,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **The structured invoice model carries what a second sheet needs.** It landed with
+  one consumer, `ConsultingInvoice`, and a model shaped around one document is a model
+  nobody has tested. Fitting a second published invoice to it found six things it could
+  not say, each of them general rather than one design's whim: a brand lockup drawn as
+  a two-line monogram instead of a logo (`InvoiceBrand.monogramTop` / `monogramBottom`);
+  a second labelled registration, because a UK sender prints both a company number and
+  a VAT number (`InvoiceContactBlock.taxRegistrationLabel` / `taxRegistrationNumber`);
+  a delivery address beside the billing one (`StructuredInvoiceData.shipTo`); a tax
+  rate printed per line and its column (`InvoiceServiceLines.Line.vatRate`,
+  `Columns.vat`), written as the design shows it because the wording differs by
+  jurisdiction; and who the money is paid to, with the closing line beside the due
+  notice (`InvoicePaymentBlock.accountHolder` / `signOff`). Every addition is blank
+  when absent, and every constructor that predates one is kept explicitly, so existing
+  calls compile and link unchanged — `ConsultingInvoice` passes its snapshot and pixel
+  gates untouched, which is the proof.
+
 - **`CvEntry` carries a link.** An entry that points somewhere — a repository, a case
   study, a company — had no way to say so, and a preset had no way to make its title
   reachable. `CvEntry` now carries `link`, a plain string blank when absent like the

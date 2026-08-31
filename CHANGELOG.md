@@ -121,9 +121,13 @@ follow semantic versioning; release dates are ISO 8601.
   is one page **strictly**: the body is a single row and a row is atomic, so a longer CV
   is refused with an `AtomicNodeTooLargeException` naming the node rather than being cut
   — splitting the row would leave the plate on one page and half the aside on the next.
-  As on the presets before it a link is drawn as its own label with the address behind
-  it, the one deliberate departure from the ported sheet, measured at 2 298 of
-  2 173 720 pixels. Guarded by a smoke test (including the unknown-mark data error, the
+  Two things depart from the ported sheet deliberately, and both are measured. A link is
+  drawn as its own label with the address behind it, as on the presets before it. And
+  every rail marker is centred on its rail: an accent is drawn centred on the edge it
+  belongs to, so the section's left edge already is the rail's axis, and the ported
+  sheet's extra half-thickness correction put each marker a rail width to the right of
+  the line it sits on — 0.72 pt, visible at reading size. Together the two come to
+  2 498 of 2 173 720 pixels, of which the centring is 200. Guarded by a smoke test (including the unknown-mark data error, the
   monogram taken from the name, the uppercased name and tracked role, a language rating
   rounded to the nearest of five dots, a skill with no level, a trunk prefix left
   undialled, the link targets on every kind of title, a dropped berth, a document with

@@ -55,6 +55,12 @@ import static com.demcha.compose.document.templates.cv.presets.MidnightNavyStyle
  * from the entry it belongs to, and the gap between entries is bottom padding
  * <em>inside</em> the border — which is what makes consecutive rails meet
  * rather than leaving a break between roles.</p>
+ *
+ * <p>An accent is drawn centred on the edge it belongs to, so the section's
+ * left edge already <em>is</em> the rail's axis: a marker reaches it by walking
+ * back across the gutter and half its own width, and nothing else. Correcting
+ * by half the rail's thickness on top of that lands every marker a rail width
+ * to the right of the line it is meant to sit on.</p>
  */
 final class MidnightNavyMain {
 
@@ -146,12 +152,18 @@ final class MidnightNavyMain {
             section.addLayerStack(stack -> {
                 stack.name("EntryHeaderLayer");
                 stack.layer(header.build(), LayerAlign.TOP_LEFT, 0);
+                // The accent is drawn centred on the section's left edge, so
+                // that edge already IS the rail's axis and the marker only has
+                // to walk back across the gutter and half its own width.
+                // Adding half the rail's thickness on top corrects in the
+                // direction the marker is already offset and lands it a rail
+                // width to the right of the line it is meant to sit on.
                 stack.position(new EllipseBuilder()
                                 .name("EntryMarker")
                                 .circle(MARKER_DIAMETER)
                                 .fillColor(NAVY)
                                 .build(),
-                        -RAIL_GUTTER - MARKER_DIAMETER / 2.0 + RAIL_WIDTH / 2.0,
+                        -RAIL_GUTTER - MARKER_DIAMETER / 2.0,
                         px(3.1), LayerAlign.TOP_LEFT, 1);
             });
 

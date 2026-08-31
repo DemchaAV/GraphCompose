@@ -224,6 +224,59 @@ class DocumentPageZoneTest {
     }
 
     /**
+     * Reservation is document-wide on purpose: {@code appliesTo} decides where
+     * the band is painted, {@code reserveSpace} takes it out of every page's
+     * content area either way — per-page reservation would let the page count
+     * depend on which pages carry the zone, which can depend on the page count.
+     * Pinned so the coupling stays a decision rather than an accident.
+     */
+    @Test
+    void aHiddenZoneStillReservesItsBand() throws Exception {
+        byte[] conditional = render(DocumentPageZone.footer(80, page -> new ParagraphBuilder()
+                .name("Counter").text("Sheet " + page.number()).build())
+                .toBuilder()
+                .appliesTo(page -> !page.isFirst())
+                .build());
+        byte[] everywhere = render(DocumentPageZone.footer(80, page -> new ParagraphBuilder()
+                .name("Counter").text("Sheet " + page.number()).build()));
+
+        try (PDDocument hidden = Loader.loadPDF(conditional);
+             PDDocument painted = Loader.loadPDF(everywhere)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setStartPage(1);
+            stripper.setEndPage(1);
+            assertThat(stripper.getText(hidden))
+                    .as("the predicate still decides painting")
+                    .doesNotContain("Sheet");
+
+            assertThat(lowestBaselineOnFirstPage(hidden))
+                    .as("but not geometry: no body glyph reaches into the reserved 80pt band"
+                            + " (the page is 240pt tall, so the band starts at y=160 top-down)")
+                    .isLessThanOrEqualTo(240 - 80 + 1.0);
+            assertThat(hidden.getNumberOfPages())
+                    .as("so hiding the zone on the cover reflows nothing")
+                    .isEqualTo(painted.getNumberOfPages());
+        }
+    }
+
+    private static double lowestBaselineOnFirstPage(PDDocument document) throws Exception {
+        double[] lowest = {0};
+        PDFTextStripper scanner = new PDFTextStripper() {
+            @Override
+            protected void writeString(String text,
+                                       java.util.List<org.apache.pdfbox.text.TextPosition> positions) {
+                for (org.apache.pdfbox.text.TextPosition position : positions) {
+                    lowest[0] = Math.max(lowest[0], position.getYDirAdj());
+                }
+            }
+        };
+        scanner.setStartPage(1);
+        scanner.setEndPage(1);
+        scanner.getText(document);
+        return lowest[0];
+    }
+
+    /**
      * The zone rides the body's machinery, and that includes anchors: a page
      * reference placed in a footer resolves against the same settled graph a
      * body reference resolves against, so "see appendix on page N" chrome is one

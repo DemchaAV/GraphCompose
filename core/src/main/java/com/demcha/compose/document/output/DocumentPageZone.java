@@ -70,6 +70,12 @@ public final class DocumentPageZone {
      * Whether the band is taken out of the page's content area. On by default,
      * the opposite of {@code DocumentHeaderFooter.reserveSpace}, which has to
      * default to off to keep documents that predate the flag rendering as they did.
+     *
+     * <p>Reservation is document-wide: the band comes out of every page's
+     * content area, including pages where {@code appliesTo} hides the zone. The
+     * predicate decides painting, not geometry — per-page reservation would let
+     * the page count depend on which pages carry the zone, which can depend on
+     * the page count.</p>
      */
     @Builder.Default
     private final boolean reserveSpace = true;

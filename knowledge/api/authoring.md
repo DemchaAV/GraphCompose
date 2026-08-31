@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.3.0-SNAPSHOT
 
-Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 1077
+Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 1106
 
 ## com.demcha.compose
 
@@ -180,6 +180,7 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `SessionChromeApi protect(DocumentProtection protection)`
 - `SessionChromeApi header(DocumentHeaderFooter header)`
 - `SessionChromeApi footer(DocumentHeaderFooter footer)`
+- `SessionChromeApi zone(DocumentPageZone zone)`
 - `SessionChromeApi clearHeadersAndFooters()`
 - `DocumentSession session()`
 
@@ -1515,6 +1516,19 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `String name()`
 - `DocumentInsets margin()`
 
+### PageFieldKind (enum)
+- constants: `NUMBER`, `TOTAL`
+
+### PageFieldNode (record)
+- `new PageFieldNode(String, PageFieldKind, DocumentTextStyle, TextAlign, DocumentInsets, DocumentInsets)`
+- `new PageFieldNode(PageFieldKind kind, DocumentTextStyle textStyle)`
+- `String name()`
+- `PageFieldKind kind()`
+- `DocumentTextStyle textStyle()`
+- `TextAlign align()`
+- `DocumentInsets padding()`
+- `DocumentInsets margin()`
+
 ### PageReferenceNode (record)
 - `new PageReferenceNode(String, String, DocumentTextStyle, TextAlign, String, DocumentInsets, DocumentInsets)`
 - `new PageReferenceNode(String anchor, DocumentTextStyle textStyle, TextAlign align)`
@@ -1744,7 +1758,9 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `String getCenterText()`
 - `String getRightText()`
 - `float getFontSize()`
+- `FontName getFontName()`
 - `DocumentColor getTextColor()`
+- `boolean isReserveSpace()`
 - `boolean isShowSeparator()`
 - `DocumentColor getSeparatorColor()`
 - `float getSeparatorThickness()`
@@ -1757,7 +1773,9 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder centerText(String)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder rightText(String)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder fontSize(float)`
+- `DocumentHeaderFooter.DocumentHeaderFooterBuilder fontName(FontName)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder textColor(DocumentColor)`
+- `DocumentHeaderFooter.DocumentHeaderFooterBuilder reserveSpace(boolean)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder showSeparator(boolean)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder separatorColor(DocumentColor)`
 - `DocumentHeaderFooter.DocumentHeaderFooterBuilder separatorThickness(float)`
@@ -1787,7 +1805,8 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `DocumentMetadata build()`
 
 ### DocumentOutputOptions (record)
-- `new DocumentOutputOptions(DocumentMetadata, DocumentWatermark, DocumentProtection, DocumentViewerPreferences, List<DocumentHeaderFooter>)`
+- `new DocumentOutputOptions(DocumentMetadata, DocumentWatermark, DocumentProtection, DocumentViewerPreferences, List<DocumentHeaderFooter>, List<DocumentPageZone>)`
+- `new DocumentOutputOptions(DocumentMetadata metadata, DocumentWatermark watermark, DocumentProtection protection, DocumentViewerPreferences viewerPreferences, List<DocumentHeaderFooter> headersAndFooters)`
 - `new DocumentOutputOptions(DocumentMetadata metadata, DocumentWatermark watermark, DocumentProtection protection, List<DocumentHeaderFooter> headersAndFooters)`
 - `boolean hasAny()`
 - `DocumentMetadata metadata()`
@@ -1795,6 +1814,7 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 - `DocumentProtection protection()`
 - `DocumentViewerPreferences viewerPreferences()`
 - `List<DocumentHeaderFooter> headersAndFooters()`
+- `List<DocumentPageZone> zones()`
 - constants: `EMPTY`
 
 ### DocumentPageNumbering (class)
@@ -1815,6 +1835,28 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 
 ### DocumentPageNumberStyle (enum)
 - constants: `DECIMAL`, `LOWER_ROMAN`, `UPPER_ROMAN`, `LOWER_ALPHA`, `UPPER_ALPHA`
+
+### DocumentPageZone (class)
+- `DocumentPageZone footer(double height, Function<PageContext, DocumentNode> content)`
+- `DocumentPageZone header(double height, Function<PageContext, DocumentNode> content)`
+- `boolean appliesTo(PageContext page)`
+- `DocumentPageZone.DocumentPageZoneBuilder builder()`
+- `DocumentPageZone.DocumentPageZoneBuilder toBuilder()`
+- `DocumentHeaderFooterZone getZone()`
+- `double getHeight()`
+- `boolean isReserveSpace()`
+- `DocumentInsets getPadding()`
+- `Predicate<PageContext> getAppliesTo()`
+- `Function<PageContext, DocumentNode> getContent()`
+
+### DocumentPageZone.DocumentPageZoneBuilder (class)
+- `DocumentPageZone.DocumentPageZoneBuilder zone(DocumentHeaderFooterZone)`
+- `DocumentPageZone.DocumentPageZoneBuilder height(double)`
+- `DocumentPageZone.DocumentPageZoneBuilder reserveSpace(boolean)`
+- `DocumentPageZone.DocumentPageZoneBuilder padding(DocumentInsets)`
+- `DocumentPageZone.DocumentPageZoneBuilder appliesTo(Predicate<PageContext>)`
+- `DocumentPageZone.DocumentPageZoneBuilder content(Function<PageContext, DocumentNode>)`
+- `DocumentPageZone build()`
 
 ### DocumentProtection (class)
 - `DocumentProtection.DocumentProtectionBuilder builder()`
@@ -1897,6 +1939,19 @@ Types: 227 · methods: 2020 · constants: 228 · compiler-generated members: 107
 
 ### DocumentWatermarkPosition (enum)
 - constants: `CENTER`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `TILE`
+
+### PageContext (class)
+- `PageContext paginated(int number, int total)`
+- `PageContext unpaginated()`
+- `boolean isPaginated()`
+- `int number()`
+- `int total()`
+- `boolean isFirst()`
+- `boolean isLast()`
+- `DocumentNode pageNumber()`
+- `DocumentNode pageNumber(DocumentTextStyle textStyle)`
+- `DocumentNode pageTotal()`
+- `DocumentNode pageTotal(DocumentTextStyle textStyle)`
 
 ## com.demcha.compose.document.showcase
 

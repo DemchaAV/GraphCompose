@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.3.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 163,
+  "count": 164,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
@@ -224,6 +224,13 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.definitions.PageBreakDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PageFieldDefinition",
       "package": "com.demcha.compose.document.layout.definitions",
       "kind": "class",
       "artifact": "graph-compose-core",
@@ -1046,35 +1053,35 @@
       "package": "com.demcha.compose.engine.render.pdf",
       "kind": "class",
       "artifact": "graph-compose-render-pdf",
-      "reason": "implementation package, and no admitted API mentions it"
+      "reason": "type @Internal"
     },
     {
       "binaryName": "com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer",
       "package": "com.demcha.compose.engine.render.pdf.helpers",
       "kind": "class",
       "artifact": "graph-compose-render-pdf",
-      "reason": "implementation package, and no admitted API mentions it"
+      "reason": "type @Internal"
     },
     {
       "binaryName": "com.demcha.compose.engine.render.pdf.helpers.PdfWatermarkRenderer",
       "package": "com.demcha.compose.engine.render.pdf.helpers",
       "kind": "class",
       "artifact": "graph-compose-render-pdf",
-      "reason": "implementation package, and no admitted API mentions it"
+      "reason": "type @Internal"
     },
     {
       "binaryName": "com.demcha.compose.engine.render.pdf.PdfFont",
       "package": "com.demcha.compose.engine.render.pdf",
       "kind": "class",
       "artifact": "graph-compose-render-pdf",
-      "reason": "implementation package, and no admitted API mentions it"
+      "reason": "type @Internal"
     },
     {
       "binaryName": "com.demcha.compose.engine.render.pdf.PdfFont$VerticalMetrics",
       "package": "com.demcha.compose.engine.render.pdf",
       "kind": "record",
       "artifact": "graph-compose-render-pdf",
-      "reason": "implementation package, and no admitted API mentions it"
+      "reason": "package @Internal (com.demcha.compose.engine.render.pdf)"
     },
     {
       "binaryName": "com.demcha.compose.engine.render.word.WordFont",

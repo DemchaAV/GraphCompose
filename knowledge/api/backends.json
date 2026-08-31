@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 69,
-    "methods": 369,
+    "methods": 371,
     "constants": 18,
-    "generated": 187
+    "generated": 189
   },
   "packages": [
     {
@@ -265,6 +265,10 @@
                 {
                   "type": "Collection<PdfHeaderFooterOptions>",
                   "name": "headerFooterOptions"
+                },
+                {
+                  "type": "FontLibrary",
+                  "name": "fonts"
                 }
               ]
             },
@@ -299,6 +303,10 @@
                 {
                   "type": "int",
                   "name": "sectionPageCount"
+                },
+                {
+                  "type": "FontLibrary",
+                  "name": "fonts"
                 }
               ]
             },
@@ -2678,6 +2686,15 @@
             },
             {
               "kind": "method",
+              "name": "getFontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FontName",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "getTextColor",
               "static": false,
               "origin": "generated",
@@ -2810,6 +2827,20 @@
               "params": [
                 {
                   "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "FontName",
                   "name": null
                 }
               ]

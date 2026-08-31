@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.3.0-SNAPSHOT
 
-Types: 69 · methods: 369 · constants: 18 · compiler-generated members: 187
+Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -54,8 +54,8 @@ Types: 69 · methods: 369 · constants: 18 · compiler-generated members: 187
 ## com.demcha.compose.document.backend.fixed.pdf
 
 ### PdfDocumentPostProcessor (class)
-- `void apply(PDDocument document, LayoutCanvas canvas, PdfMetadataOptions metadataOptions, PdfWatermarkOptions watermarkOptions, PdfProtectionOptions protectionOptions, Collection<PdfHeaderFooterOptions> headerFooterOptions)`
-- `void applySectionChrome(PDDocument document, LayoutCanvas canvas, PdfWatermarkOptions watermarkOptions, Collection<PdfHeaderFooterOptions> headerFooterOptions, int basePageOffset, int sectionPageCount)`
+- `void apply(PDDocument document, LayoutCanvas canvas, PdfMetadataOptions metadataOptions, PdfWatermarkOptions watermarkOptions, PdfProtectionOptions protectionOptions, Collection<PdfHeaderFooterOptions> headerFooterOptions, FontLibrary fonts)`
+- `void applySectionChrome(PDDocument document, LayoutCanvas canvas, PdfWatermarkOptions watermarkOptions, Collection<PdfHeaderFooterOptions> headerFooterOptions, int basePageOffset, int sectionPageCount, FontLibrary fonts)`
 - `void applyDocumentMetadataAndProtection(PDDocument document, PdfMetadataOptions metadataOptions, PdfProtectionOptions protectionOptions)`
 - `void applyViewerPreferences(PDDocument document, PdfViewerPreferencesOptions options)`
 - `byte[] apply(byte[] pdfBytes, LayoutCanvas canvas, PdfMetadataOptions metadataOptions, PdfWatermarkOptions watermarkOptions, PdfProtectionOptions protectionOptions, Collection<PdfHeaderFooterOptions> headerFooterOptions)`
@@ -257,6 +257,7 @@ Types: 69 · methods: 369 · constants: 18 · compiler-generated members: 187
 - `String getCenterText()`
 - `String getRightText()`
 - `float getFontSize()`
+- `FontName getFontName()`
 - `Color getTextColor()`
 - `boolean isShowSeparator()`
 - `Color getSeparatorColor()`
@@ -270,6 +271,7 @@ Types: 69 · methods: 369 · constants: 18 · compiler-generated members: 187
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder centerText(String)`
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder rightText(String)`
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder fontSize(float)`
+- `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder fontName(FontName)`
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder textColor(Color)`
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder showSeparator(boolean)`
 - `PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder separatorColor(Color)`

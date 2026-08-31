@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 227,
-    "methods": 2020,
-    "constants": 228,
-    "generated": 1077
+    "types": 232,
+    "methods": 2064,
+    "constants": 230,
+    "generated": 1106
   },
   "packages": [
     {
@@ -1977,6 +1977,20 @@
                 {
                   "type": "DocumentHeaderFooter",
                   "name": "footer"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "zone",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SessionChromeApi",
+              "params": [
+                {
+                  "type": "DocumentPageZone",
+                  "name": "zone"
                 }
               ]
             },
@@ -20462,6 +20476,148 @@
           ]
         },
         {
+          "name": "PageFieldKind",
+          "binaryName": "com.demcha.compose.document.node.PageFieldKind",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "NUMBER",
+              "static": true,
+              "origin": "generated",
+              "type": "PageFieldKind"
+            },
+            {
+              "kind": "constant",
+              "name": "TOTAL",
+              "static": true,
+              "origin": "generated",
+              "type": "PageFieldKind"
+            }
+          ]
+        },
+        {
+          "name": "PageFieldNode",
+          "binaryName": "com.demcha.compose.document.node.PageFieldNode",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PageFieldNode",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "PageFieldKind",
+                  "name": null
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": null
+                },
+                {
+                  "type": "TextAlign",
+                  "name": null
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": null
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "PageFieldNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "PageFieldKind",
+                  "name": "kind"
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "kind",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PageFieldKind",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "textStyle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "align",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "TextAlign",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "padding",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentInsets",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "margin",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentInsets",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "PageReferenceNode",
           "binaryName": "com.demcha.compose.document.node.PageReferenceNode",
           "kind": "record",
@@ -24291,11 +24447,29 @@
             },
             {
               "kind": "method",
+              "name": "getFontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FontName",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "getTextColor",
               "static": false,
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentColor",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isReserveSpace",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
               "params": []
             },
             {
@@ -24429,6 +24603,20 @@
             },
             {
               "kind": "method",
+              "name": "fontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentHeaderFooter.DocumentHeaderFooterBuilder",
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "textColor",
               "static": false,
               "origin": "generated",
@@ -24437,6 +24625,20 @@
               "params": [
                 {
                   "type": "DocumentColor",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "reserveSpace",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentHeaderFooter.DocumentHeaderFooterBuilder",
+              "params": [
+                {
+                  "type": "boolean",
                   "name": null
                 }
               ]
@@ -24761,6 +24963,40 @@
                 {
                   "type": "List<DocumentHeaderFooter>",
                   "name": null
+                },
+                {
+                  "type": "List<DocumentPageZone>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "DocumentOutputOptions",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentMetadata",
+                  "name": "metadata"
+                },
+                {
+                  "type": "DocumentWatermark",
+                  "name": "watermark"
+                },
+                {
+                  "type": "DocumentProtection",
+                  "name": "protection"
+                },
+                {
+                  "type": "DocumentViewerPreferences",
+                  "name": "viewerPreferences"
+                },
+                {
+                  "type": "List<DocumentHeaderFooter>",
+                  "name": "headersAndFooters"
                 }
               ]
             },
@@ -24842,6 +25078,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "List<DocumentHeaderFooter>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "zones",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<DocumentPageZone>",
               "params": []
             }
           ]
@@ -25035,6 +25280,241 @@
               "static": true,
               "origin": "generated",
               "type": "DocumentPageNumberStyle"
+            }
+          ]
+        },
+        {
+          "name": "DocumentPageZone",
+          "binaryName": "com.demcha.compose.document.output.DocumentPageZone",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentPageZone",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "Function<PageContext, DocumentNode>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "header",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentPageZone",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "Function<PageContext, DocumentNode>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "appliesTo",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [
+                {
+                  "type": "PageContext",
+                  "name": "page"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getZone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentHeaderFooterZone",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getHeight",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isReserveSpace",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getPadding",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentInsets",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getAppliesTo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Predicate<PageContext>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getContent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Function<PageContext, DocumentNode>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "DocumentPageZone.DocumentPageZoneBuilder",
+          "binaryName": "com.demcha.compose.document.output.DocumentPageZone$DocumentPageZoneBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "zone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "DocumentHeaderFooterZone",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "height",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "reserveSpace",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "padding",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "DocumentInsets",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "appliesTo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "Predicate<PageContext>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "content",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone.DocumentPageZoneBuilder",
+              "params": [
+                {
+                  "type": "Function<PageContext, DocumentNode>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageZone",
+              "params": []
             }
           ]
         },
@@ -25879,6 +26359,135 @@
               "static": true,
               "origin": "generated",
               "type": "DocumentWatermarkPosition"
+            }
+          ]
+        },
+        {
+          "name": "PageContext",
+          "binaryName": "com.demcha.compose.document.output.PageContext",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "paginated",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PageContext",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "number"
+                },
+                {
+                  "type": "int",
+                  "name": "total"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "unpaginated",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PageContext",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isPaginated",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "number",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "total",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isFirst",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isLast",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "pageNumber",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentNode",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "pageNumber",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentNode",
+              "params": [
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "pageTotal",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentNode",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "pageTotal",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentNode",
+              "params": [
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
+                }
+              ]
             }
           ]
         }

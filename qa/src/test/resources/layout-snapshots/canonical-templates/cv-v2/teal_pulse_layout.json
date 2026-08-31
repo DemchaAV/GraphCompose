@@ -1,0 +1,3647 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.28,
+    "pageHeight" : 769.6,
+    "innerWidth" : 595.28,
+    "innerHeight" : 769.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "TealPulseCv[0]",
+    "entityName" : "TealPulseCv",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 0.0,
+    "computedY" : 2.0,
+    "placementX" : 0.0,
+    "placementY" : 2.0,
+    "placementWidth" : 595.28,
+    "placementHeight" : 767.601,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.28,
+    "contentHeight" : 767.601,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 18.35,
+      "right" : 28.604,
+      "bottom" : 7.556,
+      "left" : 28.604
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]",
+    "entityName" : "Masthead",
+    "entityKind" : "RowNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 676.575,
+    "placementX" : 28.604,
+    "placementY" : 676.575,
+    "placementWidth" : 538.073,
+    "placementHeight" : 74.676,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 74.676,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.175,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]",
+    "entityName" : "BrandMark",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.604,
+    "computedY" : 685.579,
+    "placementX" : 28.604,
+    "placementY" : 685.579,
+    "placementWidth" : 71.239,
+    "placementHeight" : 56.668,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.239,
+    "contentHeight" : 56.668,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/Icon_brandheart[0]",
+    "entityName" : "Icon_brandheart",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 675.363,
+    "placementX" : 28.604,
+    "placementY" : 675.363,
+    "placementWidth" : 71.239,
+    "placementHeight" : 77.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.239,
+    "contentHeight" : 77.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/Icon_brandheart[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/Icon_brandheart[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 675.363,
+    "placementX" : 28.604,
+    "placementY" : 675.363,
+    "placementWidth" : 71.239,
+    "placementHeight" : 77.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.239,
+    "contentHeight" : 77.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/Icon_brandheart[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/Icon_brandheart[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 28.604,
+    "computedY" : 675.363,
+    "placementX" : 28.604,
+    "placementY" : 675.363,
+    "placementWidth" : 77.1,
+    "placementHeight" : 77.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.1,
+    "contentHeight" : 77.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]/BrandPulse[1]",
+    "entityName" : "BrandPulse",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/BrandMark[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 17.81,
+    "computedY" : 688.278,
+    "placementX" : 17.81,
+    "placementY" : 688.278,
+    "placementWidth" : 92.827,
+    "placementHeight" : 44.255,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 92.827,
+    "contentHeight" : 44.255,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/Identity[1]",
+    "entityName" : "Identity",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 120.891,
+    "computedY" : 676.575,
+    "placementX" : 120.891,
+    "placementY" : 676.575,
+    "placementWidth" : 340.363,
+    "placementHeight" : 74.676,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 340.363,
+    "contentHeight" : 74.676,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/Identity[1]/DisplayName[0]",
+    "entityName" : "DisplayName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/Identity[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 120.891,
+    "computedY" : 695.951,
+    "placementX" : 120.891,
+    "placementY" : 695.951,
+    "placementWidth" : 340.363,
+    "placementHeight" : 55.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 340.363,
+    "contentHeight" : 55.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Masthead[0]/Identity[1]/ProfessionalTitle[1]",
+    "entityName" : "ProfessionalTitle",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/Masthead[0]/Identity[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 120.891,
+    "computedY" : 676.575,
+    "placementX" : 120.891,
+    "placementY" : 676.575,
+    "placementWidth" : 205.712,
+    "placementHeight" : 19.376,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 205.712,
+    "contentHeight" : 19.376,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]",
+    "entityName" : "ContactStrip",
+    "entityKind" : "RowNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 646.892,
+    "placementX" : 28.604,
+    "placementY" : 646.892,
+    "placementWidth" : 538.073,
+    "placementHeight" : 20.508,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 20.508,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 12.413,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/Contact_0_location[0]",
+    "entityName" : "Contact_0_location",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.604,
+    "computedY" : 651.505,
+    "placementX" : 28.604,
+    "placementY" : 651.505,
+    "placementWidth" : 120.885,
+    "placementHeight" : 15.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.885,
+    "contentHeight" : 15.6,
+    "margin" : {
+      "top" : -4.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/ContactSeparator_1[1]",
+    "entityName" : "ContactSeparator_1",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 178.536,
+    "computedY" : 646.892,
+    "placementX" : 178.536,
+    "placementY" : 646.892,
+    "placementWidth" : 1.0,
+    "placementHeight" : 20.508,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 20.508,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/Contact_1_email[2]",
+    "entityName" : "Contact_1_email",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 208.584,
+    "computedY" : 651.205,
+    "placementX" : 208.584,
+    "placementY" : 651.205,
+    "placementWidth" : 111.22,
+    "placementHeight" : 16.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.22,
+    "contentHeight" : 16.2,
+    "margin" : {
+      "top" : -4.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/ContactSeparator_2[3]",
+    "entityName" : "ContactSeparator_2",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 348.852,
+    "computedY" : 646.892,
+    "placementX" : 348.852,
+    "placementY" : 646.892,
+    "placementWidth" : 1.0,
+    "placementHeight" : 20.508,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 20.508,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/Contact_2_phone[4]",
+    "entityName" : "Contact_2_phone",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 378.9,
+    "computedY" : 652.155,
+    "placementX" : 378.9,
+    "placementY" : 652.155,
+    "placementWidth" : 81.613,
+    "placementHeight" : 14.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 81.613,
+    "contentHeight" : 14.3,
+    "margin" : {
+      "top" : -4.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/ContactSeparator_3[5]",
+    "entityName" : "ContactSeparator_3",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 5,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 489.561,
+    "computedY" : 646.892,
+    "placementX" : 489.561,
+    "placementY" : 646.892,
+    "placementWidth" : 1.0,
+    "placementHeight" : 20.508,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 20.508,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ContactStrip[1]/Contact_3_linkedin[6]",
+    "entityName" : "Contact_3_linkedin",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ContactStrip[1]",
+    "childIndex" : 6,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 519.608,
+    "computedY" : 652.505,
+    "placementX" : 519.608,
+    "placementY" : 652.505,
+    "placementWidth" : 47.068,
+    "placementHeight" : 13.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.068,
+    "contentHeight" : 13.6,
+    "margin" : {
+      "top" : -4.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/MastheadRule[2]",
+    "entityName" : "MastheadRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 633.13,
+    "placementX" : 28.604,
+    "placementY" : 633.13,
+    "placementWidth" : 538.073,
+    "placementHeight" : 1.349,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 1.349,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 15.651,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]",
+    "entityName" : "BodyGrid",
+    "entityKind" : "RowNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 177.009,
+    "placementX" : 28.604,
+    "placementY" : 177.009,
+    "placementWidth" : 538.073,
+    "placementHeight" : 440.47,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 440.47,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 16.191,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]",
+    "entityName" : "Sidebar",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.604,
+    "computedY" : 239.229,
+    "placementX" : 28.604,
+    "placementY" : 239.229,
+    "placementWidth" : 118.781,
+    "placementHeight" : 378.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.781,
+    "contentHeight" : 378.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.857,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetenciesDash[0]",
+    "entityName" : "CompetenciesDash",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 611.002,
+    "placementX" : 28.604,
+    "placementY" : 611.002,
+    "placementWidth" : 29.143,
+    "placementHeight" : 1.619,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 29.143,
+    "contentHeight" : 1.619,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.556,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetenciesHeading[1]",
+    "entityName" : "CompetenciesHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 590.967,
+    "placementX" : 28.604,
+    "placementY" : 590.967,
+    "placementWidth" : 110.685,
+    "placementHeight" : 12.48,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 110.685,
+    "contentHeight" : 12.48,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 18.889,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "entityName" : "CompetencyItems",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 267.832,
+    "placementX" : 28.604,
+    "placementY" : 267.832,
+    "placementWidth" : 118.781,
+    "placementHeight" : 304.245,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.781,
+    "contentHeight" : 304.245,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_PatientAssessment[0]",
+    "entityName" : "Competency_PatientAssessment",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 561.169,
+    "placementX" : 28.604,
+    "placementY" : 561.169,
+    "placementWidth" : 90.748,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.748,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_CarePlanning[1]",
+    "entityName" : "Competency_CarePlanning",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 534.502,
+    "placementX" : 28.604,
+    "placementY" : 534.502,
+    "placementWidth" : 67.823,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 67.823,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_MedicationAdministration[2]",
+    "entityName" : "Competency_MedicationAdministration",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 507.835,
+    "placementX" : 28.604,
+    "placementY" : 507.835,
+    "placementWidth" : 118.781,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.781,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_ClinicalDocumentation[3]",
+    "entityName" : "Competency_ClinicalDocumentation",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 481.168,
+    "placementX" : 28.604,
+    "placementY" : 481.168,
+    "placementWidth" : 105.828,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.828,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_InfectionPrevention[4]",
+    "entityName" : "Competency_InfectionPrevention",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 454.501,
+    "placementX" : 28.604,
+    "placementY" : 454.501,
+    "placementWidth" : 94.302,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 94.302,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_IVTherapy[5]",
+    "entityName" : "Competency_IVTherapy",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 427.834,
+    "placementX" : 28.604,
+    "placementY" : 427.834,
+    "placementWidth" : 56.433,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.433,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_WoundCare[6]",
+    "entityName" : "Competency_WoundCare",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 401.167,
+    "placementX" : 28.604,
+    "placementY" : 401.167,
+    "placementWidth" : 63.378,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.378,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_PatientEducation[7]",
+    "entityName" : "Competency_PatientEducation",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 7,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 374.5,
+    "placementX" : 28.604,
+    "placementY" : 374.5,
+    "placementWidth" : 83.385,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.385,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_Safeguarding[8]",
+    "entityName" : "Competency_Safeguarding",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 8,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 347.833,
+    "placementX" : 28.604,
+    "placementY" : 347.833,
+    "placementWidth" : 64.687,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 64.687,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_TeamCollaboration[9]",
+    "entityName" : "Competency_TeamCollaboration",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 9,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 321.166,
+    "placementX" : 28.604,
+    "placementY" : 321.166,
+    "placementWidth" : 90.82,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.82,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_DischargeCoordination[10]",
+    "entityName" : "Competency_DischargeCoordination",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 10,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 294.499,
+    "placementX" : 28.604,
+    "placementY" : 294.499,
+    "placementWidth" : 106.901,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.901,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]/Competency_ElectronicHealthRecords[11]",
+    "entityName" : "Competency_ElectronicHealthRecords",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetencyItems[2]",
+    "childIndex" : 11,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 267.832,
+    "placementX" : 28.604,
+    "placementY" : 267.832,
+    "placementWidth" : 116.145,
+    "placementHeight" : 10.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.145,
+    "contentHeight" : 10.908,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]/CompetenciesClosingRule[3]",
+    "entityName" : "CompetenciesClosingRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Sidebar[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 239.229,
+    "placementX" : 28.604,
+    "placementY" : 239.229,
+    "placementWidth" : 116.573,
+    "placementHeight" : 1.619,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.573,
+    "contentHeight" : 1.619,
+    "margin" : {
+      "top" : 26.985,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "entityName" : "Main",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 171.37,
+    "computedY" : 177.009,
+    "placementX" : 171.37,
+    "placementY" : 177.009,
+    "placementWidth" : 395.306,
+    "placementHeight" : 440.47,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 395.306,
+    "contentHeight" : 440.47,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 17.27
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]",
+    "entityName" : "SectionHeader_PROFESSIONALSUMMARY",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 586.177,
+    "placementX" : 188.641,
+    "placementY" : 586.177,
+    "placementWidth" : 378.036,
+    "placementHeight" : 31.302,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 378.036,
+    "contentHeight" : 31.302,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 10.794,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]",
+    "entityName" : "Badge_PROFESSIONALSUMMARY",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 586.177,
+    "placementX" : 188.641,
+    "placementY" : 586.177,
+    "placementWidth" : 31.302,
+    "placementHeight" : 31.302,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 31.302,
+    "contentHeight" : 31.302,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]/Icon_summary[0]",
+    "entityName" : "Icon_summary",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 194.292,
+    "computedY" : 591.828,
+    "placementX" : 194.292,
+    "placementY" : 591.828,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]/Icon_summary[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]/Icon_summary[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 194.292,
+    "computedY" : 591.828,
+    "placementX" : 194.292,
+    "placementY" : 591.828,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]/Icon_summary[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/Badge_PROFESSIONALSUMMARY[0]/Icon_summary[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 194.292,
+    "computedY" : 591.828,
+    "placementX" : 194.292,
+    "placementY" : 591.828,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/SectionHeaderRule_PROFESSIONALSUMMARY[1]",
+    "entityName" : "SectionHeaderRule_PROFESSIONALSUMMARY",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 229.118,
+    "computedY" : 601.153,
+    "placementX" : 229.118,
+    "placementY" : 601.153,
+    "placementWidth" : 337.559,
+    "placementHeight" : 1.349,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 337.559,
+    "contentHeight" : 1.349,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]/SectionHeading_PROFESSIONALSUMMARY[2]",
+    "entityName" : "SectionHeading_PROFESSIONALSUMMARY",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALSUMMARY[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 229.118,
+    "computedY" : 594.208,
+    "placementX" : 229.118,
+    "placementY" : 594.208,
+    "placementWidth" : 144.93,
+    "placementHeight" : 15.24,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 144.93,
+    "contentHeight" : 15.24,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SummaryText[1]",
+    "entityName" : "SummaryText",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 477.181,
+    "placementX" : 188.641,
+    "placementY" : 477.181,
+    "placementWidth" : 317.12,
+    "placementHeight" : 98.202,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 317.12,
+    "contentHeight" : 98.202,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 56.668,
+      "bottom" : 15.651,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]",
+    "entityName" : "SectionHeader_PROFESSIONALEXPERIENCE",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 430.228,
+    "placementX" : 188.641,
+    "placementY" : 430.228,
+    "placementWidth" : 378.036,
+    "placementHeight" : 31.302,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 378.036,
+    "contentHeight" : 31.302,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.556,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]",
+    "entityName" : "Badge_PROFESSIONALEXPERIENCE",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 430.228,
+    "placementX" : 188.641,
+    "placementY" : 430.228,
+    "placementWidth" : 31.302,
+    "placementHeight" : 31.302,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 31.302,
+    "contentHeight" : 31.302,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]",
+    "entityName" : "Icon_experience",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 194.292,
+    "computedY" : 435.879,
+    "placementX" : 194.292,
+    "placementY" : 435.879,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 194.292,
+    "computedY" : 435.879,
+    "placementX" : 194.292,
+    "placementY" : 435.879,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 194.292,
+    "computedY" : 435.879,
+    "placementX" : 194.292,
+    "placementY" : 435.879,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]/SvgIcon[0]/SvgLayer1[1]",
+    "entityName" : "SvgLayer1",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/Badge_PROFESSIONALEXPERIENCE[0]/Icon_experience[0]/SvgIcon[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 194.292,
+    "computedY" : 435.879,
+    "placementX" : 194.292,
+    "placementY" : 435.879,
+    "placementWidth" : 20.0,
+    "placementHeight" : 20.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 20.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/SectionHeaderRule_PROFESSIONALEXPERIENCE[1]",
+    "entityName" : "SectionHeaderRule_PROFESSIONALEXPERIENCE",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 229.118,
+    "computedY" : 445.204,
+    "placementX" : 229.118,
+    "placementY" : 445.204,
+    "placementWidth" : 337.559,
+    "placementHeight" : 1.349,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 337.559,
+    "contentHeight" : 1.349,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]/SectionHeading_PROFESSIONALEXPERIENCE[2]",
+    "entityName" : "SectionHeading_PROFESSIONALEXPERIENCE",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/SectionHeader_PROFESSIONALEXPERIENCE[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 229.118,
+    "computedY" : 438.259,
+    "placementX" : 229.118,
+    "placementY" : 438.259,
+    "placementWidth" : 160.457,
+    "placementHeight" : 15.24,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 160.457,
+    "contentHeight" : 15.24,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHeadline_0[3]",
+    "entityName" : "ExperienceHeadline_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 411.992,
+    "placementX" : 188.641,
+    "placementY" : 411.992,
+    "placementWidth" : 325.998,
+    "placementHeight" : 10.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 325.998,
+    "contentHeight" : 10.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.016,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "entityName" : "ExperienceHighlights_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 338.962,
+    "placementX" : 188.641,
+    "placementY" : 338.962,
+    "placementWidth" : 321.805,
+    "placementHeight" : 66.014,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.805,
+    "contentHeight" : 66.014,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 18.35,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]/Highlight_0_Deliverdirectnursingcareforadultpatientsonabusyacutemedicalward[0]",
+    "entityName" : "Highlight_0_Deliverdirectnursingcareforadultpatientsonabusyacutemedicalward",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 395.184,
+    "placementX" : 188.641,
+    "placementY" : 395.184,
+    "placementWidth" : 279.348,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 279.348,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]/Highlight_0_Coordinatecareplanswithdoctorstherapistsandsupportstafftoimproveoutcomes[1]",
+    "entityName" : "Highlight_0_Coordinatecareplanswithdoctorstherapistsandsupportstafftoimproveoutcomes",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 381.128,
+    "placementX" : 188.641,
+    "placementY" : 381.128,
+    "placementWidth" : 321.805,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.805,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]/Highlight_0_Supervisejuniornursesandsupportstudentplacementsduringclinicalrotations[2]",
+    "entityName" : "Highlight_0_Supervisejuniornursesandsupportstudentplacementsduringclinicalrotations",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 367.073,
+    "placementX" : 188.641,
+    "placementY" : 367.073,
+    "placementWidth" : 299.585,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 299.585,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]/Highlight_0_Improveddischargecoordinationandpatientcommunicationacrosstheward[3]",
+    "entityName" : "Highlight_0_Improveddischargecoordinationandpatientcommunicationacrosstheward",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 353.017,
+    "placementX" : 188.641,
+    "placementY" : 353.017,
+    "placementWidth" : 289.874,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 289.874,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]/Highlight_0_Maintainprecisedocumentationandensurecompliancewithclinicalstandards[4]",
+    "entityName" : "Highlight_0_Maintainprecisedocumentationandensurecompliancewithclinicalstandards",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_0[4]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 338.962,
+    "placementX" : 188.641,
+    "placementY" : 338.962,
+    "placementWidth" : 294.444,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 294.444,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHeadline_1[5]",
+    "entityName" : "ExperienceHeadline_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 309.932,
+    "placementX" : 188.641,
+    "placementY" : 309.932,
+    "placementWidth" : 256.133,
+    "placementHeight" : 10.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 256.133,
+    "contentHeight" : 10.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.016,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]",
+    "entityName" : "ExperienceHighlights_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 250.957,
+    "placementX" : 188.641,
+    "placementY" : 250.957,
+    "placementWidth" : 351.719,
+    "placementHeight" : 51.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 351.719,
+    "contentHeight" : 51.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 18.35,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]/Highlight_1_Providednursingcareacrossmedicalandsurgicalunits[0]",
+    "entityName" : "Highlight_1_Providednursingcareacrossmedicalandsurgicalunits",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 293.124,
+    "placementX" : 188.641,
+    "placementY" : 293.124,
+    "placementWidth" : 209.76,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 209.76,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]/Highlight_1_Administeredmedicationsmonitoredvitalsignsandescalateddeterioratingpatientspromptly[1]",
+    "entityName" : "Highlight_1_Administeredmedicationsmonitoredvitalsignsandescalateddeterioratingpatientspromptly",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 279.069,
+    "placementX" : 188.641,
+    "placementY" : 279.069,
+    "placementWidth" : 351.719,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 351.719,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]/Highlight_1_Supportedinfectioncontrolproceduresandsafedischargeplanning[2]",
+    "entityName" : "Highlight_1_Supportedinfectioncontrolproceduresandsafedischargeplanning",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 265.013,
+    "placementX" : 188.641,
+    "placementY" : 265.013,
+    "placementWidth" : 255.643,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 255.643,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]/Highlight_1_Builtstrongrapportwithpatientsandfamiliesduringtreatmentandrecovery[3]",
+    "entityName" : "Highlight_1_Builtstrongrapportwithpatientsandfamiliesduringtreatmentandrecovery",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_1[6]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 250.957,
+    "placementX" : 188.641,
+    "placementY" : 250.957,
+    "placementWidth" : 289.05,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 289.05,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHeadline_2[7]",
+    "entityName" : "ExperienceHeadline_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 221.928,
+    "placementX" : 188.641,
+    "placementY" : 221.928,
+    "placementWidth" : 357.282,
+    "placementHeight" : 10.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 357.282,
+    "contentHeight" : 10.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.016,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]",
+    "entityName" : "ExperienceHighlights_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 188.641,
+    "computedY" : 177.009,
+    "placementX" : 188.641,
+    "placementY" : 177.009,
+    "placementWidth" : 321.315,
+    "placementHeight" : 37.903,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.315,
+    "contentHeight" : 37.903,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]/Highlight_2_Deliveredhomebasednursingcareandpatienteducation[0]",
+    "entityName" : "Highlight_2_Deliveredhomebasednursingcareandpatienteducation",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 205.12,
+    "placementX" : 188.641,
+    "placementY" : 205.12,
+    "placementWidth" : 220.645,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 220.645,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]/Highlight_2_Managedwoundcaremedicationsupportandfollowupvisitsforvulnerablepatients[1]",
+    "entityName" : "Highlight_2_Managedwoundcaremedicationsupportandfollowupvisitsforvulnerablepatients",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 191.064,
+    "placementX" : 188.641,
+    "placementY" : 191.064,
+    "placementWidth" : 321.315,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.315,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]/Highlight_2_WorkedcloselywithGPssocialservicesandfamiliestocoordinateholisticcare[2]",
+    "entityName" : "Highlight_2_WorkedcloselywithGPssocialservicesandfamiliestocoordinateholisticcare",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/BodyGrid[3]/Main[1]/ExperienceHighlights_2[8]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 188.641,
+    "computedY" : 177.009,
+    "placementX" : 188.641,
+    "placementY" : 177.009,
+    "placementWidth" : 299.862,
+    "placementHeight" : 9.792,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 299.862,
+    "contentHeight" : 9.792,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBandRule[4]",
+    "entityName" : "ClosingBandRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 159.469,
+    "placementX" : 28.604,
+    "placementY" : 159.469,
+    "placementWidth" : 538.073,
+    "placementHeight" : 1.349,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 1.349,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 14.572,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]",
+    "entityName" : "ClosingBand",
+    "entityKind" : "RowNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 43.334,
+    "placementX" : 28.604,
+    "placementY" : 43.334,
+    "placementWidth" : 538.073,
+    "placementHeight" : 101.564,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 101.564,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 11.873,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]",
+    "entityName" : "EducationColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.604,
+    "computedY" : 60.866,
+    "placementX" : 28.604,
+    "placementY" : 60.866,
+    "placementWidth" : 121.179,
+    "placementHeight" : 84.031,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 121.179,
+    "contentHeight" : 84.031,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]",
+    "entityName" : "ColumnHeader_EDUCATION",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 117.373,
+    "placementX" : 28.604,
+    "placementY" : 117.373,
+    "placementWidth" : 121.179,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 121.179,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 11.873,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]",
+    "entityName" : "Badge_EDUCATION",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.604,
+    "computedY" : 117.373,
+    "placementX" : 28.604,
+    "placementY" : 117.373,
+    "placementWidth" : 27.524,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 27.524,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]/Icon_education[0]",
+    "entityName" : "Icon_education",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 33.616,
+    "computedY" : 122.385,
+    "placementX" : 33.616,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]/Icon_education[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]/Icon_education[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 33.616,
+    "computedY" : 122.385,
+    "placementX" : 33.616,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]/Icon_education[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/Badge_EDUCATION[0]/Icon_education[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 33.616,
+    "computedY" : 122.385,
+    "placementX" : 33.616,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/ColumnHeadingStack_EDUCATION[1]",
+    "entityName" : "ColumnHeadingStack_EDUCATION",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 65.842,
+    "computedY" : 115.526,
+    "placementX" : 65.842,
+    "placementY" : 115.526,
+    "placementWidth" : 83.94,
+    "placementHeight" : 18.266,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.94,
+    "contentHeight" : 18.266,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/ColumnHeadingStack_EDUCATION[1]/ColumnHeading_EDUCATION[0]",
+    "entityName" : "ColumnHeading_EDUCATION",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/ColumnHeadingStack_EDUCATION[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 65.842,
+    "computedY" : 122.272,
+    "placementX" : 65.842,
+    "placementY" : 122.272,
+    "placementWidth" : 51.84,
+    "placementHeight" : 11.52,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 51.84,
+    "contentHeight" : 11.52,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/ColumnHeadingStack_EDUCATION[1]/ColumnHeadingRule_EDUCATION[1]",
+    "entityName" : "ColumnHeadingRule_EDUCATION",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/ColumnHeader_EDUCATION[0]/ColumnHeadingStack_EDUCATION[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 65.842,
+    "computedY" : 115.526,
+    "placementX" : 65.842,
+    "placementY" : 115.526,
+    "placementWidth" : 83.94,
+    "placementHeight" : 1.619,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.94,
+    "contentHeight" : 1.619,
+    "margin" : {
+      "top" : 5.127,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/EducationDegree_0[1]",
+    "entityName" : "EducationDegree_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 92.84,
+    "placementX" : 28.604,
+    "placementY" : 92.84,
+    "placementWidth" : 118.804,
+    "placementHeight" : 12.66,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.804,
+    "contentHeight" : 12.66,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.667,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/EducationInstitution_0[2]",
+    "entityName" : "EducationInstitution_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 76.853,
+    "placementX" : 28.604,
+    "placementY" : 76.853,
+    "placementWidth" : 95.907,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.907,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.667,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]/EducationDates_0[3]",
+    "entityName" : "EducationDates_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/EducationColumn[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.604,
+    "computedY" : 60.866,
+    "placementX" : 28.604,
+    "placementY" : 60.866,
+    "placementWidth" : 44.892,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 44.892,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]",
+    "entityName" : "CertificationsColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 171.37,
+    "computedY" : 43.334,
+    "placementX" : 171.37,
+    "placementY" : 43.334,
+    "placementWidth" : 198.167,
+    "placementHeight" : 101.564,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 198.167,
+    "contentHeight" : 101.564,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 19.429
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]",
+    "entityName" : "ColumnHeader_CERTIFICATIONS",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 190.799,
+    "computedY" : 117.373,
+    "placementX" : 190.799,
+    "placementY" : 117.373,
+    "placementWidth" : 162.316,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 162.316,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 11.873,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]",
+    "entityName" : "Badge_CERTIFICATIONS",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 190.799,
+    "computedY" : 117.373,
+    "placementX" : 190.799,
+    "placementY" : 117.373,
+    "placementWidth" : 27.524,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 27.524,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]",
+    "entityName" : "Icon_certifications",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 195.812,
+    "computedY" : 122.385,
+    "placementX" : 195.812,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 195.812,
+    "computedY" : 122.385,
+    "placementX" : 195.812,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 195.812,
+    "computedY" : 122.385,
+    "placementX" : 195.812,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]/SvgIcon[0]/SvgLayer1[1]",
+    "entityName" : "SvgLayer1",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/Badge_CERTIFICATIONS[0]/Icon_certifications[0]/SvgIcon[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 195.812,
+    "computedY" : 122.385,
+    "placementX" : 195.812,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/ColumnHeadingStack_CERTIFICATIONS[1]",
+    "entityName" : "ColumnHeadingStack_CERTIFICATIONS",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 228.038,
+    "computedY" : 115.526,
+    "placementX" : 228.038,
+    "placementY" : 115.526,
+    "placementWidth" : 125.077,
+    "placementHeight" : 18.266,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 125.077,
+    "contentHeight" : 18.266,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/ColumnHeadingStack_CERTIFICATIONS[1]/ColumnHeading_CERTIFICATIONS[0]",
+    "entityName" : "ColumnHeading_CERTIFICATIONS",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/ColumnHeadingStack_CERTIFICATIONS[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 228.038,
+    "computedY" : 122.272,
+    "placementX" : 228.038,
+    "placementY" : 122.272,
+    "placementWidth" : 77.117,
+    "placementHeight" : 11.52,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.117,
+    "contentHeight" : 11.52,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/ColumnHeadingStack_CERTIFICATIONS[1]/ColumnHeadingRule_CERTIFICATIONS[1]",
+    "entityName" : "ColumnHeadingRule_CERTIFICATIONS",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/ColumnHeader_CERTIFICATIONS[0]/ColumnHeadingStack_CERTIFICATIONS[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 228.038,
+    "computedY" : 115.526,
+    "placementX" : 228.038,
+    "placementY" : 115.526,
+    "placementWidth" : 125.077,
+    "placementHeight" : 1.619,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 125.077,
+    "contentHeight" : 1.619,
+    "margin" : {
+      "top" : 5.127,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]",
+    "entityName" : "CertificationItems",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 190.799,
+    "computedY" : 43.334,
+    "placementX" : 190.799,
+    "placementY" : 43.334,
+    "placementWidth" : 178.738,
+    "placementHeight" : 62.166,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 178.738,
+    "contentHeight" : 62.166,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]/Certification_NMCRegisteredNurse[0]",
+    "entityName" : "Certification_NMCRegisteredNurse",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 190.799,
+    "computedY" : 95.18,
+    "placementX" : 190.799,
+    "placementY" : 95.18,
+    "placementWidth" : 99.825,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 99.825,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]/Certification_ImmediateLifeSupportILS[1]",
+    "entityName" : "Certification_ImmediateLifeSupportILS",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 190.799,
+    "computedY" : 77.898,
+    "placementX" : 190.799,
+    "placementY" : 77.898,
+    "placementWidth" : 118.882,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.882,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]/Certification_VenepunctureandCannulationCertification[2]",
+    "entityName" : "Certification_VenepunctureandCannulationCertification",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 190.799,
+    "computedY" : 60.616,
+    "placementX" : 190.799,
+    "placementY" : 60.616,
+    "placementWidth" : 178.738,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 178.738,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]/Certification_SafeguardingAdultsLevel3[3]",
+    "entityName" : "Certification_SafeguardingAdultsLevel3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/CertificationsColumn[1]/CertificationItems[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 190.799,
+    "computedY" : 43.334,
+    "placementX" : 190.799,
+    "placementY" : 43.334,
+    "placementWidth" : 117.214,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 117.214,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]",
+    "entityName" : "AdditionalColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 374.703,
+    "computedY" : 43.751,
+    "placementX" : 374.703,
+    "placementY" : 43.751,
+    "placementWidth" : 191.974,
+    "placementHeight" : 101.146,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 191.974,
+    "contentHeight" : 101.146,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 19.429
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]",
+    "entityName" : "ColumnHeader_ADDITIONALINFORMATION",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 394.132,
+    "computedY" : 117.373,
+    "placementX" : 394.132,
+    "placementY" : 117.373,
+    "placementWidth" : 172.545,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 172.545,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 11.873,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]",
+    "entityName" : "Badge_ADDITIONALINFORMATION",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 394.132,
+    "computedY" : 117.373,
+    "placementX" : 394.132,
+    "placementY" : 117.373,
+    "placementWidth" : 27.524,
+    "placementHeight" : 27.524,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 27.524,
+    "contentHeight" : 27.524,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]",
+    "entityName" : "Icon_additional",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 399.144,
+    "computedY" : 122.385,
+    "placementX" : 399.144,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 399.144,
+    "computedY" : 122.385,
+    "placementX" : 399.144,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 399.144,
+    "computedY" : 122.385,
+    "placementX" : 399.144,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]/SvgIcon[0]/SvgLayer1[1]",
+    "entityName" : "SvgLayer1",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/Badge_ADDITIONALINFORMATION[0]/Icon_additional[0]/SvgIcon[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 399.144,
+    "computedY" : 122.385,
+    "placementX" : 399.144,
+    "placementY" : 122.385,
+    "placementWidth" : 17.5,
+    "placementHeight" : 17.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.5,
+    "contentHeight" : 17.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/ColumnHeadingStack_ADDITIONALINFORMATION[1]",
+    "entityName" : "ColumnHeadingStack_ADDITIONALINFORMATION",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 431.37,
+    "computedY" : 115.526,
+    "placementX" : 431.37,
+    "placementY" : 115.526,
+    "placementWidth" : 135.306,
+    "placementHeight" : 18.266,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 135.306,
+    "contentHeight" : 18.266,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/ColumnHeadingStack_ADDITIONALINFORMATION[1]/ColumnHeading_ADDITIONALINFORMATION[0]",
+    "entityName" : "ColumnHeading_ADDITIONALINFORMATION",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/ColumnHeadingStack_ADDITIONALINFORMATION[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 431.37,
+    "computedY" : 122.272,
+    "placementX" : 431.37,
+    "placementY" : 122.272,
+    "placementWidth" : 123.773,
+    "placementHeight" : 11.52,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 123.773,
+    "contentHeight" : 11.52,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/ColumnHeadingStack_ADDITIONALINFORMATION[1]/ColumnHeadingRule_ADDITIONALINFORMATION[1]",
+    "entityName" : "ColumnHeadingRule_ADDITIONALINFORMATION",
+    "entityKind" : "LineNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/ColumnHeader_ADDITIONALINFORMATION[0]/ColumnHeadingStack_ADDITIONALINFORMATION[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 431.37,
+    "computedY" : 115.526,
+    "placementX" : 431.37,
+    "placementY" : 115.526,
+    "placementWidth" : 135.306,
+    "placementHeight" : 1.619,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 135.306,
+    "contentHeight" : 1.619,
+    "margin" : {
+      "top" : 5.127,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]",
+    "entityName" : "AdditionalFacts",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 394.132,
+    "computedY" : 43.751,
+    "placementX" : 394.132,
+    "placementY" : 43.751,
+    "placementWidth" : 163.122,
+    "placementHeight" : 61.749,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 163.122,
+    "contentHeight" : 61.749,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 42.636,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]/Fact_Languages[0]",
+    "entityName" : "Fact_Languages",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 394.132,
+    "computedY" : 80.15,
+    "placementX" : 394.132,
+    "placementY" : 80.15,
+    "placementWidth" : 105.367,
+    "placementHeight" : 25.35,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.367,
+    "contentHeight" : 25.35,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]/Fact_RighttoWork[1]",
+    "entityName" : "Fact_RighttoWork",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 394.132,
+    "computedY" : 61.95,
+    "placementX" : 394.132,
+    "placementY" : 61.95,
+    "placementWidth" : 120.486,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.486,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]/Fact_Availability[2]",
+    "entityName" : "Fact_Availability",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]/ClosingBand[5]/AdditionalColumn[2]/AdditionalFacts[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 394.132,
+    "computedY" : 43.751,
+    "placementX" : 394.132,
+    "placementY" : 43.751,
+    "placementWidth" : 104.645,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 104.645,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/TaglineRule[6]",
+    "entityName" : "TaglineRule",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 20.127,
+    "placementX" : 28.604,
+    "placementY" : 20.127,
+    "placementWidth" : 538.073,
+    "placementHeight" : 11.334,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 11.334,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.864,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/TaglineRule[6]/TaglineRuleLine[0]",
+    "entityName" : "TaglineRuleLine",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "TealPulseCv[0]/TaglineRule[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.604,
+    "computedY" : 25.119,
+    "placementX" : 28.604,
+    "placementY" : 25.119,
+    "placementWidth" : 538.073,
+    "placementHeight" : 1.349,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 1.349,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/TaglineRule[6]/Icon_heart[1]",
+    "entityName" : "Icon_heart",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TealPulseCv[0]/TaglineRule[6]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 551.776,
+    "computedY" : 18.344,
+    "placementX" : 551.776,
+    "placementY" : 18.344,
+    "placementWidth" : 14.9,
+    "placementHeight" : 14.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.9,
+    "contentHeight" : 14.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/TaglineRule[6]/Icon_heart[1]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TealPulseCv[0]/TaglineRule[6]/Icon_heart[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 551.776,
+    "computedY" : 18.344,
+    "placementX" : 551.776,
+    "placementY" : 18.344,
+    "placementWidth" : 14.9,
+    "placementHeight" : 14.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.9,
+    "contentHeight" : 14.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/TaglineRule[6]/Icon_heart[1]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "TealPulseCv[0]/TaglineRule[6]/Icon_heart[1]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 551.776,
+    "computedY" : 18.344,
+    "placementX" : 551.776,
+    "placementY" : 18.344,
+    "placementWidth" : 14.9,
+    "placementHeight" : 14.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.9,
+    "contentHeight" : 14.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TealPulseCv[0]/Tagline[7]",
+    "entityName" : "Tagline",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TealPulseCv[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.604,
+    "computedY" : 9.555,
+    "placementX" : 28.604,
+    "placementY" : 9.555,
+    "placementWidth" : 538.073,
+    "placementHeight" : 9.708,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.073,
+    "contentHeight" : 9.708,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

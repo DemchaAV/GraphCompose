@@ -178,7 +178,16 @@ for (const route of doc.tasks) {
     if (!alt.tradeoffs) fail(id, `alternative "${alt.id}" has no tradeoffs — what it costs is the deciding half`);
   }
 
-  if (!route.confirmedBy) unconfirmed.push(id);
+  // `confirmedBy` is the one gate a machine cannot close, so the machine at
+  // least refuses a value that only looks like one: whitespace, or anything
+  // that is not a name, would read as confirmed while recording nobody.
+  if (route.confirmedBy === undefined) {
+    fail(id, "no confirmedBy field — use null for unconfirmed rather than omitting it");
+  } else if (route.confirmedBy === null) {
+    unconfirmed.push(id);
+  } else if (typeof route.confirmedBy !== "string" || route.confirmedBy.trim() === "") {
+    fail(id, `confirmedBy is ${JSON.stringify(route.confirmedBy)} — it must name a person, or be null`);
+  }
 }
 
 if (errors.length) {

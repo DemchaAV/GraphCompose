@@ -34,7 +34,7 @@
       "surfaces": ["authoring"],
       "docs": ["docs/recipes/layered-page-design.md#sidebar-page-background-vs-row"],
       "verifiedAgainst": "2.2.3-SNAPSHOT",
-      "confirmedBy": null
+      "confirmedBy": "DemchaAV"
     },
     {
       "task": "layout.choose-the-layer",
@@ -67,7 +67,7 @@
       "surfaces": ["authoring"],
       "docs": ["docs/recipes/layered-page-design.md#the-four-tools"],
       "verifiedAgainst": "2.2.3-SNAPSHOT",
-      "confirmedBy": null
+      "confirmedBy": "DemchaAV"
     },
     {
       "task": "table.header-on-every-page",
@@ -89,7 +89,7 @@
       "surfaces": ["authoring"],
       "docs": ["docs/recipes/tables.md#repeated-header-on-page-break"],
       "verifiedAgainst": "2.2.3-SNAPSHOT",
-      "confirmedBy": null
+      "confirmedBy": "DemchaAV"
     }
   ]
 }

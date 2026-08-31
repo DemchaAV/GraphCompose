@@ -111,6 +111,15 @@ jobs:
               - 'mvnw'
               - 'mvnw.cmd'
               - '.github/workflows/ci.yml'
+              # The knowledge pack is generated from the compiled classes and
+              # gated in build-and-test. Without this a PR touching only the
+              # extractor, the classification rules or a generated surface
+              # matches no filter, skips build-and-test, and skips the gate with
+              # it — the gate would be absent on exactly the PRs that change the
+              # gate. Deliberately NOT added to `jvm`: the check is
+              # JDK-independent, so a knowledge-only PR wants one JDK 17 job
+              # rather than the full matrix.
+              - 'knowledge/**'
             # Markdown is a build input even though it compiles nothing:
             # DocumentationSnippetCompileTest compiles the literal java fences in
             # docs/, and the guard suites read README / CONTRIBUTING / docs. Kept
@@ -204,6 +213,56 @@ jobs:
         # below the floor in coverage/pom.xml). -am pulls the fonts / emoji upstreams;
         # only examples / benchmarks are excluded (their own CI jobs cover them).
         run: ./mvnw -B -ntp clean verify -pl :graph-compose-core,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-templates,:graph-compose-testing,:graph-compose,:graph-compose-bundle,:graph-compose-qa,:graph-compose-coverage -am
+
+      # The knowledge pack describes the public API of the tree being built, so
+      # it is checked here rather than in a job of its own: every job gets a
+      # fresh runner, and a separate one would have no */target/classes to read.
+      # Guarded to the baseline JDK because the surface is JDK-independent —
+      # running it three times would only triple the chance of a flake.
+      - name: Set up Node for the knowledge pack
+        if: matrix.java == '17'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Knowledge pack — classification fixtures
+        if: matrix.java == '17'
+        run: node knowledge/tools/api-surface/test/classifier.test.mjs
+
+      # Blocking, and blocking from the first run. A warn-only gate is one
+      # nobody reads, which is the failure mode this pack exists to remove: the
+      # allow-list drifted through an entire major because nothing was watching.
+      # Treat a failure here as a lockfile that was not regenerated.
+      - name: Knowledge pack — API surface is current
+        if: matrix.java == '17'
+        run: node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
+
+      # docs/api-stability.md is where a reader asks "what is still moving", and
+      # nothing was checking that it still names what carries @Beta. The test it
+      # cites as its guard examines the annotation type, never what is annotated.
+      - name: Knowledge pack — the stability document names every @Beta
+        if: matrix.java == '17'
+        run: node knowledge/tools/api-surface/check-stability-doc.mjs
+
+      - name: Knowledge pack — claim parser fixtures
+        if: matrix.java == '17'
+        run: node knowledge/tools/claims/test/claims.test.mjs
+
+      # A claim is a promise a published page makes to a reader. This fails when
+      # a page names API that no surface has — which a reader would discover by
+      # trying to compile it — and when a proof points at a test that has since
+      # been renamed away. Missing claims are only ever reported, never failed.
+      - name: Knowledge pack — documentation claims hold
+        if: matrix.java == '17'
+        run: node knowledge/tools/claims/check-claims.mjs --check
+
+      # A wrong route does not fail to compile — it sends every reader down the
+      # wrong path with the authority of a generated artifact. So a route is only
+      # served once its anchor resolves, its symbols exist, and its constraints
+      # name a documented behaviour that some test actually holds up.
+      - name: Knowledge pack — routing table holds up
+        if: matrix.java == '17'
+        run: node knowledge/tools/routing/check-routes.mjs
 
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical

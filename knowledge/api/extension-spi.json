@@ -1,0 +1,550 @@
+{
+  "schemaVersion": 2,
+  "targetLibrary": "GraphCompose",
+  "surface": "extension-spi",
+  "targetVersion": "2.3.x",
+  "verifiedAgainst": "2.3.0-SNAPSHOT",
+  "generator": "knowledge/tools/api-surface/extract-api.mjs",
+  "generatedFrom": [
+    "io.github.demchaav:graph-compose-core:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.3.0-SNAPSHOT"
+  ],
+  "parameterNamesFrom": [
+    "graph-compose-core:sources",
+    "graph-compose-templates:sources",
+    "graph-compose-render-pdf:sources",
+    "graph-compose-render-docx:sources",
+    "graph-compose-render-pptx:sources",
+    "graph-compose-testing:sources"
+  ],
+  "counts": {
+    "types": 9,
+    "methods": 26,
+    "constants": 0,
+    "generated": 26
+  },
+  "packages": [
+    {
+      "name": "com.demcha.compose.document.backend.fixed",
+      "types": [
+        {
+          "name": "FixedLayoutBackend",
+          "binaryName": "com.demcha.compose.document.backend.fixed.FixedLayoutBackend",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "R",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "FixedLayoutBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.fixed.FixedLayoutBackendProvider",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FixedLayoutRenderer",
+              "params": [
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": null
+                },
+                {
+                  "type": "DocumentDebugOptions",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "FixedLayoutRenderer",
+          "binaryName": "com.demcha.compose.document.backend.fixed.FixedLayoutRenderer",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "write",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderToImages",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<BufferedImage>",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": null
+                },
+                {
+                  "type": "int",
+                  "name": null
+                },
+                {
+                  "type": "boolean",
+                  "name": null
+                },
+                {
+                  "type": "int",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderSections",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "writeSections",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": null
+                },
+                {
+                  "type": "OutputStream",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "FontMetricsProvider",
+          "binaryName": "com.demcha.compose.document.backend.fixed.FontMetricsProvider",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "openMeasurement",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "MeasurementResources",
+              "params": [
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "MeasurementResources",
+          "binaryName": "com.demcha.compose.document.backend.fixed.MeasurementResources",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "fontLibrary",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "textMeasurementSystem",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "TextMeasurementSystem",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "close",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pdf",
+      "types": [
+        {
+          "name": "PdfFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFragmentRenderHandler",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Class<T>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "T",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pptx",
+      "stability": "beta",
+      "types": [
+        {
+          "name": "PptxFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxFragmentRenderHandler",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Class<T>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "T",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.semantic",
+      "types": [
+        {
+          "name": "SemanticBackend",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticBackend",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "R",
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": null
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.layout",
+      "types": [
+        {
+          "name": "NodeDefinition",
+          "binaryName": "com.demcha.compose.document.layout.NodeDefinition",
+          "kind": "interface",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "nodeType",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Class<E>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "prepare",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PreparedNode<E>",
+              "params": [
+                {
+                  "type": "E",
+                  "name": null
+                },
+                {
+                  "type": "PrepareContext",
+                  "name": null
+                },
+                {
+                  "type": "BoxConstraints",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "paginationPolicy",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PaginationPolicy",
+              "params": [
+                {
+                  "type": "E",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "split",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PreparedSplitResult<E>",
+              "params": [
+                {
+                  "type": "PreparedNode<E>",
+                  "name": null
+                },
+                {
+                  "type": "SplitRequest",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "children",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<DocumentNode>",
+              "params": [
+                {
+                  "type": "E",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "emitFragments",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<LayoutFragment>",
+              "params": [
+                {
+                  "type": "PreparedNode<E>",
+                  "name": null
+                },
+                {
+                  "type": "FragmentContext",
+                  "name": null
+                },
+                {
+                  "type": "FragmentPlacement",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "emitOverlayFragments",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<LayoutFragment>",
+              "params": [
+                {
+                  "type": "PreparedNode<E>",
+                  "name": null
+                },
+                {
+                  "type": "FragmentContext",
+                  "name": null
+                },
+                {
+                  "type": "FragmentPlacement",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "firstSliceHeight",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "PreparedNode<E>",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,677 @@
+{
+  "schemaVersion": 2,
+  "targetLibrary": "GraphCompose",
+  "surface": "testing",
+  "targetVersion": "2.3.x",
+  "verifiedAgainst": "2.3.0-SNAPSHOT",
+  "generator": "knowledge/tools/api-surface/extract-api.mjs",
+  "generatedFrom": [
+    "io.github.demchaav:graph-compose-core:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.3.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.3.0-SNAPSHOT"
+  ],
+  "parameterNamesFrom": [
+    "graph-compose-core:sources",
+    "graph-compose-templates:sources",
+    "graph-compose-render-pdf:sources",
+    "graph-compose-render-docx:sources",
+    "graph-compose-render-pptx:sources",
+    "graph-compose-testing:sources"
+  ],
+  "counts": {
+    "types": 5,
+    "methods": 32,
+    "constants": 2,
+    "generated": 8
+  },
+  "packages": [
+    {
+      "name": "com.demcha.compose.testing.layout",
+      "types": [
+        {
+          "name": "LayoutSnapshotAssertions",
+          "binaryName": "com.demcha.compose.testing.layout.LayoutSnapshotAssertions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-testing",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "UPDATE_PROPERTY",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "DocumentSession",
+                  "name": "document"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotPath"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "DocumentSession",
+                  "name": "document"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "DocumentSession",
+                  "name": "document"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotPath"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "DocumentSession",
+                  "name": "document"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotPath"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotPath"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotPath"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatches",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                },
+                {
+                  "type": "Path",
+                  "name": "expectedRoot"
+                },
+                {
+                  "type": "Path",
+                  "name": "actualRoot"
+                },
+                {
+                  "type": "String",
+                  "name": "snapshotName"
+                },
+                {
+                  "type": "String...",
+                  "name": "folders"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "LayoutSnapshotJson",
+          "binaryName": "com.demcha.compose.testing.layout.LayoutSnapshotJson",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-testing",
+          "members": [
+            {
+              "kind": "method",
+              "name": "toJson",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "LayoutDiagnosticSnapshot",
+                  "name": "snapshot"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toJson",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toJson",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "LayoutSnapshot",
+                  "name": "snapshot"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "normalizeLineEndings",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.testing.visual",
+      "types": [
+        {
+          "name": "ImageDiff",
+          "binaryName": "com.demcha.compose.testing.visual.ImageDiff",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-testing",
+          "members": [
+            {
+              "kind": "method",
+              "name": "compare",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ImageDiff.Result",
+              "params": [
+                {
+                  "type": "BufferedImage",
+                  "name": "expected"
+                },
+                {
+                  "type": "BufferedImage",
+                  "name": "actual"
+                },
+                {
+                  "type": "int",
+                  "name": "perPixelTolerance"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ImageDiff.Result",
+          "binaryName": "com.demcha.compose.testing.visual.ImageDiff$Result",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-testing",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Result",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                },
+                {
+                  "type": "long",
+                  "name": null
+                },
+                {
+                  "type": "int",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "BufferedImage",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "withinBudget",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [
+                {
+                  "type": "long",
+                  "name": "maxMismatchedPixels"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "differs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "mismatchedPixelCount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "long",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "maxChannelDelta",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "summary",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "diffImage",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BufferedImage",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfVisualRegression",
+          "binaryName": "com.demcha.compose.testing.visual.PdfVisualRegression",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-testing",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "APPROVE_PROPERTY",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "standard",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfVisualRegression",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "baselineRoot",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfVisualRegression",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": "baselineRoot"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderScale",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfVisualRegression",
+              "params": [
+                {
+                  "type": "float",
+                  "name": "renderScale"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "perPixelTolerance",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfVisualRegression",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "perPixelTolerance"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "mismatchedPixelBudget",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfVisualRegression",
+              "params": [
+                {
+                  "type": "long",
+                  "name": "mismatchedPixelBudget"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatchesBaseline",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "baselineName"
+                },
+                {
+                  "type": "byte[]",
+                  "name": "pdfBytes"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "assertMatchesBaseline",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "baselineName"
+                },
+                {
+                  "type": "DocumentSession",
+                  "name": "session"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderPages",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "List<BufferedImage>",
+              "params": [
+                {
+                  "type": "byte[]",
+                  "name": "pdfBytes"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderPages",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "List<BufferedImage>",
+              "params": [
+                {
+                  "type": "DocumentSession",
+                  "name": "session"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

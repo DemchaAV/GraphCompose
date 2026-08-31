@@ -84,6 +84,46 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A
+  studio invoice built around a cream sidebar — the two-line monogram and the wordmark
+  on a terracotta block at its head, a tinted quarter-disc, an arch and a sprig running
+  down the rest of it — beside a billing sheet that reads sender, title and metadata,
+  the billed-to and shipped-to pair across a rule, the priced service lines with a VAT
+  column, the totals stack closing on a filled total-due band, and the notes and bank
+  details above a dark sign-off band. Ships as `invoice.presets.LumaStudioInvoice` on
+  the structured invoice model, porting the rendered layout of the published standalone
+  `luma-co-studio-invoice` template. Unlike the CV presets promoted before it this one
+  flows: the line-items table repeats its dark header on the next page, the totals stack
+  and each closing block stay whole, and the paper tint, the sidebar column and the dark
+  foot band are page backgrounds, so every page carries the same frame and the folio
+  always has a dark ground. **The sign-off carries its own strip, which is where the
+  preset deliberately departs from the sheet it ports.** On the published template the
+  words rely on that background band, which is pinned to the paper's edge — right on a
+  one-page invoice, and white-on-cream in the middle of the last page of a longer one,
+  where the flow ends well above the paper's foot. Drawing the strip with the words
+  fixes it wherever they land; the cost is 7 440 of 2 173 720 pixels on the reference
+  sheet, where the strip starts three points above the background band it sits on, and
+  one extra layout node. It is flow content only because footer chrome carries text
+  today — one size, one colour, no glyph, where this band needs two faces and a disc —
+  so once a footer zone can hold a node the sign-off belongs in one and the strip goes
+  away. Its geometry is not a set of round numbers: the design was drawn
+  on a pixel grid, so the preset carries that grid as page ratios and states every
+  vertical gap as the white the drawing shows, subtracting the blank a line box already
+  carries — per family, because the three faces it sets fill different line boxes at the
+  same size. Letter-spaced runs are written letter by letter with an invisible inline
+  rectangle between the pairs, since a text style carries no tracking; the six spacings
+  are frozen constants rather than a measurement, because measuring at compose time
+  would tie the preset to the font artifact's resource layout. Amounts take their mark
+  from `StructuredInvoiceData.currencyCode()` — the code is the authority, so the sheet
+  cannot contradict itself — and the contact channels carry `tel:`, `mailto:` and
+  `https:` targets derived from their values, with a parenthesised trunk prefix dropped
+  from the dial target the way a caller dialling from abroad drops it. Guarded by a
+  smoke test (including the empty document, an unknown and a blank currency code, a
+  supplier with one registration and with none, the link targets, the repeated header
+  and folio on a continuation page, and the sign-off landing on its own ground), an
+  exact layout snapshot over both a one-page and a three-page invoice, and a
+  pixel-parity gate; the examples showcase gains `invoice-luma-studio-v2`.
+
 - **`SerifHeadline` links its titles and lets its bands breathe.** Every title the
   preset draws — a role, a project, a degree, an achievement — is now a link when its
   entry carries one. And a band column keeps a gutter at its right edge, so its text

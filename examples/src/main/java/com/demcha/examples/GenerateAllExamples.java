@@ -102,6 +102,7 @@ import com.demcha.examples.templates.cv.v2.ProfessionalSidebarExample;
 import com.demcha.examples.templates.cv.v2.SerifHeadlineExample;
 import com.demcha.examples.templates.invoice.ClassicInvoiceV2Example;
 import com.demcha.examples.templates.invoice.ConsultingInvoiceV2Example;
+import com.demcha.examples.templates.invoice.LumaStudioInvoiceV2Example;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
 import com.demcha.examples.templates.invoice.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
@@ -176,6 +177,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + ModernInvoiceV2Example.generate());
         System.out.println("Generated: " + ClassicInvoiceV2Example.generate());
         System.out.println("Generated: " + ConsultingInvoiceV2Example.generate());
+        System.out.println("Generated: " + LumaStudioInvoiceV2Example.generate());
 
         // Proposals
         System.out.println("Generated: " + ProposalCinematicFileExample.generate());

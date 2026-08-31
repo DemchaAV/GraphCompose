@@ -100,6 +100,10 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      *                      the design shows it (e.g. {@code "20%"}) rather
      *                      than as a number, because the wording differs by
      *                      jurisdiction; blank when absent
+     * @param icon          the mark a preset draws for this line; the token
+     *                      means something only to the preset that packages
+     *                      it, and a preset that draws no marks ignores it.
+     *                      Blank when absent
      */
     public record Line(
             int lineNumber,
@@ -110,7 +114,8 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             String unit,
             BigDecimal unitPrice,
             BigDecimal amount,
-            String vatRate) {
+            String vatRate,
+            String icon) {
 
         /**
          * Normalizes optional fields.
@@ -124,6 +129,27 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             unitPrice = Objects.requireNonNullElse(unitPrice, BigDecimal.ZERO);
             amount = Objects.requireNonNullElse(amount, BigDecimal.ZERO);
             vatRate = Objects.requireNonNullElse(vatRate, "");
+            icon = Objects.requireNonNullElse(icon, "");
+        }
+
+        /**
+         * Backward-compatible constructor for callers that predate the mark.
+         *
+         * @param lineNumber    the printed line number
+         * @param title         the service title
+         * @param description   the description under the title
+         * @param servicePeriod the period this line covers
+         * @param quantity      how much was delivered
+         * @param unit          what the quantity counts
+         * @param unitPrice     the price per unit
+         * @param amount        the line total
+         * @param vatRate       the tax rate printed for this line
+         */
+        public Line(int lineNumber, String title, String description, String servicePeriod,
+                    BigDecimal quantity, String unit, BigDecimal unitPrice,
+                    BigDecimal amount, String vatRate) {
+            this(lineNumber, title, description, servicePeriod, quantity, unit,
+                    unitPrice, amount, vatRate, "");
         }
 
         /**
@@ -143,7 +169,7 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
                     BigDecimal quantity, String unit, BigDecimal unitPrice,
                     BigDecimal amount) {
             this(lineNumber, title, description, servicePeriod, quantity, unit,
-                    unitPrice, amount, "");
+                    unitPrice, amount, "", "");
         }
     }
 }

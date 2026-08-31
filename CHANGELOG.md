@@ -7,6 +7,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **An invoice line carries a mark.** A design that opens each service line with a
+  glyph — a card for a billing line, a shield for fraud screening, a globe for a hosted
+  service — had nowhere to say which one, and deriving it from the description would
+  have been guesswork dressed as a feature. `InvoiceServiceLines.Line` now carries
+  `icon`, a plain string blank when absent, exactly as `CvEntry.icon` already works on
+  the CV side: the token means something only to the preset that packages it, and a
+  preset that draws no marks ignores it. It costs the layout nothing where nothing is
+  set. Both constructors that predate it — the one before the per-line tax rate and the
+  one before the mark — are kept explicitly, so existing calls compile and link
+  unchanged and every line built through them still carries no mark.
+
 - **`CvSkill` carries the level as the document words it.** A rated skill could say how
   much — a number in `[0, 1]` a preset draws as dots or a meter — or it could say it in
   words by not being a skill at all and living in a `RowsSection` instead. It could not

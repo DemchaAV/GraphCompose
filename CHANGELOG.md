@@ -43,8 +43,10 @@ follow semantic versioning; release dates are ISO 8601.
   pages carry the zone, which separates "is this page numbered" from "is the band drawn" —
   the two that `DocumentPageNumbering` conflates. A zone reserves its height by default and
   does not paginate: content that needs more than the band raises
-  `AtomicNodeTooLargeException` naming the zone and its height rather than being dropped.
-  `DocumentHeaderFooter` is unchanged and unaffected.
+  `AtomicNodeTooLargeException` naming the zone and its height rather than being dropped —
+  whether the overflow is atomic (a row too tall for the band) or splittable (a paragraph
+  that would have continued onto a second band). `DocumentHeaderFooter` is unchanged and
+  unaffected.
 
 - **A header or footer can reserve its height from the content area.**
   `DocumentHeaderFooter.reserveSpace(true)` insets the page's content area so the body

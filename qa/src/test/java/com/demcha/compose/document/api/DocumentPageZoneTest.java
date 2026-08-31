@@ -162,6 +162,28 @@ class DocumentPageZoneTest {
     }
 
     /**
+     * The test above overflows through an atomic row, which the compiler refuses
+     * itself. Splittable content is the quieter failure mode: a bare paragraph is
+     * happy to continue onto a second band-page, and a zone has nowhere to put
+     * one — so the tail used to be dropped with nothing but a log line. Same
+     * contract for both: refused, named, never truncated.
+     */
+    @Test
+    void splittableContentThatOutgrowsTheBandIsRefusedNotTruncated() {
+        assertThatThrownBy(() -> render(DocumentPageZone.footer(24, page -> new ParagraphBuilder()
+                .name("Spilling")
+                .text("A paragraph is splittable, so the compiler does not refuse it the way it"
+                        + " refuses an oversized row: it lays the extra lines onto a second band"
+                        + " page, and this sentence is long enough to be sure there are several"
+                        + " of them to lose.")
+                .build())))
+                .isInstanceOf(AtomicNodeTooLargeException.class)
+                .hasMessageContaining("FOOTER")
+                .hasMessageContaining("does not fit its declared height")
+                .hasMessageContaining("24.0");
+    }
+
+    /**
      * The header band is the other half of the placement arithmetic — a footer
      * needs no vertical shift at all, a header is lifted by the band's distance
      * from the page's bottom edge, and getting that wrong puts the header where

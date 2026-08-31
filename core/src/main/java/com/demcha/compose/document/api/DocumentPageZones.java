@@ -14,8 +14,6 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.output.DocumentHeaderFooterZone;
 import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.output.PageContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,16 +39,13 @@ import java.util.Map;
  * content that needs more than the band raises
  * {@link AtomicNodeTooLargeException} rather than being silently dropped — a
  * footer that quietly loses half of what it was given is the harder bug to
- * find. Flow content that splits without being atomic is bounded the same way:
- * only the band's own page survives, and the rest is reported on the lifecycle
- * logger.</p>
+ * find. That holds for splittable content too: a paragraph the compiler would
+ * happily continue onto a second band-page is refused, not quietly cut to the
+ * first.</p>
  *
  * @author Artem Demchyshyn
  */
 final class DocumentPageZones {
-
-    private static final Logger LIFECYCLE_LOG =
-            LoggerFactory.getLogger("com.demcha.compose.document.lifecycle");
 
     private DocumentPageZones() {
     }
@@ -65,7 +60,6 @@ final class DocumentPageZones {
      * @param registry  the session's node registry
      * @param resources the session's measurement resources
      * @param markdown  whether markdown parsing is enabled for this session
-     * @param sessionId session id, for the drop diagnostic
      * @return a layout graph with the zone fragments, or {@code base}
      */
     static LayoutGraph apply(LayoutGraph base,
@@ -73,8 +67,7 @@ final class DocumentPageZones {
                              LayoutCompiler compiler,
                              NodeRegistry registry,
                              MeasurementResources resources,
-                             boolean markdown,
-                             String sessionId) {
+                             boolean markdown) {
         if (zones == null || zones.isEmpty() || base.totalPages() == 0) {
             return base;
         }
@@ -93,7 +86,7 @@ final class DocumentPageZones {
                 }
                 combined.addAll(placeZone(
                         zone, index, context, page, pageHeight, bandWidth, bandLeft,
-                        compiler, registry, resources, markdown, sessionId));
+                        compiler, registry, resources, markdown));
             }
         }
         return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
@@ -109,8 +102,7 @@ final class DocumentPageZones {
                                                   LayoutCompiler compiler,
                                                   NodeRegistry registry,
                                                   MeasurementResources resources,
-                                                  boolean markdown,
-                                                  String sessionId) {
+                                                  boolean markdown) {
         DocumentNode content = zone.getContent() == null ? null : zone.getContent().apply(context);
         if (content == null) {
             return List.of();
@@ -137,6 +129,18 @@ final class DocumentPageZones {
                             + " paginate, so its content has to fit the band: raise the zone's height,"
                             + " reduce its padding, or build less into it. (" + tooLarge.getMessage() + ")");
         }
+        // The compiler refuses atomic content that outgrows the band; splittable
+        // content it would happily continue onto a second band-page, and a zone
+        // has no second page. Truncating to the first would lose content without
+        // a sound, so both overflows get the same answer.
+        if (laidOut.totalPages() > 1) {
+            throw new AtomicNodeTooLargeException(
+                    "The " + zone.getZone() + " zone's content does not fit its declared height of "
+                            + zone.getHeight() + "pt on page " + context.number() + ": laid out, it"
+                            + " fills " + laidOut.totalPages() + " bands of that height. A zone does"
+                            + " not paginate, so its content has to fit the band: raise the zone's"
+                            + " height, reduce its padding, or build less into it.");
+        }
 
         // The band's own y origin on the page. Fragment y is PDF-native (up from
         // the page bottom), and the sub-compile measured from the band's bottom,
@@ -147,12 +151,7 @@ final class DocumentPageZones {
                 : 0.0;
 
         List<PlacedFragment> placed = new ArrayList<>(laidOut.fragments().size());
-        int dropped = 0;
         for (PlacedFragment fragment : laidOut.fragments()) {
-            if (fragment.pageIndex() != 0) {
-                dropped++;
-                continue;
-            }
             placed.add(new PlacedFragment(
                     "@page-zone[" + page + "][" + zoneIndex + "]" + fragment.path(),
                     fragment.fragmentIndex(),
@@ -164,12 +163,6 @@ final class DocumentPageZones {
                     fragment.margin(),
                     fragment.padding(),
                     fragment.payload()));
-        }
-        if (dropped > 0) {
-            LIFECYCLE_LOG.warn(
-                    "document.zone.overflow sessionId={} page={} zone={} height={} droppedFragments={}"
-                            + " — a zone does not paginate; declare a height that fits its content",
-                    sessionId, page + 1, zone.getZone(), zone.getHeight(), dropped);
         }
         return placed;
     }

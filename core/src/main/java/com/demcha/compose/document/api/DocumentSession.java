@@ -756,7 +756,7 @@ public final class DocumentSession implements AutoCloseable {
                 DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
         return DocumentPageZones.apply(
                 withBackgrounds, chromeOptions.zones(), compiler, registry,
-                measurementResources, markdown, sessionId);
+                measurementResources, markdown);
     }
 
     private PageGeometry buildPageGeometry() {

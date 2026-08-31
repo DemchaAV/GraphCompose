@@ -7,6 +7,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CvSkill` carries the level as the document words it.** A rated skill could say how
+  much — a number in `[0, 1]` a preset draws as dots or a meter — or it could say it in
+  words by not being a skill at all and living in a `RowsSection` instead. It could not
+  say both, which is why `CharcoalGold` sets its languages as rows: that design writes
+  "Native" and "B2 – Upper Intermediate" out, and a number could not carry them back. A
+  design that shows a rating *and* names it had nowhere to go. `CvSkill` now carries
+  `note` — a plain string, blank when absent, like the fields beside it — reachable
+  through `CvSkill.of(name, level, note)`. The two channels stay separate because a
+  number cannot carry a wording and a wording cannot be measured into a meter; a preset
+  draws whichever it has room for, or both. The two-argument constructor and both
+  existing factories are kept explicitly, so existing calls compile and link unchanged
+  and every skill built through them still carries no note.
+
 - **The structured invoice model carries what a second sheet needs.** It landed with
   one consumer, `ConsultingInvoice`, and a model shaped around one document is a model
   nobody has tested. Fitting a second published invoice to it found six things it could

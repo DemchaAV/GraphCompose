@@ -84,6 +84,36 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A clinical CV preset in five bands: `TealPulse`.** A one-page sheet whose mark is a
+  heart crossed by a flat pulse, beside a letter-spaced name over a contact strip
+  divided by short rules; then a two-column body carrying the competencies as dotted
+  lines beside the summary and the roles under badged headings; then a three-column
+  closing band for the degree, the certifications and the facts; and a tracked line
+  under a rule that ends in a small heart. Ships as `cv.presets.TealPulse` on the
+  existing `CvDocument` model with **no model change at all**, porting the rendered
+  layout of a published standalone template. **It sets its own page**, unlike every CV
+  preset before it: the design was drawn on a raster whose proportion is not A4's and
+  every length is a share of that grid, so a caller's page size and margin are
+  overwritten rather than followed. Six berths reach their sections by title, including
+  a tagline berth whose body is drawn and whose title is not — the title is how a
+  document names the berth. Both vertical rules are the left border of the column to
+  their right rather than lines placed beside them, so they are the grid: change a
+  weight and the rules follow. The main headings are laid over their own rule with the
+  paper knocked out behind every letter, because a row cannot nest in a row cell and the
+  rule's visible length still has to follow the words. **What happens past one page is
+  not what the other ported CV presets do:** the bands are stacked in the page flow, so
+  a CV with more roles than the design holds carries the closing band onto a second page
+  rather than losing anything, while the body row itself is atomic and a body taller
+  than a page raises `AtomicNodeTooLargeException`. As on `TerracottaRail`, a link is
+  drawn as its own label with the address behind it, which is the one deliberate
+  departure from the ported sheet — writing the URL out makes the strip's gaps depend on
+  how long a profile is called — measured at six of 121 nodes shifting sideways and
+  7 724 of 1 987 720 pixels, with nothing moving vertically. Guarded by a smoke test
+  (including the empty document, the page override, the tagline's title staying off the
+  sheet, the link targets, a linked role and degree, the run onto a second page and the
+  refusal of a body taller than one), an exact layout snapshot and a pixel-parity gate;
+  the examples showcase gains `cv-teal-pulse-v2`.
+
 - **An architect's two-column CV preset: `TerracottaRail`.** A one-page A4 sheet whose
   narrow column carries a serif monogram over a terracotta rule, the contact channels
   behind their marks, two bulleted lists and a block of closing facts, beside a wide

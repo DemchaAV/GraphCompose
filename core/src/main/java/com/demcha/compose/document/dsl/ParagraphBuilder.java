@@ -372,16 +372,38 @@ public final class ParagraphBuilder {
      * Adds a coloured chip: {@code text} in {@code fg} on a {@code bg} fill, with
      * the default code radius and padding.
      *
+     * <p>The glyphs take the paragraph's {@linkplain #textStyle(DocumentTextStyle)
+     * text style} — family, size and decoration — with only the colour replaced by
+     * {@code fg}, so a chip in a 9 pt paragraph is a 9 pt chip. The paragraph style is
+     * read when this method is called, so set it before the chip; to size a chip
+     * independently of the paragraph, pass the style explicitly with
+     * {@link #inlineStyledChip(String, DocumentTextStyle, DocumentColor)}.</p>
+     *
      * @param text the text
-     * @param fg   the text colour
+     * @param fg   the text colour; {@code null} leaves the glyphs black
      * @param bg   the chip fill colour; must not be {@code null}
      * @return this builder
      * @since 1.9.0
      */
     public ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg) {
+        return inlineStyledChip(text, this.textStyle.withColor(fg), bg);
+    }
+
+    /**
+     * Adds a chip with an explicit glyph style on a {@code bg} fill, keeping the
+     * default code radius and padding — the escape hatch from
+     * {@link #inlineChip(String, DocumentColor, DocumentColor)} for a chip that is
+     * meant to differ from the paragraph around it.
+     *
+     * @param text      the text
+     * @param textStyle the glyph style; falls back to the paragraph style when {@code null}
+     * @param bg        the chip fill colour; must not be {@code null}
+     * @return this builder
+     * @since 2.3.0
+     */
+    public ParagraphBuilder inlineStyledChip(String text, DocumentTextStyle textStyle, DocumentColor bg) {
         Objects.requireNonNull(bg, "bg");
-        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text,
-                DocumentTextStyle.builder().color(fg).build(),
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
                 new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));
         this.text = "";
         return this;

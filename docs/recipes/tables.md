@@ -22,6 +22,11 @@ table paginates.
 
 ## Cell content — one line, several lines, or a node
 
+<!-- claim: capability=table.cell-content -->
+<!-- claim: symbol=DocumentTableCell.text -->
+<!-- claim: symbol=DocumentTableCell.lines -->
+<!-- claim: symbol=DocumentTableCell.node -->
+
 Three factories, three shapes. Pick by what the cell holds, not by
 what the text looks like:
 
@@ -62,6 +67,9 @@ child shorter than one page's content area.
 
 ## Row span — merge a cell vertically
 
+<!-- claim: capability=table.row-span -->
+<!-- claim: behavior=table.spanning-cell-height-is-sum-of-covered-rows proof=test:TableBuilderRowSpanTest -->
+
 Spanning cells declare how many rows they cover via `rowSpan(int)`.
 The layout layer skips occupied grid positions when interpreting
 subsequent source rows, so authors only specify the cells that are
@@ -97,6 +105,10 @@ a precise diagnostic if a span overlaps another cell, exceeds the
 remaining rows / columns, or leaves a gap.
 
 ## Zebra — alternating row fills
+
+<!-- claim: capability=table.zebra-striping -->
+<!-- claim: symbol=TableBuilder.zebra -->
+<!-- claim: behavior=table.explicit-row-style-beats-zebra proof=test:TableBuilderZebraAndTotalsTest -->
 
 `zebra(odd, even)` paints odd-indexed rows (0, 2, 4 — first, third,
 fifth visually) in one fill and even-indexed rows (1, 3, 5) in
@@ -134,6 +146,8 @@ already have an explicit `rowStyle(idx, ...)` override, so
 
 ## Totals row — bold + subtle fill
 
+<!-- claim: symbol=TableBuilder.totalRow -->
+
 `totalRow(values...)` appends the row at the end of the table and
 assigns a default totals style (bold text + a subtle gray-blue fill).
 A two-arg overload takes a custom `DocumentTableStyle` for branded
@@ -166,6 +180,12 @@ last row index, so it wins over zebra alternation on that row
 regardless of parity.
 
 ## Repeated header on page break
+
+<!-- claim: capability=table.repeat-header-across-pages -->
+<!-- claim: symbol=TableBuilder.repeatHeader -->
+<!-- claim: symbol=TableBuilder.headerRow -->
+<!-- claim: behavior=table.header-repeats-on-every-continuation-page proof=test:TableBuilderRepeatHeaderTest -->
+<!-- claim: behavior=table.repeat-header-defaults-to-zero proof=test:TableBuilderRepeatHeaderTest -->
 
 `repeatHeader()` repeats the first row at the top of every
 continuation page when the table is split across pages.

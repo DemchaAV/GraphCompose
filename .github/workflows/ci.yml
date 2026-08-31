@@ -237,6 +237,18 @@ jobs:
         if: matrix.java == '17'
         run: node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
 
+      - name: Knowledge pack — claim parser fixtures
+        if: matrix.java == '17'
+        run: node knowledge/tools/claims/test/claims.test.mjs
+
+      # A claim is a promise a published page makes to a reader. This fails when
+      # a page names API that no surface has — which a reader would discover by
+      # trying to compile it — and when a proof points at a test that has since
+      # been renamed away. Missing claims are only ever reported, never failed.
+      - name: Knowledge pack — documentation claims hold
+        if: matrix.java == '17'
+        run: node knowledge/tools/claims/check-claims.mjs --check
+
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
         # across JVMs and one pass is enough to catch broken @link

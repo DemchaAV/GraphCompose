@@ -80,6 +80,7 @@ import com.demcha.examples.templates.coverletter.CvPanelLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvSidebarPortraitLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvTimelineMinimalLetterV2Example;
 import com.demcha.examples.templates.cv.v2.CharcoalGoldExample;
+import com.demcha.examples.templates.cv.v2.SlateOrangeExample;
 import com.demcha.examples.templates.cv.v2.TealPulseExample;
 import com.demcha.examples.templates.cv.v2.TerracottaRailExample;
 import com.demcha.examples.templates.cv.v2.CvBlueBannerExample;
@@ -158,6 +159,7 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CharcoalGoldExample.generate());
         System.out.println("Generated: " + TerracottaRailExample.generate());
         System.out.println("Generated: " + TealPulseExample.generate());
+        System.out.println("Generated: " + SlateOrangeExample.generate());
 
         // Cover letters (v2 layered — 15 paired letters, one per CV preset)
         System.out.println("Generated: " + CvBlueBannerLetterV2Example.generate());

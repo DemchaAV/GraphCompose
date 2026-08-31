@@ -6,7 +6,7 @@
     "pagesWithClaims": 2,
     "symbol": 14,
     "capability": 6,
-    "behavior": 5
+    "behavior": 6
   },
   "claims": {
     "symbol": {
@@ -103,7 +103,7 @@
       "TableBuilder.headerRow": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 186,
+          "line": 187,
           "heading": "Repeated header on page break",
           "surface": "authoring",
           "stability": "stable"
@@ -112,7 +112,7 @@
       "TableBuilder.repeatHeader": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 185,
+          "line": 186,
           "heading": "Repeated header on page break",
           "surface": "authoring",
           "stability": "stable"
@@ -121,7 +121,7 @@
       "TableBuilder.totalRow": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 149,
+          "line": 150,
           "heading": "Totals row — bold + subtle fill",
           "surface": "authoring",
           "stability": "stable"
@@ -130,7 +130,7 @@
       "TableBuilder.zebra": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 110,
+          "line": 111,
           "heading": "Zebra — alternating row fills",
           "surface": "authoring",
           "stability": "stable"
@@ -162,21 +162,21 @@
       "table.repeat-header-across-pages": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 184,
+          "line": 185,
           "heading": "Repeated header on page break"
         }
       ],
       "table.row-span": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 70,
+          "line": 71,
           "heading": "Row span — merge a cell vertically"
         }
       ],
       "table.zebra-striping": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 109,
+          "line": 110,
           "heading": "Zebra — alternating row fills"
         }
       ]
@@ -190,10 +190,18 @@
           "proof": "test:RowBuilderTest"
         }
       ],
+      "table.composed-cell-paints-but-has-no-snapshot-node": [
+        {
+          "page": "docs/recipes/tables.md",
+          "line": 29,
+          "heading": "Cell content — one line, several lines, or a node",
+          "proof": "test:ComposedCellSnapshotContractTest"
+        }
+      ],
       "table.explicit-row-style-beats-zebra": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 111,
+          "line": 112,
           "heading": "Zebra — alternating row fills",
           "proof": "test:TableBuilderZebraAndTotalsTest"
         }
@@ -201,7 +209,7 @@
       "table.header-repeats-on-every-continuation-page": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 187,
+          "line": 188,
           "heading": "Repeated header on page break",
           "proof": "test:TableBuilderRepeatHeaderTest"
         }
@@ -209,7 +217,7 @@
       "table.repeat-header-defaults-to-zero": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 188,
+          "line": 189,
           "heading": "Repeated header on page break",
           "proof": "test:TableBuilderRepeatHeaderTest"
         }
@@ -217,7 +225,7 @@
       "table.spanning-cell-height-is-sum-of-covered-rows": [
         {
           "page": "docs/recipes/tables.md",
-          "line": 71,
+          "line": 72,
           "heading": "Row span — merge a cell vertically",
           "proof": "test:TableBuilderRowSpanTest"
         }

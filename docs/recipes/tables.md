@@ -26,6 +26,7 @@ table paginates.
 <!-- claim: symbol=DocumentTableCell.text -->
 <!-- claim: symbol=DocumentTableCell.lines -->
 <!-- claim: symbol=DocumentTableCell.node -->
+<!-- claim: behavior=table.composed-cell-paints-but-has-no-snapshot-node proof=test:ComposedCellSnapshotContractTest -->
 
 Three factories, three shapes. Pick by what the cell holds, not by
 what the text looks like:

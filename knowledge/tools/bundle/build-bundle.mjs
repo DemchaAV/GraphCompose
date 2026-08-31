@@ -101,7 +101,7 @@ const add = (name, contents) => entries.push([name, contents]);
 add("manifest.json", fs.readFileSync(path.join(KNOWLEDGE, "manifest.json")));
 add("provenance.json", fs.readFileSync(PROVENANCE));
 
-for (const sub of ["api", "routing", "claims"]) {
+for (const sub of ["api", "routing", "claims", "proofs"]) {
   const dir = path.join(KNOWLEDGE, sub);
   if (!fs.existsSync(dir)) continue;
   for (const rel of filesUnder(dir)) {

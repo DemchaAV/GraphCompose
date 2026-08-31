@@ -79,6 +79,24 @@ follow semantic versioning; release dates are ISO 8601.
   colours the packaged marks come in, so a document chooses one deliberately rather
   than mixing navy and gold in a row by accident.
 
+- **A photographic CV preset: `CharcoalGold`.** A one-page sheet in two columns: a
+  charcoal sidebar carrying a ringed photograph, the contact channels behind their
+  marks, rated skills, languages and degrees, beside a paper column carrying a two-tone
+  name — the given name in ink, the family name larger and in gold — the summary, the
+  roles held on a dated rail, a pair of credential columns divided by a hairline, and a
+  closing strip of tools. Ships as `cv.presets.CharcoalGold` on the existing
+  `CvDocument` model with **no model change at all**, porting the rendered layout of the
+  published standalone `charcoal-gold-cv` template. Unlike its ported siblings it leaves
+  the page size to the caller: the design is drawn on A4 and its geometry follows the
+  page's own width, so a different page rescales rather than breaks. Seven berths reach
+  their sections by title; credentials take the mark each entry names in
+  `CvEntry.icon()` from this preset's own set, every title it draws is a link when the
+  entry carries one, and a skill the document leaves unlevelled draws no rating rather
+  than five empty dots. Guarded by a smoke test (including the unknown-mark data error,
+  the missing portrait, the unlevelled skill, the link targets and the one-page limit),
+  an exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-charcoal-gold-v2`.
+
 - **A two-column editorial CV preset: `SerifHeadline`.** A one-page A4 sheet under a
   Volkhov masthead — the name in the display serif over its role and a short gold rule,
   the contact channels stacked opposite — then a two-column body: the roles held on a

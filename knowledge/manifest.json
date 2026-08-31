@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "targetLibrary": "GraphCompose",
+  "targetVersion": "2.2.x",
+  "generator": "knowledge/tools/api-surface/extract-api.mjs",
+  "generatorVersion": "2.0.0",
+  "note": "Stable contract. Provenance for a particular run (commit, timestamp, artifact digests) is written to target/knowledge/provenance.json and is deliberately not tracked.",
+  "surfaces": [
+    {
+      "surface": "authoring",
+      "json": "knowledge/api/authoring.json",
+      "markdown": "knowledge/api/authoring.md"
+    },
+    {
+      "surface": "templates",
+      "json": "knowledge/api/templates.json",
+      "markdown": "knowledge/api/templates.md"
+    },
+    {
+      "surface": "backends",
+      "json": "knowledge/api/backends.json",
+      "markdown": "knowledge/api/backends.md"
+    },
+    {
+      "surface": "testing",
+      "json": "knowledge/api/testing.json",
+      "markdown": "knowledge/api/testing.md"
+    },
+    {
+      "surface": "extension-spi",
+      "json": "knowledge/api/extension-spi.json",
+      "markdown": "knowledge/api/extension-spi.md"
+    }
+  ],
+  "classification": {
+    "stages": [
+      "A admission: type @Internal | explicit SPI list | package @Internal | explicit exclusion | surface rule | hard error",
+      "B stability: type @Beta | package @Beta | stable — resolved per type, nested types separately",
+      "C members: member @Internal excluded | member @Beta | inherit the type"
+    ],
+    "annotations": {
+      "internal": "com.demcha.compose.document.api.Internal",
+      "beta": "com.demcha.compose.document.api.Beta"
+    },
+    "rules": "knowledge/tools/api-surface/lib/surfaces.mjs",
+    "excluded": "knowledge/api/excluded.json"
+  }
+}

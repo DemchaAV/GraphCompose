@@ -8,38 +8,49 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Pins the compatibility promise made when {@link CvEntry} grew a location
- * and a mark: the four-argument constructor that predates them is still
- * there and still means what it meant, so a caller written against it keeps
- * compiling and linking.
+ * Pins the compatibility promise made each time {@link CvEntry} grew: the
+ * constructors that predate the location, the mark and the link are still
+ * there and still mean what they meant, so a caller written against any of
+ * them keeps compiling and linking.
  */
 class CvEntryPlaceAndIconTest {
 
     @Test
-    void theConstructorThatPredatesThemLeavesBothBlank() {
+    void theConstructorThatPredatesThemLeavesThemAllBlank() {
         CvEntry entry = new CvEntry("Engineer", "Acme", "2021", "Did the work.");
         assertThat(entry.place()).isEmpty();
         assertThat(entry.icon()).isEmpty();
+        assertThat(entry.link()).isEmpty();
         assertThat(entry.subtitle()).isEqualTo("Acme");
     }
 
     @Test
+    void theConstructorThatPredatesTheLinkLeavesItBlank() {
+        CvEntry entry = new CvEntry("Engineer", "Acme", "2021", "Body", "Berlin", "cart");
+        assertThat(entry.link()).isEmpty();
+        assertThat(entry.place()).isEqualTo("Berlin");
+        assertThat(entry.icon()).isEqualTo("cart");
+    }
+
+    @Test
     void nullsNormalizeToBlank() {
-        CvEntry entry = new CvEntry("Engineer", "Acme", "2021", "Body", null, null);
+        CvEntry entry = new CvEntry("Engineer", "Acme", "2021", "Body", null, null, null);
         assertThat(entry.place()).isEmpty();
         assertThat(entry.icon()).isEmpty();
+        assertThat(entry.link()).isEmpty();
     }
 
     @Test
     void theOriginalFieldsStillRejectNull() {
-        assertThatThrownBy(() -> new CvEntry("Engineer", null, "2021", "Body", "Berlin", "cart"))
+        assertThatThrownBy(() ->
+                new CvEntry("Engineer", null, "2021", "Body", "Berlin", "cart", ""))
                 .isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("subtitle");
     }
 
     @Test
     void aBlankTitleIsStillRejected() {
-        assertThatThrownBy(() -> new CvEntry("  ", "Acme", "2021", "Body", "", ""))
+        assertThatThrownBy(() -> new CvEntry("  ", "Acme", "2021", "Body", "", "", ""))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("title");
     }
@@ -52,9 +63,11 @@ class CvEntryPlaceAndIconTest {
                 .body("An open-source ledger.")
                 .place("Remote")
                 .icon("cart")
+                .link("https://example.com/ledgerkit")
                 .build();
         assertThat(entry).isEqualTo(new CvEntry("Ledgerkit", "Java, PostgreSQL", "2024",
-                "An open-source ledger.", "Remote", "cart"));
+                "An open-source ledger.", "Remote", "cart",
+                "https://example.com/ledgerkit"));
     }
 
     @Test
@@ -65,6 +78,7 @@ class CvEntryPlaceAndIconTest {
         assertThat(entry.body()).isEmpty();
         assertThat(entry.place()).isEmpty();
         assertThat(entry.icon()).isEmpty();
+        assertThat(entry.link()).isEmpty();
     }
 
     @Test
@@ -85,9 +99,11 @@ class CvEntryPlaceAndIconTest {
                 .body((String) null)
                 .place(null)
                 .icon(null)
+                .link(null)
                 .build();
         assertThat(entry.subtitle()).isEmpty();
         assertThat(entry.body()).isEmpty();
         assertThat(entry.place()).isEmpty();
+        assertThat(entry.link()).isEmpty();
     }
 }

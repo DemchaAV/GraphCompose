@@ -245,6 +245,18 @@ final class SerifHeadlineStyles {
     /** The plate hangs a little left of its column, into the gutter. */
     static final double PLATE_HANG = h(-4);
     static final double GLYPH_CLEARANCE = h(10);
+
+    /**
+     * The space a band column leaves at its right edge, so its text stops
+     * short of the hairline rather than running into it.
+     *
+     * <p>This is the one measure on the sheet that is not the published
+     * design's: there, a column's text runs to the separator, and a line
+     * that happens to fill the column touches it. The gutter matches
+     * {@link #GLYPH_CLEARANCE}, the space the next column's mark already
+     * keeps on the other side, so the rule sits centred in white.</p>
+     */
+    static final double COLUMN_TAIL_GUTTER = GLYPH_CLEARANCE;
     static final double CARD_TITLE_TO_TECH = gap(15, BLANK_TITLE, BLANK_SMALL);
     static final double CARD_TECH_TO_BODY = gap(12, BLANK_SMALL, BLANK_SMALL);
     static final double CARD_BODY_LEADING = v(18.5) / SMALL_SIZE;
@@ -379,10 +391,27 @@ final class SerifHeadlineStyles {
      */
     static DocumentInsets columnInsets(double bandWidth, double columnWidth,
                                        int index, double dx, double naturalWidth) {
+        return columnInsets(bandWidth, columnWidth, index, dx, naturalWidth, 0.0);
+    }
+
+    /**
+     * The same, with a gutter kept at the column's right edge.
+     *
+     * @param bandWidth    the band's full width
+     * @param columnWidth  one column's share of it
+     * @param index        which column, from zero
+     * @param dx           an extra offset for a mark that hangs left
+     * @param naturalWidth the child's own width when it has one, else zero
+     * @param tailGutter   space to leave at the right edge
+     * @return the insets to set on that layer
+     */
+    static DocumentInsets columnInsets(double bandWidth, double columnWidth,
+                                       int index, double dx, double naturalWidth,
+                                       double tailGutter) {
         double left = index * columnWidth + dx;
         double right = naturalWidth > 0.0
                 ? Math.max(0.0, bandWidth - left - naturalWidth)
-                : Math.max(0.0, bandWidth - left - (columnWidth - dx));
+                : Math.max(0.0, bandWidth - left - (columnWidth - dx) + tailGutter);
         return new DocumentInsets(0, right, 0, left);
     }
 

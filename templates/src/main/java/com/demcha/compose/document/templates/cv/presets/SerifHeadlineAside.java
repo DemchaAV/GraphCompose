@@ -105,13 +105,15 @@ final class SerifHeadlineAside {
         for (int i = 0; i < entries.size(); i++) {
             CvEntry entry = entries.get(i);
             boolean first = i == 0;
-            section.addParagraph(p -> p
-                    .name("Degree_" + compact(entry.title()))
-                    .text(entry.title())
-                    .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
-                    .lineSpacing(TIGHT_LEADING)
-                    .margin(new DocumentInsets(
-                            first ? HEADING_TO_EDUCATION : 0, 0, DEGREE_TO_INSTITUTION, 0)));
+            section.addParagraph(p -> {
+                p.name("Degree_" + compact(entry.title()))
+                        .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
+                        .lineSpacing(TIGHT_LEADING);
+                SerifHeadlineText.title(p, entry,
+                        style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+                p.margin(new DocumentInsets(
+                        first ? HEADING_TO_EDUCATION : 0, 0, DEGREE_TO_INSTITUTION, 0));
+            });
             section.addParagraph(p -> p
                     .name("Institution_" + compact(entry.title()))
                     .text(entry.subtitle())

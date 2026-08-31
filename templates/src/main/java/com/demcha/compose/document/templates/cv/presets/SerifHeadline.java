@@ -39,6 +39,11 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
  * type subtracted; setting the pixel numbers directly would push every block
  * a few points too far apart.</p>
  *
+ * <p>One measure is deliberately not the drawing's: a band column keeps a
+ * gutter at its right edge, so its text stops short of the hairline instead
+ * of running into it. In the published sheet a line that happens to fill its
+ * column touches the rule.</p>
+ *
  * <h2>One page, and what happens past it</h2>
  *
  * <p>This sheet holds one page of content. The body is a single row, and a
@@ -83,6 +88,17 @@ import static com.demcha.compose.document.templates.cv.presets.SerifHeadlineStyl
  * and an unknown token is reported as a data error naming the set. An entry
  * with no token is drawn without a mark. The certification medal is chrome
  * rather than data: every plate takes the same one.</p>
+ *
+ * <p>The marks come in two colours, which is worth knowing before choosing
+ * one: {@code cart} and {@code api} are drawn in the design's navy ink, and
+ * {@code trophy}, {@code chart} and {@code rocket} in its gold. Nothing
+ * stops a document mixing them, but a band that does reads as a mistake
+ * rather than a choice.</p>
+ *
+ * <p>Every title this preset draws — a role, a project, a degree, an
+ * achievement — becomes a link when its entry carries {@code CvEntry.link()}.
+ * A link is an annotation rather than ink, so a linked title and a plain one
+ * are the same sheet.</p>
  *
  * <p>The employer's city and the campus come from {@code CvEntry.place()},
  * because this design sets them beside the employer and the years in their

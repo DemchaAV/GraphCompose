@@ -7,6 +7,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CvEntry` carries a link.** An entry that points somewhere — a repository, a case
+  study, a company — had no way to say so, and a preset had no way to make its title
+  reachable. `CvEntry` now carries `link`, a plain string blank when absent like the
+  fields beside it, set through `CvEntry.Builder.link(...)`. It costs the layout
+  nothing: a link is an annotation rather than ink, so a linked title and a plain one
+  are the same sheet, which is also why the parity gates cannot see it and a test
+  asserts the targets directly. The six-argument constructor is kept explicitly, so
+  existing calls compile and link unchanged.
+
 - **`CvEntry` carries a location and a mark, and gains a builder.** The record held a
   title, a subtitle, a date and a body, which is enough for a dated block and not
   enough for the designs that set the city beside the employer in its own colour, or
@@ -58,6 +67,17 @@ follow semantic versioning; release dates are ISO 8601.
   form and freezes its collections, matching the family's existing records.
 
 ### Templates
+
+- **`SerifHeadline` links its titles and lets its bands breathe.** Every title the
+  preset draws — a role, a project, a degree, an achievement — is now a link when its
+  entry carries one. And a band column keeps a gutter at its right edge, so its text
+  stops short of the hairline between columns instead of running into it: **the first
+  place a promoted preset deliberately departs from the sheet it ports**, where a line
+  that happens to fill its column touches the rule. The departure is exactly measured —
+  six of 235 nodes narrow, 8 191 of 2 173 720 pixels change, and nothing else moves —
+  and both baselines were re-recorded with it. The class documentation names the two
+  colours the packaged marks come in, so a document chooses one deliberately rather
+  than mixing navy and gold in a row by accident.
 
 - **A two-column editorial CV preset: `SerifHeadline`.** A one-page A4 sheet under a
   Volkhov masthead — the name in the display serif over its role and a short gold rule,

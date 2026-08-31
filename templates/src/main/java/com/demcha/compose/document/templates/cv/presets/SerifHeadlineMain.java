@@ -132,13 +132,13 @@ final class SerifHeadlineMain {
                 .fillColor(INK)
                 .margin(DocumentInsets.zero())
                 .build();
-        DocumentNode title = new ParagraphBuilder()
+        ParagraphBuilder titleText = new ParagraphBuilder()
                 .name("JobTitle_" + compact(entry.title()))
-                .text(entry.title())
                 .textStyle(style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
-                .lineSpacing(TIGHT_LEADING)
-                .margin(DocumentInsets.zero())
-                .build();
+                .lineSpacing(TIGHT_LEADING);
+        SerifHeadlineText.title(titleText, entry,
+                style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+        DocumentNode title = titleText.margin(DocumentInsets.zero()).build();
         DocumentNode dates = new ParagraphBuilder()
                 .name("JobDates_" + compact(entry.title()))
                 .text(entry.date())
@@ -226,12 +226,14 @@ final class SerifHeadlineMain {
         column.name("ProjectCard_" + compact(project.title()))
                 .spacing(0)
                 .padding(new DocumentInsets(0, 0, 0, lead + PROJECT_GLYPH_TO_TEXT));
-        column.addParagraph(p -> p
-                .name("ProjectTitle_" + compact(project.title()))
-                .text(project.title())
-                .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
-                .lineSpacing(TIGHT_LEADING)
-                .margin(new DocumentInsets(0, 0, CARD_TITLE_TO_TECH, 0)));
+        column.addParagraph(p -> {
+            p.name("ProjectTitle_" + compact(project.title()))
+                    .textStyle(style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
+                    .lineSpacing(TIGHT_LEADING);
+            SerifHeadlineText.title(p, project,
+                    style(ITEM_TITLE_SIZE, INK, DocumentTextDecoration.BOLD));
+            p.margin(new DocumentInsets(0, 0, CARD_TITLE_TO_TECH, 0));
+        });
         column.addParagraph(p -> p
                 .name("ProjectStack_" + compact(project.title()))
                 .text(project.subtitle())

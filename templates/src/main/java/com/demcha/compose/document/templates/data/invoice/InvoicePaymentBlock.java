@@ -23,13 +23,20 @@ import java.util.Objects;
  *                          the emphasis — usually the term itself, as in
  *                          {@code "30 days"}; empty leaves the notice
  *                          evenly set
+ * @param accountHolder     who the money is paid to, set above the fields
+ *                          where a design names the account before listing
+ *                          it; blank when absent
+ * @param signOff           the closing line a design sets beside the due
+ *                          notice, usually a thank-you; blank when absent
  */
 public record InvoicePaymentBlock(
         String heading,
         List<Field> fields,
         String instruction,
         String dueNotice,
-        String dueNoticeEmphasis) {
+        String dueNoticeEmphasis,
+        String accountHolder,
+        String signOff) {
 
     /**
      * Normalizes optional fields and freezes the field list.
@@ -40,6 +47,23 @@ public record InvoicePaymentBlock(
         instruction = Objects.requireNonNullElse(instruction, "");
         dueNotice = Objects.requireNonNullElse(dueNotice, "");
         dueNoticeEmphasis = Objects.requireNonNullElse(dueNoticeEmphasis, "");
+        accountHolder = Objects.requireNonNullElse(accountHolder, "");
+        signOff = Objects.requireNonNullElse(signOff, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the account
+     * holder and the sign-off.
+     *
+     * @param heading           the block heading
+     * @param fields            the labelled payment fields, in print order
+     * @param instruction       the sentence under the fields
+     * @param dueNotice         the short due-by notice
+     * @param dueNoticeEmphasis the emphasised run inside the notice
+     */
+    public InvoicePaymentBlock(String heading, List<Field> fields, String instruction,
+                               String dueNotice, String dueNoticeEmphasis) {
+        this(heading, fields, instruction, dueNotice, dueNoticeEmphasis, "", "");
     }
 
     /**

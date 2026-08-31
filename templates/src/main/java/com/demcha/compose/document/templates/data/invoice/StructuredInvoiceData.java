@@ -26,6 +26,9 @@ import java.util.Objects;
  * @param supplier     the sender's address and contact channels
  * @param masthead     the document title and its metadata rows
  * @param billTo       the billed-to block
+ * @param shipTo       the shipped-to block, for the designs that print a
+ *                     delivery address beside the billing one; empty when
+ *                     the two are the same or the design shows only one
  * @param summary      what the invoice covers, and for which period
  * @param serviceLines the line-items table
  * @param totals       the totals stack and its total band
@@ -38,6 +41,7 @@ public record StructuredInvoiceData(
         InvoiceContactBlock supplier,
         InvoiceMasthead masthead,
         InvoiceRecipient billTo,
+        InvoiceRecipient shipTo,
         InvoiceSummaryBlock summary,
         InvoiceServiceLines serviceLines,
         InvoiceTotalsBlock totals,
@@ -55,6 +59,8 @@ public record StructuredInvoiceData(
         masthead = masthead == null ? new InvoiceMasthead(null, null) : masthead;
         billTo = billTo == null
                 ? new InvoiceRecipient(null, null, null, null, null, null) : billTo;
+        shipTo = shipTo == null
+                ? new InvoiceRecipient(null, null, null, null, null, null) : shipTo;
         summary = summary == null ? new InvoiceSummaryBlock(null, null, null) : summary;
         serviceLines = serviceLines == null
                 ? new InvoiceServiceLines(null, null) : serviceLines;
@@ -63,6 +69,31 @@ public record StructuredInvoiceData(
                 ? new InvoicePaymentBlock(null, null, null, null, null) : payment;
         notes = notes == null ? new InvoiceNotesBlock(null, null, null, null) : notes;
         currencyCode = Objects.requireNonNullElse(currencyCode, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the
+     * shipped-to block.
+     *
+     * @param brand        the sender's brand lockup
+     * @param supplier     the sender's address and contact channels
+     * @param masthead     the document title and its metadata rows
+     * @param billTo       the billed-to block
+     * @param summary      what the invoice covers, and for which period
+     * @param serviceLines the line-items table
+     * @param totals       the totals stack and its total band
+     * @param payment      where to send the money, and by when
+     * @param notes        the closing notes and query channels
+     * @param currencyCode the ISO currency code the figures are stated in
+     */
+    public StructuredInvoiceData(InvoiceBrand brand, InvoiceContactBlock supplier,
+                                 InvoiceMasthead masthead, InvoiceRecipient billTo,
+                                 InvoiceSummaryBlock summary,
+                                 InvoiceServiceLines serviceLines,
+                                 InvoiceTotalsBlock totals, InvoicePaymentBlock payment,
+                                 InvoiceNotesBlock notes, String currencyCode) {
+        this(brand, supplier, masthead, billTo, null, summary, serviceLines,
+                totals, payment, notes, currencyCode);
     }
 
     /**
@@ -82,6 +113,7 @@ public record StructuredInvoiceData(
         private InvoiceContactBlock supplier;
         private InvoiceMasthead masthead;
         private InvoiceRecipient billTo;
+        private InvoiceRecipient shipTo;
         private InvoiceSummaryBlock summary;
         private InvoiceServiceLines serviceLines;
         private InvoiceTotalsBlock totals;
@@ -133,6 +165,18 @@ public record StructuredInvoiceData(
          */
         public Builder billTo(InvoiceRecipient billTo) {
             this.billTo = billTo;
+            return this;
+        }
+
+        /**
+         * Sets the shipped-to block, for the designs that print a delivery
+         * address beside the billing one.
+         *
+         * @param shipTo recipient block
+         * @return this builder
+         */
+        public Builder shipTo(InvoiceRecipient shipTo) {
+            this.shipTo = shipTo;
             return this;
         }
 
@@ -208,8 +252,8 @@ public record StructuredInvoiceData(
          * @return structured invoice data
          */
         public StructuredInvoiceData build() {
-            return new StructuredInvoiceData(brand, supplier, masthead, billTo, summary,
-                    serviceLines, totals, payment, notes, currencyCode);
+            return new StructuredInvoiceData(brand, supplier, masthead, billTo, shipTo,
+                    summary, serviceLines, totals, payment, notes, currencyCode);
         }
     }
 }

@@ -20,12 +20,18 @@ import java.util.Objects;
  * @param qualifier the second wordmark line under the name (e.g. the
  *                  business type)
  * @param tagline   the tagline under the lockup
+ * @param monogramTop    the first line of a drawn monogram, for the lockups
+ *                       that set initials rather than an image; blank when
+ *                       absent
+ * @param monogramBottom the second monogram line; blank when absent
  */
 public record InvoiceBrand(
         DocumentImageData logo,
         String name,
         String qualifier,
-        String tagline) {
+        String tagline,
+        String monogramTop,
+        String monogramBottom) {
 
     /**
      * Normalizes the optional text fields; the logo stays nullable.
@@ -34,6 +40,30 @@ public record InvoiceBrand(
         name = Objects.requireNonNullElse(name, "");
         qualifier = Objects.requireNonNullElse(qualifier, "");
         tagline = Objects.requireNonNullElse(tagline, "");
+        monogramTop = Objects.requireNonNullElse(monogramTop, "");
+        monogramBottom = Objects.requireNonNullElse(monogramBottom, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the monogram.
+     *
+     * @param logo      the logo image, or {@code null}
+     * @param name      the brand name
+     * @param qualifier the second wordmark line
+     * @param tagline   the tagline under the lockup
+     */
+    public InvoiceBrand(DocumentImageData logo, String name, String qualifier,
+                        String tagline) {
+        this(logo, name, qualifier, tagline, "", "");
+    }
+
+    /**
+     * Whether this lockup carries a drawn monogram.
+     *
+     * @return {@code true} when either monogram line was supplied
+     */
+    public boolean hasMonogram() {
+        return !monogramTop.isBlank() || !monogramBottom.isBlank();
     }
 
     /**

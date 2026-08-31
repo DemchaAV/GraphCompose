@@ -20,6 +20,10 @@ import java.util.Objects;
  * @param registrationLabel  the label of the registration number
  *                           (e.g. {@code "ABN"})
  * @param registrationNumber the registration number itself
+ * @param taxRegistrationLabel  the label of a second registration a
+ *                              jurisdiction requires beside the first
+ *                              (e.g. {@code "VAT No."}); blank when absent
+ * @param taxRegistrationNumber that second number itself; blank when absent
  */
 public record InvoiceContactBlock(
         String legalName,
@@ -28,7 +32,9 @@ public record InvoiceContactBlock(
         String email,
         String website,
         String registrationLabel,
-        String registrationNumber) {
+        String registrationNumber,
+        String taxRegistrationLabel,
+        String taxRegistrationNumber) {
 
     /**
      * Normalizes optional fields and freezes the address lines.
@@ -41,5 +47,26 @@ public record InvoiceContactBlock(
         website = Objects.requireNonNullElse(website, "");
         registrationLabel = Objects.requireNonNullElse(registrationLabel, "");
         registrationNumber = Objects.requireNonNullElse(registrationNumber, "");
+        taxRegistrationLabel = Objects.requireNonNullElse(taxRegistrationLabel, "");
+        taxRegistrationNumber = Objects.requireNonNullElse(taxRegistrationNumber, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the second
+     * registration.
+     *
+     * @param legalName          the registered business name
+     * @param addressLines       the address lines, in order
+     * @param phone              the phone channel
+     * @param email              the email channel
+     * @param website            the website channel
+     * @param registrationLabel  the label of the registration number
+     * @param registrationNumber the registration number itself
+     */
+    public InvoiceContactBlock(String legalName, List<String> addressLines, String phone,
+                               String email, String website, String registrationLabel,
+                               String registrationNumber) {
+        this(legalName, addressLines, phone, email, website,
+                registrationLabel, registrationNumber, "", "");
     }
 }

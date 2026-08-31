@@ -24,7 +24,9 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      * Normalizes an absent column set and freezes the line list.
      */
     public InvoiceServiceLines {
-        columns = columns == null ? new Columns(null, null, null, null, null, null) : columns;
+        columns = columns == null
+                ? new Columns(null, null, null, null, null, null, null)
+                : columns;
         lines = List.copyOf(Objects.requireNonNullElse(lines, List.of()));
     }
 
@@ -37,6 +39,9 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      * @param quantity      label of the quantity column
      * @param unitPrice     label of the unit-price column
      * @param amount        label of the amount column
+     * @param vat           label of the tax-rate column, for the
+     *                      jurisdictions that print the rate per line;
+     *                      blank leaves the column out
      */
     public record Columns(
             String index,
@@ -44,7 +49,8 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             String servicePeriod,
             String quantity,
             String unitPrice,
-            String amount) {
+            String amount,
+            String vat) {
 
         /**
          * Normalizes optional labels to empty strings.
@@ -56,6 +62,23 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             quantity = Objects.requireNonNullElse(quantity, "");
             unitPrice = Objects.requireNonNullElse(unitPrice, "");
             amount = Objects.requireNonNullElse(amount, "");
+            vat = Objects.requireNonNullElse(vat, "");
+        }
+
+        /**
+         * Backward-compatible constructor for callers that predate the
+         * tax-rate column.
+         *
+         * @param index         label of the line-number column
+         * @param description   label of the description column
+         * @param servicePeriod label of the service-period column
+         * @param quantity      label of the quantity column
+         * @param unitPrice     label of the unit-price column
+         * @param amount        label of the amount column
+         */
+        public Columns(String index, String description, String servicePeriod,
+                       String quantity, String unitPrice, String amount) {
+            this(index, description, servicePeriod, quantity, unitPrice, amount, "");
         }
     }
 
@@ -73,6 +96,10 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      *                      {@link BigDecimal#ZERO}
      * @param amount        the line total; {@code null} normalizes to
      *                      {@link BigDecimal#ZERO}
+     * @param vatRate       the tax rate printed for this line, written as
+     *                      the design shows it (e.g. {@code "20%"}) rather
+     *                      than as a number, because the wording differs by
+     *                      jurisdiction; blank when absent
      */
     public record Line(
             int lineNumber,
@@ -82,7 +109,8 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             BigDecimal quantity,
             String unit,
             BigDecimal unitPrice,
-            BigDecimal amount) {
+            BigDecimal amount,
+            String vatRate) {
 
         /**
          * Normalizes optional fields.
@@ -95,6 +123,27 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             unit = Objects.requireNonNullElse(unit, "");
             unitPrice = Objects.requireNonNullElse(unitPrice, BigDecimal.ZERO);
             amount = Objects.requireNonNullElse(amount, BigDecimal.ZERO);
+            vatRate = Objects.requireNonNullElse(vatRate, "");
+        }
+
+        /**
+         * Backward-compatible constructor for callers that predate the
+         * per-line tax rate.
+         *
+         * @param lineNumber    the printed line number
+         * @param title         the service title
+         * @param description   the description under the title
+         * @param servicePeriod the period this line covers
+         * @param quantity      how much was delivered
+         * @param unit          what the quantity counts
+         * @param unitPrice     the price per unit
+         * @param amount        the line total
+         */
+        public Line(int lineNumber, String title, String description, String servicePeriod,
+                    BigDecimal quantity, String unit, BigDecimal unitPrice,
+                    BigDecimal amount) {
+            this(lineNumber, title, description, servicePeriod, quantity, unit,
+                    unitPrice, amount, "");
         }
     }
 }

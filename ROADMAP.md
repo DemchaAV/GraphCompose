@@ -2,9 +2,28 @@
 
 GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Dates are intentionally omitted. Concrete work is tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) and shipped work is recorded in [CHANGELOG.md](CHANGELOG.md).
 
-## Now — after 2.1
+## Now — after 2.3
 
-Consolidation ahead of the next patch: the documentation and contributor surfaces are being brought onto the 2.x vocabulary, the CI guards onto what they actually run, and the committed example assets onto a regeneration path. Open engineering threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues) — vector clipping for the PPTX backend, backend-neutral font measurement, and font-face selection are the live ones.
+The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): bringing the DOCX export onto the shared fixed-layout geometry the PPTX backend already renders from, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
+
+## Upcoming — 2.3
+
+**2.3.0** is the current release. It leads with **page chrome built from nodes**: a
+`DocumentPageZone` takes a content function and lays a real node subtree into the band —
+a badge, a link annotation, an image, right-to-left text, any font the document has —
+through the same layout and render path as the body, on every fixed-layout backend. A
+`PageContext` hands each page its numbers as plain Java values; `pageNumber()` returns a
+node, so the same zone exports to Word as a live `PAGE` field — the first DOCX
+header/footer support — and a page reference inside a zone resolves against the body's
+anchors. The text header/footer picks up the two things it was missing: a font family
+(`fontName`) and real height reservation (`reserveSpace`).
+
+The release also ships the **knowledge pack**: a tracked, generated description of the
+public API under `knowledge/`, gated in CI against the compiled classes, with
+documentation claims resolved to proofs and a queryable offline bundle attached to the
+GitHub Release.
+
+Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.3.0`.
 
 ## Current stable — 2.2
 

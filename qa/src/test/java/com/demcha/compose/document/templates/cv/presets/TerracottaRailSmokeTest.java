@@ -174,6 +174,46 @@ class TerracottaRailSmokeTest {
     }
 
     @Test
+    void everyTitleBecomesALinkWhenItsEntryCarriesOne() throws Exception {
+        // A role, a degree and a credential, each pointing somewhere. None of
+        // it moves a pixel or a layout node, so this is the only thing that
+        // would notice the annotations going missing.
+        List<CvDocument.Placement> placements = new ArrayList<>();
+        for (CvDocument.Placement placement : TerracottaRailFixtures.canonicalCv().placements()) {
+            placements.add(switch (placement.section().title()) {
+                case "PROFESSIONAL EXPERIENCE" -> new CvDocument.Placement(Slot.MAIN,
+                        new EntriesSection("PROFESSIONAL EXPERIENCE", List.of(
+                                CvEntry.builder("Senior Architect")
+                                        .subtitle("Northline Studio, Bristol, UK")
+                                        .date("2021")
+                                        .link("https://example.test/northline")
+                                        .body("Lead design packages.")
+                                        .build())));
+                case "EDUCATION" -> new CvDocument.Placement(Slot.MAIN,
+                        new EntriesSection("EDUCATION", List.of(
+                                CvEntry.builder("MArch Architecture")
+                                        .subtitle("University of Sheffield")
+                                        .date("2014")
+                                        .link("https://example.test/sheffield")
+                                        .build())));
+                case "CERTIFICATIONS" -> new CvDocument.Placement(Slot.SIDEBAR,
+                        new EntriesSection("CERTIFICATIONS", List.of(
+                                CvEntry.builder("ARB Registered Architect")
+                                        .link("https://example.test/arb")
+                                        .build())));
+                default -> placement;
+            });
+        }
+
+        List<String> targets = linkTargets(
+                render(new CvDocument(TerracottaRailFixtures.identity(), placements)));
+        assertThat(targets)
+                .contains("https://example.test/northline")
+                .contains("https://example.test/sheffield")
+                .contains("https://example.test/arb");
+    }
+
+    @Test
     void aProjectTitleBecomesALinkWhenItsEntryCarriesOne() throws Exception {
         EntriesSection linked = new EntriesSection("SELECTED PROJECTS", List.of(
                 CvEntry.builder("Harbour Point")

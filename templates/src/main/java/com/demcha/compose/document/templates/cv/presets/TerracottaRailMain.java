@@ -172,7 +172,7 @@ final class TerracottaRailMain {
                     body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP, (float) ENTRY_INDENT);
                     railedLine(body, "Role", index,
                             titleAndDate("RoleTable_" + index, entry.title(), entry.date(),
-                                    ENTRY_WIDTH, ROLE_PERIOD_SHARE));
+                                    ENTRY_WIDTH, ROLE_PERIOD_SHARE, entry.link()));
                     body.addParagraph(p -> p
                             .name("Employer_" + index)
                             .text(entry.subtitle())
@@ -301,7 +301,8 @@ final class TerracottaRailMain {
                                     (float) ENTRY_INDENT);
                             railedLine(body, "Edu", index,
                                     titleAndDate("EduTable_" + index, entry.title(), entry.date(),
-                                            EDUCATION_ENTRY_WIDTH, EDUCATION_PERIOD_SHARE));
+                                            EDUCATION_ENTRY_WIDTH, EDUCATION_PERIOD_SHARE,
+                                            entry.link()));
                             body.addParagraph(p -> p
                                     .name("Institution_" + index)
                                     .text(entry.subtitle())

@@ -72,9 +72,15 @@ import static com.demcha.compose.document.templates.cv.presets.TerracottaRailSty
  * {@code CvEntry.icon()}, from this preset's own vocabulary —
  * {@code globe}, {@code badge}, {@code clock}, {@code building},
  * {@code hotel}, {@code house} — and an unknown token is reported as a data
- * error naming the set. An entry with no token is drawn without a mark, and
- * a project title becomes a link when its entry carries
- * {@code CvEntry.link()}.</p>
+ * error naming the set. An entry with no token is drawn without a mark.</p>
+ *
+ * <p>Every title the preset draws — a role, a project, a degree, a
+ * credential — becomes a link when its entry carries {@code CvEntry.link()}.
+ * It costs the layout nothing, because a link is an annotation rather than
+ * ink, so a linked title and a plain one are the same line. The closing facts
+ * are the exception: their bold line is a label for the values under it —
+ * "Languages:", "Availability:" — rather than the name of something a reader
+ * could open.</p>
  *
  * <p>The email, the phone and each link are reachable from the PDF, with the
  * {@code mailto:} and {@code tel:} targets built from the values. A link is

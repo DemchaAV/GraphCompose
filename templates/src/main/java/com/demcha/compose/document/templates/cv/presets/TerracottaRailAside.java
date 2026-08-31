@@ -213,12 +213,12 @@ final class TerracottaRailAside {
                     String name = prefix + "_" + index++;
                     if (discBullet) {
                         bulletLine(block, name, p -> p.dot(3.0, ACCENT), skill.name(),
-                                INK, DETAIL_SIZE);
+                                INK, DETAIL_SIZE, null);
                     } else {
                         bulletLine(block, name,
                                 p -> inlineIcon(p, TerracottaRailIcons.SQUARE,
                                         TerracottaRailIcons.BULLET_SIZE),
-                                skill.name(), INK, DETAIL_SIZE);
+                                skill.name(), INK, DETAIL_SIZE, null);
                     }
                 }
             }
@@ -232,8 +232,9 @@ final class TerracottaRailAside {
             headingWithDash(block, section.title(), SIDEBAR_HEADING_SPACER, SIDEBAR_DASH_WIDTH);
             List<CvEntry> entries = section.entries();
             for (int index = 0; index < entries.size(); index++) {
+                CvEntry entry = entries.get(index);
                 bulletLine(block, "Certification_" + index, p -> p.dot(3.0, ACCENT),
-                        entries.get(index).title(), INK, DETAIL_SIZE);
+                        entry.title(), INK, DETAIL_SIZE, entry.link());
             }
         });
     }

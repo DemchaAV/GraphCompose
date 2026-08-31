@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.TableBuilder;
+import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.LayerAlign;
@@ -194,10 +195,30 @@ final class TerracottaRailWidgets {
      * — it spans the cell and its columns lay out. Both cells hold a
      * paragraph, because a table inside a row cell draws only leaf
      * content.</p>
+     *
+     * <p>The title carries the entry's link when it has one. That costs the
+     * layout nothing — a link is an annotation rather than ink — so a linked
+     * title and a plain one are the same line.</p>
+     *
+     * @param name      the node name this line's parts are built from
+     * @param title     the entry's title
+     * @param date      the date, set flush right
+     * @param width     the line's width
+     * @param dateShare how much of that width the date takes
+     * @param link      the target the title points at, blank for none
+     * @return the line node
      */
     static DocumentNode titleAndDate(String name, String title, String date,
-                                     double width, double dateShare) {
+                                     double width, double dateShare, String link) {
         double dateColumn = width * dateShare;
+        ParagraphBuilder titleCell = new ParagraphBuilder()
+                .name(name + "_Title")
+                .text(title)
+                .lineSpacing(0)
+                .textStyle(text(ITEM_TITLE_SIZE, INK, true));
+        if (link != null && !link.isBlank()) {
+            titleCell.link(new DocumentLinkOptions(link));
+        }
         return new TableBuilder()
                 .name(name)
                 .width(width)
@@ -209,12 +230,7 @@ final class TerracottaRailWidgets {
                         .stroke(NO_BORDER)
                         .build())
                 .rowCells(
-                        DocumentTableCell.node(new ParagraphBuilder()
-                                .name(name + "_Title")
-                                .text(title)
-                                .lineSpacing(0)
-                                .textStyle(text(ITEM_TITLE_SIZE, INK, true))
-                                .build()),
+                        DocumentTableCell.node(titleCell.build()),
                         DocumentTableCell.node(new ParagraphBuilder()
                                 .name(name + "_Period")
                                 .text(date)
@@ -246,14 +262,21 @@ final class TerracottaRailWidgets {
                 .layer(layer.build(), LayerAlign.TOP_LEFT, 0));
     }
 
-    /** A bullet line: a mark, a gap, and the item beside it. */
+    /**
+     * A bullet line: a mark, a gap, and the item beside it — carrying a link
+     * when one is given.
+     */
     static void bulletLine(SectionBuilder block, String name, Consumer<ParagraphBuilder> mark,
-                           String item, DocumentColor color, double size) {
+                           String item, DocumentColor color, double size, String link) {
         block.addParagraph(p -> {
             p.name(name);
             mark.accept(p);
             p.inlineText("  ");
-            p.inlineText(item, text(size, color, false));
+            if (link == null || link.isBlank()) {
+                p.inlineText(item, text(size, color, false));
+            } else {
+                p.inlineText(item, text(size, color, false), new DocumentLinkOptions(link));
+            }
             p.margin(0f, 0f, (float) BULLET_ROW_GAP, 0f);
         });
     }

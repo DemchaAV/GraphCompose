@@ -96,7 +96,8 @@ follow semantic versioning; release dates are ISO 8601.
   terracotta square and no dash under its heading, the other a disc and a dash, which
   is how the sheet tells two lists of one-liners apart. Each fact and each project
   takes the mark its entry names in `CvEntry.icon()` from this preset's own vocabulary,
-  a project title is a link when its entry carries one, and the monogram is drawn from
+  every title it draws — a role, a project, a degree, a credential — is a link when its
+  entry carries one, and the monogram is drawn from
   the name's own initials rather than a field of its own — a document states its name
   once, and a monogram that could disagree with it would be a second place to keep
   true. **A link in the contact block is drawn as its own label with the address behind
@@ -111,8 +112,8 @@ follow semantic versioning; release dates are ISO 8601.
   `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
   smoke test (including the unknown-mark data error, an entry with no mark, an identity
   with no links, a document with nothing but an identity, the monogram, the link
-  targets, the four contact rows sharing one axis and the one-page limit), an exact
-  layout snapshot and a pixel-parity gate;
+  targets on every kind of title, the four contact rows sharing one axis and the
+  one-page limit), an exact layout snapshot and a pixel-parity gate;
   the examples showcase gains `cv-terracotta-rail-v2`.
 
 - **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A

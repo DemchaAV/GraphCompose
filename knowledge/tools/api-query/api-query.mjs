@@ -38,6 +38,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
 const API_DIR = path.join(REPO_ROOT, "knowledge", "api");
+const TASKS_FILE = path.join(REPO_ROOT, "knowledge", "routing", "tasks.json");
 
 function usage(code = 0) {
   process.stdout.write(
@@ -48,6 +49,9 @@ function usage(code = 0) {
       "  --search <term>        types, methods and constants matching a term\n" +
       "  --constant <NAME>      which types declare a constant\n" +
       "  --package <pkg>        the types in a package\n" +
+      "  --task <id>            how to do a thing: the path, the alternatives,\n" +
+      "                         the constraints, and the one anchor to open\n" +
+      "  --tasks                every intent the routing table answers\n" +
       "  --dump                 every surface as one JSON document, on stdout\n\n" +
       "  --surface <name>       restrict to one surface (authoring, templates,\n" +
       "                         backends, testing, extension-spi). Default: all\n" +
@@ -61,6 +65,7 @@ function parseArgs(argv) {
   const out = {
     surface: null, type: null, method: null, exists: null,
     search: null, constant: null, package: null, dump: false, json: false,
+    task: null, tasks: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -74,9 +79,83 @@ function parseArgs(argv) {
     else if (a === "--search") out.search = argv[++i];
     else if (a === "--constant") out.constant = argv[++i];
     else if (a === "--package") out.package = argv[++i];
+    else if (a === "--task") out.task = argv[++i];
+    else if (a === "--tasks") out.tasks = true;
     else usage(2);
   }
   return out;
+}
+
+// ------------------------------------------------------------------ routing ---
+
+/**
+ * Answer an intent instead of a symbol.
+ *
+ * Surfaces say what exists; they cannot say which of three ways is the right
+ * one, which is where wrong-API choices actually come from — a skills list in
+ * two columns is a row with weights, and nothing in a signature says so.
+ *
+ * What comes back is deliberately not the guide. It is the decision plus one
+ * anchor: restating the prose here would make this a fourth copy of the
+ * documentation, which is the outcome keeping prose in `docs/` exists to avoid.
+ */
+function answerTask(id) {
+  if (!fs.existsSync(TASKS_FILE)) {
+    process.stderr.write("[api-query] no routing table at knowledge/routing/tasks.json\n");
+    process.exit(1);
+  }
+  const doc = JSON.parse(fs.readFileSync(TASKS_FILE, "utf8"));
+  const route = doc.tasks.find((t) => t.task === id);
+  if (!route) {
+    const near = doc.tasks
+      .map((t) => t.task)
+      .filter((t) => t.includes(id) || id.includes(t.split(".").pop()));
+    return { found: false, query: { task: id }, didYouMean: near, available: doc.tasks.map((t) => t.task) };
+  }
+  return { found: true, query: { task: id }, ...route };
+}
+
+function renderTask(answer) {
+  if (!answer.found) {
+    const out = [`No route for "${answer.query.task}".`];
+    if (answer.didYouMean.length) out.push(`did you mean: ${answer.didYouMean.join(", ")}`);
+    out.push(`known intents: ${answer.available.join(", ")}`);
+    return out.join("\n");
+  }
+
+  const out = [];
+  out.push(`${answer.task} — ${answer.intent}`);
+  out.push("");
+  out.push(`  use: ${answer.recommended}`);
+  out.push(`       ${answer.recommendedBecause}`);
+
+  if (answer.alternatives?.length) {
+    out.push("");
+    out.push("  instead, when:");
+    for (const alt of answer.alternatives) {
+      out.push(`    ${alt.id}`);
+      out.push(`      when:  ${alt.useWhen}`);
+      out.push(`      costs: ${alt.tradeoffs}`);
+    }
+  }
+  if (answer.constraints?.length) {
+    out.push("");
+    out.push("  constraints:");
+    for (const c of answer.constraints) out.push(`    ${c}`);
+  }
+  if (answer.symbols?.length) {
+    out.push("");
+    out.push(`  symbols: ${answer.symbols.join(", ")}`);
+  }
+  if (answer.docs?.length) {
+    out.push("");
+    out.push(`  read: ${answer.docs.join("  ")}`);
+  }
+  if (!answer.confirmedBy) {
+    out.push("");
+    out.push("  (recommendation not yet confirmed by a maintainer)");
+  }
+  return out.join("\n");
 }
 
 // ------------------------------------------------------------------ loading ---
@@ -375,6 +454,24 @@ function render(answer) {
 // -------------------------------------------------------------------- main ---
 
 const args = parseArgs(process.argv.slice(2));
+
+// Routing is answered from its own file and needs no surfaces loaded.
+if (args.tasks) {
+  const doc = JSON.parse(fs.readFileSync(TASKS_FILE, "utf8"));
+  process.stdout.write(
+    args.json
+      ? `${JSON.stringify(doc.tasks.map((t) => ({ task: t.task, intent: t.intent })), null, 2)}\n`
+      : `${doc.tasks.map((t) => `${t.task}\n  ${t.intent}`).join("\n")}\n`,
+  );
+  process.exit(0);
+}
+
+if (args.task) {
+  const answer = answerTask(args.task);
+  process.stdout.write(args.json ? `${JSON.stringify(answer, null, 2)}\n` : `${renderTask(answer)}\n`);
+  process.exit(answer.found ? 0 : 3);
+}
+
 const index = loadSurfaces(args.surface);
 
 if (args.dump) {

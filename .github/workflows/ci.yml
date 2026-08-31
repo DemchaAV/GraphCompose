@@ -249,6 +249,14 @@ jobs:
         if: matrix.java == '17'
         run: node knowledge/tools/claims/check-claims.mjs --check
 
+      # A wrong route does not fail to compile — it sends every reader down the
+      # wrong path with the authority of a generated artifact. So a route is only
+      # served once its anchor resolves, its symbols exist, and its constraints
+      # name a documented behaviour that some test actually holds up.
+      - name: Knowledge pack — routing table holds up
+        if: matrix.java == '17'
+        run: node knowledge/tools/routing/check-routes.mjs
+
       - name: Generate Javadoc
         # Run only on the baseline JDK — Javadoc output is identical
         # across JVMs and one pass is enough to catch broken @link

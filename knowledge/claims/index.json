@@ -3,13 +3,58 @@
   "note": "Generated from claim markers in docs/. Given a symbol, capability or behaviour, this says which pages assert it — so an API change resolves to a page set by intersection rather than by reading everything.",
   "generator": "knowledge/tools/claims/check-claims.mjs",
   "counts": {
-    "pagesWithClaims": 1,
-    "symbol": 7,
-    "capability": 4,
-    "behavior": 4
+    "pagesWithClaims": 2,
+    "symbol": 14,
+    "capability": 6,
+    "behavior": 5
   },
   "claims": {
     "symbol": {
+      "AbstractFlowBuilder.addCanvas": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 11,
+          "heading": "The four tools",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "AbstractFlowBuilder.addLayerStack": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 10,
+          "heading": "The four tools",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "AbstractFlowBuilder.addRow": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 26,
+          "heading": "Sidebar: page background vs. row",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "CanvasLayerBuilder.position": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 12,
+          "heading": "The four tools",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "DocumentSession.pageBackgrounds": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 28,
+          "heading": "Sidebar: page background vs. row",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
       "DocumentTableCell.lines": [
         {
           "page": "docs/recipes/tables.md",
@@ -33,6 +78,24 @@
           "page": "docs/recipes/tables.md",
           "line": 26,
           "heading": "Cell content — one line, several lines, or a node",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "PageBackgroundFill.leftColumn": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 29,
+          "heading": "Sidebar: page background vs. row",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "RowBuilder.weights": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 27,
+          "heading": "Sidebar: page background vs. row",
           "surface": "authoring",
           "stability": "stable"
         }
@@ -75,6 +138,20 @@
       ]
     },
     "capability": {
+      "layout.choose-the-layer": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 9,
+          "heading": "The four tools"
+        }
+      ],
+      "layout.two-columns": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 25,
+          "heading": "Sidebar: page background vs. row"
+        }
+      ],
       "table.cell-content": [
         {
           "page": "docs/recipes/tables.md",
@@ -105,6 +182,14 @@
       ]
     },
     "behavior": {
+      "row.rejects-a-nested-row": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 30,
+          "heading": "Sidebar: page background vs. row",
+          "proof": "test:RowBuilderTest"
+        }
+      ],
       "table.explicit-row-style-beats-zebra": [
         {
           "page": "docs/recipes/tables.md",

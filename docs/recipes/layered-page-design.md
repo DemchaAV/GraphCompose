@@ -6,6 +6,11 @@ cleanly and one that fights the engine. This page is the decision guide.
 
 ## The four tools
 
+<!-- claim: capability=layout.choose-the-layer -->
+<!-- claim: symbol=AbstractFlowBuilder.addLayerStack -->
+<!-- claim: symbol=AbstractFlowBuilder.addCanvas -->
+<!-- claim: symbol=CanvasLayerBuilder.position -->
+
 | Tool | Reach for it when | API |
 | --- | --- | --- |
 | **Page background** | A fill must sit behind everything and repeat on every page — a sidebar tint, a header band, a watermark wash. Ratio-based; never participates in layout. | `pageBackgrounds(List.of(PageBackgroundFill...))` |
@@ -16,6 +21,13 @@ cleanly and one that fights the engine. This page is the decision guide.
 ## Worked distinctions
 
 ### Sidebar: page background vs. row
+
+<!-- claim: capability=layout.two-columns -->
+<!-- claim: symbol=AbstractFlowBuilder.addRow -->
+<!-- claim: symbol=RowBuilder.weights -->
+<!-- claim: symbol=DocumentSession.pageBackgrounds -->
+<!-- claim: symbol=PageBackgroundFill.leftColumn -->
+<!-- claim: behavior=row.rejects-a-nested-row proof=test:RowBuilderTest -->
 
 A **tinted** sidebar that must repeat on every page is a page background — it
 costs nothing at layout time and never shifts content:

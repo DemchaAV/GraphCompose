@@ -59,6 +59,27 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A two-column editorial CV preset: `SerifHeadline`.** A one-page A4 sheet under a
+  Volkhov masthead — the name in the display serif over its role and a short gold rule,
+  the contact channels stacked opposite — then a two-column body: the roles held on a
+  timeline rail and the projects as marked cards on the left, the degrees and grouped
+  skill meters across a hairline divider on the right, closing with full-width bands of
+  certifications and achievements. Ships as `cv.presets.SerifHeadline` on the existing
+  `CvDocument` model, porting the rendered layout of the published standalone
+  `serif-headline-cv` template. Its geometry is not a set of round numbers: the design
+  was drawn on a 1024-pixel grid, so the preset carries that grid and scales it onto A4
+  — heights by an extra factor — and states every vertical gap as the white the drawing
+  shows, subtracting the blank a line box already carries above and below its own type.
+  Eight berths reach their sections by title, the projects and achievements take the
+  mark each entry names in `CvEntry.icon()` from this preset's own vocabulary, and the
+  employer's city and the campus come from `CvEntry.place()`. Like its siblings it owns
+  its page and holds one: the body is a single atomic row, so a longer CV raises
+  `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
+  smoke test (including the unknown-mark data error, an entry with no mark, an employer
+  with no place, the overlapping soft-skills berth, the link targets and the one-page
+  limit), an exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-serif-headline-v2`.
+
 - **A portrait CV preset: `NavySidebar`.** A one-page A4 CV in two columns on Lato —
   a navy plate carrying a ringed portrait, the contact channels behind their marks, the
   degrees, the skills and the languages, beside a white column of the name, the summary,

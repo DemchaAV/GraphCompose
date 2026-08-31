@@ -6,7 +6,7 @@ GraphCompose is solo-maintained. This roadmap is a direction, not a contract. Da
 
 The live threads are tracked in [issues](https://github.com/DemchaAV/GraphCompose/issues): bringing the DOCX export onto the shared fixed-layout geometry the PPTX backend already renders from, growing the built-in layered template line-up, and keeping the knowledge pack current as the API moves. Vector clipping for the PPTX backend remains open.
 
-## Upcoming — 2.3
+## Current stable — 2.3
 
 **2.3.0** is the current release. It leads with **page chrome built from nodes**: a
 `DocumentPageZone` takes a content function and lays a real node subtree into the band —
@@ -25,7 +25,7 @@ GitHub Release.
 
 Full detail in [CHANGELOG.md](CHANGELOG.md) under `v2.3.0`.
 
-## Current stable — 2.2
+## Previously — 2.2
 
 **2.2.2** brings **right-to-left text**: a paragraph says which way it runs, and Hebrew and
 Arabic lay out, shape, join and mirror correctly through all three backends. The paragraph

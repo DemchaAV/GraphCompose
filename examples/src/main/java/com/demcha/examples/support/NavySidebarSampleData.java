@@ -4,6 +4,7 @@ import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvDocument;
+import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -60,10 +61,16 @@ public final class NavySidebarSampleData {
                                 + " whether it worked. Happiest with a small team and a"
                                 + " short feedback loop."))
                 .section(Slot.SIDEBAR, EntriesSection.builder("Education")
-                        .entry("MSc Marketing Analytics", "University of Bristol",
-                                "2015 - 2016", "Bristol, UK")
-                        .entry("BA Business Management", "University of Leeds",
-                                "2012 - 2015", "Leeds, UK")
+                        .entry(CvEntry.builder("MSc Marketing Analytics")
+                                .subtitle("University of Bristol")
+                                .date("2015 - 2016")
+                                .place("Bristol, UK")
+                                .build())
+                        .entry(CvEntry.builder("BA Business Management")
+                                .subtitle("University of Leeds")
+                                .date("2012 - 2015")
+                                .place("Leeds, UK")
+                                .build())
                         .build())
                 .section(Slot.SIDEBAR, SkillsSection.of("Skills", SkillGroup.of("Core",
                         "Positioning",

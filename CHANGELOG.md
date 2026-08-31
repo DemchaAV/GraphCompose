@@ -7,6 +7,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **`CvEntry` carries a location and a mark, and gains a builder.** The record held a
+  title, a subtitle, a date and a body, which is enough for a dated block and not
+  enough for the designs that set the city beside the employer in its own colour, or
+  that open a project with an icon. Folding a location into the subtitle would have
+  merged two things a design styles apart; deriving an icon from the text would have
+  been guesswork. `CvEntry` now carries `place` and `icon` — both plain strings, blank
+  when absent, matching how `subtitle` and `date` already behave — and
+  `CvEntry.builder(title)` reaches them without counting six positions. The icon
+  vocabulary is preset-scoped: a token means something only to the preset that packages
+  it, and the presets that draw no marks ignore it. The four-argument constructor is
+  kept explicitly, so existing calls compile and link unchanged.
+
 - **`CvIdentity` carries an optional portrait.** A CV design with a photograph in it
   had nowhere to put one: the identity record held the name, the title, the contact
   triple and the links, and a preset that wanted a face had to ship a silhouette of its
@@ -60,7 +72,8 @@ follow semantic versioning; release dates are ISO 8601.
   `RowsSection` because this design writes the proficiency out — "Native", "Advanced" —
   which a levelled skill could not carry back. The photograph comes from the new
   `CvIdentity.portrait()`; an identity without one draws the ring around an empty navy
-  disc. The phone, the email and each link are reachable from the PDF, with the
+  disc; its education entries read the `place` field for the campus line. The phone,
+  the email and each link are reachable from the PDF, with the
   `tel:` and `mailto:` targets built from the values — the published sheet drew its
   channels as plain text, and this is the one place the port deliberately improves on
   it, at no cost to the render: annotations move no pixel and no layout node, which

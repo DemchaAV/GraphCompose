@@ -65,9 +65,9 @@ import static com.demcha.compose.document.templates.cv.presets.NavySidebarStyles
  * own title, since it is the one block with no heading; a skill's level,
  * since there are no meters here; and a {@code SkillGroup}'s category. A
  * berth is filled by the first section that names it, so a second section
- * naming the same berth is not drawn either. An education entry uses all
- * four of its fields — the degree, the institution, the body as the campus
- * line, and the years.</p>
+ * naming the same berth is not drawn either. An education entry is drawn as
+ * four lines — the degree, the institution, the {@code place}, and the years
+ * — and its body has nowhere to go on this sheet.</p>
  *
  * <h2>The portrait</h2>
  *

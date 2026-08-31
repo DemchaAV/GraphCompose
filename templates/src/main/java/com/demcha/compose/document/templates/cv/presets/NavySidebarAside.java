@@ -218,7 +218,9 @@ final class NavySidebarAside {
 
     /**
      * Each degree as four lines: the qualification in capitals, the
-     * institution, where it was, and the years.
+     * institution, where it was, and the years. The third line is the
+     * entry's {@code place} — the field the model gives a location, rather
+     * than the body, which this design has nowhere to put.
      */
     private static void renderEducation(SectionBuilder section, EntriesSection education) {
         sidebarHeading(section, education.title(), false);
@@ -231,7 +233,7 @@ final class NavySidebarAside {
                     .margin(new DocumentInsets(0, 0, EDU_DEGREE_GAP, 0)));
             line(section, "Institution_" + compact(entry.title()), entry.subtitle(),
                     EDU_LINE_GAP);
-            line(section, "Campus_" + compact(entry.title()), entry.body(), EDU_LINE_GAP);
+            line(section, "Campus_" + compact(entry.title()), entry.place(), EDU_LINE_GAP);
             line(section, "Years_" + compact(entry.title()), entry.date(), EDU_ENTRY_GAP);
         }
     }

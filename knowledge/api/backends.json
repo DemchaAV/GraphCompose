@@ -3978,6 +3978,7 @@
     },
     {
       "name": "com.demcha.compose.document.backend.fixed.pptx",
+      "stability": "beta",
       "types": [
         {
           "name": "PptxCoordinates",
@@ -4589,6 +4590,7 @@
     },
     {
       "name": "com.demcha.compose.document.backend.fixed.pptx.handlers",
+      "stability": "beta",
       "types": [
         {
           "name": "PptxAnchorMarkerRenderHandler",

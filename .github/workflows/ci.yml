@@ -237,6 +237,13 @@ jobs:
         if: matrix.java == '17'
         run: node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
 
+      # docs/api-stability.md is where a reader asks "what is still moving", and
+      # nothing was checking that it still names what carries @Beta. The test it
+      # cites as its guard examines the annotation type, never what is annotated.
+      - name: Knowledge pack — the stability document names every @Beta
+        if: matrix.java == '17'
+        run: node knowledge/tools/api-surface/check-stability-doc.mjs
+
       - name: Knowledge pack — claim parser fixtures
         if: matrix.java == '17'
         run: node knowledge/tools/claims/test/claims.test.mjs

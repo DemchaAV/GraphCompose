@@ -7,6 +7,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A billed party carries a printed registration.** A supplier could already state a
+  tax registration through `InvoiceContactBlock.taxRegistrationLabel` /
+  `taxRegistrationNumber`, and the party being billed could not — but most B2B invoices
+  print the customer's VAT or tax number too, under its address. `subline` was the only
+  spare field and it is contractually the attention line that sits *above* the address,
+  so a registration put there renders in the wrong place. `InvoiceRecipient` now carries
+  `registrationLabel` and `registrationNumber`, mirroring the pair the supplier block
+  already has, with `hasRegistration()` for the presets that draw the row only when
+  there is a number to draw. Both are plain strings, blank when absent, and the
+  six-argument constructor is kept explicitly, so existing calls compile and link
+  unchanged and every recipient built through them still prints no registration.
+
 - **An invoice line carries a mark.** A design that opens each service line with a
   glyph — a card for a billing line, a shield for fraud screening, a globe for a hosted
   service — had nowhere to say which one, and deriving it from the description would

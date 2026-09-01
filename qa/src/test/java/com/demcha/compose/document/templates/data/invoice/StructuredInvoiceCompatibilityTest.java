@@ -96,6 +96,33 @@ class StructuredInvoiceCompatibilityTest {
     }
 
     @Test
+    void theRecipientConstructorThatPredatesTheRegistrationLeavesItBlank() {
+        InvoiceRecipient recipient = new InvoiceRecipient("BILL TO", "Northwind Ltd.", "",
+                List.of("42 Bridgewater Street"), "Email", "ap@example.test");
+        assertThat(recipient.registrationLabel()).isEmpty();
+        assertThat(recipient.registrationNumber()).isEmpty();
+        assertThat(recipient.hasRegistration()).isFalse();
+    }
+
+    @Test
+    void aRecipientCarriesTheRegistrationItIsGiven() {
+        InvoiceRecipient recipient = new InvoiceRecipient("BILL TO", "Northwind Ltd.", "",
+                List.of("42 Bridgewater Street"), "", "", "VAT Number", "GB 987 6543 21");
+        assertThat(recipient.registrationLabel()).isEqualTo("VAT Number");
+        assertThat(recipient.registrationNumber()).isEqualTo("GB 987 6543 21");
+        assertThat(recipient.hasRegistration()).isTrue();
+    }
+
+    @Test
+    void aRecipientWithALabelAndNoNumberPrintsNothing() {
+        // The number is what makes the row worth drawing; a label on its own is
+        // a heading over an absence.
+        InvoiceRecipient recipient = new InvoiceRecipient("BILL TO", "Northwind Ltd.", "",
+                List.of(), "", "", "VAT Number", null);
+        assertThat(recipient.hasRegistration()).isFalse();
+    }
+
+    @Test
     void theDataConstructorThatPredatesShipToLeavesItEmptyRatherThanNull() {
         // The record normalizes an absent block to its empty form, so preset
         // code reads it without a null check — the promise the whole model

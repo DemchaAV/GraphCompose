@@ -93,7 +93,7 @@ public record CvEntry(String title, String subtitle, String date, String body,
      *
      * @param title the entry's heading (required, non-blank)
      * @return new fluent builder
-     * @since 2.2.3
+     * @since 2.4.0
      */
     public static Builder builder(String title) {
         return new Builder(title);
@@ -103,7 +103,7 @@ public record CvEntry(String title, String subtitle, String date, String body,
      * Mutable builder for {@link CvEntry}. Every field but the title starts
      * blank, so an entry names only what it has.
      *
-     * @since 2.2.3
+     * @since 2.4.0
      */
     public static final class Builder {
         private final String title;

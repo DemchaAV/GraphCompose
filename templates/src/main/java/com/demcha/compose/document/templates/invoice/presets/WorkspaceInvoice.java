@@ -83,7 +83,7 @@ import static com.demcha.compose.document.templates.invoice.presets.WorkspaceSty
  * template.compose(session, invoice);
  * }</pre>
  *
- * @since 2.2.3
+ * @since 2.4.0
  */
 public final class WorkspaceInvoice {
 

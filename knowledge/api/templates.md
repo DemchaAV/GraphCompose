@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
+Types: 217 · methods: 1221 · constants: 164 · compiler-generated members: 644
 
 ## com.demcha.compose.document.templates.api
 
@@ -585,14 +585,31 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `CvSection section()`
 
 ### CvEntry (record)
-- `new CvEntry(String, String, String, String)`
+- `new CvEntry(String, String, String, String, String, String, String)`
+- `new CvEntry(String title, String subtitle, String date, String body, String place, String icon)`
+- `new CvEntry(String title, String subtitle, String date, String body)`
+- `CvEntry.Builder builder(String title)`
 - `String title()`
 - `String subtitle()`
 - `String date()`
 - `String body()`
+- `String place()`
+- `String icon()`
+- `String link()`
+
+### CvEntry.Builder (class)
+- `CvEntry.Builder subtitle(String value)`
+- `CvEntry.Builder date(String value)`
+- `CvEntry.Builder body(String value)`
+- `CvEntry.Builder body(List<String> lines)`
+- `CvEntry.Builder place(String value)`
+- `CvEntry.Builder icon(String value)`
+- `CvEntry.Builder link(String value)`
+- `CvEntry build()`
 
 ### CvIdentity (record)
-- `new CvIdentity(CvName, String, Contact, List<Link>)`
+- `new CvIdentity(CvName, String, Contact, List<Link>, Optional<DocumentImageData>)`
+- `new CvIdentity(CvName name, String jobTitle, Contact contact, List<Link> links)`
 - `new CvIdentity(CvName name, Contact contact, List<Link> links)`
 - `String displayName()`
 - `String tagline()`
@@ -601,6 +618,7 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `String jobTitle()`
 - `Contact contact()`
 - `List<Link> links()`
+- `Optional<DocumentImageData> portrait()`
 
 ### CvIdentity.Builder (class)
 - `CvIdentity.Builder name(CvName value)`
@@ -611,6 +629,7 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `CvIdentity.Builder contact(String phone, String email, String address)`
 - `CvIdentity.Builder link(Link link)`
 - `CvIdentity.Builder link(String label, String url)`
+- `CvIdentity.Builder portrait(DocumentImageData value)`
 - `CvIdentity build()`
 
 ### CvName (record)
@@ -631,11 +650,14 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `String title()`
 
 ### CvSkill (record)
-- `new CvSkill(String, OptionalDouble)`
+- `new CvSkill(String, OptionalDouble, String)`
+- `new CvSkill(String name, OptionalDouble level)`
 - `CvSkill of(String name)`
 - `CvSkill of(String name, double level)`
+- `CvSkill of(String name, double level, String note)`
 - `String name()`
 - `OptionalDouble level()`
+- `String note()`
 
 ### EntriesSection (record)
 - `new EntriesSection(String, List<CvEntry>)`
@@ -711,6 +733,10 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
 
+### CharcoalGold (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
 ### ClassicSerif (class)
 - `DocumentTemplate<CvDocument> create()`
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
@@ -735,6 +761,10 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `DocumentTemplate<CvDocument> create()`
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### MidnightNavy (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`
 
 ### MinimalUnderlined (class)
 - `DocumentTemplate<CvDocument> create()`
@@ -791,6 +821,10 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `MonogramSidebar.Options.Builder monogramRingColor(DocumentColor value)`
 - `MonogramSidebar.Options build()`
 
+### NavySidebar (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
 ### NordicClean (class)
 - `DocumentTemplate<CvDocument> create()`
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
@@ -816,9 +850,21 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 ### NordicClean.RailSide (enum)
 - constants: `LEFT`, `RIGHT`
 
+### OrangeOps (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`, `DISPLAY_FONT`
+
 ### Panel (class)
 - `DocumentTemplate<CvDocument> create()`
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### ProfessionalSidebar (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### SerifHeadline (class)
+- `DocumentTemplate<CvDocument> create()`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
 
 ### SidebarPortrait (class)
@@ -841,10 +887,26 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `SidebarPortrait.Options.Builder accentColor(DocumentColor value)`
 - `SidebarPortrait.Options build()`
 
+### SlateOrange (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
+### TealPulse (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
+### TerracottaRail (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
 ### TimelineMinimal (class)
 - `DocumentTemplate<CvDocument> create()`
 - `DocumentTemplate<CvDocument> create(BrandTheme theme)`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### VioletGrid (class)
+- `DocumentTemplate<CvDocument> create()`
+- constants: `ID`, `DISPLAY_NAME`
 
 ## com.demcha.compose.document.templates.cv.widgets
 
@@ -919,6 +981,31 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `void render(SectionBuilder host, CvSkill skill, double trackWidth, BrandTheme theme)`
 
 ## com.demcha.compose.document.templates.data.invoice
+
+### InvoiceBrand (record)
+- `new InvoiceBrand(DocumentImageData, String, String, String, String, String)`
+- `new InvoiceBrand(DocumentImageData logo, String name, String qualifier, String tagline)`
+- `boolean hasMonogram()`
+- `boolean hasLogo()`
+- `DocumentImageData logo()`
+- `String name()`
+- `String qualifier()`
+- `String tagline()`
+- `String monogramTop()`
+- `String monogramBottom()`
+
+### InvoiceContactBlock (record)
+- `new InvoiceContactBlock(String, List<String>, String, String, String, String, String, String, String)`
+- `new InvoiceContactBlock(String legalName, List<String> addressLines, String phone, String email, String website, String registrationLabel, String registrationNumber)`
+- `String legalName()`
+- `List<String> addressLines()`
+- `String phone()`
+- `String email()`
+- `String website()`
+- `String registrationLabel()`
+- `String registrationNumber()`
+- `String taxRegistrationLabel()`
+- `String taxRegistrationNumber()`
 
 ### InvoiceData (record)
 - `new InvoiceData(String, String, String, String, String, String, InvoiceParty, InvoiceParty, List<InvoiceLineItem>, List<InvoiceSummaryRow>, List<String>, List<String>, String)`
@@ -1014,6 +1101,24 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `InvoiceLineItem.Builder amount(String amount)`
 - `InvoiceLineItem build()`
 
+### InvoiceMasthead (record)
+- `new InvoiceMasthead(String, List<InvoiceMasthead.Entry>)`
+- `String title()`
+- `List<InvoiceMasthead.Entry> entries()`
+
+### InvoiceMasthead.Entry (record)
+- `new Entry(String, String, boolean)`
+- `String label()`
+- `String value()`
+- `boolean emphasized()`
+
+### InvoiceNotesBlock (record)
+- `new InvoiceNotesBlock(String, List<String>, String, String)`
+- `String heading()`
+- `List<String> paragraphs()`
+- `String contactEmail()`
+- `String contactPhone()`
+
 ### InvoiceParty (record)
 - `new InvoiceParty(String, List<String>, String, String, String)`
 - `InvoiceParty.Builder builder()`
@@ -1033,6 +1138,72 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `InvoiceParty.Builder taxId(String taxId)`
 - `InvoiceParty build()`
 
+### InvoicePaymentBlock (record)
+- `new InvoicePaymentBlock(String, List<InvoicePaymentBlock.Field>, String, String, String, String, String)`
+- `new InvoicePaymentBlock(String heading, List<InvoicePaymentBlock.Field> fields, String instruction, String dueNotice, String dueNoticeEmphasis)`
+- `String heading()`
+- `List<InvoicePaymentBlock.Field> fields()`
+- `String instruction()`
+- `String dueNotice()`
+- `String dueNoticeEmphasis()`
+- `String accountHolder()`
+- `String signOff()`
+
+### InvoicePaymentBlock.Field (record)
+- `new Field(String, String)`
+- `String label()`
+- `String value()`
+
+### InvoiceRecipient (record)
+- `new InvoiceRecipient(String, String, String, List<String>, String, String, String, String)`
+- `new InvoiceRecipient(String heading, String name, String subline, List<String> addressLines, String emailLabel, String email)`
+- `boolean hasRegistration()`
+- `String heading()`
+- `String name()`
+- `String subline()`
+- `List<String> addressLines()`
+- `String emailLabel()`
+- `String email()`
+- `String registrationLabel()`
+- `String registrationNumber()`
+
+### InvoiceServiceLines (record)
+- `new InvoiceServiceLines(InvoiceServiceLines.Columns, List<InvoiceServiceLines.Line>)`
+- `InvoiceServiceLines.Columns columns()`
+- `List<InvoiceServiceLines.Line> lines()`
+
+### InvoiceServiceLines.Columns (record)
+- `new Columns(String, String, String, String, String, String, String)`
+- `new Columns(String index, String description, String servicePeriod, String quantity, String unitPrice, String amount)`
+- `String index()`
+- `String description()`
+- `String servicePeriod()`
+- `String quantity()`
+- `String unitPrice()`
+- `String amount()`
+- `String vat()`
+
+### InvoiceServiceLines.Line (record)
+- `new Line(int, String, String, String, BigDecimal, String, BigDecimal, BigDecimal, String, String)`
+- `new Line(int lineNumber, String title, String description, String servicePeriod, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal amount, String vatRate)`
+- `new Line(int lineNumber, String title, String description, String servicePeriod, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal amount)`
+- `int lineNumber()`
+- `String title()`
+- `String description()`
+- `String servicePeriod()`
+- `BigDecimal quantity()`
+- `String unit()`
+- `BigDecimal unitPrice()`
+- `BigDecimal amount()`
+- `String vatRate()`
+- `String icon()`
+
+### InvoiceSummaryBlock (record)
+- `new InvoiceSummaryBlock(String, String, String)`
+- `String heading()`
+- `String intro()`
+- `String servicePeriod()`
+
 ### InvoiceSummaryRow (record)
 - `new InvoiceSummaryRow(String, String, boolean)`
 - `InvoiceSummaryRow.Builder builder()`
@@ -1046,7 +1217,69 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `InvoiceSummaryRow.Builder emphasized(boolean emphasized)`
 - `InvoiceSummaryRow build()`
 
+### InvoiceTotalsBlock (record)
+- `new InvoiceTotalsBlock(List<InvoiceTotalsBlock.Row>, String, BigDecimal)`
+- `List<InvoiceTotalsBlock.Row> rows()`
+- `String totalLabel()`
+- `BigDecimal totalAmount()`
+
+### InvoiceTotalsBlock.Row (record)
+- `new Row(String, BigDecimal)`
+- `String label()`
+- `BigDecimal amount()`
+
+### StructuredInvoiceData (record)
+- `new StructuredInvoiceData(InvoiceBrand, InvoiceContactBlock, InvoiceMasthead, InvoiceRecipient, InvoiceRecipient, InvoiceSummaryBlock, InvoiceServiceLines, InvoiceTotalsBlock, InvoicePaymentBlock, InvoiceNotesBlock, String)`
+- `new StructuredInvoiceData(InvoiceBrand brand, InvoiceContactBlock supplier, InvoiceMasthead masthead, InvoiceRecipient billTo, InvoiceSummaryBlock summary, InvoiceServiceLines serviceLines, InvoiceTotalsBlock totals, InvoicePaymentBlock payment, InvoiceNotesBlock notes, String currencyCode)`
+- `StructuredInvoiceData.Builder builder()`
+- `InvoiceBrand brand()`
+- `InvoiceContactBlock supplier()`
+- `InvoiceMasthead masthead()`
+- `InvoiceRecipient billTo()`
+- `InvoiceRecipient shipTo()`
+- `InvoiceSummaryBlock summary()`
+- `InvoiceServiceLines serviceLines()`
+- `InvoiceTotalsBlock totals()`
+- `InvoicePaymentBlock payment()`
+- `InvoiceNotesBlock notes()`
+- `String currencyCode()`
+
+### StructuredInvoiceData.Builder (class)
+- `StructuredInvoiceData.Builder brand(InvoiceBrand brand)`
+- `StructuredInvoiceData.Builder supplier(InvoiceContactBlock supplier)`
+- `StructuredInvoiceData.Builder masthead(InvoiceMasthead masthead)`
+- `StructuredInvoiceData.Builder billTo(InvoiceRecipient billTo)`
+- `StructuredInvoiceData.Builder shipTo(InvoiceRecipient shipTo)`
+- `StructuredInvoiceData.Builder summary(InvoiceSummaryBlock summary)`
+- `StructuredInvoiceData.Builder serviceLines(InvoiceServiceLines serviceLines)`
+- `StructuredInvoiceData.Builder totals(InvoiceTotalsBlock totals)`
+- `StructuredInvoiceData.Builder payment(InvoicePaymentBlock payment)`
+- `StructuredInvoiceData.Builder notes(InvoiceNotesBlock notes)`
+- `StructuredInvoiceData.Builder currencyCode(String currencyCode)`
+- `StructuredInvoiceData build()`
+
+### StructuredInvoiceDocumentSpec (record)
+- `new StructuredInvoiceDocumentSpec(StructuredInvoiceData)`
+- `StructuredInvoiceDocumentSpec from(StructuredInvoiceData invoice)`
+- `StructuredInvoiceData invoice()`
+
 ## com.demcha.compose.document.templates.data.proposal
+
+### ProposalAcceptance (record)
+- `new ProposalAcceptance(String, String, String, List<String>)`
+- `String heading()`
+- `String icon()`
+- `String statement()`
+- `List<String> fields()`
+
+### ProposalBrand (record)
+- `new ProposalBrand(String, String, String, String, String, String)`
+- `String monogram()`
+- `String nameLine1()`
+- `String nameLine2()`
+- `String documentLabel()`
+- `String website()`
+- `String footerName()`
 
 ### ProposalData (record)
 - `new ProposalData(String, String, String, String, String, String, ProposalParty, ProposalParty, List<ProposalSection>, List<ProposalTimelineItem>, List<ProposalPricingRow>, List<String>, String)`
@@ -1094,6 +1327,13 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalData.Builder footerNote(String footerNote)`
 - `ProposalData build()`
 
+### ProposalDeliverables (record)
+- `new ProposalDeliverables(String, String, List<String>, List<String>)`
+- `String heading()`
+- `String icon()`
+- `List<String> leftColumn()`
+- `List<String> rightColumn()`
+
 ### ProposalDocumentSpec (record)
 - `new ProposalDocumentSpec(ProposalData)`
 - `ProposalDocumentSpec from(ProposalData proposal)`
@@ -1129,6 +1369,54 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalDocumentSpec.Builder footerNote(String footerNote)`
 - `ProposalDocumentSpec build()`
 
+### ProposalGlance (record)
+- `new ProposalGlance(String, List<ProposalGlance.Fact>)`
+- `String heading()`
+- `List<ProposalGlance.Fact> facts()`
+
+### ProposalGlance.Fact (record)
+- `new Fact(String, String, String, String)`
+- `String icon()`
+- `String label()`
+- `String value()`
+- `String note()`
+
+### ProposalGoals (record)
+- `new ProposalGoals(String, String, List<ProposalGoals.Goal>)`
+- `String heading()`
+- `String icon()`
+- `List<ProposalGoals.Goal> items()`
+
+### ProposalGoals.Goal (record)
+- `new Goal(String, String)`
+- `String icon()`
+- `String text()`
+
+### ProposalInvestment (record)
+- `new ProposalInvestment(String, String, String, String, List<ProposalInvestment.Row>, String, String)`
+- `String heading()`
+- `String icon()`
+- `String itemHeader()`
+- `String amountHeader()`
+- `List<ProposalInvestment.Row> rows()`
+- `String totalLabel()`
+- `String totalAmount()`
+
+### ProposalInvestment.Role (enum)
+- constants: `NONE`, `SUBTOTAL`, `OPTIONAL`
+
+### ProposalInvestment.Row (record)
+- `new Row(String, String, ProposalInvestment.Role)`
+- `String label()`
+- `String amount()`
+- `ProposalInvestment.Role role()`
+
+### ProposalMetaLine (record)
+- `new ProposalMetaLine(String, String, String)`
+- `String preparedFor()`
+- `String preparedBy()`
+- `String date()`
+
 ### ProposalParty (record)
 - `new ProposalParty(String, List<String>, String, String, String)`
 - `ProposalParty.Builder builder()`
@@ -1148,6 +1436,21 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalParty.Builder website(String website)`
 - `ProposalParty build()`
 
+### ProposalPhaseGrid (record)
+- `new ProposalPhaseGrid(String, String, List<String>, List<ProposalPhaseGrid.Phase>)`
+- `String heading()`
+- `String icon()`
+- `List<String> columnHeaders()`
+- `List<ProposalPhaseGrid.Phase> phases()`
+
+### ProposalPhaseGrid.Phase (record)
+- `new Phase(String, String, String, String, String)`
+- `String number()`
+- `String name()`
+- `String focus()`
+- `String duration()`
+- `String output()`
+
 ### ProposalPricingRow (record)
 - `new ProposalPricingRow(String, String, String, boolean)`
 - `ProposalPricingRow.Builder builder()`
@@ -1163,6 +1466,18 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalPricingRow.Builder emphasized(boolean emphasized)`
 - `ProposalPricingRow build()`
 
+### ProposalScope (record)
+- `new ProposalScope(String, String, List<ProposalScope.Item>)`
+- `String heading()`
+- `String icon()`
+- `List<ProposalScope.Item> items()`
+
+### ProposalScope.Item (record)
+- `new Item(String, String, String)`
+- `String number()`
+- `String title()`
+- `String description()`
+
 ### ProposalSection (record)
 - `new ProposalSection(String, List<String>)`
 - `ProposalSection.Builder builder()`
@@ -1176,6 +1491,18 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalSection.Builder addParagraph(String paragraph)`
 - `ProposalSection build()`
 
+### ProposalSummaryBlock (record)
+- `new ProposalSummaryBlock(String, String, List<String>)`
+- `String heading()`
+- `String icon()`
+- `List<String> paragraphs()`
+
+### ProposalTermsBlock (record)
+- `new ProposalTermsBlock(String, String, List<String>)`
+- `String heading()`
+- `String icon()`
+- `List<String> items()`
+
 ### ProposalTimelineItem (record)
 - `new ProposalTimelineItem(String, String, String)`
 - `ProposalTimelineItem.Builder builder()`
@@ -1188,6 +1515,48 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `ProposalTimelineItem.Builder duration(String duration)`
 - `ProposalTimelineItem.Builder details(String details)`
 - `ProposalTimelineItem build()`
+
+### ProposalTitleLines (record)
+- `new ProposalTitleLines(String, String, String)`
+- `String lead()`
+- `String second()`
+- `String third()`
+
+### StructuredProposalData (record)
+- `new StructuredProposalData(ProposalBrand, ProposalTitleLines, ProposalMetaLine, ProposalSummaryBlock, ProposalGlance, ProposalGoals, ProposalScope, ProposalDeliverables, ProposalPhaseGrid, ProposalInvestment, ProposalTermsBlock, ProposalAcceptance)`
+- `StructuredProposalData.Builder builder()`
+- `ProposalBrand brand()`
+- `ProposalTitleLines title()`
+- `ProposalMetaLine meta()`
+- `ProposalSummaryBlock executiveSummary()`
+- `ProposalGlance glance()`
+- `ProposalGoals goals()`
+- `ProposalScope scope()`
+- `ProposalDeliverables deliverables()`
+- `ProposalPhaseGrid timeline()`
+- `ProposalInvestment investment()`
+- `ProposalTermsBlock terms()`
+- `ProposalAcceptance acceptance()`
+
+### StructuredProposalData.Builder (class)
+- `StructuredProposalData.Builder brand(ProposalBrand brand)`
+- `StructuredProposalData.Builder title(ProposalTitleLines title)`
+- `StructuredProposalData.Builder meta(ProposalMetaLine meta)`
+- `StructuredProposalData.Builder executiveSummary(ProposalSummaryBlock executiveSummary)`
+- `StructuredProposalData.Builder glance(ProposalGlance glance)`
+- `StructuredProposalData.Builder goals(ProposalGoals goals)`
+- `StructuredProposalData.Builder scope(ProposalScope scope)`
+- `StructuredProposalData.Builder deliverables(ProposalDeliverables deliverables)`
+- `StructuredProposalData.Builder timeline(ProposalPhaseGrid timeline)`
+- `StructuredProposalData.Builder investment(ProposalInvestment investment)`
+- `StructuredProposalData.Builder terms(ProposalTermsBlock terms)`
+- `StructuredProposalData.Builder acceptance(ProposalAcceptance acceptance)`
+- `StructuredProposalData build()`
+
+### StructuredProposalDocumentSpec (record)
+- `new StructuredProposalDocumentSpec(StructuredProposalData)`
+- `StructuredProposalDocumentSpec from(StructuredProposalData proposal)`
+- `StructuredProposalData proposal()`
 
 ## com.demcha.compose.document.templates.data.schedule
 
@@ -1367,14 +1736,43 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 
 ## com.demcha.compose.document.templates.invoice.presets
 
+### ClassicInvoice (class)
+- `DocumentTemplate<InvoiceDocumentSpec> create()`
+- `DocumentTemplate<InvoiceDocumentSpec> create(BrandTheme theme)`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### ConsultingInvoice (class)
+- `DocumentTemplate<StructuredInvoiceDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### LumaStudioInvoice (class)
+- `DocumentTemplate<StructuredInvoiceDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
 ### ModernInvoice (class)
 - `DocumentTemplate<InvoiceDocumentSpec> create()`
 - `DocumentTemplate<InvoiceDocumentSpec> create(BrandTheme theme)`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
 
+### PaymentsInvoice (class)
+- `DocumentTemplate<StructuredInvoiceData> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
+### WorkspaceInvoice (class)
+- `DocumentTemplate<StructuredInvoiceData> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
 ## com.demcha.compose.document.templates.proposal.presets
+
+### EditorialProposal (class)
+- `DocumentTemplate<StructuredProposalDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
 
 ### ModernProposal (class)
 - `DocumentTemplate<ProposalDocumentSpec> create()`
 - `DocumentTemplate<ProposalDocumentSpec> create(BrandTheme theme)`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### NorthlineProposal (class)
+- `DocumentTemplate<StructuredProposalDocumentSpec> create()`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`

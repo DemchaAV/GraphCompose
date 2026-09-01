@@ -124,7 +124,7 @@ import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.R
  * title, the degree and a certification become links when their entry carries
  * {@code CvEntry.link()}.</p>
  *
- * @since 2.2.3
+ * @since 2.4.0
  */
 public final class OrangeOps {
 

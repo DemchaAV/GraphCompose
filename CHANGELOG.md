@@ -3,83 +3,7 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
-## v2.3.0 — 2026-08-31
-
-### Public API
-
-- **A header or footer can name its font family.** `DocumentHeaderFooter.fontName(...)`
-  picks the family the zone is typeset in; the PDF and PPTX backends resolve it through
-  the document's own font library, the same way body text is resolved. Until now a zone
-  was drawn in standard-14 Helvetica and nothing else, so a footer outside WinAnsi — a
-  Cyrillic page counter, a Greek imprint — came out as a row of `?`. The default is
-  still `FontName.HELVETICA` and resolves to the same standard-14 face the zone drew
-  before, so an existing header or footer renders unchanged down to its placement.
-  Naming a family is the whole mechanism: there is no automatic fallback here any more
-  than there is in the body, so a code point the chosen family cannot encode is still
-  substituted with `?`.
-
-- **DOCX exports a page zone as a real Word footer.** The zone the PDF and PPTX backends
-  draw is now written into a `w:ftr` / `w:hdr` part, which is the first header/footer support
-  the DOCX exporter has had. The band's children become runs on one Word line: a paragraph
-  contributes its runs, a flex spacer becomes the right tab stop. Page numbers are the part
-  that could not simply be copied over — a semantic export hands the node tree to Word and
-  *Word* paginates, so a number written as text would be right on one page and wrong on the
-  rest. `PageContext.pageNumber()` and `pageTotal()` return a node instead of an `int`:
-  resolved text on a fixed-layout export, a live `PAGE` / `NUMPAGES` field in Word. The same
-  zone definition therefore serves both lanes, and the field's placeholder run carries the
-  node's text style, so a styled page number stays styled in Word rather than snapping to
-  the document default. Reading `PageContext.number()` on a semantic
-  export raises `UnsupportedOperationException` naming the alternative rather than returning
-  a plausible lie. Node kinds outside the mapped set are skipped and reported. A page
-  predicate (`appliesTo`) is fixed-layout capability — there is no page to test it against
-  when the definition is written — so a zone that carries one is exported to every page,
-  and the export logs what it could not honor.
-
-- **A page zone draws a node subtree instead of text slots.** `DocumentPageZone`, registered
-  through `document.chrome().zone(...)`, takes a content function called once per page with
-  that page's `PageContext` and returns any `DocumentNode`. The subtree is laid out against a
-  canvas the size of the band and spliced into the compiled layout graph, so every
-  fixed-layout backend draws it with no code of its own: a badge, a link annotation, an image,
-  a shape, a table, right-to-left text and any font the document has all work in a zone
-  because it is the body's machinery, not a second copy of it. Page numbers come from the
-  context — `page.number() + " / " + page.total()` — so the band needs no placeholder tokens,
-  and anything the tokens could not express (roman numerals, an offset, a different line on
-  the last page) is ordinary Java in the same lambda. A page reference inside a zone
-  resolves against the body's anchors, so a footer can say "appendix on page N" about
-  content it does not itself contain. `appliesTo(page -> ...)` decides which
-  pages carry the zone, which separates "is this page numbered" from "is the band drawn" —
-  the two that `DocumentPageNumbering` conflates. The predicate decides painting only: a
-  reserving zone's band comes out of every page's content area either way, so hiding the
-  zone on the cover does not reflow the cover. A zone reserves its height by default and
-  does not paginate: content that needs more than the band raises
-  `AtomicNodeTooLargeException` naming the zone and its height rather than being dropped —
-  whether the overflow is atomic (a row too tall for the band) or splittable (a paragraph
-  that would have continued onto a second band). `DocumentHeaderFooter` is unchanged and
-  unaffected.
-
-- **A header or footer can reserve its height from the content area.**
-  `DocumentHeaderFooter.reserveSpace(true)` insets the page's content area so the body
-  is never laid out into the band the zone paints. Until now `height` positioned the
-  zone's text and nothing else — it was never subtracted from the content area, so
-  whether a footer collided with the last line of body text was decided by whichever
-  page margin the author happened to pick. The content area is inset to the larger of
-  the margin and the zone's height, not their sum, so a zone that already fits inside
-  the margin reserves nothing and reflows nothing. `DocumentSession.availableHeight()`
-  (and `canvas().innerHeight()`, which it still aliases) report the reduced area, so a
-  composition that sizes itself against the page — `TimelineMinimal` splits its columns
-  this way — sees the space it actually has. Off by default: turning it on can add pages
-  to a document that was relying on the overlap.
-
-### Tests
-
-- **Header and footer placement is now guarded.** `ChromeGeometryGuardTest` pins the
-  rules a zone is drawn by — left slot flush to the left margin, right slot flush to the
-  right, centre slot centred between them, one baseline per zone at a fixed offset from
-  the zone's edge, repeated identically on every page — and records that a zone's
-  `height` reserves nothing from the content area. No template registers a header or
-  footer, so none of the committed visual baselines covered chrome: a change to how a
-  zone is positioned used to move text in every consumer's document while passing every
-  gate in the repository.
+## v2.4.0 — Planned
 
 ### Public API
 
@@ -627,12 +551,6 @@ follow semantic versioning; release dates are ISO 8601.
   phase-grid header-count contract), an exact two-page layout snapshot, and a
   pixel-parity gate; the examples showcase gains `proposal-northline-v2`.
 
-- **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
-  the date and the description, and never `CvEntry.subtitle()` — so every company name
-  was missing from the rendered CV while the education block, which does render its
-  subtitle, looked complete. The employer is now drawn between the position and the date,
-  in the shared theme entry-subtitle style.
-
 ### Tests
 
 - **The sidebar CV samples are held to the width of the column they are drawn in.**
@@ -646,6 +564,92 @@ follow semantic versioning; release dates are ISO 8601.
   instead of the length of the string — a single-line channel is as tall as its mark,
   a wrapped one close to twice that — and the two sample addresses were shortened to
   fit.
+
+## v2.3.0 — 2026-08-31
+
+### Public API
+
+- **A header or footer can name its font family.** `DocumentHeaderFooter.fontName(...)`
+  picks the family the zone is typeset in; the PDF and PPTX backends resolve it through
+  the document's own font library, the same way body text is resolved. Until now a zone
+  was drawn in standard-14 Helvetica and nothing else, so a footer outside WinAnsi — a
+  Cyrillic page counter, a Greek imprint — came out as a row of `?`. The default is
+  still `FontName.HELVETICA` and resolves to the same standard-14 face the zone drew
+  before, so an existing header or footer renders unchanged down to its placement.
+  Naming a family is the whole mechanism: there is no automatic fallback here any more
+  than there is in the body, so a code point the chosen family cannot encode is still
+  substituted with `?`.
+
+- **DOCX exports a page zone as a real Word footer.** The zone the PDF and PPTX backends
+  draw is now written into a `w:ftr` / `w:hdr` part, which is the first header/footer support
+  the DOCX exporter has had. The band's children become runs on one Word line: a paragraph
+  contributes its runs, a flex spacer becomes the right tab stop. Page numbers are the part
+  that could not simply be copied over — a semantic export hands the node tree to Word and
+  *Word* paginates, so a number written as text would be right on one page and wrong on the
+  rest. `PageContext.pageNumber()` and `pageTotal()` return a node instead of an `int`:
+  resolved text on a fixed-layout export, a live `PAGE` / `NUMPAGES` field in Word. The same
+  zone definition therefore serves both lanes, and the field's placeholder run carries the
+  node's text style, so a styled page number stays styled in Word rather than snapping to
+  the document default. Reading `PageContext.number()` on a semantic
+  export raises `UnsupportedOperationException` naming the alternative rather than returning
+  a plausible lie. Node kinds outside the mapped set are skipped and reported. A page
+  predicate (`appliesTo`) is fixed-layout capability — there is no page to test it against
+  when the definition is written — so a zone that carries one is exported to every page,
+  and the export logs what it could not honor.
+
+- **A page zone draws a node subtree instead of text slots.** `DocumentPageZone`, registered
+  through `document.chrome().zone(...)`, takes a content function called once per page with
+  that page's `PageContext` and returns any `DocumentNode`. The subtree is laid out against a
+  canvas the size of the band and spliced into the compiled layout graph, so every
+  fixed-layout backend draws it with no code of its own: a badge, a link annotation, an image,
+  a shape, a table, right-to-left text and any font the document has all work in a zone
+  because it is the body's machinery, not a second copy of it. Page numbers come from the
+  context — `page.number() + " / " + page.total()` — so the band needs no placeholder tokens,
+  and anything the tokens could not express (roman numerals, an offset, a different line on
+  the last page) is ordinary Java in the same lambda. A page reference inside a zone
+  resolves against the body's anchors, so a footer can say "appendix on page N" about
+  content it does not itself contain. `appliesTo(page -> ...)` decides which
+  pages carry the zone, which separates "is this page numbered" from "is the band drawn" —
+  the two that `DocumentPageNumbering` conflates. The predicate decides painting only: a
+  reserving zone's band comes out of every page's content area either way, so hiding the
+  zone on the cover does not reflow the cover. A zone reserves its height by default and
+  does not paginate: content that needs more than the band raises
+  `AtomicNodeTooLargeException` naming the zone and its height rather than being dropped —
+  whether the overflow is atomic (a row too tall for the band) or splittable (a paragraph
+  that would have continued onto a second band). `DocumentHeaderFooter` is unchanged and
+  unaffected.
+
+- **A header or footer can reserve its height from the content area.**
+  `DocumentHeaderFooter.reserveSpace(true)` insets the page's content area so the body
+  is never laid out into the band the zone paints. Until now `height` positioned the
+  zone's text and nothing else — it was never subtracted from the content area, so
+  whether a footer collided with the last line of body text was decided by whichever
+  page margin the author happened to pick. The content area is inset to the larger of
+  the margin and the zone's height, not their sum, so a zone that already fits inside
+  the margin reserves nothing and reflows nothing. `DocumentSession.availableHeight()`
+  (and `canvas().innerHeight()`, which it still aliases) report the reduced area, so a
+  composition that sizes itself against the page — `TimelineMinimal` splits its columns
+  this way — sees the space it actually has. Off by default: turning it on can add pages
+  to a document that was relying on the overlap.
+
+### Tests
+
+- **Header and footer placement is now guarded.** `ChromeGeometryGuardTest` pins the
+  rules a zone is drawn by — left slot flush to the left margin, right slot flush to the
+  right, centre slot centred between them, one baseline per zone at a fixed offset from
+  the zone's edge, repeated identically on every page — and records that a zone's
+  `height` reserves nothing from the content area. No template registers a header or
+  footer, so none of the committed visual baselines covered chrome: a change to how a
+  zone is positioned used to move text in every consumer's document while passing every
+  gate in the repository.
+
+### Templates
+
+- **Monogram Sidebar draws the employer.** Its experience entries rendered the position,
+  the date and the description, and never `CvEntry.subtitle()` — so every company name
+  was missing from the rendered CV while the education block, which does render its
+  subtitle, looked complete. The employer is now drawn between the position and the date,
+  in the shared theme entry-subtitle style.
 
 ### Documentation
 

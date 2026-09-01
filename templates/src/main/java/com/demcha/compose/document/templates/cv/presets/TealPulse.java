@@ -109,7 +109,7 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.P
  * template.compose(session, cv);
  * }</pre>
  *
- * @since 2.2.3
+ * @since 2.4.0
  */
 public final class TealPulse {
 

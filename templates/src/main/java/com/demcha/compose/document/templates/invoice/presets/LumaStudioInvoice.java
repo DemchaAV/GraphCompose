@@ -72,7 +72,7 @@ import static com.demcha.compose.document.templates.invoice.presets.LumaStudioSt
  * the band and the sidebar sprig — are template chrome and ship inside the
  * artifact.</p>
  *
- * @since 2.2.3
+ * @since 2.4.0
  */
 public final class LumaStudioInvoice {
 

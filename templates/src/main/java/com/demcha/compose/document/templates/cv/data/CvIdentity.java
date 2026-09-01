@@ -221,7 +221,7 @@ public record CvIdentity(CvName name, String jobTitle,
          * @param value the image data; null leaves the identity without a
          *              photograph
          * @return this builder for chaining
-         * @since 2.2.3
+         * @since 2.4.0
          */
         public Builder portrait(DocumentImageData value) {
             this.portrait = value;

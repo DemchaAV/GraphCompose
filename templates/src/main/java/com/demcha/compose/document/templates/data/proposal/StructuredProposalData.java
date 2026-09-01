@@ -30,6 +30,13 @@ package com.demcha.compose.document.templates.data.proposal;
  * @param investment       the priced block
  * @param terms            the bulleted terms block
  * @param acceptance       the signing card
+ * @param recipient        the addressed organisation, for the designs that open
+ *                         with one; blank when the design names it in its header
+ *                         line instead
+ * @param attention        the person at the recipient the proposal is addressed
+ *                         to; blank when the design addresses no one
+ * @param footer           the issuer's own identity as the foot states it;
+ *                         blank when the design's foot carries only a name
  */
 public record StructuredProposalData(
         ProposalBrand brand,
@@ -43,7 +50,10 @@ public record StructuredProposalData(
         ProposalPhaseGrid timeline,
         ProposalInvestment investment,
         ProposalTermsBlock terms,
-        ProposalAcceptance acceptance) {
+        ProposalAcceptance acceptance,
+        ProposalRecipient recipient,
+        ProposalAttention attention,
+        ProposalFooter footer) {
 
     /**
      * Normalizes absent components to their empty forms.
@@ -73,6 +83,40 @@ public record StructuredProposalData(
                 ? new ProposalTermsBlock(null, null, null) : terms;
         acceptance = acceptance == null
                 ? new ProposalAcceptance(null, null, null, null) : acceptance;
+        recipient = recipient == null
+                ? new ProposalRecipient(null, null, null) : recipient;
+        attention = attention == null
+                ? new ProposalAttention(null, null, null, null, null) : attention;
+        footer = footer == null
+                ? new ProposalFooter(null, null, null, null) : footer;
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the addressed
+     * block, the attention line and the foot's own identity.
+     *
+     * @param brand            the issuing brand
+     * @param title            the proposal's title
+     * @param meta             the header facts
+     * @param executiveSummary the summary block
+     * @param glance           the at-a-glance facts
+     * @param goals            the goals block
+     * @param scope            the scope block
+     * @param deliverables     the deliverables block
+     * @param timeline         the phase grid
+     * @param investment       the investment table
+     * @param terms            the terms block
+     * @param acceptance       the signing card
+     */
+    public StructuredProposalData(ProposalBrand brand, ProposalTitleLines title,
+                                  ProposalMetaLine meta,
+                                  ProposalSummaryBlock executiveSummary,
+                                  ProposalGlance glance, ProposalGoals goals,
+                                  ProposalScope scope, ProposalDeliverables deliverables,
+                                  ProposalPhaseGrid timeline, ProposalInvestment investment,
+                                  ProposalTermsBlock terms, ProposalAcceptance acceptance) {
+        this(brand, title, meta, executiveSummary, glance, goals, scope, deliverables,
+                timeline, investment, terms, acceptance, null, null, null);
     }
 
     /**
@@ -100,6 +144,9 @@ public record StructuredProposalData(
         private ProposalInvestment investment;
         private ProposalTermsBlock terms;
         private ProposalAcceptance acceptance;
+        private ProposalRecipient recipient;
+        private ProposalAttention attention;
+        private ProposalFooter footer;
 
         private Builder() {
         }
@@ -237,6 +284,39 @@ public record StructuredProposalData(
         }
 
         /**
+         * Sets the addressed organisation.
+         *
+         * @param recipient the addressed organisation
+         * @return this builder
+         */
+        public Builder recipient(ProposalRecipient recipient) {
+            this.recipient = recipient;
+            return this;
+        }
+
+        /**
+         * Sets the person at the recipient the proposal is addressed to.
+         *
+         * @param attention the addressed person
+         * @return this builder
+         */
+        public Builder attention(ProposalAttention attention) {
+            this.attention = attention;
+            return this;
+        }
+
+        /**
+         * Sets the issuer's own identity, as the foot states it.
+         *
+         * @param footer the issuer's identity
+         * @return this builder
+         */
+        public Builder footer(ProposalFooter footer) {
+            this.footer = footer;
+            return this;
+        }
+
+        /**
          * Builds the normalized structured proposal data.
          *
          * @return structured proposal data
@@ -244,7 +324,7 @@ public record StructuredProposalData(
         public StructuredProposalData build() {
             return new StructuredProposalData(brand, title, meta, executiveSummary,
                     glance, goals, scope, deliverables, timeline, investment,
-                    terms, acceptance);
+                    terms, acceptance, recipient, attention, footer);
         }
     }
 }

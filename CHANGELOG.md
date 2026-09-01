@@ -7,6 +7,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A proposal carries the header a one-page sales proposal has.** The proposal model was
+  shaped for a two-page consulting document: a running header naming three things by role,
+  and a title of exactly three lines. A one-page sales proposal opens differently — an
+  addressed organisation with its own address block, a named person at it with a role and
+  two channels, a row of marked tiles whose captions are the document's own, a headline
+  broken across however many lines the design breaks it across, and a foot carrying the
+  legal entity rather than only a name. None of that had a home, and each of the seven
+  designs measured for this needs the same five things, which is why they arrive together
+  rather than one per preset: five separate additions to a published record would leave
+  the model a patchwork of near-duplicates.
+  <br><br>
+  `ProposalRecipient`, `ProposalAttention` and `ProposalFooter` are new;
+  `StructuredProposalData` carries them as `recipient`, `attention` and `footer`, and its
+  twelve-argument constructor is kept explicitly so existing calls compile and link
+  unchanged. `ProposalTitleLines` gains `eyebrow`, `lines` and `standfirst`, with `lines`
+  the canonical reading and `lead`/`second`/`third` its first three — one statement kept
+  consistent by construction rather than by the caller, so a preset written against the
+  three reads the same title a four-line document states. The list form is a factory,
+  `ProposalTitleLines.of`, because a second three-argument constructor taking
+  `(String, List, List)` is ambiguous for a caller passing nulls.
+  `ProposalMetaLine` gains `entries`, and those do <em>not</em> derive from the trio in
+  either direction: turning three roles into tiles would mean inventing their captions,
+  and reading roles back out of arbitrary tiles would mean guessing which is which. A
+  preset draws the one its design has.
+
 - **An invoice line carries where it was delivered.** A design that bills the same
   service in more than one place — the same instance type in two datacentres, the same
   plan in two jurisdictions — prints where beside what, as its own column next to the

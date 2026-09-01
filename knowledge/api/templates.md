@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 220 · methods: 1230 · constants: 170 · compiler-generated members: 653
+Types: 221 · methods: 1231 · constants: 172 · compiler-generated members: 655
 
 ## com.demcha.compose.document.templates.api
 
@@ -1763,6 +1763,10 @@ Types: 220 · methods: 1230 · constants: 170 · compiler-generated members: 653
 - `DocumentTemplate<InvoiceDocumentSpec> create()`
 - `DocumentTemplate<InvoiceDocumentSpec> create(BrandTheme theme)`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### ObsidianInvoice (class)
+- `DocumentTemplate<StructuredInvoiceData> create()`
+- constants: `ID`, `DISPLAY_NAME`
 
 ### PaymentsInvoice (class)
 - `DocumentTemplate<StructuredInvoiceData> create()`

@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 220,
-    "methods": 1230,
-    "constants": 170,
-    "generated": 653
+    "types": 221,
+    "methods": 1231,
+    "constants": 172,
+    "generated": 655
   },
   "packages": [
     {
@@ -20968,6 +20968,40 @@
                   "name": "theme"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "ObsidianInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.ObsidianInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
             }
           ]
         },

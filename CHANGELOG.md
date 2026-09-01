@@ -7,6 +7,17 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A supplier carries the legal line it prints under its name.** A footer band that
+  identifies the issuer often has to carry more than a name and an address: a
+  parent-company or regulator disclosure — "X is a subsidiary of Y" — is a statement the
+  jurisdiction requires on the sheet, and deriving it from the fields beside it is not
+  possible because it is prose, not a number. Composed from `legalName` alone, that line
+  simply went missing. `InvoiceContactBlock` now carries `legalFootnote`, a plain string
+  blank when absent, like the fields beside it; a preset with no footer band ignores it.
+  Both constructors that predate it — the one before the second registration and the one
+  before the footnote — are kept explicitly, so existing calls compile and link unchanged
+  and every block built through them still prints no disclosure.
+
 - **A billed party carries a printed registration.** A supplier could already state a
   tax registration through `InvoiceContactBlock.taxRegistrationLabel` /
   `taxRegistrationNumber`, and the party being billed could not — but most B2B invoices

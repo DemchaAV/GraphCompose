@@ -41,6 +41,33 @@ class StructuredInvoiceCompatibilityTest {
     }
 
     @Test
+    void theContactConstructorThatPredatesTheLegalFootnoteLeavesItBlank() {
+        InvoiceContactBlock supplier = new InvoiceContactBlock(
+                "Luma Ltd", List.of("14 Gower Street"), "+44", "a@b.c", "b.c",
+                "Company No.", "12578934", "VAT No.", "GB123");
+        assertThat(supplier.legalFootnote()).isEmpty();
+        assertThat(supplier.taxRegistrationNumber()).isEqualTo("GB123");
+    }
+
+    @Test
+    void aContactCarriesTheLegalFootnoteItIsGiven() {
+        InvoiceContactBlock supplier = new InvoiceContactBlock(
+                "Luma Ltd", List.of("14 Gower Street"), "+44", "a@b.c", "b.c",
+                "Company No.", "12578934", "VAT No.", "GB123",
+                "Luma Ltd is a subsidiary of Luma Group plc.");
+        assertThat(supplier.legalFootnote())
+                .isEqualTo("Luma Ltd is a subsidiary of Luma Group plc.");
+    }
+
+    @Test
+    void aNullLegalFootnoteNormalizesToBlankLikeTheFieldsBesideIt() {
+        InvoiceContactBlock supplier = new InvoiceContactBlock(
+                "Luma Ltd", List.of("14 Gower Street"), "+44", "a@b.c", "b.c",
+                "Company No.", "12578934", "VAT No.", "GB123", null);
+        assertThat(supplier.legalFootnote()).isEmpty();
+    }
+
+    @Test
     void thePaymentConstructorThatPredatesTheAccountHolderLeavesItBlank() {
         InvoicePaymentBlock payment = new InvoicePaymentBlock(
                 "PAYMENT", List.of(new InvoicePaymentBlock.Field("BANK", "Starling")),

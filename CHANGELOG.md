@@ -168,6 +168,42 @@ follow semantic versioning; release dates are ISO 8601.
   recognisable; a number is not — dates, reference numbers and amounts all look like
   one — so only the structured contact field is linked.
 
+- **A dark invoice preset: `ObsidianInvoice`.** The first dark sheet in the library: a
+  wordmark over the document's name against a ruled metadata stack, the issuer and the
+  billed party on filled discs in cards of their own, a line-item table in a third, the
+  totals in a fourth, the notes and payment details side by side in a fifth and sixth,
+  and a closing band under a hairline. Ships as `invoice.presets.ObsidianInvoice` on the
+  existing `StructuredInvoiceData` model, porting the rendered layout of a published
+  standalone template: rendered against the frozen original with the same data, every
+  card, the table, the totals and both information cards are **pixel-identical**, and the
+  only regions that differ are the two discs — which carry the caller's mark where the
+  original carried its own — and the enumeration, which sets the sheet's own face.
+  <br><br>
+  The fill is set on the page rather than on the flow. A container's fill is bounded by
+  its content height, so a continuation page carrying three line items would show two
+  thirds of a white sheet under them; the page background covers the paper whatever the
+  content does.
+  <br><br>
+  Sizes are solved from ink rather than from cap height. The design's own face is not
+  bundled and matching a cap height alone would still set every string to the wrong
+  width, so each size is solved from the measured ink width of the string it sets, with
+  the substitute's width ratio applied once — and every size is named, in the styles, by
+  the string it came from. Vertical positions are cap tops rather than box edges, because
+  ink is what a design can be measured on.
+  <br><br>
+  The tax column is worked out rather than asked for. This design gives the tax its own
+  money column where the model carries a rate, and the figure is not a second thing to
+  state: a line already gives the quantity, the unit price and the total it comes to, so
+  the tax is the difference between what was charged and what the goods cost. Reading it
+  off the line is also what keeps the column and the total consistent when either moves.
+  <br><br>
+  The issuer's disc carries the caller's logo when there is one, the brand's monogram when
+  it states one, and initials taken from the name otherwise; the billed party's always
+  shows initials taken from its name. Guarded by a smoke test (including the derived tax
+  and its zero-rated case, both disc fallbacks, the due sentence keeping its accented date
+  inside one sentence, and pagination), an exact layout snapshot, and a pixel baseline —
+  all three fed by one fixture.
+
 - **A per-seat subscription invoice preset: `SubscriptionInvoice`.** A lockup against the
   title, the supplier's details beside a metadata panel whose rows each open with a
   coloured bar, two addressed parties under coloured underlines, a six-column table

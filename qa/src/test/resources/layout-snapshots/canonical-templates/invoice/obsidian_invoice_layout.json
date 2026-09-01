@@ -1,0 +1,4187 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 542.237,
+    "innerHeight" : 802.393,
+    "margin" : {
+      "top" : 25.955,
+      "right" : 27.084,
+      "bottom" : 13.542,
+      "left" : 25.955
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "ObsidianInvoice[0]",
+    "entityName" : "ObsidianInvoice",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 25.955,
+    "computedY" : 16.015,
+    "placementX" : 25.955,
+    "placementY" : 16.015,
+    "placementWidth" : 542.237,
+    "placementHeight" : 799.92,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 799.92,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]",
+    "entityName" : "Masthead",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 690.441,
+    "placementX" : 25.955,
+    "placementY" : 690.441,
+    "placementWidth" : 542.237,
+    "placementHeight" : 125.493,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 125.493,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/BrandColumn[0]",
+    "entityName" : "BrandColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.955,
+    "computedY" : 691.709,
+    "placementX" : 25.955,
+    "placementY" : 691.709,
+    "placementWidth" : 167.991,
+    "placementHeight" : 124.226,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 167.991,
+    "contentHeight" : 124.226,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/BrandColumn[0]/BrandWordmark[0]",
+    "entityName" : "BrandWordmark",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/BrandColumn[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.955,
+    "computedY" : 789.772,
+    "placementX" : 25.955,
+    "placementY" : 789.772,
+    "placementWidth" : 90.274,
+    "placementHeight" : 26.265,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.274,
+    "contentHeight" : 26.265,
+    "margin" : {
+      "top" : -0.103,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/BrandColumn[0]/InvoiceTitle[1]",
+    "entityName" : "InvoiceTitle",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/BrandColumn[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.955,
+    "computedY" : 691.709,
+    "placementX" : 25.955,
+    "placementY" : 691.709,
+    "placementWidth" : 167.991,
+    "placementHeight" : 41.306,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 167.991,
+    "contentHeight" : 41.306,
+    "margin" : {
+      "top" : 56.757,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "entityName" : "InvoiceMeta",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 350.959,
+    "computedY" : 690.441,
+    "placementX" : 350.959,
+    "placementY" : 690.441,
+    "placementWidth" : 217.233,
+    "placementHeight" : 125.493,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 125.493,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaNumberLabel[0]",
+    "entityName" : "MetaNumberLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 804.961,
+    "placementX" : 350.959,
+    "placementY" : 804.961,
+    "placementWidth" : 56.184,
+    "placementHeight" : 8.128,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.184,
+    "contentHeight" : 8.128,
+    "margin" : {
+      "top" : 2.845,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaNumber[1]",
+    "entityName" : "MetaNumber",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 785.681,
+    "placementX" : 350.959,
+    "placementY" : 785.681,
+    "placementWidth" : 84.786,
+    "placementHeight" : 11.228,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 84.786,
+    "contentHeight" : 11.228,
+    "margin" : {
+      "top" : 8.052,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Rule[2]",
+    "entityName" : "MetaRow_0Rule",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 775.593,
+    "placementX" : 350.959,
+    "placementY" : 775.593,
+    "placementWidth" : 217.233,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 9.087,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]",
+    "entityName" : "MetaRow_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 758.15,
+    "placementX" : 350.959,
+    "placementY" : 758.15,
+    "placementWidth" : 217.233,
+    "placementHeight" : 17.443,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 17.443,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]",
+    "entityName" : "MetaRow_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 350.959,
+    "computedY" : 758.15,
+    "placementX" : 350.959,
+    "placementY" : 758.15,
+    "placementWidth" : 217.233,
+    "placementHeight" : 17.443,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 17.443,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "entityName" : "MetaRow_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 350.959,
+    "computedY" : 758.15,
+    "placementX" : 350.959,
+    "placementY" : 758.15,
+    "placementWidth" : 217.233,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 8.264,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]/MetaRow_0[0]/MetaRow_0Label[0]",
+    "entityName" : "MetaRow_0Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 350.959,
+    "computedY" : 758.15,
+    "placementX" : 350.959,
+    "placementY" : 758.15,
+    "placementWidth" : 42.72,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.72,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]/MetaRow_0[0]/MetaRow_0Value[1]",
+    "entityName" : "MetaRow_0Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_0Layer[3]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 459.575,
+    "computedY" : 758.15,
+    "placementX" : 459.575,
+    "placementY" : 758.15,
+    "placementWidth" : 108.617,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.617,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Rule[4]",
+    "entityName" : "MetaRow_1Rule",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 751.331,
+    "placementX" : 350.959,
+    "placementY" : 751.331,
+    "placementWidth" : 217.233,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 5.819,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]",
+    "entityName" : "MetaRow_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 735.581,
+    "placementX" : 350.959,
+    "placementY" : 735.581,
+    "placementWidth" : 217.233,
+    "placementHeight" : 15.75,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 15.75,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]",
+    "entityName" : "MetaRow_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 350.959,
+    "computedY" : 735.581,
+    "placementX" : 350.959,
+    "placementY" : 735.581,
+    "placementWidth" : 217.233,
+    "placementHeight" : 15.75,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 15.75,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "entityName" : "MetaRow_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 350.959,
+    "computedY" : 735.581,
+    "placementX" : 350.959,
+    "placementY" : 735.581,
+    "placementWidth" : 217.233,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 6.571,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]/MetaRow_1[0]/MetaRow_1Label[0]",
+    "entityName" : "MetaRow_1Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 350.959,
+    "computedY" : 735.581,
+    "placementX" : 350.959,
+    "placementY" : 735.581,
+    "placementWidth" : 37.46,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.46,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]/MetaRow_1[0]/MetaRow_1Value[1]",
+    "entityName" : "MetaRow_1Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_1Layer[5]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 459.575,
+    "computedY" : 735.581,
+    "placementX" : 459.575,
+    "placementY" : 735.581,
+    "placementWidth" : 108.617,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.617,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Rule[6]",
+    "entityName" : "MetaRow_2Rule",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 729.325,
+    "placementX" : 350.959,
+    "placementY" : 729.325,
+    "placementWidth" : 217.233,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 5.255,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]",
+    "entityName" : "MetaRow_2Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 713.011,
+    "placementX" : 350.959,
+    "placementY" : 713.011,
+    "placementWidth" : 217.233,
+    "placementHeight" : 16.314,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 16.314,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]",
+    "entityName" : "MetaRow_2Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 350.959,
+    "computedY" : 713.011,
+    "placementX" : 350.959,
+    "placementY" : 713.011,
+    "placementWidth" : 217.233,
+    "placementHeight" : 16.314,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 16.314,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "entityName" : "MetaRow_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 350.959,
+    "computedY" : 713.011,
+    "placementX" : 350.959,
+    "placementY" : 713.011,
+    "placementWidth" : 217.233,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 7.135,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]/MetaRow_2[0]/MetaRow_2Label[0]",
+    "entityName" : "MetaRow_2Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 350.959,
+    "computedY" : 713.011,
+    "placementX" : 350.959,
+    "placementY" : 713.011,
+    "placementWidth" : 62.647,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 62.647,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]/MetaRow_2[0]/MetaRow_2Value[1]",
+    "entityName" : "MetaRow_2Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_2Layer[7]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 459.575,
+    "computedY" : 713.011,
+    "placementX" : 459.575,
+    "placementY" : 713.011,
+    "placementWidth" : 108.617,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.617,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Rule[8]",
+    "entityName" : "MetaRow_3Rule",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 706.756,
+    "placementX" : 350.959,
+    "placementY" : 706.756,
+    "placementWidth" : 217.233,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 5.255,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]",
+    "entityName" : "MetaRow_3Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]",
+    "childIndex" : 9,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 350.959,
+    "computedY" : 690.441,
+    "placementX" : 350.959,
+    "placementY" : 690.441,
+    "placementWidth" : 217.233,
+    "placementHeight" : 16.314,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 16.314,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]",
+    "entityName" : "MetaRow_3Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 350.959,
+    "computedY" : 690.441,
+    "placementX" : 350.959,
+    "placementY" : 690.441,
+    "placementWidth" : 217.233,
+    "placementHeight" : 16.314,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 16.314,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "entityName" : "MetaRow_3",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 350.959,
+    "computedY" : 690.441,
+    "placementX" : 350.959,
+    "placementY" : 690.441,
+    "placementWidth" : 217.233,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 217.233,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 7.135,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]/MetaRow_3[0]/MetaRow_3Label[0]",
+    "entityName" : "MetaRow_3Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 350.959,
+    "computedY" : 690.441,
+    "placementX" : 350.959,
+    "placementY" : 690.441,
+    "placementWidth" : 37.111,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.111,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]/MetaRow_3[0]/MetaRow_3Value[1]",
+    "entityName" : "MetaRow_3Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/Masthead[0]/InvoiceMeta[1]/MetaRow_3Layer[9]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 459.575,
+    "computedY" : 690.441,
+    "placementX" : 459.575,
+    "placementY" : 690.441,
+    "placementWidth" : 108.617,
+    "placementHeight" : 9.179,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.617,
+    "contentHeight" : 9.179,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/HeaderDivider[1]",
+    "entityName" : "HeaderDivider",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 675.216,
+    "placementX" : 25.955,
+    "placementY" : 675.216,
+    "placementWidth" : 542.237,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 14.226,
+      "right" : 0.0,
+      "bottom" : 15.235,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]",
+    "entityName" : "PartiesRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 535.433,
+    "placementX" : 25.955,
+    "placementY" : 535.433,
+    "placementWidth" : 542.237,
+    "placementHeight" : 124.548,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 124.548,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]",
+    "entityName" : "SupplierCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.955,
+    "computedY" : 535.433,
+    "placementX" : 25.955,
+    "placementY" : 535.433,
+    "placementWidth" : 260.398,
+    "placementHeight" : 124.548,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.398,
+    "contentHeight" : 124.548,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 13.542,
+      "bottom" : 14.67,
+      "left" : 13.542
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierLabel[0]",
+    "entityName" : "SupplierLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.497,
+    "computedY" : 634.377,
+    "placementX" : 39.497,
+    "placementY" : 634.377,
+    "placementWidth" : 21.785,
+    "placementHeight" : 8.903,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 21.785,
+    "contentHeight" : 8.903,
+    "margin" : {
+      "top" : 16.701,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]",
+    "entityName" : "SupplierBodyLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.497,
+    "computedY" : 550.103,
+    "placementX" : 39.497,
+    "placementY" : 550.103,
+    "placementWidth" : 233.314,
+    "placementHeight" : 84.274,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 84.274,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]",
+    "entityName" : "SupplierBodyHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 39.497,
+    "computedY" : 550.103,
+    "placementX" : 39.497,
+    "placementY" : 550.103,
+    "placementWidth" : 233.314,
+    "placementHeight" : 84.274,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 84.274,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]",
+    "entityName" : "SupplierBody",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 39.497,
+    "computedY" : 550.103,
+    "placementX" : 39.497,
+    "placementY" : 550.103,
+    "placementWidth" : 233.314,
+    "placementHeight" : 74.331,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 74.331,
+    "margin" : {
+      "top" : 9.944,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierDisc[0]",
+    "entityName" : "SupplierDisc",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 39.497,
+    "computedY" : 588.886,
+    "placementX" : 39.497,
+    "placementY" : 588.886,
+    "placementWidth" : 35.547,
+    "placementHeight" : 35.547,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 35.547,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierDisc[0]/SupplierDisc[0]",
+    "entityName" : "SupplierDisc",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierDisc[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 39.497,
+    "computedY" : 588.886,
+    "placementX" : 39.497,
+    "placementY" : 588.886,
+    "placementWidth" : 35.547,
+    "placementHeight" : 35.547,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 35.547,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierDisc[0]/SupplierDisc[0]/SupplierDiscInitials[0]",
+    "entityName" : "SupplierDiscInitials",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierDisc[0]/SupplierDisc[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 39.497,
+    "computedY" : 601.849,
+    "placementX" : 39.497,
+    "placementY" : 601.849,
+    "placementWidth" : 35.547,
+    "placementHeight" : 9.621,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 9.621,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "entityName" : "SupplierText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 102.128,
+    "computedY" : 550.103,
+    "placementX" : 102.128,
+    "placementY" : 550.103,
+    "placementWidth" : 86.34,
+    "placementHeight" : 74.331,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.34,
+    "contentHeight" : 74.331,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]/SupplierName[0]",
+    "entityName" : "SupplierName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 102.128,
+    "computedY" : 612.8,
+    "placementX" : 102.128,
+    "placementY" : 612.8,
+    "placementWidth" : 76.798,
+    "placementHeight" : 9.621,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 76.798,
+    "contentHeight" : 9.621,
+    "margin" : {
+      "top" : 2.013,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]/SupplierAddressLine_0[1]",
+    "entityName" : "SupplierAddressLine_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 102.128,
+    "computedY" : 597.5,
+    "placementX" : 102.128,
+    "placementY" : 597.5,
+    "placementWidth" : 83.639,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.639,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 5.789,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]/SupplierAddressLine_1[2]",
+    "entityName" : "SupplierAddressLine_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 102.128,
+    "computedY" : 582.829,
+    "placementX" : 102.128,
+    "placementY" : 582.829,
+    "placementWidth" : 66.205,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 66.205,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 5.159,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]/SupplierAddressLine_2[3]",
+    "entityName" : "SupplierAddressLine_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "childIndex" : 3,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 102.128,
+    "computedY" : 568.723,
+    "placementX" : 102.128,
+    "placementY" : 568.723,
+    "placementWidth" : 69.287,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.287,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 4.595,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]/SupplierContact[4]",
+    "entityName" : "SupplierContact",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/SupplierCard[0]/SupplierBodyLayer[1]/SupplierBodyHolder[0]/SupplierBody[0]/SupplierText[1]",
+    "childIndex" : 4,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 102.128,
+    "computedY" : 550.103,
+    "placementX" : 102.128,
+    "placementY" : 550.103,
+    "placementWidth" : 86.34,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.34,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 9.109,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]",
+    "entityName" : "BillToCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 307.794,
+    "computedY" : 554.053,
+    "placementX" : 307.794,
+    "placementY" : 554.053,
+    "placementWidth" : 260.398,
+    "placementHeight" : 105.928,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.398,
+    "contentHeight" : 105.928,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 13.542,
+      "bottom" : 14.67,
+      "left" : 13.542
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToLabel[0]",
+    "entityName" : "BillToLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 634.377,
+    "placementX" : 321.336,
+    "placementY" : 634.377,
+    "placementWidth" : 24.518,
+    "placementHeight" : 8.903,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 24.518,
+    "contentHeight" : 8.903,
+    "margin" : {
+      "top" : 16.701,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]",
+    "entityName" : "BillToBodyLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 568.723,
+    "placementX" : 321.336,
+    "placementY" : 568.723,
+    "placementWidth" : 233.314,
+    "placementHeight" : 65.654,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 65.654,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]",
+    "entityName" : "BillToBodyHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 568.723,
+    "placementX" : 321.336,
+    "placementY" : 568.723,
+    "placementWidth" : 233.314,
+    "placementHeight" : 65.654,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 65.654,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]",
+    "entityName" : "BillToBody",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 568.723,
+    "placementX" : 321.336,
+    "placementY" : 568.723,
+    "placementWidth" : 233.314,
+    "placementHeight" : 55.711,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 55.711,
+    "margin" : {
+      "top" : 9.944,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToDisc[0]",
+    "entityName" : "BillToDisc",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 588.886,
+    "placementX" : 321.336,
+    "placementY" : 588.886,
+    "placementWidth" : 35.547,
+    "placementHeight" : 35.547,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 35.547,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToDisc[0]/BillToDisc[0]",
+    "entityName" : "BillToDisc",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToDisc[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 588.886,
+    "placementX" : 321.336,
+    "placementY" : 588.886,
+    "placementWidth" : 35.547,
+    "placementHeight" : 35.547,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 35.547,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToDisc[0]/BillToDisc[0]/BillToDiscInitials[0]",
+    "entityName" : "BillToDiscInitials",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToDisc[0]/BillToDisc[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 321.336,
+    "computedY" : 601.849,
+    "placementX" : 321.336,
+    "placementY" : 601.849,
+    "placementWidth" : 35.547,
+    "placementHeight" : 9.621,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.547,
+    "contentHeight" : 9.621,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]",
+    "entityName" : "BillToText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 383.967,
+    "computedY" : 568.723,
+    "placementX" : 383.967,
+    "placementY" : 568.723,
+    "placementWidth" : 111.801,
+    "placementHeight" : 55.711,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.801,
+    "contentHeight" : 55.711,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]/BillToName[0]",
+    "entityName" : "BillToName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 383.967,
+    "computedY" : 612.8,
+    "placementX" : 383.967,
+    "placementY" : 612.8,
+    "placementWidth" : 111.801,
+    "placementHeight" : 9.621,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.801,
+    "contentHeight" : 9.621,
+    "margin" : {
+      "top" : 2.013,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]/BillToAddressLine_0[1]",
+    "entityName" : "BillToAddressLine_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 383.967,
+    "computedY" : 597.5,
+    "placementX" : 383.967,
+    "placementY" : 597.5,
+    "placementWidth" : 64.208,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 64.208,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 5.789,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]/BillToAddressLine_1[2]",
+    "entityName" : "BillToAddressLine_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 383.967,
+    "computedY" : 582.829,
+    "placementX" : 383.967,
+    "placementY" : 582.829,
+    "placementWidth" : 70.19,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 70.19,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 5.159,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]/BillToAddressLine_2[3]",
+    "entityName" : "BillToAddressLine_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/PartiesRow[2]/BillToCard[1]/BillToBodyLayer[1]/BillToBodyHolder[0]/BillToBody[0]/BillToText[1]",
+    "childIndex" : 3,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 383.967,
+    "computedY" : 568.723,
+    "placementX" : 383.967,
+    "placementY" : 568.723,
+    "placementWidth" : 69.287,
+    "placementHeight" : 9.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.287,
+    "contentHeight" : 9.511,
+    "margin" : {
+      "top" : 4.595,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/LineItemsCard[3]",
+    "entityName" : "LineItemsCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 286.962,
+    "placementX" : 25.955,
+    "placementY" : 286.962,
+    "placementWidth" : 542.237,
+    "placementHeight" : 232.673,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 232.673,
+    "margin" : {
+      "top" : 15.799,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 12.413,
+      "bottom" : 0.0,
+      "left" : 12.413
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/LineItemsCard[3]/LineItems[0]",
+    "entityName" : "LineItems",
+    "entityKind" : "TableNode",
+    "parentPath" : "ObsidianInvoice[0]/LineItemsCard[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 38.368,
+    "computedY" : 286.962,
+    "placementX" : 38.368,
+    "placementY" : 286.962,
+    "placementWidth" : 517.41,
+    "placementHeight" : 232.673,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 517.41,
+    "contentHeight" : 232.673,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]",
+    "entityName" : "TotalsRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 197.162,
+    "placementX" : 25.955,
+    "placementY" : 197.162,
+    "placementWidth" : 542.237,
+    "placementHeight" : 89.799,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 89.799,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsSpacer[0]",
+    "entityName" : "TotalsSpacer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.955,
+    "computedY" : 286.962,
+    "placementX" : 25.955,
+    "placementY" : 286.962,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]",
+    "entityName" : "TotalsCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 307.794,
+    "computedY" : 197.162,
+    "placementX" : 307.794,
+    "placementY" : 197.162,
+    "placementWidth" : 260.398,
+    "placementHeight" : 82.464,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.398,
+    "contentHeight" : 82.464,
+    "margin" : {
+      "top" : 7.335,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 16.927,
+      "bottom" : 8.038,
+      "left" : 13.542
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]",
+    "entityName" : "TotalsRow_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 259.939,
+    "placementX" : 321.336,
+    "placementY" : 259.939,
+    "placementWidth" : 229.929,
+    "placementHeight" : 19.687,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 19.687,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]",
+    "entityName" : "TotalsRow_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 259.939,
+    "placementX" : 321.336,
+    "placementY" : 259.939,
+    "placementWidth" : 229.929,
+    "placementHeight" : 19.687,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 19.687,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "entityName" : "TotalsRow_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 259.939,
+    "placementX" : 321.336,
+    "placementY" : 259.939,
+    "placementWidth" : 229.929,
+    "placementHeight" : 10.119,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 10.119,
+    "margin" : {
+      "top" : 9.568,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]/TotalsRow_0Label[0]",
+    "entityName" : "TotalsRow_0Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 261.211,
+    "placementX" : 321.336,
+    "placementY" : 261.211,
+    "placementWidth" : 33.806,
+    "placementHeight" : 8.847,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 33.806,
+    "contentHeight" : 8.847,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]/TotalsRow_0Value[1]",
+    "entityName" : "TotalsRow_0Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 436.3,
+    "computedY" : 259.939,
+    "placementX" : 436.3,
+    "placementY" : 259.939,
+    "placementWidth" : 114.964,
+    "placementHeight" : 10.119,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 114.964,
+    "contentHeight" : 10.119,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]",
+    "entityName" : "TotalsRow_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 240.755,
+    "placementX" : 321.336,
+    "placementY" : 240.755,
+    "placementWidth" : 229.929,
+    "placementHeight" : 19.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 19.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]",
+    "entityName" : "TotalsRow_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 240.755,
+    "placementX" : 321.336,
+    "placementY" : 240.755,
+    "placementWidth" : 229.929,
+    "placementHeight" : 19.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 19.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "entityName" : "TotalsRow_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 240.755,
+    "placementX" : 321.336,
+    "placementY" : 240.755,
+    "placementWidth" : 229.929,
+    "placementHeight" : 10.119,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 10.119,
+    "margin" : {
+      "top" : 9.065,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]/TotalsRow_1Label[0]",
+    "entityName" : "TotalsRow_1Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 242.027,
+    "placementX" : 321.336,
+    "placementY" : 242.027,
+    "placementWidth" : 43.998,
+    "placementHeight" : 8.847,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 43.998,
+    "contentHeight" : 8.847,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]/TotalsRow_1Value[1]",
+    "entityName" : "TotalsRow_1Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 436.3,
+    "computedY" : 240.755,
+    "placementX" : 436.3,
+    "placementY" : 240.755,
+    "placementWidth" : 114.964,
+    "placementHeight" : 10.119,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 114.964,
+    "contentHeight" : 10.119,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalsRule[2]",
+    "entityName" : "TotalsRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 317.386,
+    "computedY" : 231.992,
+    "placementX" : 317.386,
+    "placementY" : 231.992,
+    "placementWidth" : 237.828,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 237.828,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 7.763,
+      "right" : -3.95,
+      "bottom" : 0.0,
+      "left" : -3.95
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]",
+    "entityName" : "TotalDueLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 205.2,
+    "placementX" : 321.336,
+    "placementY" : 205.2,
+    "placementWidth" : 229.929,
+    "placementHeight" : 26.791,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 26.791,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]",
+    "entityName" : "TotalDueHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 205.2,
+    "placementX" : 321.336,
+    "placementY" : 205.2,
+    "placementWidth" : 229.929,
+    "placementHeight" : 26.791,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 26.791,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "entityName" : "TotalDue",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 205.2,
+    "placementX" : 321.336,
+    "placementY" : 205.2,
+    "placementWidth" : 229.929,
+    "placementHeight" : 17.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.929,
+    "contentHeight" : 17.805,
+    "margin" : {
+      "top" : 8.986,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]/TotalDueLabel[0]",
+    "entityName" : "TotalDueLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 209.265,
+    "placementX" : 321.336,
+    "placementY" : 209.265,
+    "placementWidth" : 43.11,
+    "placementHeight" : 9.677,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 43.11,
+    "contentHeight" : 9.677,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]/TotalDueValue[1]",
+    "entityName" : "TotalDueValue",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/TotalsRow[4]/TotalsCard[1]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 436.3,
+    "computedY" : 205.2,
+    "placementX" : 436.3,
+    "placementY" : 205.2,
+    "placementWidth" : 114.964,
+    "placementHeight" : 17.805,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 114.964,
+    "contentHeight" : 17.805,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]",
+    "entityName" : "InfoCardsRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 65.386,
+    "placementX" : 25.955,
+    "placementY" : 65.386,
+    "placementWidth" : 542.237,
+    "placementHeight" : 123.313,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 123.313,
+    "margin" : {
+      "top" : 8.464,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]",
+    "entityName" : "NotesCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.955,
+    "computedY" : 65.976,
+    "placementX" : 25.955,
+    "placementY" : 65.976,
+    "placementWidth" : 260.398,
+    "placementHeight" : 122.723,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.398,
+    "contentHeight" : 122.723,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 13.542,
+      "bottom" : 16.981,
+      "left" : 13.542
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]",
+    "entityName" : "NotesHeadLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 28.212,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 28.212,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]",
+    "entityName" : "NotesHeadHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 28.212,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 28.212,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]",
+    "entityName" : "NotesHead",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 14.106,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]",
+    "entityName" : "NotesIcon",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]",
+    "entityName" : "Glyph_notes",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 14.106,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.106,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesIcon[0]/Glyph_notes[0]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 39.497,
+    "computedY" : 160.487,
+    "placementX" : 39.497,
+    "placementY" : 160.487,
+    "placementWidth" : 14.106,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.106,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]/NotesHeading[1]",
+    "entityName" : "NotesHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesHeadLayer[0]/NotesHeadHolder[0]/NotesHead[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 66.016,
+    "computedY" : 163.365,
+    "placementX" : 66.016,
+    "placementY" : 163.365,
+    "placementWidth" : 24.421,
+    "placementHeight" : 8.626,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 24.421,
+    "contentHeight" : 8.626,
+    "margin" : {
+      "top" : 2.602,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesBody[1]",
+    "entityName" : "NotesBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.497,
+    "computedY" : 82.957,
+    "placementX" : 39.497,
+    "placementY" : 82.957,
+    "placementWidth" : 216.942,
+    "placementHeight" : 77.53,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 216.942,
+    "contentHeight" : 77.53,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 26.519
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesBody[1]/NotesParagraph_0[0]",
+    "entityName" : "NotesParagraph_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesBody[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 66.016,
+    "computedY" : 118.786,
+    "placementX" : 66.016,
+    "placementY" : 118.786,
+    "placementWidth" : 190.423,
+    "placementHeight" : 33.796,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 190.423,
+    "contentHeight" : 33.796,
+    "margin" : {
+      "top" : 7.905,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesBody[1]/NotesParagraph_1[1]",
+    "entityName" : "NotesParagraph_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/NotesCard[0]/NotesBody[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 66.016,
+    "computedY" : 82.957,
+    "placementX" : 66.016,
+    "placementY" : 82.957,
+    "placementWidth" : 167.62,
+    "placementHeight" : 21.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 167.62,
+    "contentHeight" : 21.1,
+    "margin" : {
+      "top" : 14.729,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]",
+    "entityName" : "PaymentCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 307.794,
+    "computedY" : 65.386,
+    "placementX" : 307.794,
+    "placementY" : 65.386,
+    "placementWidth" : 260.398,
+    "placementHeight" : 123.313,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 260.398,
+    "contentHeight" : 123.313,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 13.542,
+      "bottom" : 12.312,
+      "left" : 13.542
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]",
+    "entityName" : "PaymentHeadLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 28.212,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 28.212,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]",
+    "entityName" : "PaymentHeadHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 28.212,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 28.212,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]",
+    "entityName" : "PaymentHead",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 233.314,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 14.106,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]",
+    "entityName" : "PaymentIcon",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]",
+    "entityName" : "Glyph_payment",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 26.519,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.519,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 14.106,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.106,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentIcon[0]/Glyph_payment[0]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 321.336,
+    "computedY" : 160.487,
+    "placementX" : 321.336,
+    "placementY" : 160.487,
+    "placementWidth" : 14.106,
+    "placementHeight" : 14.106,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.106,
+    "contentHeight" : 14.106,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]/PaymentHeading[1]",
+    "entityName" : "PaymentHeading",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentHeadLayer[0]/PaymentHeadHolder[0]/PaymentHead[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 347.855,
+    "computedY" : 163.365,
+    "placementX" : 347.855,
+    "placementY" : 163.365,
+    "placementWidth" : 66.611,
+    "placementHeight" : 8.626,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 66.611,
+    "contentHeight" : 8.626,
+    "margin" : {
+      "top" : 2.602,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentIntro[1]",
+    "entityName" : "PaymentIntro",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 133.795,
+    "placementX" : 321.336,
+    "placementY" : 133.795,
+    "placementWidth" : 104.986,
+    "placementHeight" : 19.351,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 104.986,
+    "contentHeight" : 19.351,
+    "margin" : {
+      "top" : 7.34,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]",
+    "entityName" : "PaymentFields",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 321.336,
+    "computedY" : 77.698,
+    "placementX" : 321.336,
+    "placementY" : 77.698,
+    "placementWidth" : 233.314,
+    "placementHeight" : 46.996,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 46.996,
+    "margin" : {
+      "top" : 9.101,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]",
+    "entityName" : "PaymentField_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 116.123,
+    "placementX" : 321.336,
+    "placementY" : 116.123,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]",
+    "entityName" : "PaymentField_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 116.123,
+    "placementX" : 321.336,
+    "placementY" : 116.123,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]/PaymentField_0[0]",
+    "entityName" : "PaymentField_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 116.123,
+    "placementX" : 321.336,
+    "placementY" : 116.123,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]/PaymentField_0[0]/PaymentField_0Label[0]",
+    "entityName" : "PaymentField_0Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]/PaymentField_0[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 116.51,
+    "placementX" : 321.336,
+    "placementY" : 116.51,
+    "placementWidth" : 22.857,
+    "placementHeight" : 8.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.857,
+    "contentHeight" : 8.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]/PaymentField_0[0]/PaymentField_0Value[1]",
+    "entityName" : "PaymentField_0Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_0Layer[0]/PaymentField_0Holder[0]/PaymentField_0[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 405.972,
+    "computedY" : 116.123,
+    "placementX" : 405.972,
+    "placementY" : 116.123,
+    "placementWidth" : 64.461,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 64.461,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]",
+    "entityName" : "PaymentField_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 103.315,
+    "placementX" : 321.336,
+    "placementY" : 103.315,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]",
+    "entityName" : "PaymentField_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 103.315,
+    "placementX" : 321.336,
+    "placementY" : 103.315,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]/PaymentField_1[0]",
+    "entityName" : "PaymentField_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 103.315,
+    "placementX" : 321.336,
+    "placementY" : 103.315,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]/PaymentField_1[0]/PaymentField_1Label[0]",
+    "entityName" : "PaymentField_1Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]/PaymentField_1[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 103.702,
+    "placementX" : 321.336,
+    "placementY" : 103.702,
+    "placementWidth" : 35.411,
+    "placementHeight" : 8.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 35.411,
+    "contentHeight" : 8.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]/PaymentField_1[0]/PaymentField_1Value[1]",
+    "entityName" : "PaymentField_1Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_1Layer[1]/PaymentField_1Holder[0]/PaymentField_1[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 405.972,
+    "computedY" : 103.315,
+    "placementX" : 405.972,
+    "placementY" : 103.315,
+    "placementWidth" : 38.123,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 38.123,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]",
+    "entityName" : "PaymentField_2Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 90.506,
+    "placementX" : 321.336,
+    "placementY" : 90.506,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]",
+    "entityName" : "PaymentField_2Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 90.506,
+    "placementX" : 321.336,
+    "placementY" : 90.506,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]/PaymentField_2[0]",
+    "entityName" : "PaymentField_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 90.506,
+    "placementX" : 321.336,
+    "placementY" : 90.506,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]/PaymentField_2[0]/PaymentField_2Label[0]",
+    "entityName" : "PaymentField_2Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]/PaymentField_2[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 90.893,
+    "placementX" : 321.336,
+    "placementY" : 90.893,
+    "placementWidth" : 60.29,
+    "placementHeight" : 8.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.29,
+    "contentHeight" : 8.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]/PaymentField_2[0]/PaymentField_2Value[1]",
+    "entityName" : "PaymentField_2Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_2Layer[2]/PaymentField_2Holder[0]/PaymentField_2[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 405.972,
+    "computedY" : 90.506,
+    "placementX" : 405.972,
+    "placementY" : 90.506,
+    "placementWidth" : 38.123,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 38.123,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]",
+    "entityName" : "PaymentField_3Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 321.336,
+    "computedY" : 77.698,
+    "placementX" : 321.336,
+    "placementY" : 77.698,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]",
+    "entityName" : "PaymentField_3Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 321.336,
+    "computedY" : 77.698,
+    "placementX" : 321.336,
+    "placementY" : 77.698,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]/PaymentField_3[0]",
+    "entityName" : "PaymentField_3",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 321.336,
+    "computedY" : 77.698,
+    "placementX" : 321.336,
+    "placementY" : 77.698,
+    "placementWidth" : 233.314,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 233.314,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]/PaymentField_3[0]/PaymentField_3Label[0]",
+    "entityName" : "PaymentField_3Label",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]/PaymentField_3[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 321.336,
+    "computedY" : 78.085,
+    "placementX" : 321.336,
+    "placementY" : 78.085,
+    "placementWidth" : 37.932,
+    "placementHeight" : 8.184,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 37.932,
+    "contentHeight" : 8.184,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]/PaymentField_3[0]/PaymentField_3Value[1]",
+    "entityName" : "PaymentField_3Value",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/InfoCardsRow[5]/PaymentCard[1]/PaymentFields[2]/PaymentField_3Layer[3]/PaymentField_3Holder[0]/PaymentField_3[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 405.972,
+    "computedY" : 77.698,
+    "placementX" : 405.972,
+    "placementY" : 77.698,
+    "placementWidth" : 61.247,
+    "placementHeight" : 8.571,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 61.247,
+    "contentHeight" : 8.571,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/FooterDivider[6]",
+    "entityName" : "FooterDivider",
+    "entityKind" : "LineNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 51.409,
+    "placementX" : 25.955,
+    "placementY" : 51.409,
+    "placementWidth" : 542.237,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 12.978,
+      "right" : 0.0,
+      "bottom" : 9.438,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]",
+    "entityName" : "ClosingBand",
+    "entityKind" : "RowNode",
+    "parentPath" : "ObsidianInvoice[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.955,
+    "computedY" : 16.015,
+    "placementX" : 25.955,
+    "placementY" : 16.015,
+    "placementWidth" : 542.237,
+    "placementHeight" : 25.955,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 542.237,
+    "contentHeight" : 25.955,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 3.385,
+      "bottom" : 0.0,
+      "left" : 2.821
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingDisc[0]",
+    "entityName" : "ClosingDisc",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.776,
+    "computedY" : 16.015,
+    "placementX" : 28.776,
+    "placementY" : 16.015,
+    "placementWidth" : 25.955,
+    "placementHeight" : 25.955,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 25.955,
+    "contentHeight" : 25.955,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingDisc[0]/ClosingDiscShape[0]",
+    "entityName" : "ClosingDiscShape",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingDisc[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.776,
+    "computedY" : 16.015,
+    "placementX" : 28.776,
+    "placementY" : 16.015,
+    "placementWidth" : 25.955,
+    "placementHeight" : 25.955,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 25.955,
+    "contentHeight" : 25.955,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingDisc[0]/ClosingDiscShape[0]/ClosingDiscInitials[0]",
+    "entityName" : "ClosingDiscInitials",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingDisc[0]/ClosingDiscShape[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.776,
+    "computedY" : 24.79,
+    "placementX" : 28.776,
+    "placementY" : 24.79,
+    "placementWidth" : 25.955,
+    "placementHeight" : 8.405,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 25.955,
+    "contentHeight" : 8.405,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingText[1]",
+    "entityName" : "ClosingText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 69.966,
+    "computedY" : 16.015,
+    "placementX" : 69.966,
+    "placementY" : 16.015,
+    "placementWidth" : 152.247,
+    "placementHeight" : 22.511,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 152.247,
+    "contentHeight" : 22.511,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingText[1]/ClosingSignOff[0]",
+    "entityName" : "ClosingSignOff",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingText[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 69.966,
+    "computedY" : 30.121,
+    "placementX" : 69.966,
+    "placementY" : 30.121,
+    "placementWidth" : 114.778,
+    "placementHeight" : 8.405,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 114.778,
+    "contentHeight" : 8.405,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingText[1]/ClosingDue[1]",
+    "entityName" : "ClosingDue",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingText[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 69.966,
+    "computedY" : 16.015,
+    "placementX" : 69.966,
+    "placementY" : 16.015,
+    "placementWidth" : 152.247,
+    "placementHeight" : 8.405,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 152.247,
+    "contentHeight" : 8.405,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingContact[2]",
+    "entityName" : "ClosingContact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 474.528,
+    "computedY" : 16.015,
+    "placementX" : 474.528,
+    "placementY" : 16.015,
+    "placementWidth" : 90.279,
+    "placementHeight" : 23.009,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.279,
+    "contentHeight" : 23.009,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingContact[2]/ClosingName[0]",
+    "entityName" : "ClosingName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingContact[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 474.528,
+    "computedY" : 30.121,
+    "placementX" : 474.528,
+    "placementY" : 30.121,
+    "placementWidth" : 90.279,
+    "placementHeight" : 8.903,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.279,
+    "contentHeight" : 8.903,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingContact[2]/ClosingContact[1]",
+    "entityName" : "ClosingContact",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ObsidianInvoice[0]/ClosingBand[7]/ClosingContact[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 474.528,
+    "computedY" : 16.015,
+    "placementX" : 474.528,
+    "placementY" : 16.015,
+    "placementWidth" : 90.279,
+    "placementHeight" : 8.903,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.279,
+    "contentHeight" : 8.903,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

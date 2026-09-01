@@ -19,6 +19,11 @@ import java.util.Objects;
  * @param addressLines the address lines, in order
  * @param emailLabel   the label printed before the email address
  * @param email        the recipient's email address
+ * @param registrationLabel  the label a printed registration is named by
+ *                           (e.g. {@code "VAT Number"}); blank when absent
+ * @param registrationNumber the registration itself, printed under the
+ *                           address rather than under the name; blank when
+ *                           absent
  */
 public record InvoiceRecipient(
         String heading,
@@ -26,7 +31,9 @@ public record InvoiceRecipient(
         String subline,
         List<String> addressLines,
         String emailLabel,
-        String email) {
+        String email,
+        String registrationLabel,
+        String registrationNumber) {
 
     /**
      * Normalizes optional fields and freezes the address lines.
@@ -38,5 +45,32 @@ public record InvoiceRecipient(
         addressLines = List.copyOf(Objects.requireNonNullElse(addressLines, List.of()));
         emailLabel = Objects.requireNonNullElse(emailLabel, "");
         email = Objects.requireNonNullElse(email, "");
+        registrationLabel = Objects.requireNonNullElse(registrationLabel, "");
+        registrationNumber = Objects.requireNonNullElse(registrationNumber, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the printed
+     * registration. The recipient simply carries none.
+     *
+     * @param heading      the block heading
+     * @param name         the recipient's name
+     * @param subline      the attention line under the name
+     * @param addressLines the address lines, in order
+     * @param emailLabel   the label printed before the email address
+     * @param email        the recipient's email address
+     */
+    public InvoiceRecipient(String heading, String name, String subline,
+                            List<String> addressLines, String emailLabel, String email) {
+        this(heading, name, subline, addressLines, emailLabel, email, "", "");
+    }
+
+    /**
+     * Whether this recipient prints a registration under its address.
+     *
+     * @return {@code true} when the number is set
+     */
+    public boolean hasRegistration() {
+        return !registrationNumber.isBlank();
     }
 }

@@ -1117,6 +1117,56 @@ function Render-ReadmeBanner {
     Note "banner: assets/readme/repository_showcase_render.png re-rendered"
 }
 
+function Update-KnowledgeSurfaces {
+    # Regenerates the tracked knowledge pack — knowledge/api/*.json|md plus
+    # knowledge/manifest.json — from THIS tree's compiled classes, then holds the
+    # claims index and the routing table to it, the same three commands the
+    # tag-time gate in release.yml and the develop CI job run. The surfaces
+    # embed the reactor version (extract-api reads it from the root pom.xml), so
+    # every version bump this script performs makes them stale in the very
+    # commit that ships the bump. The 2.3.0 cycle paid for that twice: the
+    # release bump left them naming the -SNAPSHOT (the tag-time --check would
+    # have refused the tag; the cut was finished with -SkipPush, a manual regen
+    # and an amend), and the -PostReleaseOnly bump left them naming the release,
+    # which kept develop's "Knowledge pack — API surface is current" job red
+    # until a follow-up commit regenerated them. So the regen runs between the
+    # bump and its commit, in BOTH modes.
+    #
+    # The claims / routing checks run as gates for the same reason the tag runs
+    # them: the pack ships as one unit, and a claim naming API no surface has,
+    # or a route whose anchor no longer resolves, would ride the commit
+    # unchallenged. (check-routes has no --check flag — routes have no
+    # generated counterpart, so validating them IS the check.)
+    #
+    # Callers guarantee the classes exist: a release cut arrives here after
+    # Step 5's clean verify built the reactor (and under -SkipVerify, Step 4's
+    # catalogue build already installed every module the extractor reads);
+    # -PostReleaseOnly arrives after its Step 2 installed the train, and the
+    # bump between touched only poms. If the tree is not built after all,
+    # extract-api refuses with the exact mvnw command to run — a loud stop,
+    # never a silently stale commit.
+    if (-not (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs'))) {
+        Note "skip (no knowledge/ pack in this tree)"
+        return
+    }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        # Skip rather than throw — a cut on a machine without Node is still a
+        # valid cut — but say it in red: the commit about to be created ships
+        # surfaces naming the PREVIOUS version, and the knowledge CI gate (on a
+        # tag, release.yml's --check) stays red until the regen lands.
+        Write-Host "    !! node not found on PATH — knowledge surfaces NOT regenerated." -ForegroundColor Red
+        Write-Host "    !! The tracked surfaces still name the pre-bump version, so the" -ForegroundColor Red
+        Write-Host "    !! knowledge CI gate (and, on a tag, release.yml) fails on this" -ForegroundColor Red
+        Write-Host "    !! commit. Stop before the push step (Ctrl+C, or -SkipPush on a" -ForegroundColor Red
+        Write-Host "    !! cut), install Node, then run and commit:" -ForegroundColor Red
+        Write-Host "    !!   node knowledge/tools/api-surface/extract-api.mjs --from-reactor" -ForegroundColor Red
+        return
+    }
+    Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor"
+    Run "node knowledge/tools/claims/check-claims.mjs --check"
+    Run "node knowledge/tools/routing/check-routes.mjs"
+}
+
 # ============================================================
 # Mode: -PostReleaseOnly
 # ============================================================
@@ -1159,6 +1209,23 @@ if ($PostReleaseOnly) {
         # during a -SNAPSHOT cycle. cut-release rewrites the snippets to the new version
         # at the NEXT release commit. Idempotent: if the poms are already on a -SNAPSHOT,
         # Get-NextSnapshotVersion returns $null and the bump is skipped.
+        # Before any pom moves: prove THIS tree can regenerate the surfaces the
+        # bump is about to invalidate. Step 2 builds the train only when the
+        # showcase actually flipped, so on a re-run — or after a -SkipShowcase
+        # cut plus a clean — Step 3c would otherwise be the first to notice the
+        # missing classes, throwing with 13 poms already rewritten and the
+        # clean-tree preflight blocking the retry. extract-api --check is the
+        # probe: it fails when the reactor slice is not built AND when the
+        # classes on disk no longer reproduce the committed surfaces (stale
+        # build), and it writes nothing. Skipped under the same conditions
+        # Update-KnowledgeSurfaces skips, so the probe and the regen agree.
+        $knowledgeToolingReady = (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs')) -and
+            $null -ne (Get-Command node -ErrorAction SilentlyContinue)
+        if ($nextSnapshot -and $knowledgeToolingReady) {
+            Step "2b" "Pre-bump gate: this tree can regenerate the knowledge surfaces"
+            Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check"
+        }
+
         $bumpedPoms = @()
         if ($nextSnapshot) {
             Step 3 "Open the next development line: bump train poms to $nextSnapshot"
@@ -1203,10 +1270,31 @@ if ($PostReleaseOnly) {
             }
         }
 
-        # Commit whatever changed: the bumped poms and/or the restored showcase files.
+        # The bump moved the version the knowledge surfaces embed, so regenerate
+        # and gate them before the commit that ships it — otherwise develop's
+        # knowledge gate goes red on surfaces still naming the release version.
+        # The classes the extractor reads are guaranteed: either Step 2's
+        # catalogue build just compiled the train, or the Step 2b probe proved
+        # the tree could already reproduce the surfaces — and the bump between
+        # touched only poms.
+        if ($bumpedPoms.Count -gt 0) {
+            Step "3c" "Regenerate the knowledge pack surfaces at $nextSnapshot"
+            Update-KnowledgeSurfaces
+        }
+
+        # Commit whatever changed: the bumped poms + regenerated knowledge
+        # surfaces, and/or the restored showcase files.
         $filesToCommit = @()
         if ($showcaseChanged -or $DryRun) { $filesToCommit += @($showcaseMetadata, 'web/examples.json') }
         $filesToCommit += $bumpedPoms
+        # The surfaces Step 3c regenerated at the new SNAPSHOT ride in the same
+        # commit as the bump they track — left behind, they are the follow-up
+        # commit the develop CI gate had to wait for on the 2.3.0 cycle. When
+        # the regen was skipped (no node / no knowledge pack), the directory is
+        # unchanged and the add stages nothing.
+        if ($bumpedPoms.Count -gt 0 -and (Test-Path (Join-Path $repoRoot 'knowledge'))) {
+            $filesToCommit += 'knowledge'
+        }
         if ($filesToCommit.Count -gt 0) {
             $parts = @()
             if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot" }
@@ -1518,6 +1606,16 @@ try {
         Step "5b" "Skipped japicmp gate (-SkipVerify)"
     }
 
+    # The knowledge surfaces embed the version Step 1 just moved, so they are
+    # regenerated here — after the verify (re)built the classes they read — and
+    # gated before anything is committed. Deliberately NOT skipped by
+    # -SkipVerify: the surfaces must move with the version either way, and
+    # Step 4's installs already compiled every module the extractor reads. Runs
+    # for pre-releases too — the tag gate re-checks the pack at whatever
+    # version the tagged poms carry.
+    Step "5c" "Regenerate the knowledge pack surfaces at $Version"
+    Update-KnowledgeSurfaces
+
     Step 6 "Commit release"
     $commitMsg = "Release v$Version"
     # Version/doc files always ship; the showcase files only when it was regenerated.
@@ -1583,6 +1681,15 @@ try {
         if (Test-Path (Join-Path $repoRoot $docPage)) {
             $commitFiles += $docPage
         }
+    }
+    # The knowledge surfaces embed the reactor version, so Step 5c regenerated
+    # them at $Version and they ship in the release commit — a pack still naming
+    # the -SNAPSHOT fails release.yml's tag-time --check after the tag is
+    # already pushed. Staged as a directory: the generated files are exactly
+    # what changed under it (Step 0 required a clean tree), and the add stages
+    # nothing when the regen was skipped.
+    if (Test-Path (Join-Path $repoRoot 'knowledge')) {
+        $commitFiles += 'knowledge'
     }
     # The README assets ride along whenever they were re-rendered — every final cut,
     # -SkipShowcase or not, since that flag is about the published site and these ship

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "targetLibrary": "GraphCompose",
-  "targetVersion": "2.3.x",
+  "targetVersion": "2.4.x",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "generatorVersion": "2.0.0",
   "note": "Stable contract. Provenance for a particular run (commit, timestamp, artifact digests) is written to target/knowledge/provenance.json and is deliberately not tracked.",

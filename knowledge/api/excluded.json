@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "verifiedAgainst": "2.3.0",
+  "verifiedAgainst": "2.4.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
   "count": 164,

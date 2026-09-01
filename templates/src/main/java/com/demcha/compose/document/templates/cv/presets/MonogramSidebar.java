@@ -893,7 +893,8 @@ public final class MonogramSidebar {
             return List.of();
         }
         List<ContactItem> items = new ArrayList<>();
-        addContactItem(items, "phone.svg", identity.contact().phone(), null);
+        addContactItem(items, "phone.svg", identity.contact().phone(),
+                ContactUri.telLink(identity.contact().phone()));
         String email = identity.contact().email();
         if (!email.isBlank()) {
             addContactItem(items, "email.svg", email,

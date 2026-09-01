@@ -120,6 +120,24 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **Seven CV presets make their telephone number dialable.** `EngineeringResume`,
+  `Executive`, `MintEditorial`, `MonogramSidebar`, `Panel`, `SidebarPortrait` and
+  `TimelineMinimal` already made an email and a profile reachable and printed the phone
+  as plain text, so a reader on a phone or a tablet could tap every contact on the sheet
+  except the one they would actually ring. Each now carries a `tel:` target built the
+  way the rest of the library builds it — a parenthesised trunk prefix is dropped,
+  because it is the digit a caller omits from abroad, while a parenthesised area code is
+  kept. `ContactUri` is the one place that conversion now lives.
+  <br><br>
+  Two of the seven printed the address and the number as one joined string, which cannot
+  carry a target on half of itself; they now set the two as separate runs of the same
+  paragraph, with the same glyphs in the same order. Nothing moves: every pixel baseline
+  in the suite passes untouched, because a link annotation is not ink.
+  <br><br>
+  A number inside a referee's free-form prose stays plain. An address in running text is
+  recognisable; a number is not — dates, reference numbers and amounts all look like
+  one — so only the structured contact field is linked.
+
 - **A violet SaaS invoice preset: `WorkspaceInvoice`.** A brand masthead over a short
   accent bar, a half-split issuer and metadata header, two addressed parties on filled
   discs, a service-line table whose marks sit on coloured tiles, a settlement row

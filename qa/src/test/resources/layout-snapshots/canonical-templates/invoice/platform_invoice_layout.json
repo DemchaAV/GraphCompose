@@ -1,0 +1,5777 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 544.119,
+    "innerHeight" : 814.941,
+    "margin" : {
+      "top" : 14.948,
+      "right" : 25.578,
+      "bottom" : 12.0,
+      "left" : 25.578
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "PlatformInvoice[0]",
+    "entityName" : "PlatformInvoice",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 25.578,
+    "computedY" : 14.039,
+    "placementX" : 25.578,
+    "placementY" : 14.039,
+    "placementWidth" : 544.119,
+    "placementHeight" : 812.902,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 812.902,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Masthead[0]",
+    "entityName" : "Masthead",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 788.076,
+    "placementX" : 25.578,
+    "placementY" : 788.076,
+    "placementWidth" : 544.119,
+    "placementHeight" : 38.866,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 38.866,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Masthead[0]/BrandLockup[0]",
+    "entityName" : "BrandLockup",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Masthead[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.578,
+    "computedY" : 802.924,
+    "placementX" : 25.578,
+    "placementY" : 802.924,
+    "placementWidth" : 76.894,
+    "placementHeight" : 24.017,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 76.894,
+    "contentHeight" : 24.017,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Masthead[0]/BrandLockup[0]/BrandWordmark[0]",
+    "entityName" : "BrandWordmark",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Masthead[0]/BrandLockup[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 802.924,
+    "placementX" : 25.578,
+    "placementY" : 802.924,
+    "placementWidth" : 76.894,
+    "placementHeight" : 15.945,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 76.894,
+    "contentHeight" : 15.945,
+    "margin" : {
+      "top" : 8.072,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Masthead[0]/InvoiceTitle[1]",
+    "entityName" : "InvoiceTitle",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 195.325,
+    "computedY" : 788.076,
+    "placementX" : 195.325,
+    "placementY" : 788.076,
+    "placementWidth" : 374.373,
+    "placementHeight" : 38.866,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 374.373,
+    "contentHeight" : 38.866,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]",
+    "entityName" : "IdentityRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 632.115,
+    "placementX" : 25.578,
+    "placementY" : 632.115,
+    "placementWidth" : 544.119,
+    "placementHeight" : 139.767,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 139.767,
+    "margin" : {
+      "top" : 16.194,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]",
+    "entityName" : "SupplierColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.578,
+    "computedY" : 635.055,
+    "placementX" : 25.578,
+    "placementY" : 635.055,
+    "placementWidth" : 127.15,
+    "placementHeight" : 136.827,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 127.15,
+    "contentHeight" : 136.827,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 3.488
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierName[0]",
+    "entityName" : "SupplierName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.066,
+    "computedY" : 755.937,
+    "placementX" : 29.066,
+    "placementY" : 755.937,
+    "placementWidth" : 101.037,
+    "placementHeight" : 15.945,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 101.037,
+    "contentHeight" : 15.945,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]",
+    "entityName" : "SupplierAddress",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.066,
+    "computedY" : 711.79,
+    "placementX" : 29.066,
+    "placementY" : 711.79,
+    "placementWidth" : 103.353,
+    "placementHeight" : 38.268,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.353,
+    "contentHeight" : 38.268,
+    "margin" : {
+      "top" : 5.88,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]/SupplierAddress_0[0]",
+    "entityName" : "SupplierAddress_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 738.099,
+    "placementX" : 29.066,
+    "placementY" : 738.099,
+    "placementWidth" : 82.774,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.774,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]/SupplierAddress_1[1]",
+    "entityName" : "SupplierAddress_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 724.944,
+    "placementX" : 29.066,
+    "placementY" : 724.944,
+    "placementWidth" : 103.353,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.353,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]/SupplierAddress_2[2]",
+    "entityName" : "SupplierAddress_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierAddress[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 711.79,
+    "placementX" : 29.066,
+    "placementY" : 711.79,
+    "placementWidth" : 32.139,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 32.139,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]",
+    "entityName" : "SupplierContact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.066,
+    "computedY" : 655.883,
+    "placementX" : 29.066,
+    "placementY" : 655.883,
+    "placementWidth" : 123.663,
+    "placementHeight" : 42.653,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 123.663,
+    "contentHeight" : 42.653,
+    "margin" : {
+      "top" : 13.254,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]/SupplierContactWebsite[0]",
+    "entityName" : "SupplierContactWebsite",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 686.577,
+    "placementX" : 29.066,
+    "placementY" : 686.577,
+    "placementWidth" : 89.61,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 89.61,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]/SupplierContactEmail[1]",
+    "entityName" : "SupplierContactEmail",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 671.23,
+    "placementX" : 29.066,
+    "placementY" : 671.23,
+    "placementWidth" : 123.663,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 123.663,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]/SupplierContactPhone[2]",
+    "entityName" : "SupplierContactPhone",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierContact[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.066,
+    "computedY" : 655.883,
+    "placementX" : 29.066,
+    "placementY" : 655.883,
+    "placementWidth" : 92.002,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 92.002,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]/SupplierTaxId[3]",
+    "entityName" : "SupplierTaxId",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/SupplierColumn[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.066,
+    "computedY" : 635.055,
+    "placementX" : 29.066,
+    "placementY" : 635.055,
+    "placementWidth" : 119.039,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.039,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 8.869,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/IdentityColumnDivider[1]",
+    "entityName" : "IdentityColumnDivider",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 294.731,
+    "computedY" : 632.115,
+    "placementX" : 294.731,
+    "placementY" : 632.115,
+    "placementWidth" : 0.581,
+    "placementHeight" : 139.767,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.581,
+    "contentHeight" : 139.767,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/IdentityColumnDivider[1]/IdentityColumnDivider[0]",
+    "entityName" : "IdentityColumnDivider",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/IdentityColumnDivider[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 294.731,
+    "computedY" : 632.115,
+    "placementX" : 294.731,
+    "placementY" : 632.115,
+    "placementWidth" : 1.0,
+    "placementHeight" : 139.767,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 139.767,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "entityName" : "MetaColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 295.313,
+    "computedY" : 638.332,
+    "placementX" : 295.313,
+    "placementY" : 638.332,
+    "placementWidth" : 274.385,
+    "placementHeight" : 130.908,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 274.385,
+    "contentHeight" : 130.908,
+    "margin" : {
+      "top" : 2.641,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 37.786
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]",
+    "entityName" : "MetaRow_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 757.282,
+    "placementX" : 333.099,
+    "placementY" : 757.282,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]",
+    "entityName" : "MetaRow_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 757.282,
+    "placementX" : 333.099,
+    "placementY" : 757.282,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "entityName" : "MetaRow_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 757.282,
+    "placementX" : 333.099,
+    "placementY" : 757.282,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]/MetaRow_0[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 757.282,
+    "placementX" : 333.099,
+    "placementY" : 757.282,
+    "placementWidth" : 71.224,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.224,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]/MetaRow_0[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_0Layer[0]/MetaRow_0Holder[0]/MetaRow_0[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 757.282,
+    "placementX" : 434.83,
+    "placementY" : 757.282,
+    "placementWidth" : 106.203,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.203,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]",
+    "entityName" : "MetaRow_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 737.457,
+    "placementX" : 333.099,
+    "placementY" : 737.457,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]",
+    "entityName" : "MetaRow_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 737.457,
+    "placementX" : 333.099,
+    "placementY" : 737.457,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "entityName" : "MetaRow_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 737.457,
+    "placementX" : 333.099,
+    "placementY" : 737.457,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]/MetaRow_1[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 737.457,
+    "placementX" : 333.099,
+    "placementY" : 737.457,
+    "placementWidth" : 56.714,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.714,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]/MetaRow_1[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_1Layer[1]/MetaRow_1Holder[0]/MetaRow_1[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 737.457,
+    "placementX" : 434.83,
+    "placementY" : 737.457,
+    "placementWidth" : 52.03,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 52.03,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]",
+    "entityName" : "MetaRow_2Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 717.632,
+    "placementX" : 333.099,
+    "placementY" : 717.632,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]",
+    "entityName" : "MetaRow_2Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 717.632,
+    "placementX" : 333.099,
+    "placementY" : 717.632,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "entityName" : "MetaRow_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 717.632,
+    "placementX" : 333.099,
+    "placementY" : 717.632,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]/MetaRow_2[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 717.632,
+    "placementX" : 333.099,
+    "placementY" : 717.632,
+    "placementWidth" : 42.374,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.374,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]/MetaRow_2[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_2Layer[2]/MetaRow_2Holder[0]/MetaRow_2[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 717.632,
+    "placementX" : 434.83,
+    "placementY" : 717.632,
+    "placementWidth" : 66.68,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 66.68,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]",
+    "entityName" : "MetaRow_3Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 697.807,
+    "placementX" : 333.099,
+    "placementY" : 697.807,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]",
+    "entityName" : "MetaRow_3Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 697.807,
+    "placementX" : 333.099,
+    "placementY" : 697.807,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "entityName" : "MetaRow_3",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 697.807,
+    "placementX" : 333.099,
+    "placementY" : 697.807,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]/MetaRow_3[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 697.807,
+    "placementX" : 333.099,
+    "placementY" : 697.807,
+    "placementWidth" : 78.907,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 78.907,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]/MetaRow_3[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_3Layer[3]/MetaRow_3Holder[0]/MetaRow_3[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 697.807,
+    "placementX" : 434.83,
+    "placementY" : 697.807,
+    "placementWidth" : 108.475,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.475,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]",
+    "entityName" : "MetaRow_4Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 677.982,
+    "placementX" : 333.099,
+    "placementY" : 677.982,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]",
+    "entityName" : "MetaRow_4Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 677.982,
+    "placementX" : 333.099,
+    "placementY" : 677.982,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]/MetaRow_4[0]",
+    "entityName" : "MetaRow_4",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 677.982,
+    "placementX" : 333.099,
+    "placementY" : 677.982,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]/MetaRow_4[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]/MetaRow_4[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 677.982,
+    "placementX" : 333.099,
+    "placementY" : 677.982,
+    "placementWidth" : 60.242,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.242,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]/MetaRow_4[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_4Layer[4]/MetaRow_4Holder[0]/MetaRow_4[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 677.982,
+    "placementX" : 434.83,
+    "placementY" : 677.982,
+    "placementWidth" : 103.841,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.841,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]",
+    "entityName" : "MetaRow_5Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 658.157,
+    "placementX" : 333.099,
+    "placementY" : 658.157,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]",
+    "entityName" : "MetaRow_5Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 658.157,
+    "placementX" : 333.099,
+    "placementY" : 658.157,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]/MetaRow_5[0]",
+    "entityName" : "MetaRow_5",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 658.157,
+    "placementX" : 333.099,
+    "placementY" : 658.157,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]/MetaRow_5[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]/MetaRow_5[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 658.157,
+    "placementX" : 333.099,
+    "placementY" : 658.157,
+    "placementWidth" : 71.154,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.154,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]/MetaRow_5[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_5Layer[5]/MetaRow_5Holder[0]/MetaRow_5[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 658.157,
+    "placementX" : 434.83,
+    "placementY" : 658.157,
+    "placementWidth" : 51.063,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 51.063,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]",
+    "entityName" : "MetaRow_6Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 333.099,
+    "computedY" : 638.332,
+    "placementX" : 333.099,
+    "placementY" : 638.332,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]",
+    "entityName" : "MetaRow_6Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 333.099,
+    "computedY" : 638.332,
+    "placementX" : 333.099,
+    "placementY" : 638.332,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]/MetaRow_6[0]",
+    "entityName" : "MetaRow_6",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 333.099,
+    "computedY" : 638.332,
+    "placementX" : 333.099,
+    "placementY" : 638.332,
+    "placementWidth" : 236.599,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 236.599,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]/MetaRow_6[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]/MetaRow_6[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 333.099,
+    "computedY" : 638.332,
+    "placementX" : 333.099,
+    "placementY" : 638.332,
+    "placementWidth" : 42.483,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.483,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]/MetaRow_6[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/IdentityRow[1]/MetaColumn[2]/MetaRow_6Layer[6]/MetaRow_6Holder[0]/MetaRow_6[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 434.83,
+    "computedY" : 638.332,
+    "placementX" : 434.83,
+    "placementY" : 638.332,
+    "placementWidth" : 18.257,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 18.257,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/IdentityRule[2]",
+    "entityName" : "IdentityRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.485,
+    "computedY" : 617.412,
+    "placementX" : 28.485,
+    "placementY" : 617.412,
+    "placementWidth" : 537.143,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 537.143,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 13.703,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 2.907
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]",
+    "entityName" : "PartiesRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 500.666,
+    "placementX" : 25.578,
+    "placementY" : 500.666,
+    "placementWidth" : 544.119,
+    "placementHeight" : 104.14,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 104.14,
+    "margin" : {
+      "top" : 12.606,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]",
+    "entityName" : "BillToColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.578,
+    "computedY" : 506.167,
+    "placementX" : 25.578,
+    "placementY" : 506.167,
+    "placementWidth" : 269.153,
+    "placementHeight" : 98.639,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 269.153,
+    "contentHeight" : 98.639,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 2.907
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]",
+    "entityName" : "BillToLabelLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.485,
+    "computedY" : 586.17,
+    "placementX" : 28.485,
+    "placementY" : 586.17,
+    "placementWidth" : 266.246,
+    "placementHeight" : 18.636,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 266.246,
+    "contentHeight" : 18.636,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]",
+    "entityName" : "BillToLabelHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 28.485,
+    "computedY" : 586.17,
+    "placementX" : 28.485,
+    "placementY" : 586.17,
+    "placementWidth" : 266.246,
+    "placementHeight" : 18.636,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 266.246,
+    "contentHeight" : 18.636,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]",
+    "entityName" : "BillToLabel",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 28.485,
+    "computedY" : 586.17,
+    "placementX" : 28.485,
+    "placementY" : 586.17,
+    "placementWidth" : 266.246,
+    "placementHeight" : 18.636,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 266.246,
+    "contentHeight" : 18.636,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToDisc[0]",
+    "entityName" : "BillToDisc",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 28.485,
+    "computedY" : 586.17,
+    "placementX" : 28.485,
+    "placementY" : 586.17,
+    "placementWidth" : 18.636,
+    "placementHeight" : 18.636,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 18.636,
+    "contentHeight" : 18.636,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToDisc[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToDisc[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 32.72,
+    "computedY" : 590.406,
+    "placementX" : 32.72,
+    "placementY" : 590.406,
+    "placementWidth" : 10.165,
+    "placementHeight" : 10.165,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 10.165,
+    "contentHeight" : 10.165,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToDisc[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToDisc[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 32.72,
+    "computedY" : 590.406,
+    "placementX" : 32.72,
+    "placementY" : 590.406,
+    "placementWidth" : 10.165,
+    "placementHeight" : 10.165,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 10.165,
+    "contentHeight" : 10.165,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]/BillToLabelText[1]",
+    "entityName" : "BillToLabelText",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToLabelLayer[0]/BillToLabelHolder[0]/BillToLabel[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 61.039,
+    "computedY" : 589.509,
+    "placementX" : 61.039,
+    "placementY" : 589.509,
+    "placementWidth" : 34.212,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 34.212,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]",
+    "entityName" : "BillToBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.485,
+    "computedY" : 506.167,
+    "placementX" : 28.485,
+    "placementY" : 506.167,
+    "placementWidth" : 143.341,
+    "placementHeight" : 80.003,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 143.341,
+    "contentHeight" : 80.003,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 32.554
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToName[0]",
+    "entityName" : "BillToName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 61.039,
+    "computedY" : 572.069,
+    "placementX" : 61.039,
+    "placementY" : 572.069,
+    "placementWidth" : 85.159,
+    "placementHeight" : 12.955,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.159,
+    "contentHeight" : 12.955,
+    "margin" : {
+      "top" : 1.146,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]",
+    "entityName" : "BillToAddress",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 61.039,
+    "computedY" : 528.639,
+    "placementX" : 61.039,
+    "placementY" : 528.639,
+    "placementWidth" : 90.597,
+    "placementHeight" : 39.693,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.597,
+    "contentHeight" : 39.693,
+    "margin" : {
+      "top" : 3.737,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]/BillToAddress_0[0]",
+    "entityName" : "BillToAddress_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 61.039,
+    "computedY" : 556.373,
+    "placementX" : 61.039,
+    "placementY" : 556.373,
+    "placementWidth" : 61.258,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 61.258,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]/BillToAddress_1[1]",
+    "entityName" : "BillToAddress_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 61.039,
+    "computedY" : 542.506,
+    "placementX" : 61.039,
+    "placementY" : 542.506,
+    "placementWidth" : 90.597,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.597,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]/BillToAddress_2[2]",
+    "entityName" : "BillToAddress_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToAddress[1]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 61.039,
+    "computedY" : 528.639,
+    "placementX" : 61.039,
+    "placementY" : 528.639,
+    "placementWidth" : 69.191,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.191,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]/BillToRegistration[2]",
+    "entityName" : "BillToRegistration",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/BillToColumn[0]/BillToBody[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 61.039,
+    "computedY" : 506.167,
+    "placementX" : 61.039,
+    "placementY" : 506.167,
+    "placementWidth" : 110.787,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 110.787,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 10.514,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/PartyColumnDivider[1]",
+    "entityName" : "PartyColumnDivider",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 294.731,
+    "computedY" : 500.666,
+    "placementX" : 294.731,
+    "placementY" : 500.666,
+    "placementWidth" : 0.581,
+    "placementHeight" : 104.14,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.581,
+    "contentHeight" : 104.14,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/PartyColumnDivider[1]/PartyColumnDivider[0]",
+    "entityName" : "PartyColumnDivider",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/PartyColumnDivider[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 294.731,
+    "computedY" : 500.666,
+    "placementX" : 294.731,
+    "placementY" : 500.666,
+    "placementWidth" : 1.0,
+    "placementHeight" : 101.399,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.0,
+    "contentHeight" : 101.399,
+    "margin" : {
+      "top" : 2.741,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]",
+    "entityName" : "ShipToColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 295.313,
+    "computedY" : 517.031,
+    "placementX" : 295.313,
+    "placementY" : 517.031,
+    "placementWidth" : 274.385,
+    "placementHeight" : 87.775,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 274.385,
+    "contentHeight" : 87.775,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 18.602
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]",
+    "entityName" : "ShipToLabelLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 313.915,
+    "computedY" : 588.429,
+    "placementX" : 313.915,
+    "placementY" : 588.429,
+    "placementWidth" : 255.782,
+    "placementHeight" : 16.377,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 255.782,
+    "contentHeight" : 16.377,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]",
+    "entityName" : "ShipToLabelHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 313.915,
+    "computedY" : 588.429,
+    "placementX" : 313.915,
+    "placementY" : 588.429,
+    "placementWidth" : 255.782,
+    "placementHeight" : 16.377,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 255.782,
+    "contentHeight" : 16.377,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]",
+    "entityName" : "ShipToLabel",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 313.915,
+    "computedY" : 588.429,
+    "placementX" : 313.915,
+    "placementY" : 588.429,
+    "placementWidth" : 255.782,
+    "placementHeight" : 16.377,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 255.782,
+    "contentHeight" : 16.377,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 313.915,
+    "computedY" : 588.429,
+    "placementX" : 313.915,
+    "placementY" : 588.429,
+    "placementWidth" : 16.377,
+    "placementHeight" : 16.377,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 16.377,
+    "contentHeight" : 16.377,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 313.915,
+    "computedY" : 588.429,
+    "placementX" : 313.915,
+    "placementY" : 588.429,
+    "placementWidth" : 16.377,
+    "placementHeight" : 16.377,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 16.377,
+    "contentHeight" : 16.377,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]/ShipToLabelText[1]",
+    "entityName" : "ShipToLabelText",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToLabelLayer[0]/ShipToLabelHolder[0]/ShipToLabel[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 344.725,
+    "computedY" : 590.638,
+    "placementX" : 344.725,
+    "placementY" : 590.638,
+    "placementWidth" : 34.77,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 34.77,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]",
+    "entityName" : "ShipToBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 313.915,
+    "computedY" : 517.031,
+    "placementX" : 313.915,
+    "placementY" : 517.031,
+    "placementWidth" : 128.782,
+    "placementHeight" : 71.398,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 128.782,
+    "contentHeight" : 71.398,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 30.81
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToName[0]",
+    "entityName" : "ShipToName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 344.725,
+    "computedY" : 574.328,
+    "placementX" : 344.725,
+    "placementY" : 574.328,
+    "placementWidth" : 85.159,
+    "placementHeight" : 12.955,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.159,
+    "contentHeight" : 12.955,
+    "margin" : {
+      "top" : 1.146,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]",
+    "entityName" : "ShipToAddress",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 344.725,
+    "computedY" : 517.031,
+    "placementX" : 344.725,
+    "placementY" : 517.031,
+    "placementWidth" : 97.971,
+    "placementHeight" : 53.56,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 97.971,
+    "contentHeight" : 53.56,
+    "margin" : {
+      "top" : 3.737,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]/ShipToAddress_0[0]",
+    "entityName" : "ShipToAddress_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 344.725,
+    "computedY" : 558.632,
+    "placementX" : 344.725,
+    "placementY" : 558.632,
+    "placementWidth" : 55.737,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 55.737,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]/ShipToAddress_1[1]",
+    "entityName" : "ShipToAddress_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 344.725,
+    "computedY" : 544.765,
+    "placementX" : 344.725,
+    "placementY" : 544.765,
+    "placementWidth" : 97.971,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 97.971,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]/ShipToAddress_2[2]",
+    "entityName" : "ShipToAddress_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 344.725,
+    "computedY" : 530.898,
+    "placementX" : 344.725,
+    "placementY" : 530.898,
+    "placementWidth" : 90.597,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.597,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]/ShipToAddress_3[3]",
+    "entityName" : "ShipToAddress_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/PartiesRow[3]/ShipToColumn[2]/ShipToBody[1]/ShipToAddress[1]",
+    "childIndex" : 3,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 344.725,
+    "computedY" : 517.031,
+    "placementX" : 344.725,
+    "placementY" : 517.031,
+    "placementWidth" : 69.191,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.191,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/LineItems[4]",
+    "entityName" : "LineItems",
+    "entityKind" : "TableNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 274.395,
+    "placementX" : 25.578,
+    "placementY" : 274.395,
+    "placementWidth" : 544.119,
+    "placementHeight" : 208.732,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 208.732,
+    "margin" : {
+      "top" : 17.539,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]",
+    "entityName" : "Settlement",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 99.7,
+    "placementX" : 25.578,
+    "placementY" : 99.7,
+    "placementWidth" : 544.119,
+    "placementHeight" : 168.117,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 168.117,
+    "margin" : {
+      "top" : 6.577,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]",
+    "entityName" : "PaymentPanel",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.578,
+    "computedY" : 99.7,
+    "placementX" : 25.578,
+    "placementY" : 99.7,
+    "placementWidth" : 241.249,
+    "placementHeight" : 168.117,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 168.117,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]",
+    "entityName" : "PaymentHeadingLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 244.398,
+    "placementX" : 25.578,
+    "placementY" : 244.398,
+    "placementWidth" : 241.249,
+    "placementHeight" : 23.419,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 23.419,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]",
+    "entityName" : "PaymentHeadingHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.578,
+    "computedY" : 244.398,
+    "placementX" : 25.578,
+    "placementY" : 244.398,
+    "placementWidth" : 241.249,
+    "placementHeight" : 23.419,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 23.419,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]",
+    "entityName" : "PaymentHeading",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 25.578,
+    "computedY" : 244.398,
+    "placementX" : 25.578,
+    "placementY" : 244.398,
+    "placementWidth" : 241.249,
+    "placementHeight" : 23.419,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 23.419,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 9.866,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 13.952
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 39.53,
+    "computedY" : 244.398,
+    "placementX" : 39.53,
+    "placementY" : 244.398,
+    "placementWidth" : 13.553,
+    "placementHeight" : 13.553,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 13.553,
+    "contentHeight" : 13.553,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 39.53,
+    "computedY" : 244.398,
+    "placementX" : 39.53,
+    "placementY" : 244.398,
+    "placementWidth" : 13.553,
+    "placementHeight" : 13.553,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 13.553,
+    "contentHeight" : 13.553,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]/PaymentHeadingText[1]",
+    "entityName" : "PaymentHeadingText",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentHeadingLayer[0]/PaymentHeadingHolder[0]/PaymentHeading[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 68.596,
+    "computedY" : 245.196,
+    "placementX" : 68.596,
+    "placementY" : 245.196,
+    "placementWidth" : 108.395,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.395,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "entityName" : "PaymentRows",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 145.097,
+    "placementX" : 25.578,
+    "placementY" : 145.097,
+    "placementWidth" : 241.249,
+    "placementHeight" : 94.219,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 94.219,
+    "margin" : {
+      "top" : 5.082,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 13.952,
+      "bottom" : 0.0,
+      "left" : 14.533
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]",
+    "entityName" : "PaymentRow_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 228.354,
+    "placementX" : 40.111,
+    "placementY" : 228.354,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]",
+    "entityName" : "PaymentRow_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 228.354,
+    "placementX" : 40.111,
+    "placementY" : 228.354,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]/PaymentRow_0[0]",
+    "entityName" : "PaymentRow_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 228.354,
+    "placementX" : 40.111,
+    "placementY" : 228.354,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]/PaymentRow_0[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]/PaymentRow_0[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 228.354,
+    "placementX" : 40.111,
+    "placementY" : 228.354,
+    "placementWidth" : 48.087,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 48.087,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]/PaymentRow_0[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_0Layer[0]/PaymentRow_0Holder[0]/PaymentRow_0[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 228.354,
+    "placementX" : 144.75,
+    "placementY" : 228.354,
+    "placementWidth" : 92.657,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 92.657,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]",
+    "entityName" : "PaymentRow_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 216.46,
+    "placementX" : 40.111,
+    "placementY" : 216.46,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]",
+    "entityName" : "PaymentRow_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 216.46,
+    "placementX" : 40.111,
+    "placementY" : 216.46,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]/PaymentRow_1[0]",
+    "entityName" : "PaymentRow_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 216.46,
+    "placementX" : 40.111,
+    "placementY" : 216.46,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]/PaymentRow_1[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]/PaymentRow_1[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 216.46,
+    "placementX" : 40.111,
+    "placementY" : 216.46,
+    "placementWidth" : 61.36,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 61.36,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]/PaymentRow_1[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_1Layer[1]/PaymentRow_1Holder[0]/PaymentRow_1[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 216.46,
+    "placementX" : 144.75,
+    "placementY" : 216.46,
+    "placementWidth" : 67.481,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 67.481,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]",
+    "entityName" : "PaymentRow_2Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 204.566,
+    "placementX" : 40.111,
+    "placementY" : 204.566,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]",
+    "entityName" : "PaymentRow_2Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 204.566,
+    "placementX" : 40.111,
+    "placementY" : 204.566,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]/PaymentRow_2[0]",
+    "entityName" : "PaymentRow_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 204.566,
+    "placementX" : 40.111,
+    "placementY" : 204.566,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]/PaymentRow_2[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]/PaymentRow_2[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 204.566,
+    "placementX" : 40.111,
+    "placementY" : 204.566,
+    "placementWidth" : 69.902,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.902,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]/PaymentRow_2[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_2Layer[2]/PaymentRow_2Holder[0]/PaymentRow_2[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 204.566,
+    "placementX" : 144.75,
+    "placementY" : 204.566,
+    "placementWidth" : 45.136,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 45.136,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]",
+    "entityName" : "PaymentRow_3Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 192.672,
+    "placementX" : 40.111,
+    "placementY" : 192.672,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]",
+    "entityName" : "PaymentRow_3Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 192.672,
+    "placementX" : 40.111,
+    "placementY" : 192.672,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]/PaymentRow_3[0]",
+    "entityName" : "PaymentRow_3",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 192.672,
+    "placementX" : 40.111,
+    "placementY" : 192.672,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]/PaymentRow_3[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]/PaymentRow_3[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 192.672,
+    "placementX" : 40.111,
+    "placementY" : 192.672,
+    "placementWidth" : 51.412,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 51.412,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]/PaymentRow_3[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_3Layer[3]/PaymentRow_3Holder[0]/PaymentRow_3[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 192.672,
+    "placementX" : 144.75,
+    "placementY" : 192.672,
+    "placementWidth" : 42.277,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.277,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]",
+    "entityName" : "PaymentRow_4Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 180.778,
+    "placementX" : 40.111,
+    "placementY" : 180.778,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]",
+    "entityName" : "PaymentRow_4Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 180.778,
+    "placementX" : 40.111,
+    "placementY" : 180.778,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]/PaymentRow_4[0]",
+    "entityName" : "PaymentRow_4",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 180.778,
+    "placementX" : 40.111,
+    "placementY" : 180.778,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]/PaymentRow_4[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]/PaymentRow_4[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 180.778,
+    "placementX" : 40.111,
+    "placementY" : 180.778,
+    "placementWidth" : 64.896,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 64.896,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]/PaymentRow_4[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_4Layer[4]/PaymentRow_4Holder[0]/PaymentRow_4[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 180.778,
+    "placementX" : 144.75,
+    "placementY" : 180.778,
+    "placementWidth" : 23.176,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 23.176,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]",
+    "entityName" : "PaymentRow_5Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 168.884,
+    "placementX" : 40.111,
+    "placementY" : 168.884,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]",
+    "entityName" : "PaymentRow_5Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 168.884,
+    "placementX" : 40.111,
+    "placementY" : 168.884,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]/PaymentRow_5[0]",
+    "entityName" : "PaymentRow_5",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 168.884,
+    "placementX" : 40.111,
+    "placementY" : 168.884,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]/PaymentRow_5[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]/PaymentRow_5[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 168.884,
+    "placementX" : 40.111,
+    "placementY" : 168.884,
+    "placementWidth" : 77.849,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.849,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]/PaymentRow_5[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_5Layer[5]/PaymentRow_5Holder[0]/PaymentRow_5[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 168.884,
+    "placementX" : 144.75,
+    "placementY" : 168.884,
+    "placementWidth" : 14.954,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.954,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]",
+    "entityName" : "PaymentRow_6Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 156.99,
+    "placementX" : 40.111,
+    "placementY" : 156.99,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]",
+    "entityName" : "PaymentRow_6Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 156.99,
+    "placementX" : 40.111,
+    "placementY" : 156.99,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]/PaymentRow_6[0]",
+    "entityName" : "PaymentRow_6",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 156.99,
+    "placementX" : 40.111,
+    "placementY" : 156.99,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]/PaymentRow_6[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]/PaymentRow_6[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 156.99,
+    "placementX" : 40.111,
+    "placementY" : 156.99,
+    "placementWidth" : 57.414,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 57.414,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]/PaymentRow_6[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_6Layer[6]/PaymentRow_6Holder[0]/PaymentRow_6[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 156.99,
+    "placementX" : 144.75,
+    "placementY" : 156.99,
+    "placementWidth" : 75.173,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.173,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]",
+    "entityName" : "PaymentRow_7Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]",
+    "childIndex" : 7,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 40.111,
+    "computedY" : 145.097,
+    "placementX" : 40.111,
+    "placementY" : 145.097,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]",
+    "entityName" : "PaymentRow_7Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 40.111,
+    "computedY" : 145.097,
+    "placementX" : 40.111,
+    "placementY" : 145.097,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]/PaymentRow_7[0]",
+    "entityName" : "PaymentRow_7",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 40.111,
+    "computedY" : 145.097,
+    "placementX" : 40.111,
+    "placementY" : 145.097,
+    "placementWidth" : 212.765,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 212.765,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]/PaymentRow_7[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]/PaymentRow_7[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 40.111,
+    "computedY" : 145.097,
+    "placementX" : 40.111,
+    "placementY" : 145.097,
+    "placementWidth" : 73.309,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 73.309,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]/PaymentRow_7[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentRows[1]/PaymentRow_7Layer[7]/PaymentRow_7Holder[0]/PaymentRow_7[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 144.75,
+    "computedY" : 145.097,
+    "placementX" : 144.75,
+    "placementY" : 145.097,
+    "placementWidth" : 93.077,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 93.077,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentPanelRule[2]",
+    "entityName" : "PaymentPanelRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 134.779,
+    "placementX" : 25.578,
+    "placementY" : 134.779,
+    "placementWidth" : 241.249,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 9.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]",
+    "entityName" : "PaymentNoteLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 99.7,
+    "placementX" : 25.578,
+    "placementY" : 99.7,
+    "placementWidth" : 241.249,
+    "placementHeight" : 35.079,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 35.079,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]",
+    "entityName" : "PaymentNoteHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.578,
+    "computedY" : 99.7,
+    "placementX" : 25.578,
+    "placementY" : 99.7,
+    "placementWidth" : 241.249,
+    "placementHeight" : 35.079,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 35.079,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]",
+    "entityName" : "PaymentNote",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 25.578,
+    "computedY" : 99.7,
+    "placementX" : 25.578,
+    "placementY" : 99.7,
+    "placementWidth" : 241.249,
+    "placementHeight" : 35.079,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.249,
+    "contentHeight" : 35.079,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.029,
+      "right" : 0.0,
+      "bottom" : 6.029,
+      "left" : 13.952
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 39.53,
+    "computedY" : 115.761,
+    "placementX" : 39.53,
+    "placementY" : 115.761,
+    "placementWidth" : 12.988,
+    "placementHeight" : 12.988,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 12.988,
+    "contentHeight" : 12.988,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 39.53,
+    "computedY" : 115.761,
+    "placementX" : 39.53,
+    "placementY" : 115.761,
+    "placementWidth" : 12.988,
+    "placementHeight" : 12.988,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 12.988,
+    "contentHeight" : 12.988,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/PaymentNoteText[1]",
+    "entityName" : "PaymentNoteText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 62.202,
+    "computedY" : 105.729,
+    "placementX" : 62.202,
+    "placementY" : 105.729,
+    "placementWidth" : 119.195,
+    "placementHeight" : 23.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.195,
+    "contentHeight" : 23.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/PaymentNoteText[1]/PaymentNoteLine_0[0]",
+    "entityName" : "PaymentNoteLine_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/PaymentNoteText[1]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 62.202,
+    "computedY" : 117.787,
+    "placementX" : 62.202,
+    "placementY" : 117.787,
+    "placementWidth" : 119.195,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.195,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/PaymentNoteText[1]/PaymentNoteLine_1[1]",
+    "entityName" : "PaymentNoteLine_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/PaymentPanel[0]/PaymentNoteLayer[3]/PaymentNoteHolder[0]/PaymentNote[0]/PaymentNoteText[1]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 62.202,
+    "computedY" : 105.729,
+    "placementX" : 62.202,
+    "placementY" : 105.729,
+    "placementWidth" : 113.869,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 113.869,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementGap[1]",
+    "entityName" : "SettlementGap",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 266.828,
+    "computedY" : 267.817,
+    "placementX" : 266.828,
+    "placementY" : 267.817,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]",
+    "entityName" : "SettlementRight",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 313.915,
+    "computedY" : 123.114,
+    "placementX" : 313.915,
+    "placementY" : 123.114,
+    "placementWidth" : 235.436,
+    "placementHeight" : 144.703,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 144.703,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]",
+    "entityName" : "Totals",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 313.915,
+    "computedY" : 193.222,
+    "placementX" : 313.915,
+    "placementY" : 193.222,
+    "placementWidth" : 235.436,
+    "placementHeight" : 67.171,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 67.171,
+    "margin" : {
+      "top" : 7.424,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 5.813
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]",
+    "entityName" : "TotalsRow_0Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 319.728,
+    "computedY" : 248.434,
+    "placementX" : 319.728,
+    "placementY" : 248.434,
+    "placementWidth" : 229.623,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]",
+    "entityName" : "TotalsRow_0Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 319.728,
+    "computedY" : 248.434,
+    "placementX" : 319.728,
+    "placementY" : 248.434,
+    "placementWidth" : 229.623,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "entityName" : "TotalsRow_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 319.728,
+    "computedY" : 248.434,
+    "placementX" : 319.728,
+    "placementY" : 248.434,
+    "placementWidth" : 229.623,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 7.557,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 319.728,
+    "computedY" : 248.434,
+    "placementX" : 319.728,
+    "placementY" : 248.434,
+    "placementWidth" : 36.673,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 36.673,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_0Layer[0]/TotalsRow_0Holder[0]/TotalsRow_0[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 430.761,
+    "computedY" : 248.434,
+    "placementX" : 430.761,
+    "placementY" : 248.434,
+    "placementWidth" : 111.033,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.033,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]",
+    "entityName" : "TotalsRow_1Layer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 319.728,
+    "computedY" : 231.443,
+    "placementX" : 319.728,
+    "placementY" : 231.443,
+    "placementWidth" : 229.623,
+    "placementHeight" : 16.991,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 16.991,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]",
+    "entityName" : "TotalsRow_1Holder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 319.728,
+    "computedY" : 231.443,
+    "placementX" : 319.728,
+    "placementY" : 231.443,
+    "placementWidth" : 229.623,
+    "placementHeight" : 16.991,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 16.991,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "entityName" : "TotalsRow_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 319.728,
+    "computedY" : 231.443,
+    "placementX" : 319.728,
+    "placementY" : 231.443,
+    "placementWidth" : 229.623,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 5.033,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 7.557,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 319.728,
+    "computedY" : 231.443,
+    "placementX" : 319.728,
+    "placementY" : 231.443,
+    "placementWidth" : 36.285,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 36.285,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRow_1Layer[1]/TotalsRow_1Holder[0]/TotalsRow_1[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 430.761,
+    "computedY" : 231.443,
+    "placementX" : 430.761,
+    "placementY" : 231.443,
+    "placementWidth" : 111.033,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.033,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalsRule[2]",
+    "entityName" : "TotalsRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 319.728,
+    "computedY" : 222.421,
+    "placementX" : 319.728,
+    "placementY" : 222.421,
+    "placementWidth" : 229.623,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.022,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]",
+    "entityName" : "TotalDueLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 319.728,
+    "computedY" : 193.222,
+    "placementX" : 319.728,
+    "placementY" : 193.222,
+    "placementWidth" : 229.623,
+    "placementHeight" : 29.199,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 29.199,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]",
+    "entityName" : "TotalDueHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 319.728,
+    "computedY" : 193.222,
+    "placementX" : 319.728,
+    "placementY" : 193.222,
+    "placementWidth" : 229.623,
+    "placementHeight" : 29.199,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 29.199,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "entityName" : "TotalDue",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 319.728,
+    "computedY" : 193.222,
+    "placementX" : 319.728,
+    "placementY" : 193.222,
+    "placementWidth" : 229.623,
+    "placementHeight" : 29.199,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 229.623,
+    "contentHeight" : 29.199,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 9.268,
+      "right" : 7.557,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]/TotalDueLabel[0]",
+    "entityName" : "TotalDueLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 319.728,
+    "computedY" : 195.713,
+    "placementX" : 319.728,
+    "placementY" : 195.713,
+    "placementWidth" : 63.094,
+    "placementHeight" : 14.948,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.094,
+    "contentHeight" : 14.948,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]/TotalDueValue[1]",
+    "entityName" : "TotalDueValue",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/Totals[0]/TotalDueLayer[3]/TotalDueHolder[0]/TotalDue[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 430.761,
+    "computedY" : 193.222,
+    "placementX" : 430.761,
+    "placementY" : 193.222,
+    "placementWidth" : 111.033,
+    "placementHeight" : 19.931,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.033,
+    "contentHeight" : 19.931,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]",
+    "entityName" : "DueDateCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 313.915,
+    "computedY" : 123.114,
+    "placementX" : 313.915,
+    "placementY" : 123.114,
+    "placementWidth" : 235.436,
+    "placementHeight" : 52.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 52.02,
+    "margin" : {
+      "top" : 18.087,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]",
+    "entityName" : "DueDateRowLayer",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 313.915,
+    "computedY" : 123.114,
+    "placementX" : 313.915,
+    "placementY" : 123.114,
+    "placementWidth" : 235.436,
+    "placementHeight" : 52.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 52.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]",
+    "entityName" : "DueDateRowHolder",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 313.915,
+    "computedY" : 123.114,
+    "placementX" : 313.915,
+    "placementY" : 123.114,
+    "placementWidth" : 235.436,
+    "placementHeight" : 52.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 52.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]",
+    "entityName" : "DueDateRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 313.915,
+    "computedY" : 123.114,
+    "placementX" : 313.915,
+    "placementY" : 123.114,
+    "placementWidth" : 235.436,
+    "placementHeight" : 52.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.436,
+    "contentHeight" : 52.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.962,
+      "right" : 0.0,
+      "bottom" : 11.51,
+      "left" : 13.37
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateDisc[0]",
+    "entityName" : "DueDateDisc",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 327.285,
+    "computedY" : 135.28,
+    "placementX" : 327.285,
+    "placementY" : 135.28,
+    "placementWidth" : 28.236,
+    "placementHeight" : 28.236,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.236,
+    "contentHeight" : 28.236,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateDisc[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateDisc[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 334.062,
+    "computedY" : 142.057,
+    "placementX" : 334.062,
+    "placementY" : 142.057,
+    "placementWidth" : 14.683,
+    "placementHeight" : 14.683,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.683,
+    "contentHeight" : 14.683,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateDisc[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateDisc[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 334.062,
+    "computedY" : 142.057,
+    "placementX" : 334.062,
+    "placementY" : 142.057,
+    "placementWidth" : 14.683,
+    "placementHeight" : 14.683,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.683,
+    "contentHeight" : 14.683,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateText[1]",
+    "entityName" : "DueDateText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 367.397,
+    "computedY" : 134.624,
+    "placementX" : 367.397,
+    "placementY" : 134.624,
+    "placementWidth" : 86.401,
+    "placementHeight" : 29.548,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.401,
+    "contentHeight" : 29.548,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateText[1]/DueDateLabel[0]",
+    "entityName" : "DueDateLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateText[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 367.397,
+    "computedY" : 152.213,
+    "placementX" : 367.397,
+    "placementY" : 152.213,
+    "placementWidth" : 44.735,
+    "placementHeight" : 11.959,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 44.735,
+    "contentHeight" : 11.959,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateText[1]/DueDateValue[1]",
+    "entityName" : "DueDateValue",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]/SettlementRight[2]/DueDateCard[1]/DueDateRowLayer[0]/DueDateRowHolder[0]/DueDateRow[0]/DueDateText[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 367.397,
+    "computedY" : 134.624,
+    "placementX" : 367.397,
+    "placementY" : 134.624,
+    "placementWidth" : 86.401,
+    "placementHeight" : 14.948,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.401,
+    "contentHeight" : 14.948,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/Settlement[5]/SettlementTail[3]",
+    "entityName" : "SettlementTail",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/Settlement[5]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 549.351,
+    "computedY" : 267.817,
+    "placementX" : 549.351,
+    "placementY" : 267.817,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNoteRule[6]",
+    "entityName" : "ClosingNoteRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 91.027,
+    "placementX" : 25.578,
+    "placementY" : 91.027,
+    "placementWidth" : 544.119,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 7.673,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]",
+    "entityName" : "ClosingNote",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 55.948,
+    "placementX" : 25.578,
+    "placementY" : 55.948,
+    "placementWidth" : 544.119,
+    "placementHeight" : 23.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 23.02,
+    "margin" : {
+      "top" : 12.058,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteIcon[0]",
+    "entityName" : "ClosingNoteIcon",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 25.578,
+    "computedY" : 64.286,
+    "placementX" : 25.578,
+    "placementY" : 64.286,
+    "placementWidth" : 14.683,
+    "placementHeight" : 14.683,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.683,
+    "contentHeight" : 14.683,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteIcon[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteIcon[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.578,
+    "computedY" : 64.286,
+    "placementX" : 25.578,
+    "placementY" : 64.286,
+    "placementWidth" : 14.683,
+    "placementHeight" : 14.683,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.683,
+    "contentHeight" : 14.683,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteIcon[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteIcon[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.578,
+    "computedY" : 64.286,
+    "placementX" : 25.578,
+    "placementY" : 64.286,
+    "placementWidth" : 14.683,
+    "placementHeight" : 14.683,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 14.683,
+    "contentHeight" : 14.683,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteText[1]",
+    "entityName" : "ClosingNoteText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 51.738,
+    "computedY" : 55.948,
+    "placementX" : 51.738,
+    "placementY" : 55.948,
+    "placementWidth" : 297.384,
+    "placementHeight" : 23.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 297.384,
+    "contentHeight" : 23.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteText[1]/ClosingNoteLead[0]",
+    "entityName" : "ClosingNoteLead",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteText[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 51.738,
+    "computedY" : 68.006,
+    "placementX" : 51.738,
+    "placementY" : 68.006,
+    "placementWidth" : 152.794,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 152.794,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteText[1]/ClosingNoteLine_0[1]",
+    "entityName" : "ClosingNoteLine_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/ClosingNote[7]/ClosingNoteText[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 51.738,
+    "computedY" : 55.948,
+    "placementX" : 51.738,
+    "placementY" : 55.948,
+    "placementWidth" : 297.384,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 297.384,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentityRule[8]",
+    "entityName" : "FooterIdentityRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 8,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 25.578,
+    "computedY" : 45.082,
+    "placementX" : 25.578,
+    "placementY" : 45.082,
+    "placementWidth" : 544.119,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 544.119,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 9.866,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]",
+    "entityName" : "FooterIdentity",
+    "entityKind" : "RowNode",
+    "parentPath" : "PlatformInvoice[0]",
+    "childIndex" : 9,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 26.16,
+    "computedY" : 14.039,
+    "placementX" : 26.16,
+    "placementY" : 14.039,
+    "placementWidth" : 543.538,
+    "placementHeight" : 21.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 543.538,
+    "contentHeight" : 21.725,
+    "margin" : {
+      "top" : 9.318,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.581
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]/FooterLockup[0]",
+    "entityName" : "FooterLockup",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/FooterIdentity[9]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 26.16,
+    "computedY" : 24.802,
+    "placementX" : 26.16,
+    "placementY" : 24.802,
+    "placementWidth" : 52.865,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 52.865,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]/FooterLockup[0]/FooterWordmark[0]",
+    "entityName" : "FooterWordmark",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/FooterIdentity[9]/FooterLockup[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 26.16,
+    "computedY" : 24.802,
+    "placementX" : 26.16,
+    "placementY" : 24.802,
+    "placementWidth" : 52.865,
+    "placementHeight" : 10.962,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 52.865,
+    "contentHeight" : 10.962,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]/FooterAddress[1]",
+    "entityName" : "FooterAddress",
+    "entityKind" : "SectionNode",
+    "parentPath" : "PlatformInvoice[0]/FooterIdentity[9]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 130.798,
+    "computedY" : 14.039,
+    "placementX" : 130.798,
+    "placementY" : 14.039,
+    "placementWidth" : 438.9,
+    "placementHeight" : 20.928,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 438.9,
+    "contentHeight" : 20.928,
+    "margin" : {
+      "top" : 0.797,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]/FooterAddress[1]/FooterIdentityName[0]",
+    "entityName" : "FooterIdentityName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/FooterIdentity[9]/FooterAddress[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 130.798,
+    "computedY" : 25.001,
+    "placementX" : 130.798,
+    "placementY" : 25.001,
+    "placementWidth" : 438.9,
+    "placementHeight" : 9.966,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 438.9,
+    "contentHeight" : 9.966,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "PlatformInvoice[0]/FooterIdentity[9]/FooterAddress[1]/FooterIdentityAddress[1]",
+    "entityName" : "FooterIdentityAddress",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "PlatformInvoice[0]/FooterIdentity[9]/FooterAddress[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 130.798,
+    "computedY" : 14.039,
+    "placementX" : 130.798,
+    "placementY" : 14.039,
+    "placementWidth" : 438.9,
+    "placementHeight" : 9.966,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 438.9,
+    "contentHeight" : 9.966,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

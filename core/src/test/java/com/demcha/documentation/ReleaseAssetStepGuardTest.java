@@ -139,8 +139,8 @@ class ReleaseAssetStepGuardTest {
      *
      * <p>Every block inside a function in this script is indented, so a {@code }} in the first
      * column is the function's and nothing else's. Stopping at the next {@code function} instead
-     * would not work here — this one is the last, and the region would swallow the rest of the
-     * file, including the staging list this test reads separately.</p>
+     * would not work when the scanned function sits last — the region would swallow the rest of
+     * the file, including the staging list this test reads separately.</p>
      */
     private static int endOfStep(String script, int step) {
         int close = script.indexOf("\n}", step);

@@ -59,12 +59,40 @@ class StructuredInvoiceCompatibilityTest {
     }
 
     @Test
-    void theLineConstructorThatPredatesTheVatRateLeavesItBlank() {
+    void theLineConstructorThatPredatesTheVatRateLeavesItAndTheMarkBlank() {
         InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
                 1, "Workshop", "A day of it", "May", BigDecimal.ONE, "day",
                 new BigDecimal("1200"), new BigDecimal("1200"));
         assertThat(line.vatRate()).isEmpty();
+        assertThat(line.icon()).isEmpty();
         assertThat(line.amount()).isEqualByComparingTo("1200");
+    }
+
+    @Test
+    void theLineConstructorThatPredatesTheMarkLeavesItBlank() {
+        // The tax rate arrived before the mark did, so a caller written against
+        // that version keeps compiling and keeps drawing no mark.
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Workshop", "A day of it", "May", BigDecimal.ONE, "day",
+                new BigDecimal("1200"), new BigDecimal("1200"), "20%");
+        assertThat(line.vatRate()).isEqualTo("20%");
+        assertThat(line.icon()).isEmpty();
+    }
+
+    @Test
+    void aLineCarriesTheMarkItIsGiven() {
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Workshop", "A day of it", "May", BigDecimal.ONE, "day",
+                new BigDecimal("1200"), new BigDecimal("1200"), "20%", "card");
+        assertThat(line.icon()).isEqualTo("card");
+    }
+
+    @Test
+    void aNullMarkNormalizesToBlankLikeTheFieldsBesideIt() {
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Workshop", "A day of it", "May", BigDecimal.ONE, "day",
+                new BigDecimal("1200"), new BigDecimal("1200"), "20%", null);
+        assertThat(line.icon()).isEmpty();
     }
 
     @Test

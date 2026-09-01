@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 218 · methods: 1224 · constants: 166 · compiler-generated members: 647
+Types: 218 · methods: 1228 · constants: 166 · compiler-generated members: 649
 
 ## com.demcha.compose.document.templates.api
 
@@ -1175,7 +1175,8 @@ Types: 218 · methods: 1224 · constants: 166 · compiler-generated members: 647
 - `List<InvoiceServiceLines.Line> lines()`
 
 ### InvoiceServiceLines.Columns (record)
-- `new Columns(String, String, String, String, String, String, String)`
+- `new Columns(String, String, String, String, String, String, String, String)`
+- `new Columns(String index, String description, String servicePeriod, String quantity, String unitPrice, String amount, String vat)`
 - `new Columns(String index, String description, String servicePeriod, String quantity, String unitPrice, String amount)`
 - `String index()`
 - `String description()`
@@ -1184,9 +1185,11 @@ Types: 218 · methods: 1224 · constants: 166 · compiler-generated members: 647
 - `String unitPrice()`
 - `String amount()`
 - `String vat()`
+- `String region()`
 
 ### InvoiceServiceLines.Line (record)
-- `new Line(int, String, String, String, BigDecimal, String, BigDecimal, BigDecimal, String, String)`
+- `new Line(int, String, String, String, BigDecimal, String, BigDecimal, BigDecimal, String, String, String)`
+- `new Line(int lineNumber, String title, String description, String servicePeriod, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal amount, String vatRate, String icon)`
 - `new Line(int lineNumber, String title, String description, String servicePeriod, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal amount, String vatRate)`
 - `new Line(int lineNumber, String title, String description, String servicePeriod, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal amount)`
 - `int lineNumber()`
@@ -1199,6 +1202,7 @@ Types: 218 · methods: 1224 · constants: 166 · compiler-generated members: 647
 - `BigDecimal amount()`
 - `String vatRate()`
 - `String icon()`
+- `String region()`
 
 ### InvoiceSummaryBlock (record)
 - `new InvoiceSummaryBlock(String, String, String)`

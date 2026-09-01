@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 218,
-    "methods": 1224,
+    "methods": 1228,
     "constants": 166,
-    "generated": 647
+    "generated": 649
   },
   "packages": [
     {
@@ -13963,6 +13963,48 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Columns",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "index"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "String",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "String",
+                  "name": "amount"
+                },
+                {
+                  "type": "String",
+                  "name": "vat"
                 }
               ]
             },
@@ -14062,6 +14104,15 @@
               "typeParameters": null,
               "returns": "String",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "region",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
             }
           ]
         },
@@ -14121,6 +14172,60 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Line",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "int",
+                  "name": "lineNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unit"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "amount"
+                },
+                {
+                  "type": "String",
+                  "name": "vatRate"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
                 }
               ]
             },
@@ -14296,6 +14401,15 @@
             {
               "kind": "method",
               "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "region",
               "static": false,
               "origin": "generated",
               "typeParameters": null,

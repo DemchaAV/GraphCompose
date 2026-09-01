@@ -1,27 +1,95 @@
 package com.demcha.compose.document.templates.data.proposal;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * The display title of a structured proposal, as up to three authored lines.
+ * A proposal's title, as the sheet sets it.
  *
- * <p>The lines are separate fields rather than one string with newlines
- * because presets are expected to set the lead line apart from the other
- * two typographically — the split carries the emphasis and is part of the
- * content, not of the layout.</p>
+ * <p>Designs break a title across a different number of lines — two, three or
+ * four — and some set a short phrase above it and a standfirst under it. The
+ * lines are therefore a list, and {@link #lead()}, {@link #second()} and
+ * {@link #third()} are the first three of that list: one statement, two ways of
+ * reading it, kept consistent by construction rather than by the caller.</p>
  *
- * @param lead   the first title line
- * @param second the second title line
- * @param third  the third title line
+ * <p>A title breaks where the design breaks it. The lines are the document's,
+ * not a paragraph the engine wraps, because where a headline turns is a
+ * typographic decision and not a consequence of the column it happens to sit
+ * in.</p>
+ *
+ * @param lead       the first line, or blank when the title has none
+ * @param second     the second line, or blank
+ * @param third      the third line, or blank
+ * @param eyebrow    the short phrase some designs set above the title (e.g.
+ *                   {@code "Proposal for"}); blank when the title carries it
+ *                   inside its own first line instead
+ * @param lines      every line of the title, in order — the canonical reading
+ * @param standfirst the paragraph under the title, one entry per printed line;
+ *                   empty when the design sets none
  */
-public record ProposalTitleLines(String lead, String second, String third) {
+public record ProposalTitleLines(String lead, String second, String third,
+                                 String eyebrow, List<String> lines,
+                                 List<String> standfirst) {
 
     /**
-     * Normalizes optional lines to empty strings.
+     * Normalizes optional fields and keeps the list and the first three lines
+     * saying the same thing.
+     *
+     * <p>Given lines, the three are its first three. Given only the three, the
+     * lines are those of them that are set. Neither can contradict the other,
+     * because only one of them is ever the input.</p>
      */
     public ProposalTitleLines {
-        lead = Objects.requireNonNullElse(lead, "");
-        second = Objects.requireNonNullElse(second, "");
-        third = Objects.requireNonNullElse(third, "");
+        eyebrow = Objects.requireNonNullElse(eyebrow, "");
+        standfirst = List.copyOf(Objects.requireNonNullElse(standfirst, List.of()));
+        List<String> stated = Objects.requireNonNullElse(lines, List.of());
+        if (stated.isEmpty()) {
+            lead = Objects.requireNonNullElse(lead, "");
+            second = Objects.requireNonNullElse(second, "");
+            third = Objects.requireNonNullElse(third, "");
+            List<String> derived = new ArrayList<>();
+            for (String line : List.of(lead, second, third)) {
+                if (!line.isBlank()) {
+                    derived.add(line);
+                }
+            }
+            lines = List.copyOf(derived);
+        } else {
+            lines = List.copyOf(stated);
+            lead = lines.size() > 0 ? lines.get(0) : "";
+            second = lines.size() > 1 ? lines.get(1) : "";
+            third = lines.size() > 2 ? lines.get(2) : "";
+        }
+    }
+
+    /**
+     * A title of up to three lines.
+     *
+     * @param lead   the first line
+     * @param second the second line
+     * @param third  the third line
+     */
+    public ProposalTitleLines(String lead, String second, String third) {
+        this(lead, second, third, "", List.of(), List.of());
+    }
+
+    /**
+     * A title of any number of lines, with the phrase above it and the paragraph
+     * under it.
+     *
+     * <p>A factory rather than a second three-argument constructor: one taking
+     * {@code (String, List, List)} beside one taking three strings is ambiguous
+     * for a caller passing nulls, and a title is not the place to make someone
+     * cast an argument to find out which they meant.</p>
+     *
+     * @param eyebrow    the phrase above the title, or blank
+     * @param lines      every line of the title, in order
+     * @param standfirst the paragraph under it, one entry per printed line
+     * @return the title
+     */
+    public static ProposalTitleLines of(String eyebrow, List<String> lines,
+                                        List<String> standfirst) {
+        return new ProposalTitleLines("", "", "", eyebrow, lines, standfirst);
     }
 }

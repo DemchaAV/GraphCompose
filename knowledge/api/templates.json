@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 222,
-    "methods": 1232,
+    "types": 226,
+    "methods": 1269,
     "constants": 174,
-    "generated": 657
+    "generated": 683
   },
   "packages": [
     {
@@ -15240,6 +15240,101 @@
           ]
         },
         {
+          "name": "ProposalAttention",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalAttention",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalAttention",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "role",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "email",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "phone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalBrand",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalBrand",
           "kind": "record",
@@ -16492,6 +16587,88 @@
           ]
         },
         {
+          "name": "ProposalFooter",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalFooter",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalFooter",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "contacts",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "confidentiality",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalGlance",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalGlance",
           "kind": "record",
@@ -16950,6 +17127,46 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "List<ProposalMetaLine.Entry>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalMetaLine",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "preparedFor"
+                },
+                {
+                  "type": "String",
+                  "name": "preparedBy"
+                },
+                {
+                  "type": "String",
+                  "name": "date"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalMetaLine",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "List<ProposalMetaLine.Entry>",
+                  "name": "entries"
                 }
               ]
             },
@@ -16974,6 +17191,75 @@
             {
               "kind": "method",
               "name": "date",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "entries",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalMetaLine.Entry>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalMetaLine.Entry",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalMetaLine$Entry",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Entry",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
               "static": false,
               "origin": "generated",
               "typeParameters": null,
@@ -17513,6 +17799,75 @@
           ]
         },
         {
+          "name": "ProposalRecipient",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalRecipient",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalRecipient",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalScope",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalScope",
           "kind": "record",
@@ -18043,6 +18398,62 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalTitleLines",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "lead"
+                },
+                {
+                  "type": "String",
+                  "name": "second"
+                },
+                {
+                  "type": "String",
+                  "name": "third"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ProposalTitleLines",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "eyebrow"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "lines"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "standfirst"
                 }
               ]
             },
@@ -18071,6 +18482,33 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "eyebrow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "lines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "standfirst",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
               "params": []
             }
           ]
@@ -18139,6 +18577,76 @@
                 {
                   "type": "ProposalAcceptance",
                   "name": null
+                },
+                {
+                  "type": "ProposalRecipient",
+                  "name": null
+                },
+                {
+                  "type": "ProposalAttention",
+                  "name": null
+                },
+                {
+                  "type": "ProposalFooter",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "StructuredProposalData",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "ProposalBrand",
+                  "name": "brand"
+                },
+                {
+                  "type": "ProposalTitleLines",
+                  "name": "title"
+                },
+                {
+                  "type": "ProposalMetaLine",
+                  "name": "meta"
+                },
+                {
+                  "type": "ProposalSummaryBlock",
+                  "name": "executiveSummary"
+                },
+                {
+                  "type": "ProposalGlance",
+                  "name": "glance"
+                },
+                {
+                  "type": "ProposalGoals",
+                  "name": "goals"
+                },
+                {
+                  "type": "ProposalScope",
+                  "name": "scope"
+                },
+                {
+                  "type": "ProposalDeliverables",
+                  "name": "deliverables"
+                },
+                {
+                  "type": "ProposalPhaseGrid",
+                  "name": "timeline"
+                },
+                {
+                  "type": "ProposalInvestment",
+                  "name": "investment"
+                },
+                {
+                  "type": "ProposalTermsBlock",
+                  "name": "terms"
+                },
+                {
+                  "type": "ProposalAcceptance",
+                  "name": "acceptance"
                 }
               ]
             },
@@ -18257,6 +18765,33 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "ProposalAcceptance",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "recipient",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalRecipient",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "attention",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalAttention",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalFooter",
               "params": []
             }
           ]
@@ -18435,6 +18970,48 @@
                 {
                   "type": "ProposalAcceptance",
                   "name": "acceptance"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "recipient",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalRecipient",
+                  "name": "recipient"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "attention",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalAttention",
+                  "name": "attention"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalFooter",
+                  "name": "footer"
                 }
               ]
             },

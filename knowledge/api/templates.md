@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
+Types: 226 · methods: 1269 · constants: 174 · compiler-generated members: 683
 
 ## com.demcha.compose.document.templates.api
 
@@ -1278,6 +1278,15 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `String statement()`
 - `List<String> fields()`
 
+### ProposalAttention (record)
+- `new ProposalAttention(String, String, String, String, String)`
+- `boolean isPresent()`
+- `String label()`
+- `String name()`
+- `String role()`
+- `String email()`
+- `String phone()`
+
 ### ProposalBrand (record)
 - `new ProposalBrand(String, String, String, String, String, String)`
 - `String monogram()`
@@ -1375,6 +1384,14 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `ProposalDocumentSpec.Builder footerNote(String footerNote)`
 - `ProposalDocumentSpec build()`
 
+### ProposalFooter (record)
+- `new ProposalFooter(String, List<String>, List<String>, String)`
+- `boolean isPresent()`
+- `String name()`
+- `List<String> addressLines()`
+- `List<String> contacts()`
+- `String confidentiality()`
+
 ### ProposalGlance (record)
 - `new ProposalGlance(String, List<ProposalGlance.Fact>)`
 - `String heading()`
@@ -1418,10 +1435,19 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `ProposalInvestment.Role role()`
 
 ### ProposalMetaLine (record)
-- `new ProposalMetaLine(String, String, String)`
+- `new ProposalMetaLine(String, String, String, List<ProposalMetaLine.Entry>)`
+- `new ProposalMetaLine(String preparedFor, String preparedBy, String date)`
+- `new ProposalMetaLine(List<ProposalMetaLine.Entry> entries)`
 - `String preparedFor()`
 - `String preparedBy()`
 - `String date()`
+- `List<ProposalMetaLine.Entry> entries()`
+
+### ProposalMetaLine.Entry (record)
+- `new Entry(String, String, String)`
+- `String icon()`
+- `String label()`
+- `String value()`
 
 ### ProposalParty (record)
 - `new ProposalParty(String, List<String>, String, String, String)`
@@ -1471,6 +1497,13 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `ProposalPricingRow.Builder amount(String amount)`
 - `ProposalPricingRow.Builder emphasized(boolean emphasized)`
 - `ProposalPricingRow build()`
+
+### ProposalRecipient (record)
+- `new ProposalRecipient(String, String, List<String>)`
+- `boolean isPresent()`
+- `String label()`
+- `String name()`
+- `List<String> addressLines()`
 
 ### ProposalScope (record)
 - `new ProposalScope(String, String, List<ProposalScope.Item>)`
@@ -1523,13 +1556,19 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `ProposalTimelineItem build()`
 
 ### ProposalTitleLines (record)
-- `new ProposalTitleLines(String, String, String)`
+- `new ProposalTitleLines(String, String, String, String, List<String>, List<String>)`
+- `new ProposalTitleLines(String lead, String second, String third)`
+- `ProposalTitleLines of(String eyebrow, List<String> lines, List<String> standfirst)`
 - `String lead()`
 - `String second()`
 - `String third()`
+- `String eyebrow()`
+- `List<String> lines()`
+- `List<String> standfirst()`
 
 ### StructuredProposalData (record)
-- `new StructuredProposalData(ProposalBrand, ProposalTitleLines, ProposalMetaLine, ProposalSummaryBlock, ProposalGlance, ProposalGoals, ProposalScope, ProposalDeliverables, ProposalPhaseGrid, ProposalInvestment, ProposalTermsBlock, ProposalAcceptance)`
+- `new StructuredProposalData(ProposalBrand, ProposalTitleLines, ProposalMetaLine, ProposalSummaryBlock, ProposalGlance, ProposalGoals, ProposalScope, ProposalDeliverables, ProposalPhaseGrid, ProposalInvestment, ProposalTermsBlock, ProposalAcceptance, ProposalRecipient, ProposalAttention, ProposalFooter)`
+- `new StructuredProposalData(ProposalBrand brand, ProposalTitleLines title, ProposalMetaLine meta, ProposalSummaryBlock executiveSummary, ProposalGlance glance, ProposalGoals goals, ProposalScope scope, ProposalDeliverables deliverables, ProposalPhaseGrid timeline, ProposalInvestment investment, ProposalTermsBlock terms, ProposalAcceptance acceptance)`
 - `StructuredProposalData.Builder builder()`
 - `ProposalBrand brand()`
 - `ProposalTitleLines title()`
@@ -1543,6 +1582,9 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `ProposalInvestment investment()`
 - `ProposalTermsBlock terms()`
 - `ProposalAcceptance acceptance()`
+- `ProposalRecipient recipient()`
+- `ProposalAttention attention()`
+- `ProposalFooter footer()`
 
 ### StructuredProposalData.Builder (class)
 - `StructuredProposalData.Builder brand(ProposalBrand brand)`
@@ -1557,6 +1599,9 @@ Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 - `StructuredProposalData.Builder investment(ProposalInvestment investment)`
 - `StructuredProposalData.Builder terms(ProposalTermsBlock terms)`
 - `StructuredProposalData.Builder acceptance(ProposalAcceptance acceptance)`
+- `StructuredProposalData.Builder recipient(ProposalRecipient recipient)`
+- `StructuredProposalData.Builder attention(ProposalAttention attention)`
+- `StructuredProposalData.Builder footer(ProposalFooter footer)`
 - `StructuredProposalData build()`
 
 ### StructuredProposalDocumentSpec (record)

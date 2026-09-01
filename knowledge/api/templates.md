@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 217 · methods: 1221 · constants: 164 · compiler-generated members: 644
+Types: 217 · methods: 1223 · constants: 164 · compiler-generated members: 645
 
 ## com.demcha.compose.document.templates.api
 
@@ -995,7 +995,8 @@ Types: 217 · methods: 1221 · constants: 164 · compiler-generated members: 644
 - `String monogramBottom()`
 
 ### InvoiceContactBlock (record)
-- `new InvoiceContactBlock(String, List<String>, String, String, String, String, String, String, String)`
+- `new InvoiceContactBlock(String, List<String>, String, String, String, String, String, String, String, String)`
+- `new InvoiceContactBlock(String legalName, List<String> addressLines, String phone, String email, String website, String registrationLabel, String registrationNumber, String taxRegistrationLabel, String taxRegistrationNumber)`
 - `new InvoiceContactBlock(String legalName, List<String> addressLines, String phone, String email, String website, String registrationLabel, String registrationNumber)`
 - `String legalName()`
 - `List<String> addressLines()`
@@ -1006,6 +1007,7 @@ Types: 217 · methods: 1221 · constants: 164 · compiler-generated members: 644
 - `String registrationNumber()`
 - `String taxRegistrationLabel()`
 - `String taxRegistrationNumber()`
+- `String legalFootnote()`
 
 ### InvoiceData (record)
 - `new InvoiceData(String, String, String, String, String, String, InvoiceParty, InvoiceParty, List<InvoiceLineItem>, List<InvoiceSummaryRow>, List<String>, List<String>, String)`

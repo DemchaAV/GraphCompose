@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 217,
-    "methods": 1221,
+    "methods": 1223,
     "constants": 164,
-    "generated": 644
+    "generated": 645
   },
   "packages": [
     {
@@ -11738,6 +11738,56 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoiceContactBlock",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "legalName"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "addressLines"
+                },
+                {
+                  "type": "String",
+                  "name": "phone"
+                },
+                {
+                  "type": "String",
+                  "name": "email"
+                },
+                {
+                  "type": "String",
+                  "name": "website"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "taxRegistrationLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "taxRegistrationNumber"
                 }
               ]
             },
@@ -11854,6 +11904,15 @@
             {
               "kind": "method",
               "name": "taxRegistrationNumber",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "legalFootnote",
               "static": false,
               "origin": "generated",
               "typeParameters": null,

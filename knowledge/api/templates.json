@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 219,
-    "methods": 1229,
-    "constants": 168,
-    "generated": 651
+    "types": 220,
+    "methods": 1230,
+    "constants": 170,
+    "generated": 653
   },
   "packages": [
     {
@@ -21008,6 +21008,40 @@
         {
           "name": "PlatformInvoice",
           "binaryName": "com.demcha.compose.document.templates.invoice.presets.PlatformInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "SubscriptionInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.SubscriptionInvoice",
           "kind": "class",
           "modifiers": [
             "final"

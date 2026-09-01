@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 221,
-    "methods": 1231,
-    "constants": 172,
-    "generated": 655
+    "types": 222,
+    "methods": 1232,
+    "constants": 174,
+    "generated": 657
   },
   "packages": [
     {
@@ -20878,6 +20878,40 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "DocumentTemplate<StructuredInvoiceDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "MerchantInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.MerchantInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
               "params": []
             }
           ]

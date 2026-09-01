@@ -98,6 +98,77 @@ class CodeQlScopeGuardTest {
     }
 
     /**
+     * The inventory the second test compares against is itself read out of the publish
+     * workflows, so it can be emptied by editing them — and an emptier inventory is an
+     * easier comparison, not a failing one. Both halves below key on the absence of a
+     * positive signal instead: a publish workflow that deploys nothing, and a train
+     * whose declared modules are not among the steps read from it.
+     *
+     * <p>Writing a deploy as {@code -pl :graph-compose-fonts} rather than
+     * {@code -f fonts/pom.xml} is enough to do it, and nothing about that edit looks
+     * like it touches the scan.</p>
+     */
+    @Test
+    void everyPublishWorkflowContributesToTheInventoryItIsRead() throws IOException {
+        Map<String, List<String>> byWorkflow = PublishedModules.deployedByWorkflow(PROJECT_ROOT);
+
+        assertThat(byWorkflow)
+                .describedAs("no publish workflow was found at all — they were renamed, and the "
+                        + "inventory the deployed-module test compares against is now empty")
+                .isNotEmpty();
+
+        Set<String> silent = new TreeSet<>();
+        byWorkflow.forEach((workflow, modules) -> {
+            if (modules.isEmpty()) {
+                silent.add(workflow);
+            }
+        });
+
+        assertThat(silent)
+                .describedAs("a publish workflow whose deploy steps this guard can no longer "
+                        + "read: whatever it ships is now invisible to the deployed-module test, "
+                        + "which will pass without ever asking about it. Either the workflow "
+                        + "stopped deploying — in which case it should stop being a publish "
+                        + "workflow — or its deploy is written some way other than "
+                        + "`-f <module>/pom.xml`, and this guard has to learn that shape before "
+                        + "the edit lands")
+                .isEmpty();
+    }
+
+    /**
+     * The train {@code publish.yml} declares matches the steps it carries.
+     *
+     * <p>The workflow states its module set twice and neither statement is derived from
+     * the other: the {@code order} the resume input is validated against, and the deploy
+     * steps themselves. A module dropped from the steps — or written in a shape this
+     * guard cannot read — leaves the two disagreeing, which is the signal that the
+     * inventory shrank rather than the train.</p>
+     */
+    @Test
+    void theDeployStepsCoverThePublishTrainTheWorkflowDeclares() throws IOException {
+        List<String> declared = PublishedModules.declaredTrain(PROJECT_ROOT);
+        List<String> steps = PublishedModules.deployedByWorkflow(PROJECT_ROOT)
+                .getOrDefault("publish.yml", List.of());
+
+        assertThat(declared)
+                .describedAs("publish.yml no longer declares its train as `order=\"...\"` — the "
+                        + "resume validation moved, and with it the second, independent statement "
+                        + "of what a release publishes that this guard holds the steps against")
+                .isNotEmpty();
+
+        Set<String> missing = new TreeSet<>(declared);
+        missing.removeAll(steps);
+
+        assertThat(missing)
+                .describedAs("publish.yml names these in its train but this guard finds no deploy "
+                        + "step for them. Either the module stopped shipping and belongs out of "
+                        + "the train, or its step is written some way other than "
+                        + "`-f <module>/pom.xml` — in which case the module is deployed, absent "
+                        + "from the inventory, and therefore never checked against the scan")
+                .isEmpty();
+    }
+
+    /**
      * The {@code -pl} selectors of the {@code mvnw} invocation carrying {@code goal}, or
      * every reactor module when the command carries no {@code -pl} at all — a build
      * without one compiles the whole reactor, which is more coverage, not less.

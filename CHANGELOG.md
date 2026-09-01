@@ -589,6 +589,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**
+  `CodeQlScopeGuardTest` asks whether every module a release publishes is inside the
+  security scan, and it read the answer's left-hand side out of the publish workflows by
+  matching `-f <module>/pom.xml` on a line mentioning `deploy`. A deploy written any
+  other way — `-pl :graph-compose-fonts`, or the same command wrapped across two lines —
+  simply left that module out of the inventory, and a shorter inventory is an easier
+  comparison rather than a failing one. Verified by mutation: with `publish-fonts.yml`
+  switched to the `-pl` form and `graph-compose-fonts` removed from the scan's module
+  list, the suite stayed green while a module published to Maven Central went unscanned.
+  Two checks now key on the absence of a positive signal instead — a publish workflow
+  that contributes no module to the inventory fails, and `publish.yml`'s deploy steps
+  are held against the `order` line it validates its own resume against, which is a
+  second statement of the train that nothing derives from the first. Both go red under
+  the mutation that used to pass.
+
 - **The sidebar CV samples are held to the width of the column they are drawn in.**
   A contact channel in `ProfessionalSidebar` and `NavySidebar` is one paragraph — the
   mark and the value share a line — so a value wider than the sidebar's text column

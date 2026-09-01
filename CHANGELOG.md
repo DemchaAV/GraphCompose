@@ -120,6 +120,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A violet SaaS invoice preset: `WorkspaceInvoice`.** A brand masthead over a short
+  accent bar, a half-split issuer and metadata header, two addressed parties on filled
+  discs, a service-line table whose marks sit on coloured tiles, a settlement row
+  pairing the bank details against the totals, and a closing band carrying the wordmark.
+  Ships as `invoice.presets.WorkspaceInvoice` on the existing `StructuredInvoiceData`
+  model, porting the rendered layout of a published standalone template. Like
+  `PaymentsInvoice` it flows — the table's header repeats on every page it reaches, a
+  continuation page reserves a deeper bottom margin, and every page carries its number,
+  which is a departure from the one-page design and the only way a lost page is
+  detectable. The sheet's own closing band cannot be page chrome, because a header
+  footer zone takes only strings and the band holds a wordmark and a link, so it is body
+  content and the number is the only chrome. Two of the design's own type corrections
+  are carried as measured constants rather than smoothed away: a cap read off a
+  screenshot includes half a pixel of antialiasing on each edge, and the body face sets
+  uppercase about 6% wider than the design's at the same cap height — measured across
+  three all-caps runs while mixed-case runs at the same sizes matched within 2%. This
+  design states its currency once per money column and writes the figures under it bare,
+  carrying the code only on the total, which is the opposite of what `PaymentsInvoice`
+  does and is why the two presets format money differently. A quantity is written with
+  what it counts. Both parties print a registration under their address through the pair
+  `InvoiceRecipient` gained for it, and a party with no number prints no label. Guarded
+  by a smoke test (including the unknown-mark data error, a line with no mark, the
+  wordmark fallback, the currency named once and not on every figure, the quantity with
+  its unit, both registrations and the absent one, the closing address as an annotation,
+  a missing ship-to, a payment card with no note, an empty document, and a thirty-line
+  invoice that runs on, repeats its column names and numbers its pages), an exact layout
+  snapshot and a pixel-parity gate; the examples showcase gains `invoice-workspace-v2`.
+
 - **A paginating invoice preset: `PaymentsInvoice`.** A lavender-and-navy sheet with a
   diagonal band crossing the masthead, a half-split issuer and metadata header, two
   addressed parties on discs, a marked service-line table, a settlement row pairing bank

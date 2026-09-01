@@ -694,7 +694,8 @@ public final class MintEditorial {
                 String phone = identity.contact().phone();
                 if (!phone.isBlank()) {
                     IconTextRow.render(block, glyph("phone.svg"), ICON_COLOR,
-                            CONTACT_ICON_SIZE, phone, style, null,
+                            CONTACT_ICON_SIZE, phone, style,
+                            ContactUri.telLink(phone),
                             DocumentInsets.bottom(13));
                 }
                 String email = identity.contact().email();

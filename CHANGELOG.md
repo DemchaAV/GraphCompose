@@ -120,6 +120,13 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **The invoice presets set their page number in their own face.** A header or footer
+  zone draws in the standard-14 face unless a document says otherwise, and until the
+  zone gained `fontName` there was no way to say otherwise — so `PaymentsInvoice` and
+  `WorkspaceInvoice` left the page number as the one line on an otherwise Lato sheet set
+  in Helvetica. Both now name the sheet's own face. The change is confined to that line:
+  measured at 600 dpi it moves 3 885 pixels of 34 794 400 on one sheet and 3 898 on the
+  other, all of them inside the number's own box, and nothing around it shifts.
 - **Seven CV presets make their telephone number dialable.** `EngineeringResume`,
   `Executive`, `MintEditorial`, `MonogramSidebar`, `Panel`, `SidebarPortrait` and
   `TimelineMinimal` already made an email and a profile reachable and printed the phone

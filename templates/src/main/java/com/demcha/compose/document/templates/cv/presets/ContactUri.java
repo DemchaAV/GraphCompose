@@ -53,14 +53,4 @@ final class ContactUri {
         String uri = tel(phone);
         return uri == null ? null : new DocumentLinkOptions(uri);
     }
-
-    /**
-     * An address as something a reader can write to.
-     *
-     * @param email the address as the sheet prints it
-     * @return a {@code mailto:} target, or {@code null} when there is none
-     */
-    static String mailto(String email) {
-        return email == null || email.isBlank() ? null : "mailto:" + email.trim();
-    }
 }

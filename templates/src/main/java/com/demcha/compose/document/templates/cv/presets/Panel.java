@@ -514,6 +514,5 @@ public final class Panel {
                         DocumentTextDecoration.BOLD,
                         ACCENT);
             }
-
         }
 }

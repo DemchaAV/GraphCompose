@@ -246,6 +246,5 @@ public final class Executive {
                         DocumentTextDecoration.UNDERLINE,
                         ACCENT);
             }
-
         }
 }

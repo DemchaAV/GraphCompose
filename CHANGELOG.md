@@ -168,6 +168,37 @@ follow semantic versioning; release dates are ISO 8601.
   recognisable; a number is not — dates, reference numbers and amounts all look like
   one — so only the structured contact field is linked.
 
+- **A commerce invoice preset: `MerchantInvoice`.** A lockup against the title over a
+  short accent rule, the supplier's details beside the invoice's metadata, two addressed
+  parties on filled discs, a line-item table whose rows are bordered boxes, a bank panel
+  beside the totals and the due-by card, a closing note, and an identity band closing the
+  sheet on a marked tile. Ships as `invoice.presets.MerchantInvoice` on the existing
+  `StructuredInvoiceData` model, porting the rendered layout of a published standalone
+  template: rendered against the frozen original with the same data the text layers are
+  **identical, all 225 words in the same place**, and the sheet above the identity band
+  carries **no differing pixel**. What differs is the two marks — the masthead lockup and
+  the band's tile, both the caller's — the enumeration's face, and the social row below.
+  <br><br>
+  **The social row is deliberately not ported.** The design closes with three discs
+  carrying social-platform marks. Those marks belong to their platforms, and the templates
+  artifact does not redistribute other companies' trademarks, so neither they nor the rule
+  that divided them off are drawn; the band keeps the tile and the issuer's identity, which
+  is what identifies the sheet. This is stated on the preset rather than left to be
+  noticed.
+  <br><br>
+  Each table row is one cell. A cell's stroke draws all four of its edges, which is
+  exactly what this design's rows are — a soft box round each, no interior verticals — so
+  a row is a single cell spanning every column with the five columns composed inside it.
+  <br><br>
+  The supplier's contact rows are the one block whose line box is not its type: an inline
+  mark taller than the text sets the box, so a pitch measured from the text and solved
+  against the text lands short by the difference. Those pitches are solved against the
+  mark. A quantity of nothing prints the design's own dash rather than a zero, because a
+  zero in a quantity column reads as none delivered rather than as not counted. Guarded by
+  a smoke test (including the dash, the unknown-mark data error, a line with no mark, an
+  invoice that ships nowhere, where the currency is stated, and pagination), an exact
+  layout snapshot, and a pixel baseline — all three fed by one fixture.
+
 - **A dark invoice preset: `ObsidianInvoice`.** The first dark sheet in the library: a
   wordmark over the document's name against a ruled metadata stack, the issuer and the
   billed party on filled discs in cards of their own, a line-item table in a third, the

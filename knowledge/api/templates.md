@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 221 · methods: 1231 · constants: 172 · compiler-generated members: 655
+Types: 222 · methods: 1232 · constants: 174 · compiler-generated members: 657
 
 ## com.demcha.compose.document.templates.api
 
@@ -1753,6 +1753,10 @@ Types: 221 · methods: 1231 · constants: 172 · compiler-generated members: 655
 
 ### LumaStudioInvoice (class)
 - `DocumentTemplate<StructuredInvoiceDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`
+
+### MerchantInvoice (class)
+- `DocumentTemplate<StructuredInvoiceData> create()`
 - constants: `ID`, `DISPLAY_NAME`
 
 ### MeteredInvoice (class)

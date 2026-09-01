@@ -104,6 +104,17 @@ class ProposalHeaderSpineTest {
     }
 
     @Test
+    void statingBothATrioAndAListReadsTheTitleFromTheList() {
+        // Only the canonical constructor allows both, and it resolves rather
+        // than throws: the list is the one that can hold a title of any length,
+        // so reading the three back from it loses nothing the caller stated.
+        ProposalTitleLines title = new ProposalTitleLines("discarded", "also discarded", "",
+                "", List.of("Proposal for", "Cloud Services", "& Support"), List.of());
+        assertThat(title.lines()).containsExactly("Proposal for", "Cloud Services", "& Support");
+        assertThat(title.lead()).isEqualTo("Proposal for");
+    }
+
+    @Test
     void aTitleCarriesTheEyebrowSomeDesignsSetAboveIt() {
         ProposalTitleLines title = ProposalTitleLines.of("Proposal for",
                 List.of("Payments", "& Financial Infrastructure"), List.of());

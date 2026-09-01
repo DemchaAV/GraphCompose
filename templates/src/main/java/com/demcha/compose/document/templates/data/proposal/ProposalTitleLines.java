@@ -36,9 +36,12 @@ public record ProposalTitleLines(String lead, String second, String third,
      * Normalizes optional fields and keeps the list and the first three lines
      * saying the same thing.
      *
-     * <p>Given lines, the three are its first three. Given only the three, the
-     * lines are those of them that are set. Neither can contradict the other,
-     * because only one of them is ever the input.</p>
+     * <p>Given lines, the three are read from it. Given no lines, the lines are
+     * those of the three that are set. Given both — which only the canonical
+     * constructor allows, and which neither convenience form can produce — the
+     * list wins and the three are read from it, because the list is the one that
+     * can hold a title of any length and reading it back is the only resolution
+     * that loses nothing the caller stated.</p>
      */
     public ProposalTitleLines {
         eyebrow = Objects.requireNonNullElse(eyebrow, "");

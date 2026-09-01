@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 226,
-    "methods": 1269,
+    "methods": 1275,
     "constants": 174,
-    "generated": 683
+    "generated": 686
   },
   "packages": [
     {
@@ -16692,6 +16692,28 @@
                 {
                   "type": "List<ProposalGlance.Fact>",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalGlance",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "List<ProposalGlance.Fact>",
+                  "name": "facts"
                 }
               ]
             },
@@ -16711,6 +16733,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "List<ProposalGlance.Fact>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
               "params": []
             }
           ]
@@ -16816,6 +16847,32 @@
                 {
                   "type": "List<ProposalGoals.Goal>",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalGoals",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                },
+                {
+                  "type": "List<ProposalGoals.Goal>",
+                  "name": "items"
                 }
               ]
             },
@@ -16844,6 +16901,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "List<ProposalGoals.Goal>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
               "params": []
             }
           ]
@@ -17895,6 +17961,32 @@
                 {
                   "type": "List<ProposalScope.Item>",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalScope",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                },
+                {
+                  "type": "List<ProposalScope.Item>",
+                  "name": "items"
                 }
               ]
             },
@@ -17923,6 +18015,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "List<ProposalScope.Item>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
               "params": []
             }
           ]

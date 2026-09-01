@@ -150,6 +150,36 @@ class ProposalHeaderSpineTest {
         assertThat(new ProposalFooter(null, null, null, null).isPresent()).isFalse();
     }
 
+    // -- the paragraph that opens a block --------------------------------
+
+    @Test
+    void aBlockCarriesTheParagraphThatOpensItAboveTheItems() {
+        // Every one of the seven sets one, and five of them set two — once over
+        // the solution and once over the reasons to choose the issuer.
+        ProposalScope scope = new ProposalScope("PROJECT OVERVIEW", "",
+                List.of(new ProposalScope.Item("01", "Multi-currency accounts",
+                        "Hold, send, receive in 30+ currencies")),
+                "This proposal outlines a tailored solution.");
+        assertThat(scope.intro()).isEqualTo("This proposal outlines a tailored solution.");
+        assertThat(scope.items()).hasSize(1);
+
+        ProposalGlance glance = new ProposalGlance("ABOUT",
+                List.of(new ProposalGlance.Fact("globe", "Global", "Scale", "")),
+                "Modern financial infrastructure for forward-thinking companies.");
+        assertThat(glance.intro()).contains("Modern financial infrastructure");
+
+        ProposalGoals goals = new ProposalGoals("WHY US", "",
+                List.of(new ProposalGoals.Goal("", "Fast")), "Because it is faster.");
+        assertThat(goals.intro()).isEqualTo("Because it is faster.");
+    }
+
+    @Test
+    void theConstructorsThatPredateTheOpeningParagraphLeaveItBlank() {
+        assertThat(new ProposalScope("PROJECT OVERVIEW", "", List.of()).intro()).isEmpty();
+        assertThat(new ProposalGoals("WHY US", "", List.of()).intro()).isEmpty();
+        assertThat(new ProposalGlance("ABOUT", List.of()).intro()).isEmpty();
+    }
+
     // -- the aggregate ---------------------------------------------------
 
     @Test

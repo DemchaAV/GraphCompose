@@ -8,8 +8,12 @@ import java.util.Objects;
  *
  * @param heading the card heading
  * @param facts   the fact rows, in order
+ * @param intro   the paragraph that opens the block, above its items; every
+ *                one-page sales proposal measured for this sets one, most of
+ *                them twice, and a block that opens straight into its list
+ *                leaves it blank
  */
-public record ProposalGlance(String heading, List<Fact> facts) {
+public record ProposalGlance(String heading, List<Fact> facts, String intro) {
 
     /**
      * Normalizes optional fields and freezes the fact list.
@@ -17,6 +21,18 @@ public record ProposalGlance(String heading, List<Fact> facts) {
     public ProposalGlance {
         heading = Objects.requireNonNullElse(heading, "");
         facts = List.copyOf(Objects.requireNonNullElse(facts, List.of()));
+        intro = Objects.requireNonNullElse(intro, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the opening
+     * paragraph.
+     *
+     * @param heading the block's heading
+     * @param facts   the facts the block sets
+     */
+    public ProposalGlance(String heading, List<Fact> facts) {
+        this(heading, facts, "");
     }
 
     /**

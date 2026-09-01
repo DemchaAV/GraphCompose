@@ -13,8 +13,13 @@ import java.util.Objects;
  * @param heading the section heading
  * @param icon    the icon token of the section badge
  * @param items   the numbered scope rows, in order
+ * @param intro   the paragraph that opens the block, above its items; every
+ *                one-page sales proposal measured for this sets one, most of
+ *                them twice, and a block that opens straight into its list
+ *                leaves it blank
  */
-public record ProposalScope(String heading, String icon, List<Item> items) {
+public record ProposalScope(String heading, String icon, List<Item> items,
+                            String intro) {
 
     /**
      * Normalizes optional fields and freezes the item list.
@@ -23,6 +28,19 @@ public record ProposalScope(String heading, String icon, List<Item> items) {
         heading = Objects.requireNonNullElse(heading, "");
         icon = Objects.requireNonNullElse(icon, "");
         items = List.copyOf(Objects.requireNonNullElse(items, List.of()));
+        intro = Objects.requireNonNullElse(intro, "");
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the opening
+     * paragraph.
+     *
+     * @param heading the block's heading
+     * @param icon    the mark the heading opens with
+     * @param items   the block's items
+     */
+    public ProposalScope(String heading, String icon, List<Item> items) {
+        this(heading, icon, items, "");
     }
 
     /**

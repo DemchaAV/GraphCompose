@@ -42,6 +42,10 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      * @param vat           label of the tax-rate column, for the
      *                      jurisdictions that print the rate per line;
      *                      blank leaves the column out
+     * @param region        label of the region column, for the designs that
+     *                      bill the same service in more than one location
+     *                      and print where beside what; blank leaves the
+     *                      column out
      */
     public record Columns(
             String index,
@@ -50,7 +54,8 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             String quantity,
             String unitPrice,
             String amount,
-            String vat) {
+            String vat,
+            String region) {
 
         /**
          * Normalizes optional labels to empty strings.
@@ -63,6 +68,24 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             unitPrice = Objects.requireNonNullElse(unitPrice, "");
             amount = Objects.requireNonNullElse(amount, "");
             vat = Objects.requireNonNullElse(vat, "");
+            region = Objects.requireNonNullElse(region, "");
+        }
+
+        /**
+         * Backward-compatible constructor for callers that predate the region
+         * column.
+         *
+         * @param index         label of the line-number column
+         * @param description   label of the description column
+         * @param servicePeriod label of the service-period column
+         * @param quantity      label of the quantity column
+         * @param unitPrice     label of the unit-price column
+         * @param amount        label of the amount column
+         * @param vat           label of the tax-rate column
+         */
+        public Columns(String index, String description, String servicePeriod,
+                       String quantity, String unitPrice, String amount, String vat) {
+            this(index, description, servicePeriod, quantity, unitPrice, amount, vat, "");
         }
 
         /**
@@ -104,6 +127,9 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
      *                      means something only to the preset that packages
      *                      it, and a preset that draws no marks ignores it.
      *                      Blank when absent
+     * @param region        where this line was delivered, for the designs that
+     *                      bill the same service in more than one location and
+     *                      print where beside what; blank when absent
      */
     public record Line(
             int lineNumber,
@@ -115,7 +141,8 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             BigDecimal unitPrice,
             BigDecimal amount,
             String vatRate,
-            String icon) {
+            String icon,
+            String region) {
 
         /**
          * Normalizes optional fields.
@@ -130,6 +157,28 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
             amount = Objects.requireNonNullElse(amount, BigDecimal.ZERO);
             vatRate = Objects.requireNonNullElse(vatRate, "");
             icon = Objects.requireNonNullElse(icon, "");
+            region = Objects.requireNonNullElse(region, "");
+        }
+
+        /**
+         * Backward-compatible constructor for callers that predate the region.
+         *
+         * @param lineNumber    the printed line number
+         * @param title         the service title
+         * @param description   the description under the title
+         * @param servicePeriod the period this line covers
+         * @param quantity      how much was delivered
+         * @param unit          what the quantity counts
+         * @param unitPrice     the price per unit
+         * @param amount        the line total
+         * @param vatRate       the tax rate printed for this line
+         * @param icon          the mark a preset draws for this line
+         */
+        public Line(int lineNumber, String title, String description, String servicePeriod,
+                    BigDecimal quantity, String unit, BigDecimal unitPrice,
+                    BigDecimal amount, String vatRate, String icon) {
+            this(lineNumber, title, description, servicePeriod, quantity, unit,
+                    unitPrice, amount, vatRate, icon, "");
         }
 
         /**
@@ -149,7 +198,7 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
                     BigDecimal quantity, String unit, BigDecimal unitPrice,
                     BigDecimal amount, String vatRate) {
             this(lineNumber, title, description, servicePeriod, quantity, unit,
-                    unitPrice, amount, vatRate, "");
+                    unitPrice, amount, vatRate, "", "");
         }
 
         /**
@@ -169,7 +218,7 @@ public record InvoiceServiceLines(Columns columns, List<Line> lines) {
                     BigDecimal quantity, String unit, BigDecimal unitPrice,
                     BigDecimal amount) {
             this(lineNumber, title, description, servicePeriod, quantity, unit,
-                    unitPrice, amount, "", "");
+                    unitPrice, amount, "", "", "");
         }
     }
 }

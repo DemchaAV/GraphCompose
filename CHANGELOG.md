@@ -7,6 +7,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **An invoice line carries where it was delivered.** A design that bills the same
+  service in more than one place — the same instance type in two datacentres, the same
+  plan in two jurisdictions — prints where beside what, as its own column next to the
+  service. `InvoiceServiceLines.Line` had nowhere to put it: `servicePeriod` is the
+  neighbouring column on such a sheet, so folding the two together collapses two columns
+  the design draws apart, and `vatRate` is a tax rate that happens to be free. `Line` now
+  carries `region` and `Columns` its caption, both plain strings blank when absent, and a
+  design with one location per invoice leaves them alone. All three constructors that
+  predate it — the ones before the per-line tax rate, the mark, and the region — are kept
+  explicitly, so existing calls compile and link unchanged and every line built through
+  them still prints no region.
+
 - **A supplier carries the legal line it prints under its name.** A footer band that
   identifies the issuer often has to carry more than a name and an address: a
   parent-company or regulator disclosure — "X is a subsidiary of Y" — is a statement the

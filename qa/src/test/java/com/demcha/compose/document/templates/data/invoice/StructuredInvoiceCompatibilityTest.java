@@ -123,6 +123,42 @@ class StructuredInvoiceCompatibilityTest {
     }
 
     @Test
+    void theColumnsConstructorThatPredatesTheRegionColumnLeavesItBlank() {
+        InvoiceServiceLines.Columns columns = new InvoiceServiceLines.Columns(
+                "#", "DESCRIPTION", "PERIOD", "QTY", "UNIT PRICE", "AMOUNT", "VAT");
+        assertThat(columns.region()).isEmpty();
+        assertThat(columns.vat()).isEqualTo("VAT");
+    }
+
+    @Test
+    void theLineConstructorThatPredatesTheRegionLeavesItBlank() {
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Compute", "On-demand", "May 2026", BigDecimal.ONE, "Hrs",
+                BigDecimal.ONE, BigDecimal.ONE, "20%", "compute");
+        assertThat(line.region()).isEmpty();
+        assertThat(line.icon()).isEqualTo("compute");
+    }
+
+    @Test
+    void aLineCarriesTheRegionItIsGiven() {
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Compute", "On-demand", "May 2026", BigDecimal.ONE, "Hrs",
+                BigDecimal.ONE, BigDecimal.ONE, "20%", "compute", "eu-west1");
+        assertThat(line.region()).isEqualTo("eu-west1");
+    }
+
+    @Test
+    void aNullRegionNormalizesToBlankLikeTheFieldsBesideIt() {
+        InvoiceServiceLines.Line line = new InvoiceServiceLines.Line(
+                1, "Compute", "On-demand", "May 2026", BigDecimal.ONE, "Hrs",
+                BigDecimal.ONE, BigDecimal.ONE, "20%", "compute", null);
+        assertThat(line.region()).isEmpty();
+        assertThat(new InvoiceServiceLines.Columns(
+                "#", "DESCRIPTION", "PERIOD", "QTY", "UNIT PRICE", "AMOUNT", "VAT", null)
+                .region()).isEmpty();
+    }
+
+    @Test
     void theRecipientConstructorThatPredatesTheRegistrationLeavesItBlank() {
         InvoiceRecipient recipient = new InvoiceRecipient("BILL TO", "Northwind Ltd.", "",
                 List.of("42 Bridgewater Street"), "Email", "ap@example.test");

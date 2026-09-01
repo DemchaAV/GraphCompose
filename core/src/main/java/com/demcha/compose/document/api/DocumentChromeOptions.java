@@ -30,6 +30,7 @@ import java.util.Objects;
  */
 final class DocumentChromeOptions {
     private final List<DocumentHeaderFooter> headersAndFooters = new ArrayList<>();
+    private final List<DocumentPageZone> zones = new ArrayList<>();
     private DocumentMetadata metadata;
     private DocumentWatermark watermark;
     private DocumentProtection protection;
@@ -66,6 +67,46 @@ final class DocumentChromeOptions {
 
     void clearHeadersAndFooters() {
         this.headersAndFooters.clear();
+        this.zones.clear();
+    }
+
+    void addZone(DocumentPageZone zone) {
+        Objects.requireNonNull(zone, "zone");
+        if (zone.getContent() == null) {
+            throw new IllegalArgumentException(
+                    "A page zone needs a content function; DocumentPageZone.footer(height, page -> ...)"
+                            + " builds one.");
+        }
+        this.zones.add(zone);
+    }
+
+    List<DocumentPageZone> zones() {
+        return List.copyOf(zones);
+    }
+
+    /**
+     * The height the given zone claims from the page's content area — the tallest
+     * of the space-reserving zones registered for it, or zero when none reserves.
+     *
+     * <p>The tallest rather than the sum: zones in the same band are drawn on top
+     * of one another, not stacked, so the band is as deep as its deepest member.</p>
+     *
+     * @param zone the band to measure
+     * @return reserved height in points, never negative
+     */
+    double reservedHeight(DocumentHeaderFooterZone zone) {
+        double reserved = 0.0;
+        for (DocumentHeaderFooter entry : headersAndFooters) {
+            if (entry.getZone() == zone && entry.isReserveSpace()) {
+                reserved = Math.max(reserved, entry.getHeight());
+            }
+        }
+        for (DocumentPageZone entry : zones) {
+            if (entry.getZone() == zone && entry.isReserveSpace()) {
+                reserved = Math.max(reserved, entry.getHeight());
+            }
+        }
+        return reserved;
     }
 
     /**
@@ -79,7 +120,8 @@ final class DocumentChromeOptions {
                && watermark == null
                && protection == null
                && viewerPreferences == null
-               && headersAndFooters.isEmpty();
+               && headersAndFooters.isEmpty()
+               && zones.isEmpty();
     }
 
     /**
@@ -93,7 +135,7 @@ final class DocumentChromeOptions {
             return DocumentOutputOptions.EMPTY;
         }
         return new DocumentOutputOptions(metadata, watermark, protection, viewerPreferences,
-                List.copyOf(headersAndFooters));
+                List.copyOf(headersAndFooters), List.copyOf(zones));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.demcha.compose.engine.render.pdf.helpers;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.components.content.watermark.WatermarkConfig;
 import com.demcha.compose.engine.components.content.watermark.WatermarkPosition;
 import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
  *
  * @author Artem Demchyshyn
  */
+@Internal
 @Slf4j
 public final class PdfWatermarkRenderer {
 

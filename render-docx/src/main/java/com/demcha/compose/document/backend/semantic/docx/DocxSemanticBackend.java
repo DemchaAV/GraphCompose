@@ -39,7 +39,18 @@ import com.demcha.compose.document.table.DocumentTableStyle;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BreakType;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import com.demcha.compose.document.node.PageFieldKind;
+import com.demcha.compose.document.node.PageFieldNode;
+import com.demcha.compose.document.output.DocumentHeaderFooterZone;
+import com.demcha.compose.document.output.DocumentPageZone;
+import com.demcha.compose.document.output.PageContext;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFHeaderFooter;
+import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
+import org.apache.xmlbeans.impl.xb.xmlschema.SpaceAttribute;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTabStop;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTabJc;
 import org.apache.poi.common.usermodel.PictureType;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFPicture;
@@ -90,6 +101,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Artem Demchyshyn
  */
 public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
+
+    /** Word measures tab stops in twentieths of a point. */
+    private static final double TWIPS_PER_POINT = 20.0;
     private static final double POINT_TO_TWIP = 20.0;
     private static final Logger LOG = LoggerFactory.getLogger(DocxSemanticBackend.class);
     // The page's content width, so an image is held to the same bound layout holds it to.
@@ -158,9 +172,114 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 props.getCoreProperties().setKeywords(metadata.getKeywords());
             }
         }
-        // Headers/footers, watermark, and protection are ignored by the v1.3
-        // DOCX exporter. Word documents do not have a direct analogue for the
-        // PDF chrome model, so these values are reserved for future expansion.
+        applyPageZones(document, options.zones());
+
+        // The text header/footer, watermark and protection are still ignored: the
+        // three text slots and their placeholder tokens describe a painted band
+        // rather than content Word can own. A page zone does describe content, so
+        // that is the one that maps.
+    }
+
+    /**
+     * Writes each page zone into a real Word header or footer part.
+     *
+     * <p>A fixed-layout backend receives a paginated document and draws the zone
+     * per page; Word paginates for itself, so the zone is written once as a
+     * definition and Word repeats it. That is why the content function is called
+     * with an unpaginated {@link PageContext}: a page number baked into text here
+     * would be right on one page and wrong on the others, so a zone that needs one
+     * places {@code pageNumber()} and gets a live {@code PAGE} field instead.</p>
+     *
+     * <p>A page predicate is the other fixed-layout-only piece: {@code appliesTo}
+     * tests a page, and no page exists here to test — Word owns pagination. The
+     * zone is written on every page rather than silently skipped, content beating
+     * absence, and the export says on the log what it could not honor.</p>
+     */
+    private void applyPageZones(XWPFDocument document, List<DocumentPageZone> zones) {
+        if (zones == null || zones.isEmpty()) {
+            return;
+        }
+        XWPFHeaderFooterPolicy policy = document.getHeaderFooterPolicy();
+        if (policy == null) {
+            policy = document.createHeaderFooterPolicy();
+        }
+        for (DocumentPageZone zone : zones) {
+            if (zone.getAppliesTo() != null) {
+                LOG.warn("docx.zone.pagePredicate zone={} — appliesTo cannot be evaluated in a"
+                        + " semantic export: Word paginates the document, so there is no page to"
+                        + " test. The zone is written on every page; per-page chrome needs a"
+                        + " fixed-layout backend.", zone.getZone());
+            }
+            DocumentNode content = zone.getContent() == null
+                    ? null
+                    : zone.getContent().apply(PageContext.unpaginated());
+            if (content == null) {
+                continue;
+            }
+            XWPFHeaderFooter target = zone.getZone() == DocumentHeaderFooterZone.HEADER
+                    ? policy.createHeader(XWPFHeaderFooterPolicy.DEFAULT)
+                    : policy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
+            writeZoneLine(target, content);
+        }
+    }
+
+    /**
+     * Writes one zone's subtree as a single line in the header/footer part.
+     *
+     * <p>A zone is one band deep, so its children belong on one Word line rather
+     * than stacked paragraphs: a row's children become runs in document order, and
+     * a flex spacer becomes the tab that carries the rest to the right margin —
+     * which is how a Word footer is built by hand anyway.</p>
+     */
+    private void writeZoneLine(XWPFHeaderFooter target, DocumentNode content) {
+        XWPFParagraph para = target.createParagraph();
+        para.setSpacingBefore(0);
+        para.setSpacingAfter(0);
+        CTTabStop tab = para.getCTP().addNewPPr().addNewTabs().addNewTab();
+        tab.setVal(STTabJc.RIGHT);
+        tab.setPos(java.math.BigInteger.valueOf(Math.round(contentWidth * TWIPS_PER_POINT)));
+
+        List<DocumentNode> parts = content instanceof RowNode row ? row.children() : List.of(content);
+        for (DocumentNode part : parts) {
+            appendZonePart(para, part);
+        }
+    }
+
+    private void appendZonePart(XWPFParagraph para, DocumentNode part) {
+        if (part instanceof ParagraphNode paragraph) {
+            writeParagraphRuns(para, paragraph, false);
+        } else if (part instanceof PageFieldNode field) {
+            appendPageField(para, field);
+        } else if (part instanceof SpacerNode) {
+            para.createRun().addTab();
+        } else {
+            warnUnsupportedZoneNode(part);
+        }
+    }
+
+    /**
+     * Emits Word's own field rather than a number, so it stays correct when the
+     * reader adds a page or edits the document.
+     */
+    private void appendPageField(XWPFParagraph para, PageFieldNode field) {
+        CTSimpleField simple = para.getCTP().addNewFldSimple();
+        simple.setInstr(field.kind() == PageFieldKind.TOTAL ? " NUMPAGES " : " PAGE ");
+        // Word repaints the field on open; the placeholder run is what a reader
+        // sees before that happens, and what a text extractor finds. It carries
+        // the node's text style like any other run — Word keeps a field result's
+        // formatting when it repaints it, so an unstyled placeholder would snap
+        // a styled page number back to the document default.
+        XWPFRun run = new XWPFRun(simple.addNewR(), para);
+        applyStyle(run, field.textStyle());
+        run.setText("1");
+    }
+
+    private void warnUnsupportedZoneNode(DocumentNode node) {
+        if (warnedNodeKinds.add("zone:" + node.nodeKind())) {
+            LOG.warn("docx.zone.unsupportedNode kind={} — a page zone maps paragraphs, page fields"
+                    + " and spacers onto a Word header/footer; other nodes are skipped",
+                    node.nodeKind());
+        }
     }
 
     private void writeNode(XWPFDocument document, DocumentNode node) throws Exception {

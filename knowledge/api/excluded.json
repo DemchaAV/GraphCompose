@@ -1,0 +1,1157 @@
+{
+  "schemaVersion": 2,
+  "verifiedAgainst": "2.4.0-SNAPSHOT",
+  "generator": "knowledge/tools/api-surface/extract-api.mjs",
+  "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
+  "count": 164,
+  "excluded": [
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
+      "package": "com.demcha.compose.document.backend.fixed.pptx.handlers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxFontMapping",
+      "package": "com.demcha.compose.document.backend.fixed.pptx.handlers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#deferLink",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#fontFamily",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#fontFamily",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#registerBookmark",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment#viewerAscent",
+      "package": "com.demcha.compose.document.backend.fixed.pptx",
+      "kind": "method",
+      "artifact": "graph-compose-render-pptx",
+      "reason": "member @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.chart.ChartSize$AspectRatio",
+      "package": "com.demcha.compose.document.chart",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.chart.ChartSize$Fixed",
+      "package": "com.demcha.compose.document.chart",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.debug.snapshot.LayoutGraphSnapshotExtractor",
+      "package": "com.demcha.compose.document.debug.snapshot",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.debug.snapshot.PageIndexExtractor",
+      "package": "com.demcha.compose.document.debug.snapshot",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.dsl.internal.BuilderSupport",
+      "package": "com.demcha.compose.document.dsl.internal",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package `document.dsl.internal` is implementation detail but carries no package-level @Internal; excluded by name until the annotation is added"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.dsl.internal.SemanticNameNormalizer",
+      "package": "com.demcha.compose.document.dsl.internal",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package `document.dsl.internal` is implementation detail but carries no package-level @Internal; excluded by name until the annotation is added"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.emoji.EmojiLibrary",
+      "package": "com.demcha.compose.document.emoji",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.BoxConstraints",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.BuiltInNodeDefinitions",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ChartTextMetricsSupport",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.CompositeLayoutSpec",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.CompositeLayoutSpec$Axis",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.AlignDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.BarcodeDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.CanvasLayerDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ChartDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ChartDefinition$PreparedChartLayout",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ChartDefinition$PreparedPrimitive",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ContainerDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.EllipseDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ImageDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.LayerStackDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.LineDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ListDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PageBreakDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PageFieldDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PageReferenceDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ParagraphDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PathDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.PolygonDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.RowDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.SectionDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ShapeContainerDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.ShapeDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.SpacerDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.TableDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.DocumentGraph",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.DocumentLayoutPassContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.DocumentLayoutResolver",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.DocumentLayoutResolver$Context",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.FixedSlotPlacementContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.FragmentContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.FragmentPlacement",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutCanvas",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutCompiler",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutFragment",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutGraph",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.MeasureContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.MeasureResult",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.MutatingPlacementContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.NodeDefinitionSupport",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.NodeDefinitionSupport$ImageDimensions",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.NodeRegistry",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PageGeometry",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PageMarginOverride",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PaginationPolicy",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ParagraphDirection",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.AnchorMarkerPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.BarcodeFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.BookmarkMarkerPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.EllipseFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ImageFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.LineFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphImageSpan",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphLine",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphLineGeometry",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphShapeSpan",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphSpan",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphSvgSpan",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ParagraphTextSpan",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PathFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PdfSemanticFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PolygonFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PreparedListItemLayout",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PreparedListLayout",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PreparedParagraphLayout",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.PreparedStackLayout",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ResolvedShapeLayer",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ResolvedSvgLayer",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ShapeClipBeginPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ShapeClipEndPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ShapeFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.SideBorders",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.TableRowFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.TransformBeginPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.TransformEndPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PlacedFragment",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PlacedNode",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PlacementContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PrepareContext",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PreparedNode",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PreparedNodeLayout",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.PreparedSplitResult",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.SplitRequest",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.SplitResult",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.TableGrid",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.TableGrid$Placement",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.TextFlowSupport",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$Linear",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$LinearAxis",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$Radial",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$RadialCircle",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$Solid",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.DocumentPaint$Stop",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.ShapeOutline$Rectangle",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.ShapeOutline$RoundedRectangle",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.style.ShapeOutline$RoundedRectanglePerCorner",
+      "package": "com.demcha.compose.document.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.barcode.BarcodeData",
+      "package": "com.demcha.compose.engine.components.content.barcode",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.barcode.BarcodeType",
+      "package": "com.demcha.compose.engine.components.content.barcode",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig",
+      "package": "com.demcha.compose.engine.components.content.header_footer",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig$HeaderFooterConfigBuilder",
+      "package": "com.demcha.compose.engine.components.content.header_footer",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone",
+      "package": "com.demcha.compose.engine.components.content.header_footer",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.header_footer.PageNumberStyle",
+      "package": "com.demcha.compose.engine.components.content.header_footer",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.protection.PdfProtectionConfig",
+      "package": "com.demcha.compose.engine.components.content.protection",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.protection.PdfProtectionConfig$PdfProtectionConfigBuilder",
+      "package": "com.demcha.compose.engine.components.content.protection",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.shape.Side",
+      "package": "com.demcha.compose.engine.components.content.shape",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.shape.Stroke",
+      "package": "com.demcha.compose.engine.components.content.shape",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.shape.StrokeColor",
+      "package": "com.demcha.compose.engine.components.content.shape",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableCellContent",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableCellLayoutStyle",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableCellLayoutStyle$TableCellLayoutStyleBuilder",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableColumnLayout",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableColumnLayout$Type",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.table.TableResolvedCell",
+      "package": "com.demcha.compose.engine.components.content.table",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.text.BlockTextData",
+      "package": "com.demcha.compose.engine.components.content.text",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.text.LineTextData",
+      "package": "com.demcha.compose.engine.components.content.text",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.text.Text",
+      "package": "com.demcha.compose.engine.components.content.text",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.text.TextDataBody",
+      "package": "com.demcha.compose.engine.components.content.text",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.text.TextIndentStrategy",
+      "package": "com.demcha.compose.engine.components.content.text",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.watermark.WatermarkConfig",
+      "package": "com.demcha.compose.engine.components.content.watermark",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.watermark.WatermarkConfig$WatermarkConfigBuilder",
+      "package": "com.demcha.compose.engine.components.content.watermark",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.watermark.WatermarkLayer",
+      "package": "com.demcha.compose.engine.components.content.watermark",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.content.watermark.WatermarkPosition",
+      "package": "com.demcha.compose.engine.components.content.watermark",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.layout.Anchor",
+      "package": "com.demcha.compose.engine.components.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.layout.HAnchor",
+      "package": "com.demcha.compose.engine.components.layout",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.layout.VAnchor",
+      "package": "com.demcha.compose.engine.components.layout",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.components.style.ComponentColor",
+      "package": "com.demcha.compose.engine.components.style",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.font.Font",
+      "package": "com.demcha.compose.engine.font",
+      "kind": "interface",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.font.FontBase",
+      "package": "com.demcha.compose.engine.font",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.font.FontLineMetrics",
+      "package": "com.demcha.compose.engine.font",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem",
+      "package": "com.demcha.compose.engine.measurement",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.pdf.GlyphFallbackLogger",
+      "package": "com.demcha.compose.engine.render.pdf",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer",
+      "package": "com.demcha.compose.engine.render.pdf.helpers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.pdf.helpers.PdfWatermarkRenderer",
+      "package": "com.demcha.compose.engine.render.pdf.helpers",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.pdf.PdfFont",
+      "package": "com.demcha.compose.engine.render.pdf",
+      "kind": "class",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "type @Internal"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.pdf.PdfFont$VerticalMetrics",
+      "package": "com.demcha.compose.engine.render.pdf",
+      "kind": "record",
+      "artifact": "graph-compose-render-pdf",
+      "reason": "package @Internal (com.demcha.compose.engine.render.pdf)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.render.word.WordFont",
+      "package": "com.demcha.compose.engine.render.word",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.ArabicShaper",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiMirroring",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiParagraphResolver",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiParagraphResolver$BaseDirection",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiParagraphResolver$DirectionalRun",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiText",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.bidi.BidiVisualOrder",
+      "package": "com.demcha.compose.engine.text.bidi",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text.bidi)"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.markdown.MarkDownParser",
+      "package": "com.demcha.compose.engine.text.markdown",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "implementation package, and no admitted API mentions it"
+    },
+    {
+      "binaryName": "com.demcha.compose.engine.text.TextControlSanitizer",
+      "package": "com.demcha.compose.engine.text",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.engine.text)"
+    }
+  ]
+}

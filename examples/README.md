@@ -154,8 +154,9 @@ are with the canonical DSL, then jump to its detailed section below.
 | [Advanced tables](#advanced-tables) | Row span, zebra rows, totals, repeating header on page break | [PDF](../assets/readme/examples/table-advanced.pdf) · [Source](src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java) |
 | [Barcodes](#barcodes) | QR, Code 128, Code 39, EAN-13, EAN-8, branded QR with theme colours | [PDF](../assets/readme/examples/barcode-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/barcodes/BarcodeShowcaseExample.java) |
 | [Charts](#charts) | Native vector bar, line, and pie/donut charts — data/spec/style layers, axis & grid toggles, point markers, value labels, legend | [PDF](../assets/readme/examples/chart-showcase.pdf) · [Source](src/main/java/com/demcha/examples/features/charts/ChartShowcaseExample.java) |
-| [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter`, `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
+| [PDF chrome](#pdf-chrome) | `DocumentMetadata`, `DocumentWatermark`, `DocumentHeaderFooter` (incl. `fontName` — a PT Sans Cyrillic counter — and `reserveSpace`), `DocumentBookmarkOptions` | [PDF](../assets/readme/examples/pdf-chrome.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PdfChromeExample.java) |
 | [Page numbering](#page-numbering) | `DocumentPageNumbering` — offset / restart / roman / suppress-on-first-page for `{page}` / `{pages}` footer tokens | [PDF](../assets/readme/examples/page-numbering.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java) |
+| [Page zone](#page-zone) | `DocumentPageZone` — footer and running head built from nodes: chip, link, `page.pageNumber()`, `appliesTo` keeping the head off the cover, and a body-anchor `addPageReference` in the band | [PDF](../assets/readme/examples/page-zone.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java) |
 | [Viewer preferences](#viewer-preferences) | `chrome().viewerPreferences(...)` — open with the bookmark panel (`USE_OUTLINES`), set page layout, or show the doc title in the window | [PDF](../assets/readme/examples/viewer-preferences.pdf) · [Source](src/main/java/com/demcha/examples/features/chrome/ViewerPreferencesExample.java) |
 | [In-PDF navigation](#in-pdf-navigation) | `anchor(...)` destinations + internal `linkTo(...)` / `inlineLinkTo(...)` / `shapeLinkTo(...)` — clickable cross-references and footnotes as native PDF GoTo actions; forward references resolve in a deferred pass | [PDF](../assets/readme/examples/in-pdf-navigation.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/InPdfNavigationExample.java) |
 | [Page references](#page-references) | `addPageReference(anchor)` — print the page an `anchor(...)` lands on (a native "see page N" cross-reference), resolved in one authoring pass | [PDF](../assets/readme/examples/page-reference.pdf) · [Source](src/main/java/com/demcha/examples/features/navigation/PageReferenceExample.java) |
@@ -906,7 +907,10 @@ labels, separators, pad-angle gaps, and a donut-centre KPI.
 Backend-neutral `DocumentMetadata`, `DocumentWatermark`,
 `DocumentHeaderFooter` (header + footer with `{page} / {pages} /
 {date}` tokens), and paragraph-level `DocumentBookmarkOptions`
-materialising as PDF outline entries.
+materialising as PDF outline entries. The footer names its family
+through `fontName` — PT Sans here, so its Cyrillic counter keeps its
+letters where the standard-14 default would substitute `?` — and
+`reserveSpace(true)` keeps the body clear of the band.
 
 <!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
 ```java
@@ -945,6 +949,44 @@ session.chrome().footer(DocumentHeaderFooter.builder()
 
 [📄 View PDF](../assets/readme/examples/page-numbering.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java)
+
+### Page zone
+
+A zone's content is a node subtree rather than three text slots, so the band can
+hold a badge, a link and the page number on one line — laid out and painted by
+the same engine as the body, which is why the chip is a real chip and the link a
+real annotation. `page.pageNumber()` returns a node rather than an `int`, so the
+same zone also exports to DOCX, where it becomes Word's live `PAGE` field.
+
+The running head is the same surface pointed up: `DocumentPageZone.header(...)`
+takes the same row DSL, `appliesTo(page -> !page.isFirst())` keeps it off the
+cover, and `addPageReference("appendix")` inside the band resolves against the
+body's anchors — every page names where the appendix landed without anyone
+maintaining the number.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+session.chrome().zone(DocumentPageZone.footer(34, page -> new RowBuilder()
+    .gap(8)
+    .addParagraph(p -> p.text("Confidential").textStyle(chrome))
+    .flexSpacer()
+    .addParagraph(p -> p.textStyle(chrome).inlineChip("v2.4", chipInk, chipFill))
+    .addParagraph(p -> p.textStyle(chrome).inlineLink("acme.example",
+            new DocumentLinkOptions("https://acme.example")))
+    .add(page.pageNumber(chrome))
+    .build()));
+
+session.chrome().zone(DocumentPageZone.header(24, page -> new RowBuilder()
+    .addParagraph(p -> p.text("Page zones").textStyle(chrome))
+    .flexSpacer()
+    .addParagraph(p -> p.text("Appendix · p.").textStyle(chrome))
+    .addPageReference("appendix", chrome, TextAlign.LEFT)
+    .build())
+    .toBuilder().appliesTo(page -> !page.isFirst()).build());
+```
+
+[📄 View PDF](../assets/readme/examples/page-zone.pdf) ·
+[📜 Full source](src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java)
 
 ### Viewer preferences
 

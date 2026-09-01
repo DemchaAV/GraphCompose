@@ -1,8 +1,12 @@
 package com.demcha.compose.engine.render.pdf.helpers;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterConfig;
 import com.demcha.compose.engine.components.content.header_footer.HeaderFooterZone;
+import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
+import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.FontLibrary;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -24,6 +28,7 @@ import java.util.List;
  *
  * @author Artem Demchyshyn
  */
+@Internal
 @Slf4j
 public final class PdfHeaderFooterRenderer {
 
@@ -36,16 +41,18 @@ public final class PdfHeaderFooterRenderer {
      *
      * @param doc     the target PDF document
      * @param configs list of header/footer configurations
+     * @param fonts   font library used to resolve each zone's font family
      * @param marginLeft  left margin of the main canvas
      * @param marginRight right margin of the main canvas
      * @throws IOException if writing to the content stream fails
      */
     public static void apply(PDDocument doc,
                              List<HeaderFooterConfig> configs,
+                             FontLibrary fonts,
                              float marginLeft,
                              float marginRight) throws IOException {
         if (doc == null) return;
-        apply(doc, configs, marginLeft, marginRight, 0, doc.getNumberOfPages());
+        apply(doc, configs, fonts, marginLeft, marginRight, 0, doc.getNumberOfPages());
     }
 
     /**
@@ -61,6 +68,7 @@ public final class PdfHeaderFooterRenderer {
      *
      * @param doc             the target PDF document
      * @param configs         list of header/footer configurations
+     * @param fonts           font library used to resolve each zone's font family
      * @param marginLeft      left margin of the section canvas
      * @param marginRight     right margin of the section canvas
      * @param basePageOffset  zero-based index of the window's first physical page
@@ -69,6 +77,7 @@ public final class PdfHeaderFooterRenderer {
      */
     public static void apply(PDDocument doc,
                              List<HeaderFooterConfig> configs,
+                             FontLibrary fonts,
                              float marginLeft,
                              float marginRight,
                              int basePageOffset,
@@ -87,7 +96,7 @@ public final class PdfHeaderFooterRenderer {
                     if (!config.appliesTo(local + 1)) {
                         continue;
                     }
-                    renderZone(cs, config, mediaBox, local + 1, sectionPageCount, marginLeft, marginRight);
+                    renderZone(cs, config, fonts, mediaBox, local + 1, sectionPageCount, marginLeft, marginRight);
                 }
             }
         }
@@ -95,12 +104,13 @@ public final class PdfHeaderFooterRenderer {
 
     private static void renderZone(PDPageContentStream cs,
                                    HeaderFooterConfig config,
+                                   FontLibrary fonts,
                                    PDRectangle mediaBox,
                                    int currentPage,
                                    int totalPages,
                                    float marginLeft,
                                    float marginRight) throws IOException {
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        PDFont font = resolveFont(fonts, config);
         float fontSize = config.getFontSize();
         float pageWidth = mediaBox.getWidth();
         float usableWidth = pageWidth - marginLeft - marginRight;
@@ -115,11 +125,11 @@ public final class PdfHeaderFooterRenderer {
 
         cs.setNonStrokingColor(config.getTextColor());
 
-        // Header/footer text frequently includes page-number glyphs,
-        // copyright marks, or user branding outside Helvetica's WinAnsi
-        // coverage. Sanitise each zone through GlyphFallbackLogger so
-        // unsupported code points become '?' instead of crashing the
-        // whole document render.
+        // Zone text frequently includes page-number glyphs, copyright marks,
+        // or user branding outside the chosen family's coverage. Sanitise each
+        // zone through GlyphFallbackLogger so unsupported code points become
+        // '?' instead of crashing the whole document render — the same policy
+        // the body text runs under, since the engine has no fallback chain.
         String leftText = GlyphFallbackLogger.sanitize(font,
                 config.resolveTokens(config.getLeftText(), currentPage, totalPages));
         if (!leftText.isEmpty()) {
@@ -169,5 +179,25 @@ public final class PdfHeaderFooterRenderer {
             cs.lineTo(pageWidth - marginRight, separatorY);
             cs.stroke();
         }
+    }
+
+    /**
+     * Resolves the zone's font family through the document's own font library, so
+     * a header or footer draws in the same face as the body asked for rather than
+     * in a font of this renderer's choosing.
+     *
+     * <p>Falls back to standard-14 Helvetica when the library cannot supply the
+     * family — a zone is chrome, and failing to draw it would cost the caller the
+     * whole document over a font name.</p>
+     */
+    private static PDFont resolveFont(FontLibrary fonts, HeaderFooterConfig config) {
+        TextStyle style = config.textStyle();
+        if (fonts != null) {
+            PdfFont resolved = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
+            if (resolved != null) {
+                return resolved.fontType(style.decoration());
+            }
+        }
+        return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     }
 }

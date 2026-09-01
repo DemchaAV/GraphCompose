@@ -1,0 +1,6156 @@
+{
+  "schemaVersion": 2,
+  "targetLibrary": "GraphCompose",
+  "surface": "backends",
+  "targetVersion": "2.4.x",
+  "verifiedAgainst": "2.4.0-SNAPSHOT",
+  "generator": "knowledge/tools/api-surface/extract-api.mjs",
+  "generatedFrom": [
+    "io.github.demchaav:graph-compose-core:2.4.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-templates:2.4.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pdf:2.4.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-docx:2.4.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-render-pptx:2.4.0-SNAPSHOT",
+    "io.github.demchaav:graph-compose-testing:2.4.0-SNAPSHOT"
+  ],
+  "parameterNamesFrom": [
+    "graph-compose-core:sources",
+    "graph-compose-templates:sources",
+    "graph-compose-render-pdf:sources",
+    "graph-compose-render-docx:sources",
+    "graph-compose-render-pptx:sources",
+    "graph-compose-testing:sources"
+  ],
+  "counts": {
+    "types": 69,
+    "methods": 371,
+    "constants": 18,
+    "generated": 189
+  },
+  "packages": [
+    {
+      "name": "com.demcha.compose.document.backend.fixed",
+      "types": [
+        {
+          "name": "BackendProviders",
+          "binaryName": "com.demcha.compose.document.backend.fixed.BackendProviders",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "fixedLayout",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FixedLayoutBackendProvider",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fixedLayout",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FixedLayoutBackendProvider",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "format"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontMetrics",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontMetricsProvider",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "FixedLayoutRenderContext",
+          "binaryName": "com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "FixedLayoutRenderContext",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": null
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": null
+                },
+                {
+                  "type": "Path",
+                  "name": null
+                },
+                {
+                  "type": "OutputStream",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canvas",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutCanvas",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "customFontFamilies",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Collection<FontFamilyDefinition>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "outputFile",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Path",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "outputStream",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "OutputStream",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "SectionUnit",
+          "binaryName": "com.demcha.compose.document.backend.fixed.SectionUnit",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "SectionUnit",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": null
+                },
+                {
+                  "type": "LayoutCanvas",
+                  "name": null
+                },
+                {
+                  "type": "List<FontFamilyDefinition>",
+                  "name": null
+                },
+                {
+                  "type": "FixedLayoutRenderer",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "graph",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutGraph",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "canvas",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutCanvas",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "customFonts",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<FontFamilyDefinition>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "chrome",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FixedLayoutRenderer",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pdf",
+      "types": [
+        {
+          "name": "PdfDocumentPostProcessor",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfDocumentPostProcessor",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "apply",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                },
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "PdfMetadataOptions",
+                  "name": "metadataOptions"
+                },
+                {
+                  "type": "PdfWatermarkOptions",
+                  "name": "watermarkOptions"
+                },
+                {
+                  "type": "PdfProtectionOptions",
+                  "name": "protectionOptions"
+                },
+                {
+                  "type": "Collection<PdfHeaderFooterOptions>",
+                  "name": "headerFooterOptions"
+                },
+                {
+                  "type": "FontLibrary",
+                  "name": "fonts"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "applySectionChrome",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                },
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "PdfWatermarkOptions",
+                  "name": "watermarkOptions"
+                },
+                {
+                  "type": "Collection<PdfHeaderFooterOptions>",
+                  "name": "headerFooterOptions"
+                },
+                {
+                  "type": "int",
+                  "name": "basePageOffset"
+                },
+                {
+                  "type": "int",
+                  "name": "sectionPageCount"
+                },
+                {
+                  "type": "FontLibrary",
+                  "name": "fonts"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "applyDocumentMetadataAndProtection",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                },
+                {
+                  "type": "PdfMetadataOptions",
+                  "name": "metadataOptions"
+                },
+                {
+                  "type": "PdfProtectionOptions",
+                  "name": "protectionOptions"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "applyViewerPreferences",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                },
+                {
+                  "type": "PdfViewerPreferencesOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "apply",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "byte[]",
+                  "name": "pdfBytes"
+                },
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "PdfMetadataOptions",
+                  "name": "metadataOptions"
+                },
+                {
+                  "type": "PdfWatermarkOptions",
+                  "name": "watermarkOptions"
+                },
+                {
+                  "type": "PdfProtectionOptions",
+                  "name": "protectionOptions"
+                },
+                {
+                  "type": "Collection<PdfHeaderFooterOptions>",
+                  "name": "headerFooterOptions"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hasPostProcessing",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [
+                {
+                  "type": "PdfMetadataOptions",
+                  "name": "metadataOptions"
+                },
+                {
+                  "type": "PdfWatermarkOptions",
+                  "name": "watermarkOptions"
+                },
+                {
+                  "type": "PdfProtectionOptions",
+                  "name": "protectionOptions"
+                },
+                {
+                  "type": "Collection<PdfHeaderFooterOptions>",
+                  "name": "headerFooterOptions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfFixedLayoutBackend",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfFixedLayoutBackend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "write",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderToImages",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "List<BufferedImage>",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                },
+                {
+                  "type": "int",
+                  "name": "dpi"
+                },
+                {
+                  "type": "boolean",
+                  "name": "transparent"
+                },
+                {
+                  "type": "int",
+                  "name": "pageIndex"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": "sections"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": "sections"
+                },
+                {
+                  "type": "OutputStream",
+                  "name": "output"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfFixedLayoutBackend.Builder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackend$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "addHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfFragmentRenderHandler<?>",
+                  "name": "handler"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "guideLines",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "debug",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "DocumentDebugOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "viewerPreferences",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfViewerPreferencesOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "metadata",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfMetadataOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "watermark",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfWatermarkOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "protect",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfProtectionOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "header",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfHeaderFooterOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PdfHeaderFooterOptions",
+                  "name": "options"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "Instant",
+                  "name": "timestamp"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfFixedLayoutBackend",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfFixedLayoutBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFixedLayoutBackendProvider",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfFixedLayoutBackendProvider",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FixedLayoutRenderer",
+              "params": [
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": "chrome"
+                },
+                {
+                  "type": "DocumentDebugOptions",
+                  "name": "debug"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfFontLibraryFactory",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "standardLibrary",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "library",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "library",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": [
+                {
+                  "type": "PDDocument",
+                  "name": "document"
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFamilies"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "measurementLibrary",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": [
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFamilies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfFontMetricsProvider",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfFontMetricsProvider",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfFontMetricsProvider",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "openMeasurement",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "MeasurementResources",
+              "params": [
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfMeasurementResources",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfMeasurementResources",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "open",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfMeasurementResources",
+              "params": [
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontLibrary",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "textMeasurementSystem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TextMeasurementSystem",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "close",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfOutputOptionsTranslator",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfOutputOptionsTranslator",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "toPdf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions",
+              "params": [
+                {
+                  "type": "DocumentMetadata",
+                  "name": "metadata"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toPdf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions",
+              "params": [
+                {
+                  "type": "DocumentViewerPreferences",
+                  "name": "viewerPreferences"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toPdf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions",
+              "params": [
+                {
+                  "type": "DocumentWatermark",
+                  "name": "watermark"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toPdf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions",
+              "params": [
+                {
+                  "type": "DocumentProtection",
+                  "name": "protection"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "toPdf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions",
+              "params": [
+                {
+                  "type": "DocumentHeaderFooter",
+                  "name": "entry"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfRenderEnvironment",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.PdfRenderEnvironment",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "method",
+              "name": "document",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDDocument",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fonts",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "pageSurface",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDPageContentStream",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "pageIndex"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "documentPage",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDPage",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "localPageIndex"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fillAlphaState",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDExtendedGraphicsState",
+              "params": [
+                {
+                  "type": "float",
+                  "name": "alpha"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "strokeAlphaState",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDExtendedGraphicsState",
+              "params": [
+                {
+                  "type": "float",
+                  "name": "alpha"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "resolveImage",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PDImageXObject",
+              "params": [
+                {
+                  "type": "ImageData",
+                  "name": "imageData"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "markReorderedText",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "registerAnchor",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pdf.handlers",
+      "types": [
+        {
+          "name": "PdfAnchorMarkerRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfAnchorMarkerRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfAnchorMarkerRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<AnchorMarkerPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "AnchorMarkerPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfBarcodeFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBarcodeFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfBarcodeFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<BarcodeFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "BarcodeFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfBookmarkMarkerRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfBookmarkMarkerRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfBookmarkMarkerRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<BookmarkMarkerPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "BookmarkMarkerPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfEllipseFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfEllipseFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfEllipseFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<EllipseFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "EllipseFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfImageFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfImageFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfImageFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ImageFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ImageFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfLineFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfLineFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfLineFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<LineFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "LineFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfParagraphFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfParagraphFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfParagraphFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ParagraphFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ParagraphFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfPathFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfPathFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfPathFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<PathFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "PathFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfPolygonFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfPolygonFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfPolygonFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<PolygonFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "PolygonFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfShapeClipBeginRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipBeginRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfShapeClipBeginRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeClipBeginPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeClipBeginPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfShapeClipEndRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeClipEndRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfShapeClipEndRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeClipEndPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeClipEndPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfShapeFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfShapeFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfShapeFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfTableRowFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTableRowFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfTableRowFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TableRowFragmentPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderFills",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderBordersAndText",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfTransformBeginRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformBeginRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfTransformBeginRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TransformBeginPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TransformBeginPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PdfTransformEndRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfTransformEndRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pdf",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfTransformEndRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TransformEndPayload>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TransformEndPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": "environment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PdfRenderEnvironment",
+                  "name": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pdf.options",
+      "types": [
+        {
+          "name": "PdfBarcodeOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getContent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getType",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeType",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getForeground",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getBackground",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getQuietZoneMargin",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeOptions$PdfBarcodeOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "content",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "type",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": [
+                {
+                  "type": "PdfBarcodeType",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "foreground",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": [
+                {
+                  "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "background",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": [
+                {
+                  "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "quietZoneMargin",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions.PdfBarcodeOptionsBuilder",
+              "params": [
+                {
+                  "type": "int",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfBarcodeOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfBarcodeType",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfBarcodeType",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "QR_CODE",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "CODE_128",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "CODE_39",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "EAN_13",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "EAN_8",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "UPC_A",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "PDF_417",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            },
+            {
+              "kind": "constant",
+              "name": "DATA_MATRIX",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfBarcodeType"
+            }
+          ]
+        },
+        {
+          "name": "PdfBookmarkOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfBookmarkOptions",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfBookmarkOptions",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "PdfBookmarkOptions",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "int",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "level",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfHeaderFooterOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "withZone",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions",
+              "params": [
+                {
+                  "type": "PdfHeaderFooterZone",
+                  "name": "zone"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getZone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterZone",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getHeight",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getLeftText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getCenterText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getRightText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getFontSize",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getFontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "FontName",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getTextColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isShowSeparator",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getSeparatorColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getSeparatorThickness",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getNumbering",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageNumbering",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterOptions$PdfHeaderFooterOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "zone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "PdfHeaderFooterZone",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "height",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leftText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "centerText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "rightText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontSize",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "textColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "showSeparator",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "separatorColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "separatorThickness",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "numbering",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions.PdfHeaderFooterOptionsBuilder",
+              "params": [
+                {
+                  "type": "DocumentPageNumbering",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfHeaderFooterOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfHeaderFooterZone",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfHeaderFooterZone",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "HEADER",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfHeaderFooterZone"
+            },
+            {
+              "kind": "constant",
+              "name": "FOOTER",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfHeaderFooterZone"
+            }
+          ]
+        },
+        {
+          "name": "PdfLinkOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfLinkOptions",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PdfLinkOptions",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "uri",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfMetadataOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getTitle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getAuthor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getSubject",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getKeywords",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getCreator",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getProducer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfMetadataOptions$PdfMetadataOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "author",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "subject",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "keywords",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "creator",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "producer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions.PdfMetadataOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfMetadataOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfProtectionOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getUserPassword",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getOwnerPassword",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanPrint",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanCopyContent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanModify",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanFillForms",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanExtractForAccessibility",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanAssemble",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isCanPrintHighQuality",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getKeyLength",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfProtectionOptions$PdfProtectionOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "userPassword",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ownerPassword",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canPrint",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canCopyContent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canModify",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canFillForms",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canExtractForAccessibility",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canAssemble",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canPrintHighQuality",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "keyLength",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions.PdfProtectionOptionsBuilder",
+              "params": [
+                {
+                  "type": "int",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfProtectionOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfViewerPreferencesOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfViewerPreferencesOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getPageMode",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageMode",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getPageLayout",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentPageLayout",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getDisplayDocTitle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getHideToolbar",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getHideMenubar",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getFitWindow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getCenterWindow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Boolean",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfViewerPreferencesOptions$PdfViewerPreferencesOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "pageMode",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "DocumentPageMode",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "pageLayout",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "DocumentPageLayout",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "displayDocTitle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "Boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hideToolbar",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "Boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hideMenubar",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "Boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fitWindow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "Boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "centerWindow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions.PdfViewerPreferencesOptionsBuilder",
+              "params": [
+                {
+                  "type": "Boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfViewerPreferencesOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfWatermarkLayer",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkLayer",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "BEHIND_CONTENT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkLayer"
+            },
+            {
+              "kind": "constant",
+              "name": "ABOVE_CONTENT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkLayer"
+            }
+          ]
+        },
+        {
+          "name": "PdfWatermarkOptions",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "isTextBased",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "isImageBased",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "toBuilder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getFontSize",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getRotation",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getImagePath",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Path",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getImageBytes",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getOpacity",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "float",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getLayer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkLayer",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "getPosition",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkPosition",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkOptions$PdfWatermarkOptionsBuilder",
+          "kind": "class",
+          "modifiers": [],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "text",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fontSize",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "rotation",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "color",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "imagePath",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "imageBytes",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "byte[]",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "opacity",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "float",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "layer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "PdfWatermarkLayer",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "position",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions.PdfWatermarkOptionsBuilder",
+              "params": [
+                {
+                  "type": "PdfWatermarkPosition",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "PdfWatermarkOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PdfWatermarkPosition",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.options.PdfWatermarkPosition",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "CENTER",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            },
+            {
+              "kind": "constant",
+              "name": "TOP_LEFT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            },
+            {
+              "kind": "constant",
+              "name": "TOP_RIGHT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            },
+            {
+              "kind": "constant",
+              "name": "BOTTOM_LEFT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            },
+            {
+              "kind": "constant",
+              "name": "BOTTOM_RIGHT",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            },
+            {
+              "kind": "constant",
+              "name": "TILE",
+              "static": true,
+              "origin": "generated",
+              "type": "PdfWatermarkPosition"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pptx",
+      "types": [
+        {
+          "name": "PptxCoordinates",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxCoordinates",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "topY",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "canvasHeight"
+                },
+                {
+                  "type": "double",
+                  "name": "y"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "flipPoint",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "canvasHeight"
+                },
+                {
+                  "type": "double",
+                  "name": "y"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "anchorOf",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Rectangle2D.Double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "canvasHeight"
+                },
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxFixedLayoutBackend",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxFixedLayoutBackend",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxFixedLayoutBackend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "write",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "renderToImages",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "List<BufferedImage>",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                },
+                {
+                  "type": "int",
+                  "name": "dpi"
+                },
+                {
+                  "type": "boolean",
+                  "name": "transparent"
+                },
+                {
+                  "type": "int",
+                  "name": "pageIndex"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "renderSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": "sections"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "writeSections",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "List<SectionUnit>",
+                  "name": "sections"
+                },
+                {
+                  "type": "OutputStream",
+                  "name": "output"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "LayoutGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "FixedLayoutRenderContext",
+                  "name": "context"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxFixedLayoutBackend.Builder",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxFixedLayoutBackend$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "metadata",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "DocumentMetadata",
+                  "name": "metadata"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "watermark",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "DocumentWatermark",
+                  "name": "watermark"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "header",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "DocumentHeaderFooter",
+                  "name": "options"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "DocumentHeaderFooter",
+                  "name": "options"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "deterministic",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "Instant",
+                  "name": "timestamp"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "rasterSlides",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "dpi"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "addHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "PptxFragmentRenderHandler<?>",
+                  "name": "handler"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "clipRasterFallback",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "embedBundledFonts",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend.Builder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "enabled"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "PptxFixedLayoutBackend",
+              "params": [],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxFixedLayoutBackendProvider",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxFixedLayoutBackendProvider",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxFixedLayoutBackendProvider",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "format",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FixedLayoutRenderer",
+              "params": [
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": "chrome"
+                },
+                {
+                  "type": "DocumentDebugOptions",
+                  "name": "debug"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxRenderEnvironment",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.PptxRenderEnvironment",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "method",
+              "name": "slideShow",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "XMLSlideShow",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "slide",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "XSLFSlide",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "pageIndex"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "surface",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "XSLFShapeContainer",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "pageIndex"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "pushGroup",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "XSLFGroupShape",
+                  "name": "group"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "popGroup",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "XSLFGroupShape",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "canvasHeight",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "fonts",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "FontLibrary",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "pictureSize",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Dimension",
+              "params": [
+                {
+                  "type": "ImageData",
+                  "name": "imageData"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "resolvePicture",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "XSLFPictureData",
+              "params": [
+                {
+                  "type": "ImageData",
+                  "name": "imageData"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "registerAnchor",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.fixed.pptx.handlers",
+      "types": [
+        {
+          "name": "PptxAnchorMarkerRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxAnchorMarkerRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxAnchorMarkerRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<AnchorMarkerPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "AnchorMarkerPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxBarcodeFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBarcodeFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxBarcodeFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<BarcodeFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "BarcodeFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxBookmarkMarkerRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBookmarkMarkerRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxBookmarkMarkerRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<BookmarkMarkerPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "BookmarkMarkerPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxEllipseFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxEllipseFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<EllipseFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "EllipseFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxImageFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxImageFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxImageFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ImageFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ImageFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxLineFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLineFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxLineFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<LineFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "LineFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxParagraphFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxParagraphFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxParagraphFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ParagraphFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ParagraphFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxPathFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxPathFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxPathFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<PathFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "PathFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxPolygonFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxPolygonFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxPolygonFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<PolygonFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "PolygonFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxShapeClipBeginRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeClipBeginRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxShapeClipBeginRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeClipBeginPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeClipBeginPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxShapeClipEndRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeClipEndRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxShapeClipEndRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeClipEndPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeClipEndPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxShapeFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxShapeFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxShapeFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<ShapeFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "ShapeFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxTableRowFragmentRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTableRowFragmentRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxTableRowFragmentRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TableRowFragmentPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "renderFills",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "renderBordersAndText",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TableRowFragmentPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxTransformBeginRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTransformBeginRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxTransformBeginRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TransformBeginPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TransformBeginPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        },
+        {
+          "name": "PptxTransformEndRenderHandler",
+          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxTransformEndRenderHandler",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "stability": "beta",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxTransformEndRenderHandler",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "payloadType",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Class<TransformEndPayload>",
+              "params": [],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": "fragment"
+                },
+                {
+                  "type": "TransformEndPayload",
+                  "name": "payload"
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": "environment"
+                }
+              ],
+              "stability": "beta"
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "PlacedFragment",
+                  "name": null
+                },
+                {
+                  "type": "Object",
+                  "name": null
+                },
+                {
+                  "type": "PptxRenderEnvironment",
+                  "name": null
+                }
+              ],
+              "stability": "beta"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.semantic",
+      "types": [
+        {
+          "name": "SemanticExportContext",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticExportContext",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "SemanticExportContext",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": null
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": null
+                },
+                {
+                  "type": "Path",
+                  "name": null
+                },
+                {
+                  "type": "DocumentOutputOptions",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "SemanticExportContext",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "LayoutCanvas",
+                  "name": "canvas"
+                },
+                {
+                  "type": "Collection<FontFamilyDefinition>",
+                  "name": "customFontFamilies"
+                },
+                {
+                  "type": "Path",
+                  "name": "outputFile"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "canvas",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "LayoutCanvas",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "customFontFamilies",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Collection<FontFamilyDefinition>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "outputFile",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Path",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "outputOptions",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentOutputOptions",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "SemanticExportManifest",
+          "binaryName": "com.demcha.compose.document.backend.semantic.SemanticExportManifest",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "SemanticExportManifest",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "Path",
+                  "name": null
+                },
+                {
+                  "type": "int",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "backendName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "outputFile",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Path",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "rootCount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "nodeKinds",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.semantic.docx",
+      "types": [
+        {
+          "name": "DocxSemanticBackend",
+          "binaryName": "com.demcha.compose.document.backend.semantic.docx.DocxSemanticBackend",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-docx",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "DocxSemanticBackend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "byte[]",
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": "context"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": "context"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.backend.semantic.pptx",
+      "types": [
+        {
+          "name": "PptxSemanticBackend",
+          "binaryName": "com.demcha.compose.document.backend.semantic.pptx.PptxSemanticBackend",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-render-pptx",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "PptxSemanticBackend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SemanticExportManifest",
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": "context"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "export",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Object",
+              "params": [
+                {
+                  "type": "DocumentGraph",
+                  "name": "graph"
+                },
+                {
+                  "type": "SemanticExportContext",
+                  "name": "context"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

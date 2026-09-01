@@ -108,6 +108,7 @@ it does.
 - **[adr/0013-composed-table-cell.md](adr/0013-composed-table-cell.md)** — composed table cell model.
 - **[adr/0014-controlled-absolute-placement.md](adr/0014-controlled-absolute-placement.md)** — controlled absolute placement strategy.
 - **[adr/0015-layered-template-architecture.md](adr/0015-layered-template-architecture.md)** — the layered `templates.cv` / `templates.coverletter` authoring model (current standard); supersedes the preset/builder portion of 0011.
+- **[adr/0017-page-chrome-two-paths.md](adr/0017-page-chrome-two-paths.md)** — why the text header/footer and the node page zone coexist instead of one replacing the other.
 
 > **ADR numbering gap (0005–0010)** is intentional — those numbers
 > were reserved during a v1.5 restructure that landed under ADR 0011

@@ -2,6 +2,7 @@ package com.demcha.compose.document.api;
 
 import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.output.DocumentMetadata;
+import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.output.DocumentProtection;
 import com.demcha.compose.document.output.DocumentViewerPreferences;
 import com.demcha.compose.document.output.DocumentWatermark;
@@ -122,6 +123,7 @@ public final class SessionChromeApi {
     public SessionChromeApi header(DocumentHeaderFooter header) {
         ensureOpen();
         chromeOptions.addHeader(header);
+        session.chromeReservationChanged();
         return this;
     }
 
@@ -135,6 +137,24 @@ public final class SessionChromeApi {
     public SessionChromeApi footer(DocumentHeaderFooter footer) {
         ensureOpen();
         chromeOptions.addFooter(footer);
+        session.chromeReservationChanged();
+        return this;
+    }
+
+    /**
+     * Registers a page zone — a band whose content is a node subtree rather than
+     * text slots. See {@link DocumentPageZone}.
+     *
+     * @param zone the zone to draw on every applicable page
+     * @return this facade for chaining
+     * @throws IllegalStateException    if the owning session has already been closed
+     * @throws IllegalArgumentException if the zone has no content function
+     * @since 2.3.0
+     */
+    public SessionChromeApi zone(DocumentPageZone zone) {
+        ensureOpen();
+        chromeOptions.addZone(zone);
+        session.chromeReservationChanged();
         return this;
     }
 
@@ -147,6 +167,7 @@ public final class SessionChromeApi {
     public SessionChromeApi clearHeadersAndFooters() {
         ensureOpen();
         chromeOptions.clearHeadersAndFooters();
+        session.chromeReservationChanged();
         return this;
     }
 

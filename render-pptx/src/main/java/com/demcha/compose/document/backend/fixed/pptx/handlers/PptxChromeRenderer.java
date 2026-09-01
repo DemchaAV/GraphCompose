@@ -17,6 +17,8 @@ import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.render.pdf.GlyphFallbackLogger;
+import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.FontLibrary;
 import com.demcha.compose.font.FontName;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -330,12 +332,15 @@ public final class PptxChromeRenderer {
         List<HeaderFooterConfig> configs = entries.stream()
                 .map(PptxChromeRenderer::toEngine)
                 .toList();
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         for (int local = 0; local < pageCount; local++) {
             for (HeaderFooterConfig config : configs) {
                 if (!config.appliesTo(local + 1)) {
                     continue;
                 }
+                // Resolved per zone rather than once for the run: two zones may ask
+                // for two families, and the font the slots are measured against has
+                // to be the one the slide is typeset in or they land off-centre.
+                PDFont font = resolveFont(environment, config);
                 renderZone(environment, config, font, canvas, local, pageCount, marginLeft, marginRight);
             }
         }
@@ -361,8 +366,7 @@ public final class PptxChromeRenderer {
         String shapeName = config.getZone() == HeaderFooterZone.HEADER
                 ? "GraphCompose Header"
                 : "GraphCompose Footer";
-        TextStyle style = new TextStyle(FontName.HELVETICA, fontSize, TextDecoration.DEFAULT,
-                config.getTextColor() == null ? Color.GRAY : config.getTextColor());
+        TextStyle style = config.textStyle();
 
         String leftText = GlyphFallbackLogger.sanitize(font,
                 config.resolveTokens(config.getLeftText(), currentPage, pageCount));
@@ -419,6 +423,25 @@ public final class PptxChromeRenderer {
     }
 
     /**
+     * Resolves the zone's font family through the deck's own font library, so a
+     * header or footer is typeset in the family the author asked for rather than
+     * in a font this renderer picked. Falls back to standard-14 Helvetica when the
+     * library cannot supply the family — chrome must not cost the caller the whole
+     * deck over a font name.
+     */
+    private static PDFont resolveFont(PptxRenderEnvironment environment, HeaderFooterConfig config) {
+        TextStyle style = config.textStyle();
+        FontLibrary fonts = environment == null ? null : environment.fonts();
+        if (fonts != null) {
+            PdfFont resolved = fonts.getFont(style.fontName(), PdfFont.class).orElse(null);
+            if (resolved != null) {
+                return resolved.fontType(style.decoration());
+            }
+        }
+        return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+    }
+
+    /**
      * Maps the canonical header/footer entry onto the engine config that owns
      * token resolution and the numbering window rules — the same mapping the
      * PDF options adapter applies.
@@ -436,6 +459,7 @@ public final class PptxChromeRenderer {
                 .centerText(entry.getCenterText())
                 .rightText(entry.getRightText())
                 .fontSize(entry.getFontSize())
+                .fontName(entry.getFontName())
                 .textColor(entry.getTextColor() == null ? null : entry.getTextColor().color())
                 .showSeparator(entry.isShowSeparator())
                 .separatorColor(entry.getSeparatorColor() == null ? null : entry.getSeparatorColor().color())

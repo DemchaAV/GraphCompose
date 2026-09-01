@@ -39,6 +39,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new SectionDefinition())
                 .register(new RowDefinition())
                 .register(new PageReferenceDefinition())
+                .register(new PageFieldDefinition())
                 .register(new LayerStackDefinition())
                 .register(new ShapeContainerDefinition())
                 .register(new TableDefinition())

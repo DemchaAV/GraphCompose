@@ -15,6 +15,21 @@ import com.demcha.compose.engine.components.style.Margin;
 public record LayoutCanvas(double width, double height, double innerWidth, double innerHeight, Margin margin) {
 
     /**
+     * The left margin as a primitive.
+     *
+     * <p>Exists so a canonical caller can place something against the content
+     * area's left edge without calling a method on the engine's {@code Margin}:
+     * the canonical surface reaches the engine through this package or not at
+     * all, and {@code ModuleBoundaryArchTest} enforces it.</p>
+     *
+     * @return the left margin in points
+     * @since 2.3.0
+     */
+    public double marginLeft() {
+        return margin == null ? 0.0 : margin.left();
+    }
+
+    /**
      * Creates canvas geometry from backend-neutral page dimensions and margin.
      *
      * @param width  physical page width

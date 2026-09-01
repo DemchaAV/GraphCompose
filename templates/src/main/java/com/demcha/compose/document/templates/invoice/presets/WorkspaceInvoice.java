@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.demcha.compose.document.templates.invoice.presets.WorkspaceStyles.CONTINUATION_MARGIN;
+import static com.demcha.compose.document.templates.invoice.presets.WorkspaceStyles.FACE;
 import static com.demcha.compose.document.templates.invoice.presets.WorkspaceStyles.MUTED;
 import static com.demcha.compose.document.templates.invoice.presets.WorkspaceStyles.PAGE;
 import static com.demcha.compose.document.templates.invoice.presets.WorkspaceStyles.PAGE_MARGIN;
@@ -159,6 +160,10 @@ public final class WorkspaceInvoice {
             document.footer(DocumentHeaderFooter.builder()
                     .zone(DocumentHeaderFooterZone.FOOTER)
                     .centerText("Page {page} of {pages}")
+                    // The zone's own default is the standard-14 face, which
+                    // would leave the page number the one line on the sheet in
+                    // a family the design never uses.
+                    .fontName(FACE)
                     .height((float) PAGE_NUMBER_BAND)
                     .fontSize((float) PAGE_NUMBER_SIZE)
                     .textColor(MUTED)

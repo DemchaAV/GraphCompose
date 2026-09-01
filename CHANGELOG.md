@@ -168,6 +168,42 @@ follow semantic versioning; release dates are ISO 8601.
   recognisable; a number is not — dates, reference numbers and amounts all look like
   one — so only the structured contact field is linked.
 
+- **A per-seat subscription invoice preset: `SubscriptionInvoice`.** A lockup against the
+  title, the supplier's details beside a metadata panel whose rows each open with a
+  coloured bar, two addressed parties under coloured underlines, a six-column table
+  carrying a tax rate on every line, the notes beside the totals, a marked payment band,
+  a four-segment strip, and a closing band that bleeds to three paper edges. Ships as
+  `invoice.presets.SubscriptionInvoice` on the existing `StructuredInvoiceData` model,
+  porting the rendered layout of a published standalone template — and this one is exact:
+  rendered against the frozen original with the same data the text layers are
+  **identical, all 218 words in the same place**, and the body carries **no differing
+  pixel at all**. Only two things differ, both by design: the masthead mark, which the
+  preset leaves to the caller, and the enumeration, which sets the sheet's own face where
+  the original took the zone default.
+  <br><br>
+  It is the first preset in the family to draw `InvoiceServiceLines.Line.vatRate()` and
+  its caption — it bills in a jurisdiction that prints the rate per line rather than only
+  as a total — and the first to number its lines, from `lineNumber()` when a line states
+  one and from its position when it does not.
+  <br><br>
+  Colour is by position and never by meaning: the metadata bars, the party underlines and
+  the closing strip all draw from one four-colour cycle indexed by where a thing sits, so
+  the fourth metadata row is amber because it is fourth and nothing in the document ever
+  names a colour. The page carries no side margins, because the strip and the closing band
+  have to reach the paper edges and do it by being the only blocks without horizontal
+  padding; the band reaches the bottom edge by bleeding rather than by being last, which
+  is what lets the enumeration sit over its fill for nothing.
+  <br><br>
+  Money is written with the currency's mark against the digits, so every figure names its
+  own currency and no column states one — which is also the preset's one boundary, and it
+  is documented and tested rather than left to be discovered: the columns are measured for
+  a one-character mark, so a currency the runtime knows only by its three-letter code does
+  not fit the unit-price column and the render is refused there rather than letting the
+  figure run under its neighbour. Guarded by a smoke test (including the per-line rate,
+  line numbering from both sources, the currency boundary, a payment band with a different
+  cell count, an invoice that ships nowhere, and pagination), an exact layout snapshot,
+  and a pixel baseline — all three fed by one fixture.
+
 - **A region-billed platform invoice preset: `PlatformInvoice`.** A lockup against the
   title, the supplier split from the invoice's own metadata by a full-height hairline,
   two addressed parties on differently-treated marks, a six-column usage table, an

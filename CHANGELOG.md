@@ -156,6 +156,40 @@ follow semantic versioning; release dates are ISO 8601.
   recognisable; a number is not — dates, reference numbers and amounts all look like
   one — so only the structured contact field is linked.
 
+- **A metered-usage invoice preset: `MeteredInvoice`.** An orange-accented masthead over
+  its own rule, the supplier split from the invoice's metadata by a hairline, two
+  addressed parties, a service-line table whose marks sit on bordered tiles, a closing
+  row pairing the bank details against the totals and the due date, and a full-bleed dark
+  band along the foot of every page. Ships as `invoice.presets.MeteredInvoice` on the
+  existing `StructuredInvoiceData` model, porting the rendered layout of a published
+  standalone template: rendered against the frozen original with the same data, the
+  document body is pixel-identical — 0 of 2,173,720 at 150 dpi between the title and the
+  footer band — and the two regions that differ are the masthead lockup, which the preset
+  leaves to the caller, and the band, which sets the sheet's own face where the original
+  took the zone default. It flows: the table's header repeats on every page it reaches,
+  the bottom margin reserves the band on every page so no row runs into the chrome, and
+  every page carries its number.
+  <br><br>
+  A unit price is written at the precision it is quoted at, between two places and four,
+  where every other figure on the sheet is written at two. That is not a formatting
+  preference: a metered rate is a fraction of a currency unit, and an hour of compute at
+  0.0710 rounded to an amount's two places is 0.07 — a different price that multiplies
+  out to a different bill. Figures state their locale rather than inheriting it.
+  <br><br>
+  The design's side margins are unequal, 35.5 px against 43.5 px of a 1055 px sheet, and
+  are kept as measured: regularising them at the mean costs four pixels of horizontal
+  error on every glyph to save eight on one edge. Its hairlines are a pixel of ink rather
+  than a pixel of geometry, so they are drawn at the weight that reproduces them instead
+  of the 0.6 pt they measure, which rasterises to less than a pixel and drops half the
+  row rules to partial opacity. The table is one column wide with a composed row inside
+  each cell, because a cell strokes all four of its own edges and five real columns would
+  draw four interior verticals the design does not have.
+  <br><br>
+  Guarded by a smoke test (including the unknown-mark data error, a line that names no
+  mark, the rate-versus-amount precision rule, pagination bringing the header back with
+  it, and the disclosure line falling back to the supplier's name), an exact layout
+  snapshot, and a pixel baseline — both fed by one fixture.
+
 - **A violet SaaS invoice preset: `WorkspaceInvoice`.** A brand masthead over a short
   accent bar, a half-split issuer and metadata header, two addressed parties on filled
   discs, a service-line table whose marks sit on coloured tiles, a settlement row

@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 217,
-    "methods": 1223,
-    "constants": 164,
-    "generated": 645
+    "types": 218,
+    "methods": 1224,
+    "constants": 166,
+    "generated": 647
   },
   "packages": [
     {
@@ -20764,6 +20764,40 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "DocumentTemplate<StructuredInvoiceDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "MeteredInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.MeteredInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
               "params": []
             }
           ]

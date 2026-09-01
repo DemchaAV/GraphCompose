@@ -108,6 +108,35 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **A paginating invoice preset: `PaymentsInvoice`.** A lavender-and-navy sheet with a
+  diagonal band crossing the masthead, a half-split issuer and metadata header, two
+  addressed parties on discs, a marked service-line table, a settlement row pairing bank
+  details against the totals, a note block and a two-cell document footer. Ships as
+  `invoice.presets.PaymentsInvoice` on the existing `StructuredInvoiceData` model,
+  porting the rendered layout of a published standalone template. It is the first preset
+  in the family built to **flow**: the design shows six service lines and a real billing
+  month brings dozens, so the table's header repeats on every page it reaches, a
+  continuation page reserves a deeper bottom margin than page one, and every page
+  carries its number — a financial record that runs over has to make a missing page
+  detectable. The table is one column, not five: the design shows an outer box and a
+  rule between rows with no interior verticals, which is exactly what a single-column
+  table draws, and the five columns are a row inside each cell. Building it the other
+  way round would leave every continuation page ending in an empty bordered strip,
+  because a section's box fills its page fragment rather than hugging its rows. The
+  lockup beside the title is the caller's: the design's mark occupies a measured
+  136 × 55.3 px box, a document that brings a logo has it drawn to that height, and one
+  that brings only a name has the name set as a wordmark — the templates artifact
+  carries no mark of its own. Figures are written with the locale stated rather than
+  inherited, because both the grouping of a number and the symbol for a currency code
+  change with it and a preset that let the JVM decide would render a different sheet on
+  a different machine. Guarded by a smoke test (including the unknown-mark data error, a
+  line with no mark, the wordmark fallback, the currency named once and carried, the
+  uppercased due line, a trunk prefix printed but not dialled, the support contacts as
+  annotations, a missing ship-to and a missing note block, an empty document, and a
+  thirty-line invoice that runs on, repeats its column names and numbers its pages), an
+  exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `invoice-payments-v2`.
+
 - **A navy-plate CV preset: `MidnightNavy`.** A one-page sheet on a full-height navy
   plate: an outlined monogram over a two-weight name and a tracked role line, then
   contact, education, metered skills and dotted languages down the plate, beside a

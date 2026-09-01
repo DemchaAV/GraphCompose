@@ -168,6 +168,49 @@ follow semantic versioning; release dates are ISO 8601.
   recognisable; a number is not — dates, reference numbers and amounts all look like
   one — so only the structured contact field is linked.
 
+- **A region-billed platform invoice preset: `PlatformInvoice`.** A lockup against the
+  title, the supplier split from the invoice's own metadata by a full-height hairline,
+  two addressed parties on differently-treated marks, a six-column usage table, an
+  outlined bank panel beside the totals and the due-date card, and an identity band
+  closing the sheet. Ships as `invoice.presets.PlatformInvoice` on the existing
+  `StructuredInvoiceData` model, porting the rendered layout of a published standalone
+  template: rendered against the frozen original with the same data, the document body
+  carries **no ink displaced at all** — every one of 225 paired words within 0.15 pt,
+  and zero pixels differing by more than a rounding step at 150 dpi between the masthead
+  and the closing note. The regions that differ are the two lockups, which the preset
+  leaves to the caller, the enumeration, which sets the sheet's own face where the
+  original took the zone default, and one phrase in the note.
+  <br><br>
+  This is the design that needed `Line.region`: it bills the same service in more than
+  one place and prints where beside what, as its own column between the service and the
+  usage.
+  <br><br>
+  Two scales, on purpose. The design is 1.50 aspect where A4 is 1.414, so one conversion
+  constant cannot serve both axes: widths, x-offsets and type sizes go through the
+  horizontal one because that is where advance widths have to fit, heights and pitches
+  through the vertical one, which is 6.3% tighter, and marks and discs through their
+  mean — about 3% out in each axis rather than 6% out in one. Writing a vertical
+  measurement on the horizontal scale would stretch the sheet by 6.3% with nothing
+  failing, which is what the split exists to make visible. The design's line pitches are
+  set cap-top to cap-top, so the preset solves each gap from Barlow's own cap height and
+  ascender rather than from the type size.
+  <br><br>
+  The table's separators are rows. A table's rules come from each cell's own style and
+  cover all four of that cell's edges, so any stroke that buys a horizontal separator
+  also buys five verticals — which this design has nowhere inside its table. Every cell
+  is stroked at zero width and each separator is a row of its own: one cell spanning
+  every column, zero padding, and a full-width line as its content.
+  <br><br>
+  A unit price is written at the precision it is quoted at, between two places and four.
+  Usage that names a unit carries two places even on a whole number, because the meter
+  reads to that precision; usage that names none is a count of whole things and is
+  written bare. The currency is stated once per money column with the figures under it
+  bare, and once more on the grand total, which stands under no caption. Guarded by a
+  smoke test (including the region column, the unknown-mark data error, a line with no
+  mark, an invoice that ships nowhere, both figure rules, and pagination bringing the
+  header back), an exact layout snapshot, and a pixel baseline — all three fed by one
+  fixture.
+
 - **A metered-usage invoice preset: `MeteredInvoice`.** An orange-accented masthead over
   its own rule, the supplier split from the invoice's metadata by a hairline, two
   addressed parties, a service-line table whose marks sit on bordered tiles, a closing

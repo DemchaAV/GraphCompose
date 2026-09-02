@@ -176,6 +176,50 @@ follow semantic versioning; release dates are ISO 8601.
   the model whose shape it renders. Every component normalizes `null` to its empty
   form and freezes its collections, matching the family's existing records.
 
+- **A rota document model, replacing `data.schedule`.** The library already shipped a
+  weekly-roster model — `templates.data.schedule`, public since the templates module was
+  extracted — and nothing ever rendered it, because it is not shaped like a rota is
+  drawn: its people are ordered by a token and grouped nowhere, so there are no staff
+  bands; an assignment cannot say that one half of a split day is drawn more quietly
+  than the other; a day heading is one string, which a design that raises the ordinal's
+  suffix cannot split; and a category carries three `java.awt.Color`s, which puts the
+  rendering decision in the document and stops two presets drawing the same rota in two
+  palettes. `templates.data.rota` is the replacement — `StructuredRotaData` (venue,
+  week, day columns, legend, staff bands, footer) wrapped by
+  `StructuredRotaDocumentSpec`, with `RotaVenue` / `RotaWeek` / `RotaDay` /
+  `RotaCovers` / `RotaLegend` / `RotaGroup` / `RotaStaff` / `RotaShift` / `RotaFooter`
+  and the `ShiftStatus` / `ShiftEmphasis` enumerations.
+  <br><br>
+  **The grid is the document's, not the preset's.** `days()` is the columns and every
+  `RotaStaff.days()` runs in that same order, so a cell is found by position and a rota
+  of five days is as ordinary as one of seven — the span is a label the document
+  carries, not a shape the model imposes. A person's day is a *list* of entries rather
+  than one, which makes the two shapes a rota actually has — a blank cell and a split
+  shift — ordinary rather than special cases a preset has to invent a representation
+  for. `RotaStaff.day(int)` answers with nothing for a day the rota does not reach, so a
+  short row is a short row and not a broken document.
+  <br><br>
+  **What a cell means is separate from what it prints.** `ShiftStatus` is the meaning a
+  preset colours by; the text is the word a particular site uses for it, so a rota
+  printing `A/L` and one printing `HOL` colour alike, and a legend entry pairs the two.
+  `ShiftEmphasis` says how loudly an entry is drawn — the day someone is off is what a
+  reader scans for, the hours they work is what they read once they have found the
+  person. There is deliberately no `marked(text, status)` factory that picks the
+  emphasis: a design that halves a day draws the halves differently, sometimes quiet
+  second and sometimes not, so `RotaShift.strong(...)` and `RotaShift.soft(...)` make
+  the caller say which. Every component normalizes `null` to its empty form and freezes
+  its collections, the inner day lists included, matching the family's existing records.
+
+### Deprecated
+
+- **`templates.data.schedule` — every type.** `WeeklyScheduleData`,
+  `WeeklyScheduleDocumentSpec`, `ScheduleDay`, `ScheduleCategory`, `SchedulePerson`,
+  `ScheduleAssignment`, `ScheduleSlot` and `ScheduleMetricRow` are deprecated since
+  2.4.0 in favour of `templates.data.rota`, each naming its replacement. They still
+  ship and still compile; nothing in the library ever rendered them, so no output moves.
+  `docs/templates/which-template-system.md` now points a caller at the rota model
+  instead.
+
 ### Templates
 
 - **The invoice presets set their page number in their own face.** A header or footer

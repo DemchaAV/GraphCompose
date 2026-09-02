@@ -11,7 +11,14 @@ import java.util.Objects;
  * @param fillColor   category fill color
  * @param textColor   category text color
  * @param borderColor category border color
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.ShiftStatus}
+ *             and a legend entry that names it. A category here carries three
+ *             colours, which is a rendering decision living in the data layer:
+ *             two presets cannot draw the same rota in two palettes.
  */
+@Deprecated(since = "2.4.0")
 public record ScheduleCategory(
         String id,
         String label,

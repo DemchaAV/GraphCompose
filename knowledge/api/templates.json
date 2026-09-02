@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 227,
-    "methods": 1276,
-    "constants": 177,
-    "generated": 689
+    "types": 242,
+    "methods": 1344,
+    "constants": 188,
+    "generated": 747
   },
   "packages": [
     {
@@ -19171,6 +19171,1111 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "StructuredProposalData",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.templates.data.rota",
+      "types": [
+        {
+          "name": "RotaCovers",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaCovers",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaCovers",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "lunch",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "dinner",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaDay",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaDay",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaDay",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "RotaCovers",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "RotaDay",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "String",
+                  "name": "ordinal"
+                },
+                {
+                  "type": "String",
+                  "name": "ordinalSuffix"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "ordinal",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "ordinalSuffix",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "note",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "covers",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "RotaCovers",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaFooter",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaFooter",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaFooter",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "note",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaGroup",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaGroup",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaGroup",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<RotaStaff>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "RotaGroup",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "List<RotaStaff>",
+                  "name": "staff"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "staff",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<RotaStaff>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaLegend",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaLegend",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaLegend",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<RotaLegend.Entry>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "RotaLegend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "List<RotaLegend.Entry>",
+                  "name": "entries"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "coversLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "coversLunchLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "coversDinnerLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "entries",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<RotaLegend.Entry>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaLegend.Entry",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaLegend$Entry",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Entry",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ShiftStatus",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "status",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ShiftStatus",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaShift",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaShift",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaShift",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ShiftStatus",
+                  "name": null
+                },
+                {
+                  "type": "ShiftEmphasis",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hours",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "RotaShift",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "strong",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "RotaShift",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "ShiftStatus",
+                  "name": "status"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "soft",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "RotaShift",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "ShiftStatus",
+                  "name": "status"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "text",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "status",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ShiftStatus",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "emphasis",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ShiftEmphasis",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaStaff",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaStaff",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaStaff",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<List<RotaShift>>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "day",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "List<RotaShift>",
+              "params": [
+                {
+                  "type": "int",
+                  "name": "index"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "days",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<List<RotaShift>>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaVenue",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaVenue",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaVenue",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "wordmark",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "wordmarkSub",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "footerName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "RotaWeek",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.RotaWeek",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "RotaWeek",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "rangeLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ShiftEmphasis",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.ShiftEmphasis",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "STRONG",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftEmphasis"
+            },
+            {
+              "kind": "constant",
+              "name": "SOFT",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftEmphasis"
+            },
+            {
+              "kind": "constant",
+              "name": "PLAIN",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftEmphasis"
+            }
+          ]
+        },
+        {
+          "name": "ShiftStatus",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.ShiftStatus",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "NONE",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "REQUEST",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "OFF",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "HOLIDAY",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "STOCK",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "STANDBY",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "TRAINING",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            },
+            {
+              "kind": "constant",
+              "name": "SUPPORT",
+              "static": true,
+              "origin": "generated",
+              "type": "ShiftStatus"
+            }
+          ]
+        },
+        {
+          "name": "StructuredRotaData",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.StructuredRotaData",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredRotaData",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "RotaVenue",
+                  "name": null
+                },
+                {
+                  "type": "RotaWeek",
+                  "name": null
+                },
+                {
+                  "type": "List<RotaDay>",
+                  "name": null
+                },
+                {
+                  "type": "RotaLegend",
+                  "name": null
+                },
+                {
+                  "type": "List<RotaGroup>",
+                  "name": null
+                },
+                {
+                  "type": "RotaFooter",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "venue",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "RotaVenue",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "week",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "RotaWeek",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "days",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<RotaDay>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "legend",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "RotaLegend",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "groups",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<RotaGroup>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "RotaFooter",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredRotaData.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.StructuredRotaData$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "venue",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "RotaVenue",
+                  "name": "venue"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "week",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "RotaWeek",
+                  "name": "week"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "days",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "List<RotaDay>",
+                  "name": "days"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "legend",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "RotaLegend",
+                  "name": "legend"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "groups",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "List<RotaGroup>",
+                  "name": "groups"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData.Builder",
+              "params": [
+                {
+                  "type": "RotaFooter",
+                  "name": "footer"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaData",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredRotaDocumentSpec",
+          "binaryName": "com.demcha.compose.document.templates.data.rota.StructuredRotaDocumentSpec",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredRotaDocumentSpec",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "StructuredRotaData",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "from",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredRotaDocumentSpec",
+              "params": [
+                {
+                  "type": "StructuredRotaData",
+                  "name": "rota"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "rota",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "StructuredRotaData",
               "params": []
             }
           ]

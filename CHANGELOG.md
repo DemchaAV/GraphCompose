@@ -912,6 +912,60 @@ follow semantic versioning; release dates are ISO 8601.
   the notice, the overlap window and every contact being followable), an exact layout
   snapshot, and a pixel baseline — all three fed by one fixture.
 
+- **The first rota preset: `CobaltRota`.** A staff rota on one landscape sheet — a
+  navy-ruled grid of who works when, read across a row rather than down a page. The
+  label column carries the venue's mark over the staff names; the day columns carry a
+  heading, whatever else is happening that day, a strip of swatches saying what the
+  colours mean, the covers each service is expecting, and then the people in bands, each
+  band opening with a navy strip and its own mark. Ships as `rota.presets.CobaltRota` on
+  the new `StructuredRotaData` model, with its icon set packaged in the templates
+  artifact, porting the rendered layout of a published standalone template: rendered at
+  150 dpi against the frozen original driven by the original's own data file, **every
+  pixel of the sheet is identical** — the grid, all eighty-four cells, the legend, the
+  covers, the bands and the foot's own line. The one region that differs is the foot's
+  left slot, which the original leaves empty and the port fills with the note the
+  document states.
+  <br><br>
+  **The whole sheet is one table.** Everything from the masthead rule to the last person
+  is rows of it — that is what keeps the columns aligned, where a masthead above or a
+  legend beside would be a second structure to keep in step. The four header rows are
+  declared repeating with their count, because `repeatHeader()` with no argument repeats
+  one row and a rota longer than a page would carry a stray rule onto the next one
+  instead of its day headings.
+  <br><br>
+  **The grid follows the document, not the design.** The sheet has as many day columns
+  as the rota has days and every person's entries are read by position against that
+  list, so a five-day rota makes five wider columns; nothing in the preset says a week.
+  A legend documenting more statuses than there are days runs onto a second strip rather
+  than losing its tail — a status a reader cannot look up is worse than an extra row —
+  and one documenting fewer is closed off with empty cells, so the table stays square
+  either way. The label column keeps its own padding whatever the day count, so the
+  wordmark does not resize with the number of days. A rota that states no legend and no
+  covers carries neither row: an empty navy bar over empty boxes is two rows of a sheet
+  that is short of rows already.
+  <br><br>
+  A day cell is a block of a stated height rather than whatever its chips come to,
+  because a table cell places a node child at its *top* — `textAnchor` seats text, not a
+  node — so a short chip in a row made tall by a neighbour would otherwise hang with all
+  the slack beneath it. An unmarked entry is drawn as a chip with no fill and no outline
+  rather than as bare text, so it occupies exactly the height a marked one does. The
+  row's tint is threaded by hand into every cell and on into those chips rather than
+  left to the table's own striping, which would stripe the header, the legend, the
+  covers and the bands too. Guarded by a smoke test (including the empty rota, a
+  five-day rota, a split day, a band naming no mark, the unknown-token data error, a
+  legend longer and shorter than the week, a rota stating neither legend nor covers, and
+  one long enough to need a second page), an exact layout snapshot, and a pixel baseline
+  — all three fed by one fixture.
+  <br><br>
+  **The gates say what they can see.** The sheet is composed table cells almost end to
+  end, and a composed cell emits fragments rather than a placed node, so the snapshot
+  holds two nodes for eighty-four shift cells: it pins the page and the table that
+  carries them, and nothing inside. The pixel baseline is the only gate that sees the
+  sheet, and one chip is under two thousand of the page's half-million pixels — a budget
+  wide enough for a renderer's antialiasing is wide enough to hide several chips — so
+  its budget is a fraction of the sibling presets', and a third test counts the ink of
+  each status colour directly. Removing a chip's fill turns that one red by name.
+
 ### Tests
 
 - **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**

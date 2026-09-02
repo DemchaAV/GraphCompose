@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 242,
-    "methods": 1344,
-    "constants": 188,
-    "generated": 747
+    "types": 243,
+    "methods": 1345,
+    "constants": 191,
+    "generated": 750
   },
   "packages": [
     {
@@ -23137,6 +23137,52 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.templates.rota.presets",
+      "types": [
+        {
+          "name": "CobaltRota",
+          "binaryName": "com.demcha.compose.document.templates.rota.presets.CobaltRota",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredRotaDocumentSpec>",
               "params": []
             }
           ]

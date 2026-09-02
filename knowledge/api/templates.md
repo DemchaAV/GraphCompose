@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 227 · methods: 1276 · constants: 177 · compiler-generated members: 689
+Types: 242 · methods: 1344 · constants: 188 · compiler-generated members: 747
 
 ## com.demcha.compose.document.templates.api
 
@@ -1614,6 +1614,108 @@ Types: 227 · methods: 1276 · constants: 177 · compiler-generated members: 689
 - `new StructuredProposalDocumentSpec(StructuredProposalData)`
 - `StructuredProposalDocumentSpec from(StructuredProposalData proposal)`
 - `StructuredProposalData proposal()`
+
+## com.demcha.compose.document.templates.data.rota
+
+### RotaCovers (record)
+- `new RotaCovers(String, String)`
+- `boolean isPresent()`
+- `String lunch()`
+- `String dinner()`
+
+### RotaDay (record)
+- `new RotaDay(String, String, String, String, RotaCovers)`
+- `new RotaDay(String name, String ordinal, String ordinalSuffix)`
+- `String name()`
+- `String ordinal()`
+- `String ordinalSuffix()`
+- `String note()`
+- `RotaCovers covers()`
+
+### RotaFooter (record)
+- `new RotaFooter(String)`
+- `boolean isPresent()`
+- `String note()`
+
+### RotaGroup (record)
+- `new RotaGroup(String, String, List<RotaStaff>)`
+- `new RotaGroup(String label, List<RotaStaff> staff)`
+- `String label()`
+- `String icon()`
+- `List<RotaStaff> staff()`
+
+### RotaLegend (record)
+- `new RotaLegend(String, String, String, String, List<RotaLegend.Entry>)`
+- `new RotaLegend(String label, List<RotaLegend.Entry> entries)`
+- `boolean isPresent()`
+- `String label()`
+- `String coversLabel()`
+- `String coversLunchLabel()`
+- `String coversDinnerLabel()`
+- `List<RotaLegend.Entry> entries()`
+
+### RotaLegend.Entry (record)
+- `new Entry(String, ShiftStatus)`
+- `String label()`
+- `ShiftStatus status()`
+
+### RotaShift (record)
+- `new RotaShift(String, ShiftStatus, ShiftEmphasis)`
+- `RotaShift hours(String text)`
+- `RotaShift strong(String text, ShiftStatus status)`
+- `RotaShift soft(String text, ShiftStatus status)`
+- `String text()`
+- `ShiftStatus status()`
+- `ShiftEmphasis emphasis()`
+
+### RotaStaff (record)
+- `new RotaStaff(String, List<List<RotaShift>>)`
+- `List<RotaShift> day(int index)`
+- `String name()`
+- `List<List<RotaShift>> days()`
+
+### RotaVenue (record)
+- `new RotaVenue(String, String, String)`
+- `boolean isPresent()`
+- `String wordmark()`
+- `String wordmarkSub()`
+- `String footerName()`
+
+### RotaWeek (record)
+- `new RotaWeek(String, String)`
+- `boolean isPresent()`
+- `String title()`
+- `String rangeLabel()`
+
+### ShiftEmphasis (enum)
+- constants: `STRONG`, `SOFT`, `PLAIN`
+
+### ShiftStatus (enum)
+- constants: `NONE`, `REQUEST`, `OFF`, `HOLIDAY`, `STOCK`, `STANDBY`, `TRAINING`, `SUPPORT`
+
+### StructuredRotaData (record)
+- `new StructuredRotaData(RotaVenue, RotaWeek, List<RotaDay>, RotaLegend, List<RotaGroup>, RotaFooter)`
+- `StructuredRotaData.Builder builder()`
+- `RotaVenue venue()`
+- `RotaWeek week()`
+- `List<RotaDay> days()`
+- `RotaLegend legend()`
+- `List<RotaGroup> groups()`
+- `RotaFooter footer()`
+
+### StructuredRotaData.Builder (class)
+- `StructuredRotaData.Builder venue(RotaVenue venue)`
+- `StructuredRotaData.Builder week(RotaWeek week)`
+- `StructuredRotaData.Builder days(List<RotaDay> days)`
+- `StructuredRotaData.Builder legend(RotaLegend legend)`
+- `StructuredRotaData.Builder groups(List<RotaGroup> groups)`
+- `StructuredRotaData.Builder footer(RotaFooter footer)`
+- `StructuredRotaData build()`
+
+### StructuredRotaDocumentSpec (record)
+- `new StructuredRotaDocumentSpec(StructuredRotaData)`
+- `StructuredRotaDocumentSpec from(StructuredRotaData rota)`
+- `StructuredRotaData rota()`
 
 ## com.demcha.compose.document.templates.data.schedule
 

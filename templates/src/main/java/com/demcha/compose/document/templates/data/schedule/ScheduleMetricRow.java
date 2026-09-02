@@ -10,7 +10,13 @@ import java.util.Objects;
  *
  * @param label     metric label
  * @param dayValues values aligned to days in display order
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.RotaCovers},
+ *             which the day itself carries rather than a parallel row whose
+ *             values are aligned to the days by position alone.
  */
+@Deprecated(since = "2.4.0")
 public record ScheduleMetricRow(
         String label,
         List<String> dayValues

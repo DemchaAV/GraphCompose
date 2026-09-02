@@ -1,0 +1,4217 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 535.466,
+    "innerHeight" : 818.192,
+    "margin" : {
+      "top" : 13.542,
+      "right" : 29.905,
+      "bottom" : 10.156,
+      "left" : 29.905
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "VioletGridCv[0]",
+    "entityName" : "VioletGridCv",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 29.905,
+    "computedY" : 10.348,
+    "placementX" : 29.905,
+    "placementY" : 10.348,
+    "placementWidth" : 535.466,
+    "placementHeight" : 818.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 818.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]",
+    "entityName" : "Header",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 734.92,
+    "placementX" : 29.905,
+    "placementY" : 734.92,
+    "placementWidth" : 535.466,
+    "placementHeight" : 93.428,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 93.428,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Identity[0]",
+    "entityName" : "Identity",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 739.279,
+    "placementX" : 29.905,
+    "placementY" : 739.279,
+    "placementWidth" : 284.374,
+    "placementHeight" : 89.069,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 284.374,
+    "contentHeight" : 89.069,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Identity[0]/Name[0]",
+    "entityName" : "Name",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Identity[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 775.002,
+    "placementX" : 29.905,
+    "placementY" : 775.002,
+    "placementWidth" : 284.374,
+    "placementHeight" : 53.346,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 284.374,
+    "contentHeight" : 53.346,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Identity[0]/Discipline[1]",
+    "entityName" : "Discipline",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Identity[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 754.683,
+    "placementX" : 29.905,
+    "placementY" : 754.683,
+    "placementWidth" : 157.277,
+    "placementHeight" : 20.319,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 157.277,
+    "contentHeight" : 20.319,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 13.147,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Identity[0]/IdentityRule[2]",
+    "entityName" : "IdentityRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Identity[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 739.279,
+    "placementX" : 29.905,
+    "placementY" : 739.279,
+    "placementWidth" : 39.497,
+    "placementHeight" : 2.257,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 39.497,
+    "contentHeight" : 2.257,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "entityName" : "Contact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 398.355,
+    "computedY" : 734.92,
+    "placementX" : 398.355,
+    "placementY" : 734.92,
+    "placementWidth" : 152.21,
+    "placementHeight" : 93.428,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 152.21,
+    "contentHeight" : 93.428,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 4.514,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]/Contact_0_email[0]",
+    "entityName" : "Contact_0_email",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 398.355,
+    "computedY" : 812.334,
+    "placementX" : 398.355,
+    "placementY" : 812.334,
+    "placementWidth" : 152.21,
+    "placementHeight" : 11.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 152.21,
+    "contentHeight" : 11.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.854,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]/Contact_1_phone[1]",
+    "entityName" : "Contact_1_phone",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 398.355,
+    "computedY" : 792.98,
+    "placementX" : 398.355,
+    "placementY" : 792.98,
+    "placementWidth" : 97.746,
+    "placementHeight" : 11.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 97.746,
+    "contentHeight" : 11.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.854,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]/Contact_2_location[2]",
+    "entityName" : "Contact_2_location",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 398.355,
+    "computedY" : 773.627,
+    "placementX" : 398.355,
+    "placementY" : 773.627,
+    "placementWidth" : 114.927,
+    "placementHeight" : 11.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 114.927,
+    "contentHeight" : 11.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.854,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]/Contact_3_website[3]",
+    "entityName" : "Contact_3_website",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 398.355,
+    "computedY" : 754.273,
+    "placementX" : 398.355,
+    "placementY" : 754.273,
+    "placementWidth" : 103.158,
+    "placementHeight" : 11.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.158,
+    "contentHeight" : 11.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.854,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Header[0]/Contact[1]/Contact_4_linkedin[4]",
+    "entityName" : "Contact_4_linkedin",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Header[0]/Contact[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 398.355,
+    "computedY" : 734.92,
+    "placementX" : 398.355,
+    "placementY" : 734.92,
+    "placementWidth" : 56.382,
+    "placementHeight" : 11.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.382,
+    "contentHeight" : 11.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SummaryLine_0[1]",
+    "entityName" : "SummaryLine_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 709.078,
+    "placementX" : 29.905,
+    "placementY" : 709.078,
+    "placementWidth" : 482.062,
+    "placementHeight" : 11.172,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 482.062,
+    "contentHeight" : 11.172,
+    "margin" : {
+      "top" : 14.67,
+      "right" : 0.0,
+      "bottom" : 1.241,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SummaryLine_1[2]",
+    "entityName" : "SummaryLine_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 696.664,
+    "placementX" : 29.905,
+    "placementY" : 696.664,
+    "placementWidth" : 495.804,
+    "placementHeight" : 11.172,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 495.804,
+    "contentHeight" : 11.172,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.241,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SummaryLine_2[3]",
+    "entityName" : "SummaryLine_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 684.251,
+    "placementX" : 29.905,
+    "placementY" : 684.251,
+    "placementWidth" : 501.018,
+    "placementHeight" : 11.172,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 501.018,
+    "contentHeight" : 11.172,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillsHeading[4]",
+    "entityName" : "SkillsHeading",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 4,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 650.396,
+    "placementX" : 29.905,
+    "placementY" : 650.396,
+    "placementWidth" : 535.466,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 19.071,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingText[0]",
+    "entityName" : "SkillsHeadingText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillsHeading[4]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 650.396,
+    "placementX" : 29.905,
+    "placementY" : 650.396,
+    "placementWidth" : 76.844,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 76.844,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingText[0]/SkillsHeadingLabel[0]",
+    "entityName" : "SkillsHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingText[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 650.396,
+    "placementX" : 29.905,
+    "placementY" : 650.396,
+    "placementWidth" : 76.844,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 76.844,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingRule[1]",
+    "entityName" : "SkillsHeadingRule",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillsHeading[4]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 106.749,
+    "computedY" : 656.562,
+    "placementX" : 106.749,
+    "placementY" : 656.562,
+    "placementWidth" : 458.622,
+    "placementHeight" : 8.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 458.622,
+    "contentHeight" : 8.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingRule[1]/SkillsHeadingRuleLine[0]",
+    "entityName" : "SkillsHeadingRuleLine",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillsHeading[4]/SkillsHeadingRule[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 118.034,
+    "computedY" : 656.562,
+    "placementX" : 118.034,
+    "placementY" : 656.562,
+    "placementWidth" : 447.337,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 447.337,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]",
+    "entityName" : "SkillGrid",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 5,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 562.656,
+    "placementX" : 29.905,
+    "placementY" : 562.656,
+    "placementWidth" : 535.466,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 11.003,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]",
+    "entityName" : "Skill_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 569.965,
+    "placementX" : 29.905,
+    "placementY" : 569.965,
+    "placementWidth" : 88.304,
+    "placementHeight" : 69.429,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 69.429,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 36.112,
+    "computedY" : 618.893,
+    "placementX" : 36.112,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 63.807,
+    "computedY" : 618.893,
+    "placementX" : 63.807,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 63.807,
+    "computedY" : 618.893,
+    "placementX" : 63.807,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/SkillLabel_0[1]",
+    "entityName" : "SkillLabel_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 36.112,
+    "computedY" : 601.283,
+    "placementX" : 36.112,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]/SkillDescription_0[2]",
+    "entityName" : "SkillDescription_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_0[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 36.112,
+    "computedY" : 569.965,
+    "placementX" : 36.112,
+    "placementY" : 569.965,
+    "placementWidth" : 75.891,
+    "placementHeight" : 27.933,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 27.933,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_0[1]",
+    "entityName" : "SkillDivider_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 118.209,
+    "computedY" : 562.656,
+    "placementX" : 118.209,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_0[1]/SkillDividerRule[0]",
+    "entityName" : "SkillDividerRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_0[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 118.209,
+    "computedY" : 562.656,
+    "placementX" : 118.209,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]",
+    "entityName" : "Skill_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 119.337,
+    "computedY" : 580.121,
+    "placementX" : 119.337,
+    "placementY" : 580.121,
+    "placementWidth" : 88.304,
+    "placementHeight" : 59.272,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 59.272,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.544,
+    "computedY" : 618.893,
+    "placementX" : 125.544,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 153.239,
+    "computedY" : 618.893,
+    "placementX" : 153.239,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 153.239,
+    "computedY" : 618.893,
+    "placementX" : 153.239,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/SkillLabel_1[1]",
+    "entityName" : "SkillLabel_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.544,
+    "computedY" : 601.283,
+    "placementX" : 125.544,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]/SkillDescription_1[2]",
+    "entityName" : "SkillDescription_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_1[2]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.544,
+    "computedY" : 580.121,
+    "placementX" : 125.544,
+    "placementY" : 580.121,
+    "placementWidth" : 75.891,
+    "placementHeight" : 17.776,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 17.776,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_1[3]",
+    "entityName" : "SkillDivider_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 207.641,
+    "computedY" : 562.656,
+    "placementX" : 207.641,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_1[3]/SkillDividerRule[0]",
+    "entityName" : "SkillDividerRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_1[3]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 207.641,
+    "computedY" : 562.656,
+    "placementX" : 207.641,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]",
+    "entityName" : "Skill_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 208.77,
+    "computedY" : 569.965,
+    "placementX" : 208.77,
+    "placementY" : 569.965,
+    "placementWidth" : 88.304,
+    "placementHeight" : 69.429,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 69.429,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.976,
+    "computedY" : 618.893,
+    "placementX" : 214.976,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 242.672,
+    "computedY" : 618.893,
+    "placementX" : 242.672,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 242.672,
+    "computedY" : 618.893,
+    "placementX" : 242.672,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/SkillLabel_2[1]",
+    "entityName" : "SkillLabel_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.976,
+    "computedY" : 601.283,
+    "placementX" : 214.976,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]/SkillDescription_2[2]",
+    "entityName" : "SkillDescription_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_2[4]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.976,
+    "computedY" : 569.965,
+    "placementX" : 214.976,
+    "placementY" : 569.965,
+    "placementWidth" : 75.891,
+    "placementHeight" : 27.933,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 27.933,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_2[5]",
+    "entityName" : "SkillDivider_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 5,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 297.074,
+    "computedY" : 562.656,
+    "placementX" : 297.074,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_2[5]/SkillDividerRule[0]",
+    "entityName" : "SkillDividerRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_2[5]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 297.074,
+    "computedY" : 562.656,
+    "placementX" : 297.074,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]",
+    "entityName" : "Skill_3",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 6,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 298.202,
+    "computedY" : 569.965,
+    "placementX" : 298.202,
+    "placementY" : 569.965,
+    "placementWidth" : 88.304,
+    "placementHeight" : 69.429,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 69.429,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 304.409,
+    "computedY" : 618.893,
+    "placementX" : 304.409,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 332.104,
+    "computedY" : 618.893,
+    "placementX" : 332.104,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 332.104,
+    "computedY" : 618.893,
+    "placementX" : 332.104,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/SkillLabel_3[1]",
+    "entityName" : "SkillLabel_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 304.409,
+    "computedY" : 601.283,
+    "placementX" : 304.409,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]/SkillDescription_3[2]",
+    "entityName" : "SkillDescription_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_3[6]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 304.409,
+    "computedY" : 569.965,
+    "placementX" : 304.409,
+    "placementY" : 569.965,
+    "placementWidth" : 75.891,
+    "placementHeight" : 27.933,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 27.933,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_3[7]",
+    "entityName" : "SkillDivider_3",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 7,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 386.506,
+    "computedY" : 562.656,
+    "placementX" : 386.506,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_3[7]/SkillDividerRule[0]",
+    "entityName" : "SkillDividerRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_3[7]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 386.506,
+    "computedY" : 562.656,
+    "placementX" : 386.506,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]",
+    "entityName" : "Skill_4",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 8,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 387.634,
+    "computedY" : 569.965,
+    "placementX" : 387.634,
+    "placementY" : 569.965,
+    "placementWidth" : 88.304,
+    "placementHeight" : 69.429,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 69.429,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 393.841,
+    "computedY" : 618.893,
+    "placementX" : 393.841,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 421.536,
+    "computedY" : 618.893,
+    "placementX" : 421.536,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 421.536,
+    "computedY" : 618.893,
+    "placementX" : 421.536,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/SkillLabel_4[1]",
+    "entityName" : "SkillLabel_4",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 393.841,
+    "computedY" : 601.283,
+    "placementX" : 393.841,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]/SkillDescription_4[2]",
+    "entityName" : "SkillDescription_4",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_4[8]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 393.841,
+    "computedY" : 569.965,
+    "placementX" : 393.841,
+    "placementY" : 569.965,
+    "placementWidth" : 75.891,
+    "placementHeight" : 27.933,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 27.933,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_4[9]",
+    "entityName" : "SkillDivider_4",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 9,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 475.938,
+    "computedY" : 562.656,
+    "placementX" : 475.938,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_4[9]/SkillDividerRule[0]",
+    "entityName" : "SkillDividerRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/SkillDivider_4[9]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 475.938,
+    "computedY" : 562.656,
+    "placementX" : 475.938,
+    "placementY" : 562.656,
+    "placementWidth" : 1.128,
+    "placementHeight" : 76.737,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 1.128,
+    "contentHeight" : 76.737,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]",
+    "entityName" : "Skill_5",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]",
+    "childIndex" : 10,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 477.067,
+    "computedY" : 569.965,
+    "placementX" : 477.067,
+    "placementY" : 569.965,
+    "placementWidth" : 88.304,
+    "placementHeight" : 69.429,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.304,
+    "contentHeight" : 69.429,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 6.207,
+      "bottom" : 0.0,
+      "left" : 6.207
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 483.274,
+    "computedY" : 618.893,
+    "placementX" : 483.274,
+    "placementY" : 618.893,
+    "placementWidth" : 75.891,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/Align[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 510.969,
+    "computedY" : 618.893,
+    "placementX" : 510.969,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/Align[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/Align[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 510.969,
+    "computedY" : 618.893,
+    "placementX" : 510.969,
+    "placementY" : 618.893,
+    "placementWidth" : 20.5,
+    "placementHeight" : 20.5,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.5,
+    "contentHeight" : 20.5,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/SkillLabel_5[1]",
+    "entityName" : "SkillLabel_5",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 483.274,
+    "computedY" : 601.283,
+    "placementX" : 483.274,
+    "placementY" : 601.283,
+    "placementWidth" : 75.891,
+    "placementHeight" : 7.793,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 7.793,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 3.385,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]/SkillDescription_5[2]",
+    "entityName" : "SkillDescription_5",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/SkillGrid[5]/Skill_5[10]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 483.274,
+    "computedY" : 569.965,
+    "placementX" : 483.274,
+    "placementY" : 569.965,
+    "placementWidth" : 75.891,
+    "placementHeight" : 27.933,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 75.891,
+    "contentHeight" : 27.933,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 1.695,
+      "bottom" : 0.0,
+      "left" : 1.695
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsHeading[6]",
+    "entityName" : "ToolsHeading",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 6,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 532.469,
+    "placementX" : 29.905,
+    "placementY" : 532.469,
+    "placementWidth" : 535.466,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 15.404,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingText[0]",
+    "entityName" : "ToolsHeadingText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ToolsHeading[6]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 532.469,
+    "placementX" : 29.905,
+    "placementY" : 532.469,
+    "placementWidth" : 34.064,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 34.064,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingText[0]/ToolsHeadingLabel[0]",
+    "entityName" : "ToolsHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingText[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 532.469,
+    "placementX" : 29.905,
+    "placementY" : 532.469,
+    "placementWidth" : 34.064,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 34.064,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingRule[1]",
+    "entityName" : "ToolsHeadingRule",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ToolsHeading[6]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 63.969,
+    "computedY" : 538.635,
+    "placementX" : 63.969,
+    "placementY" : 538.635,
+    "placementWidth" : 501.402,
+    "placementHeight" : 8.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 501.402,
+    "contentHeight" : 8.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingRule[1]/ToolsHeadingRuleLine[0]",
+    "entityName" : "ToolsHeadingRuleLine",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/ToolsHeading[6]/ToolsHeadingRule[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 75.254,
+    "computedY" : 538.635,
+    "placementX" : 75.254,
+    "placementY" : 538.635,
+    "placementWidth" : 490.117,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 490.117,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ToolsLine[7]",
+    "entityName" : "ToolsLine",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 7,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 512.186,
+    "placementX" : 29.905,
+    "placementY" : 512.186,
+    "placementWidth" : 528.641,
+    "placementHeight" : 9.732,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 528.641,
+    "contentHeight" : 9.732,
+    "margin" : {
+      "top" : 10.551,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceHeading[8]",
+    "entityName" : "ExperienceHeading",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 8,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 477.259,
+    "placementX" : 29.905,
+    "placementY" : 477.259,
+    "placementWidth" : 535.466,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 20.143,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingText[0]",
+    "entityName" : "ExperienceHeadingText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceHeading[8]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 477.259,
+    "placementX" : 29.905,
+    "placementY" : 477.259,
+    "placementWidth" : 63.841,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.841,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingText[0]/ExperienceHeadingLabel[0]",
+    "entityName" : "ExperienceHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingText[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 477.259,
+    "placementX" : 29.905,
+    "placementY" : 477.259,
+    "placementWidth" : 63.841,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.841,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingRule[1]",
+    "entityName" : "ExperienceHeadingRule",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceHeading[8]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 93.746,
+    "computedY" : 483.425,
+    "placementX" : 93.746,
+    "placementY" : 483.425,
+    "placementWidth" : 471.625,
+    "placementHeight" : 8.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 471.625,
+    "contentHeight" : 8.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingRule[1]/ExperienceHeadingRuleLine[0]",
+    "entityName" : "ExperienceHeadingRuleLine",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceHeading[8]/ExperienceHeadingRule[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 105.031,
+    "computedY" : 483.425,
+    "placementX" : 105.031,
+    "placementY" : 483.425,
+    "placementWidth" : 460.34,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 460.34,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]",
+    "entityName" : "ExperienceEntries",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 9,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 262.073,
+    "placementX" : 29.905,
+    "placementY" : 262.073,
+    "placementWidth" : 535.456,
+    "placementHeight" : 204.296,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.456,
+    "contentHeight" : 204.296,
+    "margin" : {
+      "top" : 10.89,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 75.891
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]",
+    "entityName" : "ExperienceEntry_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 105.796,
+    "computedY" : 382.189,
+    "placementX" : 105.796,
+    "placementY" : 382.189,
+    "placementWidth" : 459.566,
+    "placementHeight" : 84.18,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 459.566,
+    "contentHeight" : 84.18,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 13.542,
+      "left" : 20.031
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]",
+    "entityName" : "EntryTitle_0",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 455.065,
+    "placementX" : 125.826,
+    "placementY" : 455.065,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]/TitleTable_0[0]",
+    "entityName" : "TitleTable_0",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 125.826,
+    "computedY" : 455.065,
+    "placementX" : 125.826,
+    "placementY" : 455.065,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]/Period_0[1]",
+    "entityName" : "Period_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.905,
+    "computedY" : 455.515,
+    "placementX" : 29.905,
+    "placementY" : 455.515,
+    "placementWidth" : 57.005,
+    "placementHeight" : 10.404,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 57.005,
+    "contentHeight" : 10.404,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]/Marker_0[2]",
+    "entityName" : "Marker_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/EntryTitle_0[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 101.987,
+    "computedY" : 456.908,
+    "placementX" : 101.987,
+    "placementY" : 456.908,
+    "placementWidth" : 7.617,
+    "placementHeight" : 7.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 7.617,
+    "contentHeight" : 7.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]/Highlights_0[1]",
+    "entityName" : "Highlights_0",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_0[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 395.731,
+    "placementX" : 125.826,
+    "placementY" : 395.731,
+    "placementWidth" : 439.535,
+    "placementHeight" : 55.892,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 55.892,
+    "margin" : {
+      "top" : 3.442,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]",
+    "entityName" : "ExperienceEntry_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 105.796,
+    "computedY" : 309.577,
+    "placementX" : 105.796,
+    "placementY" : 309.577,
+    "placementWidth" : 459.566,
+    "placementHeight" : 72.613,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 459.566,
+    "contentHeight" : 72.613,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 13.542,
+      "left" : 20.031
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]",
+    "entityName" : "EntryTitle_1",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 370.885,
+    "placementX" : 125.826,
+    "placementY" : 370.885,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]/TitleTable_1[0]",
+    "entityName" : "TitleTable_1",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 125.826,
+    "computedY" : 370.885,
+    "placementX" : 125.826,
+    "placementY" : 370.885,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]/Period_1[1]",
+    "entityName" : "Period_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.905,
+    "computedY" : 371.335,
+    "placementX" : 29.905,
+    "placementY" : 371.335,
+    "placementWidth" : 47.893,
+    "placementHeight" : 10.404,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.893,
+    "contentHeight" : 10.404,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]/Marker_1[2]",
+    "entityName" : "Marker_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/EntryTitle_1[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 101.987,
+    "computedY" : 372.729,
+    "placementX" : 101.987,
+    "placementY" : 372.729,
+    "placementWidth" : 7.617,
+    "placementHeight" : 7.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 7.617,
+    "contentHeight" : 7.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]/Highlights_1[1]",
+    "entityName" : "Highlights_1",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_1[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 323.119,
+    "placementX" : 125.826,
+    "placementY" : 323.119,
+    "placementWidth" : 439.535,
+    "placementHeight" : 44.325,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 44.325,
+    "margin" : {
+      "top" : 3.442,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]",
+    "entityName" : "ExperienceEntry_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 105.796,
+    "computedY" : 262.073,
+    "placementX" : 105.796,
+    "placementY" : 262.073,
+    "placementWidth" : 459.566,
+    "placementHeight" : 47.504,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 459.566,
+    "contentHeight" : 47.504,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 20.031
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]",
+    "entityName" : "EntryTitle_2",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 298.273,
+    "placementX" : 125.826,
+    "placementY" : 298.273,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]/TitleTable_2[0]",
+    "entityName" : "TitleTable_2",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 125.826,
+    "computedY" : 298.273,
+    "placementX" : 125.826,
+    "placementY" : 298.273,
+    "placementWidth" : 439.535,
+    "placementHeight" : 11.304,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 11.304,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]/Period_2[1]",
+    "entityName" : "Period_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.905,
+    "computedY" : 298.723,
+    "placementX" : 29.905,
+    "placementY" : 298.723,
+    "placementWidth" : 47.893,
+    "placementHeight" : 10.404,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.893,
+    "contentHeight" : 10.404,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]/Marker_2[2]",
+    "entityName" : "Marker_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/EntryTitle_2[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 101.987,
+    "computedY" : 300.116,
+    "placementX" : 101.987,
+    "placementY" : 300.116,
+    "placementWidth" : 7.617,
+    "placementHeight" : 7.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 7.617,
+    "contentHeight" : 7.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]/Highlights_2[1]",
+    "entityName" : "Highlights_2",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/ExperienceEntries[9]/ExperienceEntry_2[2]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 125.826,
+    "computedY" : 262.073,
+    "placementX" : 125.826,
+    "placementY" : 262.073,
+    "placementWidth" : 439.535,
+    "placementHeight" : 32.758,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 439.535,
+    "contentHeight" : 32.758,
+    "margin" : {
+      "top" : 3.442,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ProjectsHeading[10]",
+    "entityName" : "ProjectsHeading",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 10,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 231.717,
+    "placementX" : 29.905,
+    "placementY" : 231.717,
+    "placementWidth" : 535.466,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 15.573,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingText[0]",
+    "entityName" : "ProjectsHeadingText",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ProjectsHeading[10]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 231.717,
+    "placementX" : 29.905,
+    "placementY" : 231.717,
+    "placementWidth" : 105.864,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.864,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingText[0]/ProjectsHeadingLabel[0]",
+    "entityName" : "ProjectsHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingText[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 231.717,
+    "placementX" : 29.905,
+    "placementY" : 231.717,
+    "placementWidth" : 105.864,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.864,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingRule[1]",
+    "entityName" : "ProjectsHeadingRule",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/ProjectsHeading[10]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 135.769,
+    "computedY" : 237.883,
+    "placementX" : 135.769,
+    "placementY" : 237.883,
+    "placementWidth" : 429.602,
+    "placementHeight" : 8.617,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 429.602,
+    "contentHeight" : 8.617,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    }
+  }, {
+    "path" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingRule[1]/ProjectsHeadingRuleLine[0]",
+    "entityName" : "ProjectsHeadingRuleLine",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/ProjectsHeading[10]/ProjectsHeadingRule[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 147.054,
+    "computedY" : 237.883,
+    "placementX" : 147.054,
+    "placementY" : 237.883,
+    "placementWidth" : 418.317,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 418.317,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]",
+    "entityName" : "Project_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 11,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 177.452,
+    "placementX" : 29.905,
+    "placementY" : 177.452,
+    "placementWidth" : 535.466,
+    "placementHeight" : 45.745,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 45.745,
+    "margin" : {
+      "top" : 8.52,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]",
+    "entityName" : "ProjectThumb_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 180.314,
+    "placementX" : 29.905,
+    "placementY" : 180.314,
+    "placementWidth" : 56.989,
+    "placementHeight" : 42.882,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.989,
+    "contentHeight" : 42.882,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.849
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]",
+    "entityName" : "ProjectTile_0",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 41.754,
+    "computedY" : 180.314,
+    "placementX" : 41.754,
+    "placementY" : 180.314,
+    "placementWidth" : 45.139,
+    "placementHeight" : 42.882,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 45.139,
+    "contentHeight" : 42.882,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]/ProjectGlyph_0[0]",
+    "entityName" : "ProjectGlyph_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 50.324,
+    "computedY" : 187.755,
+    "placementX" : 50.324,
+    "placementY" : 187.755,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]/ProjectGlyph_0[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]/ProjectGlyph_0[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 50.324,
+    "computedY" : 187.755,
+    "placementX" : 50.324,
+    "placementY" : 187.755,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]/ProjectGlyph_0[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectThumb_0[0]/ProjectTile_0[0]/ProjectGlyph_0[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 50.324,
+    "computedY" : 187.755,
+    "placementX" : 50.324,
+    "placementY" : 187.755,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectCopy_0[1]",
+    "entityName" : "ProjectCopy_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 108.052,
+    "computedY" : 177.452,
+    "placementX" : 108.052,
+    "placementY" : 177.452,
+    "placementWidth" : 457.309,
+    "placementHeight" : 45.745,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 457.309,
+    "contentHeight" : 45.745,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 19.466
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectCopy_0[1]/ProjectTitle_0[0]",
+    "entityName" : "ProjectTitle_0",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectCopy_0[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 127.519,
+    "computedY" : 211.652,
+    "placementX" : 127.519,
+    "placementY" : 211.652,
+    "placementWidth" : 437.842,
+    "placementHeight" : 11.544,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 437.842,
+    "contentHeight" : 11.544,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_0[11]/ProjectCopy_0[1]/ProjectBody_0[1]",
+    "entityName" : "ProjectBody_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Project_0[11]/ProjectCopy_0[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 127.519,
+    "computedY" : 177.452,
+    "placementX" : 127.519,
+    "placementY" : 177.452,
+    "placementWidth" : 424.042,
+    "placementHeight" : 32.169,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 424.042,
+    "contentHeight" : 32.169,
+    "margin" : {
+      "top" : 2.031,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]",
+    "entityName" : "Project_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 12,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 124.751,
+    "placementX" : 29.905,
+    "placementY" : 124.751,
+    "placementWidth" : 535.466,
+    "placementHeight" : 42.882,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 42.882,
+    "margin" : {
+      "top" : 9.818,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]",
+    "entityName" : "ProjectThumb_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 124.751,
+    "placementX" : 29.905,
+    "placementY" : 124.751,
+    "placementWidth" : 56.989,
+    "placementHeight" : 42.882,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.989,
+    "contentHeight" : 42.882,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.849
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]",
+    "entityName" : "ProjectTile_1",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 41.754,
+    "computedY" : 124.751,
+    "placementX" : 41.754,
+    "placementY" : 124.751,
+    "placementWidth" : 45.139,
+    "placementHeight" : 42.882,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 45.139,
+    "contentHeight" : 42.882,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]/ProjectGlyph_1[0]",
+    "entityName" : "ProjectGlyph_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 50.324,
+    "computedY" : 132.193,
+    "placementX" : 50.324,
+    "placementY" : 132.193,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]/ProjectGlyph_1[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]/ProjectGlyph_1[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 50.324,
+    "computedY" : 132.193,
+    "placementX" : 50.324,
+    "placementY" : 132.193,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]/ProjectGlyph_1[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectThumb_1[0]/ProjectTile_1[0]/ProjectGlyph_1[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 50.324,
+    "computedY" : 132.193,
+    "placementX" : 50.324,
+    "placementY" : 132.193,
+    "placementWidth" : 28.0,
+    "placementHeight" : 28.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.0,
+    "contentHeight" : 28.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectCopy_1[1]",
+    "entityName" : "ProjectCopy_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 108.052,
+    "computedY" : 132.892,
+    "placementX" : 108.052,
+    "placementY" : 132.892,
+    "placementWidth" : 457.309,
+    "placementHeight" : 34.742,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 457.309,
+    "contentHeight" : 34.742,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 19.466
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectCopy_1[1]/ProjectTitle_1[0]",
+    "entityName" : "ProjectTitle_1",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectCopy_1[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 127.519,
+    "computedY" : 156.09,
+    "placementX" : 127.519,
+    "placementY" : 156.09,
+    "placementWidth" : 437.842,
+    "placementHeight" : 11.544,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 437.842,
+    "contentHeight" : 11.544,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/Project_1[12]/ProjectCopy_1[1]/ProjectBody_1[1]",
+    "entityName" : "ProjectBody_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/Project_1[12]/ProjectCopy_1[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 127.519,
+    "computedY" : 132.892,
+    "placementX" : 127.519,
+    "placementY" : 132.892,
+    "placementWidth" : 424.178,
+    "placementHeight" : 21.167,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 424.178,
+    "contentHeight" : 21.167,
+    "margin" : {
+      "top" : 2.031,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "entityName" : "CredentialHeadings",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 13,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 101.109,
+    "placementX" : 29.905,
+    "placementY" : 101.109,
+    "placementWidth" : 535.466,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 8.859,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]/EducationHeadingLabel[0]",
+    "entityName" : "EducationHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 101.109,
+    "placementX" : 29.905,
+    "placementY" : 101.109,
+    "placementWidth" : 62.401,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 62.401,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]/EducationHeadingRule[1]",
+    "entityName" : "EducationHeadingRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 103.591,
+    "computedY" : 107.276,
+    "placementX" : 103.591,
+    "placementY" : 107.276,
+    "placementWidth" : 159.846,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 159.846,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]/SpacerNode[2]",
+    "entityName" : null,
+    "entityKind" : "SpacerNode",
+    "parentPath" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 274.722,
+    "computedY" : 115.893,
+    "placementX" : 274.722,
+    "placementY" : 115.893,
+    "placementWidth" : 39.497,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 39.497,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]/LanguagesHeadingLabel[3]",
+    "entityName" : "LanguagesHeadingLabel",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 314.219,
+    "computedY" : 101.109,
+    "placementX" : 314.219,
+    "placementY" : 101.109,
+    "placementWidth" : 63.291,
+    "placementHeight" : 14.783,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 63.291,
+    "contentHeight" : 14.783,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialHeadings[13]/LanguagesHeadingRule[4]",
+    "entityName" : "LanguagesHeadingRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "VioletGridCv[0]/CredentialHeadings[13]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 388.794,
+    "computedY" : 107.276,
+    "placementX" : 388.794,
+    "placementY" : 107.276,
+    "placementWidth" : 165.292,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 165.292,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 11.285
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]",
+    "entityName" : "CredentialBodies",
+    "entityKind" : "RowNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 14,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 50.973,
+    "placementX" : 29.905,
+    "placementY" : 50.973,
+    "placementWidth" : 535.466,
+    "placementHeight" : 42.519,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 535.466,
+    "contentHeight" : 42.519,
+    "margin" : {
+      "top" : 7.617,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]",
+    "entityName" : "Education",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 29.905,
+    "computedY" : 52.849,
+    "placementX" : 29.905,
+    "placementY" : 52.849,
+    "placementWidth" : 242.614,
+    "placementHeight" : 40.643,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.614,
+    "contentHeight" : 40.643,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]",
+    "entityName" : "EducationBody",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 29.905,
+    "computedY" : 52.849,
+    "placementX" : 29.905,
+    "placementY" : 52.849,
+    "placementWidth" : 242.614,
+    "placementHeight" : 40.643,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 242.614,
+    "contentHeight" : 40.643,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationLines[0]",
+    "entityName" : "EducationLines",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 81.251,
+    "computedY" : 52.849,
+    "placementX" : 81.251,
+    "placementY" : 52.849,
+    "placementWidth" : 191.268,
+    "placementHeight" : 38.33,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 191.268,
+    "contentHeight" : 38.33,
+    "margin" : {
+      "top" : 2.313,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 51.346
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]",
+    "entityName" : "EducationBadge",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 29.905,
+    "computedY" : 52.867,
+    "placementX" : 29.905,
+    "placementY" : 52.867,
+    "placementWidth" : 40.625,
+    "placementHeight" : 40.625,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 40.625,
+    "contentHeight" : 40.625,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]/EducationGlyph[0]",
+    "entityName" : "EducationGlyph",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 37.218,
+    "computedY" : 60.179,
+    "placementX" : 37.218,
+    "placementY" : 60.179,
+    "placementWidth" : 26.0,
+    "placementHeight" : 26.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.0,
+    "contentHeight" : 26.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]/EducationGlyph[0]/SvgIcon[0]",
+    "entityName" : "SvgIcon",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]/EducationGlyph[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 37.218,
+    "computedY" : 60.179,
+    "placementX" : 37.218,
+    "placementY" : 60.179,
+    "placementWidth" : 26.0,
+    "placementHeight" : 26.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.0,
+    "contentHeight" : 26.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]/EducationGlyph[0]/SvgIcon[0]/SvgLayer0[0]",
+    "entityName" : "SvgLayer0",
+    "entityKind" : "Path",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Education[0]/EducationBody[0]/EducationBadge[1]/EducationGlyph[0]/SvgIcon[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 37.218,
+    "computedY" : 60.179,
+    "placementX" : 37.218,
+    "placementY" : 60.179,
+    "placementWidth" : 26.0,
+    "placementHeight" : 26.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 26.0,
+    "contentHeight" : 26.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/CredentialGutter[1]",
+    "entityName" : "CredentialGutter",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 272.529,
+    "computedY" : 92.492,
+    "placementX" : 272.529,
+    "placementY" : 92.492,
+    "placementWidth" : 39.497,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 39.497,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/CredentialGutter[1]/SpacerNode[0]",
+    "entityName" : null,
+    "entityKind" : "SpacerNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/CredentialGutter[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 272.529,
+    "computedY" : 92.492,
+    "placementX" : 272.529,
+    "placementY" : 92.492,
+    "placementWidth" : 39.497,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 39.497,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Languages[2]",
+    "entityName" : "Languages",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 312.026,
+    "computedY" : 50.973,
+    "placementX" : 312.026,
+    "placementY" : 50.973,
+    "placementWidth" : 253.325,
+    "placementHeight" : 42.519,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 253.325,
+    "contentHeight" : 42.519,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/CredentialBodies[14]/Languages[2]/LanguageTable[0]",
+    "entityName" : "LanguageTable",
+    "entityKind" : "TableNode",
+    "parentPath" : "VioletGridCv[0]/CredentialBodies[14]/Languages[2]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 312.026,
+    "computedY" : 50.973,
+    "placementX" : 312.026,
+    "placementY" : 50.973,
+    "placementWidth" : 253.325,
+    "placementHeight" : 41.221,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 253.325,
+    "contentHeight" : 41.221,
+    "margin" : {
+      "top" : 1.298,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "VioletGridCv[0]/QuoteBand[15]",
+    "entityName" : "QuoteBand",
+    "entityKind" : "SectionNode",
+    "parentPath" : "VioletGridCv[0]",
+    "childIndex" : 15,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 29.905,
+    "computedY" : 10.348,
+    "placementX" : 29.905,
+    "placementY" : 10.348,
+    "placementWidth" : 414.689,
+    "placementHeight" : 27.084,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 414.689,
+    "contentHeight" : 27.084,
+    "margin" : {
+      "top" : 13.542,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.492,
+      "right" : 22.57,
+      "bottom" : 6.492,
+      "left" : 22.57
+    }
+  }, {
+    "path" : "VioletGridCv[0]/QuoteBand[15]/QuoteLine[0]",
+    "entityName" : "QuoteLine",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "VioletGridCv[0]/QuoteBand[15]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 52.475,
+    "computedY" : 16.839,
+    "placementX" : 52.475,
+    "placementY" : 16.839,
+    "placementWidth" : 369.55,
+    "placementHeight" : 14.1,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 369.55,
+    "contentHeight" : 14.1,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

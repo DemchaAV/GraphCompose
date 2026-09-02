@@ -80,6 +80,13 @@ import com.demcha.examples.templates.coverletter.CvNordicCleanLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvPanelLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvSidebarPortraitLetterV2Example;
 import com.demcha.examples.templates.coverletter.CvTimelineMinimalLetterV2Example;
+import com.demcha.examples.templates.cv.v2.CharcoalGoldExample;
+import com.demcha.examples.templates.cv.v2.SlateOrangeExample;
+import com.demcha.examples.templates.cv.v2.MidnightNavyExample;
+import com.demcha.examples.templates.cv.v2.OrangeOpsExample;
+import com.demcha.examples.templates.cv.v2.VioletGridExample;
+import com.demcha.examples.templates.cv.v2.TealPulseExample;
+import com.demcha.examples.templates.cv.v2.TerracottaRailExample;
 import com.demcha.examples.templates.cv.v2.CvBlueBannerExample;
 import com.demcha.examples.templates.cv.v2.CvBoxedV2Example;
 import com.demcha.examples.templates.cv.v2.CvCenteredHeadlineExample;
@@ -97,9 +104,19 @@ import com.demcha.examples.templates.cv.v2.CvNordicCleanExample;
 import com.demcha.examples.templates.cv.v2.CvPanelExample;
 import com.demcha.examples.templates.cv.v2.CvSidebarPortraitExample;
 import com.demcha.examples.templates.cv.v2.CvTimelineMinimalExample;
+import com.demcha.examples.templates.cv.v2.NavySidebarExample;
+import com.demcha.examples.templates.cv.v2.ProfessionalSidebarExample;
+import com.demcha.examples.templates.cv.v2.SerifHeadlineExample;
+import com.demcha.examples.templates.invoice.ClassicInvoiceV2Example;
+import com.demcha.examples.templates.invoice.ConsultingInvoiceV2Example;
+import com.demcha.examples.templates.invoice.LumaStudioInvoiceV2Example;
+import com.demcha.examples.templates.invoice.PaymentsInvoiceV2Example;
+import com.demcha.examples.templates.invoice.WorkspaceInvoiceV2Example;
 import com.demcha.examples.templates.invoice.InvoiceCinematicFileExample;
 import com.demcha.examples.templates.invoice.ModernInvoiceV2Example;
 import com.demcha.examples.templates.proposal.CinematicProposalFileExample;
+import com.demcha.examples.templates.proposal.EditorialProposalV2Example;
+import com.demcha.examples.templates.proposal.NorthlineProposalV2Example;
 import com.demcha.examples.templates.proposal.ProposalCinematicFileExample;
 import com.demcha.examples.templates.proposal.ModernProposalV2Example;
 import com.demcha.examples.templates.schedule.WeeklyScheduleFileExample;
@@ -142,6 +159,16 @@ public final class GenerateAllExamples {
         System.out.println("Generated: " + CvPanelExample.generate());
         System.out.println("Generated: " + CvSidebarPortraitExample.generate());
         System.out.println("Generated: " + CvTimelineMinimalExample.generate());
+        System.out.println("Generated: " + NavySidebarExample.generate());
+        System.out.println("Generated: " + ProfessionalSidebarExample.generate());
+        System.out.println("Generated: " + SerifHeadlineExample.generate());
+        System.out.println("Generated: " + CharcoalGoldExample.generate());
+        System.out.println("Generated: " + TerracottaRailExample.generate());
+        System.out.println("Generated: " + TealPulseExample.generate());
+        System.out.println("Generated: " + SlateOrangeExample.generate());
+        System.out.println("Generated: " + VioletGridExample.generate());
+        System.out.println("Generated: " + OrangeOpsExample.generate());
+        System.out.println("Generated: " + MidnightNavyExample.generate());
 
         // Cover letters (v2 layered — 15 paired letters, one per CV preset)
         System.out.println("Generated: " + CvBlueBannerLetterV2Example.generate());
@@ -163,10 +190,17 @@ public final class GenerateAllExamples {
         // Invoices
         System.out.println("Generated: " + InvoiceCinematicFileExample.generate());
         System.out.println("Generated: " + ModernInvoiceV2Example.generate());
+        System.out.println("Generated: " + ClassicInvoiceV2Example.generate());
+        System.out.println("Generated: " + ConsultingInvoiceV2Example.generate());
+        System.out.println("Generated: " + LumaStudioInvoiceV2Example.generate());
+        System.out.println("Generated: " + PaymentsInvoiceV2Example.generate());
+        System.out.println("Generated: " + WorkspaceInvoiceV2Example.generate());
 
         // Proposals
         System.out.println("Generated: " + ProposalCinematicFileExample.generate());
         System.out.println("Generated: " + ModernProposalV2Example.generate());
+        System.out.println("Generated: " + NorthlineProposalV2Example.generate());
+        System.out.println("Generated: " + EditorialProposalV2Example.generate());
         System.out.println("Generated: " + CinematicProposalFileExample.generate());
 
         // Schedule

@@ -145,14 +145,31 @@ public final class Executive {
                             .padding(DocumentInsets.zero());
                     Headline.uppercaseLeftAligned(section, identity.name().full(), theme,
                             nameStyle());
-                    String meta = joinPipe(identity.contact().address(),
-                            identity.contact().phone());
-                    if (!meta.isBlank()) {
-                        section.addParagraph(paragraph -> paragraph
-                                .text(meta)
-                                .textStyle(metaStyle())
-                                .align(TextAlign.LEFT)
-                                .margin(DocumentInsets.top(2)));
+                    String address = identity.contact().address();
+                    String phone = identity.contact().phone();
+                    if (!address.isBlank() || !phone.isBlank()) {
+                        // The number is its own run rather than part of one joined string, so
+                        // it can carry a dialling target without the address being swept into
+                        // it. The glyphs and their order are what the joined string gave.
+                        section.addParagraph(paragraph -> {
+                            paragraph.textStyle(metaStyle())
+                                    .align(TextAlign.LEFT)
+                                    .margin(DocumentInsets.top(2));
+                            if (!address.isBlank()) {
+                                paragraph.inlineText(address.trim(), metaStyle());
+                            }
+                            if (!phone.isBlank()) {
+                                if (!address.isBlank()) {
+                                    paragraph.inlineText(" | ", metaStyle());
+                                }
+                                DocumentLinkOptions dial = ContactUri.telLink(phone);
+                                if (dial == null) {
+                                    paragraph.inlineText(phone.trim(), metaStyle());
+                                } else {
+                                    paragraph.inlineText(phone.trim(), metaStyle(), dial);
+                                }
+                            }
+                        });
                     }
                     addLinkRow(section, identity);
                     section.addLine(line -> line
@@ -228,20 +245,6 @@ public final class Executive {
                         theme.typography().sizeBody(),
                         DocumentTextDecoration.UNDERLINE,
                         ACCENT);
-            }
-
-            private static String joinPipe(String... parts) {
-                StringBuilder sb = new StringBuilder();
-                for (String part : parts) {
-                    if (part == null || part.isBlank()) {
-                        continue;
-                    }
-                    if (sb.length() > 0) {
-                        sb.append(" | ");
-                    }
-                    sb.append(part.trim());
-                }
-                return sb.toString();
             }
         }
 }

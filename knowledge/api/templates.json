@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 161,
-    "methods": 953,
-    "constants": 117,
-    "generated": 402
+    "types": 227,
+    "methods": 1276,
+    "constants": 177,
+    "generated": 689
   },
   "packages": [
     {
@@ -6735,6 +6735,92 @@
                 {
                   "type": "String",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "CvEntry",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "subtitle"
+                },
+                {
+                  "type": "String",
+                  "name": "date"
+                },
+                {
+                  "type": "String",
+                  "name": "body"
+                },
+                {
+                  "type": "String",
+                  "name": "place"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "CvEntry",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "subtitle"
+                },
+                {
+                  "type": "String",
+                  "name": "date"
+                },
+                {
+                  "type": "String",
+                  "name": "body"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
                 }
               ]
             },
@@ -6773,6 +6859,151 @@
               "typeParameters": null,
               "returns": "String",
               "params": []
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "link",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "CvEntry.Builder",
+          "binaryName": "com.demcha.compose.document.templates.cv.data.CvEntry$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "subtitle",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "date",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "body",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "body",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "List<String>",
+                  "name": "lines"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "place",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "link",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvEntry",
+              "params": []
             }
           ]
         },
@@ -6808,6 +7039,36 @@
                 {
                   "type": "List<Link>",
                   "name": null
+                },
+                {
+                  "type": "Optional<DocumentImageData>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "CvIdentity",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "CvName",
+                  "name": "name"
+                },
+                {
+                  "type": "String",
+                  "name": "jobTitle"
+                },
+                {
+                  "type": "Contact",
+                  "name": "contact"
+                },
+                {
+                  "type": "List<Link>",
+                  "name": "links"
                 }
               ]
             },
@@ -6894,6 +7155,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "List<Link>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "portrait",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "Optional<DocumentImageData>",
               "params": []
             }
           ]
@@ -7040,6 +7310,20 @@
                 {
                   "type": "String",
                   "name": "url"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "portrait",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvIdentity.Builder",
+              "params": [
+                {
+                  "type": "DocumentImageData",
+                  "name": "value"
                 }
               ]
             },
@@ -7239,6 +7523,28 @@
                 {
                   "type": "OptionalDouble",
                   "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "CvSkill",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "OptionalDouble",
+                  "name": "level"
                 }
               ]
             },
@@ -7276,6 +7582,28 @@
             },
             {
               "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "CvSkill",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "double",
+                  "name": "level"
+                },
+                {
+                  "type": "String",
+                  "name": "note"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "name",
               "static": false,
               "origin": "generated",
@@ -7290,6 +7618,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "OptionalDouble",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "note",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
               "params": []
             }
           ]
@@ -8095,6 +8432,47 @@
           ]
         },
         {
+          "name": "CharcoalGold",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.CharcoalGold",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ClassicSerif",
           "binaryName": "com.demcha.compose.document.templates.cv.presets.ClassicSerif",
           "kind": "class",
@@ -8366,6 +8744,40 @@
                   "name": "theme"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "MidnightNavy",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.MidnightNavy",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
             }
           ]
         },
@@ -8974,6 +9386,47 @@
           ]
         },
         {
+          "name": "NavySidebar",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.NavySidebar",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "NordicClean",
           "binaryName": "com.demcha.compose.document.templates.cv.presets.NordicClean",
           "kind": "class",
@@ -9239,6 +9692,47 @@
           ]
         },
         {
+          "name": "OrangeOps",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.OrangeOps",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_FONT",
+              "static": true,
+              "origin": "generated",
+              "type": "FontName"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "Panel",
           "binaryName": "com.demcha.compose.document.templates.cv.presets.Panel",
           "kind": "class",
@@ -9290,6 +9784,88 @@
                   "name": "theme"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "ProfessionalSidebar",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.ProfessionalSidebar",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "SerifHeadline",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.SerifHeadline",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
             }
           ]
         },
@@ -9507,6 +10083,115 @@
           ]
         },
         {
+          "name": "SlateOrange",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.SlateOrange",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "TealPulse",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.TealPulse",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "TerracottaRail",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.TerracottaRail",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "TimelineMinimal",
           "binaryName": "com.demcha.compose.document.templates.cv.presets.TimelineMinimal",
           "kind": "class",
@@ -9558,6 +10243,40 @@
                   "name": "theme"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "VioletGrid",
+          "binaryName": "com.demcha.compose.document.templates.cv.presets.VioletGrid",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<CvDocument>",
+              "params": []
             }
           ]
         }
@@ -10825,6 +11544,384 @@
       "name": "com.demcha.compose.document.templates.data.invoice",
       "types": [
         {
+          "name": "InvoiceBrand",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceBrand",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceBrand",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentImageData",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoiceBrand",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentImageData",
+                  "name": "logo"
+                },
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "String",
+                  "name": "qualifier"
+                },
+                {
+                  "type": "String",
+                  "name": "tagline"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hasMonogram",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "hasLogo",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "logo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentImageData",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "qualifier",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "tagline",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "monogramTop",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "monogramBottom",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceContactBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceContactBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoiceContactBlock",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "legalName"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "addressLines"
+                },
+                {
+                  "type": "String",
+                  "name": "phone"
+                },
+                {
+                  "type": "String",
+                  "name": "email"
+                },
+                {
+                  "type": "String",
+                  "name": "website"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "taxRegistrationLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "taxRegistrationNumber"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoiceContactBlock",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "legalName"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "addressLines"
+                },
+                {
+                  "type": "String",
+                  "name": "phone"
+                },
+                {
+                  "type": "String",
+                  "name": "email"
+                },
+                {
+                  "type": "String",
+                  "name": "website"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "registrationNumber"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "legalName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "phone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "email",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "website",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "registrationLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "registrationNumber",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "taxRegistrationLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "taxRegistrationNumber",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "legalFootnote",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "InvoiceData",
           "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceData",
           "kind": "record",
@@ -12026,6 +13123,186 @@
           ]
         },
         {
+          "name": "InvoiceMasthead",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceMasthead",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceMasthead",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<InvoiceMasthead.Entry>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "entries",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InvoiceMasthead.Entry>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceMasthead.Entry",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceMasthead$Entry",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Entry",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "emphasized",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceNotesBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceNotesBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "paragraphs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "contactEmail",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "contactPhone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "InvoiceParty",
           "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceParty",
           "kind": "record",
@@ -12239,6 +13516,969 @@
           ]
         },
         {
+          "name": "InvoicePaymentBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoicePaymentBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<InvoicePaymentBlock.Field>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoicePaymentBlock",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "List<InvoicePaymentBlock.Field>",
+                  "name": "fields"
+                },
+                {
+                  "type": "String",
+                  "name": "instruction"
+                },
+                {
+                  "type": "String",
+                  "name": "dueNotice"
+                },
+                {
+                  "type": "String",
+                  "name": "dueNoticeEmphasis"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fields",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InvoicePaymentBlock.Field>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "instruction",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "dueNotice",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "dueNoticeEmphasis",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "accountHolder",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "signOff",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoicePaymentBlock.Field",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock$Field",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Field",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceRecipient",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceRecipient",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceRecipient",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "InvoiceRecipient",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "String",
+                  "name": "subline"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "addressLines"
+                },
+                {
+                  "type": "String",
+                  "name": "emailLabel"
+                },
+                {
+                  "type": "String",
+                  "name": "email"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hasRegistration",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "subline",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "emailLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "email",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "registrationLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "registrationNumber",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceServiceLines",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceServiceLines",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceServiceLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "InvoiceServiceLines.Columns",
+                  "name": null
+                },
+                {
+                  "type": "List<InvoiceServiceLines.Line>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "columns",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceServiceLines.Columns",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "lines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InvoiceServiceLines.Line>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceServiceLines.Columns",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceServiceLines$Columns",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Columns",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Columns",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "index"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "String",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "String",
+                  "name": "amount"
+                },
+                {
+                  "type": "String",
+                  "name": "vat"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Columns",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "index"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "String",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "String",
+                  "name": "amount"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "index",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "description",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "servicePeriod",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "quantity",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "unitPrice",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "vat",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "region",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceServiceLines.Line",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceServiceLines$Line",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Line",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "int",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": null
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Line",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "int",
+                  "name": "lineNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unit"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "amount"
+                },
+                {
+                  "type": "String",
+                  "name": "vatRate"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Line",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "int",
+                  "name": "lineNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unit"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "amount"
+                },
+                {
+                  "type": "String",
+                  "name": "vatRate"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "Line",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "int",
+                  "name": "lineNumber"
+                },
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "String",
+                  "name": "description"
+                },
+                {
+                  "type": "String",
+                  "name": "servicePeriod"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "quantity"
+                },
+                {
+                  "type": "String",
+                  "name": "unit"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "unitPrice"
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": "amount"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "lineNumber",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "int",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "description",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "servicePeriod",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "quantity",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BigDecimal",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "unit",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "unitPrice",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BigDecimal",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BigDecimal",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "vatRate",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "region",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceSummaryBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceSummaryBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceSummaryBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "servicePeriod",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "InvoiceSummaryRow",
           "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceSummaryRow",
           "kind": "record",
@@ -12368,12 +14608,831 @@
               "params": []
             }
           ]
+        },
+        {
+          "name": "InvoiceTotalsBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceTotalsBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "InvoiceTotalsBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "List<InvoiceTotalsBlock.Row>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "rows",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InvoiceTotalsBlock.Row>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "totalLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "totalAmount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BigDecimal",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "InvoiceTotalsBlock.Row",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.InvoiceTotalsBlock$Row",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Row",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "BigDecimal",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "BigDecimal",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredInvoiceData",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredInvoiceData",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "InvoiceBrand",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceContactBlock",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceMasthead",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceRecipient",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceRecipient",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceSummaryBlock",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceServiceLines",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceTotalsBlock",
+                  "name": null
+                },
+                {
+                  "type": "InvoicePaymentBlock",
+                  "name": null
+                },
+                {
+                  "type": "InvoiceNotesBlock",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "StructuredInvoiceData",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "InvoiceBrand",
+                  "name": "brand"
+                },
+                {
+                  "type": "InvoiceContactBlock",
+                  "name": "supplier"
+                },
+                {
+                  "type": "InvoiceMasthead",
+                  "name": "masthead"
+                },
+                {
+                  "type": "InvoiceRecipient",
+                  "name": "billTo"
+                },
+                {
+                  "type": "InvoiceSummaryBlock",
+                  "name": "summary"
+                },
+                {
+                  "type": "InvoiceServiceLines",
+                  "name": "serviceLines"
+                },
+                {
+                  "type": "InvoiceTotalsBlock",
+                  "name": "totals"
+                },
+                {
+                  "type": "InvoicePaymentBlock",
+                  "name": "payment"
+                },
+                {
+                  "type": "InvoiceNotesBlock",
+                  "name": "notes"
+                },
+                {
+                  "type": "String",
+                  "name": "currencyCode"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "brand",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceBrand",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "supplier",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceContactBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "masthead",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceMasthead",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "billTo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceRecipient",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "shipTo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceRecipient",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "summary",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceSummaryBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "serviceLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceServiceLines",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "totals",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceTotalsBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payment",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoicePaymentBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "notes",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "InvoiceNotesBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "currencyCode",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredInvoiceData.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "brand",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceBrand",
+                  "name": "brand"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "supplier",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceContactBlock",
+                  "name": "supplier"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "masthead",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceMasthead",
+                  "name": "masthead"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "billTo",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceRecipient",
+                  "name": "billTo"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "shipTo",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceRecipient",
+                  "name": "shipTo"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "summary",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceSummaryBlock",
+                  "name": "summary"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "serviceLines",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceServiceLines",
+                  "name": "serviceLines"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "totals",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceTotalsBlock",
+                  "name": "totals"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "payment",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoicePaymentBlock",
+                  "name": "payment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "notes",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "InvoiceNotesBlock",
+                  "name": "notes"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "currencyCode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "currencyCode"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredInvoiceDocumentSpec",
+          "binaryName": "com.demcha.compose.document.templates.data.invoice.StructuredInvoiceDocumentSpec",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredInvoiceDocumentSpec",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "StructuredInvoiceData",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "from",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceDocumentSpec",
+              "params": [
+                {
+                  "type": "StructuredInvoiceData",
+                  "name": "invoice"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "invoice",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "StructuredInvoiceData",
+              "params": []
+            }
+          ]
         }
       ]
     },
     {
       "name": "com.demcha.compose.document.templates.data.proposal",
       "types": [
+        {
+          "name": "ProposalAcceptance",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalAcceptance",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalAcceptance",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "statement",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fields",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalAttention",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalAttention",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalAttention",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "role",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "email",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "phone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalBrand",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalBrand",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalBrand",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "monogram",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "nameLine1",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "nameLine2",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "documentLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "website",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "footerName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
         {
           "name": "ProposalData",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalData",
@@ -12986,6 +16045,79 @@
           ]
         },
         {
+          "name": "ProposalDeliverables",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalDeliverables",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalDeliverables",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "leftColumn",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "rightColumn",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalDocumentSpec",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec",
           "kind": "record",
@@ -13455,6 +16587,754 @@
           ]
         },
         {
+          "name": "ProposalFooter",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalFooter",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalFooter",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "contacts",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "confidentiality",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalGlance",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalGlance",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalGlance",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalGlance.Fact>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalGlance",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "List<ProposalGlance.Fact>",
+                  "name": "facts"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "facts",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalGlance.Fact>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalGlance.Fact",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalGlance$Fact",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Fact",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "note",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalGoals",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalGoals",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalGoals",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalGoals.Goal>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalGoals",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                },
+                {
+                  "type": "List<ProposalGoals.Goal>",
+                  "name": "items"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "items",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalGoals.Goal>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalGoals.Goal",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalGoals$Goal",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Goal",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "text",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalInvestment",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalInvestment",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalInvestment",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalInvestment.Row>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "itemHeader",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amountHeader",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "rows",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalInvestment.Row>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "totalLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "totalAmount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalInvestment.Role",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalInvestment$Role",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "NONE",
+              "static": true,
+              "origin": "generated",
+              "type": "ProposalInvestment.Role"
+            },
+            {
+              "kind": "constant",
+              "name": "SUBTOTAL",
+              "static": true,
+              "origin": "generated",
+              "type": "ProposalInvestment.Role"
+            },
+            {
+              "kind": "constant",
+              "name": "OPTIONAL",
+              "static": true,
+              "origin": "generated",
+              "type": "ProposalInvestment.Role"
+            }
+          ]
+        },
+        {
+          "name": "ProposalInvestment.Row",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalInvestment$Row",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Row",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ProposalInvestment.Role",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "role",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalInvestment.Role",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalMetaLine",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalMetaLine",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalMetaLine",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalMetaLine.Entry>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalMetaLine",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "preparedFor"
+                },
+                {
+                  "type": "String",
+                  "name": "preparedBy"
+                },
+                {
+                  "type": "String",
+                  "name": "date"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalMetaLine",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "List<ProposalMetaLine.Entry>",
+                  "name": "entries"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "preparedFor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "preparedBy",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "date",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "entries",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalMetaLine.Entry>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalMetaLine.Entry",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalMetaLine$Entry",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Entry",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalParty",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalParty",
           "kind": "record",
@@ -13668,6 +17548,165 @@
           ]
         },
         {
+          "name": "ProposalPhaseGrid",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalPhaseGrid",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalPhaseGrid",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalPhaseGrid.Phase>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "columnHeaders",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "phases",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalPhaseGrid.Phase>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalPhaseGrid.Phase",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalPhaseGrid$Phase",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Phase",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "number",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "focus",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "duration",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "output",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalPricingRow",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalPricingRow",
           "kind": "record",
@@ -13826,6 +17865,230 @@
           ]
         },
         {
+          "name": "ProposalRecipient",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalRecipient",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalRecipient",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isPresent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalScope",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalScope",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalScope",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ProposalScope.Item>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalScope",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "heading"
+                },
+                {
+                  "type": "String",
+                  "name": "icon"
+                },
+                {
+                  "type": "List<ProposalScope.Item>",
+                  "name": "items"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "items",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ProposalScope.Item>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "intro",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalScope.Item",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalScope$Item",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "Item",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "number",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "description",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalSection",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalSection",
           "kind": "record",
@@ -13958,6 +18221,126 @@
           ]
         },
         {
+          "name": "ProposalSummaryBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalSummaryBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalSummaryBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "paragraphs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalTermsBlock",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalTermsBlock",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalTermsBlock",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "heading",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "icon",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "items",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ProposalTimelineItem",
           "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalTimelineItem",
           "kind": "record",
@@ -14084,6 +18467,710 @@
               "origin": "source",
               "typeParameters": null,
               "returns": "ProposalTimelineItem",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ProposalTitleLines",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.ProposalTitleLines",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ProposalTitleLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ProposalTitleLines",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "lead"
+                },
+                {
+                  "type": "String",
+                  "name": "second"
+                },
+                {
+                  "type": "String",
+                  "name": "third"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ProposalTitleLines",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "eyebrow"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "lines"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "standfirst"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "lead",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "second",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "third",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "eyebrow",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "lines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "standfirst",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredProposalData",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.StructuredProposalData",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredProposalData",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "ProposalBrand",
+                  "name": null
+                },
+                {
+                  "type": "ProposalTitleLines",
+                  "name": null
+                },
+                {
+                  "type": "ProposalMetaLine",
+                  "name": null
+                },
+                {
+                  "type": "ProposalSummaryBlock",
+                  "name": null
+                },
+                {
+                  "type": "ProposalGlance",
+                  "name": null
+                },
+                {
+                  "type": "ProposalGoals",
+                  "name": null
+                },
+                {
+                  "type": "ProposalScope",
+                  "name": null
+                },
+                {
+                  "type": "ProposalDeliverables",
+                  "name": null
+                },
+                {
+                  "type": "ProposalPhaseGrid",
+                  "name": null
+                },
+                {
+                  "type": "ProposalInvestment",
+                  "name": null
+                },
+                {
+                  "type": "ProposalTermsBlock",
+                  "name": null
+                },
+                {
+                  "type": "ProposalAcceptance",
+                  "name": null
+                },
+                {
+                  "type": "ProposalRecipient",
+                  "name": null
+                },
+                {
+                  "type": "ProposalAttention",
+                  "name": null
+                },
+                {
+                  "type": "ProposalFooter",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "StructuredProposalData",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "ProposalBrand",
+                  "name": "brand"
+                },
+                {
+                  "type": "ProposalTitleLines",
+                  "name": "title"
+                },
+                {
+                  "type": "ProposalMetaLine",
+                  "name": "meta"
+                },
+                {
+                  "type": "ProposalSummaryBlock",
+                  "name": "executiveSummary"
+                },
+                {
+                  "type": "ProposalGlance",
+                  "name": "glance"
+                },
+                {
+                  "type": "ProposalGoals",
+                  "name": "goals"
+                },
+                {
+                  "type": "ProposalScope",
+                  "name": "scope"
+                },
+                {
+                  "type": "ProposalDeliverables",
+                  "name": "deliverables"
+                },
+                {
+                  "type": "ProposalPhaseGrid",
+                  "name": "timeline"
+                },
+                {
+                  "type": "ProposalInvestment",
+                  "name": "investment"
+                },
+                {
+                  "type": "ProposalTermsBlock",
+                  "name": "terms"
+                },
+                {
+                  "type": "ProposalAcceptance",
+                  "name": "acceptance"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "brand",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalBrand",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalTitleLines",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "meta",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalMetaLine",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "executiveSummary",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalSummaryBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "glance",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalGlance",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "goals",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalGoals",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "scope",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalScope",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "deliverables",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalDeliverables",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "timeline",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalPhaseGrid",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "investment",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalInvestment",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "terms",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalTermsBlock",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "acceptance",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalAcceptance",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "recipient",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalRecipient",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "attention",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalAttention",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ProposalFooter",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredProposalData.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.StructuredProposalData$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "brand",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalBrand",
+                  "name": "brand"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalTitleLines",
+                  "name": "title"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "meta",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalMetaLine",
+                  "name": "meta"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "executiveSummary",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalSummaryBlock",
+                  "name": "executiveSummary"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "glance",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalGlance",
+                  "name": "glance"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "goals",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalGoals",
+                  "name": "goals"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "scope",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalScope",
+                  "name": "scope"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "deliverables",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalDeliverables",
+                  "name": "deliverables"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "timeline",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalPhaseGrid",
+                  "name": "timeline"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "investment",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalInvestment",
+                  "name": "investment"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "terms",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalTermsBlock",
+                  "name": "terms"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "acceptance",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalAcceptance",
+                  "name": "acceptance"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "recipient",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalRecipient",
+                  "name": "recipient"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "attention",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalAttention",
+                  "name": "attention"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "footer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData.Builder",
+              "params": [
+                {
+                  "type": "ProposalFooter",
+                  "name": "footer"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalData",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "StructuredProposalDocumentSpec",
+          "binaryName": "com.demcha.compose.document.templates.data.proposal.StructuredProposalDocumentSpec",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "StructuredProposalDocumentSpec",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "StructuredProposalData",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "from",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "StructuredProposalDocumentSpec",
+              "params": [
+                {
+                  "type": "StructuredProposalData",
+                  "name": "proposal"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "proposal",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "StructuredProposalData",
               "params": []
             }
           ]
@@ -16344,6 +21431,204 @@
       "name": "com.demcha.compose.document.templates.invoice.presets",
       "types": [
         {
+          "name": "ClassicInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.ClassicInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<InvoiceDocumentSpec>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<InvoiceDocumentSpec>",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ConsultingInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.ConsultingInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "LumaStudioInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.LumaStudioInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "MerchantInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.MerchantInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "MeteredInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.MeteredInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
           "name": "ModernInvoice",
           "binaryName": "com.demcha.compose.document.templates.invoice.presets.ModernInvoice",
           "kind": "class",
@@ -16397,12 +21682,264 @@
               ]
             }
           ]
+        },
+        {
+          "name": "ObsidianInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.ObsidianInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PaymentsInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.PaymentsInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "PlatformInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.PlatformInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "SubscriptionInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.SubscriptionInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "WorkspaceInvoice",
+          "binaryName": "com.demcha.compose.document.templates.invoice.presets.WorkspaceInvoice",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredInvoiceData>",
+              "params": []
+            }
+          ]
         }
       ]
     },
     {
       "name": "com.demcha.compose.document.templates.proposal.presets",
       "types": [
+        {
+          "name": "EditorialProposal",
+          "binaryName": "com.demcha.compose.document.templates.proposal.presets.EditorialProposal",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "IndigoProposal",
+          "binaryName": "com.demcha.compose.document.templates.proposal.presets.IndigoProposal",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
         {
           "name": "ModernProposal",
           "binaryName": "com.demcha.compose.document.templates.proposal.presets.ModernProposal",
@@ -16455,6 +21992,47 @@
                   "name": "theme"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "NorthlineProposal",
+          "binaryName": "com.demcha.compose.document.templates.proposal.presets.NorthlineProposal",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
+              "params": []
             }
           ]
         }

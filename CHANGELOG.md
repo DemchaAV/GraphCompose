@@ -3,6 +3,900 @@
 All notable changes to GraphCompose are documented here. Versions
 follow semantic versioning; release dates are ISO 8601.
 
+## v2.4.0 — Planned
+
+### Public API
+
+- **A proposal block carries the paragraph that opens it.** `ProposalScope`,
+  `ProposalGoals` and `ProposalGlance` each set a heading and a list, and every one-page
+  sales proposal measured for the header spine also sets a paragraph between the two —
+  five of the seven set two of them, once over the solution and once over the reasons to
+  choose the issuer. The header survey missed it, so it arrives here rather than inside
+  the first preset that needs it. All three records gain `intro`, a plain string blank
+  when absent, and each keeps its previous constructor explicitly, so existing calls
+  compile and link unchanged and every block built through them opens straight into its
+  list as before.
+
+- **A proposal carries the header a one-page sales proposal has.** The proposal model was
+  shaped for a two-page consulting document: a running header naming three things by role,
+  and a title of exactly three lines. A one-page sales proposal opens differently — an
+  addressed organisation with its own address block, a named person at it with a role and
+  two channels, a row of marked tiles whose captions are the document's own, a headline
+  broken across however many lines the design breaks it across, and a foot carrying the
+  legal entity rather than only a name. None of that had a home, and each of the seven
+  designs measured for this needs the same five things, which is why they arrive together
+  rather than one per preset: five separate additions to a published record would leave
+  the model a patchwork of near-duplicates.
+  <br><br>
+  `ProposalRecipient`, `ProposalAttention` and `ProposalFooter` are new;
+  `StructuredProposalData` carries them as `recipient`, `attention` and `footer`, and its
+  twelve-argument constructor is kept explicitly so existing calls compile and link
+  unchanged. `ProposalTitleLines` gains `eyebrow`, `lines` and `standfirst`, with `lines`
+  the canonical reading and `lead`/`second`/`third` its first three — one statement kept
+  consistent by construction rather than by the caller, so a preset written against the
+  three reads the same title a four-line document states. The list form is a factory,
+  `ProposalTitleLines.of`, because a second three-argument constructor taking
+  `(String, List, List)` is ambiguous for a caller passing nulls.
+  `ProposalMetaLine` gains `entries`, and those do <em>not</em> derive from the trio in
+  either direction: turning three roles into tiles would mean inventing their captions,
+  and reading roles back out of arbitrary tiles would mean guessing which is which. A
+  preset draws the one its design has.
+
+- **An invoice line carries where it was delivered.** A design that bills the same
+  service in more than one place — the same instance type in two datacentres, the same
+  plan in two jurisdictions — prints where beside what, as its own column next to the
+  service. `InvoiceServiceLines.Line` had nowhere to put it: `servicePeriod` is the
+  neighbouring column on such a sheet, so folding the two together collapses two columns
+  the design draws apart, and `vatRate` is a tax rate that happens to be free. `Line` now
+  carries `region` and `Columns` its caption, both plain strings blank when absent, and a
+  design with one location per invoice leaves them alone. All three constructors that
+  predate it — the ones before the per-line tax rate, the mark, and the region — are kept
+  explicitly, so existing calls compile and link unchanged and every line built through
+  them still prints no region.
+
+- **A supplier carries the legal line it prints under its name.** A footer band that
+  identifies the issuer often has to carry more than a name and an address: a
+  parent-company or regulator disclosure — "X is a subsidiary of Y" — is a statement the
+  jurisdiction requires on the sheet, and deriving it from the fields beside it is not
+  possible because it is prose, not a number. Composed from `legalName` alone, that line
+  simply went missing. `InvoiceContactBlock` now carries `legalFootnote`, a plain string
+  blank when absent, like the fields beside it; a preset with no footer band ignores it.
+  Both constructors that predate it — the one before the second registration and the one
+  before the footnote — are kept explicitly, so existing calls compile and link unchanged
+  and every block built through them still prints no disclosure.
+
+- **A billed party carries a printed registration.** A supplier could already state a
+  tax registration through `InvoiceContactBlock.taxRegistrationLabel` /
+  `taxRegistrationNumber`, and the party being billed could not — but most B2B invoices
+  print the customer's VAT or tax number too, under its address. `subline` was the only
+  spare field and it is contractually the attention line that sits *above* the address,
+  so a registration put there renders in the wrong place. `InvoiceRecipient` now carries
+  `registrationLabel` and `registrationNumber`, mirroring the pair the supplier block
+  already has, with `hasRegistration()` for the presets that draw the row only when
+  there is a number to draw. Both are plain strings, blank when absent, and the
+  six-argument constructor is kept explicitly, so existing calls compile and link
+  unchanged and every recipient built through them still prints no registration.
+
+- **An invoice line carries a mark.** A design that opens each service line with a
+  glyph — a card for a billing line, a shield for fraud screening, a globe for a hosted
+  service — had nowhere to say which one, and deriving it from the description would
+  have been guesswork dressed as a feature. `InvoiceServiceLines.Line` now carries
+  `icon`, a plain string blank when absent, exactly as `CvEntry.icon` already works on
+  the CV side: the token means something only to the preset that packages it, and a
+  preset that draws no marks ignores it. It costs the layout nothing where nothing is
+  set. Both constructors that predate it — the one before the per-line tax rate and the
+  one before the mark — are kept explicitly, so existing calls compile and link
+  unchanged and every line built through them still carries no mark.
+
+- **`CvSkill` carries the level as the document words it.** A rated skill could say how
+  much — a number in `[0, 1]` a preset draws as dots or a meter — or it could say it in
+  words by not being a skill at all and living in a `RowsSection` instead. It could not
+  say both, which is why `CharcoalGold` sets its languages as rows: that design writes
+  "Native" and "B2 – Upper Intermediate" out, and a number could not carry them back. A
+  design that shows a rating *and* names it had nowhere to go. `CvSkill` now carries
+  `note` — a plain string, blank when absent, like the fields beside it — reachable
+  through `CvSkill.of(name, level, note)`. The two channels stay separate because a
+  number cannot carry a wording and a wording cannot be measured into a meter; a preset
+  draws whichever it has room for, or both. The two-argument constructor and both
+  existing factories are kept explicitly, so existing calls compile and link unchanged
+  and every skill built through them still carries no note.
+
+- **The structured invoice model carries what a second sheet needs.** It landed with
+  one consumer, `ConsultingInvoice`, and a model shaped around one document is a model
+  nobody has tested. Fitting a second published invoice to it found six things it could
+  not say, each of them general rather than one design's whim: a brand lockup drawn as
+  a two-line monogram instead of a logo (`InvoiceBrand.monogramTop` / `monogramBottom`);
+  a second labelled registration, because a UK sender prints both a company number and
+  a VAT number (`InvoiceContactBlock.taxRegistrationLabel` / `taxRegistrationNumber`);
+  a delivery address beside the billing one (`StructuredInvoiceData.shipTo`); a tax
+  rate printed per line and its column (`InvoiceServiceLines.Line.vatRate`,
+  `Columns.vat`), written as the design shows it because the wording differs by
+  jurisdiction; and who the money is paid to, with the closing line beside the due
+  notice (`InvoicePaymentBlock.accountHolder` / `signOff`). Every addition is blank
+  when absent, and every constructor that predates one is kept explicitly, so existing
+  calls compile and link unchanged — `ConsultingInvoice` passes its snapshot and pixel
+  gates untouched, which is the proof.
+
+- **`CvEntry` carries a link.** An entry that points somewhere — a repository, a case
+  study, a company — had no way to say so, and a preset had no way to make its title
+  reachable. `CvEntry` now carries `link`, a plain string blank when absent like the
+  fields beside it, set through `CvEntry.Builder.link(...)`. It costs the layout
+  nothing: a link is an annotation rather than ink, so a linked title and a plain one
+  are the same sheet, which is also why the parity gates cannot see it and a test
+  asserts the targets directly. The six-argument constructor is kept explicitly, so
+  existing calls compile and link unchanged.
+
+- **`CvEntry` carries a location and a mark, and gains a builder.** The record held a
+  title, a subtitle, a date and a body, which is enough for a dated block and not
+  enough for the designs that set the city beside the employer in its own colour, or
+  that open a project with an icon. Folding a location into the subtitle would have
+  merged two things a design styles apart; deriving an icon from the text would have
+  been guesswork. `CvEntry` now carries `place` and `icon` — both plain strings, blank
+  when absent, matching how `subtitle` and `date` already behave — and
+  `CvEntry.builder(title)` reaches them without counting six positions. The icon
+  vocabulary is preset-scoped: a token means something only to the preset that packages
+  it, and the presets that draw no marks ignore it. The four-argument constructor is
+  kept explicitly, so existing calls compile and link unchanged.
+
+- **`CvIdentity` carries an optional portrait.** A CV design with a photograph in it
+  had nowhere to put one: the identity record held the name, the title, the contact
+  triple and the links, and a preset that wanted a face had to ship a silhouette of its
+  own. `CvIdentity` now carries `Optional<DocumentImageData> portrait` — the image
+  itself, because a photograph is caller-supplied content rather than template chrome —
+  reachable through `CvIdentity.Builder.portrait(...)`. The four- and three-argument
+  constructors are kept explicitly, so existing calls compile and link unchanged; only a
+  record deconstruction pattern over `CvIdentity` sees the extra component. A document
+  carrying a portrait still renders through every preset in the family — the ones with
+  nowhere to draw it ignore it.
+
+- **A structured invoice document model.** The invoice family's data layer knew one
+  shape — an invoice as pre-formatted display strings, with one address block per
+  party, line items whose quantity and money are already rendered, and a flat list of
+  summary rows. That cannot carry the structured business invoice: a brand lockup with
+  the sender's own logo, labelled masthead metadata, a contact block with a business
+  registration, priced service lines carrying `BigDecimal` figures and the unit they
+  are counted in, a totals stack with its own total band, bank payment fields, and a
+  footer line. `templates.data.invoice` now carries that second model —
+  `StructuredInvoiceData` (+ its section records) wrapped by
+  `StructuredInvoiceDocumentSpec` — alongside the display one; a preset consumes the
+  model whose shape it renders. The brand logo arrives as `DocumentImageData`, because
+  the logo is caller-supplied content rather than template chrome, and it stays
+  optional so a wordmark-only lockup composes. Every component normalizes `null` to
+  its empty form, money and quantities default to zero, and collections are frozen.
+
+- **A structured proposal document model.** The proposal family's data layer knew one
+  shape — a titled run of prose sections with a flat timeline and pricing list — which
+  cannot carry the structured business proposal: brand marks, an authored multi-line
+  title, an at-a-glance fact card, goal cells, a numbered scope list, authored
+  deliverable columns, a phase grid with its own headers, priced rows with a
+  `Role` (`NONE` / `SUBTOTAL` / `OPTIONAL`) and a total band, and a signing card.
+  `templates.data.proposal` now carries that second model —
+  `StructuredProposalData` (+ its section records) wrapped by
+  `StructuredProposalDocumentSpec` — alongside the narrative one; a preset consumes
+  the model whose shape it renders. Every component normalizes `null` to its empty
+  form and freezes its collections, matching the family's existing records.
+
+### Templates
+
+- **The invoice presets set their page number in their own face.** A header or footer
+  zone draws in the standard-14 face unless a document says otherwise, and until the
+  zone gained `fontName` there was no way to say otherwise — so `PaymentsInvoice` and
+  `WorkspaceInvoice` left the page number as the one line on an otherwise Lato sheet set
+  in Helvetica. Both now name the sheet's own face. The change is confined to that line:
+  measured at 600 dpi it moves 3 885 pixels of 34 794 400 on one sheet and 3 898 on the
+  other, all of them inside the number's own box, and nothing around it shifts.
+- **Seven CV presets make their telephone number dialable.** `EngineeringResume`,
+  `Executive`, `MintEditorial`, `MonogramSidebar`, `Panel`, `SidebarPortrait` and
+  `TimelineMinimal` already made an email and a profile reachable and printed the phone
+  as plain text, so a reader on a phone or a tablet could tap every contact on the sheet
+  except the one they would actually ring. Each now carries a `tel:` target built the
+  way the rest of the library builds it — a parenthesised trunk prefix is dropped,
+  because it is the digit a caller omits from abroad, while a parenthesised area code is
+  kept. `ContactUri` is the one place that conversion now lives.
+  <br><br>
+  Two of the seven printed the address and the number as one joined string, which cannot
+  carry a target on half of itself; they now set the two as separate runs of the same
+  paragraph, with the same glyphs in the same order. Nothing moves: every pixel baseline
+  in the suite passes untouched, because a link annotation is not ink.
+  <br><br>
+  A number inside a referee's free-form prose stays plain. An address in running text is
+  recognisable; a number is not — dates, reference numbers and amounts all look like
+  one — so only the structured contact field is linked.
+
+- **A commerce invoice preset: `MerchantInvoice`.** A lockup against the title over a
+  short accent rule, the supplier's details beside the invoice's metadata, two addressed
+  parties on filled discs, a line-item table whose rows are bordered boxes, a bank panel
+  beside the totals and the due-by card, a closing note, and an identity band closing the
+  sheet on a marked tile. Ships as `invoice.presets.MerchantInvoice` on the existing
+  `StructuredInvoiceData` model, porting the rendered layout of a published standalone
+  template: rendered against the frozen original with the same data the text layers are
+  **identical, all 225 words in the same place**, and the sheet above the identity band
+  carries **no differing pixel**. What differs is the two marks — the masthead lockup and
+  the band's tile, both the caller's — the enumeration's face, and the social row below.
+  <br><br>
+  **The social row is deliberately not ported.** The design closes with three discs
+  carrying social-platform marks. Those marks belong to their platforms, and the templates
+  artifact does not redistribute other companies' trademarks, so neither they nor the rule
+  that divided them off are drawn; the band keeps the tile and the issuer's identity, which
+  is what identifies the sheet. This is stated on the preset rather than left to be
+  noticed.
+  <br><br>
+  Each table row is one cell. A cell's stroke draws all four of its edges, which is
+  exactly what this design's rows are — a soft box round each, no interior verticals — so
+  a row is a single cell spanning every column with the five columns composed inside it.
+  <br><br>
+  The supplier's contact rows are the one block whose line box is not its type: an inline
+  mark taller than the text sets the box, so a pitch measured from the text and solved
+  against the text lands short by the difference. Those pitches are solved against the
+  mark. A quantity of nothing prints the design's own dash rather than a zero, because a
+  zero in a quantity column reads as none delivered rather than as not counted. Guarded by
+  a smoke test (including the dash, the unknown-mark data error, a line with no mark, an
+  invoice that ships nowhere, where the currency is stated, and pagination), an exact
+  layout snapshot, and a pixel baseline — all three fed by one fixture.
+
+- **A dark invoice preset: `ObsidianInvoice`.** The first dark sheet in the library: a
+  wordmark over the document's name against a ruled metadata stack, the issuer and the
+  billed party on filled discs in cards of their own, a line-item table in a third, the
+  totals in a fourth, the notes and payment details side by side in a fifth and sixth,
+  and a closing band under a hairline. Ships as `invoice.presets.ObsidianInvoice` on the
+  existing `StructuredInvoiceData` model, porting the rendered layout of a published
+  standalone template: rendered against the frozen original with the same data, every
+  card, the table, the totals and both information cards are **pixel-identical**, and the
+  only regions that differ are the two discs — which carry the caller's mark where the
+  original carried its own — and the enumeration, which sets the sheet's own face.
+  <br><br>
+  The fill is set on the page rather than on the flow. A container's fill is bounded by
+  its content height, so a continuation page carrying three line items would show two
+  thirds of a white sheet under them; the page background covers the paper whatever the
+  content does.
+  <br><br>
+  Sizes are solved from ink rather than from cap height. The design's own face is not
+  bundled and matching a cap height alone would still set every string to the wrong
+  width, so each size is solved from the measured ink width of the string it sets, with
+  the substitute's width ratio applied once — and every size is named, in the styles, by
+  the string it came from. Vertical positions are cap tops rather than box edges, because
+  ink is what a design can be measured on.
+  <br><br>
+  The tax column is worked out rather than asked for. This design gives the tax its own
+  money column where the model carries a rate, and the figure is not a second thing to
+  state: a line already gives the quantity, the unit price and the total it comes to, so
+  the tax is the difference between what was charged and what the goods cost. Reading it
+  off the line is also what keeps the column and the total consistent when either moves.
+  <br><br>
+  The issuer's disc carries the caller's logo when there is one, the brand's monogram when
+  it states one, and initials taken from the name otherwise; the billed party's always
+  shows initials taken from its name. Guarded by a smoke test (including the derived tax
+  and its zero-rated case, both disc fallbacks, the due sentence keeping its accented date
+  inside one sentence, and pagination), an exact layout snapshot, and a pixel baseline —
+  all three fed by one fixture.
+
+- **A per-seat subscription invoice preset: `SubscriptionInvoice`.** A lockup against the
+  title, the supplier's details beside a metadata panel whose rows each open with a
+  coloured bar, two addressed parties under coloured underlines, a six-column table
+  carrying a tax rate on every line, the notes beside the totals, a marked payment band,
+  a four-segment strip, and a closing band that bleeds to three paper edges. Ships as
+  `invoice.presets.SubscriptionInvoice` on the existing `StructuredInvoiceData` model,
+  porting the rendered layout of a published standalone template — and this one is exact:
+  rendered against the frozen original with the same data the text layers are
+  **identical, all 218 words in the same place**, and the body carries **no differing
+  pixel at all**. Only two things differ, both by design: the masthead mark, which the
+  preset leaves to the caller, and the enumeration, which sets the sheet's own face where
+  the original took the zone default.
+  <br><br>
+  It is the first preset in the family to draw `InvoiceServiceLines.Line.vatRate()` and
+  its caption — it bills in a jurisdiction that prints the rate per line rather than only
+  as a total — and the first to number its lines, from `lineNumber()` when a line states
+  one and from its position when it does not.
+  <br><br>
+  Colour is by position and never by meaning: the metadata bars, the party underlines and
+  the closing strip all draw from one four-colour cycle indexed by where a thing sits, so
+  the fourth metadata row is amber because it is fourth and nothing in the document ever
+  names a colour. The page carries no side margins, because the strip and the closing band
+  have to reach the paper edges and do it by being the only blocks without horizontal
+  padding; the band reaches the bottom edge by bleeding rather than by being last, which
+  is what lets the enumeration sit over its fill for nothing.
+  <br><br>
+  Money is written with the currency's mark against the digits, so every figure names its
+  own currency and no column states one — which is also the preset's one boundary, and it
+  is documented and tested rather than left to be discovered: the columns are measured for
+  a one-character mark, so a currency the runtime knows only by its three-letter code does
+  not fit the unit-price column and the render is refused there rather than letting the
+  figure run under its neighbour. Guarded by a smoke test (including the per-line rate,
+  line numbering from both sources, the currency boundary, a payment band with a different
+  cell count, an invoice that ships nowhere, and pagination), an exact layout snapshot,
+  and a pixel baseline — all three fed by one fixture.
+
+- **A region-billed platform invoice preset: `PlatformInvoice`.** A lockup against the
+  title, the supplier split from the invoice's own metadata by a full-height hairline,
+  two addressed parties on differently-treated marks, a six-column usage table, an
+  outlined bank panel beside the totals and the due-date card, and an identity band
+  closing the sheet. Ships as `invoice.presets.PlatformInvoice` on the existing
+  `StructuredInvoiceData` model, porting the rendered layout of a published standalone
+  template: rendered against the frozen original with the same data, the document body
+  carries **no ink displaced at all** — every one of 225 paired words within 0.15 pt,
+  and zero pixels differing by more than a rounding step at 150 dpi between the masthead
+  and the closing note. The regions that differ are the two lockups, which the preset
+  leaves to the caller, the enumeration, which sets the sheet's own face where the
+  original took the zone default, and one phrase in the note.
+  <br><br>
+  This is the design that needed `Line.region`: it bills the same service in more than
+  one place and prints where beside what, as its own column between the service and the
+  usage.
+  <br><br>
+  Two scales, on purpose. The design is 1.50 aspect where A4 is 1.414, so one conversion
+  constant cannot serve both axes: widths, x-offsets and type sizes go through the
+  horizontal one because that is where advance widths have to fit, heights and pitches
+  through the vertical one, which is 6.3% tighter, and marks and discs through their
+  mean — about 3% out in each axis rather than 6% out in one. Writing a vertical
+  measurement on the horizontal scale would stretch the sheet by 6.3% with nothing
+  failing, which is what the split exists to make visible. The design's line pitches are
+  set cap-top to cap-top, so the preset solves each gap from Barlow's own cap height and
+  ascender rather than from the type size.
+  <br><br>
+  The table's separators are rows. A table's rules come from each cell's own style and
+  cover all four of that cell's edges, so any stroke that buys a horizontal separator
+  also buys five verticals — which this design has nowhere inside its table. Every cell
+  is stroked at zero width and each separator is a row of its own: one cell spanning
+  every column, zero padding, and a full-width line as its content.
+  <br><br>
+  A unit price is written at the precision it is quoted at, between two places and four.
+  Usage that names a unit carries two places even on a whole number, because the meter
+  reads to that precision; usage that names none is a count of whole things and is
+  written bare. The currency is stated once per money column with the figures under it
+  bare, and once more on the grand total, which stands under no caption. Guarded by a
+  smoke test (including the region column, the unknown-mark data error, a line with no
+  mark, an invoice that ships nowhere, both figure rules, and pagination bringing the
+  header back), an exact layout snapshot, and a pixel baseline — all three fed by one
+  fixture.
+
+- **A metered-usage invoice preset: `MeteredInvoice`.** An orange-accented masthead over
+  its own rule, the supplier split from the invoice's metadata by a hairline, two
+  addressed parties, a service-line table whose marks sit on bordered tiles, a closing
+  row pairing the bank details against the totals and the due date, and a full-bleed dark
+  band along the foot of every page. Ships as `invoice.presets.MeteredInvoice` on the
+  existing `StructuredInvoiceData` model, porting the rendered layout of a published
+  standalone template: rendered against the frozen original with the same data, the
+  document body is pixel-identical — 0 of 2,173,720 at 150 dpi between the title and the
+  footer band — and the two regions that differ are the masthead lockup, which the preset
+  leaves to the caller, and the band, which sets the sheet's own face where the original
+  took the zone default. It flows: the table's header repeats on every page it reaches,
+  the bottom margin reserves the band on every page so no row runs into the chrome, and
+  every page carries its number.
+  <br><br>
+  A unit price is written at the precision it is quoted at, between two places and four,
+  where every other figure on the sheet is written at two. That is not a formatting
+  preference: a metered rate is a fraction of a currency unit, and an hour of compute at
+  0.0710 rounded to an amount's two places is 0.07 — a different price that multiplies
+  out to a different bill. Figures state their locale rather than inheriting it.
+  <br><br>
+  The design's side margins are unequal, 35.5 px against 43.5 px of a 1055 px sheet, and
+  are kept as measured: regularising them at the mean costs four pixels of horizontal
+  error on every glyph to save eight on one edge. Its hairlines are a pixel of ink rather
+  than a pixel of geometry, so they are drawn at the weight that reproduces them instead
+  of the 0.6 pt they measure, which rasterises to less than a pixel and drops half the
+  row rules to partial opacity. The table is one column wide with a composed row inside
+  each cell, because a cell strokes all four of its own edges and five real columns would
+  draw four interior verticals the design does not have.
+  <br><br>
+  Guarded by a smoke test (including the unknown-mark data error, a line that names no
+  mark, the rate-versus-amount precision rule, pagination bringing the header back with
+  it, and the disclosure line falling back to the supplier's name), an exact layout
+  snapshot, and a pixel baseline — both fed by one fixture.
+
+- **A violet SaaS invoice preset: `WorkspaceInvoice`.** A brand masthead over a short
+  accent bar, a half-split issuer and metadata header, two addressed parties on filled
+  discs, a service-line table whose marks sit on coloured tiles, a settlement row
+  pairing the bank details against the totals, and a closing band carrying the wordmark.
+  Ships as `invoice.presets.WorkspaceInvoice` on the existing `StructuredInvoiceData`
+  model, porting the rendered layout of a published standalone template. Like
+  `PaymentsInvoice` it flows — the table's header repeats on every page it reaches, a
+  continuation page reserves a deeper bottom margin, and every page carries its number,
+  which is a departure from the one-page design and the only way a lost page is
+  detectable. The sheet's own closing band cannot be page chrome, because a header
+  footer zone takes only strings and the band holds a wordmark and a link, so it is body
+  content and the number is the only chrome. Two of the design's own type corrections
+  are carried as measured constants rather than smoothed away: a cap read off a
+  screenshot includes half a pixel of antialiasing on each edge, and the body face sets
+  uppercase about 6% wider than the design's at the same cap height — measured across
+  three all-caps runs while mixed-case runs at the same sizes matched within 2%. This
+  design states its currency once per money column and writes the figures under it bare,
+  carrying the code only on the total, which is the opposite of what `PaymentsInvoice`
+  does and is why the two presets format money differently. A quantity is written with
+  what it counts. Both parties print a registration under their address through the pair
+  `InvoiceRecipient` gained for it, and a party with no number prints no label. Guarded
+  by a smoke test (including the unknown-mark data error, a line with no mark, the
+  wordmark fallback, the currency named once and not on every figure, the quantity with
+  its unit, both registrations and the absent one, the closing address as an annotation,
+  a missing ship-to, a payment card with no note, an empty document, and a thirty-line
+  invoice that runs on, repeats its column names and numbers its pages), an exact layout
+  snapshot and a pixel-parity gate; the examples showcase gains `invoice-workspace-v2`.
+
+- **A paginating invoice preset: `PaymentsInvoice`.** A lavender-and-navy sheet with a
+  diagonal band crossing the masthead, a half-split issuer and metadata header, two
+  addressed parties on discs, a marked service-line table, a settlement row pairing bank
+  details against the totals, a note block and a two-cell document footer. Ships as
+  `invoice.presets.PaymentsInvoice` on the existing `StructuredInvoiceData` model,
+  porting the rendered layout of a published standalone template. It is the first preset
+  in the family built to **flow**: the design shows six service lines and a real billing
+  month brings dozens, so the table's header repeats on every page it reaches, a
+  continuation page reserves a deeper bottom margin than page one, and every page
+  carries its number — a financial record that runs over has to make a missing page
+  detectable. The table is one column, not five: the design shows an outer box and a
+  rule between rows with no interior verticals, which is exactly what a single-column
+  table draws, and the five columns are a row inside each cell. Building it the other
+  way round would leave every continuation page ending in an empty bordered strip,
+  because a section's box fills its page fragment rather than hugging its rows. The
+  lockup beside the title is the caller's: the design's mark occupies a measured
+  136 × 55.3 px box, a document that brings a logo has it drawn to that height, and one
+  that brings only a name has the name set as a wordmark — the templates artifact
+  carries no mark of its own. Figures are written with the locale stated rather than
+  inherited, because both the grouping of a number and the symbol for a currency code
+  change with it and a preset that let the JVM decide would render a different sheet on
+  a different machine. Guarded by a smoke test (including the unknown-mark data error, a
+  line with no mark, the wordmark fallback, the currency named once and carried, the
+  uppercased due line, a trunk prefix printed but not dialled, the support contacts as
+  annotations, a missing ship-to and a missing note block, an empty document, and a
+  thirty-line invoice that runs on, repeats its column names and numbers its pages), an
+  exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `invoice-payments-v2`.
+
+- **A navy-plate CV preset: `MidnightNavy`.** A one-page sheet on a full-height navy
+  plate: an outlined monogram over a two-weight name and a tracked role line, then
+  contact, education, metered skills and dotted languages down the plate, beside a
+  paper column carrying the summary, the roles held on a rail, three achievement discs
+  and the certifications in divided columns. Ships as `cv.presets.MidnightNavy` on the
+  existing `CvDocument` model, porting the rendered layout of a published standalone
+  template; it needed no model change. The plate is a page background rather than a
+  section fill — it reaches three paper edges and a fill stops at its own box — sized
+  by the same ratio the body row splits on, so the two cannot drift apart. Every
+  horizontal pair goes through one wrapper: a row nested directly in a row cell is
+  refused and both columns are cells, so a skill and its meter, a language and its
+  dots, a title and its dates, a disc and its line and the certification columns are
+  each a row wrapped in a single layer of a stack. Three marks are relationships rather
+  than lengths: the experience rail is the entry section's left accent, so its height
+  derives from the entry and the inter-entry gap is padding inside the border, which is
+  what makes consecutive rails meet; a certification divider is the column's own
+  accent; and a skill meter is three layers sharing the track's axis rather than three
+  pieces placed apart. The monogram and the role line are built from the identity — two
+  initials and the name's own words — so a document fills neither in twice. Seven
+  berths reach their sections by title, and the contact heading is the preset's own
+  because a document has no section to carry it. Unlike its ported siblings this sheet
+  is one page **strictly**: the body is a single row and a row is atomic, so a longer CV
+  is refused with an `AtomicNodeTooLargeException` naming the node rather than being cut
+  — splitting the row would leave the plate on one page and half the aside on the next.
+  Two things depart from the ported sheet deliberately, and both are measured. A link is
+  drawn as its own label with the address behind it, as on the presets before it. And
+  every rail marker is centred on its rail: an accent is drawn centred on the edge it
+  belongs to, so the section's left edge already is the rail's axis, and the ported
+  sheet's extra half-thickness correction put each marker a rail width to the right of
+  the line it sits on — 0.72 pt, visible at reading size. Together the two come to
+  2 498 of 2 173 720 pixels, of which the centring is 200. Guarded by a smoke test (including the unknown-mark data error, the
+  monogram taken from the name, the uppercased name and tracked role, a language rating
+  rounded to the nearest of five dots, a skill with no level, a trunk prefix left
+  undialled, the link targets on every kind of title, a dropped berth, a document with
+  nothing but an identity, and the refusal past one page), an exact layout snapshot and
+  a pixel-parity gate; the examples showcase gains `cv-midnight-navy-v2`.
+
+- **A two-column operations CV preset: `OrangeOps`.** A one-page sheet in three bands
+  over a split body: a two-tone name above a dark role bar whose right edge and three
+  accent slashes all lean by one ratio, a contact strip whose items sit on one axis
+  between hairlines, then a narrow column of dotted skills, achievement discs, a degree
+  and certifications beside a wide column carrying the profile, the roles held with
+  their dates on the right margin, a four-metric strip on full-height rules, and the
+  closing lines. Ships as `cv.presets.OrangeOps` on the existing `CvDocument` model,
+  porting the rendered layout of a published standalone template. It is the first
+  preset whose display family the engine does not carry: Oswald is not one of the
+  families `graph-compose-fonts` ships, so the preset names it through
+  `OrangeOps.DISPLAY_FONT` and the caller registers it — the gate and the example each
+  register the two faces from their own module's resources, and the class documentation
+  shows the call. Eight berths reach their sections by title, four to a column, and a
+  berth nobody fills takes its heading, its accent rule and its join hairline with it
+  rather than leaving a rule over a gap. Two shapes are what the design shows rather
+  than what a row could hold: the role bar is a layer stack because the plate and the
+  slashes overlap horizontally, and an achievement is a layer stack because a table cell
+  anchors its disc to the foot of the pair instead of the top. A badge is one leaf, not
+  two — the disc is re-emitted around the glyph inside a widened viewBox, because a
+  shape container inside a table cell reserves its box and composes none of its
+  children. A heading's parenthetical is set smaller on the same line, split off at the
+  title's first bracket, which is how `KEY KPI SNAPSHOT (Recent 12 Months)` reaches the
+  page as the design sets it. As on the presets before it a link is drawn as its own
+  label with the address behind it, the one deliberate departure from the ported sheet,
+  measured at 7 241 of 2 173 720 pixels. Guarded by a smoke test (including the unknown
+  mark data error, an entry with no mark, the uppercased name and role bar, the
+  parenthetical heading, a trunk prefix left undialled, the link targets on every kind
+  of title, a dropped berth taking its join rule with it, a document with nothing but an
+  identity, and the run onto a second page), an exact layout snapshot and a pixel-parity
+  gate; the examples showcase gains `cv-orange-ops-v2`.
+
+- **A banded single-column CV preset: `VioletGrid`.** A one-page sheet with no page-level
+  grid at all: a two-tone name beside the contact list, three opening lines, a six-up
+  grid of marked skills divided by dotted rules, a strip of tools on inline discs, the
+  roles held on a dated timeline whose dates sit outside the rail, the projects behind
+  tinted tiles, education and languages side by side, and a tinted band closing on a
+  quotation. Ships as `cv.presets.VioletGrid` on the existing `CvDocument` model,
+  porting the rendered layout of a published standalone template; like `SlateOrange` it
+  reads a rated language's wording from `CvSkill.note`. Every split is local to one
+  band — the masthead splits where the contact marks begin, the timeline into dates,
+  rail and content, a project into tile and copy, the credentials into two halves — and
+  none of the four knows about the others, which is why every horizontal arrangement is
+  either a top-level row or a table and none of them nests. Three marks are
+  relationships rather than lengths: a section rule starts where its heading ends
+  because it is a weighted column taking what an auto column leaves; the timeline rail
+  is the left border of every entry but the last, so consecutive entries butt into one
+  line; and a project's hairline is its copy's left border, so it is exactly as tall as
+  the copy. Seven berths reach their sections by title, including a quotation berth
+  whose body is drawn and whose title is not. Unlike its ported siblings this sheet
+  flows: each experience entry is held together, so a longer CV runs onto a second page
+  rather than cutting a role in half. As on the presets before it a link is drawn as its
+  own label with the address behind it, the one deliberate departure from the ported
+  sheet, measured at 1 882 of 2 173 720 pixels. Guarded by a smoke test (including the
+  unknown-mark data error, a skill with no mark, the two-tone name, the quotation's
+  title staying off the sheet, the link targets on every kind of title, an identity with
+  no links, a document with nothing but an identity, and the run onto a second page), an
+  exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-violet-grid-v2`.
+
+- **A masthead-and-rail CV preset: `SlateOrange`.** A one-page sheet built as a
+  full-bleed slate band over a two-column body: an orange monogram tile beside the name,
+  the role line and a tracked specialism strip, with the contact lines across an orange
+  hairline; then a narrow column of marked competencies, trophied achievements, rated
+  languages and closing facts, beside a wide column carrying the profile, the roles held
+  on a rail, and a credentials footer of education and certifications. Ships as
+  `cv.presets.SlateOrange` on the existing `CvDocument` model, porting the rendered
+  layout of a published standalone template; it is the first preset to use
+  `CvSkill.note`, which its language rows need to show a rating and name it on the same
+  line. The four fills that reach a paper edge — the slate band, the orange tile and the
+  two column dividers — are page backgrounds rather than section fills, because a fill
+  on a section is bounded by its content. Every horizontal pair inside a body column is
+  a table with fixed widths: a row cannot nest in a row cell and both columns are cells,
+  so mark and label, language and rating, role and dates, and the two credential columns
+  are all tables, and where a cell needs several stacked lines it holds a single-column
+  table of its own. Seven berths reach their sections by title, including a specialism
+  berth whose body is drawn and whose title is not. As on the presets before it, a link
+  is drawn as its own label with the address behind it — the one deliberate departure
+  from the ported sheet, measured at 2 100 of 2 173 720 pixels — and a role or a degree
+  becomes a link when its entry carries one. Guarded by a smoke test (including the
+  unknown-mark data error, an achievement with no mark falling back to the trophy, a
+  language with and without its wording, the monogram and the strip, the link targets,
+  an identity with no links, a document with nothing but an identity, and the refusal of
+  a CV taller than the sheet), an exact layout snapshot and a pixel-parity gate; the
+  examples showcase gains `cv-slate-orange-v2`.
+
+- **A clinical CV preset in five bands: `TealPulse`.** A one-page sheet whose mark is a
+  heart crossed by a flat pulse, beside a letter-spaced name over a contact strip
+  divided by short rules; then a two-column body carrying the competencies as dotted
+  lines beside the summary and the roles under badged headings; then a three-column
+  closing band for the degree, the certifications and the facts; and a tracked line
+  under a rule that ends in a small heart. Ships as `cv.presets.TealPulse` on the
+  existing `CvDocument` model with **no model change at all**, porting the rendered
+  layout of a published standalone template. **It sets its own page**, unlike every CV
+  preset before it: the design was drawn on a raster whose proportion is not A4's and
+  every length is a share of that grid, so a caller's page size and margin are
+  overwritten rather than followed. Six berths reach their sections by title, including
+  a tagline berth whose body is drawn and whose title is not — the title is how a
+  document names the berth. Both vertical rules are the left border of the column to
+  their right rather than lines placed beside them, so they are the grid: change a
+  weight and the rules follow. The main headings are laid over their own rule with the
+  paper knocked out behind every letter, because a row cannot nest in a row cell and the
+  rule's visible length still has to follow the words. **What happens past one page is
+  not what the other ported CV presets do:** the bands are stacked in the page flow, so
+  a CV with more roles than the design holds carries the closing band onto a second page
+  rather than losing anything, while the body row itself is atomic and a body taller
+  than a page raises `AtomicNodeTooLargeException`. As on `TerracottaRail`, a link is
+  drawn as its own label with the address behind it, which is the one deliberate
+  departure from the ported sheet — writing the URL out makes the strip's gaps depend on
+  how long a profile is called — measured at six of 121 nodes shifting sideways and
+  7 724 of 1 987 720 pixels, with nothing moving vertically. Guarded by a smoke test
+  (including the empty document, the page override, the tagline's title staying off the
+  sheet, the link targets, a linked role and degree, the run onto a second page and the
+  refusal of a body taller than one), an exact layout snapshot and a pixel-parity gate;
+  the examples showcase gains `cv-teal-pulse-v2`.
+
+- **An architect's two-column CV preset: `TerracottaRail`.** A one-page A4 sheet whose
+  narrow column carries a serif monogram over a terracotta rule, the contact channels
+  behind their marks, two bulleted lists and a block of closing facts, beside a wide
+  column carrying a letter-spaced masthead, the summary, the roles held on a ringed
+  rail, a projects grid and the degrees. Ships as `cv.presets.TerracottaRail` on the
+  existing `CvDocument` model with **no model change at all**, porting the rendered
+  layout of a published standalone template. Like `CharcoalGold` it leaves the page to
+  the caller. Eight berths reach their sections by title; the two bulleted lists are
+  skills without levels, because this design writes them as plain lines — one takes a
+  terracotta square and no dash under its heading, the other a disc and a dash, which
+  is how the sheet tells two lists of one-liners apart. Each fact and each project
+  takes the mark its entry names in `CvEntry.icon()` from this preset's own vocabulary,
+  every title it draws — a role, a project, a degree, a credential — is a link when its
+  entry carries one, and the monogram is drawn from
+  the name's own initials rather than a field of its own — a document states its name
+  once, and a monogram that could disagree with it would be a second place to keep
+  true. **A link in the contact block is drawn as its own label with the address behind
+  it**, which is where the preset departs from the sheet it ports: writing the URL out
+  makes that row as wide as whatever the reader's profile happens to be called — long
+  enough that the published design sets it smaller and nudged in, on an axis of its
+  own. Stating `Link("LinkedIn", "https://…")` puts the four rows on one axis at one
+  size for every document. The departure is exactly measured — two of 154 nodes narrow,
+  1 743 of 2 173 720 pixels change, and nothing moves vertically — and both baselines
+  were recorded with it. A link takes the mark of the network it points at, or a globe.
+  Like its siblings it holds one page: the body is a single atomic row, so a longer CV raises
+  `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
+  smoke test (including the unknown-mark data error, an entry with no mark, an identity
+  with no links, a document with nothing but an identity, the monogram, the link
+  targets on every kind of title, the four contact rows sharing one axis and the
+  one-page limit), an exact layout snapshot and a pixel-parity gate;
+  the examples showcase gains `cv-terracotta-rail-v2`.
+
+- **The first invoice preset that paginates what it ports: `LumaStudioInvoice`.** A
+  studio invoice built around a cream sidebar — the two-line monogram and the wordmark
+  on a terracotta block at its head, a tinted quarter-disc, an arch and a sprig running
+  down the rest of it — beside a billing sheet that reads sender, title and metadata,
+  the billed-to and shipped-to pair across a rule, the priced service lines with a VAT
+  column, the totals stack closing on a filled total-due band, and the notes and bank
+  details above a dark sign-off band. Ships as `invoice.presets.LumaStudioInvoice` on
+  the structured invoice model, porting the rendered layout of the published standalone
+  `luma-co-studio-invoice` template. Unlike the CV presets promoted before it this one
+  flows: the line-items table repeats its dark header on the next page, the totals stack
+  and each closing block stay whole, and the paper tint, the sidebar column and the dark
+  foot band are page backgrounds, so every page carries the same frame and the folio
+  always has a dark ground. **The sign-off carries its own strip, which is where the
+  preset deliberately departs from the sheet it ports.** On the published template the
+  words rely on that background band, which is pinned to the paper's edge — right on a
+  one-page invoice, and white-on-cream in the middle of the last page of a longer one,
+  where the flow ends well above the paper's foot. Drawing the strip with the words
+  fixes it wherever they land; the cost is 7 440 of 2 173 720 pixels on the reference
+  sheet, where the strip starts three points above the background band it sits on, and
+  one extra layout node. It is flow content only because footer chrome carries text
+  today — one size, one colour, no glyph, where this band needs two faces and a disc —
+  so once a footer zone can hold a node the sign-off belongs in one and the strip goes
+  away. Its geometry is not a set of round numbers: the design was drawn
+  on a pixel grid, so the preset carries that grid as page ratios and states every
+  vertical gap as the white the drawing shows, subtracting the blank a line box already
+  carries — per family, because the three faces it sets fill different line boxes at the
+  same size. Letter-spaced runs are written letter by letter with an invisible inline
+  rectangle between the pairs, since a text style carries no tracking; the six spacings
+  are frozen constants rather than a measurement, because measuring at compose time
+  would tie the preset to the font artifact's resource layout. Amounts take their mark
+  from `StructuredInvoiceData.currencyCode()` — the code is the authority, so the sheet
+  cannot contradict itself — and the contact channels carry `tel:`, `mailto:` and
+  `https:` targets derived from their values, with a parenthesised trunk prefix dropped
+  from the dial target the way a caller dialling from abroad drops it. Guarded by a
+  smoke test (including the empty document, an unknown and a blank currency code, a
+  supplier with one registration and with none, the link targets, the repeated header
+  and folio on a continuation page, and the sign-off landing on its own ground), an
+  exact layout snapshot over both a one-page and a three-page invoice, and a
+  pixel-parity gate; the examples showcase gains `invoice-luma-studio-v2`.
+
+- **`SerifHeadline` links its titles and lets its bands breathe.** Every title the
+  preset draws — a role, a project, a degree, an achievement — is now a link when its
+  entry carries one. And a band column keeps a gutter at its right edge, so its text
+  stops short of the hairline between columns instead of running into it: **the first
+  place a promoted preset deliberately departs from the sheet it ports**, where a line
+  that happens to fill its column touches the rule. The departure is exactly measured —
+  six of 235 nodes narrow, 8 191 of 2 173 720 pixels change, and nothing else moves —
+  and both baselines were re-recorded with it. The class documentation names the two
+  colours the packaged marks come in, so a document chooses one deliberately rather
+  than mixing navy and gold in a row by accident.
+
+- **A photographic CV preset: `CharcoalGold`.** A one-page sheet in two columns: a
+  charcoal sidebar carrying a ringed photograph, the contact channels behind their
+  marks, rated skills, languages and degrees, beside a paper column carrying a two-tone
+  name — the given name in ink, the family name larger and in gold — the summary, the
+  roles held on a dated rail, a pair of credential columns divided by a hairline, and a
+  closing strip of tools. Ships as `cv.presets.CharcoalGold` on the existing
+  `CvDocument` model with **no model change at all**, porting the rendered layout of the
+  published standalone `charcoal-gold-cv` template. Unlike its ported siblings it leaves
+  the page size to the caller: the design is drawn on A4 and its geometry follows the
+  page's own width, so a different page rescales rather than breaks. Seven berths reach
+  their sections by title; credentials take the mark each entry names in
+  `CvEntry.icon()` from this preset's own set, every title it draws is a link when the
+  entry carries one, and a skill the document leaves unlevelled draws no rating rather
+  than five empty dots. Guarded by a smoke test (including the unknown-mark data error,
+  the missing portrait, the unlevelled skill, the link targets and the one-page limit),
+  an exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-charcoal-gold-v2`.
+
+- **A two-column editorial CV preset: `SerifHeadline`.** A one-page A4 sheet under a
+  Volkhov masthead — the name in the display serif over its role and a short gold rule,
+  the contact channels stacked opposite — then a two-column body: the roles held on a
+  timeline rail and the projects as marked cards on the left, the degrees and grouped
+  skill meters across a hairline divider on the right, closing with full-width bands of
+  certifications and achievements. Ships as `cv.presets.SerifHeadline` on the existing
+  `CvDocument` model, porting the rendered layout of the published standalone
+  `serif-headline-cv` template. Its geometry is not a set of round numbers: the design
+  was drawn on a 1024-pixel grid, so the preset carries that grid and scales it onto A4
+  — heights by an extra factor — and states every vertical gap as the white the drawing
+  shows, subtracting the blank a line box already carries above and below its own type.
+  Eight berths reach their sections by title, the projects and achievements take the
+  mark each entry names in `CvEntry.icon()` from this preset's own vocabulary, and the
+  employer's city and the campus come from `CvEntry.place()`. Like its siblings it owns
+  its page and holds one: the body is a single atomic row, so a longer CV raises
+  `AtomicNodeTooLargeException` rather than flowing or dropping entries. Guarded by a
+  smoke test (including the unknown-mark data error, an entry with no mark, an employer
+  with no place, the overlapping soft-skills berth, the link targets and the one-page
+  limit), an exact layout snapshot and a pixel-parity gate; the examples showcase gains
+  `cv-serif-headline-v2`.
+
+- **A portrait CV preset: `NavySidebar`.** A one-page A4 CV in two columns on Lato —
+  a navy plate carrying a ringed portrait, the contact channels behind their marks, the
+  degrees, the skills and the languages, beside a white column of the name, the summary,
+  the roles held on a timeline rail with a filled marker at each one, and the
+  achievements and certifications behind badged headings. Ships as
+  `cv.presets.NavySidebar` on the existing `CvDocument` model, porting the rendered
+  layout of the published standalone `navy-sidebar-cv` template. Like its sibling it
+  owns its page and holds one: the two columns are a single atomic row, so a CV longer
+  than the sheet raises `AtomicNodeTooLargeException` rather than flowing or dropping
+  entries. Sections reach their berth by title rather than by `Slot`; languages are a
+  `RowsSection` because this design writes the proficiency out — "Native", "Advanced" —
+  which a levelled skill could not carry back. The photograph comes from the new
+  `CvIdentity.portrait()`; an identity without one draws the ring around an empty navy
+  disc; its education entries read the `place` field for the campus line. The phone,
+  the email and each link are reachable from the PDF, with the
+  `tel:` and `mailto:` targets built from the values — the published sheet drew its
+  channels as plain text, and this is the one place the port deliberately improves on
+  it, at no cost to the render: annotations move no pixel and no layout node, which
+  both gates confirm without re-blessing. Guarded by a smoke test (including the link
+  targets, the missing portrait, the capitals this design imposes, the one-page limit
+  and the fields it has no place for), an exact layout snapshot and a pixel-parity
+  gate; the examples showcase gains `cv-navy-sidebar-v2`.
+
+- **The first CV preset that owns its page: `ProfessionalSidebar`.** A one-page CV
+  in two columns on the Barlow&nbsp;Condensed / Lato pair — a navy monogram plate over a
+  pale sidebar carrying the contact channels, meter-bar skills, an education rail with
+  dot markers and five-dot language ratings, beside a white column of the tracked name,
+  the profile, the roles held with bulleted highlights, the projects and the references
+  note. Ships as `cv.presets.ProfessionalSidebar` on the existing `CvDocument` model —
+  no model change was needed — porting the rendered layout of the published standalone
+  `professional-sidebar-cv` template. The preset owns its page: a 491.6&nbsp;x&nbsp;737.28pt
+  sheet with no margin, the page fill and the pale sidebar painted as page backgrounds. The
+  sheet holds one page — its two columns are a single atomic row, so a CV longer than the
+  sheet raises `AtomicNodeTooLargeException` rather than flowing onto a second page or
+  silently dropping entries the way the capped sidebar presets do. The class documentation
+  says so, points at `TimelineMinimal` for a preset that splits its own columns, and
+  `docs/templates/v2-layered/using-templates.md` carries it beside the capped presets.
+  Sections reach their berth by title rather than by `Slot`,
+  because the columns are fixed; skills and languages are both `SkillsSection`s drawn
+  differently, and a level the document omits draws the name alone. The contact channels
+  come off `CvIdentity`, with `tel:` and `mailto:` targets built from the values and the
+  packaged marks chosen per channel. Guarded by a smoke test (including the identity-only
+  document, the unlevelled skill, the PDF link targets, the one-page limit and the fields
+  this design has no place for), an exact layout snapshot and a pixel-parity gate; the
+  examples showcase gains `cv-professional-sidebar-v2`.
+
+- **A second structured proposal preset: `EditorialProposal`.** The same document the
+  `NorthlineProposal` preset renders, in a different hand: an orange accent, section
+  headings set in the display serif over short accent rules instead of in the body sans
+  inside icon badges, a brand mark drawn from vector paths instead of a monogram letter,
+  an untitled fact card, a scope ordinal set in plain accent text, and a hairline page
+  foot. Moving a document between the two presets is a one-line change plus two data
+  checks — the badge and goal icon tokens are preset-scoped (the four `fact-*` tokens
+  are not), and headings are drawn as authored, so the sibling's tracked capitals stay
+  capitals here. Ships as
+  `proposal.presets.EditorialProposal` on the structured proposal model, porting the
+  rendered layout of the published standalone `northline-proposal-orange` template,
+  with its SVG icon set packaged in the artifact. Guarded by a smoke test (including
+  the empty document, both data contracts, and the proof that one document renders
+  through both proposal presets), an exact two-page layout snapshot, and a
+  pixel-parity gate; the examples showcase gains `proposal-editorial-v2`.
+
+- **A professional-services invoice preset: `ConsultingInvoice`.** A corporate masthead
+  — brand lockup and contact channels beside the document title and its metadata —
+  over priced service lines that carry a service period and a unit per line, closing
+  with an emphasized total band and the bank details beside the notes and the due-by
+  chip. Ships as `invoice.presets.ConsultingInvoice` consuming the new structured
+  invoice model, with its contact marks, bank badge and calendar packaged in the
+  templates artifact, porting the rendered layout of the published standalone
+  `northpoint-consulting-invoice` template. Long invoices flow: the line-items table
+  repeats its header and the totals stack stays whole. Guarded by a smoke test
+  (including the empty document, the wordmark fallback, the rendered figures and the
+  repeated header), exact layout snapshots for the single page and the overflow, and a
+  pixel-parity gate; the examples showcase gains `invoice-consulting-v2`.
+
+- **A second invoice preset: `ClassicInvoice`.** The letterhead-style invoice — a header
+  band with the company name and a 28pt INVOICE title, a TOTAL DUE hero strip,
+  BILL&nbsp;TO / FROM party columns, and a dedicated Summary table composed after the
+  line items (subtotal / tax / TOTAL, the last row emphasized) — now ships as
+  `invoice.presets.ClassicInvoice` on the layered stack, with the same
+  `create()` / `create(BrandTheme)` contract as `ModernInvoice`, porting the rendered
+  layout of the published standalone `invoice-classic` template. Guarded by a smoke
+  test, exact layout snapshots (the canonical single page plus a forty-line-item
+  overflow that freezes the two-page table continuation), and the invoice pixel-parity
+  gate; the examples showcase gains `invoice-classic-v2`.
+
+- **The first structured proposal preset: `NorthlineProposal`.** A two-page
+  teal-and-navy business proposal on the Spectral/Lato pair — brand header with logo
+  mark and wordmark, three stacked title lines on the reference's own pitch, the
+  executive summary beside an at-a-glance fact card, icon goal cells, a numbered
+  scope list, deliverable columns, the phase grid, an investment table with subtotal /
+  optional / total row styling, and a signing card — with the navy footer band, the
+  teal page-number block and the `01`/`02` page numbers as page chrome rather than
+  flow content. Ships as `proposal.presets.NorthlineProposal` consuming the new
+  structured proposal model, with its icon set packaged in the templates artifact,
+  porting the rendered layout of the published standalone `northline-proposal`
+  template. Guarded by a smoke test (including the empty document and the
+  phase-grid header-count contract), an exact two-page layout snapshot, and a
+  pixel-parity gate; the examples showcase gains `proposal-northline-v2`.
+
+- **A one-page sales proposal preset: `IndigoProposal`.** A wordmark against the
+  document's label over a full-width rule, the addressed organisation and the person to
+  reply to beside a four-line headline and a row of marked discs, a tinted band that
+  bleeds to both paper edges carrying a paragraph about the issuer over four marked
+  tiles, a numbered plan beside the priced rows and their total card, and a foot with the
+  issuer's identity and its channels. Ships as `proposal.presets.IndigoProposal` on the
+  structured proposal model, with its icon set packaged in the templates artifact,
+  porting the rendered layout of a published standalone template — and this one is exact:
+  rendered against the frozen original with the same data the text layers are
+  **identical, all 262 words in the same place to 0.000 pt**, and the head, the lower
+  half, the closing rule and the foot's own lines carry **no differing pixel at all**.
+  <br><br>
+  **Two of the design's own brand assets are deliberately not ported.** The band's right
+  is a product photograph carrying a payment network's mark, and the foot closes on the
+  issuer's logotype. Those belong to their owners, and the templates artifact does not
+  redistribute other companies' marks. Both places are kept rather than closed up — the
+  band keeps the height and the column that give the copy beside it the measure it was
+  solved against, and the foot keeps the column that sets where the name begins — and
+  what fills them is the document's: the foot sets whatever monogram the document names,
+  and the band's column stays flat tint. This is stated on the preset rather than left to
+  be noticed.
+  <br><br>
+  The sheet is one page by design and not by accident. Every block's position is a cap
+  top in one vertical map and a single cursor walks the page once, turning each cap top
+  into the margin that puts it there — so a block moves by changing one number rather
+  than by re-deriving the gaps around it. Four blocks state how many lines they wrap to,
+  because the engine cannot be asked at compose time; content heavier than the design's
+  own pushes what follows down and can carry the foot onto a second page, which the
+  preset says rather than capping what it is given.
+  <br><br>
+  **No block is ever drawn over another.** A stated position and heavier-than-designed
+  content produce a negative margin, which the engine honours by *raising* the block —
+  so a plan of six or seven steps still fits the page and prints the closing rule
+  through its last step. Every margin the cursor returns is therefore floored at
+  nothing, and the counts either side of that window are gates: five steps is the
+  design's own, six and seven are where an unclamped margin overlaps silently, and
+  fourteen is where the foot has to take a second page.
+  <br><br>
+  Sizes are solved from ink rather than from cap height: the design's own face is not
+  bundled, the substitute sets 10–20% wide at bold, and matching a cap height alone put
+  every bold block over its measure. A foot's confidentiality line, when a document
+  carries one, closes the channels line rather than opening one of its own — the
+  design's last line already ends against the bottom margin, so a fourth would carry the
+  whole foot onto a second page — and it is set as prose, not as a channel: a notice is
+  a sentence, and a sentence is not somewhere a reader can be sent.
+  <br><br>
+  The two packaged mark sets are not interchangeable, and the preset says so by
+  refusing: the header's marks are drawn in the accent for a pale disc and the band's in
+  white for a near-black tile, so a band token named on a header disc would render as
+  nothing at all. It is a data error reported by name instead. Guarded by a smoke test
+  (including the empty document, a tile that names no mark, both unknown-token cases,
+  the notice, the overlap window and every contact being followable), an exact layout
+  snapshot, and a pixel baseline — all three fed by one fixture.
+
+### Tests
+
+- **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**
+  `CodeQlScopeGuardTest` asks whether every module a release publishes is inside the
+  security scan, and it read the answer's left-hand side out of the publish workflows by
+  matching `-f <module>/pom.xml` on a line mentioning `deploy`. A deploy written any
+  other way — `-pl :graph-compose-fonts`, or the same command wrapped across two lines —
+  simply left that module out of the inventory, and a shorter inventory is an easier
+  comparison rather than a failing one. Verified by mutation: with `publish-fonts.yml`
+  switched to the `-pl` form and `graph-compose-fonts` removed from the scan's module
+  list, the suite stayed green while a module published to Maven Central went unscanned.
+  Two checks now key on the absence of a positive signal instead — a publish workflow
+  that contributes no module to the inventory fails, and `publish.yml`'s deploy steps
+  are held against the `order` line it validates its own resume against, which is a
+  second statement of the train that nothing derives from the first. Both go red under
+  the mutation that used to pass.
+
+- **The sidebar CV samples are held to the width of the column they are drawn in.**
+  A contact channel in `ProfessionalSidebar` and `NavySidebar` is one paragraph — the
+  mark and the value share a line — so a value wider than the sidebar's text column
+  wraps and leaves the mark alone on the first line. The promotion gates could not see
+  it: they measure the published template's own fixture, whose addresses fit, while the
+  example sample data is written for the repository and can outgrow the column with
+  every test still green. It shipped that way once, spotted in the rendered preview
+  rather than by a build. `SidebarContactRowsFitTest` now measures the shape of the row
+  instead of the length of the string — a single-line channel is as tall as its mark,
+  a wrapped one close to twice that — and the two sample addresses were shortened to
+  fit.
+
 ## v2.3.0 — 2026-08-31
 
 ### Public API

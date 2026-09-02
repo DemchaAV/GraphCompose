@@ -235,7 +235,8 @@ public final class EngineeringResume {
                 }
                 List<ContactPart> parts = new ArrayList<>();
                 addPart(parts, identity.contact().address(), null);
-                addPart(parts, identity.contact().phone(), null);
+                addPart(parts, identity.contact().phone(),
+                        ContactUri.telLink(identity.contact().phone()));
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
                     addPart(parts, email,

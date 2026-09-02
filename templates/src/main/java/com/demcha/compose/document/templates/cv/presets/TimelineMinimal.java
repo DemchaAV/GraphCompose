@@ -432,7 +432,8 @@ public final class TimelineMinimal {
                 addContactItem(items, "LOC", "location.svg",
                         identity.contact().address(), null);
                 addContactItem(items, "TEL", "phone.svg",
-                        identity.contact().phone(), null);
+                        identity.contact().phone(),
+                        ContactUri.telLink(identity.contact().phone()));
                 String email = identity.contact().email();
                 if (!email.isBlank()) {
                     addContactItem(items, "@", "email.svg", email,

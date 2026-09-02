@@ -1,0 +1,4637 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 595.276,
+    "innerHeight" : 841.89,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "TerracottaRailCv[0]",
+    "entityName" : "TerracottaRailCv",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 0.0,
+    "computedY" : 47.306,
+    "placementX" : 0.0,
+    "placementY" : 47.306,
+    "placementWidth" : 595.276,
+    "placementHeight" : 794.584,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 794.584,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]",
+    "entityName" : "Body",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 0.0,
+    "computedY" : 47.306,
+    "placementX" : 0.0,
+    "placementY" : 47.306,
+    "placementWidth" : 595.276,
+    "placementHeight" : 794.584,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 794.584,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "entityName" : "Sidebar",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 100.839,
+    "placementX" : 0.0,
+    "placementY" : 100.839,
+    "placementWidth" : 183.345,
+    "placementHeight" : 741.051,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 183.345,
+    "contentHeight" : 741.051,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 20.0,
+      "right" : 11.4,
+      "bottom" : 5.0,
+      "left" : 25.4
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Monogram[0]",
+    "entityName" : "Monogram",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 774.19,
+    "placementX" : 25.4,
+    "placementY" : 774.19,
+    "placementWidth" : 48.78,
+    "placementHeight" : 47.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 48.78,
+    "contentHeight" : 47.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/MonogramRule[1]",
+    "entityName" : "MonogramRule",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 764.79,
+    "placementX" : 25.4,
+    "placementY" : 764.79,
+    "placementWidth" : 48.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 48.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 10.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]",
+    "entityName" : "Contact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 684.99,
+    "placementX" : 25.4,
+    "placementY" : 684.99,
+    "placementWidth" : 113.88,
+    "placementHeight" : 69.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 113.88,
+    "contentHeight" : 69.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]/Contact_0[0]",
+    "entityName" : "Contact_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 741.84,
+    "placementX" : 25.4,
+    "placementY" : 741.84,
+    "placementWidth" : 113.88,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 113.88,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]/Contact_1[1]",
+    "entityName" : "Contact_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 724.39,
+    "placementX" : 25.4,
+    "placementY" : 724.39,
+    "placementWidth" : 85.646,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 85.646,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]/Contact_2[2]",
+    "entityName" : "Contact_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 706.94,
+    "placementX" : 25.4,
+    "placementY" : 706.94,
+    "placementWidth" : 106.253,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.253,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]/Contact_3[3]",
+    "entityName" : "Contact_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Contact[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 689.49,
+    "placementX" : 25.4,
+    "placementY" : 689.49,
+    "placementWidth" : 49.355,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 49.355,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 4.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Divider_AfterContact[3]",
+    "entityName" : "Divider_AfterContact",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 675.99,
+    "placementX" : 25.4,
+    "placementY" : 675.99,
+    "placementWidth" : 146.545,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "entityName" : "CoreCompetencies",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 457.063,
+    "placementX" : 25.4,
+    "placementY" : 457.063,
+    "placementWidth" : 106.829,
+    "placementHeight" : 210.926,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.829,
+    "contentHeight" : 210.926,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Heading_CORECOMPETENCIES[0]",
+    "entityName" : "Heading_CORECOMPETENCIES",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 657.463,
+    "placementX" : 25.4,
+    "placementY" : 657.463,
+    "placementWidth" : 101.553,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 101.553,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_0[1]",
+    "entityName" : "Competency_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 635.513,
+    "placementX" : 25.4,
+    "placementY" : 635.513,
+    "placementWidth" : 87.369,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 87.369,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_1[2]",
+    "entityName" : "Competency_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 619.563,
+    "placementX" : 25.4,
+    "placementY" : 619.563,
+    "placementWidth" : 95.358,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 95.358,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_2[3]",
+    "entityName" : "Competency_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 603.613,
+    "placementX" : 25.4,
+    "placementY" : 603.613,
+    "placementWidth" : 91.068,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.068,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_3[4]",
+    "entityName" : "Competency_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 587.663,
+    "placementX" : 25.4,
+    "placementY" : 587.663,
+    "placementWidth" : 83.888,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.888,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_4[5]",
+    "entityName" : "Competency_4",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 571.713,
+    "placementX" : 25.4,
+    "placementY" : 571.713,
+    "placementWidth" : 30.716,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 30.716,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_5[6]",
+    "entityName" : "Competency_5",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 555.763,
+    "placementX" : 25.4,
+    "placementY" : 555.763,
+    "placementWidth" : 47.546,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.546,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_6[7]",
+    "entityName" : "Competency_6",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 7,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 539.813,
+    "placementX" : 25.4,
+    "placementY" : 539.813,
+    "placementWidth" : 77.803,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.803,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_7[8]",
+    "entityName" : "Competency_7",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 8,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 523.863,
+    "placementX" : 25.4,
+    "placementY" : 523.863,
+    "placementWidth" : 90.141,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.141,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_8[9]",
+    "entityName" : "Competency_8",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 9,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 507.913,
+    "placementX" : 25.4,
+    "placementY" : 507.913,
+    "placementWidth" : 71.271,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 71.271,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_9[10]",
+    "entityName" : "Competency_9",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 10,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 491.963,
+    "placementX" : 25.4,
+    "placementY" : 491.963,
+    "placementWidth" : 106.829,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.829,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_10[11]",
+    "entityName" : "Competency_10",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 11,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 476.013,
+    "placementX" : 25.4,
+    "placementY" : 476.013,
+    "placementWidth" : 81.579,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 81.579,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]/Competency_11[12]",
+    "entityName" : "Competency_11",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/CoreCompetencies[4]",
+    "childIndex" : 12,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 460.063,
+    "placementX" : 25.4,
+    "placementY" : 460.063,
+    "placementWidth" : 86.913,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.913,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Divider_AfterCompetencies[5]",
+    "entityName" : "Divider_AfterCompetencies",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 448.063,
+    "placementX" : 25.4,
+    "placementY" : 448.063,
+    "placementWidth" : 146.545,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "entityName" : "Software",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 307.487,
+    "placementX" : 25.4,
+    "placementY" : 307.487,
+    "placementWidth" : 72.249,
+    "placementHeight" : 132.576,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 72.249,
+    "contentHeight" : 132.576,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Heading_SOFTWARE[0]",
+    "entityName" : "Heading_SOFTWARE",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 429.537,
+    "placementX" : 25.4,
+    "placementY" : 429.537,
+    "placementWidth" : 52.0,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 52.0,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/AccentLine_SOFTWARE[1]",
+    "entityName" : "AccentLine_SOFTWARE",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 424.637,
+    "placementX" : 25.4,
+    "placementY" : 424.637,
+    "placementWidth" : 20.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_0[2]",
+    "entityName" : "Software_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 406.187,
+    "placementX" : 25.4,
+    "placementY" : 406.187,
+    "placementWidth" : 29.916,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 29.916,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_1[3]",
+    "entityName" : "Software_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 390.237,
+    "placementX" : 25.4,
+    "placementY" : 390.237,
+    "placementWidth" : 46.746,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 46.746,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_2[4]",
+    "entityName" : "Software_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 374.287,
+    "placementX" : 25.4,
+    "placementY" : 374.287,
+    "placementWidth" : 32.275,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 32.275,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_3[5]",
+    "entityName" : "Software_3",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 358.337,
+    "placementX" : 25.4,
+    "placementY" : 358.337,
+    "placementWidth" : 46.78,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 46.78,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_4[6]",
+    "entityName" : "Software_4",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 342.387,
+    "placementX" : 25.4,
+    "placementY" : 342.387,
+    "placementWidth" : 69.999,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 69.999,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_5[7]",
+    "entityName" : "Software_5",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 7,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 326.437,
+    "placementX" : 25.4,
+    "placementY" : 326.437,
+    "placementWidth" : 50.994,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 50.994,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]/Software_6[8]",
+    "entityName" : "Software_6",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Software[6]",
+    "childIndex" : 8,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 310.487,
+    "placementX" : 25.4,
+    "placementY" : 310.487,
+    "placementWidth" : 72.249,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 72.249,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Divider_AfterSoftware[7]",
+    "entityName" : "Divider_AfterSoftware",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 298.487,
+    "placementX" : 25.4,
+    "placementY" : 298.487,
+    "placementWidth" : 146.545,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]",
+    "entityName" : "Certifications",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 237.661,
+    "placementX" : 25.4,
+    "placementY" : 237.661,
+    "placementWidth" : 105.102,
+    "placementHeight" : 52.826,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.102,
+    "contentHeight" : 52.826,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]/Heading_CERTIFICATIONS[0]",
+    "entityName" : "Heading_CERTIFICATIONS",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 279.961,
+    "placementX" : 25.4,
+    "placementY" : 279.961,
+    "placementWidth" : 77.553,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.553,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]/AccentLine_CERTIFICATIONS[1]",
+    "entityName" : "AccentLine_CERTIFICATIONS",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 275.061,
+    "placementX" : 25.4,
+    "placementY" : 275.061,
+    "placementWidth" : 20.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 20.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]/Certification_0[2]",
+    "entityName" : "Certification_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 256.611,
+    "placementX" : 25.4,
+    "placementY" : 256.611,
+    "placementWidth" : 105.102,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 105.102,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]/Certification_1[3]",
+    "entityName" : "Certification_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Certifications[8]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 240.661,
+    "placementX" : 25.4,
+    "placementY" : 240.661,
+    "placementWidth" : 102.658,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 102.658,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/Divider_AfterCertifications[9]",
+    "entityName" : "Divider_AfterCertifications",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 9,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 228.661,
+    "placementX" : 25.4,
+    "placementY" : 228.661,
+    "placementWidth" : 146.545,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 8.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]",
+    "entityName" : "AdditionalInformation",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]",
+    "childIndex" : 10,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 25.4,
+    "computedY" : 105.839,
+    "placementX" : 25.4,
+    "placementY" : 105.839,
+    "placementWidth" : 146.545,
+    "placementHeight" : 114.822,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 114.822,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/Heading_ADDITIONALINFORMATION[0]",
+    "entityName" : "Heading_ADDITIONALINFORMATION",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 210.134,
+    "placementX" : 25.4,
+    "placementY" : 210.134,
+    "placementWidth" : 131.334,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 131.334,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]",
+    "entityName" : "AddInfo_0Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 169.293,
+    "placementX" : 25.4,
+    "placementY" : 169.293,
+    "placementWidth" : 146.545,
+    "placementHeight" : 31.841,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 31.841,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]",
+    "entityName" : "AddInfo_0Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 25.4,
+    "computedY" : 169.293,
+    "placementX" : 25.4,
+    "placementY" : 169.293,
+    "placementWidth" : 146.545,
+    "placementHeight" : 31.841,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 31.841,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]",
+    "entityName" : "AddInfo_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 25.4,
+    "computedY" : 169.293,
+    "placementX" : 25.4,
+    "placementY" : 169.293,
+    "placementWidth" : 146.545,
+    "placementHeight" : 31.841,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 31.841,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Icon_0[0]",
+    "entityName" : "Icon_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 25.4,
+    "computedY" : 185.134,
+    "placementX" : 25.4,
+    "placementY" : 185.134,
+    "placementWidth" : 16.0,
+    "placementHeight" : 16.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 16.0,
+    "contentHeight" : 16.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]",
+    "entityName" : "Text_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 51.778,
+    "computedY" : 169.293,
+    "placementX" : 51.778,
+    "placementY" : 169.293,
+    "placementWidth" : 90.753,
+    "placementHeight" : 31.841,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.753,
+    "contentHeight" : 31.841,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]/Label_0[0]",
+    "entityName" : "Label_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 191.021,
+    "placementX" : 51.778,
+    "placementY" : 191.021,
+    "placementWidth" : 41.735,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 41.735,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]/Val_0[1]",
+    "entityName" : "Val_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 180.407,
+    "placementX" : 51.778,
+    "placementY" : 180.407,
+    "placementWidth" : 59.367,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 59.367,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]/Val_0[2]",
+    "entityName" : "Val_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_0Stack[1]/AddInfo_0Layer[0]/AddInfo_0[0]/Text_0[1]",
+    "childIndex" : 2,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 169.793,
+    "placementX" : 51.778,
+    "placementY" : 169.793,
+    "placementWidth" : 90.753,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.753,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]",
+    "entityName" : "AddInfo_1Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 141.066,
+    "placementX" : 25.4,
+    "placementY" : 141.066,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]",
+    "entityName" : "AddInfo_1Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 25.4,
+    "computedY" : 141.066,
+    "placementX" : 25.4,
+    "placementY" : 141.066,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]",
+    "entityName" : "AddInfo_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 25.4,
+    "computedY" : 141.066,
+    "placementX" : 25.4,
+    "placementY" : 141.066,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Icon_1[0]",
+    "entityName" : "Icon_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 25.4,
+    "computedY" : 146.293,
+    "placementX" : 25.4,
+    "placementY" : 146.293,
+    "placementWidth" : 16.0,
+    "placementHeight" : 16.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 16.0,
+    "contentHeight" : 16.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Text_1[1]",
+    "entityName" : "Text_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 51.778,
+    "computedY" : 141.066,
+    "placementX" : 51.778,
+    "placementY" : 141.066,
+    "placementWidth" : 60.412,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.412,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Text_1[1]/Label_1[0]",
+    "entityName" : "Label_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Text_1[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 152.18,
+    "placementX" : 51.778,
+    "placementY" : 152.18,
+    "placementWidth" : 55.507,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 55.507,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Text_1[1]/Val_1[1]",
+    "entityName" : "Val_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_1Stack[2]/AddInfo_1Layer[0]/AddInfo_1[0]/Text_1[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 141.566,
+    "placementX" : 51.778,
+    "placementY" : 141.566,
+    "placementWidth" : 60.412,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.412,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]",
+    "entityName" : "AddInfo_2Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 25.4,
+    "computedY" : 112.839,
+    "placementX" : 25.4,
+    "placementY" : 112.839,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 7.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]",
+    "entityName" : "AddInfo_2Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 25.4,
+    "computedY" : 112.839,
+    "placementX" : 25.4,
+    "placementY" : 112.839,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]",
+    "entityName" : "AddInfo_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 25.4,
+    "computedY" : 112.839,
+    "placementX" : 25.4,
+    "placementY" : 112.839,
+    "placementWidth" : 146.545,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.545,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Icon_2[0]",
+    "entityName" : "Icon_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 25.4,
+    "computedY" : 118.066,
+    "placementX" : 25.4,
+    "placementY" : 118.066,
+    "placementWidth" : 16.0,
+    "placementHeight" : 16.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 16.0,
+    "contentHeight" : 16.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Text_2[1]",
+    "entityName" : "Text_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 51.778,
+    "computedY" : 112.839,
+    "placementX" : 51.778,
+    "placementY" : 112.839,
+    "placementWidth" : 56.358,
+    "placementHeight" : 21.227,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.358,
+    "contentHeight" : 21.227,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Text_2[1]/Label_2[0]",
+    "entityName" : "Label_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Text_2[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 123.953,
+    "placementX" : 51.778,
+    "placementY" : 123.953,
+    "placementWidth" : 44.036,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 44.036,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Text_2[1]/Val_2[1]",
+    "entityName" : "Val_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/Sidebar[0]/AdditionalInformation[10]/AddInfo_2Stack[3]/AddInfo_2Layer[0]/AddInfo_2[0]/Text_2[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 51.778,
+    "computedY" : 113.339,
+    "placementX" : 51.778,
+    "placementY" : 113.339,
+    "placementWidth" : 56.358,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 56.358,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "entityName" : "MainColumn",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 183.345,
+    "computedY" : 47.306,
+    "placementX" : 183.345,
+    "placementY" : 47.306,
+    "placementWidth" : 411.931,
+    "placementHeight" : 794.584,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 411.931,
+    "contentHeight" : 794.584,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 20.0,
+      "right" : 24.0,
+      "bottom" : 5.0,
+      "left" : 22.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Masthead[0]",
+    "entityName" : "Masthead",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 759.69,
+    "placementX" : 205.345,
+    "placementY" : 759.69,
+    "placementWidth" : 321.748,
+    "placementHeight" : 62.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.748,
+    "contentHeight" : 62.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Masthead[0]/FullName[0]",
+    "entityName" : "FullName",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Masthead[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 788.29,
+    "placementX" : 205.345,
+    "placementY" : 788.29,
+    "placementWidth" : 321.748,
+    "placementHeight" : 33.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.748,
+    "contentHeight" : 33.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 8.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Masthead[0]/JobTitle[1]",
+    "entityName" : "JobTitle",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Masthead[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 764.69,
+    "placementX" : 205.345,
+    "placementY" : 764.69,
+    "placementWidth" : 169.468,
+    "placementHeight" : 15.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 169.468,
+    "contentHeight" : 15.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Divider_AfterMasthead[1]",
+    "entityName" : "Divider_AfterMasthead",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 754.69,
+    "placementX" : 205.345,
+    "placementY" : 754.69,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "entityName" : "Summary",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 654.443,
+    "placementX" : 205.345,
+    "placementY" : 654.443,
+    "placementWidth" : 346.356,
+    "placementHeight" : 94.246,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 346.356,
+    "contentHeight" : 94.246,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]/Heading_PROFESSIONALSUMMARY[0]",
+    "entityName" : "Heading_PROFESSIONALSUMMARY",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 738.163,
+    "placementX" : 205.345,
+    "placementY" : 738.163,
+    "placementWidth" : 133.212,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 133.212,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]/AccentLine_PROFESSIONALSUMMARY[1]",
+    "entityName" : "AccentLine_PROFESSIONALSUMMARY",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 733.263,
+    "placementX" : 205.345,
+    "placementY" : 733.263,
+    "placementWidth" : 22.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]/SummaryPara_0[2]",
+    "entityName" : "SummaryPara_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 705.823,
+    "placementX" : 205.345,
+    "placementY" : 705.823,
+    "placementWidth" : 323.91,
+    "placementHeight" : 21.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 323.91,
+    "contentHeight" : 21.94,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]/SummaryPara_1[3]",
+    "entityName" : "SummaryPara_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 681.383,
+    "placementX" : 205.345,
+    "placementY" : 681.383,
+    "placementWidth" : 346.356,
+    "placementHeight" : 21.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 346.356,
+    "contentHeight" : 21.94,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]/SummaryPara_2[4]",
+    "entityName" : "SummaryPara_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Summary[2]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 656.943,
+    "placementX" : 205.345,
+    "placementY" : 656.943,
+    "placementWidth" : 342.787,
+    "placementHeight" : 21.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 342.787,
+    "contentHeight" : 21.94,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Divider_AfterSummary[3]",
+    "entityName" : "Divider_AfterSummary",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 647.443,
+    "placementX" : 205.345,
+    "placementY" : 647.443,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]",
+    "entityName" : "Experience",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 303.313,
+    "placementX" : 205.345,
+    "placementY" : 303.313,
+    "placementWidth" : 365.921,
+    "placementHeight" : 337.631,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.921,
+    "contentHeight" : 337.631,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/Heading_PROFESSIONALEXPERIENCE[0]",
+    "entityName" : "Heading_PROFESSIONALEXPERIENCE",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 630.417,
+    "placementX" : 205.345,
+    "placementY" : 630.417,
+    "placementWidth" : 143.475,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 143.475,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]",
+    "entityName" : "ExperienceEntry_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 497.072,
+    "placementX" : 205.345,
+    "placementY" : 497.072,
+    "placementWidth" : 365.921,
+    "placementHeight" : 124.345,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.921,
+    "contentHeight" : 124.345,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/RoleLine_0[0]",
+    "entityName" : "RoleLine_0",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 609.652,
+    "placementX" : 218.345,
+    "placementY" : 609.652,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/RoleLine_0[0]/RoleTable_0[0]",
+    "entityName" : "RoleTable_0",
+    "entityKind" : "TableNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/RoleLine_0[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 218.345,
+    "computedY" : 609.652,
+    "placementX" : 218.345,
+    "placementY" : 609.652,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/RoleLine_0[0]/RoleMarker_0[1]",
+    "entityName" : "RoleMarker_0",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/RoleLine_0[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 202.245,
+    "computedY" : 615.217,
+    "placementX" : 202.245,
+    "placementY" : 615.217,
+    "placementWidth" : 6.2,
+    "placementHeight" : 6.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.2,
+    "contentHeight" : 6.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/Employer_0[1]",
+    "entityName" : "Employer_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 599.332,
+    "placementX" : 218.345,
+    "placementY" : 599.332,
+    "placementWidth" : 100.783,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 100.783,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]/Highlights_0[2]",
+    "entityName" : "Highlights_0",
+    "entityKind" : "ListNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_0[1]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 506.072,
+    "placementX" : 218.345,
+    "placementY" : 506.072,
+    "placementWidth" : 348.171,
+    "placementHeight" : 90.76,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 348.171,
+    "contentHeight" : 90.76,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]",
+    "entityName" : "ExperienceEntry_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 384.197,
+    "placementX" : 205.345,
+    "placementY" : 384.197,
+    "placementWidth" : 365.921,
+    "placementHeight" : 112.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.921,
+    "contentHeight" : 112.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/RoleLine_1[0]",
+    "entityName" : "RoleLine_1",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 485.307,
+    "placementX" : 218.345,
+    "placementY" : 485.307,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/RoleLine_1[0]/RoleTable_1[0]",
+    "entityName" : "RoleTable_1",
+    "entityKind" : "TableNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/RoleLine_1[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 218.345,
+    "computedY" : 485.307,
+    "placementX" : 218.345,
+    "placementY" : 485.307,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/RoleLine_1[0]/RoleMarker_1[1]",
+    "entityName" : "RoleMarker_1",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/RoleLine_1[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 202.245,
+    "computedY" : 490.872,
+    "placementX" : 202.245,
+    "placementY" : 490.872,
+    "placementWidth" : 6.2,
+    "placementHeight" : 6.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.2,
+    "contentHeight" : 6.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/Employer_1[1]",
+    "entityName" : "Employer_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 474.987,
+    "placementX" : 218.345,
+    "placementY" : 474.987,
+    "placementWidth" : 111.654,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.654,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]/Highlights_1[2]",
+    "entityName" : "Highlights_1",
+    "entityKind" : "ListNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_1[2]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 393.197,
+    "placementX" : 218.345,
+    "placementY" : 393.197,
+    "placementWidth" : 349.599,
+    "placementHeight" : 79.29,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.599,
+    "contentHeight" : 79.29,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]",
+    "entityName" : "ExperienceEntry_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 303.313,
+    "placementX" : 205.345,
+    "placementY" : 303.313,
+    "placementWidth" : 365.921,
+    "placementHeight" : 80.885,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.921,
+    "contentHeight" : 80.885,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/RoleLine_2[0]",
+    "entityName" : "RoleLine_2",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 372.433,
+    "placementX" : 218.345,
+    "placementY" : 372.433,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/RoleLine_2[0]/RoleTable_2[0]",
+    "entityName" : "RoleTable_2",
+    "entityKind" : "TableNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/RoleLine_2[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 218.345,
+    "computedY" : 372.433,
+    "placementX" : 218.345,
+    "placementY" : 372.433,
+    "placementWidth" : 352.921,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.921,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/RoleLine_2[0]/RoleMarker_2[1]",
+    "entityName" : "RoleMarker_2",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/RoleLine_2[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 202.245,
+    "computedY" : 377.997,
+    "placementX" : 202.245,
+    "placementY" : 377.997,
+    "placementWidth" : 6.2,
+    "placementHeight" : 6.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.2,
+    "contentHeight" : 6.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/Employer_2[1]",
+    "entityName" : "Employer_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 362.113,
+    "placementX" : 218.345,
+    "placementY" : 362.113,
+    "placementWidth" : 123.771,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 123.771,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]/Highlights_2[2]",
+    "entityName" : "Highlights_2",
+    "entityKind" : "ListNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Experience[4]/ExperienceEntry_2[3]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 218.345,
+    "computedY" : 303.313,
+    "placementX" : 218.345,
+    "placementY" : 303.313,
+    "placementWidth" : 329.019,
+    "placementHeight" : 56.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 329.019,
+    "contentHeight" : 56.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Divider_AfterExperience[5]",
+    "entityName" : "Divider_AfterExperience",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 296.313,
+    "placementX" : 205.345,
+    "placementY" : 296.313,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "entityName" : "SelectedProjects",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 139.902,
+    "placementX" : 205.345,
+    "placementY" : 139.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 149.91,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 149.91,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Heading_SELECTEDPROJECTS[0]",
+    "entityName" : "Heading_SELECTEDPROJECTS",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 279.286,
+    "placementX" : 205.345,
+    "placementY" : 279.286,
+    "placementWidth" : 104.79,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 104.79,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/AccentLine_SELECTEDPROJECTS[1]",
+    "entityName" : "AccentLine_SELECTEDPROJECTS",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 274.386,
+    "placementX" : 205.345,
+    "placementY" : 274.386,
+    "placementWidth" : 22.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]",
+    "entityName" : "Project_0Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 234.894,
+    "placementX" : 205.345,
+    "placementY" : 234.894,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]",
+    "entityName" : "Project_0Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 205.345,
+    "computedY" : 234.894,
+    "placementX" : 205.345,
+    "placementY" : 234.894,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]",
+    "entityName" : "Project_0",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 205.345,
+    "computedY" : 234.894,
+    "placementX" : 205.345,
+    "placementY" : 234.894,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjIcon_0[0]",
+    "entityName" : "ProjIcon_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 205.345,
+    "computedY" : 246.886,
+    "placementX" : 205.345,
+    "placementY" : 246.886,
+    "placementWidth" : 22.0,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]",
+    "entityName" : "ProjMeta_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 234.619,
+    "computedY" : 234.894,
+    "placementX" : 234.619,
+    "placementY" : 234.894,
+    "placementWidth" : 98.269,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 98.269,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 8.0,
+      "bottom" : 0.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]/ProjTitle_0[0]",
+    "entityName" : "ProjTitle_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 257.121,
+    "placementX" : 238.619,
+    "placementY" : 257.121,
+    "placementWidth" : 62.344,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 62.344,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]/ProjSub_0[1]",
+    "entityName" : "ProjSub_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 246.008,
+    "placementX" : 238.619,
+    "placementY" : 246.008,
+    "placementWidth" : 86.269,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 86.269,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]/ProjLoc_0[2]",
+    "entityName" : "ProjLoc_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjMeta_0[1]",
+    "childIndex" : 2,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 234.894,
+    "placementX" : 238.619,
+    "placementY" : 234.894,
+    "placementWidth" : 23.986,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 23.986,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjDesc_0[2]",
+    "entityName" : "ProjDesc_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 366.354,
+    "computedY" : 235.446,
+    "placementX" : 366.354,
+    "placementY" : 235.446,
+    "placementWidth" : 187.16,
+    "placementHeight" : 33.44,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 187.16,
+    "contentHeight" : 33.44,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjDesc_0[2]/ProjDescText_0[0]",
+    "entityName" : "ProjDescText_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_0Stack[2]/Project_0Layer[0]/Project_0[0]/ProjDesc_0[2]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 376.354,
+    "computedY" : 235.446,
+    "placementX" : 376.354,
+    "placementY" : 235.446,
+    "placementWidth" : 177.16,
+    "placementHeight" : 33.44,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 177.16,
+    "contentHeight" : 33.44,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/ProjDiv_0[3]",
+    "entityName" : "ProjDiv_0",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 229.894,
+    "placementX" : 205.345,
+    "placementY" : 229.894,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]",
+    "entityName" : "Project_1Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 193.902,
+    "placementX" : 205.345,
+    "placementY" : 193.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]",
+    "entityName" : "Project_1Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 205.345,
+    "computedY" : 193.902,
+    "placementX" : 205.345,
+    "placementY" : 193.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]",
+    "entityName" : "Project_1",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 205.345,
+    "computedY" : 193.902,
+    "placementX" : 205.345,
+    "placementY" : 193.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjIcon_1[0]",
+    "entityName" : "ProjIcon_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 205.345,
+    "computedY" : 205.894,
+    "placementX" : 205.345,
+    "placementY" : 205.894,
+    "placementWidth" : 22.0,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]",
+    "entityName" : "ProjMeta_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 234.619,
+    "computedY" : 193.902,
+    "placementX" : 234.619,
+    "placementY" : 193.902,
+    "placementWidth" : 118.269,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.269,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 8.0,
+      "bottom" : 0.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]/ProjTitle_1[0]",
+    "entityName" : "ProjTitle_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 216.129,
+    "placementX" : 238.619,
+    "placementY" : 216.129,
+    "placementWidth" : 88.011,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 88.011,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]/ProjSub_1[1]",
+    "entityName" : "ProjSub_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 205.016,
+    "placementX" : 238.619,
+    "placementY" : 205.016,
+    "placementWidth" : 106.269,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.269,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]/ProjLoc_1[2]",
+    "entityName" : "ProjLoc_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjMeta_1[1]",
+    "childIndex" : 2,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 193.902,
+    "placementX" : 238.619,
+    "placementY" : 193.902,
+    "placementWidth" : 17.37,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 17.37,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjDesc_1[2]",
+    "entityName" : "ProjDesc_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 366.354,
+    "computedY" : 194.454,
+    "placementX" : 366.354,
+    "placementY" : 194.454,
+    "placementWidth" : 200.327,
+    "placementHeight" : 33.44,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 200.327,
+    "contentHeight" : 33.44,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjDesc_1[2]/ProjDescText_1[0]",
+    "entityName" : "ProjDescText_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_1Stack[4]/Project_1Layer[0]/Project_1[0]/ProjDesc_1[2]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 376.354,
+    "computedY" : 194.454,
+    "placementX" : 376.354,
+    "placementY" : 194.454,
+    "placementWidth" : 190.327,
+    "placementHeight" : 33.44,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 190.327,
+    "contentHeight" : 33.44,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/ProjDiv_1[5]",
+    "entityName" : "ProjDiv_1",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 188.902,
+    "placementX" : 205.345,
+    "placementY" : 188.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 2.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]",
+    "entityName" : "Project_2Stack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 141.902,
+    "placementX" : 205.345,
+    "placementY" : 141.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 45.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 45.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]",
+    "entityName" : "Project_2Layer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 205.345,
+    "computedY" : 141.902,
+    "placementX" : 205.345,
+    "placementY" : 141.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 45.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 45.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]",
+    "entityName" : "Project_2",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 205.345,
+    "computedY" : 141.902,
+    "placementX" : 205.345,
+    "placementY" : 141.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 45.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 45.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjIcon_2[0]",
+    "entityName" : "ProjIcon_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 205.345,
+    "computedY" : 164.902,
+    "placementX" : 205.345,
+    "placementY" : 164.902,
+    "placementWidth" : 22.0,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]",
+    "entityName" : "ProjMeta_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 234.619,
+    "computedY" : 152.91,
+    "placementX" : 234.619,
+    "placementY" : 152.91,
+    "placementWidth" : 99.272,
+    "placementHeight" : 33.992,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 99.272,
+    "contentHeight" : 33.992,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 8.0,
+      "bottom" : 0.0,
+      "left" : 4.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]/ProjTitle_2[0]",
+    "entityName" : "ProjTitle_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 175.137,
+    "placementX" : 238.619,
+    "placementY" : 175.137,
+    "placementWidth" : 70.079,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 70.079,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]/ProjSub_2[1]",
+    "entityName" : "ProjSub_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 164.024,
+    "placementX" : 238.619,
+    "placementY" : 164.024,
+    "placementWidth" : 87.272,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 87.272,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]/ProjLoc_2[2]",
+    "entityName" : "ProjLoc_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjMeta_2[1]",
+    "childIndex" : 2,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 238.619,
+    "computedY" : 152.91,
+    "placementX" : 238.619,
+    "placementY" : 152.91,
+    "placementWidth" : 53.164,
+    "placementHeight" : 10.114,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 53.164,
+    "contentHeight" : 10.114,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjDesc_2[2]",
+    "entityName" : "ProjDesc_2",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]",
+    "childIndex" : 2,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 366.354,
+    "computedY" : 141.902,
+    "placementX" : 366.354,
+    "placementY" : 141.902,
+    "placementWidth" : 166.176,
+    "placementHeight" : 45.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 166.176,
+    "contentHeight" : 45.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjDesc_2[2]/ProjDescText_2[0]",
+    "entityName" : "ProjDescText_2",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/SelectedProjects[6]/Project_2Stack[6]/Project_2Layer[0]/Project_2[0]/ProjDesc_2[2]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 376.354,
+    "computedY" : 141.902,
+    "placementX" : 376.354,
+    "placementY" : 141.902,
+    "placementWidth" : 156.176,
+    "placementHeight" : 45.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 156.176,
+    "contentHeight" : 45.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Divider_AfterProjects[7]",
+    "entityName" : "Divider_AfterProjects",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 132.902,
+    "placementX" : 205.345,
+    "placementY" : 132.902,
+    "placementWidth" : 365.931,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 6.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]",
+    "entityName" : "Education",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 365.931,
+    "placementHeight" : 74.096,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 74.096,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/Heading_EDUCATION[0]",
+    "entityName" : "Heading_EDUCATION",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 115.876,
+    "placementX" : 205.345,
+    "placementY" : 115.876,
+    "placementWidth" : 60.632,
+    "placementHeight" : 10.526,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.632,
+    "contentHeight" : 10.526,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 3.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/AccentLine_EDUCATION[1]",
+    "entityName" : "AccentLine_EDUCATION",
+    "entityKind" : "LineNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 110.976,
+    "placementX" : 205.345,
+    "placementY" : 110.976,
+    "placementWidth" : 22.0,
+    "placementHeight" : 1.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 22.0,
+    "contentHeight" : 1.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 5.5,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]",
+    "entityName" : "EducationBandStack",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 365.931,
+    "placementHeight" : 53.17,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 53.17,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]",
+    "entityName" : "EducationBandLayer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 365.931,
+    "placementHeight" : 53.17,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 53.17,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]",
+    "entityName" : "EducationBand",
+    "entityKind" : "RowNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 365.931,
+    "placementHeight" : 53.17,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 365.931,
+    "contentHeight" : 53.17,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]",
+    "entityName" : "EducationEntries",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 256.142,
+    "placementHeight" : 53.17,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 256.142,
+    "contentHeight" : 53.17,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 8.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]",
+    "entityName" : "EducationEntry_0",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 205.345,
+    "computedY" : 74.391,
+    "placementX" : 205.345,
+    "placementY" : 74.391,
+    "placementWidth" : 248.142,
+    "placementHeight" : 31.085,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 248.142,
+    "contentHeight" : 31.085,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 9.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/EduLine_0[0]",
+    "entityName" : "EduLine_0",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 218.345,
+    "computedY" : 93.711,
+    "placementX" : 218.345,
+    "placementY" : 93.711,
+    "placementWidth" : 235.142,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.142,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/EduLine_0[0]/EduTable_0[0]",
+    "entityName" : "EduTable_0",
+    "entityKind" : "TableNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/EduLine_0[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 218.345,
+    "computedY" : 93.711,
+    "placementX" : 218.345,
+    "placementY" : 93.711,
+    "placementWidth" : 235.142,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.142,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/EduLine_0[0]/EduMarker_0[1]",
+    "entityName" : "EduMarker_0",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/EduLine_0[0]",
+    "childIndex" : 1,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 202.245,
+    "computedY" : 99.276,
+    "placementX" : 202.245,
+    "placementY" : 99.276,
+    "placementWidth" : 6.2,
+    "placementHeight" : 6.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.2,
+    "contentHeight" : 6.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]/Institution_0[1]",
+    "entityName" : "Institution_0",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_0[0]",
+    "childIndex" : 1,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 218.345,
+    "computedY" : 83.391,
+    "placementX" : 218.345,
+    "placementY" : 83.391,
+    "placementWidth" : 78.604,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 78.604,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]",
+    "entityName" : "EducationEntry_1",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 205.345,
+    "computedY" : 52.306,
+    "placementX" : 205.345,
+    "placementY" : 52.306,
+    "placementWidth" : 248.142,
+    "placementHeight" : 22.085,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 248.142,
+    "contentHeight" : 22.085,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/EduLine_1[0]",
+    "entityName" : "EduLine_1",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 218.345,
+    "computedY" : 62.626,
+    "placementX" : 218.345,
+    "placementY" : 62.626,
+    "placementWidth" : 235.142,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.142,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/EduLine_1[0]/EduTable_1[0]",
+    "entityName" : "EduTable_1",
+    "entityKind" : "TableNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/EduLine_1[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 218.345,
+    "computedY" : 62.626,
+    "placementX" : 218.345,
+    "placementY" : 62.626,
+    "placementWidth" : 235.142,
+    "placementHeight" : 11.765,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 235.142,
+    "contentHeight" : 11.765,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/EduLine_1[0]/EduMarker_1[1]",
+    "entityName" : "EduMarker_1",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/EduLine_1[0]",
+    "childIndex" : 1,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 202.245,
+    "computedY" : 68.191,
+    "placementX" : 202.245,
+    "placementY" : 68.191,
+    "placementWidth" : 6.2,
+    "placementHeight" : 6.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.2,
+    "contentHeight" : 6.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]/Institution_1[1]",
+    "entityName" : "Institution_1",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationEntries[0]/EducationEntry_1[1]",
+    "childIndex" : 1,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 218.345,
+    "computedY" : 52.306,
+    "placementX" : 218.345,
+    "placementY" : 52.306,
+    "placementWidth" : 120.056,
+    "placementHeight" : 10.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.056,
+    "contentHeight" : 10.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]/EducationBandRight[1]",
+    "entityName" : "EducationBandRight",
+    "entityKind" : "SectionNode",
+    "parentPath" : "TerracottaRailCv[0]/Body[0]/MainColumn[1]/Education[8]/EducationBandStack[2]/EducationBandLayer[0]/EducationBand[0]",
+    "childIndex" : 1,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 461.496,
+    "computedY" : 105.476,
+    "placementX" : 461.496,
+    "placementY" : 105.476,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

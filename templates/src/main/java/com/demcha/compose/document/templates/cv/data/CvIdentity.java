@@ -1,5 +1,6 @@
 package com.demcha.compose.document.templates.cv.data;
 
+import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.templates.core.identity.Contact;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.core.identity.PartyIdentity;
@@ -7,6 +8,7 @@ import com.demcha.compose.document.templates.core.identity.PartyIdentity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Top-of-document identity block — name, optional professional title,
@@ -24,21 +26,41 @@ import java.util.Objects;
  *                 that have a subtitle line; blank when absent
  * @param contact  phone / email / address — all three required
  * @param links    ordered list of optional outbound links; never null
+ * @param portrait optional photograph of the candidate, drawn by the presets
+ *                 that have somewhere to put one; empty otherwise
  */
 public record CvIdentity(CvName name, String jobTitle,
-                         Contact contact, List<Link> links)
+                         Contact contact, List<Link> links,
+                         Optional<DocumentImageData> portrait)
         implements PartyIdentity {
 
     /**
      * Validates that {@code name} and {@code contact} are non-null,
-     * trims a null {@code jobTitle} to empty, and defensively copies
-     * {@code links} (null becomes an empty list).
+     * trims a null {@code jobTitle} to empty, defensively copies
+     * {@code links} (null becomes an empty list), and treats a null
+     * {@code portrait} as absent.
      */
     public CvIdentity {
         Objects.requireNonNull(name, "name");
         jobTitle = jobTitle == null ? "" : jobTitle.trim();
         Objects.requireNonNull(contact, "contact");
         links = links == null ? List.of() : List.copyOf(links);
+        portrait = portrait == null ? Optional.empty() : portrait;
+    }
+
+    /**
+     * Backward-compatible constructor for callers that predate the
+     * optional portrait. The identity simply carries no photograph.
+     *
+     * @param name     structured name with first / last required and an
+     *                 optional middle component
+     * @param jobTitle optional professional title; blank when absent
+     * @param contact  phone / email / address — all three required
+     * @param links    ordered list of optional outbound links; never null
+     */
+    public CvIdentity(CvName name, String jobTitle,
+                      Contact contact, List<Link> links) {
+        this(name, jobTitle, contact, links, Optional.empty());
     }
 
     /**
@@ -51,7 +73,7 @@ public record CvIdentity(CvName name, String jobTitle,
      * @param links   ordered list of optional outbound links; never null
      */
     public CvIdentity(CvName name, Contact contact, List<Link> links) {
-        this(name, "", contact, links);
+        this(name, "", contact, links, Optional.empty());
     }
 
     /**
@@ -91,6 +113,7 @@ public record CvIdentity(CvName name, String jobTitle,
         private String jobTitle = "";
         private Contact contact;
         private final List<Link> links = new ArrayList<>();
+        private DocumentImageData portrait;
 
         private Builder() {
         }
@@ -191,12 +214,28 @@ public record CvIdentity(CvName name, String jobTitle,
         }
 
         /**
+         * Sets the candidate's photograph. Only the presets with a place
+         * for one draw it; the rest ignore it, so a document carrying a
+         * portrait still renders through every preset in the family.
+         *
+         * @param value the image data; null leaves the identity without a
+         *              photograph
+         * @return this builder for chaining
+         * @since 2.4.0
+         */
+        public Builder portrait(DocumentImageData value) {
+            this.portrait = value;
+            return this;
+        }
+
+        /**
          * Builds the immutable {@link CvIdentity}.
          *
          * @return the assembled identity block
          */
         public CvIdentity build() {
-            return new CvIdentity(name, jobTitle, contact, links);
+            return new CvIdentity(name, jobTitle, contact, links,
+                    Optional.ofNullable(portrait));
         }
     }
 }

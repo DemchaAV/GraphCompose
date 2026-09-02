@@ -870,6 +870,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Tests
 
+- **The schedule fixtures no longer carry a real venue's staff.** The weekly-schedule
+  test fixture and the example data factory were written from a real bar's rota and kept
+  its people's names, its venue name, and two third parties named in the day notes.
+  Fixture content should be invented, and this is now: eleven invented names, an
+  invented venue, and generic notes. The shape — eleven people, seven days, the same
+  categories and the same assignments — is unchanged, so every assertion that read it
+  reads the same thing. `assets/readme/examples/weekly-schedule.pdf` is re-rendered for
+  the two note strings it prints; nothing else in it moves.
+
 - **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**
   `CodeQlScopeGuardTest` asks whether every module a release publishes is inside the
   security scan, and it read the answer's left-hand side out of the publish workflows by

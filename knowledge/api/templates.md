@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 226 · methods: 1269 · constants: 174 · compiler-generated members: 683
+Types: 226 · methods: 1275 · constants: 174 · compiler-generated members: 686
 
 ## com.demcha.compose.document.templates.api
 
@@ -1393,9 +1393,11 @@ Types: 226 · methods: 1269 · constants: 174 · compiler-generated members: 683
 - `String confidentiality()`
 
 ### ProposalGlance (record)
-- `new ProposalGlance(String, List<ProposalGlance.Fact>)`
+- `new ProposalGlance(String, List<ProposalGlance.Fact>, String)`
+- `new ProposalGlance(String heading, List<ProposalGlance.Fact> facts)`
 - `String heading()`
 - `List<ProposalGlance.Fact> facts()`
+- `String intro()`
 
 ### ProposalGlance.Fact (record)
 - `new Fact(String, String, String, String)`
@@ -1405,10 +1407,12 @@ Types: 226 · methods: 1269 · constants: 174 · compiler-generated members: 683
 - `String note()`
 
 ### ProposalGoals (record)
-- `new ProposalGoals(String, String, List<ProposalGoals.Goal>)`
+- `new ProposalGoals(String, String, List<ProposalGoals.Goal>, String)`
+- `new ProposalGoals(String heading, String icon, List<ProposalGoals.Goal> items)`
 - `String heading()`
 - `String icon()`
 - `List<ProposalGoals.Goal> items()`
+- `String intro()`
 
 ### ProposalGoals.Goal (record)
 - `new Goal(String, String)`
@@ -1506,10 +1510,12 @@ Types: 226 · methods: 1269 · constants: 174 · compiler-generated members: 683
 - `List<String> addressLines()`
 
 ### ProposalScope (record)
-- `new ProposalScope(String, String, List<ProposalScope.Item>)`
+- `new ProposalScope(String, String, List<ProposalScope.Item>, String)`
+- `new ProposalScope(String heading, String icon, List<ProposalScope.Item> items)`
 - `String heading()`
 - `String icon()`
 - `List<ProposalScope.Item> items()`
+- `String intro()`
 
 ### ProposalScope.Item (record)
 - `new Item(String, String, String)`

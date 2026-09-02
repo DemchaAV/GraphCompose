@@ -7,6 +7,16 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A proposal block carries the paragraph that opens it.** `ProposalScope`,
+  `ProposalGoals` and `ProposalGlance` each set a heading and a list, and every one-page
+  sales proposal measured for the header spine also sets a paragraph between the two —
+  five of the seven set two of them, once over the solution and once over the reasons to
+  choose the issuer. The header survey missed it, so it arrives here rather than inside
+  the first preset that needs it. All three records gain `intro`, a plain string blank
+  when absent, and each keeps its previous constructor explicitly, so existing calls
+  compile and link unchanged and every block built through them opens straight into its
+  list as before.
+
 - **A proposal carries the header a one-page sales proposal has.** The proposal model was
   shaped for a two-page consulting document: a running header naming three things by role,
   and a title of exactly three lines. A one-page sales proposal opens differently — an

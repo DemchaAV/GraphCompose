@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 226,
-    "methods": 1275,
-    "constants": 174,
-    "generated": 686
+    "types": 227,
+    "methods": 1276,
+    "constants": 177,
+    "generated": 689
   },
   "packages": [
     {
@@ -21861,6 +21861,47 @@
         {
           "name": "EditorialProposal",
           "binaryName": "com.demcha.compose.document.templates.proposal.presets.EditorialProposal",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "IndigoProposal",
+          "binaryName": "com.demcha.compose.document.templates.proposal.presets.IndigoProposal",
           "kind": "class",
           "modifiers": [
             "final"

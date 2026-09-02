@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 226 · methods: 1275 · constants: 174 · compiler-generated members: 686
+Types: 227 · methods: 1276 · constants: 177 · compiler-generated members: 689
 
 ## com.demcha.compose.document.templates.api
 
@@ -1842,6 +1842,10 @@ Types: 226 · methods: 1275 · constants: 174 · compiler-generated members: 686
 ## com.demcha.compose.document.templates.proposal.presets
 
 ### EditorialProposal (class)
+- `DocumentTemplate<StructuredProposalDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### IndigoProposal (class)
 - `DocumentTemplate<StructuredProposalDocumentSpec> create()`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
 

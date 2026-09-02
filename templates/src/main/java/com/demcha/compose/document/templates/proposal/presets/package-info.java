@@ -18,7 +18,8 @@
  *       {@link com.demcha.compose.document.templates.data.proposal.StructuredProposalDocumentSpec},
  *       carrying their measured geometry and palette as preset-local tokens
  *       because each reproduces one designed look rather than a themeable
- *       family ({@code NorthlineProposal}, {@code EditorialProposal}).</li>
+ *       family ({@code NorthlineProposal}, {@code EditorialProposal},
+ *       {@code IndigoProposal}).</li>
  * </ul>
  *
  * <p>Both shapes reuse the shared {@code templates.core.*} layer; the

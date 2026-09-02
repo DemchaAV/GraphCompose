@@ -814,6 +814,60 @@ follow semantic versioning; release dates are ISO 8601.
   phase-grid header-count contract), an exact two-page layout snapshot, and a
   pixel-parity gate; the examples showcase gains `proposal-northline-v2`.
 
+- **A one-page sales proposal preset: `IndigoProposal`.** A wordmark against the
+  document's label over a full-width rule, the addressed organisation and the person to
+  reply to beside a four-line headline and a row of marked discs, a tinted band that
+  bleeds to both paper edges carrying a paragraph about the issuer over four marked
+  tiles, a numbered plan beside the priced rows and their total card, and a foot with the
+  issuer's identity and its channels. Ships as `proposal.presets.IndigoProposal` on the
+  structured proposal model, with its icon set packaged in the templates artifact,
+  porting the rendered layout of a published standalone template — and this one is exact:
+  rendered against the frozen original with the same data the text layers are
+  **identical, all 262 words in the same place to 0.000 pt**, and the head, the lower
+  half, the closing rule and the foot's own lines carry **no differing pixel at all**.
+  <br><br>
+  **Two of the design's own brand assets are deliberately not ported.** The band's right
+  is a product photograph carrying a payment network's mark, and the foot closes on the
+  issuer's logotype. Those belong to their owners, and the templates artifact does not
+  redistribute other companies' marks. Both places are kept rather than closed up — the
+  band keeps the height and the column that give the copy beside it the measure it was
+  solved against, and the foot keeps the column that sets where the name begins — and
+  what fills them is the document's: the foot sets whatever monogram the document names,
+  and the band's column stays flat tint. This is stated on the preset rather than left to
+  be noticed.
+  <br><br>
+  The sheet is one page by design and not by accident. Every block's position is a cap
+  top in one vertical map and a single cursor walks the page once, turning each cap top
+  into the margin that puts it there — so a block moves by changing one number rather
+  than by re-deriving the gaps around it. Four blocks state how many lines they wrap to,
+  because the engine cannot be asked at compose time; content heavier than the design's
+  own pushes what follows down and can carry the foot onto a second page, which the
+  preset says rather than capping what it is given.
+  <br><br>
+  **No block is ever drawn over another.** A stated position and heavier-than-designed
+  content produce a negative margin, which the engine honours by *raising* the block —
+  so a plan of six or seven steps still fits the page and prints the closing rule
+  through its last step. Every margin the cursor returns is therefore floored at
+  nothing, and the counts either side of that window are gates: five steps is the
+  design's own, six and seven are where an unclamped margin overlaps silently, and
+  fourteen is where the foot has to take a second page.
+  <br><br>
+  Sizes are solved from ink rather than from cap height: the design's own face is not
+  bundled, the substitute sets 10–20% wide at bold, and matching a cap height alone put
+  every bold block over its measure. A foot's confidentiality line, when a document
+  carries one, closes the channels line rather than opening one of its own — the
+  design's last line already ends against the bottom margin, so a fourth would carry the
+  whole foot onto a second page — and it is set as prose, not as a channel: a notice is
+  a sentence, and a sentence is not somewhere a reader can be sent.
+  <br><br>
+  The two packaged mark sets are not interchangeable, and the preset says so by
+  refusing: the header's marks are drawn in the accent for a pale disc and the band's in
+  white for a near-black tile, so a band token named on a header disc would render as
+  nothing at all. It is a data error reported by name instead. Guarded by a smoke test
+  (including the empty document, a tile that names no mark, both unknown-token cases,
+  the notice, the overlap window and every contact being followable), an exact layout
+  snapshot, and a pixel baseline — all three fed by one fixture.
+
 ### Tests
 
 - **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**

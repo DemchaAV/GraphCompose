@@ -1,0 +1,77 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 841.89,
+    "pageHeight" : 595.276,
+    "innerWidth" : 817.054,
+    "innerHeight" : 545.749,
+    "margin" : {
+      "top" : 10.596,
+      "right" : 12.418,
+      "bottom" : 38.931,
+      "left" : 12.418
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CobaltRota[0]",
+    "entityName" : "CobaltRota",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 12.418,
+    "computedY" : 81.405,
+    "placementX" : 12.418,
+    "placementY" : 81.405,
+    "placementWidth" : 817.054,
+    "placementHeight" : 503.275,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 817.054,
+    "contentHeight" : 503.275,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CobaltRota[0]/Schedule[0]",
+    "entityName" : "Schedule",
+    "entityKind" : "TableNode",
+    "parentPath" : "CobaltRota[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 12.418,
+    "computedY" : 81.405,
+    "placementX" : 12.418,
+    "placementY" : 81.405,
+    "placementWidth" : 817.054,
+    "placementHeight" : 503.275,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 817.054,
+    "contentHeight" : 503.275,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

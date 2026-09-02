@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 242 · methods: 1344 · constants: 188 · compiler-generated members: 747
+Types: 243 · methods: 1345 · constants: 191 · compiler-generated members: 750
 
 ## com.demcha.compose.document.templates.api
 
@@ -1958,4 +1958,10 @@ Types: 242 · methods: 1344 · constants: 188 · compiler-generated members: 747
 
 ### NorthlineProposal (class)
 - `DocumentTemplate<StructuredProposalDocumentSpec> create()`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+## com.demcha.compose.document.templates.rota.presets
+
+### CobaltRota (class)
+- `DocumentTemplate<StructuredRotaDocumentSpec> create()`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`

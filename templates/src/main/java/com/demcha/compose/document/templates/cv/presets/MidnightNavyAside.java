@@ -16,6 +16,7 @@ import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.OptionalDouble;
-import java.util.regex.Pattern;
 
 import static com.demcha.compose.document.templates.cv.presets.MidnightNavyStyles.ASIDE_CONTENT_PAD;
 import static com.demcha.compose.document.templates.cv.presets.MidnightNavyStyles.ASIDE_DIM;
@@ -88,12 +88,6 @@ final class MidnightNavyAside {
 
     /** The heading the design gives the contact block, which no section carries. */
     static final String CONTACT_HEADING = "CONTACT";
-
-    /**
-     * A trunk prefix in a printed number is for a domestic dialler and is not
-     * part of the international one, so it is dropped from the dialled form.
-     */
-    private static final Pattern TRUNK_PREFIX = Pattern.compile("\\(0+\\)");
 
     private MidnightNavyAside() {
     }
@@ -186,7 +180,7 @@ final class MidnightNavyAside {
         Contact contact = identity.contact();
         List<Channel> channels = new ArrayList<>();
         channels.add(new Channel(MidnightNavyIcons.PHONE, contact.phone(),
-                telUri(contact.phone())));
+                ContactUri.tel(contact.phone())));
         channels.add(new Channel(MidnightNavyIcons.EMAIL, contact.email(),
                 "mailto:" + contact.email()));
         channels.add(new Channel(MidnightNavyIcons.LOCATION, contact.address(), null));
@@ -398,14 +392,6 @@ final class MidnightNavyAside {
         return link.url().toLowerCase(Locale.ROOT).contains("linkedin.")
                 ? MidnightNavyIcons.LINKEDIN
                 : MidnightNavyIcons.WEBSITE;
-    }
-
-    /** A printed number as something a reader can dial, or {@code null}. */
-    private static String telUri(String phone) {
-        String dialled = TRUNK_PREFIX.matcher(phone).replaceAll("");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     /** One contact row: its mark, what it reads, and where it points. */

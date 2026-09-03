@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 228 · methods: 1281 · constants: 177 · compiler-generated members: 689
+Types: 228 · methods: 1282 · constants: 177 · compiler-generated members: 689
 
 ## com.demcha.compose.document.templates.api
 
@@ -63,6 +63,7 @@ Types: 228 · methods: 1281 · constants: 177 · compiler-generated members: 689
 - `String tel(String phone)`
 - `DocumentLinkOptions telLink(String phone)`
 - `DocumentLinkOptions mailLink(String email)`
+- `String web(String website)`
 - `DocumentLinkOptions webLink(String website)`
 - `DocumentLinkOptions channelLink(String contact)`
 

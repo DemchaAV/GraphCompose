@@ -11,6 +11,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -279,7 +280,7 @@ final class SlateOrangeMasthead {
         Contact contact = identity.contact();
         List<Channel> channels = new ArrayList<>();
         channels.add(new Channel(SlateOrangeIcons.PHONE, contact.phone(),
-                telUri(contact.phone())));
+                ContactUri.tel(contact.phone())));
         channels.add(new Channel(SlateOrangeIcons.EMAIL, contact.email(),
                 "mailto:" + contact.email()));
         for (Link link : identity.links()) {
@@ -287,18 +288,5 @@ final class SlateOrangeMasthead {
         }
         channels.add(new Channel(SlateOrangeIcons.LOCATION, contact.address(), null));
         return channels;
-    }
-
-    /**
-     * The dial target for a phone number: its digits, keeping a leading
-     * {@code +} so an international number stays international, and dropping a
-     * parenthesised trunk prefix the way a caller dialling from abroad does.
-     */
-    private static String telUri(String phone) {
-        String dialled = phone.replaceAll("\\(0+\\)", "");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty()
-                ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 }

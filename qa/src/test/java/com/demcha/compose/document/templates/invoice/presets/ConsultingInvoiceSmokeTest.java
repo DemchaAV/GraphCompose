@@ -5,16 +5,23 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
+import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 import com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData;
 import com.demcha.compose.document.templates.data.invoice.StructuredInvoiceDocumentSpec;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -152,6 +159,65 @@ class ConsultingInvoiceSmokeTest {
                 .payment(data.payment())
                 .notes(data.notes())
                 .currencyCode(data.currencyCode());
+    }
+
+    @Test
+    void aTrunkPrefixIsPrintedAndNotDialled() throws Exception {
+        // The sheet prints the number a reader at home would dial and links the
+        // one a caller abroad has to. The trunk prefix belongs to the first and
+        // not the second, and this preset used to hand the printed form's
+        // brackets straight to the link.
+        //
+        // The sheet dials in two places from two fields — the supplier in the
+        // masthead and the contact in the closing prose — so each is given its
+        // own number and both targets are named. One number would let either
+        // site alone satisfy the assertion.
+        StructuredInvoiceData canonical = ConsultingInvoiceFixtures.canonicalInvoice().invoice();
+        InvoiceContactBlock supplier = canonical.supplier();
+        InvoiceNotesBlock notes = canonical.notes();
+        String inTheMasthead = "+44 (0)20 7946 0832";
+        String inTheProse = "+44 (0)161 555 2200";
+
+        StructuredInvoiceData printed = rebuild(canonical)
+                .supplier(new InvoiceContactBlock(supplier.legalName(), supplier.addressLines(),
+                        inTheMasthead, supplier.email(), supplier.website(),
+                        supplier.registrationLabel(), supplier.registrationNumber(),
+                        supplier.taxRegistrationLabel(), supplier.taxRegistrationNumber(),
+                        supplier.legalFootnote()))
+                // The closing links the number where it finds it in its own
+                // prose, so the sentence has to carry the new one too.
+                .notes(new InvoiceNotesBlock(notes.heading(),
+                        notes.paragraphs().stream()
+                                .map(line -> line.replace(notes.contactPhone(), inTheProse))
+                                .toList(),
+                        notes.contactEmail(), inTheProse))
+                .build();
+
+        byte[] pdfBytes = render(StructuredInvoiceDocumentSpec.from(printed));
+        assertThat(textOf(pdfBytes)).contains(inTheMasthead).contains(inTheProse);
+        assertThat(dialTargets(pdfBytes))
+                .containsExactlyInAnyOrder("tel:+442079460832", "tel:+441615552200");
+    }
+
+    /**
+     * The {@code tel:} targets the file carries. A run that wraps at a space
+     * carries one annotation per piece, all pointing at the same place, so it
+     * is the set of targets that is asserted rather than their number.
+     */
+    private static Set<String> dialTargets(byte[] pdfBytes) throws Exception {
+        Set<String> targets = new LinkedHashSet<>();
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            for (PDPage page : document.getPages()) {
+                for (PDAnnotation annotation : page.getAnnotations()) {
+                    if (annotation instanceof PDAnnotationLink link
+                            && link.getAction() instanceof PDActionURI uri
+                            && uri.getURI().startsWith("tel:")) {
+                        targets.add(uri.getURI());
+                    }
+                }
+            }
+        }
+        return targets;
     }
 
     @Test

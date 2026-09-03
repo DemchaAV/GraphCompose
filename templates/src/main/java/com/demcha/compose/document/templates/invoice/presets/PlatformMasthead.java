@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.InlineImageAlignment;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
@@ -155,11 +156,11 @@ final class PlatformMasthead {
             block.spacing(capPitch(28, BODY_SIZE))
                     .margin(new DocumentInsets(capPitch(46, BODY_SIZE), 0, 0, 0));
             channel(block, "Website", PlatformIcons.WEBSITE, supplier.website(),
-                    InvoiceUri.webLink(supplier.website()));
+                    ContactUri.webLink(supplier.website()));
             channel(block, "Email", PlatformIcons.EMAIL, supplier.email(),
-                    InvoiceUri.mailLink(supplier.email()));
+                    ContactUri.mailLink(supplier.email()));
             channel(block, "Phone", PlatformIcons.PHONE, supplier.phone(),
-                    InvoiceUri.telLink(supplier.phone()));
+                    ContactUri.telLink(supplier.phone()));
         });
 
         if (!supplier.taxRegistrationNumber().isBlank()) {

@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceRecipient;
@@ -67,11 +68,11 @@ final class ObsidianParties {
             row.addSection("SupplierCard", cell -> renderCard(cell, "Supplier", "From",
                     supplierDisc(brand, supplier), supplier.legalName(),
                     supplier.addressLines(), supplier.email(),
-                    InvoiceUri.mailLink(supplier.email())));
+                    ContactUri.mailLink(supplier.email())));
             row.addSection("BillToCard", cell -> renderCard(cell, "BillTo", billTo.heading(),
                     initialsDisc("BillToDisc", DISC_CLIENT, initials(billTo.name())),
                     billTo.name(), billTo.addressLines(), billTo.email(),
-                    InvoiceUri.mailLink(billTo.email())));
+                    ContactUri.mailLink(billTo.email())));
         });
     }
 

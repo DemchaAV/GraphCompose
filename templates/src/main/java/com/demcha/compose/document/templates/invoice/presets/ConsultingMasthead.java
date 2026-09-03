@@ -10,6 +10,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
@@ -32,9 +33,7 @@ import static com.demcha.compose.document.templates.invoice.presets.ConsultingSt
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.SMALL_BOLD;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.SUPPLIER_WIDTH;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.link;
-import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.telUri;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.tracked;
-import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.websiteUri;
 
 /**
  * The masthead of the Consulting Invoice: the sender's lockup and contact
@@ -70,7 +69,7 @@ final class ConsultingMasthead {
         }
         if (!supplier.phone().isBlank()) {
             contactBand(section, ConsultingIcons.PHONE, 9.2, supplier.phone(),
-                    CONTACT_ROW_HEIGHT, telUri(supplier.phone()));
+                    CONTACT_ROW_HEIGHT, ContactUri.tel(supplier.phone()));
         }
         if (!supplier.email().isBlank()) {
             contactBand(section, ConsultingIcons.EMAIL, 9.2, supplier.email(),
@@ -78,7 +77,7 @@ final class ConsultingMasthead {
         }
         if (!supplier.website().isBlank()) {
             contactBand(section, ConsultingIcons.WEBSITE, 9.4, supplier.website(),
-                    CONTACT_ROW_HEIGHT, websiteUri(supplier.website()));
+                    CONTACT_ROW_HEIGHT, ContactUri.web(supplier.website()));
         }
     }
 

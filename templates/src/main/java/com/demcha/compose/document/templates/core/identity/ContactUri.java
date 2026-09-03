@@ -79,21 +79,38 @@ public final class ContactUri {
     }
 
     /**
-     * A written site as something a reader can follow. A sheet prints
-     * {@code example.com}; a viewer needs a scheme in front of it.
+     * A written site as a browsable target. A sheet prints {@code example.com};
+     * a viewer needs a scheme in front of it.
+     *
+     * <p>A target is not yet a link. Giving a scheme to something that is not an
+     * address — {@code ask at the bar} becomes {@code https://ask at the bar} —
+     * produces a string {@link DocumentLinkOptions} refuses, so this is for a
+     * component that takes a plain target. Where a link is being made, reach for
+     * {@link #webLink(String)}: that is where the refusal becomes no link rather
+     * than a page that does not compose.</p>
+     *
+     * @param website the site as the sheet prints it
+     * @return the target, or {@code null} when there is no site
+     */
+    public static String web(String website) {
+        if (website == null || website.isBlank()) {
+            return null;
+        }
+        String trimmed = website.trim();
+        return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+                ? trimmed
+                : "https://" + trimmed;
+    }
+
+    /**
+     * The same, ready to hand to a component that takes a link or nothing.
      *
      * @param website the site as the sheet prints it
      * @return the link options, or {@code null} when there is no site, or none
      *         that could be made from what was printed
      */
     public static DocumentLinkOptions webLink(String website) {
-        if (website == null || website.isBlank()) {
-            return null;
-        }
-        String trimmed = website.trim();
-        return options(trimmed.startsWith("http://") || trimmed.startsWith("https://")
-                ? trimmed
-                : "https://" + trimmed);
+        return options(web(website));
     }
 
     /**

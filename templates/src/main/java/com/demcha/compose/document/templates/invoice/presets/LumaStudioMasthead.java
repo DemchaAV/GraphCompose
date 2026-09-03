@@ -7,13 +7,13 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.node.TextVerticalAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
 import com.demcha.compose.document.templates.data.invoice.InvoiceRecipient;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.ACCENT;
 import static com.demcha.compose.document.templates.invoice.presets.LumaStudioStyles.BODY;
@@ -59,9 +59,6 @@ final class LumaStudioMasthead {
     /** The break this sheet stacks address lines on. */
     private static final String NEWLINE = String.valueOf((char) 10);
 
-    /** A parenthesised trunk prefix, which an international dial target drops. */
-    private static final Pattern TRUNK_PREFIX = Pattern.compile("\\(0+\\)");
-
     private LumaStudioMasthead() {
     }
 
@@ -97,11 +94,11 @@ final class LumaStudioMasthead {
                 .spacing(0)
                 .margin(new DocumentInsets(LINE_PITCH * 0.79, 0, 0, 0));
         contactRow(contacts, LumaStudioIcons.PHONE, supplier.phone(),
-                telUri(supplier.phone()));
+                ContactUri.tel(supplier.phone()));
         contactRow(contacts, LumaStudioIcons.EMAIL, supplier.email(),
                 supplier.email().isBlank() ? null : "mailto:" + supplier.email());
         contactRow(contacts, LumaStudioIcons.WEBSITE, supplier.website(),
-                webUri(supplier.website()));
+                ContactUri.web(supplier.website()));
         section.add(contacts.build());
 
         section.addParagraph(p -> p
@@ -141,31 +138,6 @@ final class LumaStudioMasthead {
             return "";
         }
         return label.isBlank() ? value : label + "  " + value;
-    }
-
-    /**
-     * The dial target for a phone number: its digits, keeping a leading
-     * {@code +} so an international number stays international.
-     *
-     * <p>A parenthesised trunk prefix — the {@code (0)} in
-     * {@code +44 (0)20 7946 0832} — is the digit a caller drops when dialling
-     * from abroad, so it is dropped here too. A parenthesised area code is
-     * not, which is why only an all-zero group goes.</p>
-     */
-    private static String telUri(String phone) {
-        String dialled = TRUNK_PREFIX.matcher(phone).replaceAll("");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty()
-                ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
-    }
-
-    /** A website target: what the document wrote, given a scheme if it has none. */
-    private static String webUri(String website) {
-        if (website.isBlank()) {
-            return null;
-        }
-        return website.startsWith("http") ? website : "https://" + website;
     }
 
     // -- title and metadata ----------------------------------------------

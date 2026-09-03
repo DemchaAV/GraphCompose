@@ -10,11 +10,11 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import static com.demcha.compose.document.templates.invoice.presets.PaymentsStyles.ACCENT;
 import static com.demcha.compose.document.templates.invoice.presets.PaymentsStyles.BODY;
@@ -62,12 +62,6 @@ import static com.demcha.compose.document.templates.invoice.presets.PaymentsStyl
  * identity on a continuation page is carried by the page number instead.</p>
  */
 final class PaymentsClosing {
-
-    /**
-     * A trunk prefix in a printed number is for a domestic dialler and is not
-     * part of the international one, so it is dropped from the dialled form.
-     */
-    private static final Pattern TRUNK_PREFIX = Pattern.compile("\\(0+\\)");
 
     private PaymentsClosing() {
     }
@@ -260,7 +254,7 @@ final class PaymentsClosing {
                             p.inlineText("    |    ", style(FOOTER_SUB_SIZE, MUTED,
                                     DocumentTextDecoration.DEFAULT));
                         }
-                        String dialled = telUri(notes.contactPhone());
+                        String dialled = ContactUri.tel(notes.contactPhone());
                         if (dialled == null) {
                             p.inlineText(notes.contactPhone(), style(FOOTER_SUB_SIZE, BODY,
                                     DocumentTextDecoration.DEFAULT));
@@ -277,13 +271,5 @@ final class PaymentsClosing {
                 });
             });
         });
-    }
-
-    /** A printed number as something a reader can dial, or {@code null}. */
-    private static String telUri(String phone) {
-        String dialled = TRUNK_PREFIX.matcher(phone).replaceAll("");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 }

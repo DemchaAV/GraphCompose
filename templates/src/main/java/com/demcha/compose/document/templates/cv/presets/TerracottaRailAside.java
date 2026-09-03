@@ -4,6 +4,7 @@ import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
@@ -142,7 +143,7 @@ final class TerracottaRailAside {
             channel(block, 0, TerracottaRailIcons.EMAIL, contact.email(),
                     "mailto:" + contact.email());
             channel(block, 1, TerracottaRailIcons.PHONE, contact.phone(),
-                    telUri(contact.phone()));
+                    ContactUri.tel(contact.phone()));
             channel(block, 2, TerracottaRailIcons.LOCATION, contact.address(), null);
             int index = 3;
             for (Link link : identity.links()) {
@@ -173,20 +174,6 @@ final class TerracottaRailAside {
         return target.contains("linkedin")
                 ? TerracottaRailIcons.LINKEDIN
                 : TerracottaRailIcons.GLOBE;
-    }
-
-    /**
-     * The dial target for a phone number: its digits, keeping a leading
-     * {@code +} so an international number stays international, and dropping
-     * a parenthesised trunk prefix the way a caller dialling from abroad
-     * drops it.
-     */
-    private static String telUri(String phone) {
-        String dialled = phone.replaceAll("\\(0+\\)", "");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty()
-                ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     // -- the lists ---------------------------------------------------------

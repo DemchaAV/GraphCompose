@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 228,
-    "methods": 1281,
+    "methods": 1282,
     "constants": 177,
     "generated": 689
   },
@@ -475,6 +475,20 @@
                 {
                   "type": "String",
                   "name": "email"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "web",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "website"
                 }
               ]
             },

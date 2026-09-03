@@ -178,20 +178,45 @@ follow semantic versioning; release dates are ISO 8601.
 
 - **One place turns a printed contact into a followable one:
   `core.identity.ContactUri`.** The rule that a printed telephone number and the number
-  a device dials are different strings was written three times — once in the CV presets,
-  once in the invoice presets, once in the proposal presets — and the three copies were
-  byte-identical where they overlapped. They are now one helper in the family-neutral
-  identity layer, beside the contact-block and link records it serves, with `tel` /
-  `telLink` / `mailLink` / `webLink` / `channelLink`.
+  a device dials are different strings had three named homes — one in the CV presets, one
+  in the invoice presets, one in the proposal presets — byte-identical where they
+  overlapped. They are now one helper in the family-neutral identity layer, beside the
+  contact-block and link records it serves, with `tel` / `telLink` / `mailLink` /
+  `web` / `webLink` / `channelLink`. Thirteen further copies of the same rule, written
+  inline inside the presets rather than named, are swept onto it under *Fixed* below.
   <br><br>
   It is public because the three families are three packages and a helper shared between
   them cannot be package-private; it is not marked experimental because the shape is not
-  a guess — three independent implementations had already agreed on it. Every method
-  answers `null` rather than throwing, including where the string cannot be a URI at
-  all: a notice, a name or a line of prose can reach a channel field, and losing the
-  affordance is not worth failing to compose the page over. Twenty-three preset files
-  now call it and nothing renders differently — a link annotation is not ink, and every
-  pixel baseline in the suite passes untouched.
+  a guess — sixteen independent implementations had already agreed on it. The link forms
+  answer `null` rather than throwing, including where the string cannot be a URI at all:
+  a notice, a name or a line of prose can reach a channel field, and losing the
+  affordance is not worth failing to compose the page over. `tel` and `web` are the
+  target forms behind `telLink` and `webLink`, for the call sites that take a plain
+  string; a target is not yet a link, so it is the link forms that carry that guarantee.
+  Nothing renders differently — a link annotation is not ink, and every pixel baseline in
+  the suite passes untouched.
+
+### Fixed
+
+- **Five designs dialled a number they had not printed.** A printed telephone number and
+  the number a device dials are different strings, and the conversion between them lived
+  in thirteen private copies — one per design. Eight of them dropped the parenthesised
+  trunk prefix and five did not, so a sheet printing `+44 (0)20 7946 0832` linked
+  `tel:+4402079460832`, a number that reaches nobody from abroad. `ConsultingInvoice` was
+  further out still: its copy removed spaces and nothing else, so the printed brackets
+  went into the target and the link was not a dialable number at all. The five are
+  `CharcoalGold`, `NavySidebar`, `ProfessionalSidebar` and `SerifHeadline` on the CV
+  side, and `ConsultingInvoice` on the invoice side.
+  <br><br>
+  All thirteen copies are gone and every design routes through `ContactUri` — which is
+  what eight of them were already doing, in eight separate places: four spelling the
+  regex out inline and four naming a constant for it. That duplication is as much the
+  cost being removed as the five that got it wrong. The same sweep removes three copies
+  of the scheme-prefixing rule for a printed website, which `ContactUri` gains as `web`.
+  <br><br>
+  Nothing on any page moves: a link annotation is not ink, and no fixture prints a trunk
+  prefix, so no pixel baseline and no layout snapshot changes — what changes is where the
+  link goes when a caller's own number carries one.
 
 ### Templates
 
@@ -913,6 +938,17 @@ follow semantic versioning; release dates are ISO 8601.
   instead of the length of the string — a single-line channel is as tall as its mark,
   a wrapped one close to twice that — and the two sample addresses were shortened to
   fit.
+
+- **Every promoted CV design is asked the same question about its telephone link.**
+  `CvPresetDialTargetTest` renders all ten with a contact block whose number carries a
+  trunk prefix and reads the `tel:` targets back out of the file. This is the check the
+  thirteen private copies never had: two designs had a test naming a trunk prefix and
+  both handled one, while the other eight asserted their dial target with a number
+  carrying none — so every copy agreed with its own test, and four of them still built a
+  target no caller could reach. Proved fails-closed by removing the trunk-prefix rule
+  from `ContactUri` and watching all ten go red. `ConsultingInvoiceSmokeTest` asks the
+  same of the invoice design that was furthest out, giving the masthead and the closing
+  prose different numbers so that neither site can answer for the other.
 
 ## v2.3.0 — 2026-08-31
 

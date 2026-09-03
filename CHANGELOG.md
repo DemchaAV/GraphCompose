@@ -176,6 +176,23 @@ follow semantic versioning; release dates are ISO 8601.
   the model whose shape it renders. Every component normalizes `null` to its empty
   form and freezes its collections, matching the family's existing records.
 
+- **One place turns a printed contact into a followable one:
+  `core.identity.ContactUri`.** The rule that a printed telephone number and the number
+  a device dials are different strings was written three times — once in the CV presets,
+  once in the invoice presets, once in the proposal presets — and the three copies were
+  byte-identical where they overlapped. They are now one helper in the family-neutral
+  identity layer, beside the contact-block and link records it serves, with `tel` /
+  `telLink` / `mailLink` / `webLink` / `channelLink`.
+  <br><br>
+  It is public because the three families are three packages and a helper shared between
+  them cannot be package-private; it is not marked experimental because the shape is not
+  a guess — three independent implementations had already agreed on it. Every method
+  answers `null` rather than throwing, including where the string cannot be a URI at
+  all: a notice, a name or a line of prose can reach a channel field, and losing the
+  affordance is not worth failing to compose the page over. Twenty-three preset files
+  now call it and nothing renders differently — a link annotation is not ink, and every
+  pixel baseline in the suite passes untouched.
+
 ### Templates
 
 - **The invoice presets set their page number in their own face.** A header or footer

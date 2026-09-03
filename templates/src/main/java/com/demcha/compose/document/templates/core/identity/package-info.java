@@ -20,6 +20,9 @@
  *       — the header widgets that render a {@code PartyIdentity}.</li>
  *   <li>{@link com.demcha.compose.document.templates.core.identity.SvgGlyph}
  *       — a small inline-SVG glyph helper used by the header widgets.</li>
+ *   <li>{@link com.demcha.compose.document.templates.core.identity.ContactUri}
+ *       — turns a printed number, address or site into the target a reader's
+ *       device can act on.</li>
  * </ul>
  */
 package com.demcha.compose.document.templates.core.identity;

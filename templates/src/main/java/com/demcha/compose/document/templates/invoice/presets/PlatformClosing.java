@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
@@ -157,10 +158,10 @@ final class PlatformClosing {
     private static void writeReachable(ParagraphBuilder paragraph, String prose,
                                        InvoiceNotesBlock notes, InvoiceContactBlock supplier) {
         List<Reachable> found = new ArrayList<>();
-        addIfPresent(found, prose, notes.contactEmail(), InvoiceUri.mailLink(notes.contactEmail()));
-        addIfPresent(found, prose, supplier.email(), InvoiceUri.mailLink(supplier.email()));
-        addIfPresent(found, prose, supplier.website(), InvoiceUri.webLink(supplier.website()));
-        addIfPresent(found, prose, notes.contactPhone(), InvoiceUri.telLink(notes.contactPhone()));
+        addIfPresent(found, prose, notes.contactEmail(), ContactUri.mailLink(notes.contactEmail()));
+        addIfPresent(found, prose, supplier.email(), ContactUri.mailLink(supplier.email()));
+        addIfPresent(found, prose, supplier.website(), ContactUri.webLink(supplier.website()));
+        addIfPresent(found, prose, notes.contactPhone(), ContactUri.telLink(notes.contactPhone()));
         found.sort(Comparator.comparingInt(Reachable::at));
 
         int cursor = 0;

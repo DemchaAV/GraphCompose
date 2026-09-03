@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
@@ -82,7 +83,7 @@ final class ObsidianClosing {
                     text.addParagraph(p -> {
                         p.name("ClosingContact").align(TextAlign.RIGHT);
                         p.inlineText(supplier.email(), plain(CLOSING_RIGHT_SIZE, MUTED),
-                                InvoiceUri.mailLink(supplier.email()));
+                                ContactUri.mailLink(supplier.email()));
                     });
                 }
             });

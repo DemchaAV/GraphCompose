@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.proposal.ProposalBrand;
 import com.demcha.compose.document.templates.data.proposal.ProposalFooter;
 
@@ -175,7 +176,7 @@ final class IndigoClosing {
     /** A channel, made followable when its printed shape says what it is. */
     private static void appendChannel(ParagraphBuilder p, String contact,
                                       DocumentTextStyle body) {
-        DocumentLinkOptions link = ProposalUri.channelLink(contact);
+        DocumentLinkOptions link = ContactUri.channelLink(contact);
         if (link == null) {
             p.inlineText(contact, body);
         } else {

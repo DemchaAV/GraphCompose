@@ -11,6 +11,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
@@ -180,11 +181,11 @@ final class MerchantMasthead {
                     .margin(new DocumentInsets(
                             inkGapToImage(280 - 236, BODY_SIZE, false), 0, 0, 0));
             channel(block, "Website", MerchantIcons.WEBSITE, supplier.website(),
-                    InvoiceUri.webLink(supplier.website()));
+                    ContactUri.webLink(supplier.website()));
             channel(block, "Email", MerchantIcons.EMAIL, supplier.email(),
-                    InvoiceUri.mailLink(supplier.email()));
+                    ContactUri.mailLink(supplier.email()));
             channel(block, "Phone", MerchantIcons.PHONE, supplier.phone(),
-                    InvoiceUri.telLink(supplier.phone()));
+                    ContactUri.telLink(supplier.phone()));
         });
 
         if (!supplier.taxRegistrationNumber().isBlank()) {

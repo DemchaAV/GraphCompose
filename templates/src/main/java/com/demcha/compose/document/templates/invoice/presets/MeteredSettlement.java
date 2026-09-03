@@ -8,6 +8,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceTotalsBlock;
 
@@ -145,7 +146,7 @@ final class MeteredSettlement {
      * address, which is the one field on the panel a reader would act on.
      */
     private static DocumentLinkOptions linkFor(String value) {
-        return value.contains("@") ? InvoiceUri.mailLink(value) : null;
+        return value.contains("@") ? ContactUri.mailLink(value) : null;
     }
 
     private static void renderDueBy(SectionBuilder column, InvoicePaymentBlock payment) {

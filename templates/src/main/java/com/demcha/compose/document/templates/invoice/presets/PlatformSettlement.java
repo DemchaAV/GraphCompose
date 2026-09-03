@@ -7,6 +7,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceTotalsBlock;
 
@@ -142,7 +143,7 @@ final class PlatformSettlement {
                         // except the remittance address, the one field on the
                         // panel a reader would act on.
                         if (field.value().contains("@")) {
-                            p.link(InvoiceUri.mailLink(field.value()));
+                            p.link(ContactUri.mailLink(field.value()));
                         }
                     });
                 });

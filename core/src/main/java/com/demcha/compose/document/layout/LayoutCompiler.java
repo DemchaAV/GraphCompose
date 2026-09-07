@@ -485,10 +485,14 @@ public final class LayoutCompiler {
                 Margin childMargin = toMargin(child.margin());
                 double slotWidth = slotWidths[index];
                 double childRegionX = cursorX + childMargin.left();
-                double childInnerWidth = Math.max(0.0, slotWidth - childMargin.horizontal());
 
+                // The whole slot goes in — prepareForRegionWidth removes the child's
+                // margin itself. Pre-subtracting it here took it off twice, so the
+                // child was prepared at slot - 2 * margin while measureRow had sized
+                // the band from slot - margin, and the extra wrap tripped the guard
+                // below.
                 PreparedNode<DocumentNode> childPrepared =
-                        prepareForRegionWidth(prepareContext, child, childInnerWidth);
+                        prepareForRegionWidth(prepareContext, child, slotWidth);
                 MeasureResult childMeasure = childPrepared.measureResult();
                 @SuppressWarnings("unchecked")
                 NodeDefinition<DocumentNode> childDefinition =
@@ -1181,9 +1185,9 @@ public final class LayoutCompiler {
             DocumentNode child = children.get(index);
             Margin childMargin = toMargin(child.margin());
             double slotWidth = slotWidths[index];
-            double childInnerWidth = Math.max(0.0, slotWidth - childMargin.horizontal());
+            // Whole slot, one margin subtraction — see the page-level row band.
             PreparedNode<DocumentNode> childPrepared =
-                    prepareForRegionWidth(prepareContext, child, childInnerWidth);
+                    prepareForRegionWidth(prepareContext, child, slotWidth);
 
             // Cross-axis seating, identical to the page-level row band: TOP
             // yields offset 0.0, so a TOP row places exactly where the plain
@@ -1209,6 +1213,21 @@ public final class LayoutCompiler {
         }
     }
 
+    /**
+     * Prepares a node for the region its <em>margin box</em> occupies.
+     *
+     * <p>Pass the whole region — the parent's content width, or a row slot — never
+     * one the node's own margin has already been taken out of: the subtraction
+     * happens here, in {@link #childAvailableWidth}. Pre-subtracting takes the
+     * margin off twice and prepares the node narrower than
+     * {@link NodeDefinitionSupport#measureRow} measured it, which is what the row
+     * band's inner-height guard then rejects.</p>
+     *
+     * @param prepareContext measurement context
+     * @param node           the node to prepare
+     * @param regionWidth    width of the region the node's margin box sits in
+     * @return the node prepared at the width {@link #childAvailableWidth} resolves for it
+     */
     private PreparedNode<DocumentNode> prepareForRegionWidth(PrepareContext prepareContext,
                                                              DocumentNode node,
                                                              double regionWidth) {
@@ -1220,16 +1239,20 @@ public final class LayoutCompiler {
      * parent offers, less the node's own margin, narrowed to the node's declared
      * horizontal size constraint.
      *
-     * <p>This caps the width a node may occupy, which is what the overflow guard in
-     * {@code compileNode} compares a measurement against. It is deliberately NOT
-     * the number a fixed-width box seats its children in: callers reach this method
-     * with different bases (a row column passes the whole slot to placement but the
-     * slot less the child's margin to prepare), so a box's children follow its
-     * measured width instead — see the {@code fixedWidth} branches in
-     * {@code compileComposite} and {@code compileNodeInFixedSlot}.</p>
+     * <p>{@code regionWidth} is the region the node's <em>margin box</em> occupies,
+     * and the margin comes off here — every caller passes a whole region, never one
+     * it has already inset. This caps the width a node may occupy, which is what the
+     * overflow guard in {@code compileNode} compares a measurement against. It is
+     * deliberately NOT the number a fixed-width box seats its children in: a box's
+     * children follow its measured width instead — see the {@code fixedWidth}
+     * branches in {@code compileComposite} and {@code compileNodeInFixedSlot}.</p>
      *
      * <p>A natural {@code DocumentFlowWidth}, which every node carries unless it
      * opted in, resolves to the region width and leaves this exactly as it was.</p>
+     *
+     * @param regionWidth width of the region the node's margin box sits in
+     * @param node        the node whose margin is removed
+     * @return the width available to the node itself, never negative
      */
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
         Margin margin = toMargin(node.margin());

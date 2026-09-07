@@ -222,14 +222,37 @@ for (const file of docPages()) {
   for (const claim of claims) {
     if (claim.proof) {
       const [scheme, id] = [claim.proof.slice(0, claim.proof.indexOf(":")), claim.proof.slice(claim.proof.indexOf(":") + 1)];
-      if (scheme === "test" && !proofTargets.tests.has(id)) {
-        errors.push({
-          file: claim.file,
-          line: claim.line,
-          heading: claim.heading,
-          message: `proof "${claim.proof}" names no test class — it was renamed or removed, so the claim is unheld.`,
-        });
-        continue;
+      if (scheme === "test") {
+        // `Class`, or `Class#method`. Resolving the class alone catches a class
+        // rename and nothing else: delete the one method that holds a behaviour
+        // and the claim goes on reading as proven, because the file still
+        // exists. Naming the method closes that, and stays optional so no
+        // existing claim has to change to keep working.
+        const [className, method] = id.split("#");
+        const testPath = proofTargets.tests.get(className);
+        if (!testPath) {
+          errors.push({
+            file: claim.file,
+            line: claim.line,
+            heading: claim.heading,
+            message: `proof "${claim.proof}" names no test class — it was renamed or removed, so the claim is unheld.`,
+          });
+          continue;
+        }
+        if (method) {
+          const source = fs.readFileSync(path.join(REPO_ROOT, testPath), "utf8");
+          if (!new RegExp(`\\b${method}\\s*\\(`).test(source)) {
+            errors.push({
+              file: claim.file,
+              line: claim.line,
+              heading: claim.heading,
+              message:
+                `proof "${claim.proof}" names no method "${method}" in ${testPath} — ` +
+                "the assertion that held this claim was renamed or removed.",
+            });
+            continue;
+          }
+        }
       }
       if (scheme === "snippet" && !proofTargets.snippets.has(id)) {
         errors.push({
@@ -331,7 +354,7 @@ for (const claim of allClaims) {
   const id = claim.proof.slice(claim.proof.indexOf(":") + 1);
   const entry = (proofs[claim.proof] ??= {
     kind: scheme,
-    ...(scheme === "test" ? { path: proofTargets.tests.get(id) ?? null } : {}),
+    ...(scheme === "test" ? { path: proofTargets.tests.get(id.split("#")[0]) ?? null } : {}),
     ...(scheme === "snippet" ? { page: proofTargets.snippets.get(id) ?? null } : {}),
     ...(scheme === "probe" || scheme === "render" ? { unresolved: "no registry for this scheme yet" } : {}),
     holds: [],

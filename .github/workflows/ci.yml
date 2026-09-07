@@ -225,27 +225,34 @@ jobs:
         with:
           node-version: '20'
 
-      # Every fixture suite the knowledge tools ship, found rather than listed.
-      # Naming them one step each meant a new suite ran only if someone also
-      # remembered to edit this file — and a suite that never runs looks exactly
-      # like a suite that passes.
+      # Every fixture suite the knowledge tools ship, discovered and then held to
+      # a declared list. Neither half is enough on its own: naming them one step
+      # each meant a new suite ran only if someone remembered to edit this file,
+      # and discovery alone meant a suite renamed out of the glob stopped running
+      # with nothing to notice. A suite that never runs looks exactly like one
+      # that passes.
       #
-      # Discovery is recursive, so a suite nested a directory deeper is still
-      # found, and the floor is what keeps the step honest in the other
-      # direction: deleting or moving a suite drops the count and goes red
-      # instead of quietly reducing coverage. Raise the floor in the same commit
-      # that adds a suite.
+      # So the set is compared, not counted. Add, rename or delete a suite and
+      # this step goes red until the list below says so too — which is the point:
+      # the change becomes deliberate instead of silent.
       - name: Knowledge pack — tool fixtures
         if: matrix.java == '17'
         run: |
-          mapfile -t suites < <(find knowledge/tools -type f -name '*.test.mjs' | sort)
-          minimum=4
-          if [ "${#suites[@]}" -lt "$minimum" ]; then
-            echo "found ${#suites[@]} fixture suites under knowledge/tools, expected at least $minimum" >&2
-            printf '  %s\n' "${suites[@]}" >&2
+          expected=$(printf '%s\n' \
+            knowledge/tools/api-surface/test/classifier.test.mjs \
+            knowledge/tools/claims/test/claims.test.mjs \
+            knowledge/tools/routing/test/anchors.test.mjs \
+            knowledge/tools/routing/test/pack-version.test.mjs)
+          found=$(find knowledge/tools -type f -name '*.test.mjs' | sort)
+          if [ "$found" != "$expected" ]; then
+            echo "the fixture suites on disk are not the ones this step declares:" >&2
+            diff <(printf '%s\n' "$expected") <(printf '%s\n' "$found") >&2 || true
             exit 1
           fi
-          for suite in "${suites[@]}"; do
+          # Not piped into `while read`: that runs the loop in a subshell, where
+          # a failing suite could not fail the step. The paths hold no spaces, so
+          # word splitting is safe and `bash -e` aborts on the first non-zero.
+          for suite in $found; do
             echo "--- $suite"
             node "$suite"
           done

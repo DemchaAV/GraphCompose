@@ -221,7 +221,7 @@ jobs:
       # running it three times would only triple the chance of a flake.
       - name: Set up Node for the knowledge pack
         if: matrix.java == '17'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 

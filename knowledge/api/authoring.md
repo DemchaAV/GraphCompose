@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 1106
+Types: 233 · methods: 2076 · constants: 230 · compiler-generated members: 1111
 
 ## com.demcha.compose
 
@@ -478,6 +478,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `T margin(float top, float right, float bottom, float left)`
 - `T bleed(DocumentBleed bleed)`
 - `T bleedToEdge(DocumentEdge... edges)`
+- `T fixedWidth(double points)`
 - `T fillColor(Color fillColor)`
 - `T fillColor(DocumentColor fillColor)`
 - `T stroke(DocumentStroke stroke)`
@@ -1250,7 +1251,8 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentInsets padding()`
 
 ### ContainerNode (record)
-- `new ContainerNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, String, DocumentBookmarkOptions)`
+- `new ContainerNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, String, DocumentBookmarkOptions, DocumentFlowWidth)`
+- `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, String anchor, DocumentBookmarkOptions bookmarkOptions)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, String anchor)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders)`
 - `new ContainerNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius)`
@@ -1266,6 +1268,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentBorders borders()`
 - `String anchor()`
 - `DocumentBookmarkOptions bookmarkOptions()`
+- `DocumentFlowWidth flowWidth()`
 
 ### DocumentBarcodeOptions (class)
 - `DocumentBarcodeOptions.DocumentBarcodeOptionsBuilder builder()`
@@ -1311,6 +1314,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `boolean keepTogether()`
 - `boolean keepWithNext()`
 - `DocumentBleed bleed()`
+- `DocumentFlowWidth flowWidth()`
 
 ### EllipseNode (record)
 - `new EllipseNode(String, double, double, DocumentColor, DocumentStroke, DocumentLinkTarget, DocumentBookmarkOptions, DocumentInsets, DocumentInsets, DocumentTransform, String)`
@@ -1625,7 +1629,8 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - constants: `TOP`, `CENTER`, `BOTTOM`
 
 ### SectionNode (record)
-- `new SectionNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, boolean, String, DocumentBleed, DocumentBookmarkOptions, boolean)`
+- `new SectionNode(String, List<DocumentNode>, double, DocumentInsets, DocumentInsets, DocumentColor, DocumentStroke, DocumentCornerRadius, DocumentBorders, boolean, String, DocumentBleed, DocumentBookmarkOptions, boolean, DocumentFlowWidth)`
+- `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed, DocumentBookmarkOptions bookmarkOptions, boolean keepWithNext)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed, DocumentBookmarkOptions bookmarkOptions)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor, DocumentBleed bleed)`
 - `new SectionNode(String name, List<DocumentNode> children, double spacing, DocumentInsets padding, DocumentInsets margin, DocumentColor fillColor, DocumentStroke stroke, DocumentCornerRadius cornerRadius, DocumentBorders borders, boolean keepTogether, String anchor)`
@@ -1647,6 +1652,7 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 - `DocumentBleed bleed()`
 - `DocumentBookmarkOptions bookmarkOptions()`
 - `boolean keepWithNext()`
+- `DocumentFlowWidth flowWidth()`
 
 ### ShapeContainerNode (record)
 - `new ShapeContainerNode(String name, ShapeOutline outline, List<LayerStackNode.Layer> layers, ClipPolicy clipPolicy, DocumentColor fillColor, DocumentStroke stroke, DocumentInsets padding, DocumentInsets margin)`
@@ -2130,6 +2136,14 @@ Types: 232 · methods: 2064 · constants: 230 · compiler-generated members: 110
 
 ### DocumentEdge (enum)
 - constants: `TOP`, `RIGHT`, `BOTTOM`, `LEFT`
+
+### DocumentFlowWidth (record)
+- `new DocumentFlowWidth(double)`
+- `DocumentFlowWidth natural()`
+- `DocumentFlowWidth of(double points)`
+- `boolean isFixed()`
+- `double resolve(double availableWidth)`
+- `double points()`
 
 ### DocumentInsets (record)
 - `new DocumentInsets(double, double, double, double)`

@@ -353,7 +353,7 @@ public final class NodeDefinitionSupport {
 
     /**
      * Measures a vertical composite node by preparing children inside the
-     * padding-adjusted inner width.
+     * padding-adjusted inner width, at the natural (content-driven) width.
      *
      * @param children    semantic child nodes
      * @param spacing     vertical spacing between children
@@ -367,7 +367,43 @@ public final class NodeDefinitionSupport {
                                                  Padding padding,
                                                  PrepareContext ctx,
                                                  BoxConstraints constraints) {
-        double innerWidth = Math.max(0.0, constraints.availableWidth() - padding.horizontal());
+        return measureComposite(children, spacing, padding, ctx, constraints, DocumentFlowWidth.natural());
+    }
+
+    /**
+     * Measures a vertical composite node by preparing children inside the
+     * padding-adjusted inner width, honouring the node's horizontal size
+     * constraint.
+     *
+     * <p>A {@link DocumentFlowWidth#natural()} width leaves the measurement
+     * exactly as it has always been: children are measured inside the width the
+     * parent offers, and the box reports shrink-to-fit. A fixed width narrows the
+     * measurement to {@link DocumentFlowWidth#resolve(double)} — clamped to the
+     * parent's available width — and the box reports that width whether or not its
+     * content fills it, so the decoration and the placed box are the width that was
+     * asked for. The vertical axis is untouched either way: the height is the same
+     * accumulated content height, measured through
+     * {@link BoxConstraints#natural(double)} as before.</p>
+     *
+     * @param children    semantic child nodes
+     * @param spacing     vertical spacing between children
+     * @param padding     engine padding
+     * @param ctx         prepare context
+     * @param constraints parent constraints
+     * @param flowWidth   the node's horizontal size constraint
+     * @return measured outer size
+     * @since 2.4.0
+     */
+    public static MeasureResult measureComposite(List<DocumentNode> children,
+                                                 double spacing,
+                                                 Padding padding,
+                                                 PrepareContext ctx,
+                                                 BoxConstraints constraints,
+                                                 DocumentFlowWidth flowWidth) {
+        // Resolving against the incoming width is idempotent, so this is correct
+        // whether the caller already narrowed the constraints or not.
+        double outerWidth = flowWidth.resolve(constraints.availableWidth());
+        double innerWidth = Math.max(0.0, outerWidth - padding.horizontal());
         double totalHeight = padding.vertical();
         double maxWidth = 0.0;
 
@@ -384,7 +420,7 @@ public final class NodeDefinitionSupport {
         }
 
         return new MeasureResult(
-                Math.min(constraints.availableWidth(), padding.horizontal() + maxWidth),
+                flowWidth.isFixed() ? outerWidth : Math.min(outerWidth, padding.horizontal() + maxWidth),
                 totalHeight);
     }
 

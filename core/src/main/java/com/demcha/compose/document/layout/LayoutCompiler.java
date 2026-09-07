@@ -279,12 +279,22 @@ public final class LayoutCompiler {
         state.advanceSpace(startReservation);
         List<DocumentNode> children = definition.children(node);
         double childRegionX = placementX + padding.left();
-        double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+        // A fixed-width box seats its children inside the width it was MEASURED at,
+        // not inside the one re-derived here. The two are not always the same
+        // number: a row column prepares its child against the slot less the child's
+        // margin and then hands placement the whole slot, so a re-derivation would
+        // wrap text at one width while the box paints at another. Taking the
+        // measured width makes the painted box and the wrapping width the same
+        // number by construction, whatever base the caller used.
+        boolean fixedWidth = node.flowWidth().isFixed();
+        double childRegionWidth = Math.max(0.0,
+                (fixedWidth ? naturalMeasure.width() : availableWidth) - padding.horizontal());
         // At the root level the page margin defines the document's content column, so
         // each direct child is measured at the content width of the page it begins on
         // (carried over from the previous pass via the fixed point). Nested composites
         // keep their parent-allocated geometry. With no per-page margins both branches
-        // resolve to the same width, so the layout is byte-identical.
+        // resolve to the same width, so the layout is byte-identical. A fixed-width box
+        // owns its width across every page it touches, so it re-seats only its x.
         boolean pageColumn = depth == 1 && state.hasPageGeometry();
 
         for (int index = 0; index < children.size(); index++) {
@@ -294,8 +304,10 @@ public final class LayoutCompiler {
             if (pageColumn) {
                 int childStartPage = prepareContext.assignedStartPage(
                         pathFor(child, path, index), state.pageIndex);
-                double pageRegionWidth = state.innerWidthForPage(childStartPage);
-                thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
+                if (!fixedWidth) {
+                    double pageRegionWidth = state.innerWidthForPage(childStartPage);
+                    thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
+                }
                 thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
             }
             PreparedNode<DocumentNode> childPrepared =
@@ -1003,7 +1015,11 @@ public final class LayoutCompiler {
             }
 
             double childRegionX = placementX + padding.left();
-            double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+            // Same rule as the flow walk: a fixed-width box seats its children inside
+            // the width it was measured at, so a row slot that hands placement a wider
+            // base than prepare saw cannot wrap text past the painted box.
+            double childRegionWidth = Math.max(0.0,
+                    (node.flowWidth().isFixed() ? measure.width() : availableWidth) - padding.horizontal());
             double childTopY = placementTopY - padding.top();
 
             if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
@@ -1187,9 +1203,26 @@ public final class LayoutCompiler {
         return prepareContext.prepare(node, BoxConstraints.natural(childAvailableWidth(regionWidth, node)));
     }
 
+    /**
+     * The width a node is both measured at and laid out inside: the region its
+     * parent offers, less the node's own margin, narrowed to the node's declared
+     * horizontal size constraint.
+     *
+     * <p>This caps the width a node may occupy, which is what the overflow guard in
+     * {@code compileNode} compares a measurement against. It is deliberately NOT
+     * the number a fixed-width box seats its children in: callers reach this method
+     * with different bases (a row column passes the whole slot to placement but the
+     * slot less the child's margin to prepare), so a box's children follow its
+     * measured width instead — see the {@code fixedWidth} branches in
+     * {@code compileComposite} and {@code compileNodeInFixedSlot}.</p>
+     *
+     * <p>{@link DocumentFlowWidth#natural()}, which every node carries unless it
+     * opted in, resolves to the region width and leaves this exactly as it was.</p>
+     */
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
         Margin margin = toMargin(node.margin());
-        return Math.max(0.0, regionWidth - margin.horizontal());
+        double available = Math.max(0.0, regionWidth - margin.horizontal());
+        return node.flowWidth().resolve(available);
     }
 
     /**

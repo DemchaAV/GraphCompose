@@ -336,7 +336,8 @@ public final class ModuleBuilder extends AbstractFlowBuilder<ModuleBuilder, Sect
         // A module does not bleed (matching its long-standing behaviour) — thread
         // only the bookmark, leaving bleed at none().
         return new SectionNode(name(), moduleChildren, spacing(), padding(), margin(), fillColor(),
-                stroke(), cornerRadius(), borders(), keepTogether, anchor(), DocumentBleed.none(), bookmarkOptions());
+                stroke(), cornerRadius(), borders(), keepTogether, anchor(), DocumentBleed.none(), bookmarkOptions(),
+                false, flowWidth());
     }
 
     /**

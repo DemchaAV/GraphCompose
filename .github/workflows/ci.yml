@@ -225,9 +225,24 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Knowledge pack — classification fixtures
+      # Every fixture suite the knowledge tools ship, found rather than listed.
+      # Naming them one step each meant a new suite ran only if someone also
+      # remembered to edit this file — and a suite that never runs looks exactly
+      # like a suite that passes. The loop fails on the first non-zero exit and
+      # prints which file it was running.
+      - name: Knowledge pack — tool fixtures
         if: matrix.java == '17'
-        run: node knowledge/tools/api-surface/test/classifier.test.mjs
+        run: |
+          shopt -s nullglob
+          suites=(knowledge/tools/*/test/*.test.mjs)
+          if [ ${#suites[@]} -eq 0 ]; then
+            echo "no fixture suites found under knowledge/tools/*/test/ — the layout moved" >&2
+            exit 1
+          fi
+          for suite in "${suites[@]}"; do
+            echo "--- $suite"
+            node "$suite"
+          done
 
       # Blocking, and blocking from the first run. A warn-only gate is one
       # nobody reads, which is the failure mode this pack exists to remove: the
@@ -236,10 +251,6 @@ jobs:
       - name: Knowledge pack — API surface is current
         if: matrix.java == '17'
         run: node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
-
-      - name: Knowledge pack — claim parser fixtures
-        if: matrix.java == '17'
-        run: node knowledge/tools/claims/test/claims.test.mjs
 
       # A claim is a promise a published page makes to a reader. This fails when
       # a page names API that no surface has — which a reader would discover by

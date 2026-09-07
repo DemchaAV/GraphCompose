@@ -1,0 +1,157 @@
+#!/usr/bin/env node
+/**
+ * knowledge/tools/routing/test/anchors.test.mjs — the anchor rule the routing
+ * gate resolves references with.
+ *
+ *   node knowledge/tools/routing/test/anchors.test.mjs
+ *
+ * Exit 0 all passed · 1 a case failed.
+ *
+ * Every case here is one the gate previously got wrong, in one of the two
+ * directions that matter:
+ *
+ *   accepts too little — CI red on a reference that works in a browser;
+ *   accepts too much   — CI green on a reference that 404s.
+ *
+ * The second is the dangerous one, and it is the reason this file exists at all:
+ * a gate that accepts everything reports zero problems for ever, which reads
+ * exactly like a gate that is working. Stub `anchorRefsIn` to return `[]` and
+ * `check-routes` still prints "5 routes hold up" — nothing but a fixture notices.
+ */
+
+import { anchorOf, anchorsIn, anchorRefsIn } from "../lib/anchors.mjs";
+
+let failures = 0;
+let passes = 0;
+
+function check(name, actual, expected) {
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if (a === e) {
+    passes += 1;
+    return;
+  }
+  failures += 1;
+  process.stdout.write(`  FAIL  ${name}\n        expected ${e}\n        actual   ${a}\n`);
+}
+
+// --------------------------------------------------------------- anchorOf ---
+
+check("a plain heading lowercases and hyphenates", anchorOf("The four tools"), "the-four-tools");
+
+// The divergence that motivated the module. House style spaces its em dashes,
+// so GitHub sees two whitespace characters and emits two hyphens. Collapsing
+// runs produced a single hyphen and disagreed with the rendered page on 121 of
+// the 786 headings under docs/.
+check(
+  "a spaced em dash yields two hyphens, as on GitHub",
+  anchorOf("Zebra — alternating row fills"),
+  "zebra--alternating-row-fills",
+);
+check(
+  "so does any other double space",
+  anchorOf("Row span  merge a cell"),
+  "row-span--merge-a-cell",
+);
+
+// The four inputs on which this rule and its Java twin
+// (DocumentationLinkGuardTest.slug, which the markdown link guard resolves with)
+// were measured to disagree. Neither can call the other across the language
+// boundary, so the same table is asserted from both sides: change one rule and
+// its own fixture goes red. Escapes, not literals -- these characters are
+// invisible or indistinguishable in an editor.
+check(
+  "a non-breaking space hyphenates like any other whitespace",
+  anchorOf("Zebra alternating rows"),
+  "zebra-alternating-rows",
+);
+check("so does an em space", anchorOf("Row span"), "row-span");
+check(
+  "a circled numeral is a number and survives, as it does on the page",
+  anchorOf("Item ① first"),
+  "item-①-first",
+);
+check(
+  "a decomposed accent is a combining mark and stays with its letter",
+  anchorOf("Café rules"),
+  "café-rules",
+);
+
+check("punctuation is dropped, not hyphenated", anchorOf("Sidebar: page background vs. row"), "sidebar-page-background-vs-row");
+check("backticks are dropped", anchorOf("`fill()` and the slot"), "fill-and-the-slot");
+check("a link in a heading contributes its text only", anchorOf("See [the guide](x.md)"), "see-the-guide");
+check("html is stripped", anchorOf("A <em>strong</em> claim"), "a-strong-claim");
+check("trailing space does not become a hyphen", anchorOf("  Trimmed  "), "trimmed");
+
+// --------------------------------------------------------------- anchorsIn ---
+
+check(
+  "headings become anchors",
+  [...anchorsIn("# One\n\n## Two words\n")],
+  ["one", "two-words"],
+);
+
+// A `#` line inside a fence renders as code. Treating it as a heading let a
+// route cite a phantom anchor and pass: docs/templates/v2-layered/
+// contributor-guide.md has `# 3. Normal run (...)` inside a bash fence.
+check(
+  "a comment inside a fenced block is not a heading",
+  [...anchorsIn("# Real\n\n```bash\n# 3. Normal run (defends against drift):\nmvn verify\n```\n")],
+  ["real"],
+);
+check(
+  "an indented fence is still a fence",
+  [...anchorsIn("# Real\n\n  ```\n  # not a heading\n  ```\n")],
+  ["real"],
+);
+
+check(
+  "a repeated heading gets GitHub's numeric suffix",
+  [...anchorsIn("## Notes\n\n## Notes\n\n## Notes\n")],
+  ["notes", "notes-1", "notes-2"],
+);
+
+check(
+  "a hand-written anchor counts",
+  [...anchorsIn("<a name=\"legacy-id\"></a>\n\n# Title\n")],
+  ["title", "legacy-id"],
+);
+
+// ------------------------------------------------------------ anchorRefsIn ---
+
+check(
+  "a repo-relative reference is found",
+  anchorRefsIn("see docs/recipes/tables.md#zebra for the rest"),
+  ["docs/recipes/tables.md#zebra"],
+);
+check(
+  "several references in one field are all found",
+  anchorRefsIn("docs/a.md#one and docs/b.md#two"),
+  ["docs/a.md#one", "docs/b.md#two"],
+);
+check(
+  "a reference inside a markdown link is found",
+  anchorRefsIn("[the guide](docs/recipes/tables.md#zebra)"),
+  ["docs/recipes/tables.md#zebra"],
+);
+
+// The URL case. Without the leading boundary a match starts after the colon and
+// yields `//github.com/...`, which fails existsSync — so the gate rejects the
+// route for "no such page" when the author wrote a perfectly good link.
+check(
+  "an absolute URL is not mistaken for a repo path",
+  anchorRefsIn("https://github.com/DemchaAV/GraphCompose/blob/develop/docs/recipes/tables.md#zebra"),
+  [],
+);
+check(
+  "nor is a bare host path",
+  anchorRefsIn("see //cdn.example.com/docs/x.md#y"),
+  [],
+);
+check("a field with no reference yields none", anchorRefsIn("plain prose, no citation"), []);
+check("a null field is not an error", anchorRefsIn(null), []);
+
+process.stdout.write(
+  failures ? `\n[anchors.test] ${failures} failed, ${passes} passed\n` : `[anchors.test] ${passes} passed\n`,
+);
+process.exit(failures ? 1 : 0);

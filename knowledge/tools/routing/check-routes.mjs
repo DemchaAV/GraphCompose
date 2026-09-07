@@ -143,11 +143,12 @@ function checkAnchorRef(id, ref, where) {
     fail(id, `${where} "${ref}" — names an anchor but no page`);
     return;
   }
-  // Collapse "./" and "//" before anything compares this to a real path: those
-  // are valid spellings of the same page, and comparing the raw string to
-  // canonical output reported them as a casing mismatch when nothing was
-  // mis-cased.
-  const normalized = path.posix.normalize(rel);
+  // Collapse "./" and "//", and drop a leading "/" — all three are valid
+  // spellings of the same page, and comparing the raw string to canonical
+  // output reported them as a casing mismatch when nothing was mis-cased. A
+  // root-relative citation is relative to the repository, which is what the
+  // caller means by it.
+  const normalized = path.posix.normalize(rel.replace(/^\/+/, ""));
   if (normalized.startsWith("../")) {
     fail(id, `${where} "${ref}" — points outside the repository`);
     return;
@@ -270,8 +271,15 @@ for (const route of doc.tasks) {
   }
 
   // 1 — every docs anchor resolves.
-  for (const ref of route.docs ?? []) checkAnchorRef(id, ref, "docs");
-  if (!(route.docs ?? []).length) fail(id, "no docs: — a route must hand over an anchor to open");
+  if (route.docs !== undefined && !Array.isArray(route.docs)) {
+    // A bare string is iterable, so this used to be walked character by
+    // character: one bogus "no such page" per letter, and the "no docs" guard
+    // below silently satisfied by a non-empty string's length.
+    fail(id, `docs: is ${typeof route.docs}, not a list — write it as ["page.md#anchor"]`);
+  } else {
+    for (const ref of route.docs ?? []) checkAnchorRef(id, ref, "docs");
+    if (!(route.docs ?? []).length) fail(id, "no docs: — a route must hand over an anchor to open");
+  }
 
   // 2 — every symbol exists.
   for (const symbol of route.symbols ?? []) {
@@ -282,7 +290,11 @@ for (const route of doc.tasks) {
 
   // 3 and 4 — every constraint is a claimed behaviour, and that claim has a proof.
   for (const constraint of route.constraints ?? []) {
-    const holders = claims.behavior[constraint];
+    // hasOwn, not a bare lookup: a constraint named after an Object.prototype
+    // member ("toString", "constructor") is otherwise truthy, and the code below
+    // then dies on it with a TypeError that names no route and loses every error
+    // collected so far.
+    const holders = Object.hasOwn(claims.behavior, constraint) ? claims.behavior[constraint] : null;
     if (!holders) {
       fail(
         id,

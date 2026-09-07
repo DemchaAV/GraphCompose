@@ -172,17 +172,27 @@ function docsArePresent(refs) {
  * comparing a route against it is not something {@link versionParts} can do.
  */
 function packVersion() {
+  let files;
   try {
     // Sorted: an inconsistent pack must not answer differently depending on the
     // order the filesystem lists it in.
-    for (const file of fs.readdirSync(API_DIR).sort()) {
-      if (!file.endsWith(".json") || file === "excluded.json") continue;
+    files = fs.readdirSync(API_DIR).sort();
+  } catch {
+    // No surfaces at all is a pack that can still answer routing questions; the
+    // provenance line goes back to naming the route's own version.
+    return null;
+  }
+  for (const file of files) {
+    if (!file.endsWith(".json") || file === "excluded.json") continue;
+    try {
       const doc = JSON.parse(fs.readFileSync(path.join(API_DIR, file), "utf8"));
       if (doc.verifiedAgainst) return doc.verifiedAgainst;
+    } catch {
+      // Per file, not per pack. One unreadable surface used to take the whole
+      // version down with it -- and `authoring.json` sorts first, so the most
+      // likely corruption was also the one that silently removed the staleness
+      // note from every answer while four good surfaces still carried the stamp.
     }
-  } catch {
-    // A pack without readable surfaces still answers routing questions; the
-    // provenance line simply goes back to naming the route's own version.
   }
   return null;
 }
@@ -274,11 +284,20 @@ function renderTask(answer) {
     // Behind by version, not by spelling: at a release tag the surfaces read
     // 2.4.0 while a route signed during the cycle reads 2.4.0-SNAPSHOT, and
     // those are the same line of development.
-    out.push(
-      compareVersions(answer.verifiedAgainst, pack) < 0
-        ? `  checked against: ${answer.verifiedAgainst} (this pack is ${pack} — the route has not been re-read since)`
-        : `  checked against: ${answer.verifiedAgainst}`,
-    );
+    // Every verdict is forwarded, not only "behind". An unorderable version and
+    // one ahead of the surfaces both look like provenance and are not, and
+    // printing them bare made a typo read exactly like a route re-read today.
+    // check-routes fails on both, but it is not what a reader runs.
+    const order = pack === null ? undefined : compareVersions(answer.verifiedAgainst, pack);
+    let note = "";
+    if (order === null) {
+      note = ` (this pack is ${pack} — those two versions cannot be compared)`;
+    } else if (order < 0) {
+      note = ` (this pack is ${pack} — the route has not been re-read since)`;
+    } else if (order > 0) {
+      note = ` (this pack is ${pack} — the route claims a version the surfaces do not have)`;
+    }
+    out.push(`  checked against: ${answer.verifiedAgainst}${note}`);
   }
   if (!answer.confirmedBy) {
     out.push("");

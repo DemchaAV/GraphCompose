@@ -56,6 +56,14 @@ import { compareVersions, packVersionOf } from "./lib/pack-version.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
+/**
+ * The same root as the operating system reports it, so a citation resolved with
+ * `realpathSync` is compared against a root that went through the same
+ * resolution. Comparing a canonical file path against a root reached through a
+ * symlink, a bind mount or a Windows `subst` drive made every citation in the
+ * file look mis-cased.
+ */
+const REPO_REAL = fs.realpathSync.native(REPO_ROOT);
 const TASKS_FILE = path.join(REPO_ROOT, "knowledge", "routing", "tasks.json");
 const API_DIR = path.join(REPO_ROOT, "knowledge", "api");
 const CLAIMS_INDEX = path.join(REPO_ROOT, "knowledge", "claims", "index.json");
@@ -135,7 +143,16 @@ function checkAnchorRef(id, ref, where) {
     fail(id, `${where} "${ref}" — names an anchor but no page`);
     return;
   }
-  const file = path.join(REPO_ROOT, ...rel.split("/"));
+  // Collapse "./" and "//" before anything compares this to a real path: those
+  // are valid spellings of the same page, and comparing the raw string to
+  // canonical output reported them as a casing mismatch when nothing was
+  // mis-cased.
+  const normalized = path.posix.normalize(rel);
+  if (normalized.startsWith("../")) {
+    fail(id, `${where} "${ref}" — points outside the repository`);
+    return;
+  }
+  const file = path.join(REPO_REAL, ...normalized.split("/"));
   // statSync rather than existsSync: a reference whose path half is a directory
   // ("docs/recipes#zebra") exists, passes the anchor guard below because it does
   // carry a fragment, and then dies inside readFileSync with an EISDIR stack
@@ -153,9 +170,17 @@ function checkAnchorRef(id, ref, where) {
   }
   // existsSync is case-insensitive on Windows and case-sensitive on the runner,
   // so a mis-cased citation passes here and fails on CI with "no such page",
-  // which reads as a missing file rather than as the casing it is.
-  const onDisk = path.relative(REPO_ROOT, fs.realpathSync.native(file)).split(path.sep).join("/");
-  if (onDisk !== rel) {
+  // which reads as a missing file rather than as the casing it is. Both sides of
+  // the comparison are realpath'd: resolving only the file compared a canonical
+  // path against a repo root reached through a symlink or a Windows subst drive,
+  // and reported every citation in the file as mis-cased.
+  const real = fs.realpathSync.native(file);
+  if (real !== REPO_REAL && !real.startsWith(REPO_REAL + path.sep)) {
+    fail(id, `${where} "${ref}" — resolves outside the repository`);
+    return;
+  }
+  const onDisk = path.relative(REPO_REAL, real).split(path.sep).join("/");
+  if (onDisk !== normalized) {
     fail(id, `${where} "${ref}" — the page on disk is "${onDisk}"; the citation's casing does not match`);
     return;
   }

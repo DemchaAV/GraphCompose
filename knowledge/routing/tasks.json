@@ -40,7 +40,7 @@
       "task": "layout.icon-beside-text",
       "intent": "Put a small icon to the left of a line or block of text.",
       "recommended": "row-with-an-auto-and-a-weight-column",
-      "recommendedBecause": "docs/recipes/layered-page-design.md#icon-beside-text states the rule the signatures cannot: a row with no column spec, no grow spacer and the default START arrangement splits its inner width into equal shares, one per child, so a 13pt icon takes half the row. auto() is the icon's own width and weight(1) is everything left, which is the only form that stays right when the column is resized. RowWidthDistributionContractTest measures both, and the icon case on a real SvgIcon node.",
+      "recommendedBecause": "docs/recipes/layered-page-design.md#icon-beside-text states the rule the signatures cannot: a row with no column spec, no grow spacer and the default START arrangement splits its inner width into equal shares, one per child, so a 13pt icon takes half the row. auto() is the icon's own width and weight(1) is everything left, so the icon keeps its own size whatever the column is resized to — unlike weights(...), where the share is fixed and the icon's slot moves with the row. fixed(13) is as stable, and is the alternative when a rail of icons must line up. RowWidthDistributionContractTest measures both, and the icon case on a real SvgIcon node.",
       "alternatives": [
         {
           "id": "row-with-a-fixed-column",

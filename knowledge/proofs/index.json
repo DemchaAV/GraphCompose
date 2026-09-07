@@ -3,7 +3,7 @@
   "note": "Every proof a documentation claim cites, resolved to where it lives and what it holds up. Generated from the claim markers in docs/; a proof that nothing cites does not appear, and a claim whose proof does not resolve fails the check rather than landing here.",
   "generator": "knowledge/tools/claims/check-claims.mjs",
   "counts": {
-    "proofs": 8,
+    "proofs": 10,
     "claimsHeld": 13,
     "claimsWithoutProof": 33
   },
@@ -34,7 +34,20 @@
         }
       ]
     },
-    "test:LineWidthUnitsContractTest": {
+    "test:LineWidthUnitsContractTest#anAlignedHeadingLeavesTheWeightColumnNothingToFill": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 145,
+          "heading": "A rule that reaches the column edge"
+        }
+      ]
+    },
+    "test:LineWidthUnitsContractTest#horizontalIsPointsAndTheLineIsNotClippedToItsSlot": {
       "kind": "test",
       "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
       "holds": [
@@ -44,7 +57,13 @@
           "page": "docs/recipes/layered-page-design.md",
           "line": 142,
           "heading": "A rule that reaches the column edge"
-        },
+        }
+      ]
+    },
+    "test:LineWidthUnitsContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
+      "holds": [
         {
           "kind": "behavior",
           "value": "line.fill-spans-its-slot",
@@ -57,13 +76,6 @@
           "value": "line.fill-overflows-a-flex-row",
           "page": "docs/recipes/layered-page-design.md",
           "line": 144,
-          "heading": "A rule that reaches the column edge"
-        },
-        {
-          "kind": "behavior",
-          "value": "row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row",
-          "page": "docs/recipes/layered-page-design.md",
-          "line": 145,
           "heading": "A rule that reaches the column edge"
         }
       ]

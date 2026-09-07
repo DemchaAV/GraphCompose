@@ -139,10 +139,10 @@ the line and cannot hold a left rail.
 <!-- claim: symbol=LineBuilder.horizontal -->
 <!-- claim: symbol=LineBuilder.fill -->
 <!-- claim: symbol=ParagraphBuilder.align -->
-<!-- claim: behavior=line.horizontal-is-points-and-is-not-clipped proof=test:LineWidthUnitsContractTest -->
+<!-- claim: behavior=line.horizontal-is-points-and-is-not-clipped proof=test:LineWidthUnitsContractTest#horizontalIsPointsAndTheLineIsNotClippedToItsSlot -->
 <!-- claim: behavior=line.fill-spans-its-slot proof=test:LineWidthUnitsContractTest -->
 <!-- claim: behavior=line.fill-overflows-a-flex-row proof=test:LineWidthUnitsContractTest -->
-<!-- claim: behavior=row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row proof=test:LineWidthUnitsContractTest -->
+<!-- claim: behavior=row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row proof=test:LineWidthUnitsContractTest#anAlignedHeadingLeavesTheWeightColumnNothingToFill -->
 
 `horizontal(width)` takes **points**. Not a percentage — even though the numbers
 next to it on this page are ratios (`weights(0.34, 0.66)`,

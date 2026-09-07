@@ -316,7 +316,7 @@
           "page": "docs/recipes/layered-page-design.md",
           "line": 142,
           "heading": "A rule that reaches the column edge",
-          "proof": "test:LineWidthUnitsContractTest"
+          "proof": "test:LineWidthUnitsContractTest#horizontalIsPointsAndTheLineIsNotClippedToItsSlot"
         }
       ],
       "row.a-flex-row-sizes-every-other-child-to-its-content": [
@@ -332,7 +332,7 @@
           "page": "docs/recipes/layered-page-design.md",
           "line": 145,
           "heading": "A rule that reaches the column edge",
-          "proof": "test:LineWidthUnitsContractTest"
+          "proof": "test:LineWidthUnitsContractTest#anAlignedHeadingLeavesTheWeightColumnNothingToFill"
         }
       ],
       "row.auto-column-rejects-right-aligned-text": [

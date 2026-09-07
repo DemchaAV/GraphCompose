@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "note": "Intent -> the path to take, the alternatives, and the one anchor to open. Hand-authored and gated by knowledge/tools/routing/check-routes.mjs. Prose stays in docs/: a route ends the choice, it does not restate the guide.",
+  "tasks": [
+    {
+      "task": "layout.two-columns",
+      "intent": "Put two columns of content side by side on the page.",
+      "recommended": "row-with-weights",
+      "recommendedBecause": "docs/recipes/layered-page-design.md#sidebar-page-background-vs-row states it directly: a column that holds content is a row column, because it flows and paginates with the main column.",
+      "alternatives": [
+        {
+          "id": "page-background-column",
+          "useWhen": "the column is a tint that must repeat on every page and holds no content",
+          "tradeoffs": "costs nothing at layout time and never shifts content, but nothing can be placed in it — text in the sidebar still needs a row over the tint"
+        },
+        {
+          "id": "table",
+          "useWhen": "the two columns are a data grid with a header row, not a page region",
+          "tradeoffs": "paginates per row and sizes columns by table rules rather than weights; a skills list in two columns is a row, not a table"
+        },
+        {
+          "id": "canvas",
+          "useWhen": "the region is a fixed box needing pixel-precise (x, y) placement — a certificate or a badge",
+          "tradeoffs": "no flow and no pagination at all; the coordinates are yours to maintain"
+        }
+      ],
+      "constraints": ["row.rejects-a-nested-row"],
+      "symbols": [
+        "AbstractFlowBuilder.addRow",
+        "RowBuilder.weights",
+        "DocumentSession.pageBackgrounds",
+        "PageBackgroundFill.leftColumn"
+      ],
+      "surfaces": ["authoring"],
+      "docs": ["docs/recipes/layered-page-design.md#sidebar-page-background-vs-row"],
+      "verifiedAgainst": "2.2.3-SNAPSHOT",
+      "confirmedBy": "DemchaAV"
+    },
+    {
+      "task": "layout.choose-the-layer",
+      "intent": "Decide which of the four placement tools a piece of page design needs.",
+      "recommended": "page-flow",
+      "recommendedBecause": "docs/recipes/layered-page-design.md#the-four-tools presents flow as the default and the other three as the cases where flow is not enough.",
+      "alternatives": [
+        {
+          "id": "page-background",
+          "useWhen": "the thing is a surface that repeats on every page and holds no content",
+          "tradeoffs": "free at layout time; cannot contain anything"
+        },
+        {
+          "id": "layer-stack",
+          "useWhen": "elements genuinely overlap and the overlay should size itself to what it sits on",
+          "tradeoffs": "measures and sizes with its parent, so it stays correct when content changes"
+        },
+        {
+          "id": "canvas",
+          "useWhen": "placement is pixel-precise inside a fixed box and must not reflow",
+          "tradeoffs": "no flow, no pagination, no measurement — coordinates are maintained by hand"
+        }
+      ],
+      "constraints": [],
+      "symbols": [
+        "AbstractFlowBuilder.addLayerStack",
+        "AbstractFlowBuilder.addCanvas",
+        "CanvasLayerBuilder.position"
+      ],
+      "surfaces": ["authoring"],
+      "docs": ["docs/recipes/layered-page-design.md#the-four-tools"],
+      "verifiedAgainst": "2.2.3-SNAPSHOT",
+      "confirmedBy": "DemchaAV"
+    },
+    {
+      "task": "table.header-on-every-page",
+      "intent": "Keep a table's header row visible when the table runs past a page break.",
+      "recommended": "repeat-header",
+      "recommendedBecause": "docs/recipes/tables.md#repeated-header-on-page-break documents repeatHeader() for exactly this, and TableBuilderRepeatHeaderTest walks every page of a 60-row table asserting it.",
+      "alternatives": [
+        {
+          "id": "split-the-table",
+          "useWhen": "each page's rows are a distinct group the reader should not read as one run",
+          "tradeoffs": "page breaks become content decisions and stop following the data; totals must be recomputed per part"
+        }
+      ],
+      "constraints": [
+        "table.header-repeats-on-every-continuation-page",
+        "table.repeat-header-defaults-to-zero"
+      ],
+      "symbols": ["TableBuilder.repeatHeader", "TableBuilder.headerRow"],
+      "surfaces": ["authoring"],
+      "docs": ["docs/recipes/tables.md#repeated-header-on-page-break"],
+      "verifiedAgainst": "2.2.3-SNAPSHOT",
+      "confirmedBy": "DemchaAV"
+    }
+  ]
+}

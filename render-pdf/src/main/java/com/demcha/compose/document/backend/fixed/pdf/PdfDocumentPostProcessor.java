@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentPageMode;
 import com.demcha.compose.engine.components.style.Margin;
 import com.demcha.compose.engine.render.pdf.helpers.PdfHeaderFooterRenderer;
 import com.demcha.compose.engine.render.pdf.helpers.PdfWatermarkRenderer;
+import com.demcha.compose.font.FontLibrary;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -48,6 +49,8 @@ public final class PdfDocumentPostProcessor {
      * @param watermarkOptions    canonical watermark options, or {@code null}
      * @param protectionOptions   canonical protection options, or {@code null}
      * @param headerFooterOptions repeating header/footer options
+     * @param fonts               the document's font library, used to resolve each
+     *                            header/footer zone's font family
      * @throws IOException if PDFBox post-processing fails
      */
     public static void apply(PDDocument document,
@@ -55,7 +58,8 @@ public final class PdfDocumentPostProcessor {
                              PdfMetadataOptions metadataOptions,
                              PdfWatermarkOptions watermarkOptions,
                              PdfProtectionOptions protectionOptions,
-                             Collection<PdfHeaderFooterOptions> headerFooterOptions) throws IOException {
+                             Collection<PdfHeaderFooterOptions> headerFooterOptions,
+                             FontLibrary fonts) throws IOException {
         if (watermarkOptions != null) {
             PdfWatermarkRenderer.apply(document, PdfOptionsAdapter.toEngine(watermarkOptions));
         }
@@ -68,7 +72,7 @@ public final class PdfDocumentPostProcessor {
                     headerFooterOptions.stream()
                             .map(PdfOptionsAdapter::toEngine)
                             .toList();
-            PdfHeaderFooterRenderer.apply(document, configs, marginLeft, marginRight);
+            PdfHeaderFooterRenderer.apply(document, configs, fonts, marginLeft, marginRight);
         }
 
         if (metadataOptions != null) {
@@ -94,6 +98,8 @@ public final class PdfDocumentPostProcessor {
      * @param headerFooterOptions section repeating header/footer options
      * @param basePageOffset      zero-based index of the section's first page
      * @param sectionPageCount    number of pages in the section
+     * @param fonts               the combined document's font library, used to
+     *                            resolve each header/footer zone's font family
      * @throws IOException if PDFBox post-processing fails
      */
     public static void applySectionChrome(PDDocument document,
@@ -101,7 +107,8 @@ public final class PdfDocumentPostProcessor {
                                           PdfWatermarkOptions watermarkOptions,
                                           Collection<PdfHeaderFooterOptions> headerFooterOptions,
                                           int basePageOffset,
-                                          int sectionPageCount) throws IOException {
+                                          int sectionPageCount,
+                                          FontLibrary fonts) throws IOException {
         if (watermarkOptions != null) {
             PdfWatermarkRenderer.apply(
                     document, PdfOptionsAdapter.toEngine(watermarkOptions), basePageOffset, sectionPageCount);
@@ -115,7 +122,8 @@ public final class PdfDocumentPostProcessor {
                     headerFooterOptions.stream()
                             .map(PdfOptionsAdapter::toEngine)
                             .toList();
-            PdfHeaderFooterRenderer.apply(document, configs, marginLeft, marginRight, basePageOffset, sectionPageCount);
+            PdfHeaderFooterRenderer.apply(
+                    document, configs, fonts, marginLeft, marginRight, basePageOffset, sectionPageCount);
         }
     }
 
@@ -254,7 +262,13 @@ public final class PdfDocumentPostProcessor {
                                PdfProtectionOptions protectionOptions,
                                Collection<PdfHeaderFooterOptions> headerFooterOptions) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
-            apply(document, canvas, metadataOptions, watermarkOptions, protectionOptions, headerFooterOptions);
+            // This entry point receives finished bytes rather than a live render, so
+            // there is no session font library to inherit. Build one over the loaded
+            // document: it covers the standard-14 and bundled families a zone can name.
+            // A family registered only for that render as a custom font is not among
+            // them and falls back to Helvetica, as it did before zones could name one.
+            apply(document, canvas, metadataOptions, watermarkOptions, protectionOptions,
+                    headerFooterOptions, PdfFontLibraryFactory.library(document));
             try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
                 document.save(output);
                 return output.toByteArray();

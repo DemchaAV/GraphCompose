@@ -6,6 +6,7 @@ import com.demcha.examples.features.canvas.CanvasLayerExample;
 import com.demcha.examples.features.debug.DebugOverlayExample;
 import com.demcha.examples.features.docx.WordExportExample;
 import com.demcha.examples.features.chrome.PageNumberingExample;
+import com.demcha.examples.features.chrome.PageZoneExample;
 import com.demcha.examples.features.chrome.PdfChromeExample;
 import com.demcha.examples.features.chrome.ViewerPreferencesExample;
 import com.demcha.examples.features.layout.BleedExample;
@@ -217,6 +218,7 @@ public final class GenerateAllExamples {
         // Theming + chrome
         System.out.println("Generated: " + PdfChromeExample.generate());
         System.out.println("Generated: " + PageNumberingExample.generate());
+        System.out.println("Generated: " + PageZoneExample.generate());
         System.out.println("Generated: " + ViewerPreferencesExample.generate());
 
         // DOCX export

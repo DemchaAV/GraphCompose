@@ -123,6 +123,7 @@ public final class PdfOutputOptionsTranslator {
                 .centerText(entry.getCenterText())
                 .rightText(entry.getRightText())
                 .fontSize(entry.getFontSize())
+                .fontName(entry.getFontName())
                 .textColor(entry.getTextColor() == null ? null : entry.getTextColor().color())
                 .showSeparator(entry.isShowSeparator())
                 .separatorColor(entry.getSeparatorColor() == null ? null : entry.getSeparatorColor().color())

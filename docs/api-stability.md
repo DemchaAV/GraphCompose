@@ -289,6 +289,15 @@ Javadoc per element.
   — the architecture guards that fail the build if the package-level
   `@Internal` marker disappears from `document.layout` or the
   annotation's contract drifts from this policy.
+- [`InternalEnginePackageMarkerTest`](../render-pdf/src/test/java/com/demcha/documentation/InternalEnginePackageMarkerTest.java)
+  in `graph-compose-render-pdf` and its
+  [twin](../render-pptx/src/test/java/com/demcha/documentation/InternalEnginePackageMarkerTest.java)
+  in `graph-compose-render-pptx` — the same guard, module-local. The engine's
+  coverage test can only reach classes on the engine's own classpath, so it
+  cannot see `engine.render.pdf.*`; each module that may ship a
+  `com.demcha.compose.engine.*` package enforces the marker in its own build,
+  over a package list read from the source tree so a newly added package fails
+  until it is marked.
 
 ---
 

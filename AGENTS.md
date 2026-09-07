@@ -22,6 +22,12 @@ documents do not say, and points at the rest.
 Read when the change reaches them:
 
 - [`docs/api-stability.md`](docs/api-stability.md) — before changing public API
+- [`knowledge/api/`](knowledge/api/) — what the public API *is*, generated from
+  the compiled classes. Ask it rather than read it:
+  `node knowledge/tools/api-query/api-query.mjs --exists Type.method`
+  (exit 0 found, 3 absent). Split by surface — `authoring` is the one a
+  compose task wants; `backends`, `templates`, `testing` and `extension-spi`
+  are opt-in.
 - [`docs/architecture/backend-capability-matrix.md`](docs/architecture/backend-capability-matrix.md)
   — before changing what a PDF, PPTX or DOCX export can do, and to record it
 - [`docs/adr/`](docs/adr/) — before revisiting a decision already taken
@@ -60,6 +66,33 @@ them up.
 Read `git status --porcelain --untracked-files=all` before committing and remove
 such files by name. Do not run `git clean -f`: it deletes new source files that
 have not been staged yet along with the junk.
+
+## Regenerate the knowledge pack with the API change
+
+`knowledge/api/*.json` and their Markdown views are generated from the compiled
+classes and committed. Treat them exactly like a lockfile: **a PR that changes
+public API regenerates the pack in the same commit.**
+
+```bash
+./mvnw -q -DskipTests install -pl :graph-compose-core,:graph-compose-templates,:graph-compose-render-pdf,:graph-compose-render-docx,:graph-compose-render-pptx,:graph-compose-testing -am
+node knowledge/tools/api-surface/extract-api.mjs --from-reactor
+```
+
+CI runs `--check` on the same input and fails the build when the committed pack
+does not match the tree. That failure is not a flake and is not the gate being
+strict: it means the surfaces on disk describe an API that no longer exists.
+
+Never hand-edit a generated file to make the check pass. The generator is the
+thing to fix — a hand-edit survives until the next regeneration and, in the
+meantime, makes the file look verified when it is not. That is not hypothetical:
+this pack exists because a generated allow-list was wrong for an entire major
+version while being quoted to agents as authoritative.
+
+If a public type is new and the run fails with *"matched no classification
+rule"*, the classifier is telling you it does not know whether the type is API.
+Add a rule in `knowledge/tools/api-surface/lib/surfaces.mjs` — the surface it
+belongs to, or an exclusion with a written reason. Do not widen a package prefix
+to make the message go away.
 
 ## Verification
 

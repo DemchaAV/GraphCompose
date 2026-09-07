@@ -1,6 +1,7 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.output.DocumentHeaderFooter;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +23,37 @@ class DocumentSessionAvailableHeightTest {
             assertThat(document.availableHeight())
                     .isEqualTo(document.canvas().innerHeight());
             // 600pt page height minus 40pt top + 40pt bottom margins
+            assertThat(document.availableHeight()).isCloseTo(520.0, within(0.5));
+        }
+    }
+
+    @Test
+    void aReservingZoneShrinksTheAvailableHeightAndTheCanvasTogether() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 600)
+                .margin(DocumentInsets.of(40))
+                .create()) {
+
+            document.footer(DocumentHeaderFooter.builder().height(90f).reserveSpace(true).build());
+
+            // 600 - 40 (top margin) - 90 (the reserved band, deeper than the margin).
+            assertThat(document.availableHeight()).isCloseTo(470.0, within(0.5));
+            assertThat(document.availableHeight())
+                    .as("the alias has to keep holding — a composition sizing itself against"
+                            + " one of the two would otherwise overrun the other")
+                    .isEqualTo(document.canvas().innerHeight());
+        }
+    }
+
+    @Test
+    void aZoneThatDoesNotReserveLeavesTheAvailableHeightAlone() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(400, 600)
+                .margin(DocumentInsets.of(40))
+                .create()) {
+
+            document.footer(DocumentHeaderFooter.builder().height(90f).build());
+
             assertThat(document.availableHeight()).isCloseTo(520.0, within(0.5));
         }
     }

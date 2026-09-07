@@ -1,6 +1,8 @@
 package com.demcha.compose.engine.components.content.header_footer;
 
+import com.demcha.compose.engine.components.content.text.TextDecoration;
 import com.demcha.compose.engine.components.content.text.TextStyle;
+import com.demcha.compose.font.FontName;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -46,6 +48,14 @@ public final class HeaderFooterConfig {
     @Builder.Default
     private final float fontSize = 9f;
 
+    /**
+     * Font family for the zone's text. Standard-14 Helvetica by default, which is
+     * the face the zone drew back when the family could not be chosen at all — so
+     * a zone that says nothing about its font renders exactly as it used to.
+     */
+    @Builder.Default
+    private final FontName fontName = FontName.HELVETICA;
+
     /** Text color. */
     @Builder.Default
     private final Color textColor = new Color(128, 128, 128);
@@ -77,6 +87,21 @@ public final class HeaderFooterConfig {
     /** Numeral style for the rendered page number. */
     @Builder.Default
     private final PageNumberStyle numberStyle = PageNumberStyle.DECIMAL;
+
+    /**
+     * The zone's text as the style the rest of the engine speaks in, so a backend
+     * resolves, measures and sanitizes zone text through exactly the same calls it
+     * uses for body text instead of reaching for a font of its own.
+     *
+     * @return this zone's font family, size, decoration and colour
+     */
+    public TextStyle textStyle() {
+        return new TextStyle(
+                fontName == null ? FontName.HELVETICA : fontName,
+                fontSize,
+                TextDecoration.DEFAULT,
+                textColor == null ? Color.GRAY : textColor);
+    }
 
     /**
      * Resolves placeholder tokens in the given text for a specific page, honouring

@@ -17,6 +17,7 @@ import java.util.Objects;
  * @param protection        optional access protection
  * @param viewerPreferences optional PDF viewer preferences (page mode / layout / window flags)
  * @param headersAndFooters repeating header/footer entries
+ * @param zones             page zones whose content is a node subtree
  * @author Artem Demchyshyn
  */
 public record DocumentOutputOptions(
@@ -24,12 +25,13 @@ public record DocumentOutputOptions(
         DocumentWatermark watermark,
         DocumentProtection protection,
         DocumentViewerPreferences viewerPreferences,
-        List<DocumentHeaderFooter> headersAndFooters
+        List<DocumentHeaderFooter> headersAndFooters,
+        List<DocumentPageZone> zones
 ) {
     /**
      * All-empty defaults.
      */
-    public static final DocumentOutputOptions EMPTY = new DocumentOutputOptions(null, null, null, null, List.of());
+    public static final DocumentOutputOptions EMPTY = new DocumentOutputOptions(null, null, null, null, List.of(), List.of());
 
     /**
      * Normalizes the headers-and-footers collection to an immutable snapshot.
@@ -39,6 +41,27 @@ public record DocumentOutputOptions(
         for (DocumentHeaderFooter entry : headersAndFooters) {
             Objects.requireNonNull(entry, "headersAndFooters entry");
         }
+        zones = zones == null ? List.of() : List.copyOf(zones);
+        for (DocumentPageZone entry : zones) {
+            Objects.requireNonNull(entry, "zones entry");
+        }
+    }
+
+    /**
+     * Backwards-compatible constructor without page zones (defaults to none).
+     *
+     * @param metadata          document information
+     * @param watermark         optional document-wide watermark
+     * @param protection        optional access protection
+     * @param viewerPreferences optional PDF viewer preferences
+     * @param headersAndFooters repeating header/footer entries
+     */
+    public DocumentOutputOptions(DocumentMetadata metadata,
+                                 DocumentWatermark watermark,
+                                 DocumentProtection protection,
+                                 DocumentViewerPreferences viewerPreferences,
+                                 List<DocumentHeaderFooter> headersAndFooters) {
+        this(metadata, watermark, protection, viewerPreferences, headersAndFooters, List.of());
     }
 
     /**
@@ -53,7 +76,7 @@ public record DocumentOutputOptions(
                                  DocumentWatermark watermark,
                                  DocumentProtection protection,
                                  List<DocumentHeaderFooter> headersAndFooters) {
-        this(metadata, watermark, protection, null, headersAndFooters);
+        this(metadata, watermark, protection, null, headersAndFooters, List.of());
     }
 
     /**
@@ -63,6 +86,7 @@ public record DocumentOutputOptions(
      */
     public boolean hasAny() {
         return metadata != null || watermark != null || protection != null
-               || viewerPreferences != null || !headersAndFooters.isEmpty();
+               || viewerPreferences != null || !headersAndFooters.isEmpty()
+               || !zones.isEmpty();
     }
 }

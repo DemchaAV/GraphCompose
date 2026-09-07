@@ -1,5 +1,6 @@
 package com.demcha.compose.engine.render.pdf;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.components.content.text.TextStyle;
 import com.demcha.compose.engine.components.geometry.ContentSize;
 import com.demcha.compose.engine.font.FontBase;
@@ -16,6 +17,17 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 
+/**
+ * PDFBox font handle: loading, embedding, width and vertical metrics for one family.
+ *
+ * <p><strong>Internal API</strong>, like the rest of this package &mdash;
+ * {@code docs/api-stability.md} allows it to change in any release. Note the tension
+ * this marker exposes: {@code PdfRenderEnvironment.fonts()} is public on the render
+ * handler SPI, and a handler that draws text has to reach a {@code PdfFont} through it.
+ * Until that seam gets a supported accessor, a third-party handler depends on this type
+ * at its own risk.</p>
+ */
+@Internal
 @Slf4j
 @Accessors(fluent = true)
 public class PdfFont extends FontBase<PDFont> {

@@ -107,7 +107,7 @@ public final class DocumentSession implements AutoCloseable {
         this.defaultOutputFile = defaultOutputFile;
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
         this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
-        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), this.margin);
+        recomputeCanvas();
         this.markdown = markdown;
         this.debug = DocumentDebugOptions.none().withGuides(guideLines);
         this.registry = BuiltInNodeDefinitions.registerDefaults(new InvalidatingNodeRegistry());
@@ -269,7 +269,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession pageSize(DocumentPageSize pageSize) {
         ensureOpen();
         this.pageSize = Objects.requireNonNull(pageSize, "pageSize");
-        this.canvas = LayoutCanvas.from(this.pageSize.width(), this.pageSize.height(), margin);
+        recomputeCanvas();
         invalidate();
         return this;
     }
@@ -298,7 +298,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession margin(DocumentInsets margin) {
         ensureOpen();
         this.margin = margin == null ? DocumentInsets.zero() : requireNonNegativePageMargin(margin);
-        this.canvas = LayoutCanvas.from(pageSize.width(), pageSize.height(), this.margin);
+        recomputeCanvas();
         invalidate();
         return this;
     }
@@ -561,6 +561,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession header(DocumentHeaderFooter header) {
         ensureOpen();
         chromeOptions.addHeader(header);
+        chromeReservationChanged();
         return this;
     }
 
@@ -574,6 +575,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession footer(DocumentHeaderFooter footer) {
         ensureOpen();
         chromeOptions.addFooter(footer);
+        chromeReservationChanged();
         return this;
     }
 
@@ -586,6 +588,7 @@ public final class DocumentSession implements AutoCloseable {
     public DocumentSession clearHeadersAndFooters() {
         ensureOpen();
         chromeOptions.clearHeadersAndFooters();
+        chromeReservationChanged();
         return this;
     }
 
@@ -747,7 +750,18 @@ public final class DocumentSession implements AutoCloseable {
      * run inside the cache compute, so the result is cached once per revision.
      */
     private LayoutGraph computeLayout() {
-        return DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+        // Backgrounds go under the body, zones over it, so the two splices bracket
+        // the compiled graph in that order.
+        LayoutGraph withBackgrounds =
+                DocumentPageBackgrounds.apply(layoutResolver.resolve(), pageBackgrounds);
+        List<DocumentPageZone> zones = chromeOptions.zones();
+        // A zone rides the body's machinery, anchors included: a page reference
+        // inside one resolves against the graph the body just settled.
+        Map<String, Integer> bodyAnchors =
+                zones.isEmpty() ? Map.of() : resolvedPageNumbers(withBackgrounds);
+        return DocumentPageZones.apply(
+                withBackgrounds, zones, bodyAnchors, compiler, registry,
+                measurementResources, markdown);
     }
 
     private PageGeometry buildPageGeometry() {
@@ -760,9 +774,52 @@ public final class DocumentSession implements AutoCloseable {
             int toIndexExclusive = rule.toPageExclusive() == Integer.MAX_VALUE
                     ? Integer.MAX_VALUE
                     : rule.toPageExclusive() - 1;
-            overrides.add(PageMarginOverride.fromInsets(fromIndex, toIndexExclusive, rule.insets()));
+            // A per-page override replaces the whole margin, so the reservation has
+            // to be re-applied on top of it — otherwise a page with an override is
+            // the one page where the body runs under the zone again.
+            overrides.add(PageMarginOverride.fromInsets(
+                    fromIndex, toIndexExclusive, marginWithChromeReservation(rule.insets())));
         }
         return PageGeometry.of(canvas, overrides);
+    }
+
+    /**
+     * Recomputes the layout canvas from the page size, the author's margin and any
+     * space-reserving chrome. Called wherever one of those three changes, so the
+     * canvas never depends on the order the session was configured in.
+     */
+    private void recomputeCanvas() {
+        this.canvas = LayoutCanvas.from(
+                pageSize.width(), pageSize.height(), marginWithChromeReservation(margin));
+    }
+
+    /** Recomputes the canvas after a chrome mutation and drops the cached layout. */
+    void chromeReservationChanged() {
+        recomputeCanvas();
+        invalidate();
+    }
+
+    /**
+     * The given page margin, widened on any side where a space-reserving header or
+     * footer is deeper than it. Taking the larger of the two rather than their sum
+     * keeps the common case still — a zone that already fits inside the margin
+     * moves nothing — and makes the guarantee the flag promises: the body is not
+     * laid out into the band the zone paints.
+     *
+     * @param author the margin as configured
+     * @return the same insets, or a copy inset for chrome
+     */
+    private DocumentInsets marginWithChromeReservation(DocumentInsets author) {
+        double header = chromeOptions.reservedHeight(DocumentHeaderFooterZone.HEADER);
+        double footer = chromeOptions.reservedHeight(DocumentHeaderFooterZone.FOOTER);
+        if (header <= author.top() && footer <= author.bottom()) {
+            return author;
+        }
+        return new DocumentInsets(
+                Math.max(author.top(), header),
+                author.right(),
+                Math.max(author.bottom(), footer),
+                author.left());
     }
 
     private static boolean containsPageReference(List<DocumentNode> nodes) {

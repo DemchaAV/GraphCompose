@@ -1,5 +1,6 @@
 package com.demcha.compose.engine.render.pdf;
 
+import com.demcha.compose.document.api.Internal;
 import com.demcha.compose.engine.text.TextControlSanitizer;
 import com.demcha.compose.engine.text.bidi.ArabicShaper;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Artem Demchyshyn
  */
+@Internal
 public final class GlyphFallbackLogger {
 
     private static final Logger LOG = LoggerFactory.getLogger(

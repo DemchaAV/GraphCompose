@@ -672,9 +672,18 @@
               "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageNumberingExample.java"
             },
             {
+              "id": "page-zone",
+              "title": "Page Zone",
+              "description": "DocumentPageZone.footer(height, page -> node) — a footer built from nodes: a notice, an inline chip, a real link annotation and page.pageNumber(), laid out by the same engine as the body and exported to DOCX as Word's live PAGE field. A running head shows the other half of the surface: appliesTo(!isFirst) keeps it off the cover, and its addPageReference resolves the appendix's page from the body's anchors.",
+              "tags": ["chrome", "footer", "v2.3.0"],
+              "pdf": "showcase/pdf/features/chrome/page-zone.pdf",
+              "screenshot": "showcase/screenshots/features/chrome/page-zone.png",
+              "code": "https://github.com/DemchaAV/GraphCompose/blob/develop/examples/src/main/java/com/demcha/examples/features/chrome/PageZoneExample.java"
+            },
+            {
               "id": "pdf-chrome",
               "title": "PDF Chrome",
-              "description": "Headers, footers, watermarks, metadata, document protection / encryption.",
+              "description": "Headers, footers, watermarks, metadata, document protection / encryption. The footer names its font family — fontName(PT_SANS) keeps a Cyrillic page counter's letters — and reserveSpace(true) keeps the body clear of the band.",
               "tags": ["chrome", "metadata", "watermark"],
               "pdf": "showcase/pdf/features/chrome/pdf-chrome.pdf",
               "screenshot": "showcase/screenshots/features/chrome/pdf-chrome.png",

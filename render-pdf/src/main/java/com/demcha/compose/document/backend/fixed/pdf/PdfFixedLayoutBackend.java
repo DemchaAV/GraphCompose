@@ -432,7 +432,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                     metadataOptions,
                     watermarkOptions,
                     protectNow,
-                    headerFooterOptions);
+                    headerFooterOptions,
+                    fonts);
             PdfDocumentPostProcessor.applyViewerPreferences(document, viewerPreferencesOptions);
             if (deterministicTimestamp != null) {
                 PdfDeterminismWriter.apply(document, deterministicTimestamp);
@@ -556,7 +557,8 @@ public final class PdfFixedLayoutBackend implements FixedLayoutRenderer {
                         chrome.watermarkOptions,
                         chrome.headerFooterOptions,
                         pageOffset,
-                        pages.size());
+                        pages.size(),
+                        fonts);
                 pageOffset += pages.size();
             }
             // Every anchor is now placed, so cross-section go-to links and the

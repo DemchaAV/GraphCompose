@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "note": "Every proof a documentation claim cites, resolved to where it lives and what it holds up. Generated from the claim markers in docs/; a proof that nothing cites does not appear, and a claim whose proof does not resolve fails the check rather than landing here.",
+  "generator": "knowledge/tools/claims/check-claims.mjs",
+  "counts": {
+    "proofs": 6,
+    "claimsHeld": 7,
+    "claimsWithoutProof": 20
+  },
+  "proofs": {
+    "test:AutoColumnRightAlignContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/AutoColumnRightAlignContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.auto-column-rejects-right-aligned-text",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 31,
+          "heading": "Sidebar: page background vs. row"
+        }
+      ]
+    },
+    "test:ComposedCellSnapshotContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/table/ComposedCellSnapshotContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "table.composed-cell-paints-but-has-no-snapshot-node",
+          "page": "docs/recipes/tables.md",
+          "line": 29,
+          "heading": "Cell content — one line, several lines, or a node"
+        }
+      ]
+    },
+    "test:RowBuilderTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/RowBuilderTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.rejects-a-nested-row",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 30,
+          "heading": "Sidebar: page background vs. row"
+        }
+      ]
+    },
+    "test:TableBuilderRepeatHeaderTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/TableBuilderRepeatHeaderTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "table.header-repeats-on-every-continuation-page",
+          "page": "docs/recipes/tables.md",
+          "line": 192,
+          "heading": "Repeated header on page break"
+        },
+        {
+          "kind": "behavior",
+          "value": "table.repeat-header-defaults-to-zero",
+          "page": "docs/recipes/tables.md",
+          "line": 193,
+          "heading": "Repeated header on page break"
+        }
+      ]
+    },
+    "test:TableBuilderRowSpanTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/TableBuilderRowSpanTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "table.spanning-cell-height-is-sum-of-covered-rows",
+          "page": "docs/recipes/tables.md",
+          "line": 72,
+          "heading": "Row span — merge a cell vertically"
+        }
+      ]
+    },
+    "test:TableBuilderZebraAndTotalsTest": {
+      "kind": "test",
+      "path": "core/src/test/java/com/demcha/compose/document/dsl/TableBuilderZebraAndTotalsTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "table.explicit-row-style-beats-zebra",
+          "page": "docs/recipes/tables.md",
+          "line": 113,
+          "heading": "Zebra — alternating row fills"
+        }
+      ]
+    }
+  }
+}

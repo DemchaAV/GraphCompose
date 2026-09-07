@@ -31,14 +31,14 @@ class WeeklyScheduleDataBuilderTest {
                 .headerMetric(metric -> metric
                         .label("FOCUS")
                         .dayValues(List.of("API", "Regression")))
-                .person("artem", "ARTEM", 10)
+                .person("omar", "OMAR", 10)
                 .person(person -> person
-                        .id("alex")
-                        .displayName("ALEX")
+                        .id("iva")
+                        .displayName("IVA")
                         .sortOrder(20))
-                .assignment("artem", "mon", "delivery", ScheduleSlot.of("09:00", "17:00"))
+                .assignment("omar", "mon", "delivery", ScheduleSlot.of("09:00", "17:00"))
                 .assignment(assignment -> assignment
-                        .personId("alex")
+                        .personId("iva")
                         .dayId("tue")
                         .categoryId("qa")
                         .slot("10:00", "18:00")
@@ -51,7 +51,7 @@ class WeeklyScheduleDataBuilderTest {
         assertThat(schedule.days()).extracting(ScheduleDay::id).containsExactly("mon", "tue");
         assertThat(schedule.categories()).extracting(ScheduleCategory::id).containsExactly("delivery", "qa");
         assertThat(schedule.headerMetrics()).extracting(ScheduleMetricRow::label).containsExactly("CAPACITY", "FOCUS");
-        assertThat(schedule.people()).extracting(SchedulePerson::id).containsExactly("artem", "alex");
+        assertThat(schedule.people()).extracting(SchedulePerson::id).containsExactly("omar", "iva");
         assertThat(schedule.assignments()).hasSize(2);
         assertThat(schedule.assignments().get(0).slots().get(0).displayText()).isEqualTo("09:00 17:00");
         assertThat(schedule.assignments().get(1).note()).isEqualTo("Regression owner");

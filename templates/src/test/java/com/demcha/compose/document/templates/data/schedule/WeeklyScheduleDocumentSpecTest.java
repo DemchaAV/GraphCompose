@@ -16,8 +16,8 @@ class WeeklyScheduleDocumentSpecTest {
                 .day("mon", "Monday", "Release prep", "delivery")
                 .category("delivery", "DELIVERY", new Color(0, 173, 76), new Color(0, 110, 49))
                 .headerMetric("CAPACITY", "4 engineers")
-                .person("artem", "ARTEM", 10)
-                .assignment("artem", "mon", "delivery", ScheduleSlot.of("09:00", "17:00"))
+                .person("omar", "OMAR", 10)
+                .assignment("omar", "mon", "delivery", ScheduleSlot.of("09:00", "17:00"))
                 .footerNote("Keep assignments data-driven.")
                 .build();
 
@@ -34,7 +34,7 @@ class WeeklyScheduleDocumentSpecTest {
                 .isEqualTo("CAPACITY");
         assertThat(spec.schedule().people()).singleElement()
                 .extracting(SchedulePerson::id)
-                .isEqualTo("artem");
+                .isEqualTo("omar");
         assertThat(spec.schedule().assignments()).singleElement()
                 .satisfies(assignment -> assertThat(assignment.slots()).singleElement()
                         .extracting(ScheduleSlot::displayText)

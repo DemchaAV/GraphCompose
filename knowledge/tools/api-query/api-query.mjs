@@ -145,12 +145,24 @@ function answerTask(id) {
 }
 
 /**
- * Whether the documentation tree a route's `docs:` path is relative to is beside
- * this pack — true in a checkout, false in the published bundle, which carries
- * the routing table but not the pages it points at.
+ * Whether the pages a route hands over are actually beside this pack — true in a
+ * checkout, false in the published bundle, which carries the routing table but
+ * not the documentation tree.
+ *
+ * Every cited page is resolved, rather than probing for a directory called
+ * `docs`. The bundle is normally unpacked *inside* another project, and that
+ * project usually has documentation of its own: keying on the directory name
+ * suppressed the note exactly where it was needed and handed the reader a
+ * GraphCompose path that appeared to resolve against their own tree.
+ *
+ * @param {string[]} refs the route's `docs:` entries
  */
-function docsAreAlongside() {
-  return fs.existsSync(path.join(KNOWLEDGE_ROOT, "..", "docs"));
+function docsArePresent(refs) {
+  return (refs ?? []).every((ref) => {
+    const rel = ref.split("#")[0];
+    if (!rel) return false;
+    return fs.existsSync(path.join(KNOWLEDGE_ROOT, "..", ...rel.split("/")));
+  });
 }
 
 /**
@@ -247,7 +259,7 @@ function renderTask(answer) {
     // names a page that is not in the archive. Saying so beats printing it as
     // though it were openable: a reader with only the bundle would otherwise go
     // looking for a file that was never there.
-    if (!docsAreAlongside()) {
+    if (!docsArePresent(answer.docs)) {
       out.push("        (not in this bundle — that path is relative to the GraphCompose repository)");
     }
   }

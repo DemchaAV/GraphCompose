@@ -80,7 +80,7 @@
       "surfaces": ["authoring"],
       "docs": ["docs/recipes/layered-page-design.md#icon-beside-text"],
       "verifiedAgainst": "2.4.0-SNAPSHOT",
-      "confirmedBy": null
+      "confirmedBy": "Artem Demchyshyn"
     },
     {
       "task": "layout.rule-beside-a-heading",
@@ -125,7 +125,7 @@
       "surfaces": ["authoring"],
       "docs": ["docs/recipes/layered-page-design.md#a-rule-that-reaches-the-column-edge"],
       "verifiedAgainst": "2.4.0-SNAPSHOT",
-      "confirmedBy": null
+      "confirmedBy": "Artem Demchyshyn"
     },
     {
       "task": "layout.choose-the-layer",

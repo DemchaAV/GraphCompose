@@ -4,7 +4,7 @@
   "generator": "knowledge/tools/claims/check-claims.mjs",
   "counts": {
     "pagesWithClaims": 2,
-    "symbol": 22,
+    "symbol": 25,
     "capability": 8,
     "behavior": 13
   },
@@ -50,6 +50,15 @@
         {
           "page": "docs/recipes/layered-page-design.md",
           "line": 62,
+          "heading": "Icon beside text",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "DocumentRowColumn.fixed": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 64,
           "heading": "Icon beside text",
           "surface": "authoring",
           "stability": "stable"
@@ -103,7 +112,7 @@
       "LineBuilder.fill": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 138,
+          "line": 140,
           "heading": "A rule that reaches the column edge",
           "surface": "authoring",
           "stability": "stable"
@@ -112,7 +121,7 @@
       "LineBuilder.horizontal": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 137,
+          "line": 139,
           "heading": "A rule that reaches the column edge",
           "surface": "authoring",
           "stability": "stable"
@@ -127,10 +136,19 @@
           "stability": "stable"
         }
       ],
+      "ParagraphBuilder.align": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 141,
+          "heading": "A rule that reaches the column edge",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
       "ParagraphBuilder.inlineSvgIcon": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 65,
+          "line": 67,
           "heading": "Icon beside text",
           "surface": "authoring",
           "stability": "stable"
@@ -139,8 +157,17 @@
       "RowBuilder.addLine": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 136,
+          "line": 138,
           "heading": "A rule that reaches the column edge",
+          "surface": "authoring",
+          "stability": "stable"
+        }
+      ],
+      "RowBuilder.arrangement": [
+        {
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 66,
+          "heading": "Icon beside text",
           "surface": "authoring",
           "stability": "stable"
         }
@@ -157,7 +184,7 @@
       "RowBuilder.flexSpacer": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 64,
+          "line": 65,
           "heading": "Icon beside text",
           "surface": "authoring",
           "stability": "stable"
@@ -227,7 +254,7 @@
       "layout.rule-beside-a-heading": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 135,
+          "line": 137,
           "heading": "A rule that reaches the column edge"
         }
       ],
@@ -271,7 +298,7 @@
       "line.fill-overflows-a-flex-row": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 141,
+          "line": 144,
           "heading": "A rule that reaches the column edge",
           "proof": "test:LineWidthUnitsContractTest"
         }
@@ -279,7 +306,7 @@
       "line.fill-spans-its-slot": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 140,
+          "line": 143,
           "heading": "A rule that reaches the column edge",
           "proof": "test:LineWidthUnitsContractTest"
         }
@@ -287,7 +314,7 @@
       "line.horizontal-is-points-and-is-not-clipped": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 139,
+          "line": 142,
           "heading": "A rule that reaches the column edge",
           "proof": "test:LineWidthUnitsContractTest"
         }
@@ -295,7 +322,7 @@
       "row.a-flex-row-sizes-every-other-child-to-its-content": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 67,
+          "line": 69,
           "heading": "Icon beside text",
           "proof": "test:RowWidthDistributionContractTest"
         }
@@ -303,7 +330,7 @@
       "row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 142,
+          "line": 145,
           "heading": "A rule that reaches the column edge",
           "proof": "test:LineWidthUnitsContractTest"
         }
@@ -319,7 +346,7 @@
       "row.no-column-spec-splits-the-width-evenly": [
         {
           "page": "docs/recipes/layered-page-design.md",
-          "line": 66,
+          "line": 68,
           "heading": "Icon beside text",
           "proof": "test:RowWidthDistributionContractTest"
         }

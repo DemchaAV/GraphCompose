@@ -22,6 +22,17 @@ library's to define. That is what moving the generator here fixes.
 | `api-surface/lib/zip.mjs` | reads a jar without unpacking it |
 | `api-surface/lib/render-markdown.mjs` | renders the Markdown view *from the JSON* |
 | `api-query/api-query.mjs` | answers a question about the surfaces instead of making you read them |
+| `claims/check-claims.mjs` | holds a page to what it claims, and builds the reverse index |
+| `claims/lib/claims.mjs` | reads the claim markers and resolves a symbol against the surfaces |
+| `routing/check-routes.mjs` | the gate a route must pass: anchors resolve, symbols exist, constraints are proven |
+| `routing/lib/anchors.mjs` | GitHub's heading-to-anchor rule, and the references a prose field makes |
+| `routing/lib/pack-version.mjs` | orders a route's `verifiedAgainst` against the version the surfaces carry |
+| `bundle/build-bundle.mjs` | packs all of it into an archive that answers with no repository around it |
+
+Every `*.test.mjs` under `knowledge/tools/` is a fixture suite, and CI runs them
+by discovery rather than by name — add one and it runs. Raise the floor in
+`.github/workflows/ci.yml` in the same commit, or a suite deleted later will not
+be missed.
 
 ## The rules
 

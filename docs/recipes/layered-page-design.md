@@ -61,7 +61,9 @@ column over it.
 <!-- claim: symbol=RowBuilder.columns -->
 <!-- claim: symbol=DocumentRowColumn.auto -->
 <!-- claim: symbol=DocumentRowColumn.weight -->
+<!-- claim: symbol=DocumentRowColumn.fixed -->
 <!-- claim: symbol=RowBuilder.flexSpacer -->
+<!-- claim: symbol=RowBuilder.arrangement -->
 <!-- claim: symbol=ParagraphBuilder.inlineSvgIcon -->
 <!-- claim: behavior=row.no-column-spec-splits-the-width-evenly proof=test:RowWidthDistributionContractTest -->
 <!-- claim: behavior=row.a-flex-row-sizes-every-other-child-to-its-content proof=test:RowWidthDistributionContractTest -->
@@ -136,6 +138,7 @@ the line and cannot hold a left rail.
 <!-- claim: symbol=RowBuilder.addLine -->
 <!-- claim: symbol=LineBuilder.horizontal -->
 <!-- claim: symbol=LineBuilder.fill -->
+<!-- claim: symbol=ParagraphBuilder.align -->
 <!-- claim: behavior=line.horizontal-is-points-and-is-not-clipped proof=test:LineWidthUnitsContractTest -->
 <!-- claim: behavior=line.fill-spans-its-slot proof=test:LineWidthUnitsContractTest -->
 <!-- claim: behavior=line.fill-overflows-a-flex-row proof=test:LineWidthUnitsContractTest -->

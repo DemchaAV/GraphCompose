@@ -13,7 +13,13 @@ import java.util.Objects;
  * @param categoryId category identifier
  * @param slots      shift/time slots
  * @param note       optional assignment note
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.RotaShift},
+ *             which a person's own day list holds directly rather than an
+ *             assignment referring to both by identifier.
  */
+@Deprecated(since = "2.4.0")
 public record ScheduleAssignment(
         String personId,
         String dayId,

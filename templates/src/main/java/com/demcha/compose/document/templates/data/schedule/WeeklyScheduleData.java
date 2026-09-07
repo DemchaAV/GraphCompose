@@ -18,7 +18,14 @@ import java.util.function.Consumer;
  * @param people        people rows in the schedule matrix
  * @param assignments   person/day assignments
  * @param footerNotes   footer notes rendered after the matrix
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.StructuredRotaData},
+ *             which carries the staff bands and the per-entry emphasis a rota is
+ *             actually drawn with, and leaves colour to the preset rather than
+ *             holding it in the document. No preset ever rendered this model.
  */
+@Deprecated(since = "2.4.0")
 public record WeeklyScheduleData(
         String title,
         String weekLabel,

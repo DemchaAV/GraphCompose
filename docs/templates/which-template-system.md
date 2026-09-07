@@ -88,7 +88,7 @@ migration is the theme + data-record swap:
 |---|---|
 | `InvoiceTemplateV1` / `InvoiceTemplateV2` | `templates.invoice.presets.ModernInvoice` — `create()` or `create(BrandTheme)`, data record `InvoiceDocumentSpec`. |
 | `ProposalTemplateV1` / `ProposalTemplateV2` | `templates.proposal.presets.ModernProposal` — same shape, data record `ProposalDocumentSpec`. |
-| `WeeklyScheduleTemplateV1` | No 2.0 template yet. The `templates.data.schedule` records still ship; author the rendering on the canonical DSL. |
+| `WeeklyScheduleTemplateV1` | No template yet. Model the rota on `templates.data.rota` (`StructuredRotaDocumentSpec`) and author the rendering on the canonical DSL. The `templates.data.schedule` records still ship but are **deprecated since 2.4.0**: they hold their colours in the data, know nothing of staff bands, and nothing ever rendered them. |
 
 ### Legacy PDF API → canonical DSL
 

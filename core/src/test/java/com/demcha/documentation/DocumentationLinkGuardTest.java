@@ -56,8 +56,15 @@ class DocumentationLinkGuardTest {
      */
     private static final Pattern LINK = Pattern.compile("\\[[^]]*]\\(([^)\\s]+)");
 
-    /** An ATX heading, whose text GitHub turns into the anchor. */
-    private static final Pattern HEADING = Pattern.compile("(?m)^#{1,6}\\s+(.+?)\\s*$");
+    /**
+     * An ATX heading, whose text GitHub turns into the anchor.
+     *
+     * <p>The run after the hashes is spaces and tabs, not {@code \s}: {@code \s}
+     * matches a newline, so a lone {@code #} on its own line swallowed the break
+     * and claimed the following line's text as a heading. GitHub renders that
+     * {@code #} as an empty heading and the next line as a paragraph.</p>
+     */
+    private static final Pattern HEADING = Pattern.compile("(?m)^#{1,6}[ \\t]+(.+?)[ \\t]*$");
 
     /** A hand-written anchor: {@code <a name="x">} or {@code <a id="x">}. */
     private static final Pattern EXPLICIT_ANCHOR =
@@ -81,7 +88,26 @@ class DocumentationLinkGuardTest {
     private static final Pattern INLINE_CODE = Pattern.compile("`[^`\\n]*`");
 
     /** Everything GitHub drops from a heading before hyphenating it. */
-    private static final Pattern NOT_IN_ANCHOR = Pattern.compile("[^\\w\\s-]", Pattern.UNICODE_CHARACTER_CLASS);
+    /**
+     * Everything GitHub drops from an anchor.
+     *
+     * <p>Spelled as categories rather than {@code \w} because {@code \w} is not
+     * GitHub's keep-set: under {@link Pattern#UNICODE_CHARACTER_CLASS} its digit
+     * class is decimal-only, so a numeral like {@code ①} was dropped where the
+     * rendered page keeps it. Marks stay in, so a decomposed accent survives.</p>
+     */
+    private static final Pattern NOT_IN_ANCHOR =
+            Pattern.compile("[^\\p{L}\\p{N}\\p{M}_\\s-]", Pattern.UNICODE_CHARACTER_CLASS);
+
+    /**
+     * The whitespace GitHub turns into hyphens — all of it.
+     *
+     * <p>{@code String.replaceAll("\\s", "-")} compiles without flags and is
+     * therefore ASCII-only, so a non-breaking space survived into the anchor as
+     * a literal U+00A0 instead of becoming a hyphen.</p>
+     */
+    private static final Pattern ANCHOR_WHITESPACE =
+            Pattern.compile("\\s", Pattern.UNICODE_CHARACTER_CLASS);
 
     /** A markdown link inside a heading — the anchor uses the text, not the target. */
     private static final Pattern HEADING_LINK = Pattern.compile("\\[([^]]*)]\\([^)]*\\)");
@@ -157,6 +183,87 @@ class DocumentationLinkGuardTest {
     }
 
     /**
+     * A heading reference written in Java: {@code docs/recipes/x.md#some-heading}
+     * inside a Javadoc block.
+     *
+     * <p>The leading boundary keeps this off absolute URLs. Several sources
+     * already link to {@code https://github.com/…/blob/main/docs/…md}; without
+     * the lookbehind the {@code docs/…} tail of such a URL matches, and a
+     * branch-pinned external link would be validated against the current
+     * worktree — which {@link #everyRelativeLinkResolves()} deliberately does not
+     * do for {@code https://} targets. The same guard is spelled as a lookbehind
+     * in {@code knowledge/tools/routing/lib/anchors.mjs}, for the same reason.</p>
+     */
+    private static final Pattern JAVA_DOCS_ANCHOR =
+            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\w-]+)");
+
+    /**
+     * Javadoc that points a reader at a section of the documentation points at a
+     * section that exists.
+     *
+     * <p>The markdown half of this guard reads {@code [text](target)} links, which
+     * is every reference a page can make. A Javadoc block cannot write one of
+     * those — it names the path as prose — so a heading rename fixes every
+     * markdown citation and the routing table's copies, and silently leaves the
+     * Javadoc one dangling. That copy has the widest audience of the three: the
+     * knowledge surfaces carry signatures and no prose, so for an API-first
+     * reader the Javadoc <em>is</em> the documentation, and it ships to
+     * javadoc.io and to every IDE tooltip.</p>
+     *
+     * @throws IOException when a source file or page cannot be read
+     */
+    @Test
+    void everyDocsAnchorCitedFromJavaResolves() throws IOException {
+        List<Path> sources = mainJavaSources();
+        // Fail-closed on the scan root rather than on the number of citations:
+        // there may legitimately be none one day, but "the tree moved and this
+        // read nothing" must not look like "every citation resolves".
+        assertThat(sources)
+                .describedAs("no main Java sources found under %s — this guard is reading a tree "
+                        + "that moved, so it is no longer guarding anything", PROJECT_ROOT)
+                .hasSizeGreaterThan(100);
+
+        Map<Path, Set<String>> anchors = new HashMap<>();
+        for (Path page : documentationPages()) {
+            anchors.put(page.toAbsolutePath().normalize(), anchorsOf(page));
+        }
+
+        Map<String, String> broken = new TreeMap<>();
+        for (Path source : sources) {
+            Matcher cited = JAVA_DOCS_ANCHOR.matcher(read(source));
+            while (cited.find()) {
+                String reference = cited.group(1) + "#" + cited.group(2);
+                Path page = PROJECT_ROOT.resolve(cited.group(1)).toAbsolutePath().normalize();
+                if (!Files.exists(page)) {
+                    broken.put(relative(source) + " -> " + reference, "no such page");
+                } else if (!anchors.getOrDefault(page, Set.of()).contains(cited.group(2))) {
+                    broken.put(relative(source) + " -> " + reference,
+                            "no heading in " + relative(page) + " anchors there");
+                }
+            }
+        }
+
+        assertThat(broken)
+                .describedAs("Javadoc naming a documentation section that is not there. Renaming a "
+                        + "heading is invisible to the compiler and to every markdown guard, and "
+                        + "this citation ships to javadoc.io. Fix the citation or restore the "
+                        + "heading")
+                .isEmpty();
+    }
+
+    /** Every module's production Java, which is what gets published as Javadoc. */
+    private static List<Path> mainJavaSources() throws IOException {
+        List<Path> sources = new ArrayList<>();
+        try (Stream<Path> tree = Files.walk(PROJECT_ROOT)) {
+            tree.filter(p -> p.toString().endsWith(".java"))
+                    .filter(p -> p.toAbsolutePath().normalize().toString()
+                            .replace('\\', '/').contains("/src/main/java/"))
+                    .forEach(sources::add);
+        }
+        return sources;
+    }
+
+    /**
      * The anchors GitHub generates for a page.
      *
      * <p>The rule: take the heading text, drop HTML tags, keep a link's text rather
@@ -195,7 +302,35 @@ class DocumentationLinkGuardTest {
         text = HEADING_LINK.matcher(text).replaceAll("$1");
         text = text.replace("`", "").toLowerCase(java.util.Locale.ROOT);
         text = NOT_IN_ANCHOR.matcher(text).replaceAll("");
-        return text.replaceAll("\\s", "-");
+        return ANCHOR_WHITESPACE.matcher(text).replaceAll("-");
+    }
+
+    /**
+     * The same four inputs {@code knowledge/tools/routing/test/anchors.test.mjs}
+     * pins on the JavaScript side.
+     *
+     * <p>GitHub's rule is implemented twice in this repository — here, and in
+     * {@code knowledge/tools/routing/lib/anchors.mjs}, which the routing gate
+     * resolves route citations with. Neither can call the other across the
+     * language boundary, so they are held together by asserting the same table
+     * from both sides: change one and its own fixture goes red. These four are
+     * the inputs on which the two implementations were measured to disagree.</p>
+     */
+    @Test
+    void theAnchorRuleAgreesWithItsJavaScriptTwin() {
+        assertThat(slug("Zebra alternating rows"))
+                .describedAs("a non-breaking space is whitespace, so it hyphenates like any other "
+                        + "instead of surviving into the anchor as a literal U+00A0")
+                .isEqualTo("zebra-alternating-rows");
+        assertThat(slug("Row span"))
+                .describedAs("so does an em space")
+                .isEqualTo("row-span");
+        assertThat(slug("Item ① first"))
+                .describedAs("a circled numeral is a number and survives, as it does on the page")
+                .isEqualTo("item-①-first");
+        assertThat(slug("Café rules"))
+                .describedAs("a decomposed accent is a combining mark and stays with its letter")
+                .isEqualTo("café-rules");
     }
 
     private static String withoutFencedBlocks(String markdown) {

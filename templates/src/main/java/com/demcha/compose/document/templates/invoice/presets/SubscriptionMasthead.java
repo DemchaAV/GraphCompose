@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
@@ -143,9 +144,9 @@ final class SubscriptionMasthead {
             block.margin(new DocumentInsets(baselineGap(48.9, BODY_SIZE, BODY_SIZE), 0, 0, 0));
             block.spacing(px(30) - 1.2 * BODY_SIZE);
             contact(block, "Email", "E", supplier.email(),
-                    InvoiceUri.mailLink(supplier.email()));
+                    ContactUri.mailLink(supplier.email()));
             contact(block, "Website", "W", supplier.website(),
-                    InvoiceUri.webLink(supplier.website()));
+                    ContactUri.webLink(supplier.website()));
             contact(block, "Registration", supplier.taxRegistrationLabel(),
                     supplier.taxRegistrationNumber(), null);
         });

@@ -135,29 +135,6 @@ final class ConsultingText {
     }
 
     /**
-     * Builds the {@code tel:} URI of a printed phone number.
-     *
-     * @param phone the printed number
-     * @return the dial URI
-     */
-    static String telUri(String phone) {
-        return "tel:" + phone.replace(" ", "");
-    }
-
-    /**
-     * Builds the browsable URI of a printed website, adding the scheme when
-     * the printed form omits it.
-     *
-     * @param website the printed website
-     * @return the browsable URI
-     */
-    static String websiteUri(String website) {
-        return website.startsWith("http://") || website.startsWith("https://")
-                ? website
-                : "https://" + website;
-    }
-
-    /**
      * Keeps a printed phone number on one line.
      *
      * @param phone the printed number

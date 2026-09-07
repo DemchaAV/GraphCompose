@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.HorizontalAlign;
 import com.demcha.compose.document.node.RowVerticalAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 
@@ -124,7 +125,7 @@ final class ObsidianCards {
                             // A bank detail is a reference, not a destination —
                             // except an address, the one field a reader would act on.
                             field.value().contains("@")
-                                    ? InvoiceUri.mailLink(field.value())
+                                    ? ContactUri.mailLink(field.value())
                                     : null));
                 });
             }

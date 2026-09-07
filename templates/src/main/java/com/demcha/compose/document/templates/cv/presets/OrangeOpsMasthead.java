@@ -14,6 +14,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.svg.SvgPath;
 import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.CvName;
@@ -21,7 +22,6 @@ import com.demcha.compose.document.templates.cv.data.CvName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.ACCENT;
 import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.BAR_TO_CONTACT;
@@ -68,14 +68,6 @@ import static com.demcha.compose.document.templates.cv.presets.OrangeOpsStyles.s
  * an error.</p>
  */
 final class OrangeOpsMasthead {
-
-    /**
-     * A trunk prefix in a printed number is for a domestic dialler and is not
-     * part of the international one — {@code +44 (0)20 7946 0832} dials
-     * {@code +442079460832}. Left in, the digits would run together into a
-     * number that reaches nobody.
-     */
-    private static final Pattern TRUNK_PREFIX = Pattern.compile("\\(0+\\)");
 
     private OrangeOpsMasthead() {
     }
@@ -205,7 +197,7 @@ final class OrangeOpsMasthead {
     private static void renderContactStrip(PageFlowBuilder page, CvIdentity identity) {
         Contact contact = identity.contact();
         List<Channel> channels = new ArrayList<>();
-        channels.add(new Channel(OrangeOpsIcons.PHONE, contact.phone(), telUri(contact.phone())));
+        channels.add(new Channel(OrangeOpsIcons.PHONE, contact.phone(), ContactUri.tel(contact.phone())));
         channels.add(new Channel(OrangeOpsIcons.EMAIL, contact.email(),
                 "mailto:" + contact.email()));
         channels.add(new Channel(OrangeOpsIcons.LOCATION, contact.address(), null));
@@ -257,14 +249,6 @@ final class OrangeOpsMasthead {
         return link.url().toLowerCase(Locale.ROOT).contains("linkedin.")
                 ? OrangeOpsIcons.LINKEDIN
                 : OrangeOpsIcons.WEBSITE;
-    }
-
-    /** A printed number as something a reader can dial, or {@code null}. */
-    private static String telUri(String phone) {
-        String dialled = TRUNK_PREFIX.matcher(phone).replaceAll("");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     /** One item of the strip: its mark, what it reads, and where it points. */

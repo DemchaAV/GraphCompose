@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.proposal.ProposalAttention;
 import com.demcha.compose.document.templates.data.proposal.ProposalBrand;
 import com.demcha.compose.document.templates.data.proposal.ProposalMetaLine;
@@ -223,9 +224,9 @@ final class IndigoMasthead {
                 .margin(new DocumentInsets(
                         cell.capAt(ATTN_ROLE_CAP, ATTN_ROLE_SIZE, false), 0, 0, 0)));
         reachable(left, "AttentionEmail", attention.email(),
-                ProposalUri.mailLink(attention.email()), cell, ATTN_EMAIL_CAP);
+                ContactUri.mailLink(attention.email()), cell, ATTN_EMAIL_CAP);
         reachable(left, "AttentionPhone", attention.phone(),
-                ProposalUri.telLink(attention.phone()), cell, ATTN_PHONE_CAP);
+                ContactUri.telLink(attention.phone()), cell, ATTN_PHONE_CAP);
     }
 
     /**

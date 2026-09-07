@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 243 · methods: 1345 · constants: 191 · compiler-generated members: 750
+Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 
 ## com.demcha.compose.document.templates.api
 
@@ -58,6 +58,14 @@ Types: 243 · methods: 1345 · constants: 191 · compiler-generated members: 750
 
 ### ContactLine.Order (enum)
 - constants: `PHONE_FIRST`, `ADDRESS_FIRST`
+
+### ContactUri (class)
+- `String tel(String phone)`
+- `DocumentLinkOptions telLink(String phone)`
+- `DocumentLinkOptions mailLink(String email)`
+- `String web(String website)`
+- `DocumentLinkOptions webLink(String website)`
+- `DocumentLinkOptions channelLink(String contact)`
 
 ### Headline (class)
 - `void spacedCentered(SectionBuilder host, String name, BrandTheme theme)`

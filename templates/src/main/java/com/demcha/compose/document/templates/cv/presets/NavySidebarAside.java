@@ -13,6 +13,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
@@ -185,7 +186,7 @@ final class NavySidebarAside {
     private static List<Channel> channels(CvIdentity identity) {
         List<Channel> channels = new ArrayList<>();
         String phone = identity.contact().phone();
-        channels.add(new Channel(NavySidebarIcons.PHONE, phone, telUri(phone)));
+        channels.add(new Channel(NavySidebarIcons.PHONE, phone, ContactUri.tel(phone)));
         String email = identity.contact().email();
         channels.add(new Channel(NavySidebarIcons.EMAIL, email, "mailto:" + email));
         channels.add(new Channel(NavySidebarIcons.LOCATION,
@@ -194,17 +195,6 @@ final class NavySidebarAside {
             channels.add(new Channel(NavySidebarIcons.LINKEDIN, link.label(), link.url()));
         }
         return channels;
-    }
-
-    /**
-     * The dial target for a phone number: its digits, keeping a leading
-     * {@code +} so an international number stays international.
-     */
-    private static String telUri(String phone) {
-        String digits = phone.replaceAll("[^0-9]", "");
-        return digits.isEmpty()
-                ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     /**

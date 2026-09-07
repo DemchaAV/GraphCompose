@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.core.identity.Contact;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.core.identity.Link;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
@@ -155,7 +156,7 @@ final class VioletGridMasthead {
         channels.add(new Channel(VioletGridIcons.EMAIL, contact.email(),
                 "mailto:" + contact.email()));
         channels.add(new Channel(VioletGridIcons.PHONE, contact.phone(),
-                telUri(contact.phone())));
+                ContactUri.tel(contact.phone())));
         channels.add(new Channel(VioletGridIcons.LOCATION, contact.address(), null));
         for (Link link : identity.links()) {
             channels.add(new Channel(markFor(link), link.label(), link.url()));
@@ -167,19 +168,6 @@ final class VioletGridMasthead {
     private static String markFor(Link link) {
         String target = (link.url() + " " + link.label()).toLowerCase(Locale.ROOT);
         return target.contains("linkedin") ? VioletGridIcons.LINKEDIN : VioletGridIcons.WEBSITE;
-    }
-
-    /**
-     * The dial target for a phone number: its digits, keeping a leading
-     * {@code +} so an international number stays international, and dropping a
-     * parenthesised trunk prefix the way a caller dialling from abroad does.
-     */
-    private static String telUri(String phone) {
-        String dialled = phone.replaceAll("\\(0+\\)", "");
-        String digits = dialled.replaceAll("[^0-9]", "");
-        return digits.isEmpty()
-                ? null
-                : "tel:" + (phone.trim().startsWith("+") ? "+" : "") + digits;
     }
 
     // -- the opening lines -------------------------------------------------

@@ -9,6 +9,7 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
@@ -154,19 +155,11 @@ final class WorkspaceClosing {
                 if (website.isBlank()) {
                     p.text("");
                 } else {
-                    p.inlineText(website, linkStyle, new DocumentLinkOptions(uri(website)));
+                    p.inlineText(website, linkStyle, ContactUri.webLink(website));
                 }
                 p.align(TextAlign.RIGHT);
                 p.margin(new DocumentInsets(0, px(3), 0, 0));
             });
         });
-    }
-
-    /** A written address as something a reader can follow. */
-    private static String uri(String website) {
-        String trimmed = website.trim();
-        return trimmed.startsWith("http://") || trimmed.startsWith("https://")
-                ? trimmed
-                : "https://" + trimmed;
     }
 }

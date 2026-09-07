@@ -11,6 +11,7 @@ import com.demcha.compose.document.style.DocumentEdge;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.svg.SvgIcon;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 
@@ -265,9 +266,9 @@ final class SubscriptionClosing {
     private static void writeReachable(ParagraphBuilder paragraph, String prose,
                                        InvoiceContactBlock supplier) {
         List<Reachable> found = new ArrayList<>();
-        addIfPresent(found, prose, supplier.email(), InvoiceUri.mailLink(supplier.email()));
-        addIfPresent(found, prose, supplier.website(), InvoiceUri.webLink(supplier.website()));
-        addIfPresent(found, prose, supplier.phone(), InvoiceUri.telLink(supplier.phone()));
+        addIfPresent(found, prose, supplier.email(), ContactUri.mailLink(supplier.email()));
+        addIfPresent(found, prose, supplier.website(), ContactUri.webLink(supplier.website()));
+        addIfPresent(found, prose, supplier.phone(), ContactUri.telLink(supplier.phone()));
         found.sort(Comparator.comparingInt(Reachable::at));
 
         int cursor = 0;

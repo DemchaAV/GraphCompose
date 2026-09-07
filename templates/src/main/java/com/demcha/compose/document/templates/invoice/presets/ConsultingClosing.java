@@ -8,6 +8,7 @@ import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceNotesBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoicePaymentBlock;
 import com.demcha.compose.document.templates.data.invoice.StructuredInvoiceData;
@@ -26,7 +27,6 @@ import static com.demcha.compose.document.templates.invoice.presets.ConsultingSt
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingStyles.SMALL_ITALIC;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.link;
 import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.nonBreakingPhone;
-import static com.demcha.compose.document.templates.invoice.presets.ConsultingText.telUri;
 
 /**
  * The closing band of the Consulting Invoice: where the money goes on the
@@ -132,7 +132,7 @@ final class ConsultingClosing {
                 .with(notes.contactEmail(), BODY_LINK, link("mailto:" + notes.contactEmail()))
                 .style(between, BODY)
                 .with(nonBreakingPhone(notes.contactPhone()), BODY,
-                        link(telUri(notes.contactPhone())))
+                        ContactUri.telLink(notes.contactPhone()))
                 .style(after, BODY));
     }
 

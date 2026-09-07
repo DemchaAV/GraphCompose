@@ -16,6 +16,8 @@ import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.*;
 import com.demcha.compose.document.templates.core.theme.BrandTheme;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

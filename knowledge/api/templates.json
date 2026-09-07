@@ -22,8 +22,8 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 243,
-    "methods": 1345,
+    "types": 244,
+    "methods": 1351,
     "constants": 191,
     "generated": 750
   },
@@ -424,6 +424,101 @@
               "static": true,
               "origin": "generated",
               "type": "ContactLine.Order"
+            }
+          ]
+        },
+        {
+          "name": "ContactUri",
+          "binaryName": "com.demcha.compose.document.templates.core.identity.ContactUri",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "tel",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "phone"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "telLink",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLinkOptions",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "phone"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "mailLink",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLinkOptions",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "email"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "web",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "website"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "webLink",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLinkOptions",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "website"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "channelLink",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLinkOptions",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "contact"
+                }
+              ]
             }
           ]
         },

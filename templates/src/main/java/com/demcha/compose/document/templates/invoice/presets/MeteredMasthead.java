@@ -10,6 +10,7 @@ import com.demcha.compose.document.style.DocumentBorders;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentStroke;
+import com.demcha.compose.document.templates.core.identity.ContactUri;
 import com.demcha.compose.document.templates.data.invoice.InvoiceBrand;
 import com.demcha.compose.document.templates.data.invoice.InvoiceContactBlock;
 import com.demcha.compose.document.templates.data.invoice.InvoiceMasthead;
@@ -165,17 +166,17 @@ final class MeteredMasthead {
                 if (!supplier.phone().isBlank()) {
                     labelledRow(contacts, "SupplierContact_" + index++,
                             "Phone:", supplier.phone(),
-                            SUPPLIER_LABEL_W, BODY, BODY, InvoiceUri.telLink(supplier.phone()));
+                            SUPPLIER_LABEL_W, BODY, BODY, ContactUri.telLink(supplier.phone()));
                 }
                 if (!supplier.email().isBlank()) {
                     labelledRow(contacts, "SupplierContact_" + index++,
                             "Email:", supplier.email(), SUPPLIER_LABEL_W, BODY, BODY,
-                            InvoiceUri.mailLink(supplier.email()));
+                            ContactUri.mailLink(supplier.email()));
                 }
                 if (!supplier.website().isBlank()) {
                     labelledRow(contacts, "SupplierContact_" + index,
                             "Website:", supplier.website(), SUPPLIER_LABEL_W, BODY, BODY,
-                            InvoiceUri.webLink(supplier.website()));
+                            ContactUri.webLink(supplier.website()));
                 }
             });
         });

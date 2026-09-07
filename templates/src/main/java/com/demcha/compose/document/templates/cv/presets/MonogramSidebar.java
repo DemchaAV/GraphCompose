@@ -21,6 +21,8 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.font.FontName;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.util.*;
 
 /**

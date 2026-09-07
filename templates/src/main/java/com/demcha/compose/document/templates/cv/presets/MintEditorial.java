@@ -29,6 +29,8 @@ import com.demcha.compose.document.templates.core.identity.Subheadline;
 import com.demcha.compose.document.templates.core.identity.SvgGlyph;
 import com.demcha.compose.document.svg.SvgIcon;
 
+import com.demcha.compose.document.templates.core.identity.ContactUri;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;

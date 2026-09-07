@@ -20,20 +20,9 @@
  */
 
 import { anchorOf, anchorsIn, anchorRefsIn } from "../lib/anchors.mjs";
+import { suite } from "../../lib/fixtures.mjs";
 
-let failures = 0;
-let passes = 0;
-
-function check(name, actual, expected) {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  if (a === e) {
-    passes += 1;
-    return;
-  }
-  failures += 1;
-  process.stdout.write(`  FAIL  ${name}\n        expected ${e}\n        actual   ${a}\n`);
-}
+const { check, done } = suite("anchors.test");
 
 // --------------------------------------------------------------- anchorOf ---
 
@@ -85,6 +74,14 @@ check(
   "café-rules",
 );
 check("letters of any script survive", anchorOf("Привет мир"), "привет-мир");
+check("a letter numeral is kept, unlike the circled one above", anchorOf("Chapter Ⅰ here"), "chapter-ⅰ-here");
+check("connector punctuation is kept — that is where the underscore lives", anchorOf("a‿f b"), "a‿f-b");
+check(
+  "a non-ASCII space at an edge is dropped and its ASCII neighbour still hyphenates",
+  anchorOf("  A"),
+  "-a",
+);
+check("the same at the trailing edge", anchorOf("A  "), "a-");
 check("so do digits, while the dots between them go", anchorOf("v1.8.0 fonts"), "v180-fonts");
 check("an underscore survives", anchorOf("snake_case name"), "snake_case-name");
 check("a dropped character leaves its spaces behind", anchorOf("A & B"), "a--b");
@@ -177,7 +174,4 @@ check(
 check("a field with no reference yields none", anchorRefsIn("plain prose, no citation"), []);
 check("a null field is not an error", anchorRefsIn(null), []);
 
-process.stdout.write(
-  failures ? `\n[anchors.test] ${failures} failed, ${passes} passed\n` : `[anchors.test] ${passes} passed\n`,
-);
-process.exit(failures ? 1 : 0);
+done();

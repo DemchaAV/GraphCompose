@@ -92,14 +92,16 @@ class DocumentationLinkGuardTest {
      *
      * <p>The keep-set was read off GitHub rather than reasoned about, by posting
      * headings to {@code api.github.com/markdown} and reading the ids it
-     * generates: letters of any script, combining marks, decimal digits,
-     * {@code _}, {@code -} and the ASCII space survive, and everything else is
-     * dropped — <em>including every other kind of whitespace</em>. A
-     * non-breaking space, an em space and a tab are all removed rather than
-     * hyphenated, and {@code ①} is removed because it is not a decimal digit,
-     * leaving the spaces that surrounded it.</p>
+     * generates: letters of any script, combining marks, decimal digits, letter
+     * numerals, connector punctuation (which is where {@code _} lives),
+     * {@code -} and the ASCII space survive, and everything else is dropped —
+     * <em>including every other kind of whitespace</em>. A non-breaking space, an
+     * em space and a tab are all removed rather than hyphenated. {@code ①} is
+     * removed because it is a {@code No} numeral, leaving the spaces that
+     * surrounded it, while {@code Ⅰ} is an {@code Nl} numeral and survives.</p>
      */
-    private static final Pattern NOT_IN_ANCHOR = Pattern.compile("[^\\p{L}\\p{M}\\p{Nd}_ -]");
+    private static final Pattern NOT_IN_ANCHOR =
+            Pattern.compile("[^\\p{L}\\p{M}\\p{Nd}\\p{Nl}\\p{Pc} -]");
 
     /** A markdown link inside a heading — the anchor uses the text, not the target. */
     private static final Pattern HEADING_LINK = Pattern.compile("\\[([^]]*)]\\([^)]*\\)");
@@ -187,7 +189,7 @@ class DocumentationLinkGuardTest {
      * in {@code knowledge/tools/routing/lib/anchors.mjs}, for the same reason.</p>
      */
     private static final Pattern JAVA_DOCS_ANCHOR =
-            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\p{L}\\p{M}\\p{Nd}_-]+)");
+            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\p{L}\\p{M}\\p{Nd}\\p{Nl}\\p{Pc}-]+)");
 
     /**
      * Javadoc that points a reader at a section of the documentation points at a
@@ -228,6 +230,14 @@ class DocumentationLinkGuardTest {
                 Path page = PROJECT_ROOT.resolve(cited.group(1)).toAbsolutePath().normalize();
                 if (!Files.exists(page)) {
                     broken.put(relative(source) + " -> " + reference, "no such page");
+                } else if (!citedAsNamedOnDisk(page, cited.group(1))) {
+                    // Files.exists and Path.equals are case-insensitive on
+                    // Windows, so a mis-cased citation was green on a developer's
+                    // box and failed only on the Linux runner — reported there as
+                    // "no such page", which reads as a missing file rather than
+                    // as the casing it is.
+                    broken.put(relative(source) + " -> " + reference,
+                            "the page on disk is named differently; check the citation's casing");
                 } else if (!anchors.getOrDefault(page, Set.of()).contains(cited.group(2))) {
                     broken.put(relative(source) + " -> " + reference,
                             "no heading in " + relative(page) + " anchors there");
@@ -241,6 +251,29 @@ class DocumentationLinkGuardTest {
                         + "this citation ships to javadoc.io. Fix the citation or restore the "
                         + "heading")
                 .isEmpty();
+    }
+
+    /**
+     * Whether a citation spells the page the way the filesystem does.
+     *
+     * <p>{@link Path#toRealPath} resolves to the on-disk name, which is the only
+     * way to see a casing mismatch on a case-insensitive filesystem. The routing
+     * gate makes the same comparison for its own citations.</p>
+     *
+     * @param page  the resolved page
+     * @param cited the path half of the citation, as written
+     * @return {@code true} when the two agree
+     */
+    private static boolean citedAsNamedOnDisk(Path page, String cited) {
+        try {
+            String onDisk = PROJECT_ROOT.toRealPath().relativize(page.toRealPath()).toString()
+                    .replace('\\', '/');
+            return onDisk.equals(cited);
+        } catch (IOException e) {
+            // Unreadable is not mis-cased; the caller has already established the
+            // file exists, so let the anchor check speak instead.
+            return true;
+        }
     }
 
     /** Every module's production Java, which is what gets published as Javadoc. */
@@ -302,15 +335,19 @@ class DocumentationLinkGuardTest {
     }
 
     /**
-     * The same four inputs {@code knowledge/tools/routing/test/anchors.test.mjs}
-     * pins on the JavaScript side.
+     * The same table {@code knowledge/tools/routing/test/anchors.test.mjs} pins
+     * on the JavaScript side.
      *
      * <p>GitHub's rule is implemented twice in this repository — here, and in
      * {@code knowledge/tools/routing/lib/anchors.mjs}, which the routing gate
      * resolves route citations with. Neither can call the other across the
-     * language boundary, so they are held together by asserting the same table
-     * from both sides: change one and its own fixture goes red. These four are
-     * the inputs on which the two implementations were measured to disagree.</p>
+     * language boundary, so they are held together by asserting the same inputs
+     * from both sides: change one and its own fixture goes red.</p>
+     *
+     * <p>Every expected value was read off GitHub, by posting the heading to
+     * {@code api.github.com/markdown} and taking the id it generated — not
+     * derived from either implementation. Three earlier versions of this rule
+     * were reasoned about instead, and all three were wrong.</p>
      */
     @Test
     void theAnchorRuleAgreesWithItsJavaScriptTwin() {
@@ -338,6 +375,19 @@ class DocumentationLinkGuardTest {
         assertThat(slug("A & B"))
                 .describedAs("a dropped character leaves its spaces behind")
                 .isEqualTo("a--b");
+        assertThat(slug("Chapter Ⅰ here"))
+                .describedAs("a letter numeral is kept, unlike the circled one above")
+                .isEqualTo("chapter-ⅰ-here");
+        assertThat(slug("a‿f b"))
+                .describedAs("connector punctuation is kept — that is where the underscore lives")
+                .isEqualTo("a‿f-b");
+        assertThat(slug("  A"))
+                .describedAs("a non-ASCII space at the edge is dropped, and the ASCII space "
+                        + "beside it still becomes a hyphen — GitHub does not trim it away")
+                .isEqualTo("-a");
+        assertThat(slug("A  "))
+                .describedAs("the same at the trailing edge")
+                .isEqualTo("a-");
         assertThat(slug("Zebra — alternating row fills"))
                 .describedAs("and the case that started all this: a spaced em dash is two spaces, "
                         + "so it is two hyphens")

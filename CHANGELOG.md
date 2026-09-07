@@ -176,6 +176,40 @@ follow semantic versioning; release dates are ISO 8601.
   the model whose shape it renders. Every component normalizes `null` to its empty
   form and freezes its collections, matching the family's existing records.
 
+- **A rota document model, replacing `data.schedule`.** The library already shipped a
+  weekly-roster model — `templates.data.schedule`, public since the templates module was
+  extracted — and nothing ever rendered it, because it is not shaped like a rota is
+  drawn: its people are ordered by a token and grouped nowhere, so there are no staff
+  bands; an assignment cannot say that one half of a split day is drawn more quietly
+  than the other; a day heading is one string, which a design that raises the ordinal's
+  suffix cannot split; and a category carries three `java.awt.Color`s, which puts the
+  rendering decision in the document and stops two presets drawing the same rota in two
+  palettes. `templates.data.rota` is the replacement — `StructuredRotaData` (venue,
+  week, day columns, legend, staff bands, footer) wrapped by
+  `StructuredRotaDocumentSpec`, with `RotaVenue` / `RotaWeek` / `RotaDay` /
+  `RotaCovers` / `RotaLegend` / `RotaGroup` / `RotaStaff` / `RotaShift` / `RotaFooter`
+  and the `ShiftStatus` / `ShiftEmphasis` enumerations.
+  <br><br>
+  **The grid is the document's, not the preset's.** `days()` is the columns and every
+  `RotaStaff.days()` runs in that same order, so a cell is found by position and a rota
+  of five days is as ordinary as one of seven — the span is a label the document
+  carries, not a shape the model imposes. A person's day is a *list* of entries rather
+  than one, which makes the two shapes a rota actually has — a blank cell and a split
+  shift — ordinary rather than special cases a preset has to invent a representation
+  for. `RotaStaff.day(int)` answers with nothing for a day the rota does not reach, so a
+  short row is a short row and not a broken document.
+  <br><br>
+  **What a cell means is separate from what it prints.** `ShiftStatus` is the meaning a
+  preset colours by; the text is the word a particular site uses for it, so a rota
+  printing `A/L` and one printing `HOL` colour alike, and a legend entry pairs the two.
+  `ShiftEmphasis` says how loudly an entry is drawn — the day someone is off is what a
+  reader scans for, the hours they work is what they read once they have found the
+  person. There is deliberately no `marked(text, status)` factory that picks the
+  emphasis: a design that halves a day draws the halves differently, sometimes quiet
+  second and sometimes not, so `RotaShift.strong(...)` and `RotaShift.soft(...)` make
+  the caller say which. Every component normalizes `null` to its empty form and freezes
+  its collections, the inner day lists included, matching the family's existing records.
+
 - **One place turns a printed contact into a followable one:
   `core.identity.ContactUri`.** The rule that a printed telephone number and the number
   a device dials are different strings had three named homes — one in the CV presets, one
@@ -195,6 +229,16 @@ follow semantic versioning; release dates are ISO 8601.
   string; a target is not yet a link, so it is the link forms that carry that guarantee.
   Nothing renders differently — a link annotation is not ink, and every pixel baseline in
   the suite passes untouched.
+
+### Deprecated
+
+- **`templates.data.schedule` — every type.** `WeeklyScheduleData`,
+  `WeeklyScheduleDocumentSpec`, `ScheduleDay`, `ScheduleCategory`, `SchedulePerson`,
+  `ScheduleAssignment`, `ScheduleSlot` and `ScheduleMetricRow` are deprecated since
+  2.4.0 in favour of `templates.data.rota`, each naming its replacement. They still
+  ship and still compile; nothing in the library ever rendered them, so no output moves.
+  `docs/templates/which-template-system.md` now points a caller at the rota model
+  instead.
 
 ### Fixed
 
@@ -910,7 +954,70 @@ follow semantic versioning; release dates are ISO 8601.
   the notice, the overlap window and every contact being followable), an exact layout
   snapshot, and a pixel baseline — all three fed by one fixture.
 
+- **The first rota preset: `CobaltRota`.** A staff rota on one landscape sheet — a
+  navy-ruled grid of who works when, read across a row rather than down a page. The
+  label column carries the venue's mark over the staff names; the day columns carry a
+  heading, whatever else is happening that day, a strip of swatches saying what the
+  colours mean, the covers each service is expecting, and then the people in bands, each
+  band opening with a navy strip and its own mark. Ships as `rota.presets.CobaltRota` on
+  the new `StructuredRotaData` model, with its icon set packaged in the templates
+  artifact, porting the rendered layout of a published standalone template: rendered at
+  150 dpi against the frozen original driven by the original's own data file, **every
+  pixel of the sheet is identical** — the grid, all eighty-four cells, the legend, the
+  covers, the bands and the foot's own line. The one region that differs is the foot's
+  left slot, which the original leaves empty and the port fills with the note the
+  document states.
+  <br><br>
+  **The whole sheet is one table.** Everything from the masthead rule to the last person
+  is rows of it — that is what keeps the columns aligned, where a masthead above or a
+  legend beside would be a second structure to keep in step. The four header rows are
+  declared repeating with their count, because `repeatHeader()` with no argument repeats
+  one row and a rota longer than a page would carry a stray rule onto the next one
+  instead of its day headings.
+  <br><br>
+  **The grid follows the document, not the design.** The sheet has as many day columns
+  as the rota has days and every person's entries are read by position against that
+  list, so a five-day rota makes five wider columns; nothing in the preset says a week.
+  A legend documenting more statuses than there are days runs onto a second strip rather
+  than losing its tail — a status a reader cannot look up is worse than an extra row —
+  and one documenting fewer is closed off with empty cells, so the table stays square
+  either way. The label column keeps its own padding whatever the day count, so the
+  wordmark does not resize with the number of days. A rota that states no legend and no
+  covers carries neither row: an empty navy bar over empty boxes is two rows of a sheet
+  that is short of rows already.
+  <br><br>
+  A day cell is a block of a stated height rather than whatever its chips come to,
+  because a table cell places a node child at its *top* — `textAnchor` seats text, not a
+  node — so a short chip in a row made tall by a neighbour would otherwise hang with all
+  the slack beneath it. An unmarked entry is drawn as a chip with no fill and no outline
+  rather than as bare text, so it occupies exactly the height a marked one does. The
+  row's tint is threaded by hand into every cell and on into those chips rather than
+  left to the table's own striping, which would stripe the header, the legend, the
+  covers and the bands too. Guarded by a smoke test (including the empty rota, a
+  five-day rota, a split day, a band naming no mark, the unknown-token data error, a
+  legend longer and shorter than the week, a rota stating neither legend nor covers, and
+  one long enough to need a second page), an exact layout snapshot, and a pixel baseline
+  — all three fed by one fixture.
+  <br><br>
+  **The gates say what they can see.** The sheet is composed table cells almost end to
+  end, and a composed cell emits fragments rather than a placed node, so the snapshot
+  holds two nodes for eighty-four shift cells: it pins the page and the table that
+  carries them, and nothing inside. The pixel baseline is the only gate that sees the
+  sheet, and one chip is under two thousand of the page's half-million pixels — a budget
+  wide enough for a renderer's antialiasing is wide enough to hide several chips — so
+  its budget is a fraction of the sibling presets', and a third test counts the ink of
+  each status colour directly. Removing a chip's fill turns that one red by name.
+
 ### Tests
+
+- **The schedule fixtures no longer carry a real venue's staff.** The weekly-schedule
+  test fixture and the example data factory were written from a real bar's rota and kept
+  its people's names, its venue name, and two third parties named in the day notes.
+  Fixture content should be invented, and this is now: eleven invented names, an
+  invented venue, and generic notes. The shape — eleven people, seven days, the same
+  categories and the same assignments — is unchanged, so every assertion that read it
+  reads the same thing. `assets/readme/examples/weekly-schedule.pdf` is re-rendered for
+  the two note strings it prints; nothing else in it moves.
 
 - **The CodeQL scope guard can no longer be emptied by rewriting a deploy command.**
   `CodeQlScopeGuardTest` asks whether every module a release publishes is inside the

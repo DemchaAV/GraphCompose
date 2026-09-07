@@ -8,7 +8,13 @@ import java.util.Objects;
  * @param id          stable person identifier
  * @param displayName display name
  * @param sortOrder   ordering token for roster display
+ *
+ * @deprecated superseded by
+ *             {@link com.demcha.compose.document.templates.data.rota.RotaStaff},
+ *             which holds its own days and sits inside the band it belongs to
+ *             rather than being ordered by a token and grouped nowhere.
  */
+@Deprecated(since = "2.4.0")
 public record SchedulePerson(
         String id,
         String displayName,

@@ -8,6 +8,7 @@ import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
+import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.*;
@@ -717,16 +718,24 @@ public final class NodeDefinitionSupport {
                         : style.padding();
         double childWidth = Math.max(0.0, cellWidth - padding.horizontal());
         double childHeight = Math.max(0.0, child.measureResult().height());
-        // Where in the cell's box the child sits. Mirrors resolveTextLines:
-        // same default (centre, from TableCellLayoutStyle.DEFAULT), same
-        // mapping of BOTTOM and DEFAULT onto the bottom edge, so text and
-        // composed content in one table cannot disagree. Slack is clamped at
-        // zero: a child taller than its cell keeps starting at the bottom
-        // rather than being pushed below it by a negative offset.
+        // Where in the cell's box the child sits. Follows resolveTextLines on
+        // the vertical axis: same default (centre, from
+        // TableCellLayoutStyle.DEFAULT), same mapping of BOTTOM and DEFAULT
+        // onto the bottom edge, so text and composed content that fit their
+        // cell land on the same line.
+        //
+        // Two deliberate differences. The horizontal half of the anchor is not
+        // read: a composed child is laid out at the cell's inner width, so
+        // there is no slack across for it to sit in, where a text line has its
+        // own measured width. And slack is clamped at zero rather than allowed
+        // to go negative — an over-tall child keeps starting at the bottom and
+        // overflowing upward instead of being pushed below its own cell. No
+        // input reachable today produces that: a row is sized from the content
+        // it holds, so this is a guard, not a behaviour anyone can observe.
         double innerHeight = Math.max(0.0, cellHeight - padding.vertical());
         double slack = Math.max(0.0, innerHeight - childHeight);
-        var anchor = style.textAnchor() == null
-                ? com.demcha.compose.engine.components.layout.Anchor.centerLeft()
+        Anchor anchor = style.textAnchor() == null
+                ? Anchor.centerLeft()
                 : style.textAnchor();
         double contentBottom = padding.bottom() + switch (anchor.v()) {
             case TOP -> slack;

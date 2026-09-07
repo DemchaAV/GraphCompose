@@ -120,6 +120,30 @@ class TableRowSpanComposedAnchorTest {
     }
 
     @Test
+    void theUnaskedForPlacementIsTheMiddle() {
+        // MIDDLE is the default, so it is the branch that moves documents
+        // nobody edited. Every other case here is differential, and all of them
+        // would still pass if MIDDLE resolved to the top or to the bottom — the
+        // two placements that move an existing composed cell either twice as far
+        // as intended or not at all. So this one is arithmetic: the midpoint of
+        // the two ends is the only value that means "half the slack".
+        double top = badgeY(anchored(DocumentTableTextAnchor.TOP_LEFT), null);
+        double bottom = badgeY(anchored(DocumentTableTextAnchor.BOTTOM_LEFT), null);
+        double middle = badgeY(anchored(DocumentTableTextAnchor.CENTER_LEFT), null);
+
+        assertThat(middle)
+                .as("MIDDLE puts the child at half the slack, not at either end of it")
+                .isCloseTo((top + bottom) / 2.0, within(EPS));
+
+        // And asking for nothing is asking for that: an unstyled cell resolves
+        // to TableCellLayoutStyle.DEFAULT, the centre the text beside it has
+        // always used. This is the pair that makes the change a change.
+        assertThat(badgeY(null, null))
+                .as("a composed cell with no anchor of its own sits where MIDDLE puts it")
+                .isCloseTo(middle, within(EPS));
+    }
+
+    @Test
     void topAnchorPutsTheChildAtTheTopOfTheSpanRatherThanTheTopOfItsOwnRow() {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(320, 300)
@@ -156,43 +180,11 @@ class TableRowSpanComposedAnchorTest {
                 .isGreaterThan(bottom + EPS);
     }
 
-    @Test
-    void aChildTallerThanItsCellStillStartsAtTheBottomRatherThanBelowIt() {
-        // Slack is clamped at zero. Without the clamp an over-tall child would
-        // be pushed below its own cell by a negative offset, which is worse
-        // than the overflow it is already doing.
-        DocumentTableCell tall = DocumentTableCell.node(
-                new ParagraphNode("TallBadge",
-                        "a rather long composed paragraph that will wrap several times "
-                                + "inside a sixty point column and so exceed the row it sits in",
-                        DocumentTextStyle.DEFAULT, TextAlign.LEFT, 0.0,
-                        DocumentInsets.zero(), DocumentInsets.zero()))
-                .withStyle(anchored(DocumentTableTextAnchor.TOP_LEFT));
-
-        TableNode table = new TableNode(
-                "OverTall",
-                List.of(DocumentTableColumn.fixed(60), DocumentTableColumn.fixed(200)),
-                List.of(List.of(tall, DocumentTableCell.text("X"))),
-                DocumentTableStyle.empty(),
-                280.0,
-                DocumentInsets.zero(),
-                DocumentInsets.zero());
-
-        try (DocumentSession session = GraphCompose.document()
-                .pageSize(320, 400)
-                .margin(DocumentInsets.of(20))
-                .create()) {
-            session.add(table);
-            LayoutGraph graph = session.layoutGraph();
-
-            List<PlacedFragment> rows = graph.fragments().stream()
-                    .filter(f -> f.payload() instanceof TableRowFragmentPayload)
-                    .toList();
-            assertThat(rows).hasSize(1);
-
-            assertThat(badgeFragment(graph).y())
-                    .as("an over-tall child is not pushed below its own row")
-                    .isGreaterThanOrEqualTo(rows.get(0).y() - EPS);
-        }
-    }
+    // There is deliberately no test for the zero clamp on slack. A row is
+    // sized from the height of the content it holds, so no input reachable
+    // through the public surface makes a cell shorter than its own child, and
+    // a test that cannot construct its premise passes on the unfixed code too
+    // — which is worse than no test, because it reads as cover. The clamp
+    // stays as what it is: a guard against a negative offset if some later
+    // change ever does give a row a height of its own.
 }

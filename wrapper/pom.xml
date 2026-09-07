@@ -69,7 +69,7 @@
              annotated with Lombok, which is provided-scope there and so never
              reaches this module transitively. Kept in lockstep with the engine pom
              by VersionConsistencyGuardTest. -->
-        <lombok.version>1.18.46</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
 
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->

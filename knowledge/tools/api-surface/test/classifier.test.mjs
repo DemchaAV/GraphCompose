@@ -29,6 +29,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { suite } from "../../lib/fixtures.mjs";
+
 import { findJavap } from "../lib/javap.mjs";
 import {
   readAnnotations,
@@ -123,19 +125,7 @@ public interface OpenedSpi {
 
 // --- harness -----------------------------------------------------------------
 
-let failures = 0;
-let passes = 0;
-
-function check(name, actual, expected) {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  if (a === e) {
-    passes += 1;
-    return;
-  }
-  failures += 1;
-  process.stdout.write(`  FAIL  ${name}\n        expected ${e}\n        actual   ${a}\n`);
-}
+const { check, done } = suite("classifier.test");
 
 function compileFixtures(outDir) {
   const srcDir = path.join(outDir, "src");
@@ -380,12 +370,7 @@ function run() {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 
-  process.stdout.write(
-    failures
-      ? `\n[classifier.test] ${failures} failed, ${passes} passed\n`
-      : `[classifier.test] ${passes} passed\n`,
-  );
-  process.exit(failures ? 1 : 0);
+  done();
 }
 
 run();

@@ -28,23 +28,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { compareVersions, versionParts, packVersionOf } from "../lib/pack-version.mjs";
+import { suite } from "../../lib/fixtures.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const API_QUERY = path.join(HERE, "..", "..", "api-query", "api-query.mjs");
 
-let failures = 0;
-let passes = 0;
-
-function check(name, actual, expected) {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  if (a === e) {
-    passes += 1;
-    return;
-  }
-  failures += 1;
-  process.stdout.write(`  FAIL  ${name}\n        expected ${e}\n        actual   ${a}\n`);
-}
+const { check, fail, done } = suite("pack-version.test");
 
 // ----------------------------------------------------------- versionParts ---
 
@@ -104,10 +93,9 @@ const shipped = source.match(/function compareVersions\([\s\S]*?\n}/);
 const shippedParts = source.match(/function versionParts\([\s\S]*?\n}/);
 
 if (!shipped || !shippedParts) {
-  failures += 1;
-  process.stdout.write(
-    "  FAIL  api-query.mjs no longer defines versionParts/compareVersions\n" +
-      "        the shipped copy of the rule is no longer pinned by this test\n",
+  fail(
+    "api-query.mjs no longer defines versionParts/compareVersions — " +
+      "the shipped copy of the rule is no longer pinned by this test",
   );
 } else {
   const shippedCompare = new Function(
@@ -118,7 +106,4 @@ if (!shipped || !shippedParts) {
   }
 }
 
-process.stdout.write(
-  failures ? `\n[pack-version.test] ${failures} failed, ${passes} passed\n` : `[pack-version.test] ${passes} passed\n`,
-);
-process.exit(failures ? 1 : 0);
+done();

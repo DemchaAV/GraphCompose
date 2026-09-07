@@ -54,28 +54,40 @@ check(
   "row-span--merge-a-cell",
 );
 
-// The four inputs on which this rule and its Java twin
-// (DocumentationLinkGuardTest.slug, which the markdown link guard resolves with)
-// were measured to disagree. Neither can call the other across the language
-// boundary, so the same table is asserted from both sides: change one rule and
-// its own fixture goes red. Escapes, not literals -- these characters are
-// invisible or indistinguishable in an editor.
+
+// Every expected value below was read off GitHub, by posting the heading to
+// api.github.com/markdown and taking the id it generated — not derived from the
+// implementation, and not reasoned about. Two earlier versions of this rule were
+// wrong precisely because they were reasoned about: one collapsed whitespace
+// runs, the next hyphenated all Unicode whitespace and kept non-decimal
+// numerals. GitHub does none of those things.
+//
+// The same table is asserted from the Java twin
+// (DocumentationLinkGuardTest.theAnchorRuleAgreesWithItsJavaScriptTwin), which
+// the markdown link guard resolves with; neither can call the other across the
+// language boundary, so change one rule and its own fixture goes red. Escapes,
+// not literals: these characters are invisible or indistinguishable in an editor.
 check(
-  "a non-breaking space hyphenates like any other whitespace",
+  "a non-breaking space is dropped, not hyphenated",
   anchorOf("Zebra alternating rows"),
-  "zebra-alternating-rows",
+  "zebraalternating-rows",
 );
-check("so does an em space", anchorOf("Row span"), "row-span");
+check("an em space is dropped too", anchorOf("Row span"), "rowspan");
+check("and a tab — only the ASCII space becomes a hyphen", anchorOf("A\tB"), "ab");
 check(
-  "a circled numeral is a number and survives, as it does on the page",
+  "a circled numeral is not a decimal digit, so it goes and its spaces stay",
   anchorOf("Item ① first"),
-  "item-①-first",
+  "item--first",
 );
 check(
   "a decomposed accent is a combining mark and stays with its letter",
   anchorOf("Café rules"),
   "café-rules",
 );
+check("letters of any script survive", anchorOf("Привет мир"), "привет-мир");
+check("so do digits, while the dots between them go", anchorOf("v1.8.0 fonts"), "v180-fonts");
+check("an underscore survives", anchorOf("snake_case name"), "snake_case-name");
+check("a dropped character leaves its spaces behind", anchorOf("A & B"), "a--b");
 
 check("punctuation is dropped, not hyphenated", anchorOf("Sidebar: page background vs. row"), "sidebar-page-background-vs-row");
 check("backticks are dropped", anchorOf("`fill()` and the slot"), "fill-and-the-slot");
@@ -148,6 +160,20 @@ check(
   anchorRefsIn("see //cdn.example.com/docs/x.md#y"),
   [],
 );
+// The matcher has to accept what anchorOf can emit. An ASCII-only anchor group
+// truncated this to "docs/recipes/tables.md#caf", and the gate then rejected the
+// route as "a heading was renamed" for a link that opens.
+check(
+  "a non-ASCII anchor is matched whole",
+  anchorRefsIn("see docs/recipes/tables.md#café-rules"),
+  ["docs/recipes/tables.md#café-rules"],
+);
+check(
+  "and one in another script",
+  anchorRefsIn("see docs/recipes/tables.md#привет-мир"),
+  ["docs/recipes/tables.md#привет-мир"],
+);
+
 check("a field with no reference yields none", anchorRefsIn("plain prose, no citation"), []);
 check("a null field is not an error", anchorRefsIn(null), []);
 

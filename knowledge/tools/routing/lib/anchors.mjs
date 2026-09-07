@@ -36,15 +36,27 @@ const HTML_TAG = /<[^>]+>/g;
 /** `[text](url)` inside a heading contributes only its text. */
 const HEADING_LINK = /\[([^\]]*)\]\([^)]*\)/g;
 /**
- * Everything GitHub drops from an anchor: punctuation, but not spaces or
- * hyphens.
+ * Everything GitHub drops from an anchor.
  *
- * `\p{M}` is in the keep-set because GitHub keeps combining marks: a decomposed
- * `Café` anchors with its accent intact, and stripping it produced `cafe-` where
- * the rendered page offers `café-`. The Java guard kept marks and dropped
- * non-decimal numerals; this keeps both, which is what the rendered page does.
+ * The keep-set was read off GitHub rather than reasoned about, by posting
+ * headings to `api.github.com/markdown` and reading the ids it generates. It
+ * keeps letters of any script, combining marks, decimal digits, `_`, `-` and the
+ * ASCII space — and drops everything else, *including every other kind of
+ * whitespace*:
+ *
+ *   `Zebra<NBSP>alternating rows`   -> `zebraalternating-rows`  (not `zebra-…`)
+ *   `Row<EM SPACE>span`             -> `rowspan`
+ *   `A<TAB>B`                       -> `ab`
+ *   `Item <U+2460> first`           -> `item--first`  (the numeral goes, the spaces stay)
+ *   `Café rules` (decomposed)       -> `café-rules`   (the combining mark stays)
+ *   `Zebra — alternating row fills` -> `zebra--alternating-row-fills`
+ *
+ * Two earlier versions of this rule guessed instead. One collapsed whitespace
+ * runs, which broke every heading with a spaced em dash. The next hyphenated all
+ * Unicode whitespace and kept non-decimal numerals, on the theory that GitHub
+ * would — it does neither.
  */
-const NOT_IN_ANCHOR = /[^\p{L}\p{N}\p{M}_\s-]/gu;
+const NOT_IN_ANCHOR = /[^\p{L}\p{M}\p{Nd}_ -]/gu;
 
 /**
  * A repo-relative `path.md#anchor` written in prose.
@@ -55,8 +67,14 @@ const NOT_IN_ANCHOR = /[^\p{L}\p{N}\p{M}_\s-]/gu;
  * which then fails `existsSync` and rejects the route for "no such page" — the
  * gate blaming the author for the gate's own regex. `:` is in the lookbehind for
  * exactly that reason.
+ *
+ * The anchor half accepts the same characters {@link anchorOf} can emit. An
+ * ASCII-only `[\w-]+` truncated a citation of a heading in any other script —
+ * `#café-rules` became `#caf` — and the gate then rejected the route for a link
+ * that opens fine, while the identical reference written in `docs:` passed,
+ * because that path never goes through this regex.
  */
-const PROSE_REF = /(?<![\w./:-])([\w.-][\w./-]*\.md)#([\w-]+)/g;
+const PROSE_REF = /(?<![\w./:-])([\w.-][\w./-]*\.md)#([\p{L}\p{M}\p{Nd}_-]+)/gu;
 
 /**
  * GitHub's heading-to-anchor rule.
@@ -69,9 +87,10 @@ export function anchorOf(heading) {
   text = text.replace(HEADING_LINK, "$1");
   text = text.replace(/`/g, "").toLowerCase();
   text = text.replace(NOT_IN_ANCHOR, "");
-  // One hyphen per whitespace character, not per run: this is the line the two
-  // implementations disagreed on, and GitHub does not collapse.
-  return text.replace(/\s/g, "-");
+  // One hyphen per ASCII space, not per run and not per whitespace character:
+  // GitHub does not collapse runs, and every other kind of whitespace has
+  // already been removed by the line above rather than hyphenated.
+  return text.replace(/ /g, "-");
 }
 
 /**

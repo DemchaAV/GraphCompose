@@ -87,27 +87,19 @@ class DocumentationLinkGuardTest {
      */
     private static final Pattern INLINE_CODE = Pattern.compile("`[^`\\n]*`");
 
-    /** Everything GitHub drops from a heading before hyphenating it. */
     /**
      * Everything GitHub drops from an anchor.
      *
-     * <p>Spelled as categories rather than {@code \w} because {@code \w} is not
-     * GitHub's keep-set: under {@link Pattern#UNICODE_CHARACTER_CLASS} its digit
-     * class is decimal-only, so a numeral like {@code ①} was dropped where the
-     * rendered page keeps it. Marks stay in, so a decomposed accent survives.</p>
+     * <p>The keep-set was read off GitHub rather than reasoned about, by posting
+     * headings to {@code api.github.com/markdown} and reading the ids it
+     * generates: letters of any script, combining marks, decimal digits,
+     * {@code _}, {@code -} and the ASCII space survive, and everything else is
+     * dropped — <em>including every other kind of whitespace</em>. A
+     * non-breaking space, an em space and a tab are all removed rather than
+     * hyphenated, and {@code ①} is removed because it is not a decimal digit,
+     * leaving the spaces that surrounded it.</p>
      */
-    private static final Pattern NOT_IN_ANCHOR =
-            Pattern.compile("[^\\p{L}\\p{N}\\p{M}_\\s-]", Pattern.UNICODE_CHARACTER_CLASS);
-
-    /**
-     * The whitespace GitHub turns into hyphens — all of it.
-     *
-     * <p>{@code String.replaceAll("\\s", "-")} compiles without flags and is
-     * therefore ASCII-only, so a non-breaking space survived into the anchor as
-     * a literal U+00A0 instead of becoming a hyphen.</p>
-     */
-    private static final Pattern ANCHOR_WHITESPACE =
-            Pattern.compile("\\s", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern NOT_IN_ANCHOR = Pattern.compile("[^\\p{L}\\p{M}\\p{Nd}_ -]");
 
     /** A markdown link inside a heading — the anchor uses the text, not the target. */
     private static final Pattern HEADING_LINK = Pattern.compile("\\[([^]]*)]\\([^)]*\\)");
@@ -195,7 +187,7 @@ class DocumentationLinkGuardTest {
      * in {@code knowledge/tools/routing/lib/anchors.mjs}, for the same reason.</p>
      */
     private static final Pattern JAVA_DOCS_ANCHOR =
-            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\w-]+)");
+            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\p{L}\\p{M}\\p{Nd}_-]+)");
 
     /**
      * Javadoc that points a reader at a section of the documentation points at a
@@ -267,8 +259,9 @@ class DocumentationLinkGuardTest {
      * The anchors GitHub generates for a page.
      *
      * <p>The rule: take the heading text, drop HTML tags, keep a link's text rather
-     * than its target, lowercase, remove everything that is not a word character,
-     * whitespace or a hyphen, then replace whitespace with hyphens. Leading and
+     * than its target, lowercase, remove everything that is not a letter, a
+     * combining mark, a decimal digit, {@code _}, {@code -} or an ASCII space,
+     * then replace each remaining ASCII space with a hyphen. Leading and
      * trailing hyphens survive — {@code ## 🚀 Start here} anchors as
      * {@code -start-here}, not {@code start-here} — and a repeated heading gets
      * {@code -1}, {@code -2} appended.</p>
@@ -302,7 +295,10 @@ class DocumentationLinkGuardTest {
         text = HEADING_LINK.matcher(text).replaceAll("$1");
         text = text.replace("`", "").toLowerCase(java.util.Locale.ROOT);
         text = NOT_IN_ANCHOR.matcher(text).replaceAll("");
-        return ANCHOR_WHITESPACE.matcher(text).replaceAll("-");
+        // The ASCII space only. Every other kind of whitespace was removed above,
+        // which is what GitHub does — hyphenating them put characters into the
+        // anchor that the rendered page does not have.
+        return text.replace(' ', '-');
     }
 
     /**
@@ -319,17 +315,35 @@ class DocumentationLinkGuardTest {
     @Test
     void theAnchorRuleAgreesWithItsJavaScriptTwin() {
         assertThat(slug("Zebra alternating rows"))
-                .describedAs("a non-breaking space is whitespace, so it hyphenates like any other "
-                        + "instead of surviving into the anchor as a literal U+00A0")
-                .isEqualTo("zebra-alternating-rows");
+                .describedAs("a non-breaking space is dropped, not hyphenated")
+                .isEqualTo("zebraalternating-rows");
         assertThat(slug("Row span"))
-                .describedAs("so does an em space")
-                .isEqualTo("row-span");
+                .describedAs("an em space is dropped too")
+                .isEqualTo("rowspan");
+        assertThat(slug("A\tB"))
+                .describedAs("and a tab — only the ASCII space becomes a hyphen")
+                .isEqualTo("ab");
         assertThat(slug("Item ① first"))
-                .describedAs("a circled numeral is a number and survives, as it does on the page")
-                .isEqualTo("item-①-first");
+                .describedAs("a circled numeral is not a decimal digit, so it goes and its spaces stay")
+                .isEqualTo("item--first");
+        assertThat(slug("Привет мир"))
+                .describedAs("letters of any script survive")
+                .isEqualTo("привет-мир");
+        assertThat(slug("v1.8.0 fonts"))
+                .describedAs("so do digits, while the dots between them go")
+                .isEqualTo("v180-fonts");
+        assertThat(slug("snake_case name"))
+                .describedAs("an underscore survives")
+                .isEqualTo("snake_case-name");
+        assertThat(slug("A & B"))
+                .describedAs("a dropped character leaves its spaces behind")
+                .isEqualTo("a--b");
+        assertThat(slug("Zebra — alternating row fills"))
+                .describedAs("and the case that started all this: a spaced em dash is two spaces, "
+                        + "so it is two hyphens")
+                .isEqualTo("zebra--alternating-row-fills");
         assertThat(slug("Café rules"))
-                .describedAs("a decomposed accent is a combining mark and stays with its letter")
+                .describedAs("a decomposed accent is a combining mark and stays with its letter (GitHub keeps it)")
                 .isEqualTo("café-rules");
     }
 

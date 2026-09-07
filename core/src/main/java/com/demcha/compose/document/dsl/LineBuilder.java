@@ -273,6 +273,16 @@ public final class LineBuilder implements Transformable<LineBuilder> {
      * or diagonal line it is a no-op, since stretching the end point would change
      * the line's slope.</p>
      *
+     * <p><strong>A flex row has no slot to fill.</strong> When the row carries a
+     * grow spacer or a non-{@code START}
+     * {@link com.demcha.compose.document.node.RowArrangement}, every non-grow
+     * child is sized to its content instead of to a slot — and a filled line
+     * answers with the row's <em>whole</em> available width, which is then placed
+     * after the children before it and runs past the row. Give the line a
+     * {@link RowBuilder#columns(com.demcha.compose.document.style.DocumentRowColumn...)
+     * weight column} rather than a spacer when it must stop at the column edge;
+     * see {@code docs/recipes/layered-page-design.md#a-rule-that-reaches-the-column-edge}.</p>
+     *
      * @return this builder
      * @since 1.9.0
      */

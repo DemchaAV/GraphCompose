@@ -242,6 +242,39 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **The weekly-schedule board's foot is a footer.** The rule, its seal and the build
+  line were the last three nodes in the flow, so they were drawn wherever the board
+  happened to end — on the sample week, forty points above the bottom margin. They are
+  now a page zone, which is what they had always been describing. A zone is measured
+  from the foot of the sheet rather than from the margin, so the band reserves the
+  margin too: without that the build line printed within three millimetres of the paper
+  edge, inside the dead zone of most office printers, and this board is meant to be
+  printed. The line itself stays against the left margin, where the board's own first
+  column starts — it is a credit, not part of the device above it.
+  <br><br>
+  What made the old foot look off centre was the artwork, not the seal — the seal had
+  always been within a five-thousandth of a point of the centre line, because equal
+  weights centre its slot whatever is drawn beside it. The rules were the problem: fixed
+  at 292pt inside slots of 382pt, and a shape narrower than its slot is drawn at the
+  slot's left edge, so the seal carried 98 points of air on one side and 8 on the other
+  while the right rule stopped 90 points short of the margin. The rule width now comes
+  off the page — printable width less the seal and its two gaps, halved — so both rules
+  reach the seal and the right one ends on the margin. The rules also sat below the
+  seal's middle by 2.45pt of its 13.7; they now share its centre line exactly.
+  <br><br>
+  The seal's letter rode high in its pill, because a line box is tall enough for a
+  descender and a capital has none, so centring the box centres the unused space with
+  it. The pill's padding now carries that half descent, computed from the Times-Bold
+  metrics, and the letter's ink sits within 0.07pt of the pill's centre. The letter
+  itself is no longer the hardcoded `S`: it is the board's own initial, so a schedule
+  printed for one venue is not sealed with another's, and a blank brand is now rejected
+  rather than sealed with nothing.
+  <br><br>
+  Being a zone rather than flow content, the foot is drawn on every page instead of once
+  at the end, and reserves its height on every page. The sample week is a page shorter
+  than that reservation, so its table is untouched; a rota long enough to run over now
+  carries its foot on both pages.
+
 - **Five designs dialled a number they had not printed.** A printed telephone number and
   the number a device dials are different strings, and the conversion between them lived
   in thirteen private copies — one per design. Eight of them dropped the parenthesised

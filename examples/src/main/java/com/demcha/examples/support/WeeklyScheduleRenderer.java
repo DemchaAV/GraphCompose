@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.node.TextAlign;
+import com.demcha.compose.document.output.DocumentPageZone;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentStroke;
@@ -336,13 +337,33 @@ public final class WeeklyScheduleRenderer {
             double dayColumn = 105.5;
             return new Layout(
                     DocumentPageSize.of(PAGE_WIDTH, 472),
-                    new DocumentInsets(14, SIDE_MARGIN, 14, SIDE_MARGIN),
+                    new DocumentInsets(BOTTOM_MARGIN, SIDE_MARGIN, BOTTOM_MARGIN, SIDE_MARGIN),
                     Math.floor((printable - DAYS_IN_WEEK * dayColumn) * 100) / 100,
                     dayColumn);
         }
 
         public double subColWidth() { return dayColWidth / 4.0; }
         public int totalColumns() { return 1 + DAYS_IN_WEEK * 4; }
+
+        /** What the footer has to lay itself out inside. */
+        public double printableWidth() {
+            return pageSize.width() - margin.left() - margin.right();
+        }
+
+        /**
+         * Half the footer rule: the printable width less the seal and the gap
+         * on either side of it.
+         *
+         * <p>Equal weights already put the seal's <em>slot</em> on the centre
+         * line — that part needs no arithmetic. What this buys is that the
+         * rules fill the slots they are given: a shape narrower than its slot
+         * is drawn at the slot's left edge, so a fixed width leaves the drawn
+         * rule short on one side of the seal and short of the margin on the
+         * other, and the foot reads as lopsided however centred the seal is.</p>
+         */
+        public double footerRuleWidth() {
+            return (printableWidth() - SEAL_WIDTH - 2 * SEAL_GAP) / 2;
+        }
     }
 
     // ───────────────────────── Constants ─────────────────────────────
@@ -354,6 +375,68 @@ public final class WeeklyScheduleRenderer {
 
     /** Left and right margin; the columns divide what is left. */
     private static final double SIDE_MARGIN = 8;
+
+    /** Top and bottom margin; the footer zone has to clear the bottom one. */
+    private static final double BOTTOM_MARGIN = 14;
+
+    /** The seal that breaks the footer rule, and the air on either side of it. */
+    private static final double SEAL_WIDTH = 44;
+    private static final double SEAL_GAP = 8;
+
+    /** Times-Bold, as the seal is set: the metrics the seal's geometry reads. */
+    private static final double TIMES_BOLD_ASCENT = 0.683;
+    private static final double TIMES_BOLD_DESCENT = 0.217;
+    private static final double TIMES_BOLD_CAP_HEIGHT = 0.676;
+
+    /** The seal's letter, and the point of air the pill keeps above and below it. */
+    private static final double SEAL_LETTER_SIZE = 13;
+    private static final double SEAL_PADDING_Y = 1;
+
+    /**
+     * How far the seal's letter drops to sit level in its pill.
+     *
+     * <p>A line box is tall enough for a descender and a capital has none, so
+     * centring the box centres the unused space along with the letter and the
+     * letter rides high. Dropping the box by half that unused space — the cap
+     * height against what the ascent and descent leave — puts the ink on the
+     * pill's centre line. It scales with the letter, but not with the font:
+     * set the seal in something other than Times-Bold and these three metrics
+     * have to change with it.</p>
+     */
+    private static final double SEAL_LETTER_DROP = SEAL_LETTER_SIZE
+            * (TIMES_BOLD_CAP_HEIGHT - (TIMES_BOLD_ASCENT - TIMES_BOLD_DESCENT)) / 2;
+
+    /** The pill: the letter's line box, plus its point of air top and bottom. */
+    private static final double SEAL_HEIGHT =
+            SEAL_LETTER_SIZE * (TIMES_BOLD_ASCENT + TIMES_BOLD_DESCENT) + 2 * SEAL_PADDING_Y;
+
+    /** The hairline the seal breaks, and the drop that lands it on the seal's centre line. */
+    private static final double FOOTER_RULE_THICKNESS = 0.6;
+    private static final double FOOTER_RULE_DROP = (SEAL_HEIGHT - FOOTER_RULE_THICKNESS) / 2;
+
+    /**
+     * The build line under the rule, set in Courier, and the air between the
+     * two. The depth reserved for it is the font's box rather than its metric
+     * descent, because it is ink, not the line box, that has to stay out of
+     * the margin, and a descender reaches past the line it is measured by.
+     */
+    private static final double COURIER_ASCENT = 0.629;
+    private static final double COURIER_BOX_DESCENT = 0.250;
+    private static final double BUILD_LINE_SIZE = 7.5;
+    private static final double FOOTER_GAP_Y = 6;
+
+    /**
+     * Height reserved at the foot of every page.
+     *
+     * <p>A footer zone is measured from the foot of the <em>sheet</em>, not
+     * from the bottom margin, and its content is laid out from the top of the
+     * band down. So the band has to be the furniture plus the margin it must
+     * not print into: at 34 — the furniture alone — the build line came within
+     * three millimetres of the paper edge, inside the dead zone of most office
+     * printers, and this board is printed.</p>
+     */
+    private static final double FOOTER_ZONE_HEIGHT = SEAL_HEIGHT + FOOTER_GAP_Y
+            + BUILD_LINE_SIZE * (COURIER_ASCENT + COURIER_BOX_DESCENT) + BOTTOM_MARGIN;
     private static final DayShift[] EMPTY_WEEK = {
             DayShift.NONE, DayShift.NONE, DayShift.NONE, DayShift.NONE,
             DayShift.NONE, DayShift.NONE, DayShift.NONE
@@ -404,6 +487,11 @@ public final class WeeklyScheduleRenderer {
                                 Layout layout) throws Exception {
         Objects.requireNonNull(outputFile, "outputFile");
         Objects.requireNonNull(brandName, "brandName");
+        // The brand heads the board and its initial seals the foot, so a blank
+        // one is a board with nobody's name on it rather than a default.
+        if (brandName.isBlank()) {
+            throw new IllegalArgumentException("brandName must not be blank");
+        }
         Objects.requireNonNull(weekStart, "weekStart");
         Objects.requireNonNull(staff, "staff");
         Objects.requireNonNull(week, "week");
@@ -430,6 +518,55 @@ public final class WeeklyScheduleRenderer {
                 .pageBackground(theme.page())
                 .margin(layout.margin())
                 .create()) {
+
+            // The rule, its seal and the build line are page furniture, not
+            // the last thing on the board: as a zone they are drawn against
+            // the bottom margin, so a week that fills the sheet and a week
+            // that half fills it both foot the same way.
+            document.chrome().zone(DocumentPageZone.footer(FOOTER_ZONE_HEIGHT, page -> new SectionBuilder()
+                    .name("FooterZone")
+                    .spacing(6)
+                    .addRow("FooterRule", row -> row
+                            .spacing(SEAL_GAP)
+                            // Equal weights on the two rules are what put the
+                            // seal in the middle; the shapes then have to fill
+                            // the slots the weights hand them.
+                            .weights(layout.footerRuleWidth(), SEAL_WIDTH, layout.footerRuleWidth())
+                            .addSection("LeftRule", section -> section
+                                    .padding(new DocumentInsets(FOOTER_RULE_DROP, 0, 0, 0))
+                                    .addShape(shape -> shape.size(layout.footerRuleWidth(), FOOTER_RULE_THICKNESS)
+                                            .fillColor(theme.brandAccent()).margin(DocumentInsets.zero())))
+                            .addSection("Seal", section -> section
+                                    .stroke(DocumentStroke.of(theme.brandAccent(), 0.5))
+                                    .cornerRadius(9)
+                                    .padding(new DocumentInsets(SEAL_PADDING_Y + SEAL_LETTER_DROP, 0,
+                                            SEAL_PADDING_Y - SEAL_LETTER_DROP, 0))
+                                    .addParagraph(p -> p
+                                            .text(sealLetter(brandName))
+                                            .align(TextAlign.CENTER)
+                                            .textStyle(DocumentTextStyle.builder()
+                                                    .fontName(FontName.TIMES_ROMAN)
+                                                    .decoration(DocumentTextDecoration.BOLD)
+                                                    .size(SEAL_LETTER_SIZE)
+                                                    .color(theme.brandAccent())
+                                                    .build())
+                                            .margin(DocumentInsets.zero())))
+                            .addSection("RightRule", section -> section
+                                    .padding(new DocumentInsets(FOOTER_RULE_DROP, 0, 0, 0))
+                                    .addShape(shape -> shape.size(layout.footerRuleWidth(), FOOTER_RULE_THICKNESS)
+                                            .fillColor(theme.brandAccent()).margin(DocumentInsets.zero()))))
+                    // Left, against the same margin the board's first column
+                    // starts on: it is a credit, not part of the device above
+                    // it, and centring gave it a weight it should not carry.
+                    .addParagraph(p -> p
+                            .text("Composed with GraphCompose — examples/.../WeeklyScheduleRenderer.java")
+                            .textStyle(DocumentTextStyle.builder()
+                                    .fontName(FontName.COURIER)
+                                    .size(7.5)
+                                    .color(theme.muted())
+                                    .build())
+                            .margin(DocumentInsets.zero()))
+                    .build()));
 
             document.pageFlow()
                     .name("WeeklyShiftSchedule")
@@ -509,45 +646,22 @@ public final class WeeklyScheduleRenderer {
                         }
                     })
 
-                    // Footer rule + seal.
-                    .addRow("FooterRule", row -> row
-                            .spacing(8)
-                            .weights(1, 0.12, 1)
-                            .addSection("LeftRule", section -> section
-                                    .padding(new DocumentInsets(10, 0, 0, 0))
-                                    .addShape(shape -> shape.size(292, 0.6).fillColor(theme.brandAccent()).margin(DocumentInsets.zero())))
-                            .addSection("Seal", section -> section
-                                    .stroke(DocumentStroke.of(theme.brandAccent(), 0.5))
-                                    .cornerRadius(9)
-                                    .padding(new DocumentInsets(1, 0, 1, 0))
-                                    .addParagraph(p -> p
-                                            .text("S")
-                                            .align(TextAlign.CENTER)
-                                            .textStyle(DocumentTextStyle.builder()
-                                                    .fontName(FontName.TIMES_ROMAN)
-                                                    .decoration(DocumentTextDecoration.BOLD)
-                                                    .size(13)
-                                                    .color(theme.brandAccent())
-                                                    .build())
-                                            .margin(DocumentInsets.zero())))
-                            .addSection("RightRule", section -> section
-                                    .padding(new DocumentInsets(10, 0, 0, 0))
-                                    .addShape(shape -> shape.size(292, 0.6).fillColor(theme.brandAccent()).margin(DocumentInsets.zero()))))
-
-                    .addSection("BuildFooter", section -> section
-                            .padding(new DocumentInsets(6, 0, 0, 0))
-                            .addParagraph(p -> p
-                                    .text("Composed with GraphCompose — examples/.../WeeklyScheduleRenderer.java")
-                                    .textStyle(DocumentTextStyle.builder()
-                                            .fontName(FontName.COURIER)
-                                            .size(7.5)
-                                            .color(theme.muted())
-                                            .build())
-                                    .margin(DocumentInsets.zero())))
                     .build();
 
             document.buildPdf();
         }
+    }
+
+    /**
+     * The letter the footer seal carries: the board's own initial, so a
+     * schedule printed for one venue is not sealed with another's.
+     *
+     * <p>Read as a code point rather than a {@code char} so a brand opening on
+     * a character outside the basic plane is not sealed with half of it.</p>
+     */
+    private static String sealLetter(String brandName) {
+        String trimmed = brandName.strip();
+        return String.valueOf(Character.toChars(trimmed.codePointAt(0))).toUpperCase(Locale.ROOT);
     }
 
     /**

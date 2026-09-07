@@ -8,6 +8,7 @@ import com.demcha.compose.engine.components.content.ImageData;
 import com.demcha.compose.engine.components.content.barcode.BarcodeData;
 import com.demcha.compose.engine.components.content.shape.Stroke;
 import com.demcha.compose.engine.components.content.table.TableResolvedCell;
+import com.demcha.compose.engine.components.layout.Anchor;
 import com.demcha.compose.engine.components.style.Padding;
 
 import java.awt.*;
@@ -683,7 +684,24 @@ public final class NodeDefinitionSupport {
      * Emits fragments for a composed cell's prepared child by
      * dispatching to the child's {@code NodeDefinition.emitFragments}
      * via {@link FragmentContext#emitChildFragments}. Positions the
-     * child at the cell's content area (inside cell padding).
+     * child inside the cell's content area, at the cell's vertical
+     * anchor.
+     *
+     * <p>The anchor is applied here for the same reason
+     * {@code PdfTableRowFragmentRenderHandler.resolveTextLines} applies
+     * it to text, and by the same rule: a cell is a box, its content is
+     * shorter than that box whenever a taller sibling sets the row
+     * height, and something has to say where in the box it sits.</p>
+     *
+     * <p>This method used to answer "the bottom", unconditionally — it
+     * accepted {@code cellHeight} and never read it. On an ordinary row
+     * that is invisible, because the row is usually as tall as its
+     * tallest cell, so bottom and top coincide. On a cell spanning rows
+     * it is not: {@code cellHeight} is the whole span, so a badge given
+     * {@code rowSpan(2)} sat at the foot of both rows, and asking for
+     * {@code TOP_LEFT} changed nothing because no branch read the anchor
+     * at all. Composed content and text in one table disagreed for the
+     * same reason — text centred, a node bottomed.</p>
      */
     private static List<LayoutFragment> emitComposedCellFragments(
             PreparedNode<?> child,
@@ -700,13 +718,37 @@ public final class NodeDefinitionSupport {
                         : style.padding();
         double childWidth = Math.max(0.0, cellWidth - padding.horizontal());
         double childHeight = Math.max(0.0, child.measureResult().height());
+        // Where in the cell's box the child sits. Follows resolveTextLines on
+        // the vertical axis: same default (centre, from
+        // TableCellLayoutStyle.DEFAULT), same mapping of BOTTOM and DEFAULT
+        // onto the bottom edge, so text and composed content that fit their
+        // cell land on the same line.
+        //
+        // Two deliberate differences. The horizontal half of the anchor is not
+        // read: a composed child is laid out at the cell's inner width, so
+        // there is no slack across for it to sit in, where a text line has its
+        // own measured width. And slack is clamped at zero rather than allowed
+        // to go negative — an over-tall child keeps starting at the bottom and
+        // overflowing upward instead of being pushed below its own cell. No
+        // input reachable today produces that: a row is sized from the content
+        // it holds, so this is a guard, not a behaviour anyone can observe.
+        double innerHeight = Math.max(0.0, cellHeight - padding.vertical());
+        double slack = Math.max(0.0, innerHeight - childHeight);
+        Anchor anchor = style.textAnchor() == null
+                ? Anchor.centerLeft()
+                : style.textAnchor();
+        double contentBottom = padding.bottom() + switch (anchor.v()) {
+            case TOP -> slack;
+            case MIDDLE -> slack / 2.0;
+            case BOTTOM, DEFAULT -> 0.0;
+        };
         // The cell paints its content area at (cellLocalX + padding.left,
-        // cellLocalY + padding.bottom). Build a placement at that
+        // cellLocalY + contentBottom). Build a placement at that
         // absolute location so the child node's emitFragments lays
         // its content out as if it were a top-level placement of the
         // cell's content area.
         double childAbsoluteX = parentPlacement.x() + cellLocalX + padding.left();
-        double childAbsoluteY = parentPlacement.y() + cellLocalY + padding.bottom();
+        double childAbsoluteY = parentPlacement.y() + cellLocalY + contentBottom;
         String childPath = parentPlacement.path() + ".cell" + cellLocalX + "x" + cellLocalY;
         FragmentPlacement childPlacement = new FragmentPlacement(
                 childPath,
@@ -732,7 +774,11 @@ public final class NodeDefinitionSupport {
             return List.of();
         }
         double offsetX = cellLocalX + padding.left();
-        double offsetY = cellLocalY + padding.bottom();
+        // Same anchor as the placement above. These two have to agree: the
+        // placement decides where the child measures itself against, this
+        // decides where its fragments land, and a difference between them
+        // would paint the child somewhere its own layout never saw.
+        double offsetY = cellLocalY + contentBottom;
         List<LayoutFragment> translated = new ArrayList<>(childFragments.size());
         for (LayoutFragment cf : childFragments) {
             translated.add(new LayoutFragment(

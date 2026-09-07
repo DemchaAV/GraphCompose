@@ -64,9 +64,9 @@
         <graphcompose.fonts.version>1.1.0</graphcompose.fonts.version>
         <graphcompose.emoji.version>1.0.0</graphcompose.emoji.version>
 
-        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.5.1</maven.jar.plugin.version>
-        <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>

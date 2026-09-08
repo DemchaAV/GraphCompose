@@ -386,7 +386,7 @@ Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 ### PdfWatermarkPosition (enum)
 - constants: `CENTER`, `TOP_LEFT`, `TOP_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_RIGHT`, `TILE`
 
-## com.demcha.compose.document.backend.fixed.pptx
+## com.demcha.compose.document.backend.fixed.pptx   [beta]
 
 ### PptxCoordinates (class)   [beta]
 - `double topY(double canvasHeight, double y, double height)   [beta]`
@@ -434,7 +434,7 @@ Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 - `XSLFPictureData resolvePicture(ImageData imageData)   [beta]`
 - `void registerAnchor(PlacedFragment fragment, String anchor)   [beta]`
 
-## com.demcha.compose.document.backend.fixed.pptx.handlers
+## com.demcha.compose.document.backend.fixed.pptx.handlers   [beta]
 
 ### PptxAnchorMarkerRenderHandler (class)   [beta]
 - `new PptxAnchorMarkerRenderHandler()   [beta]`

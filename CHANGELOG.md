@@ -172,6 +172,24 @@ follow semantic versioning; release dates are ISO 8601.
   neither shrinks a fixed rule nor gives `fill()` a slot, and a centre- or right-aligned
   heading claims the whole `auto()` column and leaves the rule zero width.
 
+- **The stability document is guarded, and the pack records a beta *package*.**
+  `docs/api-stability.md` is where a reader asks what is still moving, and nothing was
+  checking that it still names what carries `@Beta`: the guard it cites,
+  `BetaAnnotationDocumentationTest`, examines the annotation type — its retention, its
+  targets, its own Javadoc — and never what is annotated.
+  `knowledge/tools/api-surface/check-stability-doc.mjs` now runs in CI and fails when a
+  marker written on a package, type or member goes unnamed. It found two things at once.
+  Four `@Beta` members of the otherwise-Stable PDF backend were undocumented —
+  `PdfFixedLayoutBackend.renderSections` / `writeSections`, and `Builder.deterministic`
+  in both overloads — and the document now names them. And the generated surfaces
+  recorded no package-level stability at all: every `knowledge/api/*.json` described
+  zero beta packages while two `package-info.java` files declare `@Beta`, so the pack
+  presented fifteen PPTX handler types as fifteen separate beta decisions rather than
+  one beta package. The extractor now carries `packageStability` through to the package
+  entry and the Markdown view marks the package heading `[beta]` the way it already
+  marked types and members, so a consumer can tell a beta package from a package whose
+  one admitted type happens to be beta.
+
 ## v2.3.0 — 2026-08-31
 
 ### Public API

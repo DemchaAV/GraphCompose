@@ -240,6 +240,7 @@ jobs:
         run: |
           expected=$(printf '%s\n' \
             knowledge/tools/api-surface/test/classifier.test.mjs \
+            knowledge/tools/api-surface/test/stability-doc.test.mjs \
             knowledge/tools/claims/test/claims.test.mjs \
             knowledge/tools/routing/test/anchors.test.mjs \
             knowledge/tools/routing/test/pack-version.test.mjs)
@@ -264,6 +265,13 @@ jobs:
       - name: Knowledge pack — API surface is current
         if: matrix.java == '17'
         run: node knowledge/tools/api-surface/extract-api.mjs --from-reactor --check
+
+      # docs/api-stability.md is where a reader asks "what is still moving", and
+      # nothing was checking that it still names what carries @Beta. The test it
+      # cites as its guard examines the annotation type, never what is annotated.
+      - name: Knowledge pack — the stability document names every @Beta
+        if: matrix.java == '17'
+        run: node knowledge/tools/api-surface/check-stability-doc.mjs
 
       # A claim is a promise a published page makes to a reader. This fails when
       # a page names API that no surface has — which a reader would discover by

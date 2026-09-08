@@ -60,7 +60,7 @@ Types: 9 · methods: 26 · constants: 0 · compiler-generated members: 26
 - `Class<T> payloadType()`
 - `void render(PlacedFragment, T, PdfRenderEnvironment)`
 
-## com.demcha.compose.document.backend.fixed.pptx
+## com.demcha.compose.document.backend.fixed.pptx   [beta]
 
 ### PptxFragmentRenderHandler (interface)   [beta]
 - `Class<T> payloadType()   [beta]`

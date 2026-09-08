@@ -88,4 +88,17 @@ class DocumentFlowWidthTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new DocumentFlowWidth(Double.POSITIVE_INFINITY));
         assertThatIllegalArgumentException().isThrownBy(() -> new DocumentFlowWidth(-3));
     }
+
+    @Test
+    void negativeZeroIsFoldedOntoNaturalRatherThanBecomingAnUnequalTwin() {
+        DocumentFlowWidth negativeZero = new DocumentFlowWidth(-0.0);
+
+        // -0.0 is not < 0.0, so it passes validation and lays out exactly like the
+        // natural width. Without folding it would compare unequal to natural() and
+        // hash to Integer.MIN_VALUE, so two identical layouts would look different.
+        assertThat(negativeZero).isEqualTo(DocumentFlowWidth.natural());
+        assertThat(negativeZero.hashCode()).isEqualTo(DocumentFlowWidth.natural().hashCode());
+        assertThat(negativeZero.isFixed()).isFalse();
+        assertThat(negativeZero.resolve(360)).isEqualTo(360.0);
+    }
 }

@@ -56,6 +56,10 @@ it: the content wraps at the same width it would have without the call.
 Nesting clamps against the *parent box*, not the page — a `fixedWidth(320)`
 section inside a `fixedWidth(200).padding(10)` parent is placed at 180pt.
 
+Under per-page margins the cap is per page: a box that spans onto a page with
+a narrower content column is capped to that column rather than keeping the
+width of the page it started on.
+
 ## Where it applies
 
 | Surface | Call |
@@ -72,6 +76,12 @@ Two boundaries to know:
 - **Bleed still wins.** On an edge declared through `bleed(...)` the
   background reaches the trimmed page edge, because that is the point of
   asking for it.
+- **One case is currently off.** A flow used as a *row column* that also
+  carries a horizontal `margin` is placed narrower than it asked for, because
+  the row subtracts that margin twice before the width is resolved. The
+  underlying row defect predates this feature (it misplaces unconstrained
+  boxes too) and is being fixed separately; a fixed-width column with no
+  horizontal margin is unaffected.
 
 `fixedWidth` rejects NaN, infinity, zero and negative values outright, so a
 computed width that went wrong fails at the call rather than at layout time.

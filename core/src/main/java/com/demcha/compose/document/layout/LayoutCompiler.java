@@ -151,9 +151,16 @@ public final class LayoutCompiler {
         }
 
         if (availableWidth <= EPS) {
+            // Name the node's own fixed width when it has one: a sub-point request
+            // survives DocumentFlowWidth.of and dies here, and blaming the parent's
+            // padding would send the author to the wrong knob.
             throw new IllegalStateException("Node '" + path
                                             + "' has no horizontal layout space. "
-                                            + "Reduce padding or margin on the parent, or increase the page width.");
+                                            + (node.flowWidth().isFixed()
+                                               ? "Its fixed width of " + node.flowWidth().points()
+                                                 + "pt leaves nothing to lay out in — raise it above "
+                                                 + EPS + "pt."
+                                               : "Reduce padding or margin on the parent, or increase the page width."));
         }
 
         MeasureResult naturalMeasure = prepared.measureResult();
@@ -293,8 +300,7 @@ public final class LayoutCompiler {
         // each direct child is measured at the content width of the page it begins on
         // (carried over from the previous pass via the fixed point). Nested composites
         // keep their parent-allocated geometry. With no per-page margins both branches
-        // resolve to the same width, so the layout is byte-identical. A fixed-width box
-        // owns its width across every page it touches, so it re-seats only its x.
+        // resolve to the same width, so the layout is byte-identical.
         boolean pageColumn = depth == 1 && state.hasPageGeometry();
 
         for (int index = 0; index < children.size(); index++) {
@@ -304,10 +310,16 @@ public final class LayoutCompiler {
             if (pageColumn) {
                 int childStartPage = prepareContext.assignedStartPage(
                         pathFor(child, path, index), state.pageIndex);
-                if (!fixedWidth) {
-                    double pageRegionWidth = state.innerWidthForPage(childStartPage);
-                    thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
+                double pageAvailableWidth =
+                        Math.max(0.0, state.innerWidthForPage(childStartPage) - margin.horizontal());
+                // A fixed-width box keeps its own width from page to page — but never
+                // more than the column of the page the child starts on. Without that
+                // cap the width stays the start page's while the x below moves to a
+                // later page's margin, which walks the child off a narrower page.
+                if (fixedWidth) {
+                    pageAvailableWidth = Math.min(naturalMeasure.width(), pageAvailableWidth);
                 }
+                thisChildRegionWidth = Math.max(0.0, pageAvailableWidth - padding.horizontal());
                 thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
             }
             PreparedNode<DocumentNode> childPrepared =
@@ -1216,7 +1228,7 @@ public final class LayoutCompiler {
      * measured width instead — see the {@code fixedWidth} branches in
      * {@code compileComposite} and {@code compileNodeInFixedSlot}.</p>
      *
-     * <p>{@link DocumentFlowWidth#natural()}, which every node carries unless it
+     * <p>A natural {@code DocumentFlowWidth}, which every node carries unless it
      * opted in, resolves to the region width and leaves this exactly as it was.</p>
      */
     private double childAvailableWidth(double regionWidth, DocumentNode node) {

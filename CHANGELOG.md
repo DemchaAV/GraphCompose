@@ -25,8 +25,17 @@ follow semantic versioning; release dates are ISO 8601.
   width (a `fixedWidth(240).padding(20)` card occupies 240pt and gives its
   children 200pt), and a request wider than the surrounding region is clamped to
   that region rather than overflowing it, which makes the call safe on a computed
-  width. Nesting clamps against the parent box, not the page. NaN, infinity, zero
-  and negative values are rejected at the call.
+  width. Nesting clamps against the parent box, not the page, and under per-page
+  margins the cap follows the page a block starts on rather than the page it
+  began the document on. NaN, infinity, zero and negative values are rejected at
+  the call, and a sub-point width that can only fail at layout now fails naming
+  the fixed width instead of blaming the parent's padding.
+
+  One configuration is knowingly still wrong: a fixed-width flow used as a *row
+  column* that also carries a horizontal margin is placed narrower than it asked
+  for, because the row path subtracts that margin twice before the width is
+  resolved. That defect predates this feature — it misplaces unconstrained boxes
+  in the same shape — and is fixed separately.
 
   The value is carried by a new canonical `DocumentFlowWidth`
   (`natural()` / `of(points)`) on `DocumentNode.flowWidth()`, stored on

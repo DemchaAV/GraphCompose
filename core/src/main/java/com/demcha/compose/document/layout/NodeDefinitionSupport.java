@@ -353,25 +353,6 @@ public final class NodeDefinitionSupport {
 
     /**
      * Measures a vertical composite node by preparing children inside the
-     * padding-adjusted inner width, at the natural (content-driven) width.
-     *
-     * @param children    semantic child nodes
-     * @param spacing     vertical spacing between children
-     * @param padding     engine padding
-     * @param ctx         prepare context
-     * @param constraints parent constraints
-     * @return measured outer size
-     */
-    public static MeasureResult measureComposite(List<DocumentNode> children,
-                                                 double spacing,
-                                                 Padding padding,
-                                                 PrepareContext ctx,
-                                                 BoxConstraints constraints) {
-        return measureComposite(children, spacing, padding, ctx, constraints, DocumentFlowWidth.natural());
-    }
-
-    /**
-     * Measures a vertical composite node by preparing children inside the
      * padding-adjusted inner width, honouring the node's horizontal size
      * constraint.
      *

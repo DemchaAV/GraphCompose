@@ -42,6 +42,10 @@ public record DocumentFlowWidth(double points) {
         if (Double.isNaN(points) || Double.isInfinite(points) || points < 0.0) {
             throw new IllegalArgumentException("flow width must be finite and non-negative: " + points);
         }
+        // -0.0 slips through the check above (it is not < 0.0) and lays out exactly
+        // like the natural width, but would compare unequal to it and hash to
+        // Integer.MIN_VALUE. Fold it onto +0.0 so one behaviour has one value.
+        points = points == 0.0 ? 0.0 : points;
     }
 
     /**

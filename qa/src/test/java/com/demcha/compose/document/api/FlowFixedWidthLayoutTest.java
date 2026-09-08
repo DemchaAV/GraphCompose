@@ -1,10 +1,13 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.layout.payloads.ShapeFragmentPayload;
 import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentEdge;
 import com.demcha.compose.document.style.DocumentFlowWidth;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /**
@@ -271,9 +275,56 @@ class FlowFixedWidthLayoutTest {
 
             // Whichever base placement re-derived, the children sit inside the box that
             // is actually painted — text can never wrap wider than its own background.
+            // The painted width itself is NOT asserted here: a row column with a
+            // horizontal margin has its margin subtracted twice before any clamp, so
+            // this card lands narrower than the 120pt it asked for. That is a
+            // pre-existing row defect (it reproduces with no fixedWidth at all) and is
+            // fixed separately; the width contract is pinned by the no-margin case below.
             assertThat(body.placementWidth()).isLessThanOrEqualTo(card.placementWidth() + 0.01);
             assertThat(body.placementX() + body.placementWidth())
                     .isLessThanOrEqualTo(card.placementX() + card.placementWidth() + 0.01);
+        }
+    }
+
+    @Test
+    void aFixedWidthSectionInARowSlotIsPlacedAtTheRequestedWidth() {
+        try (DocumentSession document = document()) {
+            document.pageFlow(page -> page.addRow(row -> row
+                    .name("Band")
+                    .addSection(s -> s
+                            .name("Card")
+                            .fixedWidth(120)
+                            .addParagraph(p -> p.name("Body").text("Short.").align(TextAlign.CENTER)))
+                    .addSection(s -> s.name("Filler").addParagraph("f"))));
+
+            // The row slot is 180pt wide; the card asked for 120 and must get exactly
+            // that, not the slot and not some re-derived fraction of it.
+            assertThat(node(document, "Card").placementWidth()).isCloseTo(120.0, within(0.01));
+            assertThat(node(document, "Body").placementWidth()).isCloseTo(120.0, within(0.01));
+        }
+    }
+
+    @Test
+    void bleedStillReachesThePageEdgeOnAFixedWidthSection() {
+        try (DocumentSession document = document()) {
+            document.pageFlow(page -> page.addSection(s -> s
+                    .name("Band")
+                    .fixedWidth(120)
+                    .fillColor(DocumentColor.rgb(226, 236, 245))
+                    .bleedToEdge(DocumentEdge.LEFT, DocumentEdge.RIGHT)
+                    .addParagraph("Bled band")));
+
+            PlacedNode band = node(document, "Band");
+            PlacedFragment fill = document.layoutGraph().fragments().stream()
+                    .filter(f -> f.payload() instanceof ShapeFragmentPayload)
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("no fill fragment for the bled band"));
+
+            // The documented precedence: the node keeps the width it asked for, while
+            // the decoration it opted to bleed still reaches both trimmed page edges.
+            assertThat(band.placementWidth()).isCloseTo(120.0, within(0.01));
+            assertThat(fill.x()).isCloseTo(0.0, within(0.01));
+            assertThat(fill.width()).isCloseTo(PAGE_WIDTH, within(0.01));
         }
     }
 
@@ -298,6 +349,54 @@ class FlowFixedWidthLayoutTest {
 
             assertThat(flow.placementWidth()).isCloseTo(200.0, within(0.01));
             assertThat(body.placementWidth()).isLessThanOrEqualTo(200.0 + 0.01);
+        }
+    }
+
+    @Test
+    void aFixedWidthRootFlowIsCappedByTheColumnOfALaterNarrowerPage() {
+        try (DocumentSession document = GraphCompose.document()
+                .pageSize(PAGE_WIDTH, PAGE_HEIGHT)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            // Page 2 onwards has an 80pt margin, so its content column is 240pt wide
+            // against page 1's 360pt. The root asks for 340pt: legal on page 1, wider
+            // than page 2 can hold. The x of a child starting on page 2 is re-seated to
+            // that page's margin, so a width left at page 1's value walks the child off
+            // the sheet — 80 + 340 = 420 on a 400pt page.
+            document.pageMargins(List.of(PageMarginRule.from(2, DocumentInsets.of(80))));
+            document.pageFlow(page -> page
+                    .name("WideFlow")
+                    .fixedWidth(340)
+                    .addSection(a -> a.name("PageOne").addParagraph("First page."))
+                    .addPageBreak(br -> br.name("ToPageTwo"))
+                    .addSection(b -> b.name("PageTwo")
+                            .addParagraph(p -> p.name("Body").text("Short.").align(TextAlign.CENTER))));
+
+            PlacedNode body = node(document, "Body");
+
+            assertThat(body.startPage()).as("the probe must actually land on page 2").isEqualTo(1);
+            assertThat(body.placementX() + body.placementWidth())
+                    .as("right edge must stay inside page 2's content column")
+                    .isLessThanOrEqualTo(PAGE_WIDTH - 80 + 0.01);
+            assertThat(body.placementWidth()).isLessThanOrEqualTo(240.0 + 0.01);
+        }
+    }
+
+    @Test
+    void aSubPointFixedWidthFailsNamingTheFixedWidthNotTheParent() {
+        try (DocumentSession document = document()) {
+            // A width below the engine's floor passes DocumentFlowWidth.of and can only
+            // fail at layout. The message has to name the knob the author actually
+            // turned, not send them to the parent's padding.
+            assertThatThrownBy(() -> {
+                document.pageFlow(page -> page.addSection(s -> s
+                        .name("Sliver")
+                        .fixedWidth(1e-9)
+                        .addParagraph(BODY)));
+                document.layoutGraph();
+            })
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("fixed width");
         }
     }
 

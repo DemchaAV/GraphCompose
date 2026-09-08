@@ -31,12 +31,6 @@ follow semantic versioning; release dates are ISO 8601.
   the call, and a sub-point width that can only fail at layout now fails naming
   the fixed width instead of blaming the parent's padding.
 
-  One configuration is knowingly still wrong: a fixed-width flow used as a *row
-  column* that also carries a horizontal margin is placed narrower than it asked
-  for, because the row path subtracts that margin twice before the width is
-  resolved. That defect predates this feature — it misplaces unconstrained boxes
-  in the same shape — and is fixed separately.
-
   The value is carried by a new canonical `DocumentFlowWidth`
   (`natural()` / `of(points)`) on `DocumentNode.flowWidth()`, stored on
   `SectionNode` and `ContainerNode`. Both records keep their previous
@@ -47,6 +41,24 @@ follow semantic versioning; release dates are ISO 8601.
   Documented in [`docs/recipes/fixed-width-flows.md`](docs/recipes/fixed-width-flows.md).
 
 ### Layout
+
+- **A decorated root flow and its children can disagree under per-page margins.**
+  A known limitation, now measured and written down rather than met by surprise.
+  A block is placed once and its background is that block's own box on every page
+  it spans, but a *direct child of the root* is seated in the column of the page
+  that child starts on. So when the root carries both a `fixedWidth` and a
+  background, and that width is narrower than a later page's column, such a child
+  is placed against the column and lands beside its own background — a 200pt root
+  banded at 20..220 gets a child at 80..280. A root at least as wide as the
+  column is unaffected, and so is a background put on a section *inside* the
+  root, which is seated as one box together with the content it decorates and is
+  the shape to prefer. Both sides are pinned in `FixedWidthPageMarginChromeTest`.
+  The inconsistency is in how the compiler seats a spanning parent's children —
+  such a parent has no single box to be — so the fix belongs there and not in the
+  decoration band, which cannot follow the page without abandoning the content of
+  any block that merely flows across the boundary.
+
+  Documented in [`docs/recipes/fixed-width-flows.md`](docs/recipes/fixed-width-flows.md).
 
 - **A composed table cell sits where its anchor says, and a spanning one stops
   falling to the foot of its span.** `emitComposedCellFragments` accepted the

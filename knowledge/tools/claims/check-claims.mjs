@@ -31,7 +31,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseClaims, resolveSymbol } from "./lib/claims.mjs";
+import { declaresTestMethod, parseClaims, resolveSymbol } from "./lib/claims.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
@@ -107,10 +107,15 @@ function loadProofTargets() {
         // Path as well as name: the registry has to say *where* a proof lives,
         // or a consumer holding the bundle can read that a claim is proven and
         // still have no way to look at the thing proving it.
-        tests.set(
-          entry.name.slice(0, -".java".length),
-          path.relative(REPO_ROOT, full).split(path.sep).join("/"),
-        );
+        //
+        // Every path, not the last one seen: a proof names a class, so two
+        // modules holding the same simple name used to collapse to whichever
+        // the walk reached last, and `#method` was then checked against the
+        // other module's file without saying so.
+        const simpleName = entry.name.slice(0, -".java".length);
+        const relative = path.relative(REPO_ROOT, full).split(path.sep).join("/");
+        if (tests.has(simpleName)) tests.get(simpleName).push(relative);
+        else tests.set(simpleName, [relative]);
       }
     }
   };
@@ -229,8 +234,8 @@ for (const file of docPages()) {
         // exists. Naming the method closes that, and stays optional so no
         // existing claim has to change to keep working.
         const [className, method] = id.split("#");
-        const testPath = proofTargets.tests.get(className);
-        if (!testPath) {
+        const testPaths = proofTargets.tests.get(className);
+        if (!testPaths) {
           errors.push({
             file: claim.file,
             line: claim.line,
@@ -239,16 +244,35 @@ for (const file of docPages()) {
           });
           continue;
         }
+        if (testPaths.length > 1) {
+          errors.push({
+            file: claim.file,
+            line: claim.line,
+            heading: claim.heading,
+            message:
+              `proof "${claim.proof}" is ambiguous — ${testPaths.length} test classes are named ` +
+              `"${className}" (${testPaths.join(", ")}). Rename one, or the proof points at ` +
+              "whichever the walk happened to reach last.",
+          });
+          continue;
+        }
+        const testPath = testPaths[0];
         if (method) {
           const source = fs.readFileSync(path.join(REPO_ROOT, testPath), "utf8");
-          if (!new RegExp(`\\b${method}\\s*\\(`).test(source)) {
+          // A live test, not a mention of one. Searching the raw file for
+          // `method(` accepted a comment, a string or a call as proof that the
+          // method survived, so deleting the assertion and leaving a
+          // `// Former test: name()` line behind kept the claim reading as held.
+          // Requiring the annotation also refuses a method whose `@Test` was
+          // dropped or replaced by `@Disabled` — neither runs, so neither proves.
+          if (!declaresTestMethod(source, method)) {
             errors.push({
               file: claim.file,
               line: claim.line,
               heading: claim.heading,
               message:
-                `proof "${claim.proof}" names no method "${method}" in ${testPath} — ` +
-                "the assertion that held this claim was renamed or removed.",
+                `proof "${claim.proof}" names no enabled test "${method}" in ${testPath} — ` +
+                "the test that held this claim was renamed, removed or disabled.",
             });
             continue;
           }
@@ -354,7 +378,9 @@ for (const claim of allClaims) {
   const id = claim.proof.slice(claim.proof.indexOf(":") + 1);
   const entry = (proofs[claim.proof] ??= {
     kind: scheme,
-    ...(scheme === "test" ? { path: proofTargets.tests.get(id.split("#")[0]) ?? null } : {}),
+    // One path in the index, as before. An ambiguous class is already an error
+    // above, so anything reaching here has exactly one.
+    ...(scheme === "test" ? { path: proofTargets.tests.get(id.split("#")[0])?.[0] ?? null } : {}),
     ...(scheme === "snippet" ? { page: proofTargets.snippets.get(id) ?? null } : {}),
     ...(scheme === "probe" || scheme === "render" ? { unresolved: "no registry for this scheme yet" } : {}),
     holds: [],

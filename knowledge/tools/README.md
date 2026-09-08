@@ -27,7 +27,7 @@ library's to define. That is what moving the generator here fixes.
 | `api-surface/lib/provenance.mjs` | records what a run read: commit, timestamp, artifact digests |
 | `api-query/api-query.mjs` | answers a question about the surfaces instead of making you read them |
 | `claims/check-claims.mjs` | holds a page to what it claims, and builds the reverse index |
-| `claims/lib/claims.mjs` | reads the claim markers and resolves a symbol against the surfaces |
+| `claims/lib/claims.mjs` | reads the claim markers, resolves a symbol against the surfaces, and decides whether a Java file really holds a named, enabled test |
 | `routing/check-routes.mjs` | the gate a route must pass: anchors resolve, symbols exist, constraints are proven |
 | `routing/lib/anchors.mjs` | GitHub's heading-to-anchor rule, and the references a prose field makes |
 | `routing/lib/pack-version.mjs` | orders a route's `verifiedAgainst` against the version the surfaces carry |

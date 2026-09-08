@@ -255,11 +255,11 @@ class FlowFixedWidthLayoutTest {
                     .name("Band")
                     .addSection(s -> s
                             .name("Card")
-                            // A horizontal margin is what makes the two bases differ: the
-                            // row prepares this child against the slot less its margin and
-                            // then hands placement the whole slot. Content is kept short so
-                            // the row's own (pre-existing, unrelated) height check does not
-                            // fire and hide the width assertion below.
+                            // A horizontal margin used to make the two bases disagree: the
+                            // row prepared this child against the slot less its margin and
+                            // then handed placement the whole slot, so the margin came off
+                            // twice and the card was placed at 100pt. It comes off once
+                            // now, and 120 + 40 fits inside the 180pt slot.
                             .margin(new DocumentInsets(0, 20, 0, 20))
                             .fixedWidth(120)
                             // A centred paragraph reports the full width it was given
@@ -273,16 +273,38 @@ class FlowFixedWidthLayoutTest {
             PlacedNode card = node(document, "Card");
             PlacedNode body = node(document, "Body");
 
-            // Whichever base placement re-derived, the children sit inside the box that
-            // is actually painted — text can never wrap wider than its own background.
-            // The painted width itself is NOT asserted here: a row column with a
-            // horizontal margin has its margin subtracted twice before any clamp, so
-            // this card lands narrower than the 120pt it asked for. That is a
-            // pre-existing row defect (it reproduces with no fixedWidth at all) and is
-            // fixed separately; the width contract is pinned by the no-margin case below.
+            // The width the author asked for, not a fraction of it: two 180pt slots,
+            // a 40pt horizontal margin, and a card that must still be exactly 120.
+            assertThat(card.placementWidth()).isCloseTo(120.0, within(0.01));
+            // And the children sit inside the box that is actually painted — text can
+            // never wrap wider than its own background.
             assertThat(body.placementWidth()).isLessThanOrEqualTo(card.placementWidth() + 0.01);
             assertThat(body.placementX() + body.placementWidth())
                     .isLessThanOrEqualTo(card.placementX() + card.placementWidth() + 0.01);
+        }
+    }
+
+    @Test
+    void aRowColumnWiderThanItsSlotLessTheMarginIsClampedToWhatIsLeft() {
+        try (DocumentSession document = document()) {
+            document.pageFlow(page -> page.addRow(row -> row
+                    .name("Band")
+                    .addSection(s -> s
+                            .name("Card")
+                            // The other side of "as long as that width plus the margin
+                            // fits the slot": 160 + 40 does not fit 180, so the clamp
+                            // that makes a computed width safe resolves it to the 140
+                            // the margin leaves rather than overflowing the row.
+                            .margin(new DocumentInsets(0, 20, 0, 20))
+                            .fixedWidth(160)
+                            .addParagraph(p -> p.name("Body").text("Short.").align(TextAlign.CENTER)))
+                    .addSection(s -> s.name("Filler").addParagraph("f"))));
+
+            PlacedNode card = node(document, "Card");
+            assertThat(card.placementWidth()).isCloseTo(140.0, within(0.01));
+            assertThat(card.placementX() + card.placementWidth())
+                    .as("the card stays inside its slot")
+                    .isLessThanOrEqualTo(20.0 + INNER_WIDTH / 2 - 20.0 + 0.01);
         }
     }
 

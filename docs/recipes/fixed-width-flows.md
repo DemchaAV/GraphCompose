@@ -56,9 +56,13 @@ it: the content wraps at the same width it would have without the call.
 Nesting clamps against the *parent box*, not the page — a `fixedWidth(320)`
 section inside a `fixedWidth(200).padding(10)` parent is placed at 180pt.
 
-Under per-page margins the cap is per page: a box that spans onto a page with
-a narrower content column is capped to that column rather than keeping the
-width of the page it started on.
+Under per-page margins the column a block is measured against is the one on the
+page that block **starts** on. Blocks placed directly in the root flow are
+capped there: with a `fixedWidth(340)` root on a page whose margins widen to
+leave a 240pt column, a block starting on that page is placed within 240pt
+rather than keeping the 340 of the page before it. Merely *continuing* onto a
+narrower page does not re-cap anything — a block is measured and placed once,
+and keeps that width for every page it spans.
 
 ## Where it applies
 
@@ -68,20 +72,28 @@ width of the page it started on.
 | Module | `module(m -> m.fixedWidth(240)…)` |
 | Root page flow | `pageFlow(page -> page.fixedWidth(200)…)` |
 
-Two boundaries to know:
+Four boundaries to know:
 
 - **Default off.** A flow that never calls `fixedWidth` keeps the
   shrink-to-fit measurement it always had — an unpadded section still reports
   the width of its widest child, capped at the column.
 - **Bleed still wins.** On an edge declared through `bleed(...)` the
   background reaches the trimmed page edge, because that is the point of
-  asking for it.
-- **One case is currently off.** A flow used as a *row column* that also
-  carries a horizontal `margin` is placed narrower than it asked for, because
-  the row subtracts that margin twice before the width is resolved. The
-  underlying row defect predates this feature (it misplaces unconstrained
-  boxes too) and is being fixed separately; a fixed-width column with no
-  horizontal margin is unaffected.
+  asking for it — on every page the block spans.
+- **A row column keeps its width.** A fixed-width flow used as a row column is
+  placed at the width it asked for, with or without a horizontal `margin`, as
+  long as that width plus the margin fits the slot.
+- **A decorated root plus per-page margins can overhang.** Give the root
+  `pageFlow` both a `fixedWidth` and a background, and its band is the root's
+  single box, while each direct child is seated in the column of the page that
+  child starts on. When the root is *narrower* than that page's column, a child
+  starting there is placed against the column and ends up beside its own
+  background — a `fixedWidth(200)` root whose band runs 20..220 gets a child at
+  80..280, overhanging by 60pt. A root at least as wide as the column (say
+  `fixedWidth(340)` against a 240pt column) already covers it and the child
+  lands inside. Put the background on a section inside the root rather than on
+  the root itself and the question does not arise: that section is seated as one
+  box together with the content it decorates.
 
 `fixedWidth` rejects NaN, infinity, zero and negative values outright, so a
 computed width that went wrong fails at the call rather than at layout time.

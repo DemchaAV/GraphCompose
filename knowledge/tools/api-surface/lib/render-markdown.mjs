@@ -81,7 +81,7 @@ export function renderMarkdown(surface) {
   );
 
   for (const pkg of surface.packages) {
-    out.push("", `## ${pkg.name}`, "");
+    out.push("", `## ${pkg.name}${mark(pkg.stability)}`, "");
     for (const type of pkg.types) {
       out.push(`### ${type.name} (${type.kind})${mark(type.stability)}`);
       for (const member of type.members) {

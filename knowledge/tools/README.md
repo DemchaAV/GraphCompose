@@ -17,6 +17,8 @@ library's to define. That is what moving the generator here fixes.
 | Path | Job |
 |---|---|
 | `api-surface/extract-api.mjs` | reads class files with `javap`, writes the surface JSON and its Markdown view |
+| `api-surface/check-stability-doc.mjs` | the gate that `docs/api-stability.md` still names everything carrying `@Beta` |
+| `api-surface/lib/stability-doc.mjs` | which markers originate a `@Beta` and which inherit one from their package or type |
 | `api-surface/lib/javap.mjs` | drives `javap` and normalises what it prints |
 | `api-surface/lib/source-names.mjs` | lifts real parameter names out of a sources jar |
 | `api-surface/lib/zip.mjs` | reads a jar without unpacking it |

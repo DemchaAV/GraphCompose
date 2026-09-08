@@ -5,6 +5,47 @@ follow semantic versioning; release dates are ISO 8601.
 
 ## v2.4.0 — Planned
 
+### Public API
+
+- **A vertical flow can pin its width and still grow with its content.**
+  `AbstractFlowBuilder.fixedWidth(double)` — so `addSection(s -> s.fixedWidth(240))`,
+  `module(m -> m.fixedWidth(240))` and `pageFlow(page -> page.fixedWidth(200))` —
+  measures, decorates and places the box at exactly the requested width, and wraps
+  its children inside that width less the flow's own padding. Narrowing a box used
+  to mean expressing the width as something else: a row whose neighbouring slot
+  soaks up the remainder, or a large one-sided `margin`. Neither pins a width —
+  both leave the box free to shrink to its content inside the space they carve
+  out — and both make the width a property of the box's surroundings rather than
+  of the box that wants it.
+
+  The constraint is horizontal only. The height is the same natural,
+  content-driven measurement it always was, so a fixed-width box still grows as
+  paragraphs are added and paginates exactly as it did — there is no
+  `fixedHeight` counterpart and no fixed box. Padding is inside the requested
+  width (a `fixedWidth(240).padding(20)` card occupies 240pt and gives its
+  children 200pt), and a request wider than the surrounding region is clamped to
+  that region rather than overflowing it, which makes the call safe on a computed
+  width. Nesting clamps against the parent box, not the page, and under per-page
+  margins the cap follows the page a block starts on rather than the page it
+  began the document on. NaN, infinity, zero and negative values are rejected at
+  the call, and a sub-point width that can only fail at layout now fails naming
+  the fixed width instead of blaming the parent's padding.
+
+  One configuration is knowingly still wrong: a fixed-width flow used as a *row
+  column* that also carries a horizontal margin is placed narrower than it asked
+  for, because the row path subtracts that margin twice before the width is
+  resolved. That defect predates this feature — it misplaces unconstrained boxes
+  in the same shape — and is fixed separately.
+
+  The value is carried by a new canonical `DocumentFlowWidth`
+  (`natural()` / `of(points)`) on `DocumentNode.flowWidth()`, stored on
+  `SectionNode` and `ContainerNode`. Both records keep their previous
+  constructors, so existing callers compile and link unchanged, and both default
+  to `natural()` — a flow that never calls `fixedWidth` keeps the shrink-to-fit
+  measurement it already had, and every committed layout snapshot is unchanged.
+
+  Documented in [`docs/recipes/fixed-width-flows.md`](docs/recipes/fixed-width-flows.md).
+
 ### Layout
 
 - **A composed table cell sits where its anchor says, and a spanning one stops

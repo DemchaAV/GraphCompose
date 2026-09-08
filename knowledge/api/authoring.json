@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 232,
-    "methods": 2064,
+    "types": 233,
+    "methods": 2076,
     "constants": 230,
-    "generated": 1106
+    "generated": 1111
   },
   "packages": [
     {
@@ -5476,6 +5476,20 @@
                 {
                   "type": "DocumentEdge...",
                   "name": "edges"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "fixedWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "T",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
                 }
               ]
             },
@@ -16571,6 +16585,64 @@
                 {
                   "type": "DocumentBookmarkOptions",
                   "name": null
+                },
+                {
+                  "type": "DocumentFlowWidth",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ContainerNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<DocumentNode>",
+                  "name": "children"
+                },
+                {
+                  "type": "double",
+                  "name": "spacing"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
+                  "type": "DocumentBorders",
+                  "name": "borders"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
                 }
               ]
             },
@@ -16847,6 +16919,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentBookmarkOptions",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -17303,6 +17384,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentBleed",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -22371,6 +22461,76 @@
                 {
                   "type": "boolean",
                   "name": null
+                },
+                {
+                  "type": "DocumentFlowWidth",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "SectionNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<DocumentNode>",
+                  "name": "children"
+                },
+                {
+                  "type": "double",
+                  "name": "spacing"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "fillColor"
+                },
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                },
+                {
+                  "type": "DocumentCornerRadius",
+                  "name": "cornerRadius"
+                },
+                {
+                  "type": "DocumentBorders",
+                  "name": "borders"
+                },
+                {
+                  "type": "boolean",
+                  "name": "keepTogether"
+                },
+                {
+                  "type": "String",
+                  "name": "anchor"
+                },
+                {
+                  "type": "DocumentBleed",
+                  "name": "bleed"
+                },
+                {
+                  "type": "DocumentBookmarkOptions",
+                  "name": "bookmarkOptions"
+                },
+                {
+                  "type": "boolean",
+                  "name": "keepWithNext"
                 }
               ]
             },
@@ -22848,6 +23008,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "flowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
               "params": []
             }
           ]
@@ -28456,6 +28625,86 @@
               "static": true,
               "origin": "generated",
               "type": "DocumentEdge"
+            }
+          ]
+        },
+        {
+          "name": "DocumentFlowWidth",
+          "binaryName": "com.demcha.compose.document.style.DocumentFlowWidth",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "DocumentFlowWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "double",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "natural",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentFlowWidth",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isFixed",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "resolve",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "availableWidth"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "points",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
             }
           ]
         },

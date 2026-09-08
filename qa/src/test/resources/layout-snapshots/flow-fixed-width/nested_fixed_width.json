@@ -1,0 +1,137 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 400.0,
+    "pageHeight" : 300.0,
+    "innerWidth" : 360.0,
+    "innerHeight" : 260.0,
+    "margin" : {
+      "top" : 20.0,
+      "right" : 20.0,
+      "bottom" : 20.0,
+      "left" : 20.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "NestedFixedWidthFlow[0]",
+    "entityName" : "NestedFixedWidthFlow",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 20.0,
+    "computedY" : 204.2,
+    "placementX" : 20.0,
+    "placementY" : 204.2,
+    "placementWidth" : 300.0,
+    "placementHeight" : 75.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 300.0,
+    "contentHeight" : 75.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NestedFixedWidthFlow[0]/Outer[0]",
+    "entityName" : "Outer",
+    "entityKind" : "SectionNode",
+    "parentPath" : "NestedFixedWidthFlow[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 204.2,
+    "placementX" : 20.0,
+    "placementY" : 204.2,
+    "placementWidth" : 300.0,
+    "placementHeight" : 75.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 300.0,
+    "contentHeight" : 75.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 12.0,
+      "bottom" : 12.0,
+      "left" : 12.0
+    }
+  }, {
+    "path" : "NestedFixedWidthFlow[0]/Outer[0]/Inner[0]",
+    "entityName" : "Inner",
+    "entityKind" : "SectionNode",
+    "parentPath" : "NestedFixedWidthFlow[0]/Outer[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 32.0,
+    "computedY" : 216.2,
+    "placementX" : 32.0,
+    "placementY" : 216.2,
+    "placementWidth" : 160.0,
+    "placementHeight" : 51.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 160.0,
+    "contentHeight" : 51.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "NestedFixedWidthFlow[0]/Outer[0]/Inner[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "NestedFixedWidthFlow[0]/Outer[0]/Inner[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 32.0,
+    "computedY" : 216.2,
+    "placementX" : 32.0,
+    "placementY" : 216.2,
+    "placementWidth" : 144.76,
+    "placementHeight" : 51.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 144.76,
+    "contentHeight" : 51.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

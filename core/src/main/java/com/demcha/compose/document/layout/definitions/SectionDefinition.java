@@ -31,7 +31,8 @@ public final class SectionDefinition implements NodeDefinition<SectionNode> {
     public PreparedNode<SectionNode> prepare(SectionNode node, PrepareContext ctx, BoxConstraints constraints) {
         return PreparedNode.composite(
                 node,
-                measureComposite(node.children(), node.spacing(), toPadding(node.padding()), ctx, constraints),
+                measureComposite(node.children(), node.spacing(), toPadding(node.padding()), ctx, constraints,
+                        node.flowWidth()),
                 new CompositeLayoutSpec(node.spacing()));
     }
 

@@ -151,9 +151,16 @@ public final class LayoutCompiler {
         }
 
         if (availableWidth <= EPS) {
+            // Name the node's own fixed width when it has one: a sub-point request
+            // survives DocumentFlowWidth.of and dies here, and blaming the parent's
+            // padding would send the author to the wrong knob.
             throw new IllegalStateException("Node '" + path
                                             + "' has no horizontal layout space. "
-                                            + "Reduce padding or margin on the parent, or increase the page width.");
+                                            + (node.flowWidth().isFixed()
+                                               ? "Its fixed width of " + node.flowWidth().points()
+                                                 + "pt leaves nothing to lay out in — raise it above "
+                                                 + EPS + "pt."
+                                               : "Reduce padding or margin on the parent, or increase the page width."));
         }
 
         MeasureResult naturalMeasure = prepared.measureResult();
@@ -279,7 +286,16 @@ public final class LayoutCompiler {
         state.advanceSpace(startReservation);
         List<DocumentNode> children = definition.children(node);
         double childRegionX = placementX + padding.left();
-        double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+        // A fixed-width box seats its children inside the width it was MEASURED at,
+        // not inside the one re-derived here. The two are not always the same
+        // number: a row column prepares its child against the slot less the child's
+        // margin and then hands placement the whole slot, so a re-derivation would
+        // wrap text at one width while the box paints at another. Taking the
+        // measured width makes the painted box and the wrapping width the same
+        // number by construction, whatever base the caller used.
+        boolean fixedWidth = node.flowWidth().isFixed();
+        double childRegionWidth = Math.max(0.0,
+                (fixedWidth ? naturalMeasure.width() : availableWidth) - padding.horizontal());
         // At the root level the page margin defines the document's content column, so
         // each direct child is measured at the content width of the page it begins on
         // (carried over from the previous pass via the fixed point). Nested composites
@@ -294,8 +310,16 @@ public final class LayoutCompiler {
             if (pageColumn) {
                 int childStartPage = prepareContext.assignedStartPage(
                         pathFor(child, path, index), state.pageIndex);
-                double pageRegionWidth = state.innerWidthForPage(childStartPage);
-                thisChildRegionWidth = Math.max(0.0, (pageRegionWidth - margin.horizontal()) - padding.horizontal());
+                double pageAvailableWidth =
+                        Math.max(0.0, state.innerWidthForPage(childStartPage) - margin.horizontal());
+                // A fixed-width box keeps its own width from page to page — but never
+                // more than the column of the page the child starts on. Without that
+                // cap the width stays the start page's while the x below moves to a
+                // later page's margin, which walks the child off a narrower page.
+                if (fixedWidth) {
+                    pageAvailableWidth = Math.min(naturalMeasure.width(), pageAvailableWidth);
+                }
+                thisChildRegionWidth = Math.max(0.0, pageAvailableWidth - padding.horizontal());
                 thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
             }
             PreparedNode<DocumentNode> childPrepared =
@@ -1003,7 +1027,11 @@ public final class LayoutCompiler {
             }
 
             double childRegionX = placementX + padding.left();
-            double childRegionWidth = Math.max(0.0, availableWidth - padding.horizontal());
+            // Same rule as the flow walk: a fixed-width box seats its children inside
+            // the width it was measured at, so a row slot that hands placement a wider
+            // base than prepare saw cannot wrap text past the painted box.
+            double childRegionWidth = Math.max(0.0,
+                    (node.flowWidth().isFixed() ? measure.width() : availableWidth) - padding.horizontal());
             double childTopY = placementTopY - padding.top();
 
             if (layoutSpec.axis() == CompositeLayoutSpec.Axis.HORIZONTAL) {
@@ -1187,9 +1215,26 @@ public final class LayoutCompiler {
         return prepareContext.prepare(node, BoxConstraints.natural(childAvailableWidth(regionWidth, node)));
     }
 
+    /**
+     * The width a node is both measured at and laid out inside: the region its
+     * parent offers, less the node's own margin, narrowed to the node's declared
+     * horizontal size constraint.
+     *
+     * <p>This caps the width a node may occupy, which is what the overflow guard in
+     * {@code compileNode} compares a measurement against. It is deliberately NOT
+     * the number a fixed-width box seats its children in: callers reach this method
+     * with different bases (a row column passes the whole slot to placement but the
+     * slot less the child's margin to prepare), so a box's children follow its
+     * measured width instead — see the {@code fixedWidth} branches in
+     * {@code compileComposite} and {@code compileNodeInFixedSlot}.</p>
+     *
+     * <p>A natural {@code DocumentFlowWidth}, which every node carries unless it
+     * opted in, resolves to the region width and leaves this exactly as it was.</p>
+     */
     private double childAvailableWidth(double regionWidth, DocumentNode node) {
         Margin margin = toMargin(node.margin());
-        return Math.max(0.0, regionWidth - margin.horizontal());
+        double available = Math.max(0.0, regionWidth - margin.horizontal());
+        return node.flowWidth().resolve(available);
     }
 
     /**

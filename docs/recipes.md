@@ -11,6 +11,7 @@ authoring API; public application code should not import
 | --- | --- |
 | [Charts](recipes/charts.md) | Native vector bar / line / area / pie-donut charts: data–spec–style layers, axis & grid toggles, point markers, value-label halos, legend placement, translucent area fills |
 | [Keep-together pagination](recipes/keep-together.md) | `keepTogether()` / `keepEntriesTogether()` — blocks that relocate whole instead of orphaning a heading at a page break |
+| [Fixed-width flows](recipes/fixed-width-flows.md) | `fixedWidth(points)` — a section, module or page flow pinned to a narrow width, with the height left content-driven |
 | [Themes](recipes/themes.md) | `BrandTheme` token bundle (palette / typography / spacing / decoration), theme factories per family, page background, direct DSL styling |
 | [Shapes and visual primitives](recipes/shapes.md) | Filled cards, dividers, spacers, lines, ellipses, image fit modes, soft panels |
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |

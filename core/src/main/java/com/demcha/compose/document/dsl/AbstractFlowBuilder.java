@@ -38,6 +38,7 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
     private DocumentCornerRadius cornerRadius = DocumentCornerRadius.ZERO;
     private DocumentBorders borders = DocumentBorders.NONE;
     private DocumentBleed bleed = DocumentBleed.none();
+    private DocumentFlowWidth flowWidth = DocumentFlowWidth.natural();
 
     /**
      * Creates a base flow builder.
@@ -184,6 +185,33 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
      */
     public T bleedToEdge(DocumentEdge... edges) {
         return bleed(DocumentBleed.of(edges));
+    }
+
+    /**
+     * Pins the flow's horizontal size: the box is measured, decorated and placed at
+     * exactly {@code points} wide, and its children wrap inside
+     * {@code points} minus the flow's own padding.
+     *
+     * <p>Only the horizontal axis is fixed. The height stays the natural,
+     * content-driven measurement it already was, so the box still grows as content
+     * is added to it and paginates unchanged — this is a fixed <em>width</em>, not
+     * a fixed box. Without this call a flow is measured at the width its parent
+     * offers, which is the unchanged default.</p>
+     *
+     * <p>The request is clamped to the width the parent actually offers, so a value
+     * wider than the surrounding region degrades to that region's width rather than
+     * overflowing it. On an edge declared through {@link #bleed(DocumentBleed)} the
+     * bleed still wins: the background reaches the trimmed page edge, because that
+     * is the whole point of asking for it.</p>
+     *
+     * @param points fixed outer width in points; must be finite and greater than zero
+     * @return this builder
+     * @throws IllegalArgumentException if {@code points} is NaN, infinite, zero or negative
+     * @since 2.4.0
+     */
+    public T fixedWidth(double points) {
+        this.flowWidth = DocumentFlowWidth.of(points);
+        return self();
     }
 
     /**
@@ -1193,6 +1221,10 @@ public abstract class AbstractFlowBuilder<T extends AbstractFlowBuilder<T, N>, N
 
     protected DocumentBleed bleed() {
         return bleed;
+    }
+
+    protected DocumentFlowWidth flowWidth() {
+        return flowWidth;
     }
 }
 

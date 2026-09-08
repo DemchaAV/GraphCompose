@@ -31,12 +31,6 @@ follow semantic versioning; release dates are ISO 8601.
   the call, and a sub-point width that can only fail at layout now fails naming
   the fixed width instead of blaming the parent's padding.
 
-  One configuration is knowingly still wrong: a fixed-width flow used as a *row
-  column* that also carries a horizontal margin is placed narrower than it asked
-  for, because the row path subtracts that margin twice before the width is
-  resolved. That defect predates this feature — it misplaces unconstrained boxes
-  in the same shape — and is fixed separately.
-
   The value is carried by a new canonical `DocumentFlowWidth`
   (`natural()` / `of(points)`) on `DocumentNode.flowWidth()`, stored on
   `SectionNode` and `ContainerNode`. Both records keep their previous

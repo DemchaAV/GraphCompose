@@ -733,7 +733,14 @@ public final class NodeDefinitionSupport {
                 style.padding() == null
                         ? com.demcha.compose.engine.components.style.Padding.zero()
                         : style.padding();
-        double childWidth = Math.max(0.0, cellWidth - padding.horizontal());
+        // The cell's inner box is the content's margin box — the same contract a
+        // row slot uses — so the placement handed on below is the content box
+        // inside it. TableLayoutSupport measures against exactly these two
+        // quantities, which is what keeps the reserved row and the drawn content
+        // the same size.
+        DocumentInsets contentMargin = child.node().margin();
+        double childWidth = Math.max(0.0,
+                cellWidth - padding.horizontal() - contentMargin.horizontal());
         double childHeight = Math.max(0.0, child.measureResult().height());
         // Where in the cell's box the child sits. Follows resolveTextLines on
         // the vertical axis: same default (centre, from
@@ -750,11 +757,11 @@ public final class NodeDefinitionSupport {
         // input reachable today produces that: a row is sized from the content
         // it holds, so this is a guard, not a behaviour anyone can observe.
         double innerHeight = Math.max(0.0, cellHeight - padding.vertical());
-        double slack = Math.max(0.0, innerHeight - childHeight);
+        double slack = Math.max(0.0, innerHeight - childHeight - contentMargin.vertical());
         Anchor anchor = style.textAnchor() == null
                 ? Anchor.centerLeft()
                 : style.textAnchor();
-        double contentBottom = padding.bottom() + switch (anchor.v()) {
+        double contentBottom = padding.bottom() + contentMargin.bottom() + switch (anchor.v()) {
             case TOP -> slack;
             case MIDDLE -> slack / 2.0;
             case BOTTOM, DEFAULT -> 0.0;
@@ -764,7 +771,7 @@ public final class NodeDefinitionSupport {
         // absolute location so the child node's emitFragments lays
         // its content out as if it were a top-level placement of the
         // cell's content area.
-        double childAbsoluteX = parentPlacement.x() + cellLocalX + padding.left();
+        double childAbsoluteX = parentPlacement.x() + cellLocalX + padding.left() + contentMargin.left();
         double childAbsoluteY = parentPlacement.y() + cellLocalY + contentBottom;
         String childPath = parentPlacement.path() + ".cell" + cellLocalX + "x" + cellLocalY;
         FragmentPlacement childPlacement = new FragmentPlacement(
@@ -790,7 +797,7 @@ public final class NodeDefinitionSupport {
         if (childFragments.isEmpty()) {
             return List.of();
         }
-        double offsetX = cellLocalX + padding.left();
+        double offsetX = cellLocalX + padding.left() + contentMargin.left();
         // Same anchor as the placement above. These two have to agree: the
         // placement decides where the child measures itself against, this
         // decides where its fragments land, and a difference between them

@@ -116,6 +116,32 @@ follow semantic versioning; release dates are ISO 8601.
   templates, the examples or the fixtures puts a horizontal margin on a row
   child, which is also why neither gate caught this.
 
+- **A margin on composed table-cell content is honoured, and honoured by both
+  passes.** The node handed to `DocumentTableCell.node(...)` was measured at the
+  cell's full inner width with its margin left in, and then laid out by the
+  fixed-box walk, which removes that margin itself — so the content re-wrapped
+  one margin narrower than the row had been sized for and painted below its own
+  table, while its box shifted right and overhung the next column. The vertical
+  axis failed the other way round: the cell height ignored the margin outright
+  while placement still applied `margin.top`, dropping the content through the
+  cell floor. On a leaf child — a bare paragraph or image — the margin was
+  discarded altogether.
+
+  A cell's inner box is now the content's margin box, the same contract a row
+  slot uses: the measure subtracts the margin once and the row reserves it on
+  both axes. The seam that made this possible is also closed. A
+  `FragmentPlacement` is a *content* box — every caller builds one at the exact
+  rectangle the content should occupy and passes `Margin.zero()` — but
+  `emitCompositeSubtree` handed it to the fixed-box walk, which reads a *margin*
+  box; it now converts between the two, so a composite child is laid out in the
+  rectangle its owner reserved rather than one margin inside it.
+
+  **This changes output only for composed cell content that carries a margin**,
+  which now sits inside the room the cell reserves for it instead of spilling
+  out. Content without one is untouched — every conversion is an identity at
+  zero — and no layout snapshot, pixel baseline or committed preview moves:
+  every composed cell in the templates and the examples uses zero margins.
+
 ### Documentation
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a

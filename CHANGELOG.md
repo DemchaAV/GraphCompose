@@ -85,6 +85,63 @@ follow semantic versioning; release dates are ISO 8601.
   neither gate; the coverage for this change is the unit test and the two
   previews.
 
+- **A row child with a horizontal margin is measured and placed at the same
+  width.** A row band is sized in two passes over the same children:
+  `measureRow` prepares each child inside its slot less that child's own margin
+  and takes the tallest result as the band height, then `LayoutCompiler`
+  prepares it again to place it. The placement pass handed
+  `prepareForRegionWidth` a width the margin had already been taken out of —
+  and that helper subtracts the margin itself — so the child was laid out at
+  `slot - 2 * margin` against a band measured from `slot - margin`. Given
+  enough text to wrap, the second subtraction bought an extra line and the
+  row's own guard rejected the document it had just measured: `Row '…' child
+  'SectionNode' measured height … exceeds row inner height`. A left or right
+  inset on a row child was the whole trigger; a section wrapping a paragraph is
+  the shortest way to reach it.
+
+  Both copies of the seating loop are fixed — the page-level row band and
+  `placeRowBandInFixedSlot`, which seats a row nested in a LayerStack layer or
+  a composed table cell — so the whole slot goes in and the margin comes off
+  once. Only the page-level band throws; the other two symptoms were silent. In
+  a fixed-slot band there is no inner-height guard, so a margin-carrying tallest
+  child was simply seated above its band and spilled through the top under a
+  non-`TOP` `verticalAlign`. And `compileNodeInFixedSlot` always derived its own
+  region as `slot - margin`, so a composite row child reported one width while
+  its own children were laid out in another.
+
+  **This changes output only for a row child carrying a left or right margin**,
+  which now occupies its slot less that margin rather than less twice it. A row
+  child without one is untouched, the arithmetic being identical at zero, and
+  no layout snapshot, pixel baseline or committed preview moves: nothing in the
+  templates, the examples or the fixtures puts a horizontal margin on a row
+  child, which is also why neither gate caught this.
+
+- **A margin on composed table-cell content is honoured, and honoured by both
+  passes.** The node handed to `DocumentTableCell.node(...)` was measured at the
+  cell's full inner width with its margin left in, and then laid out by the
+  fixed-box walk, which removes that margin itself — so the content re-wrapped
+  one margin narrower than the row had been sized for and painted below its own
+  table, while its box shifted right and overhung the next column. The vertical
+  axis failed the other way round: the cell height ignored the margin outright
+  while placement still applied `margin.top`, dropping the content through the
+  cell floor. On a leaf child — a bare paragraph or image — the margin was
+  discarded altogether.
+
+  A cell's inner box is now the content's margin box, the same contract a row
+  slot uses: the measure subtracts the margin once and the row reserves it on
+  both axes. The seam that made this possible is also closed. A
+  `FragmentPlacement` is a *content* box — every caller builds one at the exact
+  rectangle the content should occupy and passes `Margin.zero()` — but
+  `emitCompositeSubtree` handed it to the fixed-box walk, which reads a *margin*
+  box; it now converts between the two, so a composite child is laid out in the
+  rectangle its owner reserved rather than one margin inside it.
+
+  **This changes output only for composed cell content that carries a margin**,
+  which now sits inside the room the cell reserves for it instead of spilling
+  out. Content without one is untouched — every conversion is an identity at
+  zero — and no layout snapshot, pixel baseline or committed preview moves:
+  every composed cell in the templates and the examples uses zero margins.
+
 ### Documentation
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a

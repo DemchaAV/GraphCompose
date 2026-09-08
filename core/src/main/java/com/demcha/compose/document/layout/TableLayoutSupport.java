@@ -190,8 +190,15 @@ final class TableLayoutSupport {
                 TableCellLayoutStyle style = stylesGrid[rowIndex][logical.startColumn()];
                 Padding padding = style.padding() == null ? Padding.zero() : style.padding();
                 double cellInnerWidth = Math.max(0.0, cellOuterWidth - padding.horizontal());
+                // The cell's inner box is the content's MARGIN box, as a row slot
+                // is: measure inside the margin, because the fragment pass places
+                // the content inside it too. Measuring at the full inner width
+                // instead re-wrapped the content narrower than the row was sized
+                // for, and it painted below its own table.
+                double contentWidth = Math.max(0.0,
+                        cellInnerWidth - src.content().margin().horizontal());
                 PreparedNode<?> child = prepareContext.prepare(src.content(),
-                        BoxConstraints.unboundedHeight(cellInnerWidth));
+                        BoxConstraints.unboundedHeight(contentWidth));
                 prepared.put(new CellKey(rowIndex, logical.startColumn()), child);
             }
         }
@@ -217,7 +224,11 @@ final class TableLayoutSupport {
                         + ") was not prepared.");
             }
             Padding padding = style.padding() == null ? Padding.zero() : style.padding();
-            return prepared.measureResult().height() + padding.vertical();
+            // The content's own vertical margin is part of what the cell has to
+            // reserve — placement offsets it by margin.top, so a height that
+            // ignored the margin dropped the content through the cell floor.
+            double margin = logical.source().content().margin().vertical();
+            return prepared.measureResult().height() + margin + padding.vertical();
         }
         return cellNaturalHeight(logical.sanitizedLines(), style, measurement);
     }

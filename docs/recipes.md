@@ -16,7 +16,7 @@ authoring API; public application code should not import
 | [Shape-as-container](recipes/shape-as-container.md) | `addCircle` / `addEllipse` / `addContainer` with `ClipPolicy` (clipped layered children) |
 | [Transforms and z-index](recipes/transforms.md) | `rotate` / `scale` mixin, per-layer `zIndex` for overlays |
 | [Page backgrounds](recipes/page-backgrounds.md) | `pageBackground` / `pageBackgrounds`, `PageBackgroundFill` columns, bands, point-based fills, layering |
-| [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer |
+| [Layered page design](recipes/layered-page-design.md) | Page background vs. row vs. layer stack vs. canvas — choosing the layer; how a row splits its width, icon beside text, a rule that reaches the column edge |
 | [Absolute placement](recipes/absolute-placement.md) | `addCanvas` + `position(x, y)` for pixel-precise certificates and badges |
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
 | [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |

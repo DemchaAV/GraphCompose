@@ -56,8 +56,15 @@ class DocumentationLinkGuardTest {
      */
     private static final Pattern LINK = Pattern.compile("\\[[^]]*]\\(([^)\\s]+)");
 
-    /** An ATX heading, whose text GitHub turns into the anchor. */
-    private static final Pattern HEADING = Pattern.compile("(?m)^#{1,6}\\s+(.+?)\\s*$");
+    /**
+     * An ATX heading, whose text GitHub turns into the anchor.
+     *
+     * <p>The run after the hashes is spaces and tabs, not {@code \s}: {@code \s}
+     * matches a newline, so a lone {@code #} on its own line swallowed the break
+     * and claimed the following line's text as a heading. GitHub renders that
+     * {@code #} as an empty heading and the next line as a paragraph.</p>
+     */
+    private static final Pattern HEADING = Pattern.compile("(?m)^#{1,6}[ \\t]+(.+?)[ \\t]*$");
 
     /** A hand-written anchor: {@code <a name="x">} or {@code <a id="x">}. */
     private static final Pattern EXPLICIT_ANCHOR =
@@ -80,8 +87,21 @@ class DocumentationLinkGuardTest {
      */
     private static final Pattern INLINE_CODE = Pattern.compile("`[^`\\n]*`");
 
-    /** Everything GitHub drops from a heading before hyphenating it. */
-    private static final Pattern NOT_IN_ANCHOR = Pattern.compile("[^\\w\\s-]", Pattern.UNICODE_CHARACTER_CLASS);
+    /**
+     * Everything GitHub drops from an anchor.
+     *
+     * <p>The keep-set was read off GitHub rather than reasoned about, by posting
+     * headings to {@code api.github.com/markdown} and reading the ids it
+     * generates: letters of any script, combining marks, decimal digits, letter
+     * numerals, connector punctuation (which is where {@code _} lives),
+     * {@code -} and the ASCII space survive, and everything else is dropped —
+     * <em>including every other kind of whitespace</em>. A non-breaking space, an
+     * em space and a tab are all removed rather than hyphenated. {@code ①} is
+     * removed because it is a {@code No} numeral, leaving the spaces that
+     * surrounded it, while {@code Ⅰ} is an {@code Nl} numeral and survives.</p>
+     */
+    private static final Pattern NOT_IN_ANCHOR =
+            Pattern.compile("[^\\p{L}\\p{M}\\p{Nd}\\p{Nl}\\p{Pc} -]");
 
     /** A markdown link inside a heading — the anchor uses the text, not the target. */
     private static final Pattern HEADING_LINK = Pattern.compile("\\[([^]]*)]\\([^)]*\\)");
@@ -157,11 +177,124 @@ class DocumentationLinkGuardTest {
     }
 
     /**
+     * A heading reference written in Java: {@code docs/recipes/x.md#some-heading}
+     * inside a Javadoc block.
+     *
+     * <p>The leading boundary keeps this off absolute URLs. Several sources
+     * already link to {@code https://github.com/…/blob/main/docs/…md}; without
+     * the lookbehind the {@code docs/…} tail of such a URL matches, and a
+     * branch-pinned external link would be validated against the current
+     * worktree — which {@link #everyRelativeLinkResolves()} deliberately does not
+     * do for {@code https://} targets. The same guard is spelled as a lookbehind
+     * in {@code knowledge/tools/routing/lib/anchors.mjs}, for the same reason.</p>
+     */
+    private static final Pattern JAVA_DOCS_ANCHOR =
+            Pattern.compile("(?<![\\w./:-])(docs/[\\w./-]+\\.md)#([\\p{L}\\p{M}\\p{Nd}\\p{Nl}\\p{Pc}-]+)");
+
+    /**
+     * Javadoc that points a reader at a section of the documentation points at a
+     * section that exists.
+     *
+     * <p>The markdown half of this guard reads {@code [text](target)} links, which
+     * is every reference a page can make. A Javadoc block cannot write one of
+     * those — it names the path as prose — so a heading rename fixes every
+     * markdown citation and the routing table's copies, and silently leaves the
+     * Javadoc one dangling. That copy has the widest audience of the three: the
+     * knowledge surfaces carry signatures and no prose, so for an API-first
+     * reader the Javadoc <em>is</em> the documentation, and it ships to
+     * javadoc.io and to every IDE tooltip.</p>
+     *
+     * @throws IOException when a source file or page cannot be read
+     */
+    @Test
+    void everyDocsAnchorCitedFromJavaResolves() throws IOException {
+        List<Path> sources = mainJavaSources();
+        // Fail-closed on the scan root rather than on the number of citations:
+        // there may legitimately be none one day, but "the tree moved and this
+        // read nothing" must not look like "every citation resolves".
+        assertThat(sources)
+                .describedAs("no main Java sources found under %s — this guard is reading a tree "
+                        + "that moved, so it is no longer guarding anything", PROJECT_ROOT)
+                .hasSizeGreaterThan(100);
+
+        Map<Path, Set<String>> anchors = new HashMap<>();
+        for (Path page : documentationPages()) {
+            anchors.put(page.toAbsolutePath().normalize(), anchorsOf(page));
+        }
+
+        Map<String, String> broken = new TreeMap<>();
+        for (Path source : sources) {
+            Matcher cited = JAVA_DOCS_ANCHOR.matcher(read(source));
+            while (cited.find()) {
+                String reference = cited.group(1) + "#" + cited.group(2);
+                Path page = PROJECT_ROOT.resolve(cited.group(1)).toAbsolutePath().normalize();
+                if (!Files.exists(page)) {
+                    broken.put(relative(source) + " -> " + reference, "no such page");
+                } else if (!citedAsNamedOnDisk(page, cited.group(1))) {
+                    // Files.exists and Path.equals are case-insensitive on
+                    // Windows, so a mis-cased citation was green on a developer's
+                    // box and failed only on the Linux runner — reported there as
+                    // "no such page", which reads as a missing file rather than
+                    // as the casing it is.
+                    broken.put(relative(source) + " -> " + reference,
+                            "the page on disk is named differently; check the citation's casing");
+                } else if (!anchors.getOrDefault(page, Set.of()).contains(cited.group(2))) {
+                    broken.put(relative(source) + " -> " + reference,
+                            "no heading in " + relative(page) + " anchors there");
+                }
+            }
+        }
+
+        assertThat(broken)
+                .describedAs("Javadoc naming a documentation section that is not there. Renaming a "
+                        + "heading is invisible to the compiler and to every markdown guard, and "
+                        + "this citation ships to javadoc.io. Fix the citation or restore the "
+                        + "heading")
+                .isEmpty();
+    }
+
+    /**
+     * Whether a citation spells the page the way the filesystem does.
+     *
+     * <p>{@link Path#toRealPath} resolves to the on-disk name, which is the only
+     * way to see a casing mismatch on a case-insensitive filesystem. The routing
+     * gate makes the same comparison for its own citations.</p>
+     *
+     * @param page  the resolved page
+     * @param cited the path half of the citation, as written
+     * @return {@code true} when the two agree
+     */
+    private static boolean citedAsNamedOnDisk(Path page, String cited) {
+        try {
+            String onDisk = PROJECT_ROOT.toRealPath().relativize(page.toRealPath()).toString()
+                    .replace('\\', '/');
+            return onDisk.equals(cited);
+        } catch (IOException e) {
+            // Unreadable is not mis-cased; the caller has already established the
+            // file exists, so let the anchor check speak instead.
+            return true;
+        }
+    }
+
+    /** Every module's production Java, which is what gets published as Javadoc. */
+    private static List<Path> mainJavaSources() throws IOException {
+        List<Path> sources = new ArrayList<>();
+        try (Stream<Path> tree = Files.walk(PROJECT_ROOT)) {
+            tree.filter(p -> p.toString().endsWith(".java"))
+                    .filter(p -> p.toAbsolutePath().normalize().toString()
+                            .replace('\\', '/').contains("/src/main/java/"))
+                    .forEach(sources::add);
+        }
+        return sources;
+    }
+
+    /**
      * The anchors GitHub generates for a page.
      *
      * <p>The rule: take the heading text, drop HTML tags, keep a link's text rather
-     * than its target, lowercase, remove everything that is not a word character,
-     * whitespace or a hyphen, then replace whitespace with hyphens. Leading and
+     * than its target, lowercase, remove everything that is not a letter, a
+     * combining mark, a decimal digit, {@code _}, {@code -} or an ASCII space,
+     * then replace each remaining ASCII space with a hyphen. Leading and
      * trailing hyphens survive — {@code ## 🚀 Start here} anchors as
      * {@code -start-here}, not {@code start-here} — and a repeated heading gets
      * {@code -1}, {@code -2} appended.</p>
@@ -195,7 +328,73 @@ class DocumentationLinkGuardTest {
         text = HEADING_LINK.matcher(text).replaceAll("$1");
         text = text.replace("`", "").toLowerCase(java.util.Locale.ROOT);
         text = NOT_IN_ANCHOR.matcher(text).replaceAll("");
-        return text.replaceAll("\\s", "-");
+        // The ASCII space only. Every other kind of whitespace was removed above,
+        // which is what GitHub does — hyphenating them put characters into the
+        // anchor that the rendered page does not have.
+        return text.replace(' ', '-');
+    }
+
+    /**
+     * The same table {@code knowledge/tools/routing/test/anchors.test.mjs} pins
+     * on the JavaScript side.
+     *
+     * <p>GitHub's rule is implemented twice in this repository — here, and in
+     * {@code knowledge/tools/routing/lib/anchors.mjs}, which the routing gate
+     * resolves route citations with. Neither can call the other across the
+     * language boundary, so they are held together by asserting the same inputs
+     * from both sides: change one and its own fixture goes red.</p>
+     *
+     * <p>Every expected value was read off GitHub, by posting the heading to
+     * {@code api.github.com/markdown} and taking the id it generated — not
+     * derived from either implementation. Three earlier versions of this rule
+     * were reasoned about instead, and all three were wrong.</p>
+     */
+    @Test
+    void theAnchorRuleAgreesWithItsJavaScriptTwin() {
+        assertThat(slug("Zebra alternating rows"))
+                .describedAs("a non-breaking space is dropped, not hyphenated")
+                .isEqualTo("zebraalternating-rows");
+        assertThat(slug("Row span"))
+                .describedAs("an em space is dropped too")
+                .isEqualTo("rowspan");
+        assertThat(slug("A\tB"))
+                .describedAs("and a tab — only the ASCII space becomes a hyphen")
+                .isEqualTo("ab");
+        assertThat(slug("Item ① first"))
+                .describedAs("a circled numeral is not a decimal digit, so it goes and its spaces stay")
+                .isEqualTo("item--first");
+        assertThat(slug("Привет мир"))
+                .describedAs("letters of any script survive")
+                .isEqualTo("привет-мир");
+        assertThat(slug("v1.8.0 fonts"))
+                .describedAs("so do digits, while the dots between them go")
+                .isEqualTo("v180-fonts");
+        assertThat(slug("snake_case name"))
+                .describedAs("an underscore survives")
+                .isEqualTo("snake_case-name");
+        assertThat(slug("A & B"))
+                .describedAs("a dropped character leaves its spaces behind")
+                .isEqualTo("a--b");
+        assertThat(slug("Chapter Ⅰ here"))
+                .describedAs("a letter numeral is kept, unlike the circled one above")
+                .isEqualTo("chapter-ⅰ-here");
+        assertThat(slug("a‿f b"))
+                .describedAs("connector punctuation is kept — that is where the underscore lives")
+                .isEqualTo("a‿f-b");
+        assertThat(slug("  A"))
+                .describedAs("a non-ASCII space at the edge is dropped, and the ASCII space "
+                        + "beside it still becomes a hyphen — GitHub does not trim it away")
+                .isEqualTo("-a");
+        assertThat(slug("A  "))
+                .describedAs("the same at the trailing edge")
+                .isEqualTo("a-");
+        assertThat(slug("Zebra — alternating row fills"))
+                .describedAs("and the case that started all this: a spaced em dash is two spaces, "
+                        + "so it is two hyphens")
+                .isEqualTo("zebra--alternating-row-fills");
+        assertThat(slug("Café rules"))
+                .describedAs("a decomposed accent is a combining mark and stays with its letter (GitHub keeps it)")
+                .isEqualTo("café-rules");
     }
 
     private static String withoutFencedBlocks(String markdown) {

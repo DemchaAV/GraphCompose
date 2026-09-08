@@ -44,6 +44,23 @@ follow semantic versioning; release dates are ISO 8601.
   neither gate; the coverage for this change is the unit test and the two
   previews.
 
+### Documentation
+
+- **A row's width rule, and what `fill()` does when there is no slot.** Two things a
+  signature cannot say now have a page and a proof. A row with no `columns(...)`, no
+  `weights(...)`, no grow spacer and the default `START` arrangement splits its inner
+  width into equal shares — one per child, content playing no part — so a 13pt icon
+  beside a paragraph takes half the row and the text wraps into twice the lines;
+  `columns(auto(), weight(1))` is the form that stays right when the column is resized.
+  And `LineBuilder.horizontal(width)` is points, not a percentage, with nothing clipping
+  the line to the space it was given: a rule that must meet the column edge is `fill()`
+  in a weight column. `LineBuilder.fill()`'s own Javadoc now names the case it used to
+  promise away — a flex row (a grow spacer, or any non-`START` arrangement) sizes every
+  non-grow child to its content, so a filled line answers with the row's whole available
+  width and is then placed past the edge. `docs/recipes/layered-page-design.md` carries
+  both sections, and the recipe's own failure modes are documented with them: a spacer
+  neither shrinks a fixed rule nor gives `fill()` a slot, and a centre- or right-aligned
+  heading claims the whole `auto()` column and leaves the rule zero width.
 
 ## v2.3.0 — 2026-08-31
 

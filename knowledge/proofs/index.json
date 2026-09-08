@@ -3,9 +3,9 @@
   "note": "Every proof a documentation claim cites, resolved to where it lives and what it holds up. Generated from the claim markers in docs/; a proof that nothing cites does not appear, and a claim whose proof does not resolve fails the check rather than landing here.",
   "generator": "knowledge/tools/claims/check-claims.mjs",
   "counts": {
-    "proofs": 6,
-    "claimsHeld": 7,
-    "claimsWithoutProof": 20
+    "proofs": 10,
+    "claimsHeld": 13,
+    "claimsWithoutProof": 33
   },
   "proofs": {
     "test:AutoColumnRightAlignContractTest": {
@@ -34,6 +34,52 @@
         }
       ]
     },
+    "test:LineWidthUnitsContractTest#anAlignedHeadingLeavesTheWeightColumnNothingToFill": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.an-aligned-paragraph-in-an-auto-column-takes-the-whole-row",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 145,
+          "heading": "A rule that reaches the column edge"
+        }
+      ]
+    },
+    "test:LineWidthUnitsContractTest#horizontalIsPointsAndTheLineIsNotClippedToItsSlot": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "line.horizontal-is-points-and-is-not-clipped",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 142,
+          "heading": "A rule that reaches the column edge"
+        }
+      ]
+    },
+    "test:LineWidthUnitsContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/LineWidthUnitsContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "line.fill-spans-its-slot",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 143,
+          "heading": "A rule that reaches the column edge"
+        },
+        {
+          "kind": "behavior",
+          "value": "line.fill-overflows-a-flex-row",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 144,
+          "heading": "A rule that reaches the column edge"
+        }
+      ]
+    },
     "test:RowBuilderTest": {
       "kind": "test",
       "path": "qa/src/test/java/com/demcha/compose/document/dsl/RowBuilderTest.java",
@@ -44,6 +90,26 @@
           "page": "docs/recipes/layered-page-design.md",
           "line": 30,
           "heading": "Sidebar: page background vs. row"
+        }
+      ]
+    },
+    "test:RowWidthDistributionContractTest": {
+      "kind": "test",
+      "path": "qa/src/test/java/com/demcha/compose/document/dsl/RowWidthDistributionContractTest.java",
+      "holds": [
+        {
+          "kind": "behavior",
+          "value": "row.no-column-spec-splits-the-width-evenly",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 68,
+          "heading": "Icon beside text"
+        },
+        {
+          "kind": "behavior",
+          "value": "row.a-flex-row-sizes-every-other-child-to-its-content",
+          "page": "docs/recipes/layered-page-design.md",
+          "line": 69,
+          "heading": "Icon beside text"
         }
       ]
     },

@@ -14,20 +14,9 @@
  */
 
 import { parseClaims, resolveSymbol } from "../lib/claims.mjs";
+import { suite } from "../../lib/fixtures.mjs";
 
-let failures = 0;
-let passes = 0;
-
-function check(name, actual, expected) {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  if (a === e) {
-    passes += 1;
-    return;
-  }
-  failures += 1;
-  process.stdout.write(`  FAIL  ${name}\n        expected ${e}\n        actual   ${a}\n`);
-}
+const { check, done } = suite("claims.test");
 
 const parse = (body) => parseClaims(body, "x.md");
 const messages = (body) => parse(body).errors.map((e) => e.message);
@@ -139,7 +128,4 @@ check(
   false,
 );
 
-process.stdout.write(
-  failures ? `\n[claims.test] ${failures} failed, ${passes} passed\n` : `[claims.test] ${passes} passed\n`,
-);
-process.exit(failures ? 1 : 0);
+done();

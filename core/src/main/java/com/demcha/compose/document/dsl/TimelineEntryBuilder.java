@@ -47,9 +47,10 @@ public final class TimelineEntryBuilder {
     /**
      * Sets the marker drawn in the rail for this entry.
      *
-     * <p>Only for {@code entry(e -> ...)}. The {@code entry(marker, e -> ...)} shorthand
-     * already carries one, and declaring a second there throws rather than quietly letting
-     * one win.</p>
+     * <p>An entry has exactly one marker. Declaring a second throws, whether the first came
+     * from the {@code entry(marker, e -> ...)} shorthand or from an earlier call to this
+     * method — quietly letting one of them win is a difference that would show up only in
+     * the rendered document.</p>
      *
      * @param marker the marker
      * @return this builder
@@ -59,10 +60,16 @@ public final class TimelineEntryBuilder {
      */
     public TimelineEntryBuilder marker(TimelineMarker marker) {
         Objects.requireNonNull(marker, "marker");
-        if (markerGivenByShorthand) {
+        if (this.marker != null) {
+            // Keyed on the marker itself, not on where the first one came from: two
+            // marker(...) calls in the advanced form are the same mistake as one beside the
+            // shorthand, and letting the second win would only show in the rendered page.
             throw new IllegalStateException(
-                    "This entry already has a marker from entry(marker, ...). Call marker(...) "
-                    + "only inside entry(entry -> ...).");
+                    "A timeline entry has exactly one marker, and this entry already has "
+                    + (markerGivenByShorthand
+                            ? "the one from entry(marker, ...). Call marker(...) only inside "
+                              + "entry(entry -> ...)."
+                            : "one. Call marker(...) once."));
         }
         this.marker = marker;
         return this;

@@ -357,7 +357,22 @@ class TimelineBuilderTest {
                         .entry(TimelineMarker.dot(8, NAVY), e -> e
                                 .marker(TimelineMarker.dot(12, NAVY))
                                 .title("T"))))
-                .withMessageContaining("already has a marker");
+                .withMessageContaining("exactly one marker")
+                .withMessageContaining("entry(marker, ...)");
+    }
+
+    @Test
+    void aMarkerCannotBeDeclaredTwiceInTheAdvancedFormEither() {
+        // The same invariant, reached without the shorthand. A guard keyed on "the marker
+        // came from entry(marker, ...)" would let this one through and silently keep the
+        // second marker — one entry, two markers declared, no error.
+        assertThatIllegalStateException()
+                .isThrownBy(() -> timelineOf(t -> t
+                        .entry(e -> e
+                                .marker(TimelineMarker.dot(8, NAVY))
+                                .marker(TimelineMarker.square(12, NAVY))
+                                .title("T"))))
+                .withMessageContaining("exactly one marker");
     }
 
     // --- markers -------------------------------------------------------------

@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 233 · methods: 2076 · constants: 230 · compiler-generated members: 1111
+Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 1111
 
 ## com.demcha.compose
 
@@ -833,6 +833,7 @@ Types: 233 · methods: 2076 · constants: 230 · compiler-generated members: 111
 - `ParagraphBuilder inlineCode(String text)`
 - `ParagraphBuilder inlineCode(String text, DocumentTextStyle textStyle)`
 - `ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg)`
+- `ParagraphBuilder inlineStyledChip(String text, DocumentTextStyle textStyle, DocumentColor bg)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height, InlineImageAlignment alignment)`
 - `ParagraphBuilder inlineImage(DocumentImageData imageData, double width, double height, InlineImageAlignment alignment, double baselineOffset, DocumentLinkOptions linkOptions)`

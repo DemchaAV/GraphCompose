@@ -361,6 +361,21 @@ class InlineHighlightRenderTest {
     }
 
     @Test
+    void explicitlyStyledChipWithANullStyleFallsBackToTheParagraph() throws Exception {
+        // The overload documents null as "use the paragraph's", which is the layout's
+        // own fallback for a run that carries no style — the same one inlineText relies
+        // on. Nothing else asserts it, so the sentence in the Javadoc is the only thing
+        // holding the contract up.
+        List<ParagraphTextSpan> spans = textSpans(p -> p
+                .textStyle(DocumentTextStyle.builder().size(9).build())
+                .inlineStyledChip("BIG", null, FILL));
+        ParagraphTextSpan chip = spans.stream().filter(s -> s.background() != null).findFirst().orElseThrow();
+        assertThat(chip.textStyle().size())
+                .as("a null chip style resolves to the paragraph's, not to the 14 pt default")
+                .isEqualTo(9.0, within(1e-9));
+    }
+
+    @Test
     void twoAdjacentDifferentChipsStaySeparateSpans() throws Exception {
         List<ParagraphTextSpan> spans = textSpans(p -> p
                 .inlineChip("A", DocumentColor.rgb(0, 100, 0), DocumentColor.rgb(220, 255, 220))

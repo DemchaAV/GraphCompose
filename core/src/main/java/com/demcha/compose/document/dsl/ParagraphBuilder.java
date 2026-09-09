@@ -399,7 +399,7 @@ public final class ParagraphBuilder {
      * @param textStyle the glyph style; falls back to the paragraph style when {@code null}
      * @param bg        the chip fill colour; must not be {@code null}
      * @return this builder
-     * @since 2.3.0
+     * @since 2.4.0
      */
     public ParagraphBuilder inlineStyledChip(String text, DocumentTextStyle textStyle, DocumentColor bg) {
         Objects.requireNonNull(bg, "bg");

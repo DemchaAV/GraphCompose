@@ -25,6 +25,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>The order matters as much as the presence. The verify step runs the drift gate, so a
  * refresh scheduled after it fails the cut on the previews it was about to fix.</p>
+ *
+ * <p>The knowledge pack under {@code knowledge/api} is the same shape of asset and fails the same
+ * way. It embeds the reactor version, so every bump the script performs invalidates it, and a
+ * regenerate-then-stage pair that comes apart ships a pack naming the version before — caught only
+ * by the tag-time gate in {@code release.yml}, after the tag is pushed.</p>
  */
 class ReleaseAssetStepGuardTest {
 
@@ -170,5 +175,48 @@ class ReleaseAssetStepGuardTest {
                 .describedAs("the previews are refreshed after the verify step that compares them, "
                         + "so a cut fails on exactly the files it was about to bring up to date")
                 .isLessThan(verify);
+    }
+
+    @Test
+    void theCutRegeneratesTheKnowledgeSurfacesBeforeStagingThem() throws IOException {
+        String script = Files.readString(SCRIPT);
+
+        int regen = script.indexOf("Step \"5c\" \"Regenerate the knowledge pack surfaces");
+        int staged = script.indexOf("$commitFiles += 'knowledge'");
+
+        assertThat(regen)
+                .describedAs("the cut no longer regenerates the knowledge surfaces, so the release "
+                        + "commit ships a pack still naming the pre-bump version and release.yml's "
+                        + "tag-time --check fails once the tag is already pushed")
+                .isNotNegative();
+        assertThat(staged)
+                .describedAs("the release commit no longer stages knowledge/, so a regen would happen "
+                        + "and never reach the tag")
+                .isNotNegative();
+        assertThat(regen)
+                .describedAs("the surfaces are regenerated after the commit that stages them, so the "
+                        + "tag carries the previous version's pack")
+                .isLessThan(staged);
+    }
+
+    @Test
+    void thePostReleaseBumpRegeneratesTheKnowledgeSurfacesBeforeStagingThem() throws IOException {
+        String script = Files.readString(SCRIPT);
+
+        int regen = script.indexOf("Step \"3c\" \"Regenerate the knowledge pack surfaces");
+        int staged = script.indexOf("$filesToCommit += 'knowledge'");
+
+        assertThat(regen)
+                .describedAs("-PostReleaseOnly no longer regenerates the surfaces the SNAPSHOT bump "
+                        + "invalidates, so develop's \"API surface is current\" job stays red until a "
+                        + "follow-up regen lands")
+                .isNotNegative();
+        assertThat(staged)
+                .describedAs("the bump commit no longer stages knowledge/, which leaves the regen in "
+                        + "the working tree and the CI job red all the same")
+                .isNotNegative();
+        assertThat(regen)
+                .describedAs("the surfaces are regenerated after the commit that stages them")
+                .isLessThan(staged);
     }
 }

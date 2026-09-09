@@ -17,12 +17,26 @@ import java.util.Objects;
  * particular shape has to ask that shape. And it is the box of the node that was
  * <em>wrapped</em> — anchor a container and the container is what comes back.</p>
  *
- * @param id        the anchor's identity
- * @param pageIndex zero-based page the anchor landed on
+ * <p><b>One of these per page the node occupies</b>, each the slice of that box lying on
+ * its own page. A node that fits on one page has one, and it is the whole box. A node that
+ * spans pages has one per page: the first runs from the node's top to the bottom of that
+ * page's content band, a middle one is the whole band, and the last runs from the band's
+ * top to the node's bottom. They share an id, so a consumer asking for an owner gets the
+ * slices in page order and can draw each on its own page without arithmetic of its own.
+ * The bands come from the geometry a spanning node's border already uses, per-page margins
+ * included.</p>
+ *
+ * <p>The margin comes off the edges a slice actually contains — the top margin only on the
+ * node's first page, the bottom margin only on its last, neither in the middle, both when
+ * there is only one. Horizontally every slice is the full box, so the left and right
+ * margins always come off.</p>
+ *
+ * @param id        the anchor's identity, shared by every page's slice
+ * @param pageIndex zero-based page this slice lies on
  * @param x         left edge, page coordinates
- * @param y         bottom edge, page coordinates
+ * @param y         bottom edge of this page's slice, page coordinates
  * @param width     the wrapped node's border-box width
- * @param height    the wrapped node's border-box height
+ * @param height    the height of this page's slice, not of the whole node
  * @author Artem Demchyshyn
  * @since 2.4.0
  */

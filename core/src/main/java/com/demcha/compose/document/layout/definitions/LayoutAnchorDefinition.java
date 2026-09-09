@@ -30,6 +30,10 @@ import java.util.List;
  * into, its own margin excluded and its padding included. Two boxes are in play and only
  * one of them is useful to a consumer — see {@link #emitFragments}.</p>
  *
+ * <p>For a child that spans pages it reports <b>one slice per page</b>, from the placement
+ * the compiler already computed for that page, so the anchor of a tall section is usable on
+ * every page it crosses rather than a single box that fits on none of them.</p>
+ *
  * @author Artem Demchyshyn
  * @since 2.4.0
  */
@@ -74,23 +78,33 @@ public final class LayoutAnchorDefinition implements NodeDefinition<LayoutAnchor
     public List<LayoutFragment> emitFragments(PreparedNode<LayoutAnchorNode> prepared,
                                               FragmentContext ctx,
                                               FragmentPlacement placement) {
-        // The child's border box, which is not the wrapper's. prepare() measured the
-        // child's *margin* box, because that is the space the wrapper has to occupy for
-        // the surrounding flow to be right; reporting it would be wrong for the one thing
-        // this seam is for. A marker with margin(top 2, right 4, bottom 6, left 8) would
-        // have its anchor centre land 2pt off its own ink in both directions, and a rail
-        // drawn through that centre would visibly miss it. So the margin comes back off
-        // here, in the offset and in the size. Measured rather than assumed: the compiler
-        // seats the child at the anchor's bottom-left plus (left, bottom) — y grows up.
+        // The slice of the child's border box that lands on *this* page.
+        //
+        // The placement already is that slice. A composite's fragments are emitted once
+        // per page it occupies, and the band each segment clamps to is computed by
+        // CompositeDecoration — the same geometry that puts a spanning section's border on
+        // every page it crosses, per-page margins included. Reading the placement is what
+        // keeps this one formula instead of a second one drifting beside it. Taking the
+        // measured height instead reported the whole subtree on every page: a section
+        // across five pages said 453.25pt five times, with tops far outside the page.
+        //
+        // The margin is a separate matter and comes off per edge. It is part of the flow
+        // extent the wrapper has to occupy but no part of the box being reported, and a
+        // slice only meets the edges it actually contains — the top margin is inside the
+        // first page's slice, the bottom margin inside the last page's, and a middle page
+        // holds neither. A node that fits on one page is both, so it loses both, exactly
+        // as before. Horizontally every slice spans the whole box, so both sides always go.
         DocumentInsets margin = prepared.node().child().margin();
-        MeasureResult measured = prepared.measureResult();
-        double width = Math.max(0.0, measured.width() - margin.horizontal());
-        double height = Math.max(0.0, measured.height() - margin.vertical());
+        double topInset = placement.pageIndex() == placement.startPage() ? margin.top() : 0.0;
+        double bottomInset = placement.pageIndex() == placement.endPage() ? margin.bottom() : 0.0;
+
+        double width = Math.max(0.0, placement.width() - margin.horizontal());
+        double height = Math.max(0.0, placement.height() - topInset - bottomInset);
         return List.of(new LayoutFragment(
                 placement.path(),
                 0,
                 margin.left(),
-                margin.bottom(),
+                bottomInset,
                 width,
                 height,
                 new LayoutAnchorPayload(prepared.node().id(), width, height)));

@@ -83,6 +83,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Layout
 
+- **A resolved anchor on content that spans pages is now that page's slice of the box.**
+  It reported the whole subtree on every page instead — a section across five pages said
+  453.25pt five times, with tops hundreds of points outside the page — which was written
+  down as a limitation because nothing yet needed the per-page extent. Something does now,
+  and the numbers were unusable rather than merely imprecise, so the semantics are fixed
+  rather than documented: one occurrence per page occupied, each the border-box slice
+  lying on that page. The first runs from the node's top to the bottom of that page's
+  content band, a middle one is the whole band, and the last runs from the band's top to
+  the node's bottom; all of them share one id. The bands are the ones a spanning node's
+  border already clamps to, per-page margins included, so there is one formula rather than
+  two drifting apart. A child's margin comes off the edges its slice actually contains —
+  the top margin only on the first page, the bottom only on the last, neither in the
+  middle — while horizontal margins come off every slice as before. **An anchor whose
+  content fits on one page is unchanged**, which is every anchor that exists today.
+
+
 - **A built-in feature can now draw from geometry the layout has already resolved.**
   Some things cannot be drawn while laying out because they depend on where other things
   ended up — a rail running between markers, a bracket spanning sections, a leader joining

@@ -9,17 +9,18 @@ import java.util.Objects;
  * Wraps one node so the finished layout reports where it landed.
  *
  * <p>The wrapper is transparent: it measures to exactly its child's size and adds no
- * spacing, so inserting one changes no geometry. What it adds is a single non-visual
- * fragment carrying {@link com.demcha.compose.document.layout.payloads.LayoutAnchorPayload},
- * which a post-layout pass can find by identity.</p>
+ * spacing, so inserting one changes no geometry. What it adds is a non-visual fragment
+ * carrying {@link com.demcha.compose.document.layout.payloads.LayoutAnchorPayload}, which a
+ * post-layout pass can find by identity — <b>one per page the child occupies</b>, each
+ * carrying that page's slice of the box.</p>
  *
  * <p>Measuring to the child rather than to the available width is not a detail. It is what
  * makes the anchor's box the child's box, so a caller reading the anchor learns where the
  * <em>marker</em> is, not where its container is. What comes back is the child's border
  * box — margin excluded, padding included; see
- * {@link ResolvedLayoutAnchor} for the whole contract. Wrap the node you want to measure:
- * anchor a marker and you get the marker, anchor the container it sits in and you get the
- * container.</p>
+ * {@link ResolvedLayoutAnchor} for the whole contract, including how a box that spans pages
+ * is sliced. Wrap the node you want to measure: anchor a marker and you get the marker,
+ * anchor the container it sits in and you get the container.</p>
  *
  * <p>Lives in this {@code @Internal} package on purpose. Anchoring is engine plumbing that
  * a built-in feature uses to reach its own resolved geometry; whether authors should ever

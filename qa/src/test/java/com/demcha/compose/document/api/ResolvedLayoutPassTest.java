@@ -338,10 +338,9 @@ class ResolvedLayoutPassTest {
     void ananchoredSubtreeThatSpansPagesReportsOneAnchorPerPage() throws Exception {
         // Pinned because it contradicts the obvious reading of "one anchor per wrapper".
         // A composite emits its fragments once per page it occupies, so an anchor wrapping
-        // content that paginates reports one per page — sharing an id, and each carrying
-        // the subtree's whole height rather than the slice on that page. Small atomic
-        // content, which is what anchors are for, never hits it. A consumer that anchors
-        // something tall has to group by page itself, and had better learn that here.
+        // content that paginates reports one per page, sharing an id — and each one is the
+        // slice of the box on *that* page, clamped to the same band a spanning section's
+        // border uses.
         Object group = new Object();
         StringBuilder body = new StringBuilder();
         for (int i = 0; i < 30; i++) {
@@ -359,6 +358,139 @@ class ResolvedLayoutPassTest {
                 .hasSize(graph.totalPages());
         assertThat(anchors.stream().map(ResolvedLayoutAnchor::pageIndex))
                 .containsExactlyElementsOf(java.util.stream.IntStream.range(0, graph.totalPages()).boxed().toList());
+
+        // The page is 200pt tall with a 20pt margin, so the band is 20..180. Every slice
+        // sits inside it and none is the whole subtree — which is what this reported
+        // before, once per page, with tops off the page entirely.
+        double subtreeHeight = anchors.stream().mapToDouble(ResolvedLayoutAnchor::height).sum();
+        assertThat(anchors).allSatisfy(anchor -> {
+            assertThat(anchor.y()).as("inside the band").isGreaterThanOrEqualTo(20.0 - 1e-9);
+            assertThat(anchor.pointY(1.0)).isLessThanOrEqualTo(180.0 + 1e-9);
+            assertThat(anchor.height()).isLessThan(subtreeHeight);
+        });
+        assertThat(anchors.get(0).pointY(1.0))
+                .as("the first slice starts at the node's top")
+                .isEqualTo(180.0, within(1e-9));
+        assertThat(anchors.get(0).y())
+                .as("and runs to the bottom of the band, because the content continues")
+                .isEqualTo(20.0, within(1e-9));
+        assertThat(anchors.get(anchors.size() - 1).pointY(1.0))
+                .as("the last slice starts at the top of its band")
+                .isEqualTo(180.0, within(1e-9));
+        assertThat(anchors.get(anchors.size() - 1).y())
+                .as("and stops where the content does, above the band bottom")
+                .isGreaterThan(20.0);
+    }
+
+    @Test
+    void aMiddlePageSliceIsTheWholeContentBand() throws Exception {
+        LayoutGraph graph = tallAnchor(60, null);
+        List<ResolvedLayoutAnchor> anchors = anchorsOf(graph);
+
+        assertThat(anchors.size()).as("three pages, so one of them is a middle").isGreaterThanOrEqualTo(3);
+        ResolvedLayoutAnchor middle = anchors.get(1);
+        assertThat(middle.y()).as("band bottom").isEqualTo(20.0, within(1e-9));
+        assertThat(middle.pointY(1.0)).as("band top").isEqualTo(180.0, within(1e-9));
+    }
+
+    @Test
+    void anAsymmetricMarginComesOffTheEdgeTheSliceActuallyContains() throws Exception {
+        // The rule the slice makes necessary. A margin is part of the flow extent the
+        // wrapper occupies but no part of the box reported, and a slice only meets the
+        // edges it contains: the top margin is inside the first page's slice, the bottom
+        // margin inside the last page's, and a middle page holds neither.
+        DocumentInsets margin = new DocumentInsets(9, 4, 5, 8);
+        LayoutGraph marginedGraph = tallAnchor(60, margin);
+        List<ResolvedLayoutAnchor> margined = anchorsOf(marginedGraph);
+
+        assertThat(margined.size()).isGreaterThanOrEqualTo(3);
+        assertThat(margined.get(0).pointY(1.0))
+                .as("the first slice's top is inset by the top margin")
+                .isEqualTo(180.0 - 9.0, within(1e-9));
+        assertThat(margined.get(1).y())
+                .as("a middle slice keeps the whole band, bottom")
+                .isEqualTo(20.0, within(1e-9));
+        assertThat(margined.get(1).pointY(1.0))
+                .as("and top")
+                .isEqualTo(180.0, within(1e-9));
+
+        // The bottom edge, on the page that actually holds it. The section has no padding,
+        // so its border box ends where its last content does — and the 5pt of margin below
+        // that is flow extent the slice must not claim.
+        ResolvedLayoutAnchor last = margined.get(margined.size() - 1);
+        double lastInk = ink(marginedGraph, last.pageIndex())
+                .mapToDouble(PlacedFragment::y).min().orElseThrow();
+        assertThat(last.y())
+                .as("the last slice stops at the content, not %.1fpt below it", margin.bottom())
+                .isEqualTo(lastInk, within(1e-9));
+
+        // Both horizontal edges, checked inside this one document rather than against a
+        // second one: the section shrinks to its text, and text laid out in a narrower
+        // column wraps differently, so the two documents' widths are not comparable —
+        // 198.802 against 198.478 for this paragraph. The section has no padding, so its
+        // border box is exactly its widest content, and an anchor that had kept the right
+        // margin would be 4pt wider than the paragraph it holds.
+        double inkLeft = ink(marginedGraph, 0).mapToDouble(PlacedFragment::x).min().orElseThrow();
+        double inkWidth = ink(marginedGraph, 0).mapToDouble(PlacedFragment::width).max().orElseThrow();
+        assertThat(margined.get(0).x())
+                .as("the left margin is outside the box")
+                .isEqualTo(inkLeft, within(1e-9));
+        assertThat(margined.get(0).width())
+                .as("and so is the right one, which only the width shows")
+                .isEqualTo(inkWidth, within(1e-9));
+    }
+
+    /** The paragraph fragments on one page — the anchored section's own content. */
+    private static java.util.stream.Stream<PlacedFragment> ink(LayoutGraph graph, int pageIndex) {
+        return graph.fragments().stream()
+                .filter(f -> f.pageIndex() == pageIndex)
+                .filter(f -> f.payload() != null
+                        && f.payload().getClass().getSimpleName().contains("Paragraph"));
+    }
+
+    @Test
+    void everySliceCarriesTheSameIdentity() throws Exception {
+        List<ResolvedLayoutAnchor> anchors = anchorsOf(tallAnchor(40, null));
+
+        assertThat(anchors.size()).isGreaterThan(1);
+        assertThat(anchors).allSatisfy(anchor -> {
+            assertThat(anchor.id().kind()).isSameAs(Kind.MARKER);
+            assertThat(anchor.id().index()).isEqualTo(0);
+        });
+        assertThat(anchors.stream().map(a -> a.id().groupKey()).distinct())
+                .as("one owner, however many pages it took")
+                .hasSize(1);
+    }
+
+    @Test
+    void slicesFollowEachPagesOwnMarginRatherThanTheDocumentDefault() throws Exception {
+        // Per-page margins are the case a second, independent band formula would get
+        // wrong. These slices come from the geometry a spanning section's border already
+        // uses, so the page the rule widened reports the band that rule gave it.
+        Object group = new Object();
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            body.append("Sentence ").append(i).append(" of a body long enough to paginate. ");
+        }
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(240, 200)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageMargins(List.of(PageMarginRule.page(2, DocumentInsets.of(40))));
+            session.pageFlow()
+                    .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.MARKER, 0),
+                            new SectionBuilder().addParagraph(body.toString()).build()))
+                    .build();
+
+            List<ResolvedLayoutAnchor> anchors =
+                    ResolvedLayoutMetadata.from(session.layoutGraph()).anchors(group, Kind.MARKER);
+            assertThat(anchors.size()).isGreaterThanOrEqualTo(2);
+            assertThat(anchors.get(0).y()).as("page 0 keeps the 20pt band").isEqualTo(20.0, within(1e-9));
+            assertThat(anchors.get(1).y())
+                    .as("page 1 is the one the rule widened, and its slice says so")
+                    .isEqualTo(40.0, within(1e-9));
+            assertThat(anchors.get(1).pointY(1.0)).isEqualTo(160.0, within(1e-9));
+        }
     }
 
     // --- 4. the owner carries the feature's own configuration -----------------
@@ -485,6 +617,24 @@ class ResolvedLayoutPassTest {
     }
 
     // --- helpers -------------------------------------------------------------
+
+    /** One anchored section tall enough to paginate, optionally with a margin on it. */
+    private static LayoutGraph tallAnchor(int sentences, DocumentInsets margin) throws Exception {
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < sentences; i++) {
+            body.append("Sentence ").append(i).append(" of a body long enough to paginate. ");
+        }
+        SectionBuilder section = new SectionBuilder().addParagraph(body.toString());
+        if (margin != null) {
+            section.margin(margin);
+        }
+        return compile(flow -> flow.add(new LayoutAnchorNode("",
+                new LayoutAnchorId(new Object(), Kind.MARKER, 0), section.build())), List.of());
+    }
+
+    private static List<ResolvedLayoutAnchor> anchorsOf(LayoutGraph graph) {
+        return ResolvedLayoutMetadata.from(graph).anchors();
+    }
 
     private static EllipseNode dot(double size) {
         return new EllipseNode("dot", size, size, INK, null, null, null, null, null);

@@ -7,6 +7,19 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline's marker column can be given a width in points.**
+  `TimelineBuilder.axisWidth(double)` is the peer of `markerColumnWeight(double)`: points
+  rather than a share of the row. Reach for it when the markers should sit the same
+  distance from the edge on every page width — a weight is a share of what the row has
+  left, so it moves when the page or the columns beside it do.
+
+  Declare one or the other, not both; a timeline that asks for both throws, naming both
+  calls. There is no conversion between them that does not need a row width neither the
+  builder nor the caller has, and a conversion done anyway is right on exactly one page:
+  the default `markerColumnWeight(0.10)` resolves to 24pt on a 320pt page and to 38.5pt on
+  a 480pt one. Nothing converts; the row resolves whichever it was handed. Timelines that
+  set neither are unchanged.
+
 - **A timeline can put a column before its markers — the `DATE` of `DATE | ● | CONTENT`.**
   `TimelineBuilder.leadingColumn(DocumentRowColumn)` declares the width once for the whole
   timeline and `TimelineEntryBuilder.leading(Consumer<SectionBuilder>)` fills it per entry.

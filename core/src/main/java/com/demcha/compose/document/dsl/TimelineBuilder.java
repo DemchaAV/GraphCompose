@@ -50,7 +50,8 @@ public final class TimelineBuilder {
     private double connectorWidth = 1.5;
     private double gutter = 8.0;
     private double markerGap = 8.0;
-    private double markerColumnWeight = 0.10;
+    private TimelineAxisSize axis = new TimelineAxisSize.Weight(0.10);
+    private String axisDeclaredBy;
     private DocumentRowColumn leadingColumn;
     private double entrySpacing = 14.0;
     private DocumentTextStyle titleStyle;
@@ -134,14 +135,57 @@ public final class TimelineBuilder {
      * Sets the relative width of the marker column (its weight against a content
      * weight of 1.0). Increase it for large numbered discs on narrow timelines.
      *
+     * <p>See {@link #axisWidth(double)} for the same column in points. Declare one or the
+     * other, not both.</p>
+     *
      * @param weight marker column weight; ignored when not positive
      * @return this builder
+     * @throws IllegalStateException if the axis width is already declared
      */
     public TimelineBuilder markerColumnWeight(double weight) {
         if (weight > 0) {
-            this.markerColumnWeight = weight;
+            declareAxisOnce("markerColumnWeight");
+            this.axis = new TimelineAxisSize.Weight(weight);
         }
         return this;
+    }
+
+    /**
+     * Sets the axis column — the one the markers sit in — to a fixed width in points.
+     *
+     * <p>The peer of {@link #markerColumnWeight(double)}, and the one to reach for when the
+     * markers should sit the same distance from the edge whatever the page width: a weight
+     * is a share of what the row has left, so it moves when the page or the columns beside
+     * it do.</p>
+     *
+     * <p>Declare one or the other, not both. They are two answers to the same question, and
+     * there is no conversion between them that does not need a row width neither the
+     * builder nor the caller has.</p>
+     *
+     * @param points axis width in points
+     * @return this builder
+     * @throws IllegalArgumentException if {@code points} is not positive and finite
+     * @throws IllegalStateException    if the axis width is already declared
+     * @since 2.4.0
+     */
+    public TimelineBuilder axisWidth(double points) {
+        if (!(points > 0) || Double.isInfinite(points)) {
+            throw new IllegalArgumentException(
+                    "A timeline's axis width must be a positive finite number of points, got: " + points);
+        }
+        declareAxisOnce("axisWidth");
+        this.axis = new TimelineAxisSize.Fixed(points);
+        return this;
+    }
+
+    private void declareAxisOnce(String call) {
+        if (axisDeclaredBy != null) {
+            throw new IllegalStateException(
+                    "A timeline's axis column has one width, declared once: this one calls "
+                    + axisDeclaredBy + "(...) and " + call + "(...). A weight is a share of the "
+                    + "row and a fixed width is points, so neither can stand in for the other.");
+        }
+        axisDeclaredBy = call;
     }
 
     /**
@@ -322,7 +366,7 @@ public final class TimelineBuilder {
             specs.add(entry.normalize(resolvedTitle, resolvedMeta, resolvedBody));
         }
         return new TimelineSpec(new TimelineRailSpec(connectorColor, connectorWidth),
-                leadingColumn, gutter, markerGap, markerColumnWeight, entrySpacing,
+                leadingColumn, gutter, markerGap, axis, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
 
@@ -348,12 +392,18 @@ public final class TimelineBuilder {
                         .spacing(4);
                 section.addRow(header -> {
                     header.spacing(spec.markerGap());
-                    if (spec.leadingColumn() == null) {
-                        header.weights(spec.markerColumnWeight(), 1.0);
+                    DocumentRowColumn axis = column(spec.axis());
+                    if (spec.leadingColumn() == null && spec.axis() instanceof TimelineAxisSize.Weight weight) {
+                        // The same two columns either way — columns(weight, weight) resolves
+                        // exactly as weights(...) does, confirmed by the snapshots. But
+                        // weights(...) is what a timeline has always put on its RowNode, and
+                        // RowNode.weights() is public; spelling it the other way empties that
+                        // list for every timeline that exists. Sugar where the sugar applies.
+                        header.weights(weight.weight(), 1.0);
+                    } else if (spec.leadingColumn() == null) {
+                        header.columns(axis, DocumentRowColumn.weight(1.0));
                     } else {
-                        header.columns(spec.leadingColumn(),
-                                DocumentRowColumn.weight(spec.markerColumnWeight()),
-                                DocumentRowColumn.weight(1.0));
+                        header.columns(spec.leadingColumn(), axis, DocumentRowColumn.weight(1.0));
                         // Present even when this entry put nothing in it: the column is the
                         // timeline's, not the entry's, and an entry that skipped it must
                         // still start its marker where every other entry starts one.
@@ -370,4 +420,20 @@ public final class TimelineBuilder {
         }
     }
 
+    /**
+     * Hands the axis size to the row in the row's own vocabulary.
+     *
+     * <p>The only place the two strategies meet, and neither is converted into the other:
+     * the row resolves a weight against its own width, which is the number nobody upstream
+     * of it has.</p>
+     *
+     * @param axis the axis size
+     * @return the column to give the row
+     */
+    private static DocumentRowColumn column(TimelineAxisSize axis) {
+        if (axis instanceof TimelineAxisSize.Fixed fixed) {
+            return DocumentRowColumn.fixed(fixed.points());
+        }
+        return DocumentRowColumn.weight(((TimelineAxisSize.Weight) axis).weight());
+    }
 }

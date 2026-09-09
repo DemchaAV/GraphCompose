@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 233,
-    "methods": 2082,
+    "methods": 2083,
     "constants": 230,
     "generated": 1111
   },
@@ -15066,6 +15066,20 @@
                 {
                   "type": "double",
                   "name": "weight"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "axisWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
                 }
               ]
             },

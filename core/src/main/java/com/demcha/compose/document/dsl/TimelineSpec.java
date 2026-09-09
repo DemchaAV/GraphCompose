@@ -19,7 +19,7 @@ import java.util.List;
  * @param gutter              space between the rail and the entry's content
  * @param markerGap           horizontal gap between the marker column and the content
  *                            beside it
- * @param markerColumnWeight  the marker column's weight against a content weight of 1.0
+ * @param axis                how wide the column the markers sit in is
  * @param entrySpacing        vertical space between entries; the rail spans it
  * @param keepTogether        whether the timeline relocates whole rather than splitting
  * @param keepEntriesTogether whether each entry relocates whole rather than splitting
@@ -31,7 +31,7 @@ record TimelineSpec(TimelineRailSpec rail,
                     DocumentRowColumn leadingColumn,
                     double gutter,
                     double markerGap,
-                    double markerColumnWeight,
+                    TimelineAxisSize axis,
                     double entrySpacing,
                     boolean keepTogether,
                     boolean keepEntriesTogether,

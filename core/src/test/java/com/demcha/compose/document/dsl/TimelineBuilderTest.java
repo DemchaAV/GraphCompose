@@ -377,6 +377,74 @@ class TimelineBuilderTest {
                 .withMessageContaining("exactly one marker");
     }
 
+    // --- the axis column -----------------------------------------------------
+
+    @Test
+    void axisWidthSizesTheMarkerColumnInPointsInsteadOfShares() {
+        SectionNode timeline = timelineOf(t -> t
+                .axisWidth(18)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+
+        assertThat(header(entry(timeline, 0)).columns())
+                .as("a fixed axis, then the content column taking the rest")
+                .containsExactly(DocumentRowColumn.fixed(18), DocumentRowColumn.weight(1.0));
+    }
+
+    @Test
+    void aWeightAxisStillReachesTheRowAsWeightsAsItAlwaysHas() {
+        // columns(weight, weight) resolves identically — the snapshots say so. But
+        // RowNode.weights() is public, and spelling it the other way would empty that list
+        // for every timeline already written.
+        SectionNode timeline = timelineOf(t -> t
+                .markerColumnWeight(0.4)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+
+        assertThat(header(entry(timeline, 0)).weights()).containsExactly(0.4, 1.0);
+        assertThat(header(entry(timeline, 0)).columns()).isEmpty();
+    }
+
+    @Test
+    void theAxisWidthIsDeclaredOnceInEitherOrder() {
+        // A weight is a share of the row and a fixed width is points. There is no
+        // conversion between them without a row width, so a timeline that asks for both
+        // has not said what it wants.
+        assertThatIllegalStateException()
+                .as("weight then points")
+                .isThrownBy(() -> timelineOf(t -> t.markerColumnWeight(0.4).axisWidth(18)))
+                .withMessageContaining("one width, declared once");
+        assertThatIllegalStateException()
+                .as("points then weight")
+                .isThrownBy(() -> timelineOf(t -> t.axisWidth(18).markerColumnWeight(0.4)))
+                .withMessageContaining("one width, declared once");
+    }
+
+    @Test
+    void anIgnoredMarkerColumnWeightDoesNotCountAsDeclaringTheAxis() {
+        // markerColumnWeight has always ignored a non-positive value. A call that changed
+        // nothing must not then block axisWidth — that would be a new failure in code that
+        // used to work.
+        SectionNode timeline = timelineOf(t -> t
+                .markerColumnWeight(0)
+                .axisWidth(18)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+
+        assertThat(header(entry(timeline, 0)).columns())
+                .containsExactly(DocumentRowColumn.fixed(18), DocumentRowColumn.weight(1.0));
+    }
+
+    @Test
+    void axisWidthTakesOnlyAPositiveFiniteNumberOfPoints() {
+        assertThatIllegalArgumentException().isThrownBy(() -> timelineOf(t -> t.axisWidth(0)))
+                .withMessageContaining("positive finite");
+        assertThatIllegalArgumentException().isThrownBy(() -> timelineOf(t -> t.axisWidth(-4)))
+                .withMessageContaining("positive finite");
+        assertThatIllegalArgumentException().isThrownBy(() -> timelineOf(t -> t.axisWidth(Double.NaN)))
+                .withMessageContaining("positive finite");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> timelineOf(t -> t.axisWidth(Double.POSITIVE_INFINITY)))
+                .withMessageContaining("positive finite");
+    }
+
     // --- the leading column --------------------------------------------------
 
     @Test

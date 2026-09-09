@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 233 · methods: 2082 · constants: 230 · compiler-generated members: 1111
+Types: 233 · methods: 2083 · constants: 230 · compiler-generated members: 1111
 
 ## com.demcha.compose
 
@@ -1125,6 +1125,7 @@ Types: 233 · methods: 2082 · constants: 230 · compiler-generated members: 111
 - `TimelineBuilder gutter(double gutter)`
 - `TimelineBuilder markerGap(double gap)`
 - `TimelineBuilder markerColumnWeight(double weight)`
+- `TimelineBuilder axisWidth(double points)`
 - `TimelineBuilder leadingColumn(DocumentRowColumn column)`
 - `TimelineBuilder spacing(double spacing)`
 - `TimelineBuilder titleStyle(DocumentTextStyle style)`

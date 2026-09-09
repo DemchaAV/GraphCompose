@@ -4,6 +4,7 @@ import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.font.FontName;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -12,20 +13,29 @@ import java.util.function.Consumer;
  * factories and passed to
  * {@link TimelineBuilder#entry(TimelineMarker, java.util.function.Consumer)}.
  *
- * <p>A marker carries its own {@link #size()} (used to lay out the rail column)
- * and a recipe that draws it into that column, so new marker shapes are one
- * factory method without touching the timeline layout.</p>
+ * <p>A marker is a declared box and a recipe that draws into it, so a new marker
+ * shape is one factory method and the timeline layout never learns what shape it
+ * is. {@link #custom(double, double, Consumer)} holds that door open for callers:
+ * anything that can be drawn into a column can be a marker, and nothing in
+ * {@link TimelineBuilder} needs to know about it.</p>
+ *
+ * <p>The box is <em>declared</em>, not measured. A marker drawn as three stacked
+ * shapes has one box, exactly as one drawn as a single ellipse does — whatever
+ * anchors on a marker must not be able to tell how the marker was built.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.7.0
  */
 public final class TimelineMarker {
 
-    private final double size;
+    private final TimelineMarkerBounds bounds;
+    // Internal, and a Consumer: the timeline calls it and nothing else does, so its
+    // shape can grow later — a marker that wants to know it is the first or the last,
+    // say — without any of that reaching the public factories.
     private final Consumer<SectionBuilder> recipe;
 
-    private TimelineMarker(double size, Consumer<SectionBuilder> recipe) {
-        this.size = size;
+    private TimelineMarker(TimelineMarkerBounds bounds, Consumer<SectionBuilder> recipe) {
+        this.bounds = bounds;
         this.recipe = recipe;
     }
 
@@ -37,7 +47,7 @@ public final class TimelineMarker {
      * @return the marker
      */
     public static TimelineMarker dot(double size, DocumentColor color) {
-        return new TimelineMarker(size, column -> column.addCircle(size, color));
+        return new TimelineMarker(TimelineMarkerBounds.square(size), column -> column.addCircle(size, color));
     }
 
     /**
@@ -49,7 +59,7 @@ public final class TimelineMarker {
      * @return the marker
      */
     public static TimelineMarker circle(double size, DocumentColor fill, DocumentStroke stroke) {
-        return new TimelineMarker(size, column -> column.addCircle(size, ellipse -> {
+        return new TimelineMarker(TimelineMarkerBounds.square(size), column -> column.addCircle(size, ellipse -> {
             if (fill != null) {
                 ellipse.fillColor(fill);
             }
@@ -77,7 +87,7 @@ public final class TimelineMarker {
                 .color(textColor == null ? DocumentColor.WHITE : textColor)
                 .build();
         String text = Integer.toString(number);
-        return new TimelineMarker(size, column -> column.addCircle(size, fill, disc -> disc
+        return new TimelineMarker(TimelineMarkerBounds.square(size), column -> column.addCircle(size, fill, disc -> disc
                 .center(new ParagraphBuilder()
                         .text(text)
                         .textStyle(label)
@@ -94,15 +104,44 @@ public final class TimelineMarker {
      * @return the marker
      */
     public static TimelineMarker square(double size, DocumentColor fill) {
-        return new TimelineMarker(size, column -> column.addShape(shape -> shape
+        return new TimelineMarker(TimelineMarkerBounds.square(size), column -> column.addShape(shape -> shape
                 .name("TimelineMarkerSquare")
                 .size(size, size)
                 .fillColor(fill)
                 .margin(DocumentInsets.zero())));
     }
 
-    double size() {
-        return size;
+    /**
+     * A marker of your own: any content, drawn into the marker column.
+     *
+     * <p>The box is yours to declare and the timeline takes it at its word — it never
+     * measures what you drew. That is what makes a marker of several shapes behave like a
+     * marker of one:</p>
+     * <pre>{@code
+     * TimelineMarker.custom(16, 16, column -> column.addLayerStack(stack -> stack
+     *         .back(ring).center(disc).center(pip)));
+     * }</pre>
+     *
+     * @param width  the marker's declared width in points
+     * @param height the marker's declared height in points
+     * @param recipe draws the marker into its column
+     * @return the marker
+     * @throws NullPointerException     if {@code recipe} is null
+     * @throws IllegalArgumentException if a dimension is not positive and finite
+     * @since 2.4.0
+     */
+    public static TimelineMarker custom(double width, double height, Consumer<SectionBuilder> recipe) {
+        Objects.requireNonNull(recipe, "recipe");
+        return new TimelineMarker(new TimelineMarkerBounds(width, height), recipe);
+    }
+
+    /**
+     * The box this marker declares for itself.
+     *
+     * @return the declared bounds
+     */
+    TimelineMarkerBounds bounds() {
+        return bounds;
     }
 
     void renderInto(SectionBuilder column) {

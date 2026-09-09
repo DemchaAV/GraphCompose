@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 233,
-    "methods": 2083,
+    "methods": 2084,
     "constants": 230,
     "generated": 1111
   },
@@ -15500,6 +15500,28 @@
                 {
                   "type": "DocumentColor",
                   "name": "fill"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "custom",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineMarker",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "recipe"
                 }
               ]
             }

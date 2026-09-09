@@ -559,6 +559,38 @@ class TimelineBuilderTest {
     // --- markers -------------------------------------------------------------
 
     @Test
+    void aCustomMarkerRendersWithoutTheBuilderKnowingWhatItIs() {
+        // The point of the factory: three shapes and a caller's own arrangement reach the
+        // marker column, and nothing in TimelineBuilder was told about any of it.
+        SectionNode timeline = timelineOf(t -> t
+                .entry(TimelineMarker.custom(16, 16, column -> column.addLayerStack(stack -> stack
+                        .back(new EllipseNode("ring", 16, 16, NAVY, null, null, null, null, null))
+                        .center(new EllipseNode("disc", 10, 10, DocumentColor.WHITE,
+                                null, null, null, null, null))
+                        .center(new EllipseNode("pip", 4, 4, NAVY, null, null, null, null, null)))),
+                        e -> e.title("Custom")));
+
+        DocumentNode marker = ((SectionNode) header(entry(timeline, 0)).children().get(0))
+                .children().get(0);
+        assertThat(marker).isInstanceOf(LayerStackNode.class);
+        assertThat(((LayerStackNode) marker).layers()).hasSize(3);
+    }
+
+    @Test
+    void aCustomMarkerDeclaresABoxTheTimelineTakesAtItsWord() {
+        // Declared rather than measured, and not required to be square: the box is what a
+        // rail anchors on, and it must not depend on what the recipe happened to draw.
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> TimelineMarker.custom(0, 16, column -> { }))
+                .withMessageContaining("width must be a positive finite");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> TimelineMarker.custom(16, Double.NaN, column -> { }))
+                .withMessageContaining("height must be a positive finite");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TimelineMarker.custom(16, 16, null));
+    }
+
+    @Test
     void everyMarkerFactoryPutsItsOwnShapeInTheMarkerColumn() {
         assertThat(markerNode(TimelineMarker.dot(8, NAVY))).isInstanceOf(EllipseNode.class);
         assertThat(markerNode(TimelineMarker.circle(8, NAVY, null))).isInstanceOf(EllipseNode.class);

@@ -5,6 +5,7 @@ import com.demcha.compose.document.dsl.TimelineBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.layout.LayoutGraph;
 import com.demcha.compose.document.layout.PlacedNode;
+import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import org.junit.jupiter.api.Test;
@@ -100,6 +101,23 @@ class TimelineAxisColumnLayoutTest {
     }
 
     @Test
+    void aMarkerOfThreeShapesSitsExactlyWhereAMarkerOfOneDoes() throws Exception {
+        // The contract a rail will depend on: how a marker is built must not be visible in
+        // the geometry around it. Both of these declare 16×16; one draws a single ellipse
+        // and the other draws three stacked ones.
+        double single = axisAndContent(TimelineMarker.dot(16, INK));
+        double composed = axisAndContent(TimelineMarker.custom(16, 16, column ->
+                column.addLayerStack(stack -> stack
+                        .back(circle(16, INK))
+                        .center(circle(10, DocumentColor.WHITE))
+                        .center(circle(4, INK)))));
+
+        assertThat(composed)
+                .as("three fragments or one, the content beside the marker starts in the same place")
+                .isEqualTo(single, within(1e-9));
+    }
+
+    @Test
     void aWeightAndAPointWidthAreNotTheSameNumberAndAreNotTreatedAsOne() throws Exception {
         // The reason the two survive to the layout separately: on this page the default
         // weight and a 20pt request land in different places. A builder that "helpfully"
@@ -136,6 +154,24 @@ class TimelineAxisColumnLayoutTest {
                 .filter(node -> node.parentPath() != null && node.parentPath().matches(".*RowNode\\[\\d+]$"))
                 .filter(node -> node.childIndex() == index)
                 .toList();
+    }
+
+    private static EllipseNode circle(double size, DocumentColor fill) {
+        return new EllipseNode("marker", size, size, fill, null, null, null, null, null);
+    }
+
+    /** Where the content beside one marker starts, with a fixed axis wide enough to hold it. */
+    private static double axisAndContent(TimelineMarker marker) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(320, 300)
+                .margin(DocumentInsets.of(20))
+                .create()) {
+            session.pageFlow().addTimeline(t -> t
+                    .connector(RAIL, 1.5)
+                    .axisWidth(20)
+                    .entry(marker, e -> e.title("Beside"))).build();
+            return columnsOf(session.layoutGraph(), 1).get(0).placementX();
+        }
     }
 
     /** Where the content beside the marker starts, on a page of the given width. */

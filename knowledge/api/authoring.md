@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 233 · methods: 2083 · constants: 230 · compiler-generated members: 1111
+Types: 233 · methods: 2084 · constants: 230 · compiler-generated members: 1111
 
 ## com.demcha.compose
 
@@ -1156,6 +1156,7 @@ Types: 233 · methods: 2083 · constants: 230 · compiler-generated members: 111
 - `TimelineMarker circle(double size, DocumentColor fill, DocumentStroke stroke)`
 - `TimelineMarker numbered(int number, double size, DocumentColor fill, DocumentColor textColor)`
 - `TimelineMarker square(double size, DocumentColor fill)`
+- `TimelineMarker custom(double width, double height, Consumer<SectionBuilder> recipe)`
 
 ### TocBuilder (class)
 - `new TocBuilder()`

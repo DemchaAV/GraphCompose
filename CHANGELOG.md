@@ -7,6 +7,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline marker can be anything you can draw.**
+  `TimelineMarker.custom(width, height, recipe)` takes a declared box and a recipe that
+  fills it, so a marker made of three stacked shapes, a bordered pill or an icon needs no
+  change to `TimelineBuilder` — the four built-in factories now go through the same door.
+  The box is declared rather than measured, and it does not have to be square; a marker
+  drawn as several fragments has one box exactly as a marker drawn as one does, which is
+  what keeps the geometry around it independent of how the marker was built.
+
+  Fixed along the way: `TimelineMarker`'s documentation said the marker's size laid out the
+  rail column. It never did — the column's width comes from `markerColumnWeight(...)` or
+  `axisWidth(...)`, and the field the sentence pointed at was read by nothing.
+
 - **A timeline's marker column can be given a width in points.**
   `TimelineBuilder.axisWidth(double)` is the peer of `markerColumnWeight(double)`: points
   rather than a share of the row. Reach for it when the markers should sit the same

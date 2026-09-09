@@ -3,9 +3,11 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.api.Test;
 
@@ -86,5 +88,45 @@ class TimelineRailVisualTest {
 
             VISUAL.assertMatchesBaseline("timeline-dsl/leading-column", session);
         }
+    }
+
+    @Test
+    void aCustomMarkerIsDrawnWhateverItIsMadeOf() throws Exception {
+        // A marker the timeline has never heard of: a ring, a disc and a pip stacked, and
+        // a bordered pill. Both declare their own box and neither needed a line in
+        // TimelineBuilder. The baseline is here because "it lays out" and "it is painted"
+        // are different claims — a marker recipe that drew nothing would pass every layout
+        // assertion in this repository.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 170)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(12)
+                            .axisWidth(22)
+                            .entry(TimelineMarker.custom(18, 18, column -> column
+                                    .addLayerStack(stack -> stack
+                                            .back(circle(18, INK))
+                                            .center(circle(11, DocumentColor.WHITE))
+                                            .center(circle(5, INK)))),
+                                    e -> e.title("Composed of three").meta("one declared box"))
+                            .entry(TimelineMarker.custom(22, 12, column -> column
+                                    .addShape(shape -> shape
+                                            .size(22, 12)
+                                            .cornerRadius(6)
+                                            .fillColor(DocumentColor.WHITE)
+                                            .stroke(DocumentStroke.of(INK, 1.0))
+                                            .margin(DocumentInsets.zero()))),
+                                    e -> e.title("Not square either")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/custom-marker", session);
+        }
+    }
+
+    private static EllipseNode circle(double size, DocumentColor fill) {
+        return new EllipseNode("marker", size, size, fill, null, null, null, null, null);
     }
 }

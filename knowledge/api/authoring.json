@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 233,
-    "methods": 2076,
+    "methods": 2077,
     "constants": 230,
     "generated": 1111
   },
@@ -10338,6 +10338,28 @@
                 {
                   "type": "DocumentColor",
                   "name": "fg"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "bg"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "inlineStyledChip",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ParagraphBuilder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "text"
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
                 },
                 {
                   "type": "DocumentColor",

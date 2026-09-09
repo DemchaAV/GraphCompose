@@ -31,7 +31,9 @@ import com.demcha.compose.document.style.ShapeOutline;
 import com.demcha.compose.document.svg.SvgIcon;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -43,6 +45,14 @@ public final class ParagraphBuilder {
     private String name = "";
     private String text = "";
     private final List<InlineRun> inlineRuns = new ArrayList<>();
+    /**
+     * Chips that take the paragraph's style with only their colour replaced, against the
+     * colour each one wants. They sit in {@link #inlineRuns} carrying no style at all, and
+     * {@link #build()} resolves them — so {@code textStyle(...)} may be set after the chip,
+     * the way it may after {@code inlineText}. Keyed by identity: two chips with the same
+     * text, fill and colour are equal records but are still two runs.
+     */
+    private final Map<InlineHighlightRun, DocumentColor> deferredChipColours = new IdentityHashMap<>();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
     private TextAlign align = TextAlign.LEFT;
     private boolean alignChosenByCaller;
@@ -84,6 +94,7 @@ public final class ParagraphBuilder {
     public ParagraphBuilder text(String text) {
         this.text = text == null ? "" : text;
         this.inlineRuns.clear();
+        this.deferredChipColours.clear();
         return this;
     }
 
@@ -372,16 +383,49 @@ public final class ParagraphBuilder {
      * Adds a coloured chip: {@code text} in {@code fg} on a {@code bg} fill, with
      * the default code radius and padding.
      *
+     * <p>The glyphs take the paragraph's {@linkplain #textStyle(DocumentTextStyle)
+     * text style} — family, size and decoration — with only the colour replaced by
+     * {@code fg}, so a chip in a 9 pt paragraph is a 9 pt chip. The style is resolved
+     * when the paragraph is built rather than when this method is called, so
+     * {@code textStyle(...)} may come after the chip, exactly as it may after
+     * {@link #inlineText(String)}. To size a chip independently of the paragraph, pass
+     * the style explicitly with
+     * {@link #inlineStyledChip(String, DocumentTextStyle, DocumentColor)}.</p>
+     *
      * @param text the text
-     * @param fg   the text colour
+     * @param fg   the text colour; {@code null} leaves the glyphs black
      * @param bg   the chip fill colour; must not be {@code null}
      * @return this builder
      * @since 1.9.0
      */
     public ParagraphBuilder inlineChip(String text, DocumentColor fg, DocumentColor bg) {
         Objects.requireNonNull(bg, "bg");
-        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text,
-                DocumentTextStyle.builder().color(fg).build(),
+        InlineHighlightRun chip = new InlineHighlightRun(text == null ? "" : text, null,
+                new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding()));
+        this.inlineRuns.add(chip);
+        // The colour is all this run knows of its own; the rest arrives from the
+        // paragraph at build(). Identity, not equality: two chips with the same text,
+        // fill and colour are equal records but are separate runs.
+        this.deferredChipColours.put(chip, fg);
+        this.text = "";
+        return this;
+    }
+
+    /**
+     * Adds a chip with an explicit glyph style on a {@code bg} fill, keeping the
+     * default code radius and padding — the escape hatch from
+     * {@link #inlineChip(String, DocumentColor, DocumentColor)} for a chip that is
+     * meant to differ from the paragraph around it.
+     *
+     * @param text      the text
+     * @param textStyle the glyph style; falls back to the paragraph style when {@code null}
+     * @param bg        the chip fill colour; must not be {@code null}
+     * @return this builder
+     * @since 2.4.0
+     */
+    public ParagraphBuilder inlineStyledChip(String text, DocumentTextStyle textStyle, DocumentColor bg) {
+        Objects.requireNonNull(bg, "bg");
+        this.inlineRuns.add(new InlineHighlightRun(text == null ? "" : text, textStyle,
                 new InlineBackground(bg, CodeChip.BACKGROUND.cornerRadius(), CodeChip.BACKGROUND.padding())));
         this.text = "";
         return this;
@@ -927,6 +971,7 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineRuns(List<InlineTextRun> inlineTextRuns) {
         this.inlineRuns.clear();
+        this.deferredChipColours.clear();
         if (inlineTextRuns != null) {
             for (InlineTextRun run : inlineTextRuns) {
                 if (run != null) {
@@ -948,6 +993,7 @@ public final class ParagraphBuilder {
      */
     public ParagraphBuilder inlineRunsMixed(List<? extends InlineRun> runs) {
         this.inlineRuns.clear();
+        this.deferredChipColours.clear();
         if (runs != null) {
             for (InlineRun run : runs) {
                 if (run != null) {
@@ -1058,6 +1104,34 @@ public final class ParagraphBuilder {
     }
 
     /**
+     * The runs as the node gets them, with every colour-only chip finally sized.
+     *
+     * <p>{@code inlineChip} records a colour and nothing else, so the paragraph style it
+     * inherits is the one standing here — at build — rather than whichever was set when
+     * the call happened. That is what lets {@code textStyle(...)} sit on either side of
+     * the chip, and it is how the layout already treats a run that carries no style at
+     * all; the only reason a chip cannot simply pass {@code null} is that it has a colour
+     * of its own to keep.</p>
+     */
+    private List<InlineRun> resolvedInlineRuns() {
+        if (deferredChipColours.isEmpty()) {
+            return List.copyOf(inlineRuns);
+        }
+        List<InlineRun> resolved = new ArrayList<>(inlineRuns.size());
+        for (InlineRun run : inlineRuns) {
+            // containsKey, not get: a null colour is a legitimate request for black.
+            if (run instanceof InlineHighlightRun chip && deferredChipColours.containsKey(chip)) {
+                resolved.add(new InlineHighlightRun(chip.text(),
+                        textStyle.withColor(deferredChipColours.get(chip)),
+                        chip.background(), chip.linkTarget()));
+            } else {
+                resolved.add(run);
+            }
+        }
+        return List.copyOf(resolved);
+    }
+
+    /**
      * Builds the semantic paragraph node.
      *
      * @return paragraph node
@@ -1066,7 +1140,7 @@ public final class ParagraphBuilder {
         return new ParagraphNode(
                 name,
                 text,
-                List.copyOf(inlineRuns),
+                resolvedInlineRuns(),
                 textStyle,
                 resolveAlign(),
                 lineSpacing,

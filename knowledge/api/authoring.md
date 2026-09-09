@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 234 · methods: 2086 · constants: 230 · compiler-generated members: 1111
+Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 1114
 
 ## com.demcha.compose
 
@@ -1123,6 +1123,7 @@ Types: 234 · methods: 2086 · constants: 230 · compiler-generated members: 111
 ### TimelineBuilder (class)
 - `TimelineBuilder connector(DocumentColor color, double width)`
 - `TimelineBuilder rail(Consumer<TimelineRailBuilder> spec)`
+- `TimelineBuilder markerOnRail()`
 - `TimelineBuilder gutter(double gutter)`
 - `TimelineBuilder markerGap(double gap)`
 - `TimelineBuilder markerColumnWeight(double weight)`
@@ -1161,6 +1162,10 @@ Types: 234 · methods: 2086 · constants: 230 · compiler-generated members: 111
 
 ### TimelineRailBuilder (class)
 - `TimelineRailBuilder stroke(DocumentStroke stroke)`
+- `TimelineRailBuilder extent(TimelineRailExtent extent)`
+
+### TimelineRailExtent (enum)
+- constants: `MARKER_TO_MARKER`, `ENTRY_BOUNDS`, `TIMELINE_BOUNDS`
 
 ### TocBuilder (class)
 - `new TocBuilder()`

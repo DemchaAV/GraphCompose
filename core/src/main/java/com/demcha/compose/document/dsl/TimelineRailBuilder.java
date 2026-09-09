@@ -23,6 +23,7 @@ import java.util.Objects;
 public final class TimelineRailBuilder {
 
     private DocumentStroke stroke;
+    private TimelineRailExtent extent;
 
     TimelineRailBuilder() {
     }
@@ -39,8 +40,30 @@ public final class TimelineRailBuilder {
         return this;
     }
 
+    /**
+     * Sets how far the rail runs.
+     *
+     * <p>Independent of where it runs: an extent is the line's two ends, and its x comes
+     * from the marker anchor. A timeline that sets neither keeps
+     * {@link TimelineRailExtent#ENTRY_BOUNDS}, which is what it already draws.</p>
+     *
+     * @param extent the rail's extent
+     * @return this builder
+     * @throws NullPointerException if {@code extent} is null
+     * @since 2.4.0
+     */
+    public TimelineRailBuilder extent(TimelineRailExtent extent) {
+        this.extent = Objects.requireNonNull(extent, "extent");
+        return this;
+    }
+
     /** The stroke this rail was given, or null when the caller set none. */
     DocumentStroke stroke() {
         return stroke;
+    }
+
+    /** The extent this rail was given, or null when the caller set none. */
+    TimelineRailExtent extent() {
+        return extent;
     }
 }

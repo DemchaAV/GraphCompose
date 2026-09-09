@@ -42,7 +42,7 @@ class TimelineMarkerAnchorTest {
                 .entry(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE), e -> e.title("Second"))
                 .entry(TimelineMarker.square(10, INK), e -> e.title("Third")));
 
-        List<ResolvedLayoutAnchor> anchors = ResolvedLayoutMetadata.from(graph).anchors();
+        List<ResolvedLayoutAnchor> anchors = markerAnchors(graph);
         assertThat(anchors).hasSize(3);
         assertThat(anchors.stream().map(a -> a.id().index()))
                 .as("indexed by entry, in document order")
@@ -60,7 +60,7 @@ class TimelineMarkerAnchorTest {
                 .axisWidth(20)
                 .entry(TimelineMarker.dot(8, INK), e -> e.title("Only")));
 
-        ResolvedLayoutAnchor anchor = ResolvedLayoutMetadata.from(graph).anchors().get(0);
+        ResolvedLayoutAnchor anchor = markerAnchors(graph).get(0);
         PlacedFragment ellipse = graph.fragments().stream()
                 .filter(f -> f.payload() != null
                         && f.payload().getClass().getSimpleName().contains("Ellipse"))
@@ -101,7 +101,7 @@ class TimelineMarkerAnchorTest {
                 .entry(TimelineMarker.dot(6, INK), e -> e.title("Small"))
                 .entry(TimelineMarker.dot(24, INK), e -> e.title("Large")));
 
-        List<ResolvedLayoutAnchor> anchors = ResolvedLayoutMetadata.from(graph).anchors();
+        List<ResolvedLayoutAnchor> anchors = markerAnchors(graph);
         assertThat(anchors.get(0).x())
                 .as("same left edge whatever the marker's size")
                 .isEqualTo(anchors.get(1).x(), within(1e-9));
@@ -121,7 +121,7 @@ class TimelineMarkerAnchorTest {
                 .entry(TimelineMarker.dot(8, INK), e -> e.title("Second").body("Short.")));
 
         assertThat(graph.totalPages()).isGreaterThan(1);
-        List<ResolvedLayoutAnchor> anchors = ResolvedLayoutMetadata.from(graph).anchors();
+        List<ResolvedLayoutAnchor> anchors = markerAnchors(graph);
         assertThat(anchors).hasSize(2);
         assertThat(anchors.get(0).pageIndex()).isZero();
         assertThat(anchors.get(1).pageIndex())
@@ -142,7 +142,7 @@ class TimelineMarkerAnchorTest {
                     .build();
 
             List<ResolvedLayoutAnchor> anchors =
-                    ResolvedLayoutMetadata.from(session.layoutGraph()).anchors();
+                    markerAnchors(session.layoutGraph());
             assertThat(anchors).hasSize(3);
 
             Object first = anchors.get(0).id().groupKey();
@@ -160,11 +160,23 @@ class TimelineMarkerAnchorTest {
                 "marker", size, size, fill, null, null, null, null, null);
     }
 
+    /**
+     * The marker anchors only.
+     *
+     * <p>A timeline anchors its entries as well as its markers — the rail needs each
+     * entry's extent on each page — so a test about markers has to say which it means.</p>
+     */
+    private static List<ResolvedLayoutAnchor> markerAnchors(LayoutGraph graph) {
+        return ResolvedLayoutMetadata.from(graph).anchors().stream()
+                .filter(a -> "MARKER".equals(a.id().kind().toString()))
+                .toList();
+    }
+
     private static ResolvedLayoutAnchor onlyAnchor(TimelineMarker marker) throws Exception {
         LayoutGraph graph = timeline(360, t -> t
                 .axisWidth(20)
                 .entry(marker, e -> e.title("Only")));
-        return ResolvedLayoutMetadata.from(graph).anchors().get(0);
+        return markerAnchors(graph).get(0);
     }
 
     private static LayoutGraph timeline(double pageWidth, Consumer<TimelineBuilder> spec) throws Exception {

@@ -52,6 +52,8 @@ public final class TimelineBuilder {
     private final List<TimelineEntryBuilder> entries = new ArrayList<>();
     private DocumentStroke railStroke = DocumentStroke.of(DEFAULT_RAIL, 1.5);
     private String railDeclaredBy;
+    private TimelineRailExtent railExtent = TimelineRailExtent.ENTRY_BOUNDS;
+    private TimelineMarkerAnchor markerAnchor;
     private double gutter = 8.0;
     private double markerGap = 8.0;
     private TimelineAxisSize axis = new TimelineAxisSize.Weight(0.10);
@@ -132,11 +134,33 @@ public final class TimelineBuilder {
         Objects.requireNonNull(spec, "spec");
         TimelineRailBuilder builder = new TimelineRailBuilder();
         spec.accept(builder);
+        if (builder.extent() != null) {
+            this.railExtent = builder.extent();
+        }
         if (builder.stroke() == null) {
             return this;
         }
         declareRailOnce("rail");
         this.railStroke = builder.stroke();
+        return this;
+    }
+
+    /**
+     * Puts the markers on the rail, rather than beside it.
+     *
+     * <p>A timeline draws its rail at the marker's left edge, pulled back by the gutter —
+     * where it has been since before there was a choice, and a distance that grows with the
+     * marker, so leaving it alone is what "renders unchanged" means. This opts a timeline
+     * into the other anchor: the rail passes through the marker's centre, at every marker
+     * size.</p>
+     *
+     * <p>It moves the rail, not the markers. Nothing else in the timeline shifts.</p>
+     *
+     * @return this builder
+     * @since 2.4.0
+     */
+    public TimelineBuilder markerOnRail() {
+        this.markerAnchor = TimelineMarkerAnchor.onTheRail();
         return this;
     }
 
@@ -424,8 +448,19 @@ public final class TimelineBuilder {
         // One owner per timeline, allocated here. Every marker below anchors on this
         // instance, so the pass that draws the rail asks for it and gets these markers and
         // nobody else's — two timelines on a page never merge.
+        if (railExtent == TimelineRailExtent.TIMELINE_BOUNDS) {
+            throw new IllegalArgumentException(
+                    "TimelineRailExtent.TIMELINE_BOUNDS is not implemented. On one page it is the "
+                    + "same line as ENTRY_BOUNDS, and across pages there is nothing to measure it "
+                    + "against — a timeline's own box draws nothing. Use ENTRY_BOUNDS or "
+                    + "MARKER_TO_MARKER.");
+        }
         TimelineRailSpec railSpec = new TimelineRailSpec(railStroke);
-        return new TimelineSpec(new TimelineRailOwner(railSpec),
+        // The gutter is only knowable here, so the default anchor is resolved here too —
+        // and it is the same model the opted-in one uses, not a branch beside it.
+        TimelineMarkerAnchor anchor =
+                markerAnchor == null ? TimelineMarkerAnchor.atLeftEdge(gutter) : markerAnchor;
+        return new TimelineSpec(new TimelineRailOwner(railSpec, railExtent, anchor),
                 railSpec, leadingColumn, gutter, markerGap, axis, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
@@ -446,9 +481,14 @@ public final class TimelineBuilder {
             int index = i;
             boolean last = i == entries.size() - 1;
             double bottom = last ? 0.0 : spec.entrySpacing();
-            timeline.addSection(section -> {
+            SectionBuilder entrySection = new SectionBuilder();
+            {
+                SectionBuilder section = entrySection;
+                // No accentLeft. The rail is one logical line drawn from the resolved
+                // anchors below, not a border repeated per entry — which is why it can
+                // start and stop at the markers, and why it holds its x under markers of
+                // different sizes.
                 section.keepTogether(spec.keepEntriesTogether())
-                        .accentLeft(spec.rail().stroke().color(), spec.rail().stroke().width())
                         .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
                 section.addRow(header -> {
@@ -474,7 +514,13 @@ public final class TimelineBuilder {
                     header.addSection(entry.beside());
                 });
                 entry.below().accept(section);
-            });
+            }
+            // The entry, anchored. Its slices are where the rail starts and stops on each
+            // page — and only its slices carry that, because an entry is the one thing
+            // here that can cross a page boundary.
+            timeline.add(new LayoutAnchorNode("",
+                    new LayoutAnchorId(spec.owner(), TimelineAnchorKind.ENTRY, index),
+                    entrySection.build()));
         }
     }
 

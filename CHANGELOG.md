@@ -7,6 +7,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline's rail is one line, drawn from where its markers landed.**
+  It was a left border repeated on every entry section, which is why it sat at the entry's
+  edge whatever the markers did, could not stop short of them, and had no way to be
+  anything but the full height of the entries. It is now computed after layout from the
+  markers' and entries' resolved positions, and contributed as one fragment per page —
+  one logical rail, however many pages it crosses, bounded on each by that page alone.
+
+  Two independent choices, and they stay independent. `TimelineRailExtent` says how far the
+  rail runs: `ENTRY_BOUNDS`, the default and what every existing timeline already draws, or
+  `MARKER_TO_MARKER`, which starts at the first marker and stops at the last.
+  `markerOnRail()` says where it runs: through the markers' centres instead of a gutter to
+  their left. A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather
+  than a line of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the
+  same line as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
+
+  **A leading column sits to the left of the timeline axis; it does not move the rail to
+  the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to
+  the axis.
+
+  Existing timelines render as they did, and that was measured rather than asserted: the
+  rail's geometry matches the border it replaces exactly, to 0.000000 in x and in both
+  ends, on every page. Two pixels differ in a three-entry timeline and one in a two-entry
+  one — the rows where two entry borders used to abut and each drew its own antialiased
+  end, so the seam came out slightly darker. One continuous line has no seams.
+
 - **A timeline's rail is one configuration.**
   `TimelineBuilder.rail(Consumer<TimelineRailBuilder>)` takes a `DocumentStroke`, and
   `connector(colour, width)` is now the shorthand that normalizes into exactly the same

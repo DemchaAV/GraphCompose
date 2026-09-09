@@ -48,18 +48,23 @@ final class ResolvedLayoutPasses {
      */
     static LayoutGraph apply(LayoutGraph base, List<ResolvedLayoutPass> passes) {
         Objects.requireNonNull(base, "base");
-        if (passes == null || passes.isEmpty()) {
-            return base;
-        }
 
         // Collected once, from the compiled graph, and handed to every pass. Nothing a
         // pass contributes can seed a new anchor for a later pass, so the result does not
         // depend on how the passes happen to interleave.
         ResolvedLayoutMetadata metadata = ResolvedLayoutMetadata.from(base);
 
+        List<ResolvedLayoutPass> running = discover(metadata);
+        if (passes != null) {
+            running.addAll(passes);
+        }
+        if (running.isEmpty()) {
+            return base;
+        }
+
         List<PlacedFragment> under = new ArrayList<>();
         List<PlacedFragment> over = new ArrayList<>();
-        for (ResolvedLayoutPass pass : passes) {
+        for (ResolvedLayoutPass pass : running) {
             List<ResolvedLayoutAddition> additions = pass.contribute(base, metadata);
             if (additions == null) {
                 throw new IllegalStateException(
@@ -98,6 +103,42 @@ final class ResolvedLayoutPasses {
         combined.addAll(over);
         // Nodes pass through untouched: a pass contributes drawing, never structure.
         return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
+    }
+
+    /**
+     * The passes the document itself asks for, found in what it anchored.
+     *
+     * <p>A built-in feature declares an owner on the semantic tree and keys its anchors on
+     * it; an owner that is <em>also</em> a pass is a feature saying it has something to
+     * draw once the layout is settled. Nothing is registered, no session is handed around,
+     * and this class stays ignorant of every feature that uses it — it asks whether the
+     * owner is a pass, not what kind of thing it is.</p>
+     *
+     * <p>Order is first appearance in the anchor list, which is the compiler's placement
+     * order, which is reading order down the document. Two instances of one feature on a
+     * page therefore draw in the order they were written.</p>
+     *
+     * @param metadata the anchors the document resolved
+     * @return the passes to run, deduplicated by identity, in document order
+     */
+    private static List<ResolvedLayoutPass> discover(ResolvedLayoutMetadata metadata) {
+        List<ResolvedLayoutPass> found = new ArrayList<>();
+        for (var anchor : metadata.anchors()) {
+            if (anchor.id().groupKey() instanceof ResolvedLayoutPass pass && !containsSame(found, pass)) {
+                found.add(pass);
+            }
+        }
+        return found;
+    }
+
+    /** Identity, not equality: two owners configured alike are still two features. */
+    private static boolean containsSame(List<ResolvedLayoutPass> passes, ResolvedLayoutPass pass) {
+        for (ResolvedLayoutPass known : passes) {
+            if (known == pass) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void requireFinite(ResolvedLayoutPass pass, double value, String name) {

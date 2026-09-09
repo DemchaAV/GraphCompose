@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 234,
-    "methods": 2086,
-    "constants": 230,
-    "generated": 1111
+    "types": 235,
+    "methods": 2088,
+    "constants": 233,
+    "generated": 1114
   },
   "packages": [
     {
@@ -15043,6 +15043,15 @@
             },
             {
               "kind": "method",
+              "name": "markerOnRail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "gutter",
               "static": false,
               "origin": "source",
@@ -15563,6 +15572,52 @@
                   "name": "stroke"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "extent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "TimelineRailExtent",
+                  "name": "extent"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailExtent",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailExtent",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "MARKER_TO_MARKER",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "ENTRY_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "TIMELINE_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
             }
           ]
         },

@@ -60,8 +60,8 @@ class TimelineBuilderTest {
         assertThat(timeline.children()).hasSize(2);
         SectionNode entry = entry(timeline, 0);
         assertThat(entry.borders().hasAny())
-                .as("each entry carries the connector rail as a left border")
-                .isTrue();
+                .as("the rail is no longer a border on the entry; it is one line drawn after layout")
+                .isFalse();
         assertThat(entry.children()).anySatisfy(child -> assertThat(child).isInstanceOf(RowNode.class));
         assertThat(lastParagraph(entry).text()).isEqualTo("body one");
     }
@@ -83,23 +83,38 @@ class TimelineBuilderTest {
     // --- the rail ------------------------------------------------------------
 
     @Test
-    void theDefaultRailIsAMutedGreyHairline() {
-        SectionNode timeline = timelineOf(t -> t.entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
-
-        assertThat(entry(timeline, 0).borders().left().color().color())
-                .isEqualTo(DEFAULT_RAIL.color());
-        assertThat(entry(timeline, 0).borders().left().width())
-                .isEqualTo(DEFAULT_RAIL_WIDTH, within(1e-9));
-    }
-
-    @Test
-    void connectorSetsTheRailColourAndWidth() {
+    void noEntryCarriesTheRailAsABorderAnyMore() {
+        // The rail left the node tree. It is one line computed from resolved anchors after
+        // layout, not a border repeated per entry, so there is nothing here to assert about
+        // it — its colour, width, extent and position are pinned in
+        // TimelineRailGeometryTest, where they can be measured.
         SectionNode timeline = timelineOf(t -> t
                 .connector(NAVY, 3.25)
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
 
-        assertThat(entry(timeline, 0).borders().left().color().color()).isEqualTo(NAVY.color());
-        assertThat(entry(timeline, 0).borders().left().width()).isEqualTo(3.25, within(1e-9));
+        assertThat(entry(timeline, 0).borders().hasAny())
+                .as("an entry decorates nothing now")
+                .isFalse();
+    }
+
+    @Test
+    void everyEntryIsAnchoredSoTheRailCanBeComputedFromWhereItLands() {
+        // The wrapper every other test in this file reads through, and the reason it
+        // exists: an entry is the only part of a timeline that can cross a page boundary,
+        // so only its anchor carries what the rail needs on each page.
+        SectionNode timeline = timelineOf(t -> t
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("First"))
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("Second")));
+
+        LayoutAnchorNode first = (LayoutAnchorNode) timeline.children().get(0);
+        LayoutAnchorNode second = (LayoutAnchorNode) timeline.children().get(1);
+        assertThat(first.id().index()).isZero();
+        assertThat(second.id().index()).isEqualTo(1);
+        assertThat(first.id().kind()).isSameAs(second.id().kind());
+        assertThat(first.id().kind().toString()).isEqualTo("ENTRY");
+        assertThat(first.id().groupKey())
+                .as("the same owner the markers anchor on, so one pass sees both")
+                .isSameAs(second.id().groupKey());
     }
 
     @Test
@@ -113,10 +128,10 @@ class TimelineBuilderTest {
                 .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 3.25)))
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
 
-        assertThat(entry(longForm, 0).borders().left().color().color())
-                .isEqualTo(entry(shorthand, 0).borders().left().color().color());
-        assertThat(entry(longForm, 0).borders().left().width())
-                .isEqualTo(entry(shorthand, 0).borders().left().width(), within(1e-9));
+        assertThat(railStroke(longForm).color().color())
+                .isEqualTo(railStroke(shorthand).color().color());
+        assertThat(railStroke(longForm).width())
+                .isEqualTo(railStroke(shorthand).width(), within(1e-9));
         assertThat(outline(longForm)).isEqualTo(outline(shorthand));
     }
 
@@ -150,8 +165,8 @@ class TimelineBuilderTest {
                 .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 2)))
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
 
-        assertThat(entry(fromEmptyRail, 0).borders().left().width()).isEqualTo(2.0, within(1e-9));
-        assertThat(entry(fromEmptyConnector, 0).borders().left().width()).isEqualTo(2.0, within(1e-9));
+        assertThat(railStroke(fromEmptyRail).width()).isEqualTo(2.0, within(1e-9));
+        assertThat(railStroke(fromEmptyConnector).width()).isEqualTo(2.0, within(1e-9));
     }
 
     @Test
@@ -164,8 +179,8 @@ class TimelineBuilderTest {
         SectionNode widthOnly = timelineOf(t -> t
                 .connector(null, 4)
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
-        assertThat(entry(widthOnly, 0).borders().left().width()).isEqualTo(4.0, within(1e-9));
-        assertThat(entry(widthOnly, 0).borders().left().color().color())
+        assertThat(railStroke(widthOnly).width()).isEqualTo(4.0, within(1e-9));
+        assertThat(railStroke(widthOnly).color().color())
                 .as("the default colour survives a width-only call")
                 .isEqualTo(DEFAULT_RAIL.color());
 
@@ -173,10 +188,10 @@ class TimelineBuilderTest {
                 .connector(NAVY, 0)
                 .connector(null, 4)
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
-        assertThat(entry(inTwoCalls, 0).borders().left().color().color())
+        assertThat(railStroke(inTwoCalls).color().color())
                 .as("the colour from the first call")
                 .isEqualTo(NAVY.color());
-        assertThat(entry(inTwoCalls, 0).borders().left().width())
+        assertThat(railStroke(inTwoCalls).width())
                 .as("and the width from the second")
                 .isEqualTo(4.0, within(1e-9));
     }
@@ -730,7 +745,7 @@ class TimelineBuilderTest {
         assertThat(timeline.children()).hasSize(2);
         SectionNode first = entry(timeline, 0);
 
-        assertThat(first.borders().hasAny()).isTrue();
+        assertThat(first.borders().hasAny()).as("no per-entry rail border").isFalse();
         assertThat(first.padding().left()).as("the default gutter").isEqualTo(DEFAULT_GUTTER, within(1e-9));
         assertThat(first.padding().bottom())
                 .as("the default entry spacing").isEqualTo(DEFAULT_ENTRY_SPACING, within(1e-9));
@@ -751,8 +766,19 @@ class TimelineBuilderTest {
         return (SectionNode) root.children().get(0);
     }
 
+    /**
+     * One entry's section, reached through the anchor that wraps it.
+     *
+     * <p>Entries are anchored so the rail can be computed from where they land — the pass
+     * needs each entry's extent on each page, and an anchor is the only thing that carries
+     * it. The unwrapping lives here rather than in every test, and
+     * {@link #everyEntryIsAnchoredSoTheRailCanBeComputedFromWhereItLands()} is where the
+     * wrapper itself is asserted.</p>
+     */
     private static SectionNode entry(SectionNode timeline, int index) {
-        return (SectionNode) timeline.children().get(index);
+        DocumentNode anchored = timeline.children().get(index);
+        assertThat(anchored).isInstanceOf(LayoutAnchorNode.class);
+        return (SectionNode) anchored.children().get(0);
     }
 
     private static RowNode header(SectionNode entry) {
@@ -781,6 +807,17 @@ class TimelineBuilderTest {
         DocumentNode anchor = markerColumn.children().get(0);
         assertThat(anchor).isInstanceOf(LayoutAnchorNode.class);
         return anchor.children().get(0).children().get(0);
+    }
+
+    /**
+     * The stroke this timeline's rail will be drawn with.
+     *
+     * <p>Read off the owner rather than off a border, because the rail is no longer a
+     * border. This asserts the configuration itself instead of one of its side effects,
+     * which is the more direct claim anyway.</p>
+     */
+    private static DocumentStroke railStroke(SectionNode timeline) {
+        return ((TimelineRailOwner) ownerOf(timeline)).rail().stroke();
     }
 
     /** The owner every marker in one timeline anchors on. */

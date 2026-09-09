@@ -4,6 +4,7 @@ import com.demcha.compose.document.backend.fixed.FixedLayoutRenderContext;
 import com.demcha.compose.document.backend.fixed.FixedLayoutRenderer;
 import com.demcha.compose.document.backend.fixed.SectionUnit;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxAnchorMarkerRenderHandler;
+import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLayoutAnchorRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBarcodeFragmentRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxBookmarkMarkerRenderHandler;
 import com.demcha.compose.document.backend.fixed.pptx.handlers.PptxEllipseFragmentRenderHandler;
@@ -195,6 +196,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 new PptxShapeClipBeginRenderHandler(),
                 new PptxShapeClipEndRenderHandler(),
                 new PptxAnchorMarkerRenderHandler(),
+                new PptxLayoutAnchorRenderHandler(),
                 new PptxBookmarkMarkerRenderHandler());
     }
 

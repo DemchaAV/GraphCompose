@@ -83,6 +83,23 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Layout
 
+- **A built-in feature can now draw from geometry the layout has already resolved.**
+  Some things cannot be drawn while laying out because they depend on where other things
+  ended up — a rail running between markers, a bracket spanning sections, a leader joining
+  a callout to its subject. Nothing carried that back: a node definition is handed its own
+  box and nothing else. A resolved-layout pass runs afterwards, over the finished graph,
+  and may only *add* fragments — never remove, reorder, mutate, add pages or touch the
+  canvas — so a document with nothing registered is handed back the very graph the
+  compiler produced, unchanged by identity rather than by comparison.
+
+  The mechanism is internal: neither the pass interface nor the anchor node is public API.
+  Opening them would mean settling when passes run, what one sees of another, whether one
+  may change nodes, failure handling and thread safety — none of which the built-in case
+  needs answered, and answering it by accident is worse than leaving it open. What does
+  reach the surface is two no-op render handlers, `PdfLayoutAnchorRenderHandler` and
+  `PptxLayoutAnchorRenderHandler`, which draw nothing and exist only because each fixed
+  backend refuses a fragment payload it has no handler for.
+
 - **A decorated root flow and its children can disagree under per-page margins.**
   A known limitation, now measured and written down rather than met by surprise.
   A block is placed once and its background is that block's own box on every page

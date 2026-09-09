@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.4.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 164,
+  "count": 173,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
@@ -209,6 +209,13 @@
       "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
     },
     {
+      "binaryName": "com.demcha.compose.document.layout.definitions.LayoutAnchorDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
       "binaryName": "com.demcha.compose.document.layout.definitions.LineDefinition",
       "package": "com.demcha.compose.document.layout.definitions",
       "kind": "class",
@@ -356,6 +363,20 @@
       "reason": "package @Internal (com.demcha.compose.document.layout)"
     },
     {
+      "binaryName": "com.demcha.compose.document.layout.LayoutAnchorId",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutAnchorNode",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
       "binaryName": "com.demcha.compose.document.layout.LayoutCanvas",
       "package": "com.demcha.compose.document.layout",
       "kind": "record",
@@ -366,6 +387,13 @@
       "binaryName": "com.demcha.compose.document.layout.LayoutCompiler",
       "package": "com.demcha.compose.document.layout",
       "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.LayoutDepth",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "enum",
       "artifact": "graph-compose-core",
       "reason": "package @Internal (com.demcha.compose.document.layout)"
     },
@@ -483,6 +511,13 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.payloads.ImageFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.LayoutAnchorPayload",
       "package": "com.demcha.compose.document.layout.payloads",
       "kind": "record",
       "artifact": "graph-compose-core",
@@ -709,6 +744,34 @@
       "binaryName": "com.demcha.compose.document.layout.PreparedSplitResult",
       "package": "com.demcha.compose.document.layout",
       "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ResolvedLayoutAddition",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ResolvedLayoutAnchor",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ResolvedLayoutMetadata",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ResolvedLayoutPass",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "interface",
       "artifact": "graph-compose-core",
       "reason": "package @Internal (com.demcha.compose.document.layout)"
     },

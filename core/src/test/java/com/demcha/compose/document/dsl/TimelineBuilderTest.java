@@ -12,6 +12,7 @@ import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
 
@@ -99,6 +100,85 @@ class TimelineBuilderTest {
 
         assertThat(entry(timeline, 0).borders().left().color().color()).isEqualTo(NAVY.color());
         assertThat(entry(timeline, 0).borders().left().width()).isEqualTo(3.25, within(1e-9));
+    }
+
+    @Test
+    void railAndConnectorAreTheSameFeature() {
+        // Not two rails with two code paths: connector(...) normalizes into the same
+        // stroke rail(...) sets, so the trees are identical rather than merely similar.
+        SectionNode shorthand = timelineOf(t -> t
+                .connector(NAVY, 3.25)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+        SectionNode longForm = timelineOf(t -> t
+                .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 3.25)))
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+
+        assertThat(entry(longForm, 0).borders().left().color().color())
+                .isEqualTo(entry(shorthand, 0).borders().left().color().color());
+        assertThat(entry(longForm, 0).borders().left().width())
+                .isEqualTo(entry(shorthand, 0).borders().left().width(), within(1e-9));
+        assertThat(outline(longForm)).isEqualTo(outline(shorthand));
+    }
+
+    @Test
+    void theRailIsConfiguredOnceInEitherOrder() {
+        assertThatIllegalStateException()
+                .as("shorthand then long form")
+                .isThrownBy(() -> timelineOf(t -> t
+                        .connector(NAVY, 2)
+                        .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 3)))))
+                .withMessageContaining("one rail, configured once");
+        assertThatIllegalStateException()
+                .as("long form then shorthand")
+                .isThrownBy(() -> timelineOf(t -> t
+                        .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 3)))
+                        .connector(NAVY, 2)))
+                .withMessageContaining("one rail, configured once");
+    }
+
+    @Test
+    void aCallThatChangesNothingDoesNotCountAsConfiguringTheRail() {
+        // connector has always ignored a null colour and a non-positive width, and rail(...)
+        // with an empty lambda sets no stroke. Neither may block the other, or code that
+        // used to work would start throwing.
+        SectionNode fromEmptyRail = timelineOf(t -> t
+                .rail(rail -> { })
+                .connector(NAVY, 2)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+        SectionNode fromEmptyConnector = timelineOf(t -> t
+                .connector(null, 0)
+                .rail(rail -> rail.stroke(DocumentStroke.of(NAVY, 2)))
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+
+        assertThat(entry(fromEmptyRail, 0).borders().left().width()).isEqualTo(2.0, within(1e-9));
+        assertThat(entry(fromEmptyConnector, 0).borders().left().width()).isEqualTo(2.0, within(1e-9));
+    }
+
+    @Test
+    void connectorStillTakesOneHalfOfTheStrokeAtATime() {
+        // Long-standing behaviour, and the reason two connector(...) calls stay legal: a
+        // null colour keeps the current one and a non-positive width keeps the current
+        // width, so setting the halves separately works. Normalizing into a single stroke
+        // is exactly where that could quietly become "both or nothing", and a guard against
+        // saying it two ways could just as quietly forbid saying it twice.
+        SectionNode widthOnly = timelineOf(t -> t
+                .connector(null, 4)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+        assertThat(entry(widthOnly, 0).borders().left().width()).isEqualTo(4.0, within(1e-9));
+        assertThat(entry(widthOnly, 0).borders().left().color().color())
+                .as("the default colour survives a width-only call")
+                .isEqualTo(DEFAULT_RAIL.color());
+
+        SectionNode inTwoCalls = timelineOf(t -> t
+                .connector(NAVY, 0)
+                .connector(null, 4)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x")));
+        assertThat(entry(inTwoCalls, 0).borders().left().color().color())
+                .as("the colour from the first call")
+                .isEqualTo(NAVY.color());
+        assertThat(entry(inTwoCalls, 0).borders().left().width())
+                .as("and the width from the second")
+                .isEqualTo(4.0, within(1e-9));
     }
 
     // --- spacing and the columns ---------------------------------------------

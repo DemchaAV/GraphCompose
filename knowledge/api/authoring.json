@@ -22,8 +22,8 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 233,
-    "methods": 2084,
+    "types": 234,
+    "methods": 2086,
     "constants": 230,
     "generated": 1111
   },
@@ -15029,6 +15029,20 @@
             },
             {
               "kind": "method",
+              "name": "rail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineRailBuilder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "gutter",
               "static": false,
               "origin": "source",
@@ -15522,6 +15536,31 @@
                 {
                   "type": "Consumer<SectionBuilder>",
                   "name": "recipe"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailBuilder",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailBuilder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "stroke",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
                 }
               ]
             }

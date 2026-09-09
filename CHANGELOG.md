@@ -7,6 +7,15 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline's rail is one configuration.**
+  `TimelineBuilder.rail(Consumer<TimelineRailBuilder>)` takes a `DocumentStroke`, and
+  `connector(colour, width)` is now the shorthand that normalizes into exactly the same
+  rail — one rendering system rather than an old spelling and a new one, which is what
+  lets the rail grow later without a second path growing beside it. Saying it both ways
+  throws, naming both calls; saying it twice the same way still works, because
+  `connector(colour, 0)` followed by `connector(null, width)` has always been a way to set
+  the two halves separately and code doing that must not start failing.
+
 - **A timeline marker can be anything you can draw.**
   `TimelineMarker.custom(width, height, recipe)` takes a declared box and a recipe that
   fills it, so a marker made of three stacked shapes, a bordered pill or an icon needs no

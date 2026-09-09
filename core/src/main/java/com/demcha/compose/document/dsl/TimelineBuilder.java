@@ -6,6 +6,7 @@ import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
@@ -49,8 +50,8 @@ public final class TimelineBuilder {
     private static final DocumentColor DEFAULT_INK = DocumentColor.rgb(34, 38, 50);
     private static final DocumentColor DEFAULT_MUTED = DocumentColor.rgb(120, 124, 136);
     private final List<TimelineEntryBuilder> entries = new ArrayList<>();
-    private DocumentColor connectorColor = DEFAULT_RAIL;
-    private double connectorWidth = 1.5;
+    private DocumentStroke railStroke = DocumentStroke.of(DEFAULT_RAIL, 1.5);
+    private String railDeclaredBy;
     private double gutter = 8.0;
     private double markerGap = 8.0;
     private TimelineAxisSize axis = new TimelineAxisSize.Weight(0.10);
@@ -94,18 +95,70 @@ public final class TimelineBuilder {
     /**
      * Sets the connector rail colour and width.
      *
+     * <p>The shorthand for {@link #rail(Consumer)}: both describe the same rail, and a
+     * timeline that uses both throws rather than letting one of them win. A call that
+     * changes nothing — a null colour and a non-positive width — is not a use.</p>
+     *
      * @param color rail colour; ignored when {@code null}
      * @param width rail width in points; ignored when not positive
      * @return this builder
+     * @throws IllegalStateException if the rail is already configured
      */
     public TimelineBuilder connector(DocumentColor color, double width) {
-        if (color != null) {
-            this.connectorColor = color;
+        if (color == null && !(width > 0)) {
+            return this;
         }
-        if (width > 0) {
-            this.connectorWidth = width;
-        }
+        declareRailOnce("connector");
+        this.railStroke = DocumentStroke.of(
+                color == null ? railStroke.color() : color,
+                width > 0 ? width : railStroke.width());
         return this;
+    }
+
+    /**
+     * Configures the connector rail.
+     *
+     * <p>{@link #connector(DocumentColor, double)} is the shorthand for this and produces
+     * the same rail — one configuration, not an old one and a new one. Setting the rail
+     * both ways throws rather than letting one of them win.</p>
+     *
+     * @param spec rail builder callback
+     * @return this builder
+     * @throws NullPointerException  if {@code spec} is null
+     * @throws IllegalStateException if the rail is already configured
+     * @since 2.4.0
+     */
+    public TimelineBuilder rail(Consumer<TimelineRailBuilder> spec) {
+        Objects.requireNonNull(spec, "spec");
+        TimelineRailBuilder builder = new TimelineRailBuilder();
+        spec.accept(builder);
+        if (builder.stroke() == null) {
+            return this;
+        }
+        declareRailOnce("rail");
+        this.railStroke = builder.stroke();
+        return this;
+    }
+
+    /**
+     * Rejects the rail being configured through both spellings.
+     *
+     * <p>Calling the <em>same</em> one twice is ordinary setter accumulation and stays
+     * legal — {@code connector(colour, 0)} then {@code connector(null, width)} has always
+     * been a way to set the two halves separately, and code doing that must not start
+     * throwing. What is rejected is a timeline that says it both ways.</p>
+     *
+     * @param call the spelling being used
+     * @throws IllegalStateException if the other spelling already configured the rail
+     */
+    private void declareRailOnce(String call) {
+        if (railDeclaredBy != null && !railDeclaredBy.equals(call)) {
+            throw new IllegalStateException(
+                    "A timeline has one rail, configured once: this one calls " + railDeclaredBy
+                    + "(...) and " + call + "(...). connector(colour, width) is the shorthand for "
+                    + "rail(r -> r.stroke(...)), so either says the whole thing.");
+        }
+        railDeclaredBy = call;
     }
 
     /**
@@ -371,7 +424,7 @@ public final class TimelineBuilder {
         // One owner per timeline, allocated here. Every marker below anchors on this
         // instance, so the pass that draws the rail asks for it and gets these markers and
         // nobody else's — two timelines on a page never merge.
-        TimelineRailSpec railSpec = new TimelineRailSpec(connectorColor, connectorWidth);
+        TimelineRailSpec railSpec = new TimelineRailSpec(railStroke);
         return new TimelineSpec(new TimelineRailOwner(railSpec),
                 railSpec, leadingColumn, gutter, markerGap, axis, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
@@ -395,7 +448,7 @@ public final class TimelineBuilder {
             double bottom = last ? 0.0 : spec.entrySpacing();
             timeline.addSection(section -> {
                 section.keepTogether(spec.keepEntriesTogether())
-                        .accentLeft(spec.rail().color(), spec.rail().width())
+                        .accentLeft(spec.rail().stroke().color(), spec.rail().stroke().width())
                         .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
                 section.addRow(header -> {

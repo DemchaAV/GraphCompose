@@ -44,7 +44,7 @@ public final class TimelineBuilder {
     private static final DocumentColor DEFAULT_RAIL = DocumentColor.rgb(150, 158, 172);
     private static final DocumentColor DEFAULT_INK = DocumentColor.rgb(34, 38, 50);
     private static final DocumentColor DEFAULT_MUTED = DocumentColor.rgb(120, 124, 136);
-    private final List<Entry> entries = new ArrayList<>();
+    private final List<TimelineEntryBuilder> entries = new ArrayList<>();
     private DocumentColor connectorColor = DEFAULT_RAIL;
     private double connectorWidth = 1.5;
     private double gutter = 8.0;
@@ -199,10 +199,35 @@ public final class TimelineBuilder {
     public TimelineBuilder entry(TimelineMarker marker, Consumer<TimelineEntryBuilder> content) {
         Objects.requireNonNull(marker, "marker");
         TimelineEntryBuilder entry = new TimelineEntryBuilder();
+        entry.markerFromShorthand(marker);
         if (content != null) {
             content.accept(entry);
         }
-        entries.add(new Entry(marker, entry));
+        entries.add(entry);
+        return this;
+    }
+
+    /**
+     * Adds one timeline entry, marker included.
+     *
+     * <p>The longer form of {@link #entry(TimelineMarker, Consumer)}, for entries that
+     * describe their own content rather than filling in a title, a meta line and a body:</p>
+     * <pre>{@code
+     * timeline.entry(e -> e
+     *     .marker(TimelineMarker.dot(8, accent))
+     *     .content(column -> column.addParagraph("Anything at all")));
+     * }</pre>
+     *
+     * @param entry callback configuring the entry, which must set a marker
+     * @return this builder
+     * @throws NullPointerException if {@code entry} is {@code null}
+     * @since 2.4.0
+     */
+    public TimelineBuilder entry(Consumer<TimelineEntryBuilder> entry) {
+        Objects.requireNonNull(entry, "entry");
+        TimelineEntryBuilder built = new TimelineEntryBuilder();
+        entry.accept(built);
+        entries.add(built);
         return this;
     }
 
@@ -250,8 +275,8 @@ public final class TimelineBuilder {
         DocumentTextStyle resolvedMeta = metaStyle != null ? metaStyle : defaultMetaStyle();
         DocumentTextStyle resolvedBody = bodyStyle != null ? bodyStyle : defaultBodyStyle();
         List<TimelineEntrySpec> specs = new ArrayList<>(entries.size());
-        for (Entry entry : entries) {
-            specs.add(entry.entry().normalize(entry.marker(), resolvedTitle, resolvedMeta, resolvedBody));
+        for (TimelineEntryBuilder entry : entries) {
+            specs.add(entry.normalize(resolvedTitle, resolvedMeta, resolvedBody));
         }
         return new TimelineSpec(new TimelineRailSpec(connectorColor, connectorWidth),
                 gutter, markerGap, markerColumnWeight, entrySpacing,
@@ -291,6 +316,4 @@ public final class TimelineBuilder {
         }
     }
 
-    private record Entry(TimelineMarker marker, TimelineEntryBuilder entry) {
-    }
 }

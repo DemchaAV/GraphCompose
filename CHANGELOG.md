@@ -7,6 +7,21 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline entry can fill its own content column.**
+  `TimelineBuilder.entry(Consumer<TimelineEntryBuilder>)` is a longer form of the existing
+  `entry(marker, ...)` that takes its marker from `TimelineEntryBuilder.marker(...)` inside
+  the lambda, and `TimelineEntryBuilder.content(Consumer<SectionBuilder>)` hands that
+  entry's content column over whole. An entry that needs a table, a chart or a nested row
+  beside its marker no longer has to express it as a title plus an `add(...)` block below
+  the body.
+
+  The two ways of describing an entry do not mix. `title`/`meta`/`body`/`add` and their
+  style overrides describe slots the timeline styles and arranges for you; `content(...)`
+  says it should arrange nothing. Calling both on one entry throws at authoring time, in
+  either order, rather than quietly letting one win — a mistake that would otherwise
+  surface only in the rendered document. `entry(marker, ...)` and `entry(e -> e.marker(...))`
+  build the same entry, and declaring a marker both ways throws for the same reason.
+
 - **A vertical flow can pin its width and still grow with its content.**
   `AbstractFlowBuilder.fixedWidth(double)` — so `addSection(s -> s.fixedWidth(240))`,
   `module(m -> m.fixedWidth(240))` and `pageFlow(page -> page.fixedWidth(200))` —

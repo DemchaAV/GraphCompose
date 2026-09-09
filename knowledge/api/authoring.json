@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 233,
-    "methods": 2077,
+    "methods": 2080,
     "constants": 230,
     "generated": 1111
   },
@@ -15145,6 +15145,20 @@
             },
             {
               "kind": "method",
+              "name": "entry",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineEntryBuilder>",
+                  "name": "entry"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "keepTogether",
               "static": false,
               "origin": "source",
@@ -15172,6 +15186,34 @@
           ],
           "artifact": "graph-compose-core",
           "members": [
+            {
+              "kind": "method",
+              "name": "marker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "TimelineMarker",
+                  "name": "marker"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "content",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "content"
+                }
+              ]
+            },
             {
               "kind": "method",
               "name": "title",

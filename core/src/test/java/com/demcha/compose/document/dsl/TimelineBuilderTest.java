@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.within;
 
@@ -269,6 +270,96 @@ class TimelineBuilderTest {
                 .contains("appended");
     }
 
+    // --- the two ways to describe an entry -----------------------------------
+
+    @Test
+    void theShorthandAndTheLongFormBuildTheSameEntry() {
+        // entry(marker, ...) is meant to be sugar, not a second path. If it ever grows one,
+        // every guarantee proven through one form stops covering the other.
+        SectionNode shorthand = timelineOf(t -> t
+                .entry(TimelineMarker.dot(8, NAVY), e -> e
+                        .title("Senior Engineer").meta("2023 - now").body("What I did.")));
+        SectionNode longForm = timelineOf(t -> t
+                .entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .title("Senior Engineer").meta("2023 - now").body("What I did.")));
+
+        assertThat(outline(longForm))
+                .as("same structure, same text, same order")
+                .isEqualTo(outline(shorthand));
+    }
+
+    @Test
+    void contentFillsTheEntrysColumnInsteadOfATitleAndABody() {
+        SectionNode timeline = timelineOf(t -> t
+                .entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .content(column -> column
+                                .addParagraph("Mine, first")
+                                .addParagraph("Mine, second"))));
+
+        SectionNode entry = entry(timeline, 0);
+        assertThat(paragraphTexts(header(entry).children().get(1)))
+                .as("the caller's blocks land in the content column of the header row")
+                .containsExactly("Mine, first", "Mine, second");
+        assertThat(paragraphsOf(entry))
+                .as("and nothing hangs below the header row, because no body was described")
+                .isEmpty();
+    }
+
+    @Test
+    void theSemanticApiAndContentCannotBeMixed() {
+        String message = "Cannot combine title/meta/body entry content with custom content(). "
+                         + "Use either the semantic entry API or content().";
+
+        assertThatIllegalStateException()
+                .as("semantic first")
+                .isThrownBy(() -> timelineOf(t -> t.entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .title("T")
+                        .content(column -> column.addParagraph("also this")))))
+                .withMessage(message);
+
+        assertThatIllegalStateException()
+                .as("and custom first — the rule is not about which came last")
+                .isThrownBy(() -> timelineOf(t -> t.entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .content(column -> column.addParagraph("mine"))
+                        .title("T"))))
+                .withMessage(message);
+    }
+
+    @Test
+    void aStyleOverrideOnItsOwnAlreadyCommitsTheEntryToTheSemanticApi() {
+        // Easy to miss when the rule is read as "title, meta or body": a style override
+        // names a slot that content() does not have, so the two are just as incompatible.
+        assertThatIllegalStateException()
+                .isThrownBy(() -> timelineOf(t -> t.entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .titleStyle(DocumentTextStyle.builder().size(12).build())
+                        .content(column -> column.addParagraph("mine")))))
+                .withMessageContaining("either the semantic entry API or content()");
+    }
+
+    @Test
+    void anEntryWithoutAMarkerSaysWhichCallIsMissing() {
+        assertThatIllegalStateException()
+                .isThrownBy(() -> timelineOf(t -> t.entry(e -> e.title("no marker"))))
+                .withMessageContaining("marker(...)");
+    }
+
+    @Test
+    void theShorthandsMarkerCannotBeReplacedFromInsideTheEntry() {
+        // Two markers declared for one entry. Letting either win silently is the kind of
+        // order-dependence that only shows up in the rendered document.
+        assertThatIllegalStateException()
+                .isThrownBy(() -> timelineOf(t -> t
+                        .entry(TimelineMarker.dot(8, NAVY), e -> e
+                                .marker(TimelineMarker.dot(12, NAVY))
+                                .title("T"))))
+                .withMessageContaining("already has a marker");
+    }
+
     // --- markers -------------------------------------------------------------
 
     @Test
@@ -347,5 +438,26 @@ class TimelineBuilderTest {
         return paragraphsOf(entry).stream()
                 .reduce((first, second) -> second)
                 .orElseThrow();
+    }
+
+    /**
+     * The node tree as indented {@code Kind[text]} lines. Structure, order and text — not
+     * styles, which the record types do not compare reliably anyway.
+     */
+    private static String outline(DocumentNode node) {
+        StringBuilder out = new StringBuilder();
+        outline(node, 0, out);
+        return out.toString();
+    }
+
+    private static void outline(DocumentNode node, int depth, StringBuilder out) {
+        out.append("  ".repeat(depth)).append(node.getClass().getSimpleName());
+        if (node instanceof ParagraphNode paragraph) {
+            out.append('[').append(paragraph.text()).append(']');
+        }
+        out.append('\n');
+        for (DocumentNode child : node.children()) {
+            outline(child, depth + 1, out);
+        }
     }
 }

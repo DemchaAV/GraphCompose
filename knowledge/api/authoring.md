@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 1111
+Types: 233 · methods: 2080 · constants: 230 · compiler-generated members: 1111
 
 ## com.demcha.compose
 
@@ -1130,10 +1130,13 @@ Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 111
 - `TimelineBuilder metaStyle(DocumentTextStyle style)`
 - `TimelineBuilder bodyStyle(DocumentTextStyle style)`
 - `TimelineBuilder entry(TimelineMarker marker, Consumer<TimelineEntryBuilder> content)`
+- `TimelineBuilder entry(Consumer<TimelineEntryBuilder> entry)`
 - `TimelineBuilder keepTogether()`
 - `TimelineBuilder keepEntriesTogether()`
 
 ### TimelineEntryBuilder (class)
+- `TimelineEntryBuilder marker(TimelineMarker marker)`
+- `TimelineEntryBuilder content(Consumer<SectionBuilder> content)`
 - `TimelineEntryBuilder title(String title)`
 - `TimelineEntryBuilder title(String title, DocumentTextStyle style)`
 - `TimelineEntryBuilder titleStyle(DocumentTextStyle style)`

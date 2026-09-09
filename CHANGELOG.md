@@ -60,10 +60,15 @@ follow semantic versioning; release dates are ISO 8601.
   and `inlineHighlight` documents that fallback on its `textStyle` parameter. The chip
   sugar was the one call that opted out of it.
 
+  It follows the same rule about *when*, too: the style is resolved as the paragraph is
+  built, so `textStyle(...)` may be set on either side of the chip. Reading the style at
+  the call would have made "a chip is sized like the text around it" true only for
+  callers who happened to order the two that way, and left `inlineChip` the one run on
+  the builder whose result depended on where its style was set.
+
   **This moves rendered output** wherever a chip sits in a paragraph that is not at the
   default style: the glyphs — and with them the chip's measured width — now follow the
-  paragraph. The paragraph style is read at the point of the call, so `textStyle(...)`
-  has to come before the chip.
+  paragraph.
 
 - **`inlineStyledChip(text, textStyle, bg)`** styles a chip that is meant to differ from
   its paragraph: an explicit glyph style on a custom fill, keeping the default chip

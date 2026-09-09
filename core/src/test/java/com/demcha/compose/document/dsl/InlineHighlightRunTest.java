@@ -119,15 +119,38 @@ class InlineHighlightRunTest {
     }
 
     @Test
-    void paragraphChipReadsTheStyleThatWasSetWhenItWasCalled() {
-        // The documented ordering caveat, pinned: the chip snapshots the paragraph
-        // style at the call, so a textStyle(...) that lands afterwards does not
-        // reach it. Change this test deliberately if the resolution ever moves to
-        // build() -- do not let it drift silently.
+    void paragraphChipTakesTheStyleTheParagraphEndsWithFromEitherSide() {
+        // The chip inherits the paragraph's final style, not whichever one happened to
+        // be set at the call: textStyle(...) works on either side of it, the way it
+        // already does around inlineText. An order-dependent answer would make "a chip
+        // is sized like the text around it" true only by convention.
+        DocumentTextStyle small = DocumentTextStyle.builder().size(9).build();
+        DocumentColor ink = DocumentColor.rgb(0, 100, 0);
+
+        InlineHighlightRun styleFirst = onlyHighlight(new ParagraphBuilder()
+                .textStyle(small)
+                .inlineChip("x", ink, DocumentColor.GRAY));
+        InlineHighlightRun chipFirst = onlyHighlight(new ParagraphBuilder()
+                .inlineChip("x", ink, DocumentColor.GRAY)
+                .textStyle(small));
+
+        assertThat(styleFirst.textStyle().size()).isEqualTo(9.0, within(1e-9));
+        assertThat(chipFirst.textStyle().size())
+                .as("a textStyle set after the chip reaches it too")
+                .isEqualTo(9.0, within(1e-9));
+        // The colour is the chip's own either way — the one thing it does not inherit.
+        assertThat(chipFirst.textStyle().color()).isSameAs(ink);
+    }
+
+    @Test
+    void theParagraphStyleAChipInheritsIsTheLastOneSet() {
+        // Resolving at build() means the paragraph's final style, not the nearest
+        // preceding one — otherwise "either side" would still hide an ordering rule.
         InlineHighlightRun run = onlyHighlight(new ParagraphBuilder()
+                .textStyle(DocumentTextStyle.builder().size(9).build())
                 .inlineChip("x", DocumentColor.rgb(0, 100, 0), DocumentColor.GRAY)
-                .textStyle(DocumentTextStyle.builder().size(9).build()));
-        assertThat(run.textStyle().size()).isEqualTo(DocumentTextStyle.DEFAULT.size(), within(1e-9));
+                .textStyle(DocumentTextStyle.builder().size(20).build()));
+        assertThat(run.textStyle().size()).isEqualTo(20.0, within(1e-9));
     }
 
     private static InlineHighlightRun onlyHighlight(ParagraphBuilder paragraph) {

@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,36 @@ class TimelineRailVisualTest {
                     .build();
 
             VISUAL.assertMatchesBaseline("timeline-dsl/classic", session);
+        }
+    }
+
+    @Test
+    void aDateColumnRendersBesideTheRailAndTheMarkersStayInLine() throws Exception {
+        // The layout test says the columns line up; this says the page actually draws that
+        // way — that the dates are painted in a column of their own rather than wrapping
+        // into the marker's, and that the rail is still one line down the left. The third
+        // entry has no date, which is where an empty column would collapse if it did.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(320, 200)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(12)
+                            .leadingColumn(DocumentRowColumn.fixed(70))
+                            .entry(e -> e.marker(TimelineMarker.dot(6, INK))
+                                    .leading(d -> d.addParagraph("2023"))
+                                    .title("Senior Engineer")
+                                    .body("Led the layout engine rewrite."))
+                            .entry(e -> e.marker(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE))
+                                    .leading(d -> d.addParagraph("Sept 2021"))
+                                    .title("Engineer"))
+                            .entry(e -> e.marker(TimelineMarker.square(9, INK))
+                                    .title("No date at all")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/leading-column", session);
         }
     }
 }

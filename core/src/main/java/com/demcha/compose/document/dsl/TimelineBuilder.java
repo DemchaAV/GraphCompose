@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.font.FontName;
@@ -50,6 +51,7 @@ public final class TimelineBuilder {
     private double gutter = 8.0;
     private double markerGap = 8.0;
     private double markerColumnWeight = 0.10;
+    private DocumentRowColumn leadingColumn;
     private double entrySpacing = 14.0;
     private DocumentTextStyle titleStyle;
     private DocumentTextStyle metaStyle;
@@ -139,6 +141,38 @@ public final class TimelineBuilder {
         if (weight > 0) {
             this.markerColumnWeight = weight;
         }
+        return this;
+    }
+
+    /**
+     * Gives every entry a column before its marker, for the {@code DATE} of a
+     * {@code DATE | ● | CONTENT} timeline.
+     *
+     * <p>The width is declared once, for the whole timeline, and every entry gets it —
+     * including entries that put nothing in it, so they stay aligned with the ones that
+     * do. Fill it per entry with {@link TimelineEntryBuilder#leading(Consumer)}.</p>
+     *
+     * <p>{@link DocumentRowColumn#auto()} is rejected: an auto column is measured from its
+     * own row's content, so entries with leading text of different lengths would place
+     * their markers at different x and the rail would not be straight. A fixed width or a
+     * weight is decided by the row, which is what makes it the same in every entry.</p>
+     *
+     * @param column the leading column's width
+     * @return this builder
+     * @throws NullPointerException     if {@code column} is null
+     * @throws IllegalArgumentException if {@code column} is {@link DocumentRowColumn#auto()}
+     * @since 2.4.0
+     */
+    public TimelineBuilder leadingColumn(DocumentRowColumn column) {
+        Objects.requireNonNull(column, "column");
+        if (column.type() == DocumentRowColumn.Type.AUTO) {
+            throw new IllegalArgumentException(
+                    "A timeline's leading column cannot be auto(): an auto column is measured "
+                    + "from its own row's content, so entries with leading text of different "
+                    + "lengths would put their markers at different x and the rail would not be "
+                    + "straight. Use fixed(points) or weight(share), which the row decides.");
+        }
+        this.leadingColumn = column;
         return this;
     }
 
@@ -276,10 +310,19 @@ public final class TimelineBuilder {
         DocumentTextStyle resolvedBody = bodyStyle != null ? bodyStyle : defaultBodyStyle();
         List<TimelineEntrySpec> specs = new ArrayList<>(entries.size());
         for (TimelineEntryBuilder entry : entries) {
+            if (leadingColumn == null && entry.hasLeading()) {
+                // Caught here rather than dropped: without a declared width there is no
+                // column to put it in, and inventing one per entry is exactly what would
+                // stop the markers lining up.
+                throw new IllegalStateException(
+                        "An entry has leading(...) content but the timeline has no leading column. "
+                        + "Call leadingColumn(...) on the timeline, so every entry's leading is the "
+                        + "same width and the markers line up.");
+            }
             specs.add(entry.normalize(resolvedTitle, resolvedMeta, resolvedBody));
         }
         return new TimelineSpec(new TimelineRailSpec(connectorColor, connectorWidth),
-                gutter, markerGap, markerColumnWeight, entrySpacing,
+                leadingColumn, gutter, markerGap, markerColumnWeight, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
 
@@ -304,7 +347,18 @@ public final class TimelineBuilder {
                         .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
                 section.addRow(header -> {
-                    header.spacing(spec.markerGap()).weights(spec.markerColumnWeight(), 1.0);
+                    header.spacing(spec.markerGap());
+                    if (spec.leadingColumn() == null) {
+                        header.weights(spec.markerColumnWeight(), 1.0);
+                    } else {
+                        header.columns(spec.leadingColumn(),
+                                DocumentRowColumn.weight(spec.markerColumnWeight()),
+                                DocumentRowColumn.weight(1.0));
+                        // Present even when this entry put nothing in it: the column is the
+                        // timeline's, not the entry's, and an entry that skipped it must
+                        // still start its marker where every other entry starts one.
+                        header.addSection(entry.leading() == null ? column -> { } : entry.leading());
+                    }
                     header.addSection(markerColumn -> {
                         markerColumn.spacing(0);
                         entry.marker().renderInto(markerColumn);

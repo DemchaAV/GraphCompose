@@ -9,6 +9,7 @@ import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.node.ShapeContainerNode;
 import com.demcha.compose.document.node.ShapeNode;
 import com.demcha.compose.document.style.DocumentColor;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.within;
@@ -373,6 +375,117 @@ class TimelineBuilderTest {
                                 .marker(TimelineMarker.square(12, NAVY))
                                 .title("T"))))
                 .withMessageContaining("exactly one marker");
+    }
+
+    // --- the leading column --------------------------------------------------
+
+    @Test
+    void aLeadingColumnPutsAThirdColumnBeforeTheMarker() {
+        SectionNode timeline = timelineOf(t -> t
+                .leadingColumn(DocumentRowColumn.fixed(48))
+                .entry(e -> e
+                        .marker(TimelineMarker.dot(8, NAVY))
+                        .leading(date -> date.addParagraph("2023"))
+                        .title("Senior Engineer")));
+
+        RowNode header = header(entry(timeline, 0));
+        assertThat(header.children()).hasSize(3);
+        assertThat(paragraphTexts(header.children().get(0)))
+                .as("leading first, before the marker")
+                .containsExactly("2023");
+        assertThat(((SectionNode) header.children().get(1)).children().get(0))
+                .as("then the marker")
+                .isInstanceOf(EllipseNode.class);
+        assertThat(paragraphTexts(header.children().get(2))).containsExactly("Senior Engineer");
+    }
+
+    @Test
+    void anEntryWithNoLeadingContentStillGetsTheColumn() {
+        // The column belongs to the timeline, not to the entry. An entry that skips it has
+        // to keep the empty space, or its marker starts where another entry's date starts.
+        SectionNode timeline = timelineOf(t -> t
+                .leadingColumn(DocumentRowColumn.fixed(48))
+                .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                        .leading(date -> date.addParagraph("2023")).title("With"))
+                .entry(e -> e.marker(TimelineMarker.dot(8, NAVY)).title("Without")));
+
+        RowNode withoutLeading = header(entry(timeline, 1));
+        assertThat(withoutLeading.children())
+                .as("three columns either way")
+                .hasSize(3);
+        assertThat(paragraphTexts(withoutLeading.children().get(0)))
+                .as("the first is simply empty")
+                .isEmpty();
+        assertThat(((SectionNode) withoutLeading.children().get(1)).children().get(0))
+                .as("so the marker is still the second column, as in the entry above")
+                .isInstanceOf(EllipseNode.class);
+    }
+
+    @Test
+    void withNoLeadingColumnTheHeaderRowIsTheTwoColumnOneItAlwaysWas() {
+        SectionNode timeline = timelineOf(t -> t
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("T")));
+
+        assertThat(header(entry(timeline, 0)).children())
+                .as("declaring no leading column adds no column")
+                .hasSize(2);
+    }
+
+    @Test
+    void anAutoLeadingColumnIsRejectedForTheReasonItWouldFail() {
+        // Measured, not assumed: with auto(), a row whose leading text is "2023" and one
+        // whose leading text is "September 2024 - present" put their markers 131pt apart.
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> timelineOf(t -> t.leadingColumn(DocumentRowColumn.auto())))
+                .withMessageContaining("measured from its own row's content")
+                .withMessageContaining("fixed(points) or weight(share)");
+    }
+
+    @Test
+    void leadingContentWithoutALeadingColumnNamesTheCallToAdd() {
+        assertThatIllegalStateException()
+                .isThrownBy(() -> timelineOf(t -> t
+                        .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                                .leading(date -> date.addParagraph("2023")))))
+                .withMessageContaining("leadingColumn(...)");
+    }
+
+    @Test
+    void leadingWorksWithEitherWayOfDescribingTheContent() {
+        // It describes a different column, so it is not part of the choice between them.
+        SectionNode semantic = timelineOf(t -> t
+                .leadingColumn(DocumentRowColumn.weight(0.3))
+                .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                        .leading(d -> d.addParagraph("2023")).title("T")));
+        SectionNode custom = timelineOf(t -> t
+                .leadingColumn(DocumentRowColumn.weight(0.3))
+                .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                        .leading(d -> d.addParagraph("2023")).content(c -> c.addParagraph("T"))));
+
+        assertThat(paragraphTexts(header(entry(semantic, 0)).children().get(0))).containsExactly("2023");
+        assertThat(paragraphTexts(header(entry(custom, 0)).children().get(0))).containsExactly("2023");
+    }
+
+    @Test
+    void aColumnSlotIsDeclaredOnceNotAssigned() {
+        // marker, leading and content each take a whole column. Two of them is a mistake,
+        // and which one survived should not depend on the order the calls were written in.
+        assertThatIllegalStateException()
+                .as("leading twice")
+                .isThrownBy(() -> timelineOf(t -> t
+                        .leadingColumn(DocumentRowColumn.fixed(48))
+                        .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                                .leading(d -> d.addParagraph("a"))
+                                .leading(d -> d.addParagraph("b")))))
+                .withMessageContaining("declares leading(...) once");
+
+        assertThatIllegalStateException()
+                .as("content twice")
+                .isThrownBy(() -> timelineOf(t -> t
+                        .entry(e -> e.marker(TimelineMarker.dot(8, NAVY))
+                                .content(c -> c.addParagraph("a"))
+                                .content(c -> c.addParagraph("b")))))
+                .withMessageContaining("declares content(...) once");
     }
 
     // --- markers -------------------------------------------------------------

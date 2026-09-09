@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
 import java.util.Objects;
@@ -40,6 +41,7 @@ public final class TimelineEntryBuilder {
     private DocumentTextStyle bodyStyle;
     private Consumer<SectionBuilder> extra;
     private Consumer<SectionBuilder> content;
+    private Consumer<SectionBuilder> leading;
 
     TimelineEntryBuilder() {
     }
@@ -91,7 +93,30 @@ public final class TimelineEntryBuilder {
     public TimelineEntryBuilder content(Consumer<SectionBuilder> content) {
         Objects.requireNonNull(content, "content");
         enter(Mode.CUSTOM);
+        declareOnce(this.content != null, "content");
         this.content = content;
+        return this;
+    }
+
+    /**
+     * Fills the column before the marker — the {@code DATE} of a
+     * {@code DATE | ● | CONTENT} timeline.
+     *
+     * <p>Legal with either way of describing the entry's content, because it describes a
+     * different column. The timeline must declare how wide that column is, with
+     * {@link TimelineBuilder#leadingColumn(DocumentRowColumn)}: the width has to be the
+     * same for every entry, or the markers do not line up and the rail is not straight.</p>
+     *
+     * @param leading callback receiving the entry's leading column
+     * @return this builder
+     * @throws NullPointerException  if {@code leading} is null
+     * @throws IllegalStateException if the entry already has leading content
+     * @since 2.4.0
+     */
+    public TimelineEntryBuilder leading(Consumer<SectionBuilder> leading) {
+        Objects.requireNonNull(leading, "leading");
+        declareOnce(this.leading != null, "leading");
+        this.leading = leading;
         return this;
     }
 
@@ -229,6 +254,31 @@ public final class TimelineEntryBuilder {
         this.markerGivenByShorthand = true;
     }
 
+    /** Whether this entry was given leading content, for the timeline to check. */
+    boolean hasLeading() {
+        return leading != null;
+    }
+
+    /**
+     * Rejects a second declaration of one of the entry's structural slots.
+     *
+     * <p>A slot that takes a whole column — {@code marker}, {@code leading},
+     * {@code content} — is declared, not assigned. Two of them is a mistake rather than an
+     * override, and the shape of an entry should not depend on which call came last.
+     * Ordinary values like {@code title(...)} do replace, as builder setters normally
+     * do.</p>
+     *
+     * @param alreadyDeclared whether the slot is already filled
+     * @param slot            the slot's name, for the message
+     * @throws IllegalStateException if it is
+     */
+    private static void declareOnce(boolean alreadyDeclared, String slot) {
+        if (alreadyDeclared) {
+            throw new IllegalStateException(
+                    "A timeline entry declares " + slot + "(...) once; this entry declares it twice.");
+        }
+    }
+
     /**
      * Commits this entry to one content vocabulary, or rejects the second one.
      *
@@ -269,7 +319,7 @@ public final class TimelineEntryBuilder {
         if (mode == Mode.CUSTOM) {
             // The content column, handed over whole. Nothing is styled or spaced for the
             // caller here — the slots those defaults describe are the ones they declined.
-            return new TimelineEntrySpec(marker, content, section -> { });
+            return new TimelineEntrySpec(leading, marker, content, section -> { });
         }
         String entryTitle = title;
         String entryMeta = meta;
@@ -306,7 +356,7 @@ public final class TimelineEntryBuilder {
                 entryExtra.accept(section);
             }
         };
-        return new TimelineEntrySpec(marker, beside, below);
+        return new TimelineEntrySpec(leading, marker, beside, below);
     }
 
     private static boolean notBlank(String value) {

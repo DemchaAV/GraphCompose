@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 233,
-    "methods": 2080,
+    "methods": 2082,
     "constants": 230,
     "generated": 1111
   },
@@ -15071,6 +15071,20 @@
             },
             {
               "kind": "method",
+              "name": "leadingColumn",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "DocumentRowColumn",
+                  "name": "column"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "spacing",
               "static": false,
               "origin": "source",
@@ -15211,6 +15225,20 @@
                 {
                   "type": "Consumer<SectionBuilder>",
                   "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leading",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "leading"
                 }
               ]
             },

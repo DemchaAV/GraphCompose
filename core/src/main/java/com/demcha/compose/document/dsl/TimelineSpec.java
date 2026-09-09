@@ -1,5 +1,7 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.style.DocumentRowColumn;
+
 import java.util.List;
 
 /**
@@ -12,6 +14,8 @@ import java.util.List;
  * able to tell which one it came from.</p>
  *
  * @param rail                the connector rail
+ * @param leadingColumn       how wide the column before the marker is, or null when the
+ *                            timeline has no leading column at all
  * @param gutter              space between the rail and the entry's content
  * @param markerGap           horizontal gap between the marker column and the content
  *                            beside it
@@ -24,6 +28,7 @@ import java.util.List;
  * @since 2.4.0
  */
 record TimelineSpec(TimelineRailSpec rail,
+                    DocumentRowColumn leadingColumn,
                     double gutter,
                     double markerGap,
                     double markerColumnWeight,

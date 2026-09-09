@@ -7,6 +7,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline can put a column before its markers — the `DATE` of `DATE | ● | CONTENT`.**
+  `TimelineBuilder.leadingColumn(DocumentRowColumn)` declares the width once for the whole
+  timeline and `TimelineEntryBuilder.leading(Consumer<SectionBuilder>)` fills it per entry.
+  Every entry gets the column, including entries that put nothing in it, because the point
+  of the column is that the markers after it start at the same x whatever the dates say.
+  Nothing is styled for you inside it, as with `content(...)`.
+
+  `auto()` is rejected at the call, with the reason. An auto column is measured from its
+  own row's content, so a timeline whose dates read `2023` and `September 2024 - present`
+  would put those two markers 131pt apart — measured, which is why this is an exception
+  rather than a documented caveat. `fixed(points)` and `weight(share)` are decided by the
+  row and both align exactly. Leading content without a declared column throws too, naming
+  the call to add, rather than inventing a width per entry.
+
 - **A timeline entry can fill its own content column.**
   `TimelineBuilder.entry(Consumer<TimelineEntryBuilder>)` is a longer form of the existing
   `entry(marker, ...)` that takes its marker from `TimelineEntryBuilder.marker(...)` inside

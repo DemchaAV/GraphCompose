@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 71,
-    "methods": 379,
+    "types": 69,
+    "methods": 371,
     "constants": 18,
-    "generated": 191
+    "generated": 189
   },
   "packages": [
     {
@@ -1488,79 +1488,6 @@
                 },
                 {
                   "type": "ImageFragmentPayload",
-                  "name": "payload"
-                },
-                {
-                  "type": "PdfRenderEnvironment",
-                  "name": "environment"
-                }
-              ]
-            },
-            {
-              "kind": "method",
-              "name": "render",
-              "static": false,
-              "origin": "generated",
-              "typeParameters": null,
-              "returns": "void",
-              "params": [
-                {
-                  "type": "PlacedFragment",
-                  "name": null
-                },
-                {
-                  "type": "Object",
-                  "name": null
-                },
-                {
-                  "type": "PdfRenderEnvironment",
-                  "name": null
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "PdfLayoutAnchorRenderHandler",
-          "binaryName": "com.demcha.compose.document.backend.fixed.pdf.handlers.PdfLayoutAnchorRenderHandler",
-          "kind": "class",
-          "modifiers": [
-            "final"
-          ],
-          "artifact": "graph-compose-render-pdf",
-          "members": [
-            {
-              "kind": "constructor",
-              "name": "PdfLayoutAnchorRenderHandler",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": null,
-              "params": []
-            },
-            {
-              "kind": "method",
-              "name": "payloadType",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": "Class<LayoutAnchorPayload>",
-              "params": []
-            },
-            {
-              "kind": "method",
-              "name": "render",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": "void",
-              "params": [
-                {
-                  "type": "PlacedFragment",
-                  "name": "fragment"
-                },
-                {
-                  "type": "LayoutAnchorPayload",
                   "name": "payload"
                 },
                 {
@@ -5052,84 +4979,6 @@
                 },
                 {
                   "type": "ImageFragmentPayload",
-                  "name": "payload"
-                },
-                {
-                  "type": "PptxRenderEnvironment",
-                  "name": "environment"
-                }
-              ],
-              "stability": "beta"
-            },
-            {
-              "kind": "method",
-              "name": "render",
-              "static": false,
-              "origin": "generated",
-              "typeParameters": null,
-              "returns": "void",
-              "params": [
-                {
-                  "type": "PlacedFragment",
-                  "name": null
-                },
-                {
-                  "type": "Object",
-                  "name": null
-                },
-                {
-                  "type": "PptxRenderEnvironment",
-                  "name": null
-                }
-              ],
-              "stability": "beta"
-            }
-          ]
-        },
-        {
-          "name": "PptxLayoutAnchorRenderHandler",
-          "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxLayoutAnchorRenderHandler",
-          "kind": "class",
-          "modifiers": [
-            "final"
-          ],
-          "artifact": "graph-compose-render-pptx",
-          "stability": "beta",
-          "members": [
-            {
-              "kind": "constructor",
-              "name": "PptxLayoutAnchorRenderHandler",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": null,
-              "params": [],
-              "stability": "beta"
-            },
-            {
-              "kind": "method",
-              "name": "payloadType",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": "Class<LayoutAnchorPayload>",
-              "params": [],
-              "stability": "beta"
-            },
-            {
-              "kind": "method",
-              "name": "render",
-              "static": false,
-              "origin": "source",
-              "typeParameters": null,
-              "returns": "void",
-              "params": [
-                {
-                  "type": "PlacedFragment",
-                  "name": "fragment"
-                },
-                {
-                  "type": "LayoutAnchorPayload",
                   "name": "payload"
                 },
                 {

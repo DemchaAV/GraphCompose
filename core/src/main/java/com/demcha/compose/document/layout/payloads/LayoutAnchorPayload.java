@@ -16,13 +16,18 @@ import java.util.Objects;
  * child's own measurement, never from the placement the anchor was handed. That
  * distinction is the whole point: an 8×8 marker inside a table cell is placed in a
  * 16pt-wide cell, and a payload built from {@code placement.width()} would report the
- * cell. A caller anchoring a marker drawn as five SVG fragments still gets one anchor with
- * one box, which is what makes the anchor a <em>logical owner</em> rather than a
- * particular draw fragment.</p>
+ * cell. A marker drawn as three stacked shapes still gets one anchor with one box, which
+ * is what makes the anchor a <em>logical owner</em> rather than a particular draw
+ * fragment.</p>
+ *
+ * <p>The box is the child's <b>border box</b> — its margin excluded, its padding included.
+ * {@code LayoutAnchorDefinition} takes the margin back off both the size and the offset,
+ * because the wrapper has to <em>occupy</em> the margin box for the flow to be right while
+ * a consumer drawing to the anchor means the ink.</p>
  *
  * @param id     the anchor's identity
- * @param width  the anchored child's own measured width
- * @param height the anchored child's own measured height
+ * @param width  the anchored child's border-box width
+ * @param height the anchored child's border-box height
  * @author Artem Demchyshyn
  * @since 2.4.0
  */

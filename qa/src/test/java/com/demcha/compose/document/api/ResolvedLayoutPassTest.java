@@ -11,8 +11,11 @@ import com.demcha.compose.document.layout.ResolvedLayoutAnchor;
 import com.demcha.compose.document.layout.ResolvedLayoutMetadata;
 import com.demcha.compose.document.layout.ResolvedLayoutPass;
 import com.demcha.compose.document.layout.payloads.LayoutAnchorPayload;
+import com.demcha.compose.document.dsl.LayerStackBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.DocumentLinkTarget;
 import com.demcha.compose.document.node.EllipseNode;
+import com.demcha.compose.document.node.LayerStackNode;
 import com.demcha.compose.document.table.DocumentTableCell;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import com.demcha.compose.document.style.DocumentColor;
@@ -122,9 +125,7 @@ class ResolvedLayoutPassTest {
         assertThat(anchor.width()).isEqualTo(8.0, within(1e-9));
         assertThat(anchor.height()).isEqualTo(8.0, within(1e-9));
 
-        PlacedFragment ellipse = graph.fragments().stream()
-                .filter(f -> f.payload() != null && f.payload().getClass().getSimpleName().contains("Ellipse"))
-                .findFirst().orElseThrow();
+        PlacedFragment ellipse = ellipses(graph).get(0);
         assertThat(anchor.x()).as("the anchor lands on its child, not on its container")
                 .isEqualTo(ellipse.x(), within(1e-9));
         assertThat(anchor.y()).isEqualTo(ellipse.y(), within(1e-9));
@@ -144,19 +145,98 @@ class ResolvedLayoutPassTest {
 
     @Test
     void oneAnchorPerWrapperHoweverManyFragmentsTheChildDraws() throws Exception {
+        // The case a custom marker actually is: three concentric dots in a layer stack —
+        // a ring, a disc and a pip — which the compiler emits as three separate ellipse
+        // fragments. The anchor has to stay one box, and the box of the marker as
+        // declared, not of any one of the shapes that make it up.
         Object group = new Object();
-        // A container drawing several shapes stands in for a custom marker; the anchor
-        // must still be one box, and the child's, not the container's stretched width.
+        LayerStackNode marker = new LayerStackBuilder()
+                .name("marker")
+                .back(dot(16))
+                .center(dot(10))
+                .center(dot(4))
+                .build();
+
         LayoutGraph graph = compile(flow -> flow
-                .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.MARKER, 0), dot(12))),
+                .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.MARKER, 0), marker)),
                 List.of());
 
+        List<PlacedFragment> shapes = ellipses(graph);
+        assertThat(shapes)
+                .as("the premise: this marker really is drawn as several fragments")
+                .hasSize(3);
+        assertThat(shapes.stream().map(PlacedFragment::width))
+                .containsExactly(16.0, 10.0, 4.0);
+
+        PlacedFragment ring = shapes.get(0);
         assertThat(ResolvedLayoutMetadata.from(graph).anchors(group, Kind.MARKER))
                 .singleElement()
                 .satisfies(a -> {
-                    assertThat(a.width()).isEqualTo(12.0, within(1e-9));
-                    assertThat(a.height()).isEqualTo(12.0, within(1e-9));
+                    assertThat(a.width()).as("the declared marker box").isEqualTo(16.0, within(1e-9));
+                    assertThat(a.height()).isEqualTo(16.0, within(1e-9));
+                    assertThat(a.x()).isEqualTo(ring.x(), within(1e-9));
+                    assertThat(a.y()).isEqualTo(ring.y(), within(1e-9));
+                    // The pip is centred in the stack, so the marker's centre is the pip's
+                    // centre. A consumer drawing a rail through the anchor hits the middle
+                    // of the composed marker, not the middle of whichever shape drew first.
+                    PlacedFragment pip = shapes.get(2);
+                    assertThat(a.pointX(0.5)).isEqualTo(pip.x() + pip.width() / 2, within(1e-9));
+                    assertThat(a.pointY(0.5)).isEqualTo(pip.y() + pip.height() / 2, within(1e-9));
                 });
+    }
+
+    @Test
+    void aMarkersOwnMarginIsNoPartOfItsAnchorBox() throws Exception {
+        // Two boxes are in play. The wrapper has to *occupy* the child's margin box or the
+        // surrounding flow is wrong, but a consumer drawing to the anchor means the ink.
+        // Deliberately asymmetric — a uniform margin hides the bug, since its margin-box
+        // centre and its border-box centre are the same point.
+        Object group = new Object();
+        DocumentInsets margin = new DocumentInsets(2, 4, 6, 8);
+        LayoutGraph graph = compile(flow -> flow
+                .addParagraph("Above")
+                .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.MARKER, 0), dot(8, margin))),
+                List.of());
+
+        PlacedFragment ellipse = ellipses(graph).get(0);
+        ResolvedLayoutAnchor anchor =
+                ResolvedLayoutMetadata.from(graph).anchors(group, Kind.MARKER).get(0);
+
+        assertThat(anchor.width()).as("the marker, not the marker plus its spacing")
+                .isEqualTo(8.0, within(1e-9));
+        assertThat(anchor.height()).isEqualTo(8.0, within(1e-9));
+        assertThat(anchor.x()).isEqualTo(ellipse.x(), within(1e-9));
+        assertThat(anchor.y()).isEqualTo(ellipse.y(), within(1e-9));
+
+        // The number the margin box would have given: 20×16 at the wrapper's own origin,
+        // whose centre sits 2pt left of and 2pt below the ink in this case. That is what a
+        // rail through the anchor centre would have missed by.
+        assertThat(anchor.pointX(0.5)).isEqualTo(ellipse.x() + 4.0, within(1e-9));
+        assertThat(anchor.pointY(0.5)).isEqualTo(ellipse.y() + 4.0, within(1e-9));
+    }
+
+    @Test
+    void anchoringAContainerReportsTheContainerAndAnchoringTheMarkerReportsTheMarker() throws Exception {
+        // The answer to "which box is it": the one you wrapped. Same marker, same document,
+        // two anchors — one around the fixed-width container, one around the dot inside it.
+        Object group = new Object();
+        LayoutGraph graph = compile(flow -> flow
+                .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.OTHER, 0),
+                        new SectionBuilder()
+                                .fixedWidth(60)
+                                .add(new LayoutAnchorNode("", new LayoutAnchorId(group, Kind.MARKER, 0), dot(8)))
+                                .build())),
+                List.of());
+
+        ResolvedLayoutMetadata metadata = ResolvedLayoutMetadata.from(graph);
+        assertThat(metadata.anchors(group, Kind.OTHER).get(0).width())
+                .as("wrapping the container measures the container")
+                .isEqualTo(60.0, within(1e-9));
+        assertThat(metadata.anchors(group, Kind.MARKER).get(0).width())
+                .as("wrapping the marker measures the marker, however wide its container is")
+                .isEqualTo(8.0, within(1e-9));
+        assertThat(metadata.anchors(group, Kind.MARKER).get(0).x())
+                .isEqualTo(ellipses(graph).get(0).x(), within(1e-9));
     }
 
     @Test
@@ -176,9 +256,7 @@ class ResolvedLayoutPassTest {
 
         ResolvedLayoutAnchor anchor =
                 ResolvedLayoutMetadata.from(graph).anchors(group, Kind.MARKER).get(0);
-        PlacedFragment ellipse = graph.fragments().stream()
-                .filter(f -> f.payload() != null && f.payload().getClass().getSimpleName().contains("Ellipse"))
-                .findFirst().orElseThrow();
+        PlacedFragment ellipse = ellipses(graph).get(0);
 
         assertThat(anchor.width()).as("the marker's width, not the cell's").isEqualTo(8.0, within(1e-9));
         assertThat(anchor.height()).isEqualTo(8.0, within(1e-9));
@@ -410,6 +488,19 @@ class ResolvedLayoutPassTest {
 
     private static EllipseNode dot(double size) {
         return new EllipseNode("dot", size, size, INK, null, null, null, null, null);
+    }
+
+    private static EllipseNode dot(double size, DocumentInsets margin) {
+        return new EllipseNode("dot", size, size, INK, null, (DocumentLinkTarget) null, null,
+                null, margin, null, null);
+    }
+
+    /** The ink the marker drew, in draw order. */
+    private static List<PlacedFragment> ellipses(LayoutGraph graph) {
+        return graph.fragments().stream()
+                .filter(f -> f.payload() != null
+                        && f.payload().getClass().getSimpleName().contains("Ellipse"))
+                .toList();
     }
 
     private static List<PlacedFragment> nonAnchor(LayoutGraph graph) {

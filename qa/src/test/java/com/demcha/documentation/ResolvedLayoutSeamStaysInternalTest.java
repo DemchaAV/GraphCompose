@@ -25,10 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * being one, and the extension-SPI allow-list admits types out of exactly such a package
  * by name. So this reads the generated surfaces and says it directly.</p>
  *
- * <p>A payload's <em>name</em> legitimately appears in a render handler's signature —
- * {@code payloadType()} returns {@code Class<…Payload>} — the way
- * {@code AnchorMarkerPayload} and {@code ShapeFragmentPayload} already do. What must not
- * happen is the type being <em>admitted</em>, which is what this checks.</p>
+ * <p>The list includes the two backend handlers. Each fixed backend does need one — its
+ * {@code handlerFor} refuses a payload class it does not know — but a handler for an
+ * internal payload is not something a caller can usefully hold, and a public class is
+ * permanent. They are package-private, and sit beside their backend rather than in the
+ * {@code handlers} package whose members are public precisely because callers register
+ * them. The seam therefore adds <em>nothing</em> to the API.</p>
  */
 class ResolvedLayoutSeamStaysInternalTest {
 
@@ -42,7 +44,9 @@ class ResolvedLayoutSeamStaysInternalTest {
             "ResolvedLayoutAnchor",
             "ResolvedLayoutMetadata",
             "ResolvedLayoutPass",
-            "ResolvedLayoutPasses");
+            "ResolvedLayoutPasses",
+            "PdfLayoutAnchorRenderHandler",
+            "PptxLayoutAnchorRenderHandler");
 
     @Test
     void noSeamTypeIsAdmittedToAPublicSurface() throws IOException {
@@ -81,22 +85,20 @@ class ResolvedLayoutSeamStaysInternalTest {
     }
 
     @Test
-    void theTwoRenderHandlersAreTheOnlySurfaceThisAdds() throws IOException {
-        // Named rather than left out. The seam is internal, but a fragment payload needs a
-        // handler in each fixed backend — handlerFor throws on a payload class it does not
-        // know — and handlers are public here, as every sibling is. So two public types do
-        // ship. A guard that simply omitted them could not say whether that was intended or
-        // an oversight; this says it is intended, and goes red if a third one appears.
-        Path backends = RepoRoot.get().resolve("knowledge/api/backends.json");
-        String json = Files.readString(backends);
-
-        assertThat(json).as("the pdf no-op handler ships, deliberately")
-                .contains("\"name\": \"PdfLayoutAnchorRenderHandler\"");
-        assertThat(json).as("and its pptx twin")
-                .contains("\"name\": \"PptxLayoutAnchorRenderHandler\"");
+    void theSeamAddsNoBackendSurfaceAtAll() throws IOException {
+        // Separate from the sweep above because this is the one that was nearly got wrong:
+        // a handler is the obvious place for internal machinery to leak, since every
+        // sibling in the handlers package is public and copying one is the natural move.
+        // The payload's own name would appear here too if a public handler declared
+        // payloadType() — AnchorMarkerPayload and ShapeFragmentPayload are in this file for
+        // exactly that reason — so its absence is the second signal that neither shipped.
+        String json = Files.readString(RepoRoot.get().resolve("knowledge/api/backends.json"));
 
         assertThat(SEAM_TYPES.stream().filter(t -> json.contains("\"name\": \"" + t + "\"")).toList())
-                .as("nothing else from the seam follows them out")
+                .as("no seam type is admitted to the backend surface")
                 .isEmpty();
+        assertThat(json)
+                .as("and no public signature mentions the anchor payload either")
+                .doesNotContain("LayoutAnchorPayload");
     }
 }

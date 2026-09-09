@@ -15,7 +15,11 @@ import java.util.Objects;
  *
  * <p>Measuring to the child rather than to the available width is not a detail. It is what
  * makes the anchor's box the child's box, so a caller reading the anchor learns where the
- * <em>marker</em> is, not where its container is.</p>
+ * <em>marker</em> is, not where its container is. What comes back is the child's border
+ * box — margin excluded, padding included; see
+ * {@link ResolvedLayoutAnchor} for the whole contract. Wrap the node you want to measure:
+ * anchor a marker and you get the marker, anchor the container it sits in and you get the
+ * container.</p>
  *
  * <p>Lives in this {@code @Internal} package on purpose. Anchoring is engine plumbing that
  * a built-in feature uses to reach its own resolved geometry; whether authors should ever

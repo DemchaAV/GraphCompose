@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 71 · methods: 379 · constants: 18 · compiler-generated members: 191
+Types: 69 · methods: 371 · constants: 18 · compiler-generated members: 189
 
 ## com.demcha.compose.document.backend.fixed
 
@@ -155,12 +155,6 @@ Types: 71 · methods: 379 · constants: 18 · compiler-generated members: 191
 - `new PdfImageFragmentRenderHandler()`
 - `Class<ImageFragmentPayload> payloadType()`
 - `void render(PlacedFragment fragment, ImageFragmentPayload payload, PdfRenderEnvironment environment)`
-- `void render(PlacedFragment, Object, PdfRenderEnvironment)`
-
-### PdfLayoutAnchorRenderHandler (class)
-- `new PdfLayoutAnchorRenderHandler()`
-- `Class<LayoutAnchorPayload> payloadType()`
-- `void render(PlacedFragment fragment, LayoutAnchorPayload payload, PdfRenderEnvironment environment)`
 - `void render(PlacedFragment, Object, PdfRenderEnvironment)`
 
 ### PdfLineFragmentRenderHandler (class)
@@ -470,12 +464,6 @@ Types: 71 · methods: 379 · constants: 18 · compiler-generated members: 191
 - `new PptxImageFragmentRenderHandler()   [beta]`
 - `Class<ImageFragmentPayload> payloadType()   [beta]`
 - `void render(PlacedFragment fragment, ImageFragmentPayload payload, PptxRenderEnvironment environment)   [beta]`
-- `void render(PlacedFragment, Object, PptxRenderEnvironment)   [beta]`
-
-### PptxLayoutAnchorRenderHandler (class)   [beta]
-- `new PptxLayoutAnchorRenderHandler()   [beta]`
-- `Class<LayoutAnchorPayload> payloadType()   [beta]`
-- `void render(PlacedFragment fragment, LayoutAnchorPayload payload, PptxRenderEnvironment environment)   [beta]`
 - `void render(PlacedFragment, Object, PptxRenderEnvironment)   [beta]`
 
 ### PptxLineFragmentRenderHandler (class)   [beta]

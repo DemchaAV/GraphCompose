@@ -9,16 +9,20 @@ import java.util.Objects;
  * bottom-left of the page, y growing upwards. A pass reading these needs no conversion to
  * emit a fragment beside them.</p>
  *
- * <p>The box is the anchored child's own, not its container's — see
- * {@code LayoutAnchorPayload}. That is what lets a caller treat this as the position of a
- * <em>marker</em> rather than of whatever cell or column happened to hold it.</p>
+ * <p><b>The box is the wrapped node's border box</b>: the box that node was laid out into,
+ * <em>its own margin excluded</em> and its padding included. Not its container's — that is
+ * what lets a caller treat this as the position of a <em>marker</em> rather than of
+ * whatever cell or column happened to hold it. Not its ink either: a stroke may paint
+ * outside it and a glyph need not fill it, so a consumer that wants the ink of one
+ * particular shape has to ask that shape. And it is the box of the node that was
+ * <em>wrapped</em> — anchor a container and the container is what comes back.</p>
  *
  * @param id        the anchor's identity
  * @param pageIndex zero-based page the anchor landed on
  * @param x         left edge, page coordinates
  * @param y         bottom edge, page coordinates
- * @param width     the anchored child's width
- * @param height    the anchored child's height
+ * @param width     the wrapped node's border-box width
+ * @param height    the wrapped node's border-box height
  * @author Artem Demchyshyn
  * @since 2.4.0
  */

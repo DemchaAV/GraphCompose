@@ -13,6 +13,7 @@ import com.demcha.compose.document.layout.PrepareContext;
 import com.demcha.compose.document.layout.PreparedNode;
 import com.demcha.compose.document.layout.payloads.LayoutAnchorPayload;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.style.DocumentInsets;
 
 import java.util.List;
 
@@ -24,6 +25,10 @@ import java.util.List;
  * wrapper that filled the width would report its container's box, which is the error this
  * whole seam exists to avoid — an 8×8 marker in a 16pt table cell must anchor at 8×8, not
  * at the cell.</p>
+ *
+ * <p>What it reports is the child's <b>border box</b>: the box the child was laid out
+ * into, its own margin excluded and its padding included. Two boxes are in play and only
+ * one of them is useful to a consumer — see {@link #emitFragments}.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.4.0
@@ -69,17 +74,25 @@ public final class LayoutAnchorDefinition implements NodeDefinition<LayoutAnchor
     public List<LayoutFragment> emitFragments(PreparedNode<LayoutAnchorNode> prepared,
                                               FragmentContext ctx,
                                               FragmentPlacement placement) {
-        // The size travels in the payload, taken from prepare()'s measurement of the
-        // child. The fragment's own box is left at the placement so the marker sits where
-        // the compiler put it; a reader that wants the child's extent reads the payload.
+        // The child's border box, which is not the wrapper's. prepare() measured the
+        // child's *margin* box, because that is the space the wrapper has to occupy for
+        // the surrounding flow to be right; reporting it would be wrong for the one thing
+        // this seam is for. A marker with margin(top 2, right 4, bottom 6, left 8) would
+        // have its anchor centre land 2pt off its own ink in both directions, and a rail
+        // drawn through that centre would visibly miss it. So the margin comes back off
+        // here, in the offset and in the size. Measured rather than assumed: the compiler
+        // seats the child at the anchor's bottom-left plus (left, bottom) — y grows up.
+        DocumentInsets margin = prepared.node().child().margin();
         MeasureResult measured = prepared.measureResult();
+        double width = Math.max(0.0, measured.width() - margin.horizontal());
+        double height = Math.max(0.0, measured.height() - margin.vertical());
         return List.of(new LayoutFragment(
                 placement.path(),
                 0,
-                0.0,
-                0.0,
-                measured.width(),
-                measured.height(),
-                new LayoutAnchorPayload(prepared.node().id(), measured.width(), measured.height())));
+                margin.left(),
+                margin.bottom(),
+                width,
+                height,
+                new LayoutAnchorPayload(prepared.node().id(), width, height)));
     }
 }

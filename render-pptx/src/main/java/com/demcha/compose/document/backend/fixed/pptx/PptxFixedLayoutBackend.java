@@ -195,6 +195,7 @@ public final class PptxFixedLayoutBackend implements FixedLayoutRenderer {
                 new PptxShapeClipBeginRenderHandler(),
                 new PptxShapeClipEndRenderHandler(),
                 new PptxAnchorMarkerRenderHandler(),
+                new PptxLayoutAnchorRenderHandler(),
                 new PptxBookmarkMarkerRenderHandler());
     }
 

@@ -47,6 +47,7 @@ public final class BuiltInNodeDefinitions {
                 .register(new PolygonDefinition())
                 .register(new PathDefinition())
                 .register(new AlignDefinition())
+                .register(new LayoutAnchorDefinition())
                 .register(new ChartDefinition());
     }
 }

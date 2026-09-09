@@ -203,22 +203,13 @@ shaped exactly like Education without a new type.
 a payload standing in for parsed JSON, and its PDF is the shortest way to
 see what each kind does to the same item.
 
-`SectionRole` says what a section *means*, separately from how it
-draws — and it is the first thing a preset routes on. A preset with a designed
-layout places sections into fixed slots, and it used to choose what
-went where by matching the heading against a list of English words:
-a CV headed `Ausbildung` or `Навыки` matched nothing, so the section
-was dropped and the slot that wanted it rendered empty. Give the module
-a role and it lands in the right slot whatever language the CV is
-written in, and whatever kind you chose to draw it with — for the roles
-that preset has a slot for. `SectionRole.OTHER` names no slot, so a
-module carrying it routes by heading like any other section.
-
-A heading that matches a keyword still routes a section that has no
-role — every hand-written section, and any module you left as
-`SectionRole.OTHER`. What a heading may not do is overrule a role: a
-module declared `EXPERIENCE` and headed "Projects" goes where you put
-it, and the projects slot does not also claim it.
+A runtime module is a shape, not a CV meaning. The template does not
+know Experience from Projects. `SectionRole` is still on the builder
+so existing call sites compile; slots do not read it. A module stays
+in document order (or the leftover tail of a two-column preset) and
+draws through `CvConstructor`. Hand-written sections still match slots
+by heading, so an `EntriesSection` titled "Experience" lands where it
+always did.
 
 Modules and the four fixed types mix freely in one document, and both
 render through the same components — a module drawn as `ENTRIES_DATED`

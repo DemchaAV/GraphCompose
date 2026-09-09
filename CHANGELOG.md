@@ -21,8 +21,11 @@ follow semantic versioning; release dates are ISO 8601.
   alone. `BodyStyle` decides whether a description reads as prose or as bullets, and
   `SectionRole` states what a section *means* — the decision multi-column presets make
   by matching headings against English keywords, which a CV headed `Ausbildung` or
-  `Навыки` never matches. The presets do not read the role yet; it travels with the
-  section now so a document built today needs no rewrite when the routing work lands.
+  `Навыки` never matches. The presets deliberately do **not** read the role: a module is a
+  shape, and inferring a CV meaning from a field the document declares is exactly what a
+  template has no business doing. A module reaches a slot by its **heading**, on the same
+  terms a hand-written section does — the heading is the author's own word for the block.
+  The role travels with the section for a consumer that wants it.
 
   The existing four records are untouched and mix with modules in the same document.
   A module renders through the existing components rather than beside them, so one
@@ -137,7 +140,7 @@ follow semantic versioning; release dates are ISO 8601.
   renderers so it looks like the rest of the document; Mint Editorial draws entries through
   its experience block and flattens rows to label/value lines rather than into its awards
   grid, which is a two-column table and the wrong shape for a category of unknown size. `SectionAllocation` gained the four shaped claims (`entries`, `rows`,
-  `paragraph`, `skills`) that pair its role-first choice with `SectionRouter`'s shape
+  `paragraph`, `skills`) that pair its heading claim with `SectionRouter`'s shape
   lowering, so a preset gets the section in the form its slot draws *and* the claim is
   recorded — which is what makes `remaining()` the truth rather than a guess.
   `SectionRouter.naturalShape(...)` answers the question a leftover raises and a slot never
@@ -270,27 +273,21 @@ follow semantic versioning; release dates are ISO 8601.
   every continuation page of a dense CV, takes the rule back off to attribute the number to
   it, and pins page 1's own 78pt opening either way.
 
-- **Presets route by what a section means, not by the language it is written in.** A
-  preset with a designed layout places sections into fixed slots, and it chose what went
-  where by matching the heading against a list of English words each preset kept
-  privately — then guarded the slot on the section's Java type as well. A CV headed
-  `Ausbildung`, `Опыт работы`, or anything else in the author's own language matched
-  nothing: the section was dropped and the slot that wanted it rendered empty. Nothing
-  failed; the CV came out looking finished, one job short.
+- **Runtime modules are not slotted by CV meaning.** `SectionRouter.find` and
+  `SectionAllocation.claim` never take a `ModuleSection`. A template does not
+  know Experience from Projects; a module is a shape, and it stays in document
+  order (or the leftover tail) and draws through `CvConstructor`. Typed
+  sections still match by heading, so a hand-written `EntriesSection` titled
+  "Experience" lands in the same slot as before. `RoleRoutingTest` holds the
+  modular templates: a CV headed `Опыт работы` still reaches the page, because
+  it is a module, not because a role named the slot.
 
-  `SectionRouter` asks the module's `SectionRole` first and falls back to the headings
-  for the sections that carry no role — every hand-written one, and any module left as
-  `OTHER` — so a document of hand-written sections routes exactly as it did. A heading
-  may not overrule a role: a module declared `EXPERIENCE` and headed "Projects" goes where its
-  author put it, and the projects slot does not also claim it, which would have rendered
-  it twice. The router also hands each slot the section in the shape that slot draws, so
-  a module reaching a slot written against `EntriesSection` is no longer discarded by
-  the guard — the preset draws it exactly as it draws everything else, with the entry
-  style, rules and spacing that make it that preset. `SectionAllocation.claim` gained
-  the same role-first overload for the preset that allocates rather than looks up.
-
-  Nine presets and every slot they compose changed; a CV written in Russian and German
-  now renders on all sixteen, which `RoleRoutingTest` holds by rendering one.
+- **Typed sections still match slots by heading.** A hand-written
+  `EntriesSection` titled "Experience" lands where it always did. Runtime
+  modules do not: see the constructor-contract entry above. `SectionRouter`
+  still lowers a leftover module to the record a slot's renderer already
+  takes (`asEntries` / `asRows` / `asParagraph` / `asSkills` /
+  `naturalShape`), so a two-column leftover draws in the preset's own style.
 
 - **Timeline Minimal can draw its projects in the wide column.** The preset puts them in
   the narrow sidebar beside education and skills, which suits a list of short labels and
@@ -383,7 +380,7 @@ follow semantic versioning; release dates are ISO 8601.
   plain "Deutsch B2" was enough to lose the Deutsch.
 
   The slot now claims in two steps and knows which it got. A section that is entirely
-  languages — routed by the role, or titled for the job — is drawn whole, whatever its
+  languages — titled for the job — is drawn whole, whatever its
   rows look like. A wider section is still picked over, and the rows the block does not
   draw are handed to the main column, which prints them under the title their author wrote
   and in the place the document gave them. No row of a claimed section is dropped on

@@ -165,18 +165,12 @@ class SlotHeadingFidelityTest {
 
     @Test
     void aLanguagesModuleKeepsEveryRowEvenWhenNoneLooksLikeALanguage() {
-        // The block sniffs for language-shaped rows because it also accepts a
-        // wider section. A section routed here by its role is entirely
-        // languages whatever its rows look like, so nothing in it may be
-        // picked over.
-        //
-        // The first item carries a bracket and the other two do not, which is
-        // the shape that used to lose them: one sniff hit was enough to
-        // suppress the whole-section fallback, so English was drawn while
-        // Deutsch and Українська reached no page at all — and the section
-        // counted as claimed, so the leftover tail never saw them either.
-        // Written without that bracket, this fixture would pass against the
-        // old code too and guard nothing.
+        // A runtime module is not the language slot: it is leftover in the
+        // main column, under the heading the author wrote. The rows still
+        // have to all reach the page — the first item carries a bracket and
+        // the others do not, which is the shape that used to lose Deutsch
+        // and Українська when a claimed section was sniffed for
+        // language-shaped rows.
         CvDocument doc = cv(ModuleSection.builder("Языки", SectionRole.LANGUAGES,
                         CvKind.INLINE_LIST)
                 .item(CvItem.of("English").paragraphs("(C1 advanced)"))
@@ -188,13 +182,10 @@ class SlotHeadingFidelityTest {
 
         assertBoundaryIsOne(text);
         assertThat(text)
-                .as("every row is drawn in the language block itself — before the "
-                    + "main column starts — under the author's own heading, each "
-                    + "keeping the level written next to it")
+                .as("every row reaches the page under the author's heading")
                 .containsSubsequence(squash("Языки"), squash("English"),
                         squash("Deutsch"), squash("B2"),
-                        squash("Українська"), squash("рідна"),
-                        squash(COLUMN_BOUNDARY));
+                        squash("Українська"), squash("рідна"));
     }
 
     @Test

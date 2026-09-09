@@ -329,6 +329,21 @@ follow semantic versioning; release dates are ISO 8601.
   zero — and no layout snapshot, pixel baseline or committed preview moves:
   every composed cell in the templates and the examples uses zero margins.
 
+### Fixed
+
+- **A DOCX export no longer loses the content of a wrapper it cannot draw.**
+  The semantic backend writes the nodes it recognises and skips the rest, and skipping a
+  wrapper took its whole subtree with it. Two were unknown to it: `AlignNode`, which says
+  where in the available width to place its child, and the internal anchor a feature uses
+  to learn where its child landed. Word lays text out itself, so neither survives as
+  geometry — but each has exactly one child, and that child is the document. An aligned
+  section exported as a well-formed file with its text missing: no exception, no warning,
+  nothing to read.
+
+  Both are transparent to the export now, in the document walk and the row-cell walk
+  alike — a wrapper handled in one and missed in the other loses a subtree just as
+  completely. PDF and PPTX were never affected; they draw what the layout produced.
+
 ### Documentation
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a

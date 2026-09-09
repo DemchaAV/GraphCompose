@@ -2,7 +2,9 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.layout.LayoutAnchorId;
 import com.demcha.compose.document.layout.LayoutAnchorNode;
+import com.demcha.compose.document.node.AlignNode;
 import com.demcha.compose.document.node.DocumentNode;
+import com.demcha.compose.document.node.HorizontalAlign;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -32,14 +34,18 @@ import java.util.function.Consumer;
  *         .title("Engineer").meta("2019 - 2021").body("Built ...")));
  * }</pre>
  *
- * <p>The rail is a left border on each entry that auto-stretches to the entry's
- * height, so it spans variable-length content without any fixed sizing; entries
- * stack flush so the rail reads as one continuous line. The timeline paginates
- * between entries, and a tall entry splits within itself — between its marker row
- * and its body, and within the body — with the rail continuing across the page
- * break. Only the single marker-plus-title row of an entry is atomic, so it would
- * throw {@code AtomicNodeTooLargeException} only in the degenerate case of one
- * marker row taller than a whole page.</p>
+ * <p>The rail is one logical line, computed after layout from where the markers and
+ * entries actually landed and drawn as one fragment per page it crosses. How far it
+ * runs is a {@link TimelineRailExtent}; where it runs comes from the marker anchor,
+ * a gutter to the left of the markers by default or through them after
+ * {@link #markerOnRail()}. It is drawn beneath the markers, so a filled marker
+ * covers the line passing under it.</p>
+ *
+ * <p>The timeline paginates between entries, and a tall entry splits within itself —
+ * between its marker row and its body, and within the body — with the rail
+ * continuing across the page break. Only the single marker-plus-title row of an
+ * entry is atomic, so it would throw {@code AtomicNodeTooLargeException} only in the
+ * degenerate case of one marker row taller than a whole page.</p>
  *
  * @author Artem Demchyshyn
  * @since 1.7.0
@@ -154,7 +160,15 @@ public final class TimelineBuilder {
      * into the other anchor: the rail passes through the marker's centre, at every marker
      * size.</p>
      *
-     * <p>It moves the rail, not the markers. Nothing else in the timeline shifts.</p>
+     * <p>It moves the markers too, because that is what putting them on the rail means:
+     * each is placed inside the axis column so that its anchor point lands on the axis,
+     * which for the centre anchor is the middle of that column. Markers of different sizes
+     * therefore share one line instead of one left edge. Nothing outside the axis column
+     * moves — the leading column, the content and the entries stay where they were.</p>
+     *
+     * <p>A timeline that does not call this keeps the left-edge anchor and the placement it
+     * has always had: markers packed to the left of the axis column, rail one gutter
+     * further left.</p>
      *
      * @return this builder
      * @since 2.4.0
@@ -461,7 +475,7 @@ public final class TimelineBuilder {
         TimelineMarkerAnchor anchor =
                 markerAnchor == null ? TimelineMarkerAnchor.atLeftEdge(gutter) : markerAnchor;
         return new TimelineSpec(new TimelineRailOwner(railSpec, railExtent, anchor),
-                railSpec, leadingColumn, gutter, markerGap, axis, entrySpacing,
+                railSpec, leadingColumn, gutter, markerGap, axis, anchor, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
 
@@ -554,11 +568,23 @@ public final class TimelineBuilder {
         DocumentNode anchored = new LayoutAnchorNode("",
                 new LayoutAnchorId(spec.owner(), TimelineAnchorKind.MARKER, index),
                 drawn.build());
+        // Where in the axis column the marker sits comes from the anchor, not from a mode:
+        // an anchor on the marker's left edge wants the marker at the column's left edge,
+        // one on its centre wants it at the column's centre. That is what puts markers of
+        // 6, 14 and 24pt on one line — each is centred in the same column, so each centre
+        // is the column's centre — and it works with a weight axis, whose width nobody
+        // knows until layout.
+        //
+        // The align wraps the anchor and not the other way round. The anchor has to stay
+        // around the marker itself or it would report the column's box, which is the whole
+        // thing the marker anchor exists not to be.
+        DocumentNode placed = new AlignNode(anchored, spec.markerAnchor().horizontalAlign());
         return markerColumn -> {
             markerColumn.spacing(0);
-            markerColumn.add(anchored);
+            markerColumn.add(placed);
         };
     }
+
 
     /**
      * Hands the axis size to the row in the row's own vocabulary.

@@ -2,6 +2,7 @@ package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.layout.LayoutAnchorId;
 import com.demcha.compose.document.layout.LayoutAnchorNode;
+import com.demcha.compose.document.node.AlignNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -682,9 +683,8 @@ class TimelineBuilderTest {
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x"))
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("y")));
 
-        DocumentNode first = header(entry(timeline, 0)).children().get(0).children().get(0);
-        DocumentNode second = header(entry(timeline, 1)).children().get(0).children().get(0);
-        assertThat(first).isInstanceOf(LayoutAnchorNode.class);
+        DocumentNode first = markerAnchorIn(header(entry(timeline, 0)).children().get(0));
+        DocumentNode second = markerAnchorIn(header(entry(timeline, 1)).children().get(0));
 
         LayoutAnchorId firstId = ((LayoutAnchorNode) first).id();
         LayoutAnchorId secondId = ((LayoutAnchorNode) second).id();
@@ -804,9 +804,23 @@ class TimelineBuilderTest {
      * wrapper itself is asserted.</p>
      */
     private static DocumentNode markerContent(DocumentNode markerColumn) {
-        DocumentNode anchor = markerColumn.children().get(0);
+        return markerAnchorIn(markerColumn).children().get(0).children().get(0);
+    }
+
+    /**
+     * The anchor around one entry's marker.
+     *
+     * <p>An {@code AlignNode} sits between the column and the anchor: where the marker sits
+     * in the axis follows from its anchor — left edge to the left, centre to the centre —
+     * and the align is how that is expressed. The anchor stays around the marker itself, so
+     * it keeps reporting the marker's box and not the column's.</p>
+     */
+    private static DocumentNode markerAnchorIn(DocumentNode markerColumn) {
+        DocumentNode align = markerColumn.children().get(0);
+        assertThat(align).isInstanceOf(AlignNode.class);
+        DocumentNode anchor = align.children().get(0);
         assertThat(anchor).isInstanceOf(LayoutAnchorNode.class);
-        return anchor.children().get(0).children().get(0);
+        return anchor;
     }
 
     /**
@@ -822,8 +836,7 @@ class TimelineBuilderTest {
 
     /** The owner every marker in one timeline anchors on. */
     private static Object ownerOf(SectionNode timeline) {
-        DocumentNode anchor = header(entry(timeline, 0)).children().get(0).children().get(0);
-        return ((LayoutAnchorNode) anchor).id().groupKey();
+        return ((LayoutAnchorNode) markerAnchorIn(header(entry(timeline, 0)).children().get(0))).id().groupKey();
     }
 
     private static List<ParagraphNode> paragraphsOf(DocumentNode parent) {

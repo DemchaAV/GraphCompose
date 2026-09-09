@@ -1,6 +1,7 @@
 package com.demcha.compose.document.dsl;
 
 import com.demcha.compose.document.layout.ResolvedLayoutAnchor;
+import com.demcha.compose.document.node.HorizontalAlign;
 
 /**
  * Which point of a marker the rail passes through.
@@ -38,6 +39,40 @@ record TimelineMarkerAnchor(double relativeX, double relativeY, double offsetX, 
     /** The marker's centre, which is what "the marker sits on the rail" means. */
     static TimelineMarkerAnchor onTheRail() {
         return new TimelineMarkerAnchor(0.5, 0.5, 0.0, 0.0);
+    }
+
+    /**
+     * Where the marker has to sit in its axis column for its anchor to land on the axis.
+     *
+     * <p>Placement follows from the anchor rather than from a mode: an anchor on the
+     * marker's left edge wants the marker at the column's left edge, one on its centre
+     * wants it at the column's centre. That is what puts markers of 6, 14 and 24pt on one
+     * line — each centred in the same column, so each centre is the column's centre — and
+     * it holds for a weighted axis, whose width nobody knows until layout.</p>
+     *
+     * <p>The mapping is exhaustive over the fractions that exist, and refuses the ones that
+     * do not. Placing a {@code relativeX} of, say, 0.25 would need the marker inset by a
+     * quarter of the leftover width, which is a fractional alignment the engine does not
+     * have; centring it instead would put its anchor somewhere other than the axis and
+     * report a resolved anchor that quietly disagrees with the rail. There is no public API
+     * that can produce such a fraction today, so this throws rather than invent a
+     * behaviour — the day fractional placement exists as a general capability, this is the
+     * one place that learns about it.</p>
+     *
+     * @return the alignment for the marker inside its axis column
+     * @throws IllegalStateException if the anchor's {@code relativeX} has no placement
+     */
+    HorizontalAlign horizontalAlign() {
+        if (relativeX == 0.0) {
+            return HorizontalAlign.LEFT;
+        }
+        if (relativeX == 0.5) {
+            return HorizontalAlign.CENTER;
+        }
+        throw new IllegalStateException(
+                "A timeline marker anchored at relativeX " + relativeX + " cannot be placed: the "
+                + "engine aligns a child left, centre or right, and nothing between. Placing it "
+                + "anywhere else would put its resolved anchor off the axis the rail is drawn on.");
     }
 
     /**

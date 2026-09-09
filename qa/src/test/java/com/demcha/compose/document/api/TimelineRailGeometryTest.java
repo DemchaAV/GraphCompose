@@ -152,6 +152,183 @@ class TimelineRailGeometryTest {
     }
 
     @Test
+    void markerOnRailPlacesEveryMarkerAnchorOnTheRail() throws Exception {
+        // The contract in its own terms, read off resolved geometry rather than off the
+        // spec that asked for it: for each entry, railX is that marker's own centre.
+        LayoutGraph graph = timeline(360, 320, t -> t
+                .markerOnRail()
+                .axisWidth(28)
+                .entry(TimelineMarker.dot(12, INK), e -> e.title("Dot").body("Body."))
+                .entry(TimelineMarker.square(12, INK), e -> e.title("Square").body("Body."))
+                .entry(TimelineMarker.numbered(3, 12, INK, DocumentColor.WHITE),
+                        e -> e.title("Numbered").body("Body.")));
+
+        double railX = rails(graph).get(0).x();
+        List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
+        assertThat(markers).hasSize(3);
+        assertThat(markers).allSatisfy(marker -> assertThat(railX)
+                .as("relativeX 0.5, offsetX 0 — the marker's own centre")
+                .isEqualTo(marker.x() + marker.width() / 2, within(1e-9)));
+    }
+
+    @Test
+    void markerOnRailPutsMarkersOfEverySizeOnTheSameLine() throws Exception {
+        // The case that found the defect. Markers were left-packed in the axis column, so
+        // a 6pt and a 24pt marker had centres 9pt apart and only the first sat on the rail.
+        // Placement now follows the anchor — a centre anchor centres the marker in its
+        // column — so every centre is the column's centre, whatever the marker's size.
+        for (Consumer<TimelineBuilder> axis : List.<Consumer<TimelineBuilder>>of(
+                t -> t.axisWidth(28), t -> t.markerColumnWeight(0.18))) {
+            LayoutGraph graph = timeline(360, 340, t -> {
+                t.markerOnRail();
+                axis.accept(t);
+                t.entry(TimelineMarker.dot(6, INK), e -> e.title("Small").body("Body."))
+                        .entry(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE),
+                                e -> e.title("Medium").body("Body."))
+                        .entry(TimelineMarker.square(24, INK), e -> e.title("Large").body("Body."));
+            });
+
+            double railX = rails(graph).get(0).x();
+            List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
+            assertThat(markers).hasSize(3);
+            assertThat(markers.stream().map(ResolvedLayoutAnchor::width))
+                    .as("the premise: three different sizes")
+                    .containsExactly(6.0, 14.0, 24.0);
+            assertThat(markers).allSatisfy(marker -> assertThat(railX)
+                    .as("every marker's centre is the axis, fixed axis or weighted")
+                    .isEqualTo(marker.x() + marker.width() / 2, within(1e-9)));
+        }
+    }
+
+    @Test
+    void theMarkerOnRailScenarioTheVisualBaselineDraws() throws Exception {
+        // The geometry behind timeline-dsl/marker-on-rail: DATE | ● | CONTENT with markers
+        // of three sizes. The baseline shows it; this says what it is.
+        LayoutGraph graph = timeline(360, 210, t -> t
+                .spacing(12)
+                .markerOnRail()
+                .axisWidth(28)
+                .leadingColumn(DocumentRowColumn.fixed(54))
+                .entry(e -> e.marker(TimelineMarker.dot(6, INK))
+                        .leading(d -> d.addParagraph("2023")).title("Senior").body("Body."))
+                .entry(e -> e.marker(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE))
+                        .leading(d -> d.addParagraph("2021")).title("Engineer").body("Body."))
+                .entry(e -> e.marker(TimelineMarker.square(24, INK))
+                        .leading(d -> d.addParagraph("2019")).title("Junior").body("Body.")));
+
+        double railX = rails(graph).get(0).x();
+        List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
+        assertThat(markers.stream().map(ResolvedLayoutAnchor::width))
+                .as("three genuinely different markers")
+                .containsExactly(6.0, 14.0, 24.0);
+        assertThat(markers.stream().map(m -> m.pointX(0.5)).distinct())
+                .as("one declared anchor x between them")
+                .hasSize(1);
+        assertThat(markers).allSatisfy(marker ->
+                assertThat(railX).isEqualTo(marker.pointX(0.5), within(1e-9)));
+        assertThat(railX)
+                .as("and the dates are in their own column, left of the axis")
+                .isGreaterThan(entryAnchors(graph).get(0).x() + 40.0);
+    }
+
+    @Test
+    void theLeftEdgeAnchorStillLeavesMarkersWhereTheyHaveAlwaysBeen() throws Exception {
+        // The other arm of the same question, and the one that must not move: markers of
+        // different sizes share a left edge, which is why the default rail is an edge plus
+        // a constant rather than a centre.
+        LayoutGraph graph = timeline(360, 340, t -> t
+                .axisWidth(28)
+                .entry(TimelineMarker.dot(6, INK), e -> e.title("Small").body("Body."))
+                .entry(TimelineMarker.square(24, INK), e -> e.title("Large").body("Body.")));
+
+        List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
+        assertThat(markers.get(0).x())
+                .as("left-packed, as before")
+                .isEqualTo(markers.get(1).x(), within(1e-9));
+        assertThat(rails(graph).get(0).x())
+                .isEqualTo(markers.get(0).x() - 8.0, within(1e-9));
+    }
+
+    @Test
+    void markerOnRailHoldsForEveryShapeAndForBothExtents() throws Exception {
+        // The extent decides the two ends and must not touch the x. Same three markers,
+        // both extents, one answer.
+        for (TimelineRailExtent extent : List.of(TimelineRailExtent.ENTRY_BOUNDS,
+                TimelineRailExtent.MARKER_TO_MARKER)) {
+            LayoutGraph graph = timeline(360, 320, t -> t
+                    .markerOnRail()
+                    .rail(rail -> rail.extent(extent))
+                    .axisWidth(28)
+                    .entry(TimelineMarker.dot(12, INK), e -> e.title("Dot").body("Body."))
+                    .entry(TimelineMarker.square(12, INK), e -> e.title("Square").body("Body.")));
+
+            double railX = rails(graph).get(0).x();
+            assertThat(markerAnchors(graph)).allSatisfy(marker -> assertThat(railX)
+                    .as("%s must not move the rail sideways", extent)
+                    .isEqualTo(marker.x() + marker.width() / 2, within(1e-9)));
+        }
+    }
+
+    @Test
+    void markerOnRailWithALeadingColumnStillPutsTheMarkerOnTheLine() throws Exception {
+        LayoutGraph graph = timeline(400, 320, t -> t
+                .markerOnRail()
+                .axisWidth(28)
+                .leadingColumn(DocumentRowColumn.fixed(56))
+                .entry(e -> e.marker(TimelineMarker.dot(12, INK))
+                        .leading(d -> d.addParagraph("2023")).title("First").body("Body."))
+                .entry(e -> e.marker(TimelineMarker.dot(12, INK))
+                        .leading(d -> d.addParagraph("2021")).title("Second").body("Body.")));
+
+        double railX = rails(graph).get(0).x();
+        assertThat(markerAnchors(graph)).allSatisfy(marker -> assertThat(railX)
+                .isEqualTo(marker.x() + marker.width() / 2, within(1e-9)));
+        assertThat(railX)
+                .as("and the date column sits to the left of it, not pushing it out")
+                .isGreaterThan(entryAnchors(graph).get(0).x() + 40.0);
+    }
+
+    @Test
+    void markerOnRailWithMarkerToMarkerRunsBetweenTheMarkerCentres() throws Exception {
+        LayoutGraph graph = timeline(360, 320, t -> t
+                .markerOnRail()
+                .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                .axisWidth(28)
+                .entry(TimelineMarker.dot(12, INK), e -> e.title("First").body("Body."))
+                .entry(TimelineMarker.dot(12, INK), e -> e.title("Second").body("Body.")));
+
+        List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
+        PlacedFragment rail = rails(graph).get(0);
+        assertThat(rail.y() + rail.height())
+                .isEqualTo(markers.get(0).pointY(0.5), within(1e-9));
+        assertThat(rail.y()).isEqualTo(markers.get(1).pointY(0.5), within(1e-9));
+    }
+
+    @Test
+    void markerOnRailIsDrawnUnderTheMarkersItCrosses() throws Exception {
+        // It matters more here than anywhere: the line now passes through the markers, so
+        // whether it is over or under them is visible on the page.
+        LayoutGraph graph = timeline(360, 320, t -> t
+                .markerOnRail()
+                .axisWidth(28)
+                .entry(TimelineMarker.dot(14, INK), e -> e.title("First").body("Body."))
+                .entry(TimelineMarker.dot(14, INK), e -> e.title("Second").body("Body.")));
+
+        int lastRail = -1;
+        int firstMarker = Integer.MAX_VALUE;
+        for (int i = 0; i < graph.fragments().size(); i++) {
+            PlacedFragment fragment = graph.fragments().get(i);
+            if ("@timeline-rail".equals(fragment.path())) {
+                lastRail = Math.max(lastRail, i);
+            } else if (fragment.payload() != null
+                    && fragment.payload().getClass().getSimpleName().contains("Ellipse")) {
+                firstMarker = Math.min(firstMarker, i);
+            }
+        }
+        assertThat(lastRail).isNotEqualTo(-1).isLessThan(firstMarker);
+    }
+
+    @Test
     void markerOnRailPutsTheLineThroughTheMarkerInstead() throws Exception {
         LayoutGraph graph = timeline(320, 300, t -> t
                 .markerOnRail()

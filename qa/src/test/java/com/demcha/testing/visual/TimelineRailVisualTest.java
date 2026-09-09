@@ -126,6 +126,41 @@ class TimelineRailVisualTest {
         }
     }
 
+    @Test
+    void markersOfEverySizeSitOnOneRailWhenTheyAreAnchoredToIt() throws Exception {
+        // DATE | ● | CONTENT, with markers of 6, 14 and 24pt. The geometry is asserted in
+        // TimelineRailGeometryTest — every marker's centre is the rail's x, to 1e-9. This
+        // is the picture of it: one straight axis with three very different markers strung
+        // on it, and the dates in their own column to its left.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(360, 210)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(12)
+                            .markerOnRail()
+                            .axisWidth(28)
+                            .leadingColumn(DocumentRowColumn.fixed(54))
+                            .entry(e -> e.marker(TimelineMarker.dot(6, INK))
+                                    .leading(d -> d.addParagraph("2023"))
+                                    .title("Senior Engineer")
+                                    .body("A small dot, centred on the axis."))
+                            .entry(e -> e.marker(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE))
+                                    .leading(d -> d.addParagraph("2021"))
+                                    .title("Engineer")
+                                    .body("A numbered disc, centred on the same axis."))
+                            .entry(e -> e.marker(TimelineMarker.square(24, INK))
+                                    .leading(d -> d.addParagraph("2019"))
+                                    .title("Junior Engineer")
+                                    .body("And a square four times the dot's size.")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/marker-on-rail", session);
+        }
+    }
+
     private static EllipseNode circle(double size, DocumentColor fill) {
         return new EllipseNode("marker", size, size, fill, null, null, null, null, null);
     }

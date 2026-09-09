@@ -60,18 +60,19 @@ class TimelineAxisColumnLayoutTest {
     }
 
     @Test
-    void theSectionInTheAxisIsTheMarkersWidthAndNotTheColumnsSoNoRailMayBeDerivedFromIt() throws Exception {
-        // The measurement that decides how the rail is built later. Under a 20pt axis the
-        // three markers report 6, 14 and 20 — their own widths, with the declared width
-        // acting as a cap on the last. A rail computed as axisX + width/2 from these
-        // numbers would sit at three different x down one timeline, which is the defect
-        // being reworked, not a new one.
+    void theSectionInTheAxisIsTheWholeColumnAndTheMarkerIsPlacedWithinIt() throws Exception {
+        // Where the marker sits in the axis follows from its anchor, and the align that
+        // expresses that fills the column. So the column reports the width it was declared
+        // with, under markers of every size, and the marker's own box lives one level
+        // deeper — reported by its anchor, which is what a rail is derived from. It was the
+        // marker's width here before markers were placed rather than packed left, and a
+        // rail taken from that number sat at three different x down one timeline.
         List<Double> widths = axisColumns(t -> t.axisWidth(20)).stream()
                 .map(PlacedNode::placementWidth).toList();
 
         assertThat(widths)
-                .as("the marker's width, capped by the column, not the column's width")
-                .containsExactly(6.0, 14.0, 20.0);
+                .as("the column's own width, whatever the marker in it")
+                .containsExactly(20.0, 20.0, 20.0);
     }
 
     @Test

@@ -17,10 +17,14 @@ follow semantic versioning; release dates are ISO 8601.
   Two independent choices, and they stay independent. `TimelineRailExtent` says how far the
   rail runs: `ENTRY_BOUNDS`, the default and what every existing timeline already draws, or
   `MARKER_TO_MARKER`, which starts at the first marker and stops at the last.
-  `markerOnRail()` says where it runs: through the markers' centres instead of a gutter to
-  their left. A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather
-  than a line of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the
-  same line as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
+  `markerOnRail()` says where it runs: it aligns every marker's declared anchor with the
+  timeline axis. With the current centre anchor, markers of different sizes are centred
+  within the axis column and share one continuous rail — a 6pt dot, a 14pt numbered disc
+  and a 24pt square all sit on the same line rather than on the same left edge. A timeline
+  that does not call it keeps the left-edge anchor and the placement it has always had.
+  A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather than a line
+  of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the same line
+  as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
 
   **A leading column sits to the left of the timeline axis; it does not move the rail to
   the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to

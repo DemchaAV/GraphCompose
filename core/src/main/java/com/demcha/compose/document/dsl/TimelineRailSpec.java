@@ -9,9 +9,9 @@ import com.demcha.compose.document.style.DocumentStroke;
  * and {@code rail(r -> r.stroke(...))} both normalize here, so there is one rail
  * configuration for the layout to read rather than an old shape and a new one.</p>
  *
- * <p>Today that rail is still a left border on every entry section, which is why a stroke
- * is all it takes to describe. Naming it separately is what lets that change without every
- * caller of the timeline layout learning about it.</p>
+ * <p>A stroke is all it takes to describe, because the rail's geometry is not here: how far
+ * it runs is a {@link TimelineRailExtent} and where it runs comes from the marker anchor,
+ * both resolved after layout. This is only what it is drawn with.</p>
  *
  * @param stroke the rail's colour and width
  * @author Artem Demchyshyn

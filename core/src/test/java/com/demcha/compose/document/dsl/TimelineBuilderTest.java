@@ -1,5 +1,7 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.layout.LayoutAnchorId;
+import com.demcha.compose.document.layout.LayoutAnchorNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -461,7 +463,7 @@ class TimelineBuilderTest {
         assertThat(paragraphTexts(header.children().get(0)))
                 .as("leading first, before the marker")
                 .containsExactly("2023");
-        assertThat(((SectionNode) header.children().get(1)).children().get(0))
+        assertThat(markerContent(header.children().get(1)))
                 .as("then the marker")
                 .isInstanceOf(EllipseNode.class);
         assertThat(paragraphTexts(header.children().get(2))).containsExactly("Senior Engineer");
@@ -484,7 +486,7 @@ class TimelineBuilderTest {
         assertThat(paragraphTexts(withoutLeading.children().get(0)))
                 .as("the first is simply empty")
                 .isEmpty();
-        assertThat(((SectionNode) withoutLeading.children().get(1)).children().get(0))
+        assertThat(markerContent(withoutLeading.children().get(1)))
                 .as("so the marker is still the second column, as in the entry above")
                 .isInstanceOf(EllipseNode.class);
     }
@@ -570,10 +572,46 @@ class TimelineBuilderTest {
                         .center(new EllipseNode("pip", 4, 4, NAVY, null, null, null, null, null)))),
                         e -> e.title("Custom")));
 
-        DocumentNode marker = ((SectionNode) header(entry(timeline, 0)).children().get(0))
-                .children().get(0);
+        DocumentNode marker = markerContent(header(entry(timeline, 0)).children().get(0));
         assertThat(marker).isInstanceOf(LayerStackNode.class);
         assertThat(((LayerStackNode) marker).layers()).hasSize(3);
+    }
+
+    @Test
+    void aMarkerIsWrappedInAnAnchorSoTheLayoutCanReportWhereItLanded() {
+        // The wrapper every other test in this file reads through. It is what turns "the
+        // marker drew three shapes" into one box the finished layout can report, and it
+        // sits inside the row's column rather than being it — a row hosts a fixed set of
+        // child types and this is not one of them.
+        SectionNode timeline = timelineOf(t -> t
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("x"))
+                .entry(TimelineMarker.dot(8, NAVY), e -> e.title("y")));
+
+        DocumentNode first = header(entry(timeline, 0)).children().get(0).children().get(0);
+        DocumentNode second = header(entry(timeline, 1)).children().get(0).children().get(0);
+        assertThat(first).isInstanceOf(LayoutAnchorNode.class);
+
+        LayoutAnchorId firstId = ((LayoutAnchorNode) first).id();
+        LayoutAnchorId secondId = ((LayoutAnchorNode) second).id();
+        assertThat(firstId.index()).as("the entry's position").isZero();
+        assertThat(secondId.index()).isEqualTo(1);
+        assertThat(firstId.kind()).isSameAs(secondId.kind());
+        assertThat(firstId.groupKey())
+                .as("one owner for the whole timeline, so its markers find each other")
+                .isSameAs(secondId.groupKey());
+    }
+
+    @Test
+    void twoTimelinesOnAPageAnchorOnDifferentOwners() {
+        // The property that lets a pass ask for its own markers and get nobody else's.
+        SectionNode page = new SectionBuilder()
+                .addTimeline(t -> t.entry(TimelineMarker.dot(8, NAVY), e -> e.title("first timeline")))
+                .addTimeline(t -> t.entry(TimelineMarker.dot(8, NAVY), e -> e.title("second timeline")))
+                .build();
+
+        Object first = ownerOf((SectionNode) page.children().get(0));
+        Object second = ownerOf((SectionNode) page.children().get(1));
+        assertThat(first).isNotSameAs(second);
     }
 
     @Test
@@ -647,8 +685,28 @@ class TimelineBuilderTest {
 
     private static DocumentNode markerNode(TimelineMarker marker) {
         SectionNode timeline = timelineOf(t -> t.entry(marker, e -> e.title("x")));
-        SectionNode markerColumn = (SectionNode) header(entry(timeline, 0)).children().get(0);
-        return markerColumn.children().get(0);
+        return markerContent(header(entry(timeline, 0)).children().get(0));
+    }
+
+    /**
+     * What the marker's recipe drew, reached through the anchor that wraps it.
+     *
+     * <p>The column holds a {@code LayoutAnchorNode} holding the drawn marker, so that the
+     * finished layout reports one box per marker however many shapes it took to draw. The
+     * unwrapping lives here rather than in each test, and
+     * {@link #aMarkerIsWrappedInAnAnchorSoTheLayoutCanReportWhereItLanded()} is where the
+     * wrapper itself is asserted.</p>
+     */
+    private static DocumentNode markerContent(DocumentNode markerColumn) {
+        DocumentNode anchor = markerColumn.children().get(0);
+        assertThat(anchor).isInstanceOf(LayoutAnchorNode.class);
+        return anchor.children().get(0).children().get(0);
+    }
+
+    /** The owner every marker in one timeline anchors on. */
+    private static Object ownerOf(SectionNode timeline) {
+        DocumentNode anchor = header(entry(timeline, 0)).children().get(0).children().get(0);
+        return ((LayoutAnchorNode) anchor).id().groupKey();
     }
 
     private static List<ParagraphNode> paragraphsOf(DocumentNode parent) {

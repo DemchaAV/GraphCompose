@@ -164,13 +164,73 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/EllipseNode[0]",
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]",
     "entityName" : null,
-    "entityKind" : "EllipseNode",
+    "entityKind" : "LayoutAnchorNode",
     "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
+    "computedX" : 28.0,
+    "computedY" : 142.0,
+    "placementX" : 28.0,
+    "placementY" : 142.0,
+    "placementWidth" : 8.0,
+    "placementHeight" : 8.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 8.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 28.0,
+    "computedY" : 142.0,
+    "placementX" : 28.0,
+    "placementY" : 142.0,
+    "placementWidth" : 8.0,
+    "placementHeight" : 8.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 8.0,
+    "contentHeight" : 8.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/EllipseNode[0]",
+    "entityName" : null,
+    "entityKind" : "EllipseNode",
+    "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[0]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
     "computedX" : 28.0,
     "computedY" : 142.0,
     "placementX" : 28.0,
@@ -404,13 +464,73 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/EllipseNode[0]",
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]",
     "entityName" : null,
-    "entityKind" : "EllipseNode",
+    "entityKind" : "LayoutAnchorNode",
     "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
+    "computedX" : 28.0,
+    "computedY" : 142.0,
+    "placementX" : 28.0,
+    "placementY" : 142.0,
+    "placementWidth" : 8.0,
+    "placementHeight" : 8.0,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 8.0,
+    "contentHeight" : 8.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 28.0,
+    "computedY" : 142.0,
+    "placementX" : 28.0,
+    "placementY" : 142.0,
+    "placementWidth" : 8.0,
+    "placementHeight" : 8.0,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 8.0,
+    "contentHeight" : 8.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/EllipseNode[0]",
+    "entityName" : null,
+    "entityKind" : "EllipseNode",
+    "parentPath" : "ContainerNode[0]/SectionNode[0]/SectionNode[1]/RowNode[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
     "computedX" : 28.0,
     "computedY" : 142.0,
     "placementX" : 28.0,

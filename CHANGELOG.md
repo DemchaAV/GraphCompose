@@ -152,6 +152,16 @@ follow semantic versioning; release dates are ISO 8601.
   middle — while horizontal margins come off every slice as before. **An anchor whose
   content fits on one page is unchanged**, which is every anchor that exists today.
 
+- **A timeline's markers now report where they landed, and the marker column gains a
+  level in the node tree.** Each marker is wrapped so the finished layout carries one
+  resolved anchor per marker — one box however many shapes the marker drew, on the page
+  the marker is actually on — which is what the rail will be computed from instead of a
+  per-entry section border. Nothing is drawn for it and nothing moves: every existing
+  timeline renders pixel for pixel as it did, and every box that was in the layout graph is
+  still there at the same coordinates. What changes is the *paths*: the marker's column now
+  holds a wrapper holding the marker, so a **committed layout snapshot that includes a
+  timeline needs re-recording** — check that the diff is only added wrapper entries and
+  renamed paths before approving it, as the three snapshots in this repository were.
 
 - **A built-in feature can now draw from geometry the layout has already resolved.**
   Some things cannot be drawn while laying out because they depend on where other things

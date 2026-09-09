@@ -13,6 +13,8 @@ import java.util.List;
  * the point — a second authoring API can produce the same spec, and the layout will not be
  * able to tell which one it came from.</p>
  *
+ * @param owner               this timeline's identity, which every one of its markers
+ *                            anchors on and no other timeline's markers do
  * @param rail                the connector rail
  * @param leadingColumn       how wide the column before the marker is, or null when the
  *                            timeline has no leading column at all
@@ -27,7 +29,8 @@ import java.util.List;
  * @author Artem Demchyshyn
  * @since 2.4.0
  */
-record TimelineSpec(TimelineRailSpec rail,
+record TimelineSpec(TimelineRailOwner owner,
+                    TimelineRailSpec rail,
                     DocumentRowColumn leadingColumn,
                     double gutter,
                     double markerGap,

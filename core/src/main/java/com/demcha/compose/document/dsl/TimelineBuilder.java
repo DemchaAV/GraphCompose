@@ -1,5 +1,8 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.layout.LayoutAnchorId;
+import com.demcha.compose.document.layout.LayoutAnchorNode;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -365,8 +368,12 @@ public final class TimelineBuilder {
             }
             specs.add(entry.normalize(resolvedTitle, resolvedMeta, resolvedBody));
         }
-        return new TimelineSpec(new TimelineRailSpec(connectorColor, connectorWidth),
-                leadingColumn, gutter, markerGap, axis, entrySpacing,
+        // One owner per timeline, allocated here. Every marker below anchors on this
+        // instance, so the pass that draws the rail asks for it and gets these markers and
+        // nobody else's — two timelines on a page never merge.
+        TimelineRailSpec railSpec = new TimelineRailSpec(connectorColor, connectorWidth);
+        return new TimelineSpec(new TimelineRailOwner(railSpec),
+                railSpec, leadingColumn, gutter, markerGap, axis, entrySpacing,
                 keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
 
@@ -383,6 +390,7 @@ public final class TimelineBuilder {
         List<TimelineEntrySpec> entries = spec.entries();
         for (int i = 0; i < entries.size(); i++) {
             TimelineEntrySpec entry = entries.get(i);
+            int index = i;
             boolean last = i == entries.size() - 1;
             double bottom = last ? 0.0 : spec.entrySpacing();
             timeline.addSection(section -> {
@@ -409,15 +417,48 @@ public final class TimelineBuilder {
                         // still start its marker where every other entry starts one.
                         header.addSection(entry.leading() == null ? column -> { } : entry.leading());
                     }
-                    header.addSection(markerColumn -> {
-                        markerColumn.spacing(0);
-                        entry.marker().renderInto(markerColumn);
-                    });
+                    header.addSection(anchoredMarker(spec, entry, index));
                     header.addSection(entry.beside());
                 });
                 entry.below().accept(section);
             });
         }
+    }
+
+    /**
+     * The marker's column, wrapped so the finished layout reports where the marker landed.
+     *
+     * <p>The wrapper is what makes a marker one box however many fragments it drew: the
+     * anchor reports the wrapped node's own box, so a ring-disc-pip marker and a plain dot
+     * of the same size resolve identically. It adds a level to the layout paths — anything
+     * keying on those, a snapshot for one, sees it — and no geometry: the wrapper measures
+     * to its child and adds no spacing.</p>
+     *
+     * <p>The anchor sits <em>inside</em> the row's column rather than being the column. A
+     * row hosts a fixed set of child types and an anchor is not one of them, and widening
+     * that list — a public builder's contract — for an internal wrapper would be the wrong
+     * trade. Wrapping the marker rather than its column is also the truer statement of what
+     * is being anchored, and it is what a recipe that draws several nodes needs: they
+     * become one box here.</p>
+     *
+     * @param spec  the timeline, for its owner
+     * @param entry the entry whose marker this is
+     * @param index the entry's position, which becomes the anchor's index
+     * @return the marker column, with the marker anchored inside it
+     */
+    private static Consumer<SectionBuilder> anchoredMarker(TimelineSpec spec,
+                                                           TimelineEntrySpec entry,
+                                                           int index) {
+        SectionBuilder drawn = new SectionBuilder();
+        drawn.spacing(0);
+        entry.marker().renderInto(drawn);
+        DocumentNode anchored = new LayoutAnchorNode("",
+                new LayoutAnchorId(spec.owner(), TimelineAnchorKind.MARKER, index),
+                drawn.build());
+        return markerColumn -> {
+            markerColumn.spacing(0);
+            markerColumn.add(anchored);
+        };
     }
 
     /**

@@ -60,10 +60,6 @@ public final class TimelineBuilder {
     TimelineBuilder() {
     }
 
-    private static boolean notBlank(String value) {
-        return value != null && !value.isBlank();
-    }
-
     private static DocumentTextStyle defaultTitleStyle() {
         return DocumentTextStyle.builder()
                 .fontName(FontName.HELVETICA)
@@ -238,58 +234,59 @@ public final class TimelineBuilder {
     }
 
     void buildInto(SectionBuilder timeline) {
-        timeline.spacing(0);
-        timeline.keepTogether(keepTogether);
+        layout(normalize(), timeline);
+    }
+
+    /**
+     * Resolves this builder's defaults and per-entry overrides into the internal model.
+     *
+     * <p>Everything the authoring API knows and the layout does not — which style a slot
+     * fell back to, whether a body was given at all — is settled here.</p>
+     *
+     * @return the normalized timeline
+     */
+    private TimelineSpec normalize() {
         DocumentTextStyle resolvedTitle = titleStyle != null ? titleStyle : defaultTitleStyle();
         DocumentTextStyle resolvedMeta = metaStyle != null ? metaStyle : defaultMetaStyle();
         DocumentTextStyle resolvedBody = bodyStyle != null ? bodyStyle : defaultBodyStyle();
+        List<TimelineEntrySpec> specs = new ArrayList<>(entries.size());
+        for (Entry entry : entries) {
+            specs.add(entry.entry().normalize(entry.marker(), resolvedTitle, resolvedMeta, resolvedBody));
+        }
+        return new TimelineSpec(new TimelineRailSpec(connectorColor, connectorWidth),
+                gutter, markerGap, markerColumnWeight, entrySpacing,
+                keepTogether, keepEntriesTogether, List.copyOf(specs));
+    }
+
+    /**
+     * Lays a normalized timeline out. It reads nothing but the spec, which is what will
+     * let a second authoring API reach this same code without it learning of that API.
+     *
+     * @param spec     the normalized timeline
+     * @param timeline the section the timeline is built into
+     */
+    private static void layout(TimelineSpec spec, SectionBuilder timeline) {
+        timeline.spacing(0);
+        timeline.keepTogether(spec.keepTogether());
+        List<TimelineEntrySpec> entries = spec.entries();
         for (int i = 0; i < entries.size(); i++) {
-            Entry entry = entries.get(i);
+            TimelineEntrySpec entry = entries.get(i);
             boolean last = i == entries.size() - 1;
-            double bottom = last ? 0.0 : entrySpacing;
+            double bottom = last ? 0.0 : spec.entrySpacing();
             timeline.addSection(section -> {
-                section.keepTogether(keepEntriesTogether)
-                        .accentLeft(connectorColor, connectorWidth)
-                        .padding(new DocumentInsets(0, 0, bottom, gutter))
+                section.keepTogether(spec.keepEntriesTogether())
+                        .accentLeft(spec.rail().color(), spec.rail().width())
+                        .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
                 section.addRow(header -> {
-                    header.spacing(markerGap).weights(markerColumnWeight, 1.0);
+                    header.spacing(spec.markerGap()).weights(spec.markerColumnWeight(), 1.0);
                     header.addSection(markerColumn -> {
                         markerColumn.spacing(0);
                         entry.marker().renderInto(markerColumn);
                     });
-                    header.addSection(titleColumn -> {
-                        titleColumn.spacing(2);
-                        if (notBlank(entry.entry().title())) {
-                            DocumentTextStyle style = entry.entry().titleStyle() != null
-                                    ? entry.entry().titleStyle() : resolvedTitle;
-                            titleColumn.addParagraph(p -> p
-                                    .text(entry.entry().title())
-                                    .textStyle(style)
-                                    .margin(DocumentInsets.zero()));
-                        }
-                        if (notBlank(entry.entry().meta())) {
-                            DocumentTextStyle style = entry.entry().metaStyle() != null
-                                    ? entry.entry().metaStyle() : resolvedMeta;
-                            titleColumn.addParagraph(p -> p
-                                    .text(entry.entry().meta())
-                                    .textStyle(style)
-                                    .margin(DocumentInsets.zero()));
-                        }
-                    });
+                    header.addSection(entry.beside());
                 });
-                if (notBlank(entry.entry().body())) {
-                    DocumentTextStyle style = entry.entry().bodyStyle() != null
-                            ? entry.entry().bodyStyle() : resolvedBody;
-                    section.addParagraph(p -> p
-                            .text(entry.entry().body())
-                            .textStyle(style)
-                            .lineSpacing(1.3)
-                            .margin(DocumentInsets.zero()));
-                }
-                if (entry.entry().extra() != null) {
-                    entry.entry().extra().accept(section);
-                }
+                entry.below().accept(section);
             });
         }
     }

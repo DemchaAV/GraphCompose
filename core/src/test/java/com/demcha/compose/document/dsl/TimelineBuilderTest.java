@@ -214,6 +214,38 @@ class TimelineBuilderTest {
     }
 
     @Test
+    void aPerEntryStyleBeatsTheTimelineDefaultForThatSlotAlone() {
+        // Precedence, and its scope: the entry that overrides gets its own style, the slots
+        // it did not override keep the timeline's, and the entry beside it is untouched.
+        // Three separate things one `override != null` decides, so they are asserted
+        // together — and the resolution moved when the model was normalized.
+        DocumentTextStyle timelineTitle = DocumentTextStyle.builder().size(19).build();
+        DocumentTextStyle timelineMeta = DocumentTextStyle.builder().size(7).build();
+        DocumentTextStyle timelineBody = DocumentTextStyle.builder().size(11).build();
+        DocumentTextStyle ownTitle = DocumentTextStyle.builder().size(23).build();
+        DocumentTextStyle ownBody = DocumentTextStyle.builder().size(5).build();
+
+        SectionNode timeline = timelineOf(t -> t
+                .titleStyle(timelineTitle).metaStyle(timelineMeta).bodyStyle(timelineBody)
+                .entry(TimelineMarker.dot(8, NAVY), e -> e
+                        .title("Overridden", ownTitle).meta("M").body("B", ownBody))
+                .entry(TimelineMarker.dot(8, NAVY), e -> e
+                        .title("Plain").meta("M").body("B")));
+
+        List<ParagraphNode> overridden = paragraphsOf(header(entry(timeline, 0)).children().get(1));
+        assertThat(overridden.get(0).textStyle().size()).as("its own title style")
+                .isEqualTo(23.0, within(1e-9));
+        assertThat(overridden.get(1).textStyle().size()).as("the meta it did not override")
+                .isEqualTo(7.0, within(1e-9));
+        assertThat(lastParagraph(entry(timeline, 0)).textStyle().size()).isEqualTo(5.0, within(1e-9));
+
+        List<ParagraphNode> plain = paragraphsOf(header(entry(timeline, 1)).children().get(1));
+        assertThat(plain.get(0).textStyle().size()).as("the next entry is unaffected")
+                .isEqualTo(19.0, within(1e-9));
+        assertThat(lastParagraph(entry(timeline, 1)).textStyle().size()).isEqualTo(11.0, within(1e-9));
+    }
+
+    @Test
     void anEntryOmitsTheParagraphsItWasNotGiven() {
         SectionNode timeline = timelineOf(t -> t
                 .entry(TimelineMarker.dot(8, NAVY), e -> e.title("Only a title")));

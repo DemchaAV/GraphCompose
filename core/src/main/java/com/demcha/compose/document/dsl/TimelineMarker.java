@@ -140,15 +140,6 @@ public final class TimelineMarker {
     }
 
     /**
-     * The box this marker declares for itself.
-     *
-     * @return the declared bounds
-     */
-    TimelineMarkerBounds bounds() {
-        return bounds;
-    }
-
-    /**
      * This marker as one node: the box it declared, with its recipe drawn inside.
      *
      * <p>The declared box is what the marker <em>is</em>, whatever the recipe measures to.

@@ -185,6 +185,105 @@ class HorizontalBandTest {
                 .isEqualTo(rowRightEdge(graph), within(1e-9));
     }
 
+    // --- relocation ---------------------------------------------------------------
+
+    @Test
+    void aKeptTogetherBlockThatRelocatesPublishesItsColumnsOnceAndUsesThem() {
+        // A block that does not fit in what is left of the page but fits on a fresh one.
+        // Whether that costs a false "two rows under one identity" depends on something the
+        // mechanism cannot see from the outside: whether the engine decides to move the
+        // block before compiling it, or compiles it and then abandons the attempt. Only the
+        // first is safe for anything a compile records, so it is asserted rather than
+        // assumed — and the assertion is that this lays out at all.
+        Object key = new Object();
+        LayoutGraph graph = document(320, 200, flow -> {
+            for (int i = 0; i < 6; i++) {
+                flow.addParagraph("Filler line " + i + " taking a line of its own on this page.");
+            }
+            flow.addSection(block -> {
+                block.keepTogether();
+                block.add(new HorizontalBandsNode("", key, row(r -> {
+                    r.columns(DocumentRowColumn.fixed(70), DocumentRowColumn.weight(1.0));
+                    r.addSection(cell -> cell.addParagraph("mark"));
+                    r.addSection(cell -> cell.addParagraph("title"));
+                })));
+                block.add(new HorizontalBandContentNode("", key, 1,
+                        section(s -> s.addParagraph("A body of two lines, kept with its row."))));
+            });
+        });
+
+        PlacedNode column = rowColumn(graph, 1);
+        PlacedNode content = bandContent(graph);
+        assertThat(content.startPage())
+                .as("the premise: the block did move to a fresh page")
+                .isGreaterThan(0);
+        assertThat(column.startPage())
+                .as("and the row moved with it, which is what kept-together means")
+                .isEqualTo(content.startPage());
+        assertThat(content.placementX())
+                .as("the column of the placement that survived, not of an abandoned one")
+                .isEqualTo(column.placementX(), within(1e-9));
+        assertThat(content.placementX() + content.placementWidth())
+                .isEqualTo(rowRightEdge(graph), within(1e-9));
+    }
+
+    @Test
+    void theSameRelocationWithSharesInsteadOfPoints() {
+        // The half that cannot be checked at build time: the columns are shares, so the
+        // number only exists after the row is laid out — and after it is laid out on the
+        // page it ended up on.
+        Object key = new Object();
+        LayoutGraph graph = document(320, 200, flow -> {
+            for (int i = 0; i < 6; i++) {
+                flow.addParagraph("Filler line " + i + " taking a line of its own on this page.");
+            }
+            flow.addSection(block -> {
+                block.keepTogether();
+                block.add(new HorizontalBandsNode("", key, row(r -> {
+                    r.columns(DocumentRowColumn.weight(0.3), DocumentRowColumn.weight(0.7));
+                    r.addSection(cell -> cell.addParagraph("mark"));
+                    r.addSection(cell -> cell.addParagraph("title"));
+                })));
+                block.add(new HorizontalBandContentNode("", key, 1,
+                        section(s -> s.addParagraph("A body of two lines, kept with its row."))));
+            });
+        });
+
+        PlacedNode column = rowColumn(graph, 1);
+        PlacedNode content = bandContent(graph);
+        assertThat(content.startPage()).isGreaterThan(0);
+        assertThat(content.placementX()).isEqualTo(column.placementX(), within(1e-9));
+        assertThat(content.placementX() + content.placementWidth())
+                .isEqualTo(rowRightEdge(graph), within(1e-9));
+    }
+
+    @Test
+    void aDocumentLaidOutMoreThanOncePublishesItsColumnsAfreshEachTime() {
+        // A page reference makes the whole document a fixed point: it is compiled, the page
+        // numbers are read off, and it is compiled again until they stop moving. Each of
+        // those is a compile, and each republishes the same identity — which is only safe
+        // because what a compile records belongs to that compile and nothing else.
+        Object key = new Object();
+        LayoutGraph graph = document(320, 220, flow -> {
+            flow.addPageReference("later");
+            flow.add(new HorizontalBandsNode("", key, row(r -> {
+                r.columns(DocumentRowColumn.fixed(70), DocumentRowColumn.weight(1.0));
+                r.addSection(cell -> cell.addParagraph("mark"));
+                r.addSection(cell -> cell.addParagraph("title"));
+            })));
+            flow.add(new HorizontalBandContentNode("", key, 1,
+                    section(s -> s.addParagraph("A body under the second column."))));
+            flow.addParagraph("filler").addParagraph("filler").addParagraph("filler");
+            flow.addSection("later", s -> s.addParagraph("The anchor this refers to."));
+        });
+
+        PlacedNode column = rowColumn(graph, 1);
+        PlacedNode content = bandContent(graph);
+        assertThat(content.placementX()).isEqualTo(column.placementX(), within(1e-9));
+        assertThat(content.placementX() + content.placementWidth())
+                .isEqualTo(rowRightEdge(graph), within(1e-9));
+    }
+
     // --- identity ----------------------------------------------------------------
 
     @Test

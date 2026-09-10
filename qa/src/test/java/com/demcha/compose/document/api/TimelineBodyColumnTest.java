@@ -1,6 +1,7 @@
 package com.demcha.compose.document.api;
 
 import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.dsl.PageFlowBuilder;
 import com.demcha.compose.document.dsl.TimelineBuilder;
 import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.layout.LayoutGraph;
@@ -167,6 +168,68 @@ class TimelineBodyColumnTest {
                 .isEqualTo(railX + 8.0, within(1e-9));
     }
 
+    @Test
+    void anEntryKeptTogetherAndMovedToAFreshPageStillHasItsBodyInTheColumn() {
+        // The relocation case. An entry that will not fit in what is left of the page moves
+        // whole, and the column its body uses is the one the row resolved where it ended
+        // up — not one left over from a placement that was never used.
+        LayoutGraph graph = document(320, 220, flow -> {
+            for (int i = 0; i < 7; i++) {
+                flow.addParagraph("Filler line " + i + " taking a line of its own on this page.");
+            }
+            flow.addTimeline(t -> t.connector(RAIL, 1.5).markerOnRail().axisWidth(24)
+                    .keepEntriesTogether()
+                    .entry(TimelineMarker.dot(10, INK), e -> e
+                            .title("Moved whole")
+                            .body("A body of a couple of lines, kept with its marker row.")));
+        });
+
+        PlacedNode body = body(graph);
+        PlacedNode contentColumn = contentColumn(graph);
+        assertThat(body.startPage()).as("the premise: it moved").isGreaterThan(0);
+        assertThat(contentColumn.startPage())
+                .as("marker row and body moved together")
+                .isEqualTo(body.startPage());
+        assertThat(body.placementX())
+                .as("bodyX is the content column of the placement that survived")
+                .isEqualTo(contentColumn.placementX(), within(1e-9));
+        assertThat(body.placementX() + body.placementWidth())
+                .isEqualTo(rowRightEdge(graph), within(1e-9));
+        assertThat(rails(graph).get(0).x()).as("railX < bodyX").isLessThan(body.placementX());
+    }
+
+    @Test
+    void aWholeTimelineKeptTogetherAndMovedKeepsTheSameInvariants() {
+        // The same question one level up: the timeline as a unit, with two entries, moved to
+        // a fresh page. Two rows, two identities, and each body in its own row's column.
+        LayoutGraph graph = document(320, 240, flow -> {
+            for (int i = 0; i < 7; i++) {
+                flow.addParagraph("Filler line " + i + " taking a line of its own on this page.");
+            }
+            flow.addTimeline(t -> t.connector(RAIL, 1.5).markerOnRail().axisWidth(24)
+                    .keepTogether()
+                    .entry(TimelineMarker.dot(10, INK), e -> e.title("First").body("A short body."))
+                    .entry(TimelineMarker.dot(10, INK), e -> e.title("Second").body("Another short body.")));
+        });
+
+        List<PlacedNode> bodies = graph.nodes().stream()
+                .filter(n -> "HorizontalBandContentNode".equals(n.nodeKind())).toList();
+        List<PlacedNode> columns = graph.nodes().stream()
+                .filter(n -> n.parentPath() != null && n.parentPath().matches(".*RowNode\\[\\d+]$"))
+                .filter(n -> n.childIndex() == 1)
+                .toList();
+
+        assertThat(bodies).hasSize(2);
+        assertThat(columns).hasSize(2);
+        assertThat(bodies.get(0).startPage()).as("the premise: the timeline moved").isGreaterThan(0);
+        for (int i = 0; i < 2; i++) {
+            assertThat(bodies.get(i).placementX())
+                    .as("entry %d: bodyX is its own row's content column", i)
+                    .isEqualTo(columns.get(i).placementX(), within(1e-9));
+            assertThat(rails(graph).get(0).x()).isLessThan(bodies.get(i).placementX());
+        }
+    }
+
     // --- helpers ---------------------------------------------------------------
 
     private static PlacedNode body(LayoutGraph graph) {
@@ -204,12 +267,18 @@ class TimelineBodyColumnTest {
     }
 
     private static LayoutGraph timeline(double width, double height, Consumer<TimelineBuilder> spec) {
+        return document(width, height, flow -> flow.addTimeline(t -> {
+            t.connector(RAIL, 1.5);
+            spec.accept(t);
+        }));
+    }
+
+    private static LayoutGraph document(double width, double height, Consumer<PageFlowBuilder> content) {
         try (DocumentSession session = GraphCompose.document()
                 .pageSize(width, height).margin(DocumentInsets.of(20)).create()) {
-            session.pageFlow().addTimeline(t -> {
-                t.connector(RAIL, 1.5);
-                spec.accept(t);
-            }).build();
+            PageFlowBuilder flow = session.pageFlow();
+            content.accept(flow);
+            flow.build();
             return session.layoutGraph();
         } catch (RuntimeException failure) {
             throw failure;

@@ -24,11 +24,14 @@ import java.util.List;
  *       defaults set on {@link com.demcha.compose.document.dsl.ListBuilder}.</li>
  * </ul>
  *
- * <p>When {@code nestedItems} is non-empty, the layout pipeline
- * flattens the tree depth-first into indent-prefixed paragraph
- * fragments and the top-level {@code marker} / {@code items} fields
- * are ignored. When {@code nestedItems} is empty, the node behaves
- * exactly like the v1.5 flat list.</p>
+ * <p>Both shapes are laid out one of two ways, chosen by
+ * {@code hangingIndent}. Left unset — the default — a nested tree is
+ * flattened depth-first into indent-prefixed paragraph fragments with the
+ * top-level {@code marker} / {@code items} fields ignored, and a flat list
+ * behaves exactly as it did in v1.5. Set, the item's marker, depth and
+ * content are kept apart and given real geometry: a marker column and a
+ * content column every visual line of the item shares. See
+ * {@link com.demcha.compose.document.dsl.ListBuilder#hangingIndent(boolean)}.</p>
  *
  * @param name               optional semantic name used in snapshots and diagnostics
  * @param items              item texts in source order — used when {@code nestedItems} is empty
@@ -42,6 +45,11 @@ import java.util.List;
  * @param normalizeMarkers   whether leading user-supplied bullets or dashes are stripped
  * @param padding            inner list padding
  * @param margin             outer list margin
+ * @param hangingIndent      whether items get marker/content geometry instead of the
+ *                           legacy text prefix; {@code false} — the default — keeps the
+ *                           v1.4-through-2.3 rendering exactly
+ * @param markerGap          space between marker and content in points, observed only
+ *                           when {@code hangingIndent} is set
  * @author Artem Demchyshyn
  */
 public record ListNode(
@@ -56,8 +64,19 @@ public record ListNode(
         String continuationIndent,
         boolean normalizeMarkers,
         DocumentInsets padding,
-        DocumentInsets margin
+        DocumentInsets margin,
+        boolean hangingIndent,
+        double markerGap
 ) implements DocumentNode {
+
+    /**
+     * Space between marker and content used when {@code hangingIndent} is set
+     * and the author did not choose a gap, in points.
+     *
+     * @since 2.4.0
+     */
+    public static final double DEFAULT_MARKER_GAP = 4.0;
+
     /**
      * Creates a normalized list node.
      */
@@ -76,6 +95,12 @@ public record ListNode(
         }
         if (itemSpacing < 0 || Double.isNaN(itemSpacing) || Double.isInfinite(itemSpacing)) {
             throw new IllegalArgumentException("itemSpacing must be finite and non-negative: " + itemSpacing);
+        }
+        // Validated even when hangingIndent is false: a node that carries a
+        // nonsense gap and only reveals it the day someone opts in is worse
+        // than one that refuses to be built.
+        if (markerGap < 0 || Double.isNaN(markerGap) || Double.isInfinite(markerGap)) {
+            throw new IllegalArgumentException("markerGap must be finite and non-negative: " + markerGap);
         }
     }
 
@@ -108,6 +133,42 @@ public record ListNode(
                     DocumentInsets margin) {
         this(name, items, List.of(), marker, textStyle, align, lineSpacing, itemSpacing,
                 continuationIndent, normalizeMarkers, padding, margin);
+    }
+
+    /**
+     * Back-compat constructor matching the v1.8-through-2.3 12-component
+     * signature. Keeps the legacy prefix layout — {@code hangingIndent} is
+     * {@code false} and {@code markerGap} takes its default, which that layout
+     * does not observe.
+     *
+     * @param name               optional semantic name used in snapshots and diagnostics
+     * @param items              item texts in source order — used when {@code nestedItems} is empty
+     * @param nestedItems        nested item tree, empty for flat lists
+     * @param marker             top-level marker rendered before each flat item
+     * @param textStyle          shared item text style
+     * @param align              horizontal alignment for item text
+     * @param lineSpacing        extra space between wrapped lines within one item
+     * @param itemSpacing        extra space between list items
+     * @param continuationIndent prefix used only for wrapped continuation lines when the marker is hidden
+     * @param normalizeMarkers   whether leading user-supplied bullets or dashes are stripped
+     * @param padding            inner list padding
+     * @param margin             outer list margin
+     * @since 2.4.0
+     */
+    public ListNode(String name,
+                    List<String> items,
+                    List<ListItem> nestedItems,
+                    ListMarker marker,
+                    DocumentTextStyle textStyle,
+                    TextAlign align,
+                    double lineSpacing,
+                    double itemSpacing,
+                    String continuationIndent,
+                    boolean normalizeMarkers,
+                    DocumentInsets padding,
+                    DocumentInsets margin) {
+        this(name, items, nestedItems, marker, textStyle, align, lineSpacing, itemSpacing,
+                continuationIndent, normalizeMarkers, padding, margin, false, DEFAULT_MARKER_GAP);
     }
 
     private static List<String> normalizeItems(List<String> items) {

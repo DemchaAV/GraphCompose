@@ -64,6 +64,25 @@ subject, keywords) carry into the Word document as well.
   of a graphics-state path clip, so the container's layers are written
   inline, in source order, without the outline frame and without clipping
   — again with one warning per export.
+- **`hangingIndent(true)` → the ordinary list form.** A list that opts
+  into marker/content geometry exports exactly as one that did not: one
+  paragraph per item, the marker in the item's text, two spaces per
+  nesting depth. Nothing is lost — same paragraphs, same text, same
+  nesting — but wrapped lines align the way Word aligns them rather than
+  the way the PDF does, and `markerGap` has no effect here.
+
+  This is a decision rather than an omission. Word places content at
+  absolute indents and has no way to be told "start the text one marker
+  width plus a gap from here", so every mechanism that looks like it
+  would — a hanging indent, a hanging indent with a tab stop, real Word
+  numbering — leaves a distance beside the marker equal to the column
+  minus the marker's own width, a number only Word knows. Honouring the
+  gap would mean measuring the marker, and this backend has no font
+  runtime to measure with: its dependencies are the core model and POI,
+  and keeping them that way is the point of a semantic backend. The
+  approximations were built and rendered through Word before being
+  rejected — a reserved column renders a gap that is not the one
+  configured, and a marker wider than the column misaligns outright.
 
 ## What is skipped
 

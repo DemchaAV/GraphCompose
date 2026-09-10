@@ -29,6 +29,20 @@ import static com.demcha.compose.document.layout.NodeDefinitionSupport.EPS;
  */
 final class ParagraphWrapping {
 
+    /**
+     * Narrowest region text is ever asked to fit into, in points.
+     *
+     * <p>The engine has two behaviours at the bottom end and this constant marks
+     * the boundary between them. At a width of zero or less a logical line
+     * becomes one empty visual line and its text is dropped; at any positive
+     * width the text is broken as far as it will go and allowed to overflow.
+     * Wherever a width is computed by subtracting something from a container —
+     * a bullet prefix here, a marker column in a list — it is floored at this
+     * value, so text that no longer fits <em>overflows</em> rather than
+     * disappearing.</p>
+     */
+    static final double MIN_TEXT_WIDTH = 1.0;
+
     private ParagraphWrapping() {
     }
 
@@ -529,7 +543,7 @@ final class ParagraphWrapping {
                                                   String prefix,
                                                   TextStyle style,
                                                   TextMeasurementSystem measurement) {
-        return Math.max(1.0, maxWidth - measurement.textWidth(style, prefix == null ? "" : prefix));
+        return Math.max(MIN_TEXT_WIDTH, maxWidth - measurement.textWidth(style, prefix == null ? "" : prefix));
     }
 
     private static String normalizeBulletPrefix(String bulletOffset) {

@@ -179,7 +179,12 @@ public final class TextFlowSupport {
 
     /**
      * Measures a list node and wraps it into a prepared leaf carrying its
-     * per-item paragraph layout, flattening nested items first when present.
+     * per-item layout.
+     *
+     * <p>This is the one place the public {@code hangingIndent} flag becomes a
+     * decision. Below this method each strategy owns its own preparation, and
+     * neither re-reads the flag — so the legacy path cannot acquire a branch it
+     * has to be re-proven against.</p>
      *
      * @param node        list node to prepare
      * @param ctx         prepare-phase context
@@ -189,6 +194,20 @@ public final class TextFlowSupport {
     public static PreparedNode<ListNode> prepareList(ListNode node,
                                                      PrepareContext ctx,
                                                      BoxConstraints constraints) {
+        return switch (ListItemLayout.of(node)) {
+            case LEGACY_PREFIX -> prepareLegacyPrefixList(node, ctx, constraints);
+            case MARKER_CONTENT -> prepareMarkerContentList(node, ctx, constraints);
+        };
+    }
+
+    /**
+     * The v1.4-through-2.3 preparation, unchanged: nested items are flattened
+     * into indent-and-marker-prefixed labels, and every item becomes a paragraph
+     * whose marker is a text prefix.
+     */
+    private static PreparedNode<ListNode> prepareLegacyPrefixList(ListNode node,
+                                                                  PrepareContext ctx,
+                                                                  BoxConstraints constraints) {
         ListNode effective = node.nestedItems().isEmpty()
                 ? node
                 : flattenNestedListNode(node);
@@ -201,6 +220,69 @@ public final class TextFlowSupport {
     }
 
     /**
+     * Marker/content preparation. The normalized depth/marker/content view of
+     * the list is built here and attached to the prepared layout.
+     *
+     * <p>Each item's text is wrapped inside its own {@code contentWidth}, and
+     * the marker takes no part in that: it is not a prefix, not a token, and
+     * never decides where a line breaks. The node keeps its authored shape —
+     * nested items are not flattened into labels here — because depth is
+     * geometry in this layout, not characters.</p>
+     */
+    private static PreparedNode<ListNode> prepareMarkerContentList(ListNode node,
+                                                                   PrepareContext ctx,
+                                                                   BoxConstraints constraints) {
+        double availableItemWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
+        List<MarkerContentItem> geometry = ListMarkerGeometry.resolve(
+                ListItemNormalizer.normalize(node), node, availableItemWidth, ctx.textMeasurement());
+
+        List<PreparedListItemLayout> items = new ArrayList<>(geometry.size());
+        for (MarkerContentItem item : geometry) {
+            ParagraphNode content = new ParagraphNode(
+                    "",
+                    item.content(),
+                    node.textStyle(),
+                    node.align(),
+                    node.lineSpacing(),
+                    "",
+                    DocumentTextIndent.NONE,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero());
+            items.add(new PreparedListItemLayout(
+                    item.content(),
+                    prepareParagraphLayout(content, item.contentWidth(), ctx.textMeasurement(), ctx.markdownEnabled()),
+                    item,
+                    true));
+        }
+
+        double totalHeight = listItemsHeight(items, node.itemSpacing());
+        double maxLineWidth = markerContentMaxLineWidth(items);
+        double measuredWidth = Math.min(constraints.availableWidth(), maxLineWidth + node.padding().horizontal());
+        double resolvedWidth = node.align() == TextAlign.LEFT
+                ? measuredWidth
+                : constraints.availableWidth();
+
+        return PreparedNode.leaf(
+                node,
+                new MeasureResult(resolvedWidth, totalHeight + node.padding().vertical()),
+                new PreparedListLayout(items, maxLineWidth, totalHeight, resolvedWidth, geometry));
+    }
+
+    /**
+     * Widest point any row reaches — the marker column and the content column
+     * are both candidates, and a marker-only row is measured by its marker.
+     */
+    private static double markerContentMaxLineWidth(List<PreparedListItemLayout> items) {
+        double widest = 0.0;
+        for (PreparedListItemLayout item : items) {
+            MarkerContentItem geometry = item.geometry();
+            widest = Math.max(widest, geometry.markerX() + geometry.measuredMarkerWidth());
+            widest = Math.max(widest, geometry.contentX() + item.paragraphLayout().maxLineWidth());
+        }
+        return widest;
+    }
+
+    /**
      * Synthesizes a flat {@link ListNode} from a nested one by walking
      * the tree depth-first and prefixing each label with
      * {@code [indent][marker] }. The synthesized node carries
@@ -209,6 +291,12 @@ public final class TextFlowSupport {
      * baked marker characters are not stripped during paragraph
      * normalization. The existing flat-list rendering pipeline then
      * paginates and emits fragments unchanged.
+     *
+     * <p>The result is a legacy-shaped node by construction — its markers are
+     * characters inside its labels — so it reports {@code hangingIndent = false}
+     * whatever the authored node said. The marker/content strategy keeps its own
+     * structural view of the same tree in
+     * {@link ListItemNormalizer}; it does not read this one.</p>
      */
     private static ListNode flattenNestedListNode(ListNode node) {
         List<String> flatItems = new ArrayList<>();
@@ -225,7 +313,9 @@ public final class TextFlowSupport {
                 node.continuationIndent(),
                 false,
                 node.padding(),
-                node.margin());
+                node.margin(),
+                false,
+                node.markerGap());
     }
 
     private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
@@ -349,35 +439,102 @@ public final class TextFlowSupport {
         List<LayoutFragment> fragments = new ArrayList<>(layout.items().size());
         double boxHeight = layout.totalHeight() + node.padding().vertical();
         double itemTopOffset = 0.0;
+        int fragmentIndex = 0;
 
         for (int itemIndex = 0; itemIndex < layout.items().size(); itemIndex++) {
-            PreparedParagraphLayout itemLayout = layout.items().get(itemIndex).paragraphLayout();
+            PreparedListItemLayout item = layout.items().get(itemIndex);
+            PreparedParagraphLayout itemLayout = item.paragraphLayout();
             double itemHeight = itemLayout.totalHeight();
             Padding itemPadding = itemPadding(node, itemIndex, layout.items().size());
             double fragmentHeight = itemHeight + itemPadding.vertical();
             double localY = boxHeight - itemTopOffset - fragmentHeight;
-            fragments.add(new LayoutFragment(
-                    placement.path(),
-                    itemIndex,
-                    0.0,
-                    localY,
-                    placement.width(),
-                    fragmentHeight,
-                    new ParagraphFragmentPayload(
-                            toTextStyle(node.textStyle()),
-                            node.align(),
-                            itemPadding,
-                            itemLayout.lineHeight(),
-                            itemLayout.lineGap(),
-                            itemLayout.baselineOffset(),
-                            itemLayout.visualLines(),
-                            null,
-                            null,
-                            TextVerticalAlign.DEFAULT)));
+            MarkerContentItem geometry = item.geometry();
+
+            if (geometry == null) {
+                // Legacy: one fragment spanning the row, marker inside the text.
+                fragments.add(new LayoutFragment(
+                        placement.path(), fragmentIndex++, 0.0, localY,
+                        placement.width(), fragmentHeight,
+                        paragraphPayload(node, node.align(), itemPadding, itemLayout, itemLayout.visualLines())));
+            } else {
+                // The marker sits in its own column and the text in another, so
+                // the two are separate fragments at separate x. They share one
+                // box: same localY, same height, same vertical padding — which is
+                // what puts the marker on the first content line's baseline
+                // instead of starting a second flow beside it.
+                Padding sides = new Padding(itemPadding.top(), 0.0, itemPadding.bottom(), 0.0);
+                if (item.drawsMarker() && !itemLayout.visualLines().isEmpty()) {
+                    fragments.add(new LayoutFragment(
+                            placement.path(), fragmentIndex++,
+                            node.padding().left() + geometry.markerX(), localY,
+                            geometry.measuredMarkerWidth(), fragmentHeight,
+                            // Always LEFT: the marker's column is geometry, and a
+                            // centred or right-aligned list aligns its text inside
+                            // the content column without moving the marker.
+                            paragraphPayload(node, TextAlign.LEFT, sides, itemLayout,
+                                    List.of(markerLine(node, itemLayout, geometry)))));
+                }
+                fragments.add(new LayoutFragment(
+                        placement.path(), fragmentIndex++,
+                        node.padding().left() + geometry.contentX(), localY,
+                        geometry.contentWidth(), fragmentHeight,
+                        paragraphPayload(node, node.align(), sides, itemLayout, itemLayout.visualLines())));
+            }
             itemTopOffset += fragmentHeight + node.itemSpacing();
         }
 
         return List.copyOf(fragments);
+    }
+
+    /**
+     * The marker as a single measured line, built from the content's own first
+     * line rather than measured again.
+     *
+     * <p>Its width is the one already resolved in the item's geometry, and its
+     * line metrics are copied from the first content line — so the marker does
+     * not merely land near that line's baseline, it is placed by the same
+     * numbers and shares it by construction. Nothing here re-measures text, and
+     * the marker never becomes a second block of flow: it has one line, in a box
+     * that is the content's box.</p>
+     */
+    private static ParagraphLine markerLine(ListNode node,
+                                            PreparedParagraphLayout itemLayout,
+                                            MarkerContentItem geometry) {
+        ParagraphLine first = itemLayout.visualLines().get(0);
+        String text = geometry.markerText();
+        return new ParagraphLine(
+                text,
+                geometry.measuredMarkerWidth(),
+                first.lineHeight(),
+                first.textLineHeight(),
+                first.textAscent(),
+                first.baselineOffsetFromBottom(),
+                List.of(new ParagraphTextSpan(
+                        text,
+                        toTextStyle(node.textStyle()),
+                        geometry.measuredMarkerWidth(),
+                        first.textLineHeight(),
+                        null,
+                        null,
+                        false)));
+    }
+
+    private static ParagraphFragmentPayload paragraphPayload(ListNode node,
+                                                             TextAlign align,
+                                                             Padding padding,
+                                                             PreparedParagraphLayout metrics,
+                                                             List<ParagraphLine> lines) {
+        return new ParagraphFragmentPayload(
+                toTextStyle(node.textStyle()),
+                align,
+                padding,
+                metrics.lineHeight(),
+                metrics.lineGap(),
+                metrics.baselineOffset(),
+                lines,
+                null,
+                null,
+                TextVerticalAlign.DEFAULT);
     }
 
     // ------------------------------------------------------------------
@@ -425,7 +582,14 @@ public final class TextFlowSupport {
                                                                 boolean keepTopInsets,
                                                                 boolean keepBottomInsets) {
         List<PreparedListItemLayout> safeItems = List.copyOf(items);
-        double maxLineWidth = maxListLineWidth(safeItems);
+        // A slice is the same list with fewer rows, so it measures the way the
+        // whole list did. Under marker/content that means counting the marker
+        // column the rows are placed into — measuring only their text would give
+        // the slice a box narrower than what it draws, and the text would hang
+        // past its own right edge as soon as a list paginated.
+        double maxLineWidth = safeItems.isEmpty() || safeItems.get(0).geometry() == null
+                ? maxListLineWidth(safeItems)
+                : markerContentMaxLineWidth(safeItems);
         double totalHeight = listItemsHeight(safeItems, source.itemSpacing());
         DocumentInsets padding = new DocumentInsets(
                 keepTopInsets ? source.padding().top() : 0.0,
@@ -441,9 +605,13 @@ public final class TextFlowSupport {
                 ? maxLineWidth + padding.horizontal()
                 : sourceLayout.resolvedWidth();
 
+        // A slice is the same list with fewer rows, so it keeps the authored
+        // layout intent. Dropping it here would leave a paginated list's tail
+        // disagreeing with its head about which strategy it is.
         ListNode fragmentNode = new ListNode(
                 source.name(),
                 safeItems.stream().map(PreparedListItemLayout::text).toList(),
+                List.of(),
                 source.marker(),
                 source.textStyle(),
                 source.align(),
@@ -452,7 +620,9 @@ public final class TextFlowSupport {
                 source.continuationIndent(),
                 false,
                 padding,
-                margin);
+                margin,
+                source.hangingIndent(),
+                source.markerGap());
         PreparedListLayout fragmentLayout = new PreparedListLayout(
                 safeItems,
                 maxLineWidth,
@@ -534,7 +704,12 @@ public final class TextFlowSupport {
                 totalHeight,
                 false,
                 false);
-        return new PreparedListItemLayout(String.join("\n", logicalLines), layout);
+        String slicedText = String.join("\n", logicalLines);
+        // Only a slice that begins at line 0 is still the start of the authored
+        // item; anything past it is a continuation and must not repeat a marker.
+        return fromInclusive == 0
+                ? item.startingAs(slicedText, layout)
+                : item.continuedAs(slicedText, layout);
     }
 
     private static double maxListLineWidth(List<PreparedListItemLayout> items) {

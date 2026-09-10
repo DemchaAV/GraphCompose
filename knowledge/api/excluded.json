@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.4.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 180,
+  "count": 183,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
@@ -454,6 +454,13 @@
       "reason": "package @Internal (com.demcha.compose.document.layout)"
     },
     {
+      "binaryName": "com.demcha.compose.document.layout.ListItemLayout",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "enum",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
       "binaryName": "com.demcha.compose.document.layout.MeasureContext",
       "package": "com.demcha.compose.document.layout",
       "kind": "interface",
@@ -567,6 +574,20 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.payloads.LineFragmentPayload",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.ListItemSpec",
+      "package": "com.demcha.compose.document.layout.payloads",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.payloads)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.payloads.MarkerContentItem",
       "package": "com.demcha.compose.document.layout.payloads",
       "kind": "record",
       "artifact": "graph-compose-core",

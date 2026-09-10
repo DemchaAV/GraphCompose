@@ -223,18 +223,18 @@ public final class TextFlowSupport {
      * Marker/content preparation. The normalized depth/marker/content view of
      * the list is built here and attached to the prepared layout.
      *
-     * <p>Measurement and emit still run the legacy pipeline, so an opted-in list
-     * currently renders exactly as it did before. That is deliberate: this
-     * change introduces the model and the seam, and the pass that turns the
-     * model into {@code markerX} / {@code contentX} / {@code contentWidth}
-     * replaces the body of this method rather than adding branches to the legacy
-     * one.</p>
+     * <p>Wrapping and emit still run the legacy pipeline, so an opted-in list
+     * currently renders exactly as it did before. That is deliberate: the change
+     * that moves text is the one that wraps at {@code contentWidth} and draws the
+     * marker at {@code markerX}, and keeping it separate leaves the numbers here
+     * provable on their own.</p>
      */
     private static PreparedNode<ListNode> prepareMarkerContentList(ListNode node,
                                                                    PrepareContext ctx,
                                                                    BoxConstraints constraints) {
         PreparedNode<ListNode> prepared = prepareLegacyPrefixList(node, ctx, constraints);
         PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
+        double availableItemWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
         return PreparedNode.leaf(
                 prepared.node(),
                 prepared.measureResult(),
@@ -243,7 +243,11 @@ public final class TextFlowSupport {
                         layout.maxLineWidth(),
                         layout.totalHeight(),
                         layout.resolvedWidth(),
-                        ListItemNormalizer.normalize(node)));
+                        ListMarkerGeometry.resolve(
+                                ListItemNormalizer.normalize(node),
+                                node,
+                                availableItemWidth,
+                                ctx.textMeasurement())));
     }
 
     /**

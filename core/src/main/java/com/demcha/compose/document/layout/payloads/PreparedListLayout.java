@@ -13,8 +13,8 @@ import java.util.List;
  * @param maxLineWidth       widest measured line width across items
  * @param totalHeight        cumulative list height
  * @param resolvedWidth      resolved layout width
- * @param markerContentItems the normalized depth/marker/content view of the same
- *                           items, in the same order — populated only under
+ * @param markerContentItems the same items with their marker/content geometry
+ *                           resolved, in the same order — populated only under
  *                           {@link com.demcha.compose.document.layout.ListItemLayout#MARKER_CONTENT},
  *                           and empty under the legacy prefix layout, which has
  *                           no marker left to keep apart from its text
@@ -24,7 +24,7 @@ public record PreparedListLayout(
         double maxLineWidth,
         double totalHeight,
         double resolvedWidth,
-        List<ListItemSpec> markerContentItems
+        List<MarkerContentItem> markerContentItems
 ) implements PreparedNodeLayout {
     /**
      * Freezes both item lists to keep the prepared layout immutable.

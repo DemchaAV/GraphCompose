@@ -5,6 +5,7 @@ import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.ListBuilder;
 import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
 import com.demcha.compose.document.layout.payloads.ListItemSpec;
+import com.demcha.compose.document.layout.payloads.MarkerContentItem;
 import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
 import com.demcha.compose.document.layout.payloads.PreparedListLayout;
 import com.demcha.compose.document.node.ListMarker;
@@ -237,24 +238,24 @@ class ListItemLayoutModelTest {
 
     @Test
     void thePreparedLayoutCarriesTheModelOnlyForTheMarkerContentStrategy() throws Exception {
-        assertThat(preparedSpecs(l -> l.bullet().items("Java", "SQL")))
+        assertThat(preparedItems(l -> l.bullet().items("Java", "SQL")))
                 .as("legacy has no marker left to keep apart from its text")
                 .isEmpty();
 
-        assertThat(preparedSpecs(l -> l.bullet().hangingIndent(true).items("Java", "SQL")))
-                .extracting(ListItemSpec::content)
+        assertThat(preparedItems(l -> l.bullet().hangingIndent(true).items("Java", "SQL")))
+                .extracting(MarkerContentItem::content)
                 .containsExactly("Java", "SQL");
     }
 
     @Test
     void theModelSurvivesNestingThroughThePipeline() throws Exception {
-        List<ListItemSpec> specs = preparedSpecs(l -> l
+        List<MarkerContentItem> items = preparedItems(l -> l
                 .hangingIndent(true)
                 .addItem("Top", c -> c.addItem("Child")));
 
-        assertThat(specs).hasSize(2);
-        assertThat(specs.stream().map(ListItemSpec::depth)).containsExactly(0, 1);
-        assertThat(specs.get(1).content()).isEqualTo("Child");
+        assertThat(items).hasSize(2);
+        assertThat(items.stream().map(MarkerContentItem::depth)).containsExactly(0, 1);
+        assertThat(items.get(1).content()).isEqualTo("Child");
     }
 
     @Test
@@ -295,7 +296,7 @@ class ListItemLayoutModelTest {
      * Prepares a list the way the compiler does and returns the normalized model
      * the prepared layout came back carrying.
      */
-    private static List<ListItemSpec> preparedSpecs(Consumer<ListBuilder> spec) throws Exception {
+    private static List<MarkerContentItem> preparedItems(Consumer<ListBuilder> spec) throws Exception {
         try (PDDocument measurementDocument = new PDDocument()) {
             FontLibrary fonts = PdfFontLibraryFactory.library(measurementDocument);
             PrepareContext ctx = new MeasuringPrepareContext(

@@ -223,31 +223,63 @@ public final class TextFlowSupport {
      * Marker/content preparation. The normalized depth/marker/content view of
      * the list is built here and attached to the prepared layout.
      *
-     * <p>Wrapping and emit still run the legacy pipeline, so an opted-in list
-     * currently renders exactly as it did before. That is deliberate: the change
-     * that moves text is the one that wraps at {@code contentWidth} and draws the
-     * marker at {@code markerX}, and keeping it separate leaves the numbers here
-     * provable on their own.</p>
+     * <p>Each item's text is wrapped inside its own {@code contentWidth}, and
+     * the marker takes no part in that: it is not a prefix, not a token, and
+     * never decides where a line breaks. The node keeps its authored shape —
+     * nested items are not flattened into labels here — because depth is
+     * geometry in this layout, not characters.</p>
      */
     private static PreparedNode<ListNode> prepareMarkerContentList(ListNode node,
                                                                    PrepareContext ctx,
                                                                    BoxConstraints constraints) {
-        PreparedNode<ListNode> prepared = prepareLegacyPrefixList(node, ctx, constraints);
-        PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
         double availableItemWidth = Math.max(0.0, constraints.availableWidth() - node.padding().horizontal());
+        List<MarkerContentItem> geometry = ListMarkerGeometry.resolve(
+                ListItemNormalizer.normalize(node), node, availableItemWidth, ctx.textMeasurement());
+
+        List<PreparedListItemLayout> items = new ArrayList<>(geometry.size());
+        for (MarkerContentItem item : geometry) {
+            ParagraphNode content = new ParagraphNode(
+                    "",
+                    item.content(),
+                    node.textStyle(),
+                    node.align(),
+                    node.lineSpacing(),
+                    "",
+                    DocumentTextIndent.NONE,
+                    DocumentInsets.zero(),
+                    DocumentInsets.zero());
+            items.add(new PreparedListItemLayout(
+                    item.content(),
+                    prepareParagraphLayout(content, item.contentWidth(), ctx.textMeasurement(), ctx.markdownEnabled()),
+                    item,
+                    true));
+        }
+
+        double totalHeight = listItemsHeight(items, node.itemSpacing());
+        double maxLineWidth = markerContentMaxLineWidth(items);
+        double measuredWidth = Math.min(constraints.availableWidth(), maxLineWidth + node.padding().horizontal());
+        double resolvedWidth = node.align() == TextAlign.LEFT
+                ? measuredWidth
+                : constraints.availableWidth();
+
         return PreparedNode.leaf(
-                prepared.node(),
-                prepared.measureResult(),
-                new PreparedListLayout(
-                        layout.items(),
-                        layout.maxLineWidth(),
-                        layout.totalHeight(),
-                        layout.resolvedWidth(),
-                        ListMarkerGeometry.resolve(
-                                ListItemNormalizer.normalize(node),
-                                node,
-                                availableItemWidth,
-                                ctx.textMeasurement())));
+                node,
+                new MeasureResult(resolvedWidth, totalHeight + node.padding().vertical()),
+                new PreparedListLayout(items, maxLineWidth, totalHeight, resolvedWidth, geometry));
+    }
+
+    /**
+     * Widest point any row reaches — the marker column and the content column
+     * are both candidates, and a marker-only row is measured by its marker.
+     */
+    private static double markerContentMaxLineWidth(List<PreparedListItemLayout> items) {
+        double widest = 0.0;
+        for (PreparedListItemLayout item : items) {
+            MarkerContentItem geometry = item.geometry();
+            widest = Math.max(widest, geometry.markerX() + geometry.measuredMarkerWidth());
+            widest = Math.max(widest, geometry.contentX() + item.paragraphLayout().maxLineWidth());
+        }
+        return widest;
     }
 
     /**
@@ -407,35 +439,102 @@ public final class TextFlowSupport {
         List<LayoutFragment> fragments = new ArrayList<>(layout.items().size());
         double boxHeight = layout.totalHeight() + node.padding().vertical();
         double itemTopOffset = 0.0;
+        int fragmentIndex = 0;
 
         for (int itemIndex = 0; itemIndex < layout.items().size(); itemIndex++) {
-            PreparedParagraphLayout itemLayout = layout.items().get(itemIndex).paragraphLayout();
+            PreparedListItemLayout item = layout.items().get(itemIndex);
+            PreparedParagraphLayout itemLayout = item.paragraphLayout();
             double itemHeight = itemLayout.totalHeight();
             Padding itemPadding = itemPadding(node, itemIndex, layout.items().size());
             double fragmentHeight = itemHeight + itemPadding.vertical();
             double localY = boxHeight - itemTopOffset - fragmentHeight;
-            fragments.add(new LayoutFragment(
-                    placement.path(),
-                    itemIndex,
-                    0.0,
-                    localY,
-                    placement.width(),
-                    fragmentHeight,
-                    new ParagraphFragmentPayload(
-                            toTextStyle(node.textStyle()),
-                            node.align(),
-                            itemPadding,
-                            itemLayout.lineHeight(),
-                            itemLayout.lineGap(),
-                            itemLayout.baselineOffset(),
-                            itemLayout.visualLines(),
-                            null,
-                            null,
-                            TextVerticalAlign.DEFAULT)));
+            MarkerContentItem geometry = item.geometry();
+
+            if (geometry == null) {
+                // Legacy: one fragment spanning the row, marker inside the text.
+                fragments.add(new LayoutFragment(
+                        placement.path(), fragmentIndex++, 0.0, localY,
+                        placement.width(), fragmentHeight,
+                        paragraphPayload(node, node.align(), itemPadding, itemLayout, itemLayout.visualLines())));
+            } else {
+                // The marker sits in its own column and the text in another, so
+                // the two are separate fragments at separate x. They share one
+                // box: same localY, same height, same vertical padding — which is
+                // what puts the marker on the first content line's baseline
+                // instead of starting a second flow beside it.
+                Padding sides = new Padding(itemPadding.top(), 0.0, itemPadding.bottom(), 0.0);
+                if (item.drawsMarker() && !itemLayout.visualLines().isEmpty()) {
+                    fragments.add(new LayoutFragment(
+                            placement.path(), fragmentIndex++,
+                            node.padding().left() + geometry.markerX(), localY,
+                            geometry.measuredMarkerWidth(), fragmentHeight,
+                            // Always LEFT: the marker's column is geometry, and a
+                            // centred or right-aligned list aligns its text inside
+                            // the content column without moving the marker.
+                            paragraphPayload(node, TextAlign.LEFT, sides, itemLayout,
+                                    List.of(markerLine(node, itemLayout, geometry)))));
+                }
+                fragments.add(new LayoutFragment(
+                        placement.path(), fragmentIndex++,
+                        node.padding().left() + geometry.contentX(), localY,
+                        geometry.contentWidth(), fragmentHeight,
+                        paragraphPayload(node, node.align(), sides, itemLayout, itemLayout.visualLines())));
+            }
             itemTopOffset += fragmentHeight + node.itemSpacing();
         }
 
         return List.copyOf(fragments);
+    }
+
+    /**
+     * The marker as a single measured line, built from the content's own first
+     * line rather than measured again.
+     *
+     * <p>Its width is the one already resolved in the item's geometry, and its
+     * line metrics are copied from the first content line — so the marker does
+     * not merely land near that line's baseline, it is placed by the same
+     * numbers and shares it by construction. Nothing here re-measures text, and
+     * the marker never becomes a second block of flow: it has one line, in a box
+     * that is the content's box.</p>
+     */
+    private static ParagraphLine markerLine(ListNode node,
+                                            PreparedParagraphLayout itemLayout,
+                                            MarkerContentItem geometry) {
+        ParagraphLine first = itemLayout.visualLines().get(0);
+        String text = geometry.markerText();
+        return new ParagraphLine(
+                text,
+                geometry.measuredMarkerWidth(),
+                first.lineHeight(),
+                first.textLineHeight(),
+                first.textAscent(),
+                first.baselineOffsetFromBottom(),
+                List.of(new ParagraphTextSpan(
+                        text,
+                        toTextStyle(node.textStyle()),
+                        geometry.measuredMarkerWidth(),
+                        first.textLineHeight(),
+                        null,
+                        null,
+                        false)));
+    }
+
+    private static ParagraphFragmentPayload paragraphPayload(ListNode node,
+                                                             TextAlign align,
+                                                             Padding padding,
+                                                             PreparedParagraphLayout metrics,
+                                                             List<ParagraphLine> lines) {
+        return new ParagraphFragmentPayload(
+                toTextStyle(node.textStyle()),
+                align,
+                padding,
+                metrics.lineHeight(),
+                metrics.lineGap(),
+                metrics.baselineOffset(),
+                lines,
+                null,
+                null,
+                TextVerticalAlign.DEFAULT);
     }
 
     // ------------------------------------------------------------------
@@ -598,7 +697,12 @@ public final class TextFlowSupport {
                 totalHeight,
                 false,
                 false);
-        return new PreparedListItemLayout(String.join("\n", logicalLines), layout);
+        String slicedText = String.join("\n", logicalLines);
+        // Only a slice that begins at line 0 is still the start of the authored
+        // item; anything past it is a continuation and must not repeat a marker.
+        return fromInclusive == 0
+                ? item.startingAs(slicedText, layout)
+                : item.continuedAs(slicedText, layout);
     }
 
     private static double maxListLineWidth(List<PreparedListItemLayout> items) {

@@ -259,12 +259,12 @@ class ListItemLayoutModelTest {
     }
 
     @Test
-    void optingInChangesNothingYet() throws Exception {
-        // The acceptance condition for this phase, stated as an equation. The
-        // model is in place and the geometry is not, so the two strategies still
-        // produce the same lines in the same places. The pass that measures the
-        // marker is what makes this test change — deliberately, and with the
-        // frozen legacy dump left untouched beside it.
+    void notOptingInLeavesEveryShapeExactlyWhereItWas() throws Exception {
+        // The compatibility half of the contract. The marker/content layout now
+        // renders its own geometry, so the two are no longer interchangeable —
+        // what has to stay true is that a list which never asked for it is
+        // untouched, shape by shape. Where it lands when it does ask is
+        // ListHangingIndentTest's subject.
         for (Consumer<ListBuilder> shape : List.<Consumer<ListBuilder>>of(
                 l -> l.bullet().items("Java", "SQL"),
                 l -> l.dash().items("Long item text that wraps across more than one visual line here."),
@@ -274,10 +274,28 @@ class ListItemLayoutModelTest {
 
             List<String> legacy = renderedLines(shape);
             assertThat(legacy).as("a shape that renders nothing would prove nothing").isNotEmpty();
-            assertThat(renderedLines(shape.andThen(l -> l.hangingIndent(true))))
-                    .as("opting in must not move anything yet")
+            assertThat(renderedLines(shape.andThen(l -> l.hangingIndent(false))))
+                    .as("saying no explicitly is the same as not saying anything")
                     .isEqualTo(legacy);
         }
+
+        // Where there is a marker, opting in is a different layout — the marker
+        // leaves the text and the wrapped lines lose their space indent.
+        for (Consumer<ListBuilder> marked : List.<Consumer<ListBuilder>>of(
+                l -> l.bullet().items("Java", "SQL"),
+                l -> l.dash().items("Long item text that wraps across more than one visual line here."),
+                l -> l.marker("=>").items("Custom"),
+                l -> l.addItem("Top", c -> c.addItem("Child", g -> g.addItem("Grandchild"))))) {
+
+            assertThat(renderedLines(marked.andThen(l -> l.hangingIndent(true))))
+                    .isNotEqualTo(renderedLines(marked));
+        }
+
+        // A list with no marker has nothing to hang, so the two layouts agree —
+        // and that agreement is a property worth stating, not an oversight.
+        Consumer<ListBuilder> markerless = l -> l.noMarker().items("Plain");
+        assertThat(renderedLines(markerless.andThen(l -> l.hangingIndent(true))))
+                .isEqualTo(renderedLines(markerless));
     }
 
     // ------------------------------------------------------------------

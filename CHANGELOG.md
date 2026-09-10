@@ -7,6 +7,34 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A list can hang its wrapped lines under its own text instead of under its marker.**
+  `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
+  every visual line of it starts at one horizontal position — the first line, the lines it
+  wraps onto, and the lines that continue on the next page. `markerGap(points)` sets the
+  space between the two columns and defaults to 4pt.
+
+  Without it a list renders exactly as it always has, and there is no plan to change that
+  default. The reason to reach for it is that the older arrangement puts the marker inside
+  the item's text and indents wrapped lines with a run of spaces wide enough to clear it.
+  A whole number of spaces rarely equals a bullet, so those lines land a little past the
+  first line's own text — 2.9pt at the default style, enough to read as ragged in a CV or
+  a report. The marker is measured now, and its width is used directly.
+
+  Measured, never assumed and never counted in characters: a bullet, a dash, an arrow and
+  a multi-character marker each get the column they actually need. An item with no marker
+  takes no marker width and no gap, so it starts flush rather than at an inset with nothing
+  in it. An item with a marker and no text stays a row and keeps its marker. Nested lists
+  indent as an outline — a child's marker starts where its parent's text starts, a
+  grandchild's where the child's does, and each level keeps its own content width.
+  `CENTER` and `RIGHT` align text inside the content column and leave the marker where it
+  is.
+
+  The marker is drawn on the item's first line and shares its baseline. It does not make
+  the row taller, does not paginate on its own, and is not drawn again when an item
+  continues onto later pages. Where the marker column is wider than the room available,
+  the marker overflows and the text is broken as narrowly as it can be — what the text
+  engine already does with a word too long for its line, rather than dropping the text.
+
 - **A timeline's rail is one line, drawn from where its markers landed.**
   It was a left border repeated on every entry section, which is why it sat at the entry's
   edge whatever the markers did, could not stop short of them, and had no way to be

@@ -33,12 +33,6 @@ import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyl
  */
 final class ListMarkerGeometry {
 
-    /**
-     * Narrowest content a row may be given. Mirrors the legacy wrap clamp, which
-     * lets an over-wide marker overflow rather than collapse the text to nothing.
-     */
-    private static final double MIN_CONTENT_WIDTH = 1.0;
-
     private ListMarkerGeometry() {
     }
 
@@ -77,7 +71,14 @@ final class ListMarkerGeometry {
             double markerWidth = hasMarker ? measurement.textWidth(style, spec.markerText()) : 0.0;
             double gap = hasMarker ? node.markerGap() : 0.0;
             double contentX = markerX + markerWidth + gap;
-            double contentWidth = Math.max(MIN_CONTENT_WIDTH, availableItemWidth - contentX);
+            // Floored at the width the text pipeline already treats as its
+            // minimum, so a marker column wider than its container overflows the
+            // way an over-long word does — rather than dropping to the engine's
+            // zero-width behaviour, which renders an empty line and loses the
+            // text. The marker itself is placed at markerX and drawn at its
+            // measured width either way; nothing here clips it.
+            double contentWidth = Math.max(
+                    ParagraphWrapping.MIN_TEXT_WIDTH, availableItemWidth - contentX);
 
             contentXByDepth[depth] = contentX;
             out.add(new MarkerContentItem(spec, markerX, markerWidth, gap, contentX, contentWidth));

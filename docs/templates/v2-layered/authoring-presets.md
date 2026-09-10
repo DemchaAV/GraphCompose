@@ -397,11 +397,21 @@ A new preset needs at least:
    - Renders to `examples/target/generated-pdfs/templates/cv/cv-my-preset.pdf`
    - Uses `ExampleDataFactory.sampleCvDocumentV2()` for content
 
-3. **Eyeball the rendered PDF** — does it match your design
-   intent? Are sections in the right slots? Is page break sensible?
+3. **Layout snapshot** with `LayoutSnapshotAssertions.assertMatches(...)`:
+   - commits the resolved geometry as reviewable JSON
+   - fails when coordinates, ordering, or page breaks drift
 
-A future Phase will add PDF/PNG snapshot diffing so visual
-regressions break the build. Until then, render parity is by-hand.
+4. **Pixel-level visual parity** with `PdfVisualRegression`:
+   - commits one PNG baseline per page
+   - writes `.actual.png` and `.diff.png` artifacts on mismatch
+
+5. **Eyeball the rendered PDF** — does it match your design
+   intent? Are sections in the right slots? Is the page break sensible?
+
+Use [Testing your document](../../operations/test-your-document.md) for the short
+consumer workflow and [Visual regression testing](../../operations/visual-regression-testing.md)
+for approval flags, tolerance, and baseline paths. GraphCompose uses the same public
+`graph-compose-testing` helpers for its own preset parity suite.
 
 ---
 

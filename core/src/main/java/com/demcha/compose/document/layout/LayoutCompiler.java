@@ -150,6 +150,13 @@ public final class LayoutCompiler {
             return;
         }
 
+        if (node instanceof HorizontalBandsNode bands) {
+            // The row inside is what gets compiled next, and nothing else is compiled in
+            // between, so this is where it learns whose columns it is resolving. The key is
+            // taken back as the row reads it, so an unwrapped row publishes nothing.
+            state.expectBands(bands.key());
+        }
+
         if (availableWidth <= EPS) {
             // Name the node's own fixed width when it has one: a sub-point request
             // survives DocumentFlowWidth.of and dies here, and blaming the parent's
@@ -322,6 +329,17 @@ public final class LayoutCompiler {
                 thisChildRegionWidth = Math.max(0.0, pageAvailableWidth - padding.horizontal());
                 thisChildRegionX = state.marginLeftForPage(childStartPage) + margin.left() + padding.left();
             }
+            if (child instanceof HorizontalBandContentNode consumer) {
+                // A column an earlier row already resolved, standing in for the region this
+                // child would otherwise get. It has to happen here, before the measurement
+                // on the next line: the width decides the wrapping, the wrapping decides the
+                // height, and the height decides the pagination — which is why this cannot
+                // be a post-layout pass.
+                ResolvedHorizontalBand band =
+                        state.band(consumer.key(), consumer.slot(), pathFor(child, path, index));
+                thisChildRegionX = band.x();
+                thisChildRegionWidth = band.width();
+            }
             PreparedNode<DocumentNode> childPrepared =
                     prepareForRegionWidth(prepareContext, child, thisChildRegionWidth);
 
@@ -480,11 +498,23 @@ public final class LayoutCompiler {
             double bandContentHeight = naturalMeasure.height() - padding.vertical();
             double cursorX = placementX + padding.left() + flexLeading;
 
+            // Whose columns these are, if anyone asked. Read once, before the loop that
+            // resolves them, because the loop is also where the slots stop existing.
+            Object bandKey = state.takeExpectedBandKey();
+            List<ResolvedHorizontalBand> publishedBands =
+                    bandKey == null ? null : new ArrayList<>(children.size());
+
             for (int index = 0; index < children.size(); index++) {
                 DocumentNode child = children.get(index);
                 Margin childMargin = toMargin(child.margin());
                 double slotWidth = slotWidths[index];
                 double childRegionX = cursorX + childMargin.left();
+                if (publishedBands != null) {
+                    // The slot, not the child's box: a band means the same thing whatever
+                    // was put in the column, so content laid out in it later is seated
+                    // exactly as a child of that column would be.
+                    publishedBands.add(new ResolvedHorizontalBand(cursorX, slotWidth));
+                }
 
                 // The whole slot goes in — prepareForRegionWidth removes the child's
                 // margin itself. Pre-subtracting it here took it off twice, so the
@@ -581,6 +611,10 @@ public final class LayoutCompiler {
 
                 cursorX += slotWidth + layoutSpec.spacing()
                            + (index < children.size() - 1 ? flexExtraGap : 0.0);
+            }
+
+            if (publishedBands != null) {
+                state.publishBands(bandKey, publishedBands);
             }
         }
 
@@ -904,6 +938,17 @@ public final class LayoutCompiler {
         Margin margin = toMargin(node.margin());
         Padding padding = toPadding(node.padding());
         double availableWidth = childAvailableWidth(slotWidth, node);
+
+        if (node instanceof HorizontalBandContentNode) {
+            // Only the vertical flow narrows a child to a published band, and a fixed slot
+            // is not the vertical flow. Refusing here rather than laying the content out in
+            // the slot it happens to be in: content silently seated somewhere other than the
+            // column it named is the failure this whole mechanism exists to prevent.
+            throw new IllegalStateException("Node '" + path + "' lays out inside a published column, "
+                                            + "which only works in a vertical flow. It is in a fixed slot "
+                                            + "here — a row column or a stack layer — where the surrounding "
+                                            + "rectangle is already decided.");
+        }
         MeasureResult measure = prepared.measureResult();
         double placementX = slotX + margin.left();
         double placementTopY = slotTopY - margin.top();

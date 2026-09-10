@@ -58,7 +58,12 @@ final class DocumentNodeAdapters {
                 textStyle.fontName(),
                 textStyle.size(),
                 toDecoration(textStyle.decoration()),
-                textStyle.color().color());
+                textStyle.color().color(),
+                // The public value keeps its unit; the engine gets points. This
+                // is the only place that knows the font size and the unit at
+                // the same time, so it is the only place that can resolve one
+                // against the other.
+                textStyle.letterSpacing().resolve(textStyle.size()));
     }
 
     static TextIndentStrategy toIndentStrategy(DocumentTextIndent indent) {

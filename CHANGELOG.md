@@ -7,6 +7,20 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text style carries typographic tracking.** `DocumentTextStyle.builder().letterSpacing(...)`
+  takes a `DocumentLetterSpacing` — either `ofFontSize(0.12)`, a share of the font size, or
+  `points(1.2)`, an absolute amount. Negative values tighten. The unit lives in the value
+  rather than in a bare `double`, because `0.12` and `1.2` are both plausible-looking
+  numbers and a call site passing one has no way to say which it meant.
+
+  The default is `DocumentLetterSpacing.NONE`, which resolves to zero at every font size, so
+  a document that never asks for tracking renders exactly as it did.
+
+  This step adds the value and carries it to the engine; nothing measures or draws with it
+  yet. When it does, it will be real tracking rather than spaces inserted between letters:
+  the string handed to the backend stays the author's string, so a spaced-caps headline
+  still reads as `JANE DOE` to search, copy/paste, text extraction and ATS parsers.
+
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
   every visual line of it starts at one horizontal position — the first line, the lines it

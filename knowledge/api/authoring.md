@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 1117
+Types: 237 · methods: 2107 · constants: 237 · compiler-generated members: 1126
 
 ## com.demcha.compose
 
@@ -2185,6 +2185,19 @@ Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 111
 ### DocumentLeader (enum)
 - constants: `NONE`, `DOTS`, `DASHES`
 
+### DocumentLetterSpacing (record)
+- `new DocumentLetterSpacing(DocumentLetterSpacing.Type, double)`
+- `DocumentLetterSpacing points(double points)`
+- `DocumentLetterSpacing ofFontSize(double fraction)`
+- `double resolve(double fontSize)`
+- `boolean isNone()`
+- `DocumentLetterSpacing.Type type()`
+- `double value()`
+- constants: `NONE`
+
+### DocumentLetterSpacing.Type (enum)
+- constants: `POINTS`, `FONT_SIZE`
+
 ### DocumentLineCap (enum)
 - `int pdfCode()`
 - constants: `BUTT`, `ROUND`, `SQUARE`
@@ -2273,14 +2286,17 @@ Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 111
 - constants: `NONE`, `FIRST_LINE`, `FROM_SECOND_LINE`, `ALL_LINES`
 
 ### DocumentTextStyle (record)
-- `new DocumentTextStyle(FontName, double, DocumentTextDecoration, DocumentColor)`
+- `new DocumentTextStyle(FontName, double, DocumentTextDecoration, DocumentColor, DocumentLetterSpacing)`
+- `new DocumentTextStyle(FontName fontName, double size, DocumentTextDecoration decoration, DocumentColor color)`
 - `DocumentTextStyle.Builder builder()`
 - `DocumentTextStyle withSize(double size)`
 - `DocumentTextStyle withColor(DocumentColor color)`
+- `DocumentTextStyle withLetterSpacing(DocumentLetterSpacing letterSpacing)`
 - `FontName fontName()`
 - `double size()`
 - `DocumentTextDecoration decoration()`
 - `DocumentColor color()`
+- `DocumentLetterSpacing letterSpacing()`
 - constants: `DEFAULT`
 
 ### DocumentTextStyle.Builder (class)
@@ -2288,6 +2304,7 @@ Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 111
 - `DocumentTextStyle.Builder size(double size)`
 - `DocumentTextStyle.Builder decoration(DocumentTextDecoration decoration)`
 - `DocumentTextStyle.Builder color(DocumentColor color)`
+- `DocumentTextStyle.Builder letterSpacing(DocumentLetterSpacing letterSpacing)`
 - `DocumentTextStyle build()`
 
 ### DocumentTransform (record)
@@ -2501,18 +2518,21 @@ Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 111
 - constants: `DEFAULT`, `BOLD`, `ITALIC`, `BOLD_ITALIC`, `UNDERLINE`, `STRIKETHROUGH`
 
 ### TextStyle (record)
-- `new TextStyle(FontName, double, TextDecoration, Color)`
+- `new TextStyle(FontName fontName, double size, TextDecoration decoration, Color color)`
+- `new TextStyle(FontName, double, TextDecoration, Color, double)`
 - `TextStyle.TextStyleBuilder builder()`
 - `FontName fontName()`
 - `double size()`
 - `TextDecoration decoration()`
 - `Color color()`
+- `double letterSpacing()`
 
 ### TextStyle.TextStyleBuilder (class)
 - `TextStyle.TextStyleBuilder fontName(FontName)`
 - `TextStyle.TextStyleBuilder size(double)`
 - `TextStyle.TextStyleBuilder decoration(TextDecoration)`
 - `TextStyle.TextStyleBuilder color(Color)`
+- `TextStyle.TextStyleBuilder letterSpacing(double)`
 - `TextStyle build()`
 
 ## com.demcha.compose.engine.components.geometry

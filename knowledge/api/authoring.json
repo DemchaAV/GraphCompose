@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 235,
-    "methods": 2093,
-    "constants": 234,
-    "generated": 1117
+    "types": 237,
+    "methods": 2107,
+    "constants": 237,
+    "generated": 1126
   },
   "packages": [
     {
@@ -29242,6 +29242,136 @@
           ]
         },
         {
+          "name": "DocumentLetterSpacing",
+          "binaryName": "com.demcha.compose.document.style.DocumentLetterSpacing",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "NONE",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing"
+            },
+            {
+              "kind": "constructor",
+              "name": "DocumentLetterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing.Type",
+                  "name": null
+                },
+                {
+                  "type": "double",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "points",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofFontSize",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "fraction"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "resolve",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "double",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "fontSize"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isNone",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "type",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing.Type",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "DocumentLetterSpacing.Type",
+          "binaryName": "com.demcha.compose.document.style.DocumentLetterSpacing$Type",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "POINTS",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing.Type"
+            },
+            {
+              "kind": "constant",
+              "name": "FONT_SIZE",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing.Type"
+            }
+          ]
+        },
+        {
           "name": "DocumentLineCap",
           "binaryName": "com.demcha.compose.document.style.DocumentLineCap",
           "kind": "enum",
@@ -30269,6 +30399,36 @@
                 {
                   "type": "DocumentColor",
                   "name": null
+                },
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "DocumentTextStyle",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": "fontName"
+                },
+                {
+                  "type": "double",
+                  "name": "size"
+                },
+                {
+                  "type": "DocumentTextDecoration",
+                  "name": "decoration"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "color"
                 }
               ]
             },
@@ -30311,6 +30471,20 @@
             },
             {
               "kind": "method",
+              "name": "withLetterSpacing",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": "letterSpacing"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "fontName",
               "static": false,
               "origin": "generated",
@@ -30343,6 +30517,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentColor",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentLetterSpacing",
               "params": []
             }
           ]
@@ -30409,6 +30592,20 @@
                 {
                   "type": "DocumentColor",
                   "name": "color"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle.Builder",
+              "params": [
+                {
+                  "type": "DocumentLetterSpacing",
+                  "name": "letterSpacing"
                 }
               ]
             },
@@ -32845,6 +33042,32 @@
               "kind": "constructor",
               "name": "TextStyle",
               "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "FontName",
+                  "name": "fontName"
+                },
+                {
+                  "type": "double",
+                  "name": "size"
+                },
+                {
+                  "type": "TextDecoration",
+                  "name": "decoration"
+                },
+                {
+                  "type": "Color",
+                  "name": "color"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "TextStyle",
+              "static": false,
               "origin": "generated",
               "typeParameters": null,
               "returns": null,
@@ -32863,6 +33086,10 @@
                 },
                 {
                   "type": "Color",
+                  "name": null
+                },
+                {
+                  "type": "double",
                   "name": null
                 }
               ]
@@ -32910,6 +33137,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "Color",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
               "params": []
             }
           ]
@@ -32974,6 +33210,20 @@
               "params": [
                 {
                   "type": "Color",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "letterSpacing",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "TextStyle.TextStyleBuilder",
+              "params": [
+                {
+                  "type": "double",
                   "name": null
                 }
               ]

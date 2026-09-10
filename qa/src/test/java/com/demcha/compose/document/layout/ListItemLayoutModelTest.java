@@ -1,0 +1,295 @@
+package com.demcha.compose.document.layout;
+
+import com.demcha.compose.GraphCompose;
+import com.demcha.compose.document.api.DocumentSession;
+import com.demcha.compose.document.dsl.ListBuilder;
+import com.demcha.compose.document.backend.fixed.pdf.PdfFontLibraryFactory;
+import com.demcha.compose.document.layout.payloads.ListItemSpec;
+import com.demcha.compose.document.layout.payloads.ParagraphFragmentPayload;
+import com.demcha.compose.document.layout.payloads.PreparedListLayout;
+import com.demcha.compose.document.node.ListMarker;
+import com.demcha.compose.document.node.ListNode;
+import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.engine.components.style.Margin;
+import com.demcha.compose.engine.measurement.FontLibraryTextMeasurementSystem;
+import com.demcha.compose.engine.measurement.TextMeasurementSystem;
+import com.demcha.compose.engine.render.pdf.PdfFont;
+import com.demcha.compose.font.FontLibrary;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
+/**
+ * The internal list layout model: one strategy, resolved once, and the
+ * normalized depth/marker/content view that the marker/content strategy keeps
+ * instead of a concatenated label.
+ *
+ * <p>This change introduces the model and the seam only — an opted-in list still
+ * renders through the legacy pipeline, and {@link #optingInChangesNothingYet()}
+ * is what holds that true while the geometry is built on top.</p>
+ */
+class ListItemLayoutModelTest {
+
+    // --- the one decision --------------------------------------------------
+
+    @Test
+    void theStrategyIsResolvedFromTheAuthoredFlagAndNothingElse() {
+        assertThat(ListItemLayout.of(list(l -> l.bullet().items("a"))))
+                .isEqualTo(ListItemLayout.LEGACY_PREFIX);
+        assertThat(ListItemLayout.of(list(l -> l.bullet().hangingIndent(true).items("a"))))
+                .isEqualTo(ListItemLayout.MARKER_CONTENT);
+
+        // A gap on its own is not an opt-in: geometry is what hangingIndent buys.
+        assertThat(ListItemLayout.of(list(l -> l.bullet().markerGap(12).items("a"))))
+                .isEqualTo(ListItemLayout.LEGACY_PREFIX);
+    }
+
+    @Test
+    void defaultsAreLegacyWithTheDocumentedGap() {
+        ListNode node = list(l -> l.bullet().items("a"));
+        assertThat(node.hangingIndent()).isFalse();
+        assertThat(node.markerGap()).isEqualTo(ListNode.DEFAULT_MARKER_GAP);
+        assertThat(ListNode.DEFAULT_MARKER_GAP).isEqualTo(4.0);
+    }
+
+    @Test
+    void theBackCompatConstructorsStillProduceLegacyNodes() {
+        ListNode eleven = new ListNode("L", List.of("a"), ListMarker.bullet(), null, null,
+                0, 0, "", true, null, null);
+        ListNode twelve = new ListNode("L", List.of("a"), List.of(), ListMarker.bullet(), null, null,
+                0, 0, "", true, null, null);
+
+        assertThat(eleven.hangingIndent()).isFalse();
+        assertThat(twelve.hangingIndent()).isFalse();
+        assertThat(eleven.markerGap()).isEqualTo(ListNode.DEFAULT_MARKER_GAP);
+        assertThat(twelve.markerGap()).isEqualTo(ListNode.DEFAULT_MARKER_GAP);
+    }
+
+    @Test
+    void markerGapIsValidatedEvenWhenTheLayoutWouldNotObserveIt() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ListBuilder().markerGap(-1))
+                .withMessageContaining("markerGap");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ListBuilder().markerGap(Double.NaN));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ListBuilder().markerGap(Double.POSITIVE_INFINITY));
+
+        // Zero is a legitimate choice, not a mistake.
+        assertThat(list(l -> l.markerGap(0).items("a")).markerGap()).isEqualTo(0.0);
+    }
+
+    // --- the normalized model ----------------------------------------------
+
+    @Test
+    void aFlatListNormalizesToDepthZeroRowsCarryingTheListMarker() {
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(
+                list(l -> l.dash().items("Java", "SQL")));
+
+        assertThat(specs).hasSize(2);
+        assertThat(specs).allSatisfy(spec -> {
+            assertThat(spec.depth()).isZero();
+            assertThat(spec.marker()).isEqualTo(ListMarker.dash());
+            assertThat(spec.hasMarker()).isTrue();
+        });
+        assertThat(specs.stream().map(ListItemSpec::content)).containsExactly("Java", "SQL");
+    }
+
+    @Test
+    void aNestedListKeepsDepthAndMarkerApartFromContentInsteadOfBakingThemIn() {
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(list(l -> l
+                .addItem("Top one", c -> c
+                        .addItem("Child one")
+                        .addItem("Child two", g -> g.addItem("Grandchild")))
+                .addItem("Top two")));
+
+        assertThat(specs).hasSize(5);
+        assertThat(specs.stream().map(ListItemSpec::depth)).containsExactly(0, 1, 1, 2, 0);
+        assertThat(specs.stream().map(ListItemSpec::content)).containsExactly(
+                "Top one", "Child one", "Child two", "Grandchild", "Top two");
+
+        // Same glyph cascade as the legacy walk, so opting in never changes
+        // which marker is shown — only where it sits.
+        assertThat(specs.stream().map(spec -> spec.marker().value())).containsExactly(
+                "• ", "◦ ", "◦ ", "▪ ", "• ");
+
+        // ...and not one of them has the depth indent or the marker in its text.
+        assertThat(specs).allSatisfy(spec -> {
+            assertThat(spec.content()).doesNotContain(" ");
+            assertThat(spec.content()).doesNotStartWith("•");
+            assertThat(spec.content()).doesNotStartWith("◦");
+            assertThat(spec.content()).doesNotStartWith("▪");
+        });
+    }
+
+    @Test
+    void aPerItemMarkerOverrideStillBeatsTheDepthCascade() {
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(list(l -> l
+                .markerFor(1, ListMarker.custom("→"))
+                .addItem("Top", c -> c.addItem("Child"))));
+
+        assertThat(specs.get(0).marker()).isEqualTo(ListMarker.bullet());
+        assertThat(specs.get(1).marker().value()).isEqualTo("→ ");
+    }
+
+    @Test
+    void aBlankItemContributesNoRowButNeverCostsItsChildren() {
+        assertThat(ListItemNormalizer.normalize(list(l -> l.items("Java", "   ", "SQL"))))
+                .extracting(ListItemSpec::content)
+                .containsExactly("Java", "SQL");
+
+        List<ListItemSpec> nested = ListItemNormalizer.normalize(list(l -> l
+                .addItem("", c -> c.addItem("Child survives"))));
+        assertThat(nested).hasSize(1);
+        assertThat(nested.get(0).depth()).isEqualTo(1);
+        assertThat(nested.get(0).content()).isEqualTo("Child survives");
+    }
+
+    @Test
+    void aMarkerlessItemIsMarkerlessRatherThanEmptyMarkered() {
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(
+                list(l -> l.noMarker().items("Aligned row")));
+
+        assertThat(specs).hasSize(1);
+        assertThat(specs.get(0).hasMarker()).isFalse();
+        assertThat(specs.get(0).markerText()).isEmpty();
+    }
+
+    // --- what gets measured -------------------------------------------------
+
+    @Test
+    void markerTextDropsTheSyntheticSeparatorAndKeepsAuthorTextIntact() {
+        // ListMarker appends one trailing space so "•" + text does not render as
+        // "•text". Under MARKER_CONTENT the space between marker and content is
+        // markerGap, so measuring that separator too would count the gap twice.
+        assertThat(spec(ListMarker.bullet()).markerText()).isEqualTo("•");
+        assertThat(spec(ListMarker.dash()).markerText()).isEqualTo("-");
+        assertThat(spec(ListMarker.custom("=>")).markerText()).isEqualTo("=>");
+        assertThat(spec(ListMarker.none()).markerText()).isEmpty();
+
+        // Only that one separator goes. A marker whose own text contains spaces
+        // keeps them — trimming an author's marker is not ours to do.
+        assertThat(spec(ListMarker.custom("[ x ]")).markerText()).isEqualTo("[ x ]");
+        assertThat(spec(ListMarker.custom("a b")).markerText()).isEqualTo("a b");
+    }
+
+    @Test
+    void aSpecRejectsANegativeDepthAndNormalizesNulls() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ListItemSpec(-1, ListMarker.bullet(), "x"))
+                .withMessageContaining("depth");
+
+        ListItemSpec normalized = new ListItemSpec(0, null, null);
+        assertThat(normalized.marker()).isEqualTo(ListMarker.none());
+        assertThat(normalized.content()).isEmpty();
+    }
+
+    // --- the seam, and what it does not do yet ------------------------------
+
+    @Test
+    void thePreparedLayoutCarriesTheModelOnlyForTheMarkerContentStrategy() throws Exception {
+        assertThat(preparedSpecs(l -> l.bullet().items("Java", "SQL")))
+                .as("legacy has no marker left to keep apart from its text")
+                .isEmpty();
+
+        assertThat(preparedSpecs(l -> l.bullet().hangingIndent(true).items("Java", "SQL")))
+                .extracting(ListItemSpec::content)
+                .containsExactly("Java", "SQL");
+    }
+
+    @Test
+    void theModelSurvivesNestingThroughThePipeline() throws Exception {
+        List<ListItemSpec> specs = preparedSpecs(l -> l
+                .hangingIndent(true)
+                .addItem("Top", c -> c.addItem("Child")));
+
+        assertThat(specs).hasSize(2);
+        assertThat(specs.stream().map(ListItemSpec::depth)).containsExactly(0, 1);
+        assertThat(specs.get(1).content()).isEqualTo("Child");
+    }
+
+    @Test
+    void optingInChangesNothingYet() throws Exception {
+        // The acceptance condition for this phase, stated as an equation. The
+        // model is in place and the geometry is not, so the two strategies still
+        // produce the same lines in the same places. The pass that measures the
+        // marker is what makes this test change — deliberately, and with the
+        // frozen legacy dump left untouched beside it.
+        for (Consumer<ListBuilder> shape : List.<Consumer<ListBuilder>>of(
+                l -> l.bullet().items("Java", "SQL"),
+                l -> l.dash().items("Long item text that wraps across more than one visual line here."),
+                l -> l.marker("=>").items("Custom"),
+                l -> l.noMarker().items("Plain"),
+                l -> l.addItem("Top", c -> c.addItem("Child", g -> g.addItem("Grandchild"))))) {
+
+            List<String> legacy = renderedLines(shape);
+            assertThat(legacy).as("a shape that renders nothing would prove nothing").isNotEmpty();
+            assertThat(renderedLines(shape.andThen(l -> l.hangingIndent(true))))
+                    .as("opting in must not move anything yet")
+                    .isEqualTo(legacy);
+        }
+    }
+
+    // ------------------------------------------------------------------
+
+    private static ListItemSpec spec(ListMarker marker) {
+        return new ListItemSpec(0, marker, "content");
+    }
+
+    private static ListNode list(Consumer<ListBuilder> spec) {
+        ListBuilder builder = new ListBuilder().name("L");
+        spec.accept(builder);
+        return builder.build();
+    }
+
+    /**
+     * Prepares a list the way the compiler does and returns the normalized model
+     * the prepared layout came back carrying.
+     */
+    private static List<ListItemSpec> preparedSpecs(Consumer<ListBuilder> spec) throws Exception {
+        try (PDDocument measurementDocument = new PDDocument()) {
+            FontLibrary fonts = PdfFontLibraryFactory.library(measurementDocument);
+            PrepareContext ctx = new MeasuringPrepareContext(
+                    fonts, new FontLibraryTextMeasurementSystem(fonts, PdfFont.class));
+            return TextFlowSupport.prepareList(list(spec), ctx, new BoxConstraints(296.0, 216.0))
+                    .requirePreparedLayout(PreparedListLayout.class)
+                    .markerContentItems();
+        }
+    }
+
+    /** Enough of a prepare pass to measure text; a list leaf needs nothing else. */
+    private record MeasuringPrepareContext(FontLibrary fonts, TextMeasurementSystem textMeasurement)
+            implements PrepareContext {
+
+        @Override
+        public <E extends com.demcha.compose.document.node.DocumentNode> PreparedNode<E> prepare(
+                E node, BoxConstraints constraints) {
+            throw new UnsupportedOperationException("a list leaf prepares no children");
+        }
+
+        @Override
+        public LayoutCanvas canvas() {
+            return LayoutCanvas.from(320, 240, new Margin(12, 12, 12, 12));
+        }
+    }
+
+    private static List<String> renderedLines(Consumer<ListBuilder> spec) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(200, 240)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            session.pageFlow().name("Root").addList(spec).build();
+            return session.layoutGraph().fragments().stream()
+                    .filter(f -> f.payload() instanceof ParagraphFragmentPayload)
+                    .flatMap(f -> ((ParagraphFragmentPayload) f.payload()).lines().stream())
+                    .map(line -> line.text() + "@" + String.format(Locale.ROOT, "%.3f", line.width()))
+                    .toList();
+        }
+    }
+}

@@ -29,6 +29,8 @@ public final class ListBuilder {
     private boolean normalizeMarkers = true;
     private DocumentInsets padding = DocumentInsets.zero();
     private DocumentInsets margin = DocumentInsets.zero();
+    private boolean hangingIndent = false;
+    private double markerGap = ListNode.DEFAULT_MARKER_GAP;
 
     /**
      * Creates a list builder.
@@ -267,6 +269,55 @@ public final class ListBuilder {
     }
 
     /**
+     * Lays the list out as a marker column and a content column, so every
+     * visual line of an item — the lines it wraps onto, and the lines that
+     * continue on the next page — starts at the same horizontal position, one
+     * marker width plus {@link #markerGap(double)} in from the item's own start.
+     *
+     * <p>Off by default, and this is not a step towards making it the default.
+     * Unset, a list renders exactly as it did in v1.4 through 2.3: the marker is
+     * a text prefix on the first line and wrapped lines carry a run of spaces
+     * measured to clear it, which lands them a fraction of a space width off the
+     * first line's text. Setting this replaces that approximation with
+     * geometry.</p>
+     *
+     * <p>Applies to nested lists too — depth, marker and content stay apart
+     * instead of being concatenated into one label, so each level resolves its
+     * own content origin.</p>
+     *
+     * @param hangingIndent whether items use marker/content geometry
+     * @return this builder
+     * @since 2.4.0
+     */
+    public ListBuilder hangingIndent(boolean hangingIndent) {
+        this.hangingIndent = hangingIndent;
+        return this;
+    }
+
+    /**
+     * Sets the space between an item's marker and its content, in points.
+     *
+     * <p>Observed only when {@link #hangingIndent(boolean)} is set. The legacy
+     * layout's gap is whatever the marker's own trailing separator measures, and
+     * this value does not change it.</p>
+     *
+     * <p>Real geometry, never spaces. A markerless item takes no gap at all,
+     * rather than an unexplained inset.</p>
+     *
+     * @param markerGap gap in points; {@code 0} is allowed
+     * @return this builder
+     * @throws IllegalArgumentException when {@code markerGap} is negative, NaN or infinite
+     * @since 2.4.0
+     */
+    public ListBuilder markerGap(double markerGap) {
+        if (markerGap < 0 || Double.isNaN(markerGap) || Double.isInfinite(markerGap)) {
+            throw new IllegalArgumentException("markerGap must be finite and non-negative: " + markerGap);
+        }
+        this.markerGap = markerGap;
+        return this;
+    }
+
+    /**
      * Sets whether leading raw markers should be stripped from input items.
      *
      * @param normalizeMarkers whether input markers are normalized
@@ -360,7 +411,9 @@ public final class ListBuilder {
                     continuationIndent,
                     normalizeMarkers,
                     padding,
-                    margin);
+                    margin,
+                    hangingIndent,
+                    markerGap);
         }
         // Nested path. Source order across flat and nested entries is
         // preserved because both flow through the unified `items` list.
@@ -377,7 +430,9 @@ public final class ListBuilder {
                 continuationIndent,
                 normalizeMarkers,
                 padding,
-                margin);
+                margin,
+                hangingIndent,
+                markerGap);
     }
 
     /**

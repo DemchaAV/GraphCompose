@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 1114
+Types: 235 · methods: 2093 · constants: 234 · compiler-generated members: 1117
 
 ## com.demcha.compose
 
@@ -762,6 +762,8 @@ Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 111
 - `ListBuilder lineSpacing(double lineSpacing)`
 - `ListBuilder itemSpacing(double itemSpacing)`
 - `ListBuilder continuationIndent(String continuationIndent)`
+- `ListBuilder hangingIndent(boolean hangingIndent)`
+- `ListBuilder markerGap(double markerGap)`
 - `ListBuilder normalizeMarkers(boolean normalizeMarkers)`
 - `ListBuilder padding(DocumentInsets padding)`
 - `ListBuilder padding(float top, float right, float bottom, float left)`
@@ -1517,8 +1519,9 @@ Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 111
 - `String value()`
 
 ### ListNode (record)
-- `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets)`
+- `new ListNode(String, List<String>, List<ListItem>, ListMarker, DocumentTextStyle, TextAlign, double, double, String, boolean, DocumentInsets, DocumentInsets, boolean, double)`
 - `new ListNode(String name, List<String> items, ListMarker marker, DocumentTextStyle textStyle, TextAlign align, double lineSpacing, double itemSpacing, String continuationIndent, boolean normalizeMarkers, DocumentInsets padding, DocumentInsets margin)`
+- `new ListNode(String name, List<String> items, List<ListItem> nestedItems, ListMarker marker, DocumentTextStyle textStyle, TextAlign align, double lineSpacing, double itemSpacing, String continuationIndent, boolean normalizeMarkers, DocumentInsets padding, DocumentInsets margin)`
 - `String name()`
 - `List<String> items()`
 - `List<ListItem> nestedItems()`
@@ -1531,6 +1534,9 @@ Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 111
 - `boolean normalizeMarkers()`
 - `DocumentInsets padding()`
 - `DocumentInsets margin()`
+- `boolean hangingIndent()`
+- `double markerGap()`
+- constants: `DEFAULT_MARKER_GAP`
 
 ### PageBreakNode (record)
 - `new PageBreakNode(String, DocumentInsets)`

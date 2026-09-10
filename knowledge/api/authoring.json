@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 235,
-    "methods": 2088,
-    "constants": 233,
-    "generated": 1114
+    "methods": 2093,
+    "constants": 234,
+    "generated": 1117
   },
   "packages": [
     {
@@ -9361,6 +9361,34 @@
                 {
                   "type": "String",
                   "name": "continuationIndent"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hangingIndent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "boolean",
+                  "name": "hangingIndent"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "markerGap",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "markerGap"
                 }
               ]
             },
@@ -20519,6 +20547,13 @@
           "artifact": "graph-compose-core",
           "members": [
             {
+              "kind": "constant",
+              "name": "DEFAULT_MARKER_GAP",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
               "kind": "constructor",
               "name": "ListNode",
               "static": false,
@@ -20573,6 +20608,14 @@
                 {
                   "type": "DocumentInsets",
                   "name": null
+                },
+                {
+                  "type": "boolean",
+                  "name": null
+                },
+                {
+                  "type": "double",
+                  "name": null
                 }
               ]
             },
@@ -20591,6 +20634,64 @@
                 {
                   "type": "List<String>",
                   "name": "items"
+                },
+                {
+                  "type": "ListMarker",
+                  "name": "marker"
+                },
+                {
+                  "type": "DocumentTextStyle",
+                  "name": "textStyle"
+                },
+                {
+                  "type": "TextAlign",
+                  "name": "align"
+                },
+                {
+                  "type": "double",
+                  "name": "lineSpacing"
+                },
+                {
+                  "type": "double",
+                  "name": "itemSpacing"
+                },
+                {
+                  "type": "String",
+                  "name": "continuationIndent"
+                },
+                {
+                  "type": "boolean",
+                  "name": "normalizeMarkers"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "padding"
+                },
+                {
+                  "type": "DocumentInsets",
+                  "name": "margin"
+                }
+              ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListNode",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                },
+                {
+                  "type": "List<String>",
+                  "name": "items"
+                },
+                {
+                  "type": "List<ListItem>",
+                  "name": "nestedItems"
                 },
                 {
                   "type": "ListMarker",
@@ -20736,6 +20837,24 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "DocumentInsets",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "hangingIndent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "markerGap",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
               "params": []
             }
           ]

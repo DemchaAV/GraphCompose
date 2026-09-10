@@ -179,7 +179,12 @@ public final class TextFlowSupport {
 
     /**
      * Measures a list node and wraps it into a prepared leaf carrying its
-     * per-item paragraph layout, flattening nested items first when present.
+     * per-item layout.
+     *
+     * <p>This is the one place the public {@code hangingIndent} flag becomes a
+     * decision. Below this method each strategy owns its own preparation, and
+     * neither re-reads the flag — so the legacy path cannot acquire a branch it
+     * has to be re-proven against.</p>
      *
      * @param node        list node to prepare
      * @param ctx         prepare-phase context
@@ -189,6 +194,20 @@ public final class TextFlowSupport {
     public static PreparedNode<ListNode> prepareList(ListNode node,
                                                      PrepareContext ctx,
                                                      BoxConstraints constraints) {
+        return switch (ListItemLayout.of(node)) {
+            case LEGACY_PREFIX -> prepareLegacyPrefixList(node, ctx, constraints);
+            case MARKER_CONTENT -> prepareMarkerContentList(node, ctx, constraints);
+        };
+    }
+
+    /**
+     * The v1.4-through-2.3 preparation, unchanged: nested items are flattened
+     * into indent-and-marker-prefixed labels, and every item becomes a paragraph
+     * whose marker is a text prefix.
+     */
+    private static PreparedNode<ListNode> prepareLegacyPrefixList(ListNode node,
+                                                                  PrepareContext ctx,
+                                                                  BoxConstraints constraints) {
         ListNode effective = node.nestedItems().isEmpty()
                 ? node
                 : flattenNestedListNode(node);
@@ -201,6 +220,33 @@ public final class TextFlowSupport {
     }
 
     /**
+     * Marker/content preparation. The normalized depth/marker/content view of
+     * the list is built here and attached to the prepared layout.
+     *
+     * <p>Measurement and emit still run the legacy pipeline, so an opted-in list
+     * currently renders exactly as it did before. That is deliberate: this
+     * change introduces the model and the seam, and the pass that turns the
+     * model into {@code markerX} / {@code contentX} / {@code contentWidth}
+     * replaces the body of this method rather than adding branches to the legacy
+     * one.</p>
+     */
+    private static PreparedNode<ListNode> prepareMarkerContentList(ListNode node,
+                                                                   PrepareContext ctx,
+                                                                   BoxConstraints constraints) {
+        PreparedNode<ListNode> prepared = prepareLegacyPrefixList(node, ctx, constraints);
+        PreparedListLayout layout = prepared.requirePreparedLayout(PreparedListLayout.class);
+        return PreparedNode.leaf(
+                prepared.node(),
+                prepared.measureResult(),
+                new PreparedListLayout(
+                        layout.items(),
+                        layout.maxLineWidth(),
+                        layout.totalHeight(),
+                        layout.resolvedWidth(),
+                        ListItemNormalizer.normalize(node)));
+    }
+
+    /**
      * Synthesizes a flat {@link ListNode} from a nested one by walking
      * the tree depth-first and prefixing each label with
      * {@code [indent][marker] }. The synthesized node carries
@@ -209,6 +255,12 @@ public final class TextFlowSupport {
      * baked marker characters are not stripped during paragraph
      * normalization. The existing flat-list rendering pipeline then
      * paginates and emits fragments unchanged.
+     *
+     * <p>The result is a legacy-shaped node by construction — its markers are
+     * characters inside its labels — so it reports {@code hangingIndent = false}
+     * whatever the authored node said. The marker/content strategy keeps its own
+     * structural view of the same tree in
+     * {@link ListItemNormalizer}; it does not read this one.</p>
      */
     private static ListNode flattenNestedListNode(ListNode node) {
         List<String> flatItems = new ArrayList<>();
@@ -225,7 +277,9 @@ public final class TextFlowSupport {
                 node.continuationIndent(),
                 false,
                 node.padding(),
-                node.margin());
+                node.margin(),
+                false,
+                node.markerGap());
     }
 
     private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
@@ -441,9 +495,13 @@ public final class TextFlowSupport {
                 ? maxLineWidth + padding.horizontal()
                 : sourceLayout.resolvedWidth();
 
+        // A slice is the same list with fewer rows, so it keeps the authored
+        // layout intent. Dropping it here would leave a paginated list's tail
+        // disagreeing with its head about which strategy it is.
         ListNode fragmentNode = new ListNode(
                 source.name(),
                 safeItems.stream().map(PreparedListItemLayout::text).toList(),
+                List.of(),
                 source.marker(),
                 source.textStyle(),
                 source.align(),
@@ -452,7 +510,9 @@ public final class TextFlowSupport {
                 source.continuationIndent(),
                 false,
                 padding,
-                margin);
+                margin,
+                source.hangingIndent(),
+                source.markerGap());
         PreparedListLayout fragmentLayout = new PreparedListLayout(
                 safeItems,
                 maxLineWidth,

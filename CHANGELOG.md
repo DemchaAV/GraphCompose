@@ -35,6 +35,16 @@ follow semantic versioning; release dates are ISO 8601.
   the marker overflows and the text is broken as narrowly as it can be — what the text
   engine already does with a word too long for its line, rather than dropping the text.
 
+  **This is fixed-layout geometry: PDF and PPTX honour it, the semantic DOCX export does
+  not.** DOCX writes a Word paragraph per item and lets Word lay it out, so it keeps the
+  marker in the item's text and exports identically whether or not the setting is on —
+  same paragraphs, same text, same nesting, all content intact. Word places content at
+  absolute indents and has no way to be told "start the text one marker width plus a gap
+  from here", so honouring this there would mean measuring the marker, which the semantic
+  backend cannot do without a font runtime it deliberately does not depend on. Approximating
+  it was measured and rejected: a reserved-column approximation renders a gap that is not
+  the one you asked for, and misaligns outright for a marker wider than the column.
+
 - **A timeline's rail is one line, drawn from where its markers landed.**
   It was a left border repeated on every entry section, which is why it sat at the entry's
   edge whatever the markers did, could not stop short of them, and had no way to be

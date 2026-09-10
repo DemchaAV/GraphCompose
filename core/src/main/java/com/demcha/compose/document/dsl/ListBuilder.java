@@ -283,7 +283,25 @@ public final class ListBuilder {
      *
      * <p>Applies to nested lists too — depth, marker and content stay apart
      * instead of being concatenated into one label, so each level resolves its
-     * own content origin.</p>
+     * own content origin. Two consequences of that are worth knowing. Because a
+     * nested label is no longer carrying a baked-in marker that must survive,
+     * {@link #normalizeMarkers(boolean)} applies to it the way it already
+     * applies to a flat item, so an author-typed {@code "- "} is stripped from a
+     * child label as well. And an item that draws nothing at all — no text and
+     * no marker — contributes no row, so its children hang at the level it would
+     * have occupied rather than one deeper.</p>
+     *
+     * <p><b>Fixed-layout only.</b> This is geometry, and it applies to the
+     * backends that do their own layout — PDF and PPTX. The semantic DOCX
+     * export writes a Word paragraph per item and lets Word lay it out, so it
+     * keeps the marker in the item's text and is unchanged by this setting: the
+     * same paragraphs, the same text, the same nesting. Word positions content
+     * at absolute indents and has no way to be told "start the text one marker
+     * width plus a gap from here", so reproducing this geometry there would mean
+     * measuring the marker — which the semantic backend deliberately cannot do,
+     * since it depends on neither a font runtime nor a layout pass. A document
+     * exported both ways is therefore identical in content and nesting, and
+     * differs in how its wrapped lines line up.</p>
      *
      * @param hangingIndent whether items use marker/content geometry
      * @return this builder
@@ -303,6 +321,12 @@ public final class ListBuilder {
      *
      * <p>Real geometry, never spaces. A markerless item takes no gap at all,
      * rather than an unexplained inset.</p>
+     *
+     * <p><b>Fixed-layout only</b>, for the reason given on
+     * {@link #hangingIndent(boolean)}: the semantic DOCX export does not lay text
+     * out and cannot place content a measured distance after a marker, so it
+     * ignores this value rather than approximating it with something that would
+     * render as a different number than the one asked for.</p>
      *
      * @param markerGap gap in points; {@code 0} is allowed
      * @return this builder

@@ -250,6 +250,36 @@ class ListHangingIndentTest {
                 .allSatisfy(g -> assertThat(g.x()).isEqualTo(20.900, within(EPS)));
     }
 
+    @Test
+    void aSplitListStillMeasuresItselfWideEnoughForItsMarkerColumn() throws Exception {
+        // A slice is the same list with fewer rows, so it must measure the same
+        // way: its box has to include the marker column it draws into. Measuring
+        // only the text would leave the box narrower than the content it places,
+        // and the text would hang past its own right edge.
+        Rendered rendered = render(150, 70, l -> l.bullet().hangingIndent(true).items(
+                "Long item text should wrap across many visual lines so that it has to cross "
+                + "a page boundary and continue on the following page."));
+
+        assertThat(rendered.graph().totalPages()).isGreaterThan(1);
+        for (PlacedNode node : listNodes(rendered.graph())) {
+            // The right edge of the text actually drawn on this page — the box
+            // has to reach it, which it cannot if the slice measured the text
+            // alone and forgot the column it is placed into.
+            double drawnRight = onPage(rendered, node.startPage()).stream()
+                    .mapToDouble(f -> f.x() + lineWidths(f).stream()
+                            .mapToDouble(Double::doubleValue).max().orElse(0.0))
+                    .max()
+                    .orElseThrow();
+            assertThat(node.placementX() + node.placementWidth())
+                    .as("page %d: the list box must reach the right edge of its own text",
+                            node.startPage())
+                    .isGreaterThanOrEqualTo(drawnRight - EPS);
+            assertThat(node.placementWidth())
+                    .as("page %d: and the box includes the marker column", node.startPage())
+                    .isGreaterThan(117.100);
+        }
+    }
+
     // --- alignment ----------------------------------------------------------
 
     @Test
@@ -416,6 +446,12 @@ class ListHangingIndentTest {
     private static List<String> texts(PlacedFragment fragment) {
         return ((ParagraphFragmentPayload) fragment.payload()).lines().stream()
                 .map(ParagraphLine::text)
+                .toList();
+    }
+
+    private static List<PlacedNode> listNodes(LayoutGraph graph) {
+        return graph.nodes().stream()
+                .filter(n -> "ListNode".equals(n.nodeKind()))
                 .toList();
     }
 

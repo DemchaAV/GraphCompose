@@ -8,7 +8,9 @@ import com.demcha.compose.engine.measurement.TextMeasurementSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.demcha.compose.document.layout.DocumentNodeAdapters.toTextStyle;
 
@@ -57,6 +59,11 @@ final class ListMarkerGeometry {
         // contentX of the most recent item at each depth, which is where a child
         // of that item hangs its own marker.
         double[] contentXByDepth = new double[8];
+        // A list normally shows the same handful of markers over and over — one
+        // per depth — so each distinct one is measured once for the whole list
+        // rather than once per row. The measurement system caches too, but that
+        // still costs a lookup per item, and there is nothing to look up here.
+        Map<String, Double> markerWidths = new HashMap<>();
 
         for (ListItemSpec spec : specs) {
             int depth = spec.depth();
@@ -68,7 +75,10 @@ final class ListMarkerGeometry {
             double markerX = depth == 0 ? 0.0 : contentXByDepth[depth - 1];
 
             boolean hasMarker = spec.hasMarker();
-            double markerWidth = hasMarker ? measurement.textWidth(style, spec.markerText()) : 0.0;
+            double markerWidth = hasMarker
+                    ? markerWidths.computeIfAbsent(spec.markerText(),
+                            text -> measurement.textWidth(style, text))
+                    : 0.0;
             double gap = hasMarker ? node.markerGap() : 0.0;
             double contentX = markerX + markerWidth + gap;
             // Floored at the width the text pipeline already treats as its

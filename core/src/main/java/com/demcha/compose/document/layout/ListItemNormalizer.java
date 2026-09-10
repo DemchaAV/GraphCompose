@@ -77,13 +77,18 @@ final class ListItemNormalizer {
                     ? item.marker()
                     : ListMarker.defaultForDepth(depth);
             String content = ListMarker.normalizeItemText(item.label(), node.normalizeMarkers());
-            if (rendersSomething(marker, content)) {
+            boolean rendered = rendersSomething(marker, content);
+            if (rendered) {
                 out.add(new ListItemSpec(depth, marker, content));
             }
-            // Children are walked either way: an empty label is a reason to skip
-            // that one row, never a reason to lose the sub-tree hanging off it.
+            // Children are walked either way: an item that draws nothing is a
+            // reason to skip that one row, never a reason to lose the sub-tree
+            // hanging off it. They hang at the level the row itself would have
+            // occupied, not one deeper — there is no visible row to hang under,
+            // and indenting them past a level that was never drawn would leave
+            // them looking inset from nothing.
             if (!item.children().isEmpty()) {
-                normalizeNested(node, item.children(), depth + 1, out);
+                normalizeNested(node, item.children(), rendered ? depth + 1 : depth, out);
             }
         }
     }

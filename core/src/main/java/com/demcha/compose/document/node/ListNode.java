@@ -24,11 +24,14 @@ import java.util.List;
  *       defaults set on {@link com.demcha.compose.document.dsl.ListBuilder}.</li>
  * </ul>
  *
- * <p>When {@code nestedItems} is non-empty, the layout pipeline
- * flattens the tree depth-first into indent-prefixed paragraph
- * fragments and the top-level {@code marker} / {@code items} fields
- * are ignored. When {@code nestedItems} is empty, the node behaves
- * exactly like the v1.5 flat list.</p>
+ * <p>Both shapes are laid out one of two ways, chosen by
+ * {@code hangingIndent}. Left unset — the default — a nested tree is
+ * flattened depth-first into indent-prefixed paragraph fragments with the
+ * top-level {@code marker} / {@code items} fields ignored, and a flat list
+ * behaves exactly as it did in v1.5. Set, the item's marker, depth and
+ * content are kept apart and given real geometry: a marker column and a
+ * content column every visual line of the item shares. See
+ * {@link com.demcha.compose.document.dsl.ListBuilder#hangingIndent(boolean)}.</p>
  *
  * @param name               optional semantic name used in snapshots and diagnostics
  * @param items              item texts in source order — used when {@code nestedItems} is empty
@@ -150,6 +153,7 @@ public record ListNode(
      * @param normalizeMarkers   whether leading user-supplied bullets or dashes are stripped
      * @param padding            inner list padding
      * @param margin             outer list margin
+     * @since 2.4.0
      */
     public ListNode(String name,
                     List<String> items,

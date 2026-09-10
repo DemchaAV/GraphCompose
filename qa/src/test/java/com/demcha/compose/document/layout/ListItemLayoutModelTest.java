@@ -175,11 +175,33 @@ class ListItemLayoutModelTest {
                 .extracting(ListItemSpec::content)
                 .containsExactly("Java", "SQL");
 
-        assertThat(ListItemNormalizer.normalize(list(l -> l
+        // ...and a row that drew nothing is not a level: its children hang where
+        // it would have hung, rather than inset under a row nobody can see.
+        List<ListItemSpec> orphaned = ListItemNormalizer.normalize(list(l -> l
                 .markerFor(0, ListMarker.none())
-                .addItem("", c -> c.addItem("Child survives")))))
-                .extracting(ListItemSpec::content)
-                .containsExactly("Child survives");
+                .addItem("", c -> c.addItem("Child survives"))));
+        assertThat(orphaned).extracting(ListItemSpec::content).containsExactly("Child survives");
+        assertThat(orphaned.get(0).depth())
+                .as("promoted to the invisible parent's own level")
+                .isZero();
+    }
+
+    @Test
+    void anInvisibleRowDoesNotLeaveItsDepthPointingAtAnEarlierSubtree() {
+        // The depth cascade resolves a child's marker origin from the most recent
+        // row one level up. A row that contributes nothing must not leave that
+        // level holding a value from a different branch — a grandchild would
+        // inherit an unrelated sibling's origin and sit far to its right.
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(list(l -> l
+                .markerFor(1, ListMarker.none())
+                .addItem("A", a -> a.addItem("A1"))
+                .addItem("B", b -> b.addItem("", hidden -> hidden.addItem("B1a")))));
+
+        assertThat(specs).extracting(ListItemSpec::content)
+                .containsExactly("A", "A1", "B", "B1a");
+        assertThat(specs.get(3).depth())
+                .as("B1a hangs under B, at the level the dropped row would have held")
+                .isEqualTo(1);
     }
 
     @Test

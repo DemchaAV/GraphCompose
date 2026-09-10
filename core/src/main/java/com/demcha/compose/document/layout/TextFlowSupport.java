@@ -582,7 +582,14 @@ public final class TextFlowSupport {
                                                                 boolean keepTopInsets,
                                                                 boolean keepBottomInsets) {
         List<PreparedListItemLayout> safeItems = List.copyOf(items);
-        double maxLineWidth = maxListLineWidth(safeItems);
+        // A slice is the same list with fewer rows, so it measures the way the
+        // whole list did. Under marker/content that means counting the marker
+        // column the rows are placed into — measuring only their text would give
+        // the slice a box narrower than what it draws, and the text would hang
+        // past its own right edge as soon as a list paginated.
+        double maxLineWidth = safeItems.isEmpty() || safeItems.get(0).geometry() == null
+                ? maxListLineWidth(safeItems)
+                : markerContentMaxLineWidth(safeItems);
         double totalHeight = listItemsHeight(safeItems, source.itemSpacing());
         DocumentInsets padding = new DocumentInsets(
                 keepTopInsets ? source.padding().top() : 0.0,

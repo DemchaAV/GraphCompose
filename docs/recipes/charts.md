@@ -1,10 +1,58 @@
-# Charts: native vector bar, line, area, and pie/donut
+# Charts: start with data, refine the look
 
-GraphCompose charts are **not rasterised images**. A `ChartNode` is compiled
-at layout time into the same primitives everything else uses (shapes, lines,
-polygons, paragraphs), so charts are deterministic, snapshot-testable,
-theme-stylable, and render as crisp vectors in every fixed-layout backend
-with zero chart-specific render code.
+GraphCompose supports native vector bar, line, area, pie, and donut charts. Start
+with one dataset and one `chart(...)` call; add labels or styling only when the
+document needs them.
+
+## Quick start: one labelled bar chart
+
+A chart is a normal flow block. Put it directly in `pageFlow`, or use the same
+`chart(...)` call inside a section, module, a column within a row, or a card.
+
+```java
+import com.demcha.compose.document.chart.ChartData;
+import com.demcha.compose.document.chart.ChartSpec;
+import com.demcha.compose.document.chart.ValueLabelMode;
+
+ChartData revenue = ChartData.builder()
+        .categories("Q1", "Q2", "Q3", "Q4")
+        .series("Revenue", 12.4, 15.1, 9.8, 14.2)
+        .build();
+
+document.pageFlow(page -> page
+        .addParagraph("Quarterly revenue")
+        .chart(ChartSpec.bar()
+                .data(revenue)
+                .valueLabels(ValueLabelMode.OUTSIDE)
+                .build()));
+```
+
+That is the complete structural path: data → chart spec → flow. GraphCompose derives
+the chart width from its container and uses the spec's size policy for height.
+
+## Common changes
+
+| You want to… | Change |
+| --- | --- |
+| Show numbers on bars | `.valueLabels(ValueLabelMode.OUTSIDE)` |
+| Format values as currency, percent, or `k` | `.valueAxis(AxisSpec.builder().format(...).build())` |
+| Move or hide the legend | `.legend(BOTTOM / TOP / RIGHT / NONE)` |
+| Use brand colours | pass a `ChartStyle` with `.seriesPaint(index, paint)` |
+| Round bar corners or change bar width | `.barCornerRadius(...)` / `.barWidthRatio(...)` on `ChartStyle` |
+| Add line dots and tune the stroke | `.pointMarker(...)` / `.lineWidth(...)` on `ChartStyle` |
+| Hide grid, tick labels, or category labels | use `AxisSpec` toggles and `.showCategoryLabels(false)` |
+| Put the chart on a coloured card | call `chart(...)` inside a `softPanel(...)` section and match `valueLabelHalo` to the panel |
+| Catch chart movement after an upgrade | snapshot the containing `DocumentSession` with `LayoutSnapshotAssertions` |
+
+The sections below follow that order: choose data and chart kind first, then add the
+specific presentation controls you need.
+
+## How the chart API is organised
+
+Charts are **not rasterised images**. A `ChartNode` is compiled at layout time into
+the same primitives everything else uses (shapes, lines, polygons, paragraphs), so
+charts remain deterministic, snapshot-testable, theme-stylable, and crisp in
+fixed-layout outputs.
 
 The API is split into independent layers so nothing is baked in:
 
@@ -191,6 +239,31 @@ pass it to each one.
 `ChartLayoutResolver.resolve(...)` does take an explicit `ChartTheme`, but it
 returns raw primitives rather than placing a chart in a document — that is the
 geometry seam, useful for tooling and tests, not a second way to author.
+
+### Put the chart on a coloured card
+
+The card belongs to the surrounding flow section; the chart remains a normal child.
+Match the value-label halo to the card so labels do not paint white rectangles over
+the background.
+
+```java
+DocumentColor panel = DocumentColor.rgb(18, 24, 38);
+
+ChartStyle onPanel = ChartStyle.builder()
+        .seriesPaint(0, DocumentPaint.solid(DocumentColor.rgb(88, 166, 255)))
+        .barCornerRadius(DocumentCornerRadius.top(3))
+        .valueLabelHalo(DocumentPaint.solid(panel))
+        .build();
+
+document.pageFlow(page -> page
+        .addSection("Revenue card", section -> section
+                .softPanel(panel, 10, 14)
+                .chart(barSpec, onPanel)));
+```
+
+Change the panel with `softPanel(...)`, the data marks with `ChartStyle`, and axes,
+labels, legend, or chart kind with `ChartSpec`. Keeping those responsibilities separate
+makes it clear which object to reach for.
 
 ### Typography
 

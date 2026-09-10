@@ -1,24 +1,36 @@
-# Advanced tables
+# Tables: start with rows, add behaviour as needed
 
-Phase D of the v1.5 release lifts the canonical table from "fixed
-header + body rows" to a feature set that covers most rendered-report
-patterns:
+A table is a normal flow block. Define its columns, add a header and rows, and
+place it directly in `pageFlow` or inside a section/module.
 
-| Feature | DSL entry point |
+## Quick start: the smallest useful table
+
+```java
+document.pageFlow(page -> page
+        .addTable(table -> table
+                .autoColumns(3)
+                .headerRow("Item", "Qty", "Amount")
+                .row("API support", "2", "£240")
+                .row("Hosting", "1", "£80")
+                .totalRow("Total", "", "£320")));
+```
+
+Start there. Add style or pagination behaviour only when the document needs it.
+
+| You want to… | Add |
 | --- | --- |
-| Column span | `DocumentTableCell.text(...).colSpan(int)` |
-| Row span | `DocumentTableCell.text(...).rowSpan(int)` |
-| Several lines in one cell | `DocumentTableCell.lines(String...)` |
-| Any node in one cell | `DocumentTableCell.node(DocumentNode)` |
-| Header row alias | `TableBuilder.headerRow(String...)` |
-| Totals row | `TableBuilder.totalRow(String...)` |
-| Zebra rows | `TableBuilder.zebra(odd, even)` |
-| Repeated header on page break | `TableBuilder.repeatHeader()` |
+| Control fixed or automatic column widths | `.columns(DocumentTableColumn...)` |
+| Style every cell | `.defaultCellStyle(...)` |
+| Add several lines to one cell | `DocumentTableCell.lines(String...)` |
+| Put any document node in a cell | `DocumentTableCell.node(DocumentNode)` |
+| Merge cells across columns or rows | `.colSpan(...)` / `.rowSpan(...)` |
+| Colour alternating rows | `.zebra(odd, even)` |
+| Give the total a branded style | `.totalRow(style, values...)` |
+| Repeat headings after a page break | `.repeatHeader()` |
 
-All the new pieces compose. A table can have a row-spanning side cell,
-zebra striping on the data rows, a bold totals row at the bottom, and
-a header that re-emits at the top of every continuation page when the
-table paginates.
+The rest of this page builds on that basic table. The features compose: one table
+can contain structured cells, spans, zebra rows, a branded total, and a header
+repeated on every continuation page.
 
 ## Cell content — one line, several lines, or a node
 
@@ -221,7 +233,7 @@ they explicitly call the method.
 
 The runnable example
 [`examples/.../TableAdvancedExample.java`](../../examples/src/main/java/com/demcha/examples/features/tables/TableAdvancedExample.java)
-combines every Phase D feature on one PDF: a 3-column invoice with a
+combines the advanced table features on one PDF: a 3-column invoice with a
 row-spanning side note, zebra body rows, a totals row, and a
 repeating "Item / Qty / Amount" header on every continuation page.
 The output lands at `examples/target/generated-pdfs/table-advanced.pdf`
@@ -229,7 +241,7 @@ on every full example sweep.
 
 ## Layout invariants you can rely on
 
-The Phase D feature set pins five test invariants:
+The table regression suite pins five invariants:
 
 1. **Row span placement** — `TableBuilderRowSpanTest` verifies the
    spanning cell's height equals the SUM of its covered row heights

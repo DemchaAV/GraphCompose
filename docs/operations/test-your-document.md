@@ -259,5 +259,5 @@ about, at near-zero cost per run.
   — a working integration test that drives the snapshot API
   entirely through the published surface. Copyable starting point.
 - [`CvV2VisualParityTest`](../../qa/src/test/java/com/demcha/compose/document/templates/cv/presets/CvV2VisualParityTest.java)
-  — example of the pixel-level pattern (currently test-only;
-  becoming public via Track N).
+  — a repository example built with the same public `PdfVisualRegression`
+  helper available to downstream projects in `graph-compose-testing`.

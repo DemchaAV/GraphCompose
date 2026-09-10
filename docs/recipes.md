@@ -5,7 +5,75 @@ one topic end-to-end. All recipes use only the canonical session-first
 authoring API; public application code should not import
 `com.demcha.compose.engine.*`.
 
-## Topic-focused recipe pages
+## Where content goes
+
+Most document features are blocks in the same `pageFlow`. A section, module, row,
+or card is just a container that groups those blocks; it does not introduce a
+different authoring API.
+
+```text
+DocumentSession
+├── pageBackground(...) / pageBackgrounds(...)  behind every page
+├── chrome() / header(...) / footer(...)         repeating page chrome
+└── pageFlow(...)
+    ├── addParagraph / addRich / addList         text
+    ├── addImage / addSvgIcon / addBarcode       media
+    ├── addTable / chart / addTimeline           data and stories
+    ├── addSection / module                      grouped content
+    ├── addRow                                   side-by-side content
+    ├── addContainer / addLayerStack             clipped or overlapping content
+    └── addCanvas                                absolute placement, only when needed
+```
+
+Calls such as `chart(...)`, `addTable(...)`, and `addImage(...)` are shared by
+the flow containers. Put them directly on the page, or call the same method inside
+a section/module when the element needs a title, panel, padding, or accent.
+
+## Find the feature, then refine it
+
+Start with the entry point in the middle column. The linked recipe answers the next
+questions: where the element can live, which controls matter most, and how
+pagination or backend limits behave when they apply.
+
+### Content and data
+
+| I want to add… | Smallest entry point | Recipe answers next |
+| --- | --- | --- |
+| [A paragraph with links, styles, icons, or emoji](recipes/rich-text.md) | `addRich(rich -> ...)` | runs, links, SVG icons, emoji, inline shapes |
+| [A list](recipes/lists.md) | `addList(list -> ...)` | markers, nesting, spacing, styled items |
+| [A table](recipes/tables.md) | `addTable(table -> ...)` | columns, cells, zebra rows, totals, repeated headers |
+| [A chart](recipes/charts.md) | `chart(ChartSpec...)` | labels, value formats, colours, bar/line shape, background, legend |
+| [A timeline](recipes/timelines.md) | `addTimeline(timeline -> ...)` | markers, rail geometry, dated entries, text styles, pagination |
+| [An image](recipes/images.md) | `addImage(image -> ...)` | path/bytes, size, contain/cover, links |
+| [A QR code or barcode](recipes/barcodes.md) | `addBarcode(barcode -> ...)` | format, colour, quiet zone, card alignment |
+
+### Layout and visual composition
+
+| I want to build… | Smallest entry point | Recipe answers next |
+| --- | --- | --- |
+| [A section, panel, divider, or visual shape](recipes/shapes.md) | `addSection(...)` / `softPanel(...)` | fill, border, radius, accent, spacing, primitive shapes |
+| [Side-by-side columns](recipes/layered-page-design.md) | `addRow(row -> ...)` | column weights, flow layout, and when a row is the right primitive |
+| [Overlapping content](recipes/layered-page-design.md) | `addLayerStack(stack -> ...)` | alignment, offsets, z-index, and when to use a container or canvas |
+| [A clipped circle, ellipse, or custom container](recipes/shape-as-container.md) | `addContainer(...)` | outline, child alignment, `CLIP_PATH`, bounds, visible overflow |
+| [A repeating page tint, sidebar, or band](recipes/page-backgrounds.md) | `pageBackgrounds(...)` | full fills, partial fills, bleed, and layering |
+| [Rotation, scale, or layer ordering](recipes/transforms.md) | `rotate(...)` / `scale(...)` / `zIndex(...)` | transform origin, clipped transforms, deterministic overlap |
+| [Pixel-precise placement](recipes/absolute-placement.md) | `addCanvas(...)` | fixed box size, `(x, y)` positions, clipping, appropriate use cases |
+| [A block that should not split badly](recipes/keep-together.md) | `keepTogether()` / `keepWithNext()` | sections, lines, timeline entries, relocation at page breaks |
+| [A theme shared across documents](recipes/themes.md) | `BrandTheme` | palette, typography, spacing, decoration, preset-level reuse |
+
+### Page behaviour, output, and development
+
+| I want to… | Smallest entry point | Recipe answers next |
+| --- | --- | --- |
+| [Add metadata, watermark, header, footer, or page numbers](recipes/pdf-chrome.md) | `metadata(...)` / `header(...)` / `footer(...)` | text chrome, node-based page zones, protection, viewer behaviour |
+| [Add links, bookmarks, or a clickable table of contents](recipes/in-pdf-navigation.md) | `anchor(...)` / `linkTo(...)` | internal destinations, page references, TOC entries, PDF actions |
+| [Preview, stream, or choose an output form](recipes/streaming.md) | `buildPdf()` / `writePdf(...)` / `toImage(...)` | files, streams, bytes, preview images, backend selection |
+| [See layout boxes and node names while developing](getting-started.md#debug-guide-lines) | `guideLines(true)` / `debug(...)` | margin guides, resolved boxes, stable node labels |
+| [Protect a document from regressions](operations/test-your-document.md) | `LayoutSnapshotAssertions` | smoke tests, geometry snapshots, pixel-level PDF diffs, CI flow |
+| [Export semantic DOCX](recipes/docx-export.md) | `export(new DocxSemanticBackend())` | semantic mapping and fixed-layout feature fallbacks |
+| [Add a new node or backend capability](recipes/extending.md) | `NodeDefinition` / render handler | extension path, fluent builder, rendering, snapshot coverage |
+
+## Full recipe catalogue
 
 | Page | Covers |
 | --- | --- |

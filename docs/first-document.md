@@ -1,32 +1,31 @@
 # Your First Document
 
-A five-minute path from an empty project to a real PDF. GraphCompose is
-session-first: you open a `DocumentSession`, describe content in reading order
-with a page flow, and render. No coordinates, no manual page breaks.
+A five-minute path from an empty project to a real PDF. Add the dependency,
+copy one complete file, and run it. You do not need to learn the layout engine
+or choose a template first.
 
 > **Prerequisites:** Java 17+ and the `io.github.demchaav:graph-compose`
 > dependency — see the [README install snippet](../README.md#installation).
 
 ## The smallest document
 
-Open a session for a file path, add one page flow, render. The engine handles
-placement and pagination.
+Open a document for a file path, add content from top to bottom, and render.
+The engine handles placement and pagination.
 
 <!-- doc-example: id=first-document-smallest mode=method -->
 ```java
 import com.demcha.compose.GraphCompose;
-import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
 
 import java.nio.file.Path;
 
 try (DocumentSession document = GraphCompose.document(Path.of("hello.pdf"))
-        .pageSize(DocumentPageSize.A4)
-        .margin(24, 24, 24, 24)
+        .margin(48, 48, 48, 48)
         .create()) {
 
     document.pageFlow(page -> page
-            .module("Summary", module -> module.paragraph("Hello GraphCompose")));
+            .addParagraph("Hello GraphCompose")
+            .addParagraph("This PDF was created without manual coordinates."));
 
     document.buildPdf();
 }
@@ -37,14 +36,20 @@ Those are statements, not a file: they go inside a method — the
 `Hello.java`. Every snippet on this page is written the same way, so the shape you are
 reading is the GraphCompose part and nothing else.
 
-`GraphCompose.document(path)` configures the output; `create()` returns the
-`DocumentSession`. Use try-with-resources so the session is always released, even
-if rendering fails. Inside the session, `pageFlow(...)` is the document body:
-modules, sections, paragraphs, lists, tables, and rows are added top to bottom.
+There are only four ideas here:
+
+1. `GraphCompose.document(path)` chooses the output file.
+2. `create()` opens a `DocumentSession`.
+3. `pageFlow(...)` receives content in top-to-bottom reading order.
+4. `buildPdf()` writes the file.
+
+Use try-with-resources so the session is released even if rendering fails. The
+page flow can contain paragraphs directly; introduce modules, sections, tables,
+and styling only when the document actually needs them.
 
 ## A real custom document
 
-The same Flow model scales to a multi-section document. There are still no
+The same flow model scales to a multi-section document. There are still no
 coordinates and no manual page breaks — just structure in reading order.
 
 <!-- doc-example: id=first-document-custom mode=method -->
@@ -102,9 +107,8 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).cr
 }
 ```
 
-Templates and hand-written Flow compose into the *same* `DocumentSession`, so you
-can mix them. To choose a template surface, see
-[Which template system should I use?](templates/which-template-system.md).
+Templates and hand-written flow compose into the *same* `DocumentSession`, so you
+can mix them. Continue with [Using built-in templates](templates/v2-layered/using-templates.md).
 
 ## Rendering on a server
 
@@ -119,11 +123,14 @@ thread-safe. Use `toPdfBytes()` only when the caller truly needs a byte array.
 
 ## Where to go next
 
-- [Getting Started](getting-started.md) — themes, hero blocks, layer stacks,
-  shape-as-container, and built-in templates.
-- [Recipes](recipes.md) — themes, shapes, transforms, tables, and layout
-  snapshots.
-- [Which template system should I use?](templates/which-template-system.md) —
-  the decision tree for CV / invoice / proposal surfaces.
-- [Production Rendering](operations/production-rendering.md) — server-side
-  lifecycle, streaming, and load guidance.
+Choose the one line that matches your next task:
+
+| Next task | Continue with |
+| --- | --- |
+| Add content such as a table, timeline, chart, image, icon, emoji, or barcode | [Content and data recipes](recipes.md#content-and-data) |
+| Build cards, columns, clipping, layers, backgrounds, or a canvas | [Layout and visual recipes](recipes.md#layout-and-visual-composition) |
+| Add headers, footers, navigation, previews, or debug overlays | [Page behaviour and development](recipes.md#page-behaviour-output-and-development) |
+| Render an invoice, proposal, CV, or cover letter | [Using built-in templates](templates/v2-layered/using-templates.md) |
+| Protect this document from layout drift | [Testing your document](operations/test-your-document.md) |
+| Stream it from a backend | [Production rendering](operations/production-rendering.md) |
+| Learn rows, layers, backgrounds, and canvases | [Layered page design](recipes/layered-page-design.md) |

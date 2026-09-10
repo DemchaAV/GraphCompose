@@ -28,6 +28,10 @@ destination.
 The template composes into an **open** `DocumentSession` — it never
 decides file vs stream vs bytes. The caller does.
 
+> **Dependency.** `graph-compose-templates` is not included in `graph-compose`.
+> Add it separately, or use `graph-compose-bundle`, which includes PDF,
+> templates, fonts, and emoji.
+
 ## Invoice
 
 <!-- doc-example: id=business-invoice mode=method -->

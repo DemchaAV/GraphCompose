@@ -12,8 +12,9 @@ Follow the path only as far as your current task requires:
 1. **Render one PDF:** [Your first document](first-document.md).
 2. **Add the blocks you need:** [Recipes](recipes.md) explains where text, tables,
    charts, icons, images, cards, rows, backgrounds, and canvases fit.
-3. **Reuse a business-document design:** [Use a built-in template](templates/v2-layered/using-templates.md)
-   for an invoice, proposal, CV, or cover letter.
+3. **Reuse a business-document design:** start with the
+   [invoice and proposal templates](templates/business-templates.md), or the
+   [CV and cover-letter quickstart](templates/v2-layered/quickstart.md).
 4. **Protect the result:** [Testing your document](operations/test-your-document.md)
    adds deterministic layout snapshots and pixel-level visual diffs.
 5. **Run it in a backend:** [Production rendering](operations/production-rendering.md)
@@ -33,8 +34,8 @@ GraphCompose itself.
 | Add a header, footer, page number, watermark, link, bookmark, or contents page | [Page behaviour recipes](recipes.md#page-behaviour-output-and-development) |
 | Inspect layout boxes or create a page preview while developing | [Developer tools and output](recipes.md#page-behaviour-output-and-development) |
 | Protect a document with snapshots and visual diffs | [Testing your document](operations/test-your-document.md) |
-| Render an invoice or proposal from data | [Using templates](templates/v2-layered/using-templates.md) |
-| Render a CV with my own data | [CV template quickstart](templates/v2-layered/quickstart.md) |
+| Render an invoice or proposal from data | [Business templates](templates/business-templates.md) |
+| Render a CV or cover letter with my own data | [CV and cover-letter quickstart](templates/v2-layered/quickstart.md) |
 | Design a custom CV style | [Authoring presets](templates/v2-layered/authoring-presets.md) |
 | Upgrade a pre-2.0 caller | [2.0 migration guide](migration/v2.0.0-modules.md) |
 | Add a new template family | [Template contributor guide](templates/v2-layered/contributor-guide.md) |
@@ -57,47 +58,7 @@ GraphCompose itself.
 - **[templates/v2-layered/](templates/v2-layered/)** — the template surface (CV is the reference implementation): `data` / `components` / `widgets` / `presets` per family, over the shared `templates.core.theme`.
 - **[templates/v1-classic/](templates/v1-classic/)** — 🗄️ archived: the classic spec/builder/presets surface removed in 2.0; kept for pre-2.0 callers.
 
-### Output backends
-- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for PDF vs PPTX fidelity.
-- **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF (`@Beta`, first shipped in 2.1.0).
-- **[api-stability.md](api-stability.md)** — stability tier per package, and what a tier promises.
-
-### Architecture
-- **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).
-- **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.
-- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered.
-- **[architecture/package-map.md](architecture/package-map.md)** — what's in which package.
-- **[architecture/canonical-legacy-parity.md](architecture/canonical-legacy-parity.md)** — per-feature authoring coverage of the canonical API, refreshed for the 2.1 line. The recipes, the capabilities catalogue and the troubleshooting guide all link into it.
-
-### Operations
-- **[operations/production-rendering.md](operations/production-rendering.md)** — server-side rendering, streaming, thread safety.
-- **[operations/performance.md](operations/performance.md)** — perf characteristics + tuning.
-- **[operations/benchmarks.md](operations/benchmarks.md)** — how to run benchmarks; reference numbers.
-- **[operations/logging.md](operations/logging.md)** — logger configuration, what each logger emits.
-- **[operations/layout-snapshot-testing.md](operations/layout-snapshot-testing.md)** — snapshot-based layout regression testing.
-
-### Contributing
-- **[contributing/extension-guide.md](contributing/extension-guide.md)** — add a new node type, backend handler, or theme primitive.
-- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered, for contributors working on layout / measurement.
-- **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
-
-### Migrations & roadmap
-- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the current upgrade guide: the 1.x → 2.x module split, the one dependency-level break, and every removed API with its replacement.
-- **[migration/v1.8.0-fonts.md](migration/v1.8.0-fonts.md)** — the fonts artifact split, still relevant to anyone adding `graph-compose-fonts`.
-- **[../ROADMAP.md](../ROADMAP.md)** — direction for the line after 2.1.
-- **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — internal refactors, scale, and tooling deferred past the 2.0 line.
-
-<details>
-<summary><b>Historical documentation</b> — shipped roadmaps and superseded minor-to-minor upgrade guides</summary>
-
-Kept for anyone stepping through the 1.x line one minor at a time. Nothing here describes the current API.
-
-- [roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md) — the v1.6 "expressive" roadmap (shipped).
-- [roadmaps/migration-v1-8-to-v1-9.md](roadmaps/migration-v1-8-to-v1-9.md) · [v1-7-to-v1-8](roadmaps/migration-v1-7-to-v1-8.md) · [v1-6-to-v1-7](roadmaps/migration-v1-6-to-v1-7.md) · [v1-5-to-v1-6](roadmaps/migration-v1-5-to-v1-6.md) · [v1-4-to-v1-5](roadmaps/migration-v1-4-to-v1-5.md)
-
-</details>
-
-### Recipes (cookbook-style howtos)
+### Recipes
 - **[recipes.md](recipes.md)** — the catalogue: every recipe page and what it covers.
 - **[recipes/rich-text.md](recipes/rich-text.md)** — styled runs, links, inline images, SVG icons, emoji, shapes, and checkboxes.
 - **[recipes/lists.md](recipes/lists.md)** — flat and nested lists with custom markers and spacing.
@@ -122,7 +83,50 @@ Kept for anyone stepping through the 1.x line one minor at a time. Nothing here 
 - **[recipes/absolute-placement.md](recipes/absolute-placement.md)** — pixel-precise canvas placement.
 - **[font-coverage.md](font-coverage.md)** — WinAnsi limits, `●` vs `•`, and glyph fallback.
 
-### Architecture Decision Records (ADRs)
+### Operations / Testing
+- **[operations/test-your-document.md](operations/test-your-document.md)** — consumer smoke tests, layout snapshots, and PDF visual diffs.
+- **[operations/visual-regression-testing.md](operations/visual-regression-testing.md)** — pixel-level PDF baselines, diffs, tolerances, and approval flow.
+- **[operations/layout-snapshot-testing.md](operations/layout-snapshot-testing.md)** — deterministic geometry regression testing.
+- **[operations/production-rendering.md](operations/production-rendering.md)** — server-side rendering, streaming, thread safety.
+- **[operations/performance.md](operations/performance.md)** — perf characteristics + tuning.
+- **[operations/benchmarks.md](operations/benchmarks.md)** — how to run benchmarks; reference numbers.
+- **[operations/logging.md](operations/logging.md)** — logger configuration, what each logger emits.
+
+### Output backends
+- **[architecture/backend-capability-matrix.md](architecture/backend-capability-matrix.md)** — what each render backend supports, per capability. The source of truth for PDF vs PPTX fidelity.
+- **[../render-pptx/README.md](../render-pptx/README.md)** — `graph-compose-render-pptx`: editable PowerPoint decks from the same session that prints the PDF (`@Beta`, first shipped in 2.1.0).
+- **[../render-docx/README.md](../render-docx/README.md)** — `graph-compose-render-docx`: semantic Word export with partial capability coverage and no full PDF parity.
+- **[api-stability.md](api-stability.md)** — stability tier per package, and what a tier promises.
+
+### Migrations
+- **[migration/v2.0.0-modules.md](migration/v2.0.0-modules.md)** — the current upgrade guide: the 1.x → 2.x module split, the one dependency-level break, and every removed API with its replacement.
+- **[migration/v1.8.0-fonts.md](migration/v1.8.0-fonts.md)** — the fonts artifact split, still relevant to anyone adding `graph-compose-fonts`.
+- **[../ROADMAP.md](../ROADMAP.md)** — direction for the line after 2.1.
+- **[roadmaps/post-2.0-engineering.md](roadmaps/post-2.0-engineering.md)** — internal refactors, scale, and tooling deferred past the 2.0 line.
+
+<details>
+<summary><b>Historical documentation</b> — shipped roadmaps and superseded minor-to-minor upgrade guides</summary>
+
+Kept for anyone stepping through the 1.x line one minor at a time. Nothing here describes the current API.
+
+- [roadmaps/v1.6-roadmap.md](roadmaps/v1.6-roadmap.md) — the v1.6 "expressive" roadmap (shipped).
+- [roadmaps/migration-v1-8-to-v1-9.md](roadmaps/migration-v1-8-to-v1-9.md) · [v1-7-to-v1-8](roadmaps/migration-v1-7-to-v1-8.md) · [v1-6-to-v1-7](roadmaps/migration-v1-6-to-v1-7.md) · [v1-5-to-v1-6](roadmaps/migration-v1-5-to-v1-6.md) · [v1-4-to-v1-5](roadmaps/migration-v1-4-to-v1-5.md)
+
+</details>
+
+### Architecture
+- **[architecture/overview.md](architecture/overview.md)** — high-level system architecture (engine + DSL + templates + backends).
+- **[architecture/lifecycle.md](architecture/lifecycle.md)** — the document lifecycle from `GraphCompose.document(...)` through `buildPdf()`.
+- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered.
+- **[architecture/package-map.md](architecture/package-map.md)** — what's in which package.
+- **[architecture/canonical-legacy-parity.md](architecture/canonical-legacy-parity.md)** — per-feature authoring coverage of the canonical API, refreshed for the 2.1 line. The recipes, the capabilities catalogue and the troubleshooting guide all link into it.
+
+### Contributing
+- **[contributing/extension-guide.md](contributing/extension-guide.md)** — add a new node type, backend handler, or theme primitive.
+- **[architecture/pagination-ordering.md](architecture/pagination-ordering.md)** — how nodes are paginated and ordered, for contributors working on layout / measurement.
+- **[contributing/release-process.md](contributing/release-process.md)** — versioning, tag procedure, Maven Central publication.
+
+### ADRs
 Numbered, dated decisions about non-trivial design choices. Read these
 when you need to understand *why* a piece of the system looks the way
 it does.

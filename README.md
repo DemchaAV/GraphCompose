@@ -46,6 +46,26 @@ wraps, places, and paginates it.
 Use it for server-side invoices, proposals, CVs, reports, statements, schedules,
 and other documents assembled from application data.
 
+### Start here
+
+- [Start with a first PDF](#installation)
+- Use a built-in template: [invoice or proposal](./docs/templates/business-templates.md),
+  or [CV or cover letter](./docs/templates/v2-layered/quickstart.md)
+- Export to [PowerPoint](./render-pptx/README.md) or [DOCX](./render-docx/README.md)
+
+### Outputs and templates
+
+- **PDF** — the main production output, included in `graph-compose`.
+- **PPTX** — editable fixed-layout export, currently **beta**, provided by the
+  separate [`graph-compose-render-pptx`](./render-pptx/README.md) module.
+- **DOCX** — semantic export with partial capability coverage, not full PDF parity,
+  provided by the separate [`graph-compose-render-docx`](./render-docx/README.md)
+  module.
+- **Templates** — maintained invoice, proposal, CV, and cover-letter designs in the
+  separate `graph-compose-templates` module. Start with
+  [invoice and proposal templates](./docs/templates/business-templates.md) or the
+  [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md).
+
 <a id="installation"></a>
 ## Create your first PDF
 
@@ -180,8 +200,10 @@ and snapshot coverage.
 1. Follow [Your first document](./docs/first-document.md) for a guided five-minute build.
 2. Open [Recipes](./docs/recipes.md) only when you need a table, image, header,
    barcode, chart, page-break rule, or another specific feature.
-3. Start from a [built-in template](./docs/templates/v2-layered/using-templates.md)
-   when the document is an invoice, proposal, CV, or cover letter.
+3. Start from an [invoice or proposal template](./docs/templates/business-templates.md)
+   when the document is a standard business artifact.
+4. Use the [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md)
+   for resume-focused document families.
 
 For a backend endpoint, use the
 [Spring Boot streaming example](./examples/src/main/java/com/demcha/examples/features/streaming/HttpStreamingExample.java).
@@ -245,7 +267,9 @@ that solves your problem:
 
 1. **First PDF** — finish the example above or read [Your first document](./docs/first-document.md).
 2. **Document features** — use the [recipe index](./docs/recipes.md) as a lookup table.
-3. **Reusable business documents** — use [templates](./docs/templates/v2-layered/using-templates.md).
+3. **Reusable business documents** — use the
+   [invoice and proposal templates](./docs/templates/business-templates.md), or the
+   [CV and cover-letter quickstart](./docs/templates/v2-layered/quickstart.md).
 4. **Production confidence** — add [snapshot and visual tests](./docs/operations/test-your-document.md),
    then review [production rendering](./docs/operations/production-rendering.md).
 5. **Library internals** — only contributors need [Contributing](./CONTRIBUTING.md),
@@ -268,6 +292,9 @@ PDF is the production, fixed-layout output included by `graph-compose`.
 | Layout snapshots and PDF visual diffs in tests | `graph-compose-testing` |
 | Only the authoring surface and engine | `graph-compose-core` |
 
+`graph-compose-bundle` includes PDF, templates, fonts, and emoji. PPTX and DOCX
+are not included in the bundle; add their render modules separately when needed.
+
 Modules use the same GraphCompose version. Bundled fonts and colour emoji have their
 own release lines. Consult the [module guide](./docs/migration/v2.0.0-modules.md) only
 when you need to split dependencies, and the
@@ -278,6 +305,7 @@ relying on a feature outside PDF.
 
 </details>
 
+<a id="what-graphcompose-is-not"></a>
 <details>
 <summary><b>Scope and comparison</b></summary>
 

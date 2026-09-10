@@ -108,7 +108,9 @@ try (DocumentSession document = GraphCompose.document(Path.of("invoice.pdf")).cr
 ```
 
 Templates and hand-written flow compose into the *same* `DocumentSession`, so you
-can mix them. Continue with [Using built-in templates](templates/v2-layered/using-templates.md).
+can mix them. Continue with the
+[invoice and proposal guide](templates/business-templates.md), or use the
+[CV and cover-letter quickstart](templates/v2-layered/quickstart.md).
 
 ## Rendering on a server
 
@@ -130,7 +132,8 @@ Choose the one line that matches your next task:
 | Add content such as a table, timeline, chart, image, icon, emoji, or barcode | [Content and data recipes](recipes.md#content-and-data) |
 | Build cards, columns, clipping, layers, backgrounds, or a canvas | [Layout and visual recipes](recipes.md#layout-and-visual-composition) |
 | Add headers, footers, navigation, previews, or debug overlays | [Page behaviour and development](recipes.md#page-behaviour-output-and-development) |
-| Render an invoice, proposal, CV, or cover letter | [Using built-in templates](templates/v2-layered/using-templates.md) |
+| Render an invoice or proposal | [Business templates](templates/business-templates.md) |
+| Render a CV or cover letter | [CV and cover-letter quickstart](templates/v2-layered/quickstart.md) |
 | Protect this document from layout drift | [Testing your document](operations/test-your-document.md) |
 | Stream it from a backend | [Production rendering](operations/production-rendering.md) |
 | Learn rows, layers, backgrounds, and canvases | [Layered page design](recipes/layered-page-design.md) |

@@ -3,10 +3,10 @@
 **5 minutes.** What it is, why it's structured this way, and a working
 example that renders a CV PDF.
 
-> **Dependency.** The ready-made presets ship in the opt-in
-> `graph-compose-templates` artifact — they are **not** bundled in `graph-compose`. Add it
-> next to `graph-compose` (or depend on `graph-compose-bundle`, which includes both). See
-> the [README install matrix](../../../README.md#installation).
+> **Dependency.** CV and cover-letter presets ship in
+> `graph-compose-templates`, which is **not** included in `graph-compose`. Add it
+> separately, or use `graph-compose-bundle`, which includes PDF, templates, fonts,
+> and emoji. See the [README install matrix](../../../README.md#installation).
 
 ---
 

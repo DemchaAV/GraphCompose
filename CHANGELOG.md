@@ -331,6 +331,30 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **`markerOnRail()` no longer draws the rail through the entry's text.**
+  Putting the markers on the rail moves the line into the middle of the axis column, and an
+  entry's body spanned the whole entry — so the line was drawn straight through ordinary
+  body text. It now starts where the title starts:
+
+  ```
+  LEADING | AXIS | CONTENT
+          |  ●   | title
+          |  │   | body line 1
+          |  │   | body line 2
+          |  ●   | next entry
+  ```
+
+  The body uses the content column the entry's own header row resolved, so a column given in
+  points and a column given as a share of the row behave identically — neither is recomputed
+  — and it stays a vertical block, so an entry longer than a page still splits across pages
+  with its text at the same x on every one.
+
+  A timeline that does not call `markerOnRail()` is untouched: the rail stays beside the
+  axis, the body still spans the entry and clears the line by the gutter, and every baseline
+  and layout snapshot of one is byte-identical. What changed is a narrower body under
+  `markerOnRail()`, which wraps into more lines — so those timelines can take more pages than
+  they did while the text was running under the line.
+
 - **A timeline marker is the box it declared.**
   `TimelineMarker.custom(width, height, recipe)` took a box and then ignored it: the
   timeline measured whatever the recipe happened to draw, so the two numbers a caller wrote

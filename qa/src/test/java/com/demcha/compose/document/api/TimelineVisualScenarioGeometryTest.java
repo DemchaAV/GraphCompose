@@ -72,8 +72,12 @@ class TimelineVisualScenarioGeometryTest {
                 TimelineRailExtent.MARKER_TO_MARKER)) {
             LayoutGraph graph = paginated(extent);
 
-            assertThat(graph.totalPages()).as("the premise: it does cross pages").isEqualTo(3);
-            assertThat(rails(graph)).as("%s: one fragment per page", extent).hasSize(3);
+            assertThat(graph.totalPages())
+                    .as("the premise: it does cross pages")
+                    .isGreaterThanOrEqualTo(3);
+            assertThat(rails(graph))
+                    .as("%s: one fragment per page", extent)
+                    .hasSize(graph.totalPages());
             assertThat(rails(graph).stream().map(PlacedFragment::x).distinct())
                     .as("%s: and one x between them", extent)
                     .hasSize(1);
@@ -165,9 +169,12 @@ class TimelineVisualScenarioGeometryTest {
         List<ResolvedLayoutAnchor> markers = markerAnchors(graph);
         List<ResolvedLayoutAnchor> entries = entryAnchors(graph);
 
+        int lastPage = graph.totalPages() - 1;
         assertThat(markers).hasSize(2);
+        assertThat(graph.totalPages()).as("the premise: at least one page between them")
+                .isGreaterThanOrEqualTo(3);
         assertThat(markers.get(0).pageIndex()).as("first marker, first page").isZero();
-        assertThat(markers.get(1).pageIndex()).as("last marker, last page").isEqualTo(2);
+        assertThat(markers.get(1).pageIndex()).as("last marker, last page").isEqualTo(lastPage);
         assertThat(markers.stream().map(ResolvedLayoutAnchor::pageIndex))
                 .as("the premise: the middle page has no marker on it")
                 .doesNotContain(1);
@@ -175,7 +182,7 @@ class TimelineVisualScenarioGeometryTest {
         assertThat(rails.get(0).y() + rails.get(0).height())
                 .as("page 0 begins at the first marker")
                 .isEqualTo(markers.get(0).pointY(0.5), within(1e-9));
-        assertThat(rails.get(2).y())
+        assertThat(rails.get(lastPage).y())
                 .as("the last page ends at the last marker")
                 .isEqualTo(markers.get(1).pointY(0.5), within(1e-9));
 

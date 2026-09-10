@@ -1,10 +1,13 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.layout.HorizontalBandContentNode;
+import com.demcha.compose.document.layout.HorizontalBandsNode;
 import com.demcha.compose.document.layout.LayoutAnchorId;
 import com.demcha.compose.document.layout.LayoutAnchorNode;
 import com.demcha.compose.document.node.AlignNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.HorizontalAlign;
+import com.demcha.compose.document.node.SectionNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentRowColumn;
@@ -489,12 +492,21 @@ public final class TimelineBuilder {
     private static void layout(TimelineSpec spec, SectionBuilder timeline) {
         timeline.spacing(0);
         timeline.keepTogether(spec.keepTogether());
+        // Which column the body belongs in, and whether the question arises at all. It does
+        // only when the rail moved into the axis; with the rail beside it the body spans the
+        // entry as it always has, and the header row publishes nothing.
+        boolean bodyClearsTheAxis = spec.markerAnchor().railRunsThroughTheAxis();
+        int contentColumn = spec.leadingColumn() == null ? 1 : 2;
         List<TimelineEntrySpec> entries = spec.entries();
         for (int i = 0; i < entries.size(); i++) {
             TimelineEntrySpec entry = entries.get(i);
             int index = i;
             boolean last = i == entries.size() - 1;
             double bottom = last ? 0.0 : spec.entrySpacing();
+            // One identity per entry, because one row resolves one set of columns. Nothing
+            // reads it but the body immediately below, and nothing else can: it is compared
+            // by reference and never leaves this loop.
+            Object bandKey = bodyClearsTheAxis ? new Object() : null;
             SectionBuilder entrySection = new SectionBuilder();
             {
                 SectionBuilder section = entrySection;
@@ -505,7 +517,7 @@ public final class TimelineBuilder {
                 section.keepTogether(spec.keepEntriesTogether())
                         .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
-                section.addRow(header -> {
+                Consumer<RowBuilder> headerSpec = header -> {
                     header.spacing(spec.markerGap());
                     DocumentRowColumn axis = column(spec.axis());
                     if (spec.leadingColumn() == null && spec.axis() instanceof TimelineAxisSize.Weight weight) {
@@ -526,8 +538,31 @@ public final class TimelineBuilder {
                     }
                     header.addSection(anchoredMarker(spec, entry, index));
                     header.addSection(entry.beside());
-                });
-                entry.below().accept(section);
+                };
+
+                if (bandKey == null) {
+                    // The rail is beside the axis, so a body spanning the entry clears it by
+                    // the gutter. This is the layout every timeline written before the choice
+                    // already has, and it is left exactly as it was.
+                    section.addRow(headerSpec);
+                    entry.below().accept(section);
+                } else {
+                    // The rail runs through the axis, so a body spanning the entry would be
+                    // crossed by it. The header publishes its columns; the body lays itself
+                    // out in the content one and stays a vertical sibling, which is what lets
+                    // it be longer than a page — a row cannot cross one.
+                    RowBuilder header = new RowBuilder();
+                    headerSpec.accept(header);
+                    section.add(new HorizontalBandsNode("", bandKey, header.build()));
+
+                    SectionBuilder body = new SectionBuilder();
+                    body.spacing(4);
+                    entry.below().accept(body);
+                    SectionNode built = body.build();
+                    if (!built.children().isEmpty()) {
+                        section.add(new HorizontalBandContentNode("", bandKey, contentColumn, built));
+                    }
+                }
             }
             // The entry, anchored. Its slices are where the rail starts and stops on each
             // page — and only its slices carry that, because an entry is the one thing

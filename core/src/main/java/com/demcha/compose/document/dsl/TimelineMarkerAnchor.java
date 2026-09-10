@@ -76,6 +76,24 @@ record TimelineMarkerAnchor(double relativeX, double relativeY, double offsetX, 
     }
 
     /**
+     * Whether the rail runs through the axis column rather than beside it.
+     *
+     * <p>The question decides where an entry's body goes. A rail beside the axis leaves the
+     * entry's whole width free, and a body spanning it clears the line by the gutter — the
+     * layout every timeline written before the choice already has. A rail through the axis
+     * would be crossed by that same body, so the body is laid out in the content column
+     * instead and the line is left with only markers to pass through.</p>
+     *
+     * <p>The anchor is what knows, because the anchor is what moved the rail. A flag on the
+     * builder would be a second way to say the same thing, and two ways can disagree.</p>
+     *
+     * @return true when the rail is inside the axis column
+     */
+    boolean railRunsThroughTheAxis() {
+        return relativeX != 0.0;
+    }
+
+    /**
      * Where this anchor puts the rail, horizontally, for a resolved marker.
      *
      * @param marker the marker's resolved box

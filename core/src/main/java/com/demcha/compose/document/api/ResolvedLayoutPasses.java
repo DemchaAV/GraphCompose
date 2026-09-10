@@ -6,10 +6,15 @@ import com.demcha.compose.document.layout.PlacedFragment;
 import com.demcha.compose.document.layout.ResolvedLayoutAddition;
 import com.demcha.compose.document.layout.ResolvedLayoutMetadata;
 import com.demcha.compose.document.layout.ResolvedLayoutPass;
+import com.demcha.compose.document.layout.payloads.LayoutAnchorPayload;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Runs the resolved-layout passes over a compiled graph and splices what they contribute.
@@ -26,7 +31,12 @@ import java.util.Objects;
  * </pre>
  *
  * <p>A pass running after backgrounds would have its under-body fragment prepended to
- * index 0 — beneath an opaque page background, and invisible.</p>
+ * index 0 — beneath an opaque page background, and invisible. Within the body the same
+ * hazard is local rather than page-wide: an under-body fragment placed at the front of the
+ * list also sits beneath the fill of every container drawn before the feature, including
+ * the panel the feature is inside. So under-body means under the contributing feature's own
+ * content — spliced immediately before the first fragment its anchors produced on that
+ * page — and a pass that anchored nothing on a page keeps the front of the list.</p>
  *
  * @author Artem Demchyshyn
  * @since 2.4.0
@@ -62,8 +72,15 @@ final class ResolvedLayoutPasses {
             return base;
         }
 
-        List<PlacedFragment> under = new ArrayList<>();
+        // Where each pass's own content starts, page by page, so that "under the body" can
+        // mean under *its* body. Prepending to index 0 instead puts the fragment beneath
+        // everything drawn before the feature — including the fill of a panel the feature
+        // sits inside, which paints over it and leaves no trace in the geometry.
+        Map<Object, Map<Integer, Integer>> ownContent = firstOwnFragmentPerPage(base);
+
+        Map<Integer, List<PlacedFragment>> under = new TreeMap<>();
         List<PlacedFragment> over = new ArrayList<>();
+        int underCount = 0;
         for (ResolvedLayoutPass pass : running) {
             List<ResolvedLayoutAddition> additions = pass.contribute(base, metadata);
             if (additions == null) {
@@ -88,21 +105,56 @@ final class ResolvedLayoutPasses {
                 requireFinite(pass, fragment.y(), "y");
                 requireFinite(pass, fragment.width(), "width");
                 requireFinite(pass, fragment.height(), "height");
-                (addition.depth() == LayoutDepth.UNDER_BODY ? under : over).add(fragment);
+                if (addition.depth() == LayoutDepth.UNDER_BODY) {
+                    under.computeIfAbsent(
+                                    ownContent.getOrDefault(pass, Map.of())
+                                            .getOrDefault(fragment.pageIndex(), 0),
+                                    index -> new ArrayList<>())
+                            .add(fragment);
+                    underCount++;
+                } else {
+                    over.add(fragment);
+                }
             }
         }
 
-        if (under.isEmpty() && over.isEmpty()) {
+        if (underCount == 0 && over.isEmpty()) {
             return base;
         }
 
-        List<PlacedFragment> combined =
-                new ArrayList<>(under.size() + base.fragments().size() + over.size());
-        combined.addAll(under);
-        combined.addAll(base.fragments());
+        List<PlacedFragment> body = base.fragments();
+        List<PlacedFragment> combined = new ArrayList<>(underCount + body.size() + over.size());
+        for (int i = 0; i < body.size(); i++) {
+            combined.addAll(under.getOrDefault(i, List.of()));
+            combined.add(body.get(i));
+        }
+        combined.addAll(under.getOrDefault(body.size(), List.of()));
         combined.addAll(over);
         // Nodes pass through untouched: a pass contributes drawing, never structure.
         return new LayoutGraph(base.canvas(), base.totalPages(), base.nodes(), combined);
+    }
+
+    /**
+     * The first fragment each anchor group put on each page.
+     *
+     * <p>An anchor's own fragment precedes its child's, so this is where a feature's
+     * content begins in draw order — and therefore where something drawn beneath that
+     * feature has to be spliced. One scan, and the answer for every pass at once.</p>
+     *
+     * @param base the compiled graph
+     * @return group key to page to first index; groups with no anchors are absent
+     */
+    private static Map<Object, Map<Integer, Integer>> firstOwnFragmentPerPage(LayoutGraph base) {
+        Map<Object, Map<Integer, Integer>> first = new IdentityHashMap<>();
+        List<PlacedFragment> fragments = base.fragments();
+        for (int i = 0; i < fragments.size(); i++) {
+            PlacedFragment fragment = fragments.get(i);
+            if (fragment.payload() instanceof LayoutAnchorPayload anchor) {
+                first.computeIfAbsent(anchor.id().groupKey(), key -> new HashMap<>())
+                        .putIfAbsent(fragment.pageIndex(), i);
+            }
+        }
+        return first;
     }
 
     /**

@@ -331,6 +331,18 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A timeline inside a card keeps its rail.**
+  A rail is drawn under the body, and "the body" was taken to be the document's: the
+  fragment went to the front of the list, before everything. Everything includes the fill of
+  whatever the timeline sits inside, so a timeline in a panel had its rail painted first and
+  covered a moment later — present in the geometry, absent from the page, and invisible to
+  any assertion that reads coordinates. The feature catalogue is exactly that shape, and its
+  timeline lost its line.
+
+  Under-body now means under the contributing feature's own content: the fragment is spliced
+  immediately before the first fragment that feature drew on that page. A pass that anchored
+  nothing on a page still goes to the front, which is what a page-wide backdrop wants.
+
 - **A DOCX export no longer loses the content of a wrapper it cannot draw.**
   The semantic backend writes the nodes it recognises and skips the rest, and skipping a
   wrapper took its whole subtree with it. Two were unknown to it: `AlignNode`, which says
@@ -360,6 +372,23 @@ follow semantic versioning; release dates are ISO 8601.
   No layout snapshot was added, and that is measured rather than preferred: a snapshot
   records nodes, the rail is a fragment, and neither committed timeline snapshot contains
   the word. The four baselines recorded before the rework are byte-identical.
+
+- **A timeline written before the rail moved lays out where it always did, and that was
+  measured rather than argued.** Eleven documents using nothing but the builder as it
+  shipped — every marker factory, every knob, a body across a page break, an entry taller
+  than four pages, a timeline started near the bottom of one, one inside a padded section,
+  two on a page — laid out on both branches and diffed. Every placed node matched; every
+  page count matched; the 31 per-entry borders became 16 rail fragments covering the same
+  span at the same x, worst |Δx| 0 and worst |Δy| 1.4e-14 over sixteen page-instances.
+  Nothing left the public surface either: 2540 members before, 2556 after, all sixteen of
+  the difference new.
+
+  The half of that which can be re-checked on one branch is now a test — every method the
+  old builder had, called in one expression; the default anchor still packing markers left;
+  the page counts; one rail on each page the entries occupy and on no other; the two
+  extents moving nothing but the rail; a padded section, a margin and a card each carrying
+  the timeline with them; five constructions of one 16pt marker; an outline of any
+  thickness; and the rail painted before the text and not only before the markers.
 
 ### Documentation
 

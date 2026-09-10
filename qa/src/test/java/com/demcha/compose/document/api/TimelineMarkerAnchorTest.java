@@ -160,6 +160,57 @@ class TimelineMarkerAnchorTest {
                 "marker", size, size, fill, null, null, null, null, null);
     }
 
+    @Test
+    void aMarkerIsGivenTheBoxItDeclaredWhateverItDrew() throws Exception {
+        // The declaration is the marker. A recipe that draws less than its box leaves the
+        // rest of it empty rather than shrinking the box, and one that draws more overflows
+        // rather than growing it — so the number the caller wrote is the number the column
+        // reserves, the anchor reports, and the rail is derived from.
+        ResolvedLayoutAnchor roomToSpare = anchorInAWideAxis(
+                TimelineMarker.custom(30, 30, column -> column.add(circle(10, INK))));
+        assertThat(roomToSpare.width()).as("declared 30, drew 10").isEqualTo(30.0, within(1e-9));
+        assertThat(roomToSpare.height()).isEqualTo(30.0, within(1e-9));
+
+        ResolvedLayoutAnchor overflowing = anchorInAWideAxis(
+                TimelineMarker.custom(10, 10, column -> column.add(circle(30, INK))));
+        assertThat(overflowing.width()).as("declared 10, drew 30").isEqualTo(10.0, within(1e-9));
+        assertThat(overflowing.height()).isEqualTo(10.0, within(1e-9));
+
+        ResolvedLayoutAnchor oblong = anchorInAWideAxis(
+                TimelineMarker.custom(24, 8, column -> column.add(circle(6, INK))));
+        assertThat(oblong.width()).as("a box does not have to be square").isEqualTo(24.0, within(1e-9));
+        assertThat(oblong.height()).isEqualTo(8.0, within(1e-9));
+    }
+
+    @Test
+    void aBoxWiderThanItsAxisKeepsItsBoxAndOverflowsTheColumn() throws Exception {
+        // The one place two declarations disagree, and the marker's is the one that wins: a
+        // 30pt box asked for inside a 20pt axis resolves to 30 and overflows the column
+        // rather than being squeezed into it. It has to be that way round — the rail is
+        // derived from this box, so a clamped box would put the line somewhere neither the
+        // marker nor the axis asked for.
+        assertThat(onlyAnchor(TimelineMarker.custom(30, 30, column -> column.add(circle(10, INK)))).width())
+                .as("a 30pt box asked for inside axisWidth(20)")
+                .isEqualTo(30.0, within(1e-9));
+    }
+
+    @Test
+    void everyBuiltInFactoryDeclaresTheSizeItWasGiven() throws Exception {
+        // And the four that shipped before any of this draw exactly their declared box, so
+        // making the declaration authoritative moved none of them. The ring is stroked at
+        // 4pt: ink spreads about a shape's edge, and the box may not follow it.
+        for (TimelineMarker marker : List.of(
+                TimelineMarker.dot(12, INK),
+                TimelineMarker.square(12, INK),
+                TimelineMarker.numbered(3, 12, INK, DocumentColor.WHITE),
+                TimelineMarker.circle(12, DocumentColor.WHITE,
+                        com.demcha.compose.document.style.DocumentStroke.of(INK, 4.0)))) {
+            ResolvedLayoutAnchor anchor = onlyAnchor(marker);
+            assertThat(anchor.width()).isEqualTo(12.0, within(1e-9));
+            assertThat(anchor.height()).isEqualTo(12.0, within(1e-9));
+        }
+    }
+
     /**
      * The marker anchors only.
      *
@@ -175,6 +226,14 @@ class TimelineMarkerAnchorTest {
     private static ResolvedLayoutAnchor onlyAnchor(TimelineMarker marker) throws Exception {
         LayoutGraph graph = timeline(360, t -> t
                 .axisWidth(20)
+                .entry(marker, e -> e.title("Only")));
+        return markerAnchors(graph).get(0);
+    }
+
+    /** The same, in an axis wide enough that the column is not the binding constraint. */
+    private static ResolvedLayoutAnchor anchorInAWideAxis(TimelineMarker marker) throws Exception {
+        LayoutGraph graph = timeline(360, t -> t
+                .axisWidth(40)
                 .entry(marker, e -> e.title("Only")));
         return markerAnchors(graph).get(0);
     }

@@ -538,6 +538,7 @@ public final class TimelineBuilder {
         }
     }
 
+
     /**
      * The marker's column, wrapped so the finished layout reports where the marker landed.
      *
@@ -562,12 +563,9 @@ public final class TimelineBuilder {
     private static Consumer<SectionBuilder> anchoredMarker(TimelineSpec spec,
                                                            TimelineEntrySpec entry,
                                                            int index) {
-        SectionBuilder drawn = new SectionBuilder();
-        drawn.spacing(0);
-        entry.marker().renderInto(drawn);
         DocumentNode anchored = new LayoutAnchorNode("",
                 new LayoutAnchorId(spec.owner(), TimelineAnchorKind.MARKER, index),
-                drawn.build());
+                entry.marker().node());
         // Where in the axis column the marker sits comes from the anchor, not from a mode:
         // an anchor on the marker's left edge wants the marker at the column's left edge,
         // one on its centre wants it at the column's centre. That is what puts markers of

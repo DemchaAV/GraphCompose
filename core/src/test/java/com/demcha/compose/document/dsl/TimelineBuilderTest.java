@@ -3,6 +3,7 @@ package com.demcha.compose.document.dsl;
 import com.demcha.compose.document.layout.LayoutAnchorId;
 import com.demcha.compose.document.layout.LayoutAnchorNode;
 import com.demcha.compose.document.node.AlignNode;
+import com.demcha.compose.document.node.CanvasLayerNode;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.node.LayerStackNode;
@@ -804,7 +805,12 @@ class TimelineBuilderTest {
      * wrapper itself is asserted.</p>
      */
     private static DocumentNode markerContent(DocumentNode markerColumn) {
-        return markerAnchorIn(markerColumn).children().get(0).children().get(0);
+        // Inside the anchor is the canvas of the marker's declared box: the recipe draws
+        // into that box rather than deciding it, which is what "declared, not measured"
+        // means. aMarkerIsGivenTheBoxItDeclaredWhateverItDrew() asserts the box itself.
+        DocumentNode canvas = markerAnchorIn(markerColumn).children().get(0);
+        assertThat(canvas).isInstanceOf(CanvasLayerNode.class);
+        return canvas.children().get(0).children().get(0);
     }
 
     /**

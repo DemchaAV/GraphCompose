@@ -331,6 +331,22 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Fixed
 
+- **A timeline marker is the box it declared.**
+  `TimelineMarker.custom(width, height, recipe)` took a box and then ignored it: the
+  timeline measured whatever the recipe happened to draw, so the two numbers a caller wrote
+  reserved nothing and the class documentation — "the box is declared, not measured" — was
+  describing an intention rather than the code. A recipe drawing a 10pt dot inside a
+  declared 30pt box resolved to 10, and everything derived from the marker followed the ink
+  instead of the declaration.
+
+  The recipe is now handed a canvas of exactly the declared size and draws from its origin.
+  Smaller content leaves the rest of the box empty; larger content overflows visibly rather
+  than growing it, and the declaration outranks even the axis column, because the rail is
+  derived from this box and a clamped one would put the line where nothing asked for it. The
+  four built-in factories draw exactly what they declare, so none of them moved — every
+  pixel baseline is unchanged, and the layout snapshots gained one node per marker and not
+  one changed coordinate.
+
 - **A timeline inside a card keeps its rail.**
   A rail is drawn under the body, and "the body" was taken to be the document's: the
   fragment went to the front of the list, before everything. Everything includes the fill of

@@ -1,9 +1,13 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.node.CanvasChild;
+import com.demcha.compose.document.node.CanvasLayerNode;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.*;
 import com.demcha.compose.font.FontName;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -144,7 +148,30 @@ public final class TimelineMarker {
         return bounds;
     }
 
-    void renderInto(SectionBuilder column) {
-        recipe.accept(column);
+    /**
+     * This marker as one node: the box it declared, with its recipe drawn inside.
+     *
+     * <p>The declared box is what the marker <em>is</em>, whatever the recipe measures to.
+     * The recipe is handed a canvas of exactly {@code width × height} and draws from its
+     * origin: a recipe smaller than the box leaves the rest of it empty, and one larger
+     * overflows visibly rather than growing the box. Either way the timeline reserves the
+     * declared box, the anchor reports the declared box, and the rail is derived from the
+     * declared box — so how a marker is drawn stays invisible to everything around it,
+     * which is the reason a marker declares a box instead of being measured.</p>
+     *
+     * <p>It outranks the axis column too: a box wider than the column it is placed in keeps
+     * its width and overflows, rather than being squeezed into the column. The rail is
+     * derived from this box, so a clamped box would put the line somewhere neither the
+     * marker nor the axis asked for.</p>
+     *
+     * @return the marker's node, sized to its declared box
+     */
+    DocumentNode node() {
+        SectionBuilder drawn = new SectionBuilder();
+        drawn.spacing(0);
+        recipe.accept(drawn);
+        return new CanvasLayerNode("marker", bounds.width(), bounds.height(),
+                List.of(new CanvasChild(drawn.build(), 0, 0)),
+                ClipPolicy.OVERFLOW_VISIBLE, DocumentInsets.zero(), DocumentInsets.zero());
     }
 }

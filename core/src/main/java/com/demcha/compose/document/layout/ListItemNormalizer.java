@@ -43,17 +43,29 @@ final class ListItemNormalizer {
         if (node.nestedItems().isEmpty()) {
             for (String item : node.items()) {
                 String content = ListMarker.normalizeItemText(item, node.normalizeMarkers());
-                if (content.isBlank()) {
-                    // Same rule as the flat legacy path: an item with no
-                    // renderable content contributes no row, marker or not.
-                    continue;
+                if (rendersSomething(node.marker(), content)) {
+                    out.add(new ListItemSpec(0, node.marker(), content));
                 }
-                out.add(new ListItemSpec(0, node.marker(), content));
             }
             return List.copyOf(out);
         }
         normalizeNested(node, node.nestedItems(), 0, out);
         return List.copyOf(out);
+    }
+
+    /**
+     * Whether an item puts anything on the page — the rule that decides which
+     * authored items survive normalization.
+     *
+     * <p>Authored cardinality is preserved: an item whose text is empty but
+     * whose marker is visible is a <b>marker-only row</b> and is kept, because
+     * the author asked for that marker and opting into marker geometry is not a
+     * reason to lose it. Only an item with neither text nor marker draws
+     * nothing, and that is the case the existing normalized-content contract
+     * already omits.</p>
+     */
+    private static boolean rendersSomething(ListMarker marker, String content) {
+        return !content.isBlank() || marker.isVisible();
     }
 
     private static void normalizeNested(ListNode node,
@@ -65,7 +77,7 @@ final class ListItemNormalizer {
                     ? item.marker()
                     : ListMarker.defaultForDepth(depth);
             String content = ListMarker.normalizeItemText(item.label(), node.normalizeMarkers());
-            if (!content.isBlank()) {
+            if (rendersSomething(marker, content)) {
                 out.add(new ListItemSpec(depth, marker, content));
             }
             // Children are walked either way: an empty label is a reason to skip

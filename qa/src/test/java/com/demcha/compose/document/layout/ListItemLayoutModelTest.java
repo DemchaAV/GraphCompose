@@ -139,16 +139,59 @@ class ListItemLayoutModelTest {
     }
 
     @Test
-    void aBlankItemContributesNoRowButNeverCostsItsChildren() {
-        assertThat(ListItemNormalizer.normalize(list(l -> l.items("Java", "   ", "SQL"))))
+    void anEmptyItemWithAVisibleMarkerStaysAsAMarkerOnlyRow() {
+        // Authored cardinality is preserved: three items in, three rows out. The
+        // author asked for that bullet, and opting into marker geometry is not a
+        // reason to lose it.
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(
+                list(l -> l.bullet().items("Java", "   ", "SQL")));
+
+        assertThat(specs).hasSize(3);
+        assertThat(specs).extracting(ListItemSpec::content).containsExactly("Java", "", "SQL");
+        assertThat(specs.get(1).hasMarker()).isTrue();
+        assertThat(specs.get(1).markerText()).isEqualTo("•");
+    }
+
+    @Test
+    void anEmptyParentKeepsItsOwnMarkerRowAndAllOfItsChildren() {
+        List<ListItemSpec> specs = ListItemNormalizer.normalize(list(l -> l
+                .addItem("", c -> c.addItem("Child survives"))));
+
+        assertThat(specs).hasSize(2);
+        assertThat(specs.get(0).depth()).isZero();
+        assertThat(specs.get(0).content()).isEmpty();
+        assertThat(specs.get(0).hasMarker()).as("the parent is a marker-only row").isTrue();
+        assertThat(specs.get(1).depth()).isEqualTo(1);
+        assertThat(specs.get(1).content()).isEqualTo("Child survives");
+    }
+
+    @Test
+    void anEmptyItemWithNoMarkerDrawsNothingAndIsOmitted() {
+        // The one case with neither text nor marker: nothing to draw, no marker,
+        // no gap, and no row — which is what the normalized-content contract
+        // already says.
+        assertThat(ListItemNormalizer.normalize(list(l -> l.noMarker().items("Java", "   ", "SQL"))))
                 .extracting(ListItemSpec::content)
                 .containsExactly("Java", "SQL");
 
-        List<ListItemSpec> nested = ListItemNormalizer.normalize(list(l -> l
-                .addItem("", c -> c.addItem("Child survives"))));
-        assertThat(nested).hasSize(1);
-        assertThat(nested.get(0).depth()).isEqualTo(1);
-        assertThat(nested.get(0).content()).isEqualTo("Child survives");
+        assertThat(ListItemNormalizer.normalize(list(l -> l
+                .markerFor(0, ListMarker.none())
+                .addItem("", c -> c.addItem("Child survives")))))
+                .extracting(ListItemSpec::content)
+                .containsExactly("Child survives");
+    }
+
+    @Test
+    void theSameEmptyItemShapesRenderUnchangedUnderTheLegacyLayout() throws Exception {
+        // The cardinality rule is a marker/content decision. Legacy keeps the
+        // behaviour it shipped with: a blank flat item is dropped whatever the
+        // marker, and a blank nested parent still renders its baked marker.
+        assertThat(legacyLineTexts(l -> l.bullet().items("Java", "   ", "SQL")))
+                .containsExactly("• Java", "• SQL");
+        assertThat(legacyLineTexts(l -> l.noMarker().items("Java", "   ", "SQL")))
+                .containsExactly("Java", "SQL");
+        assertThat(legacyLineTexts(l -> l.addItem("", c -> c.addItem("Child survives"))))
+                .containsExactly("•", "  ◦ Child survives");
     }
 
     @Test
@@ -276,6 +319,21 @@ class ListItemLayoutModelTest {
         @Override
         public LayoutCanvas canvas() {
             return LayoutCanvas.from(320, 240, new Margin(12, 12, 12, 12));
+        }
+    }
+
+    /** Exact line texts a shape produces under the legacy layout. */
+    private static List<String> legacyLineTexts(Consumer<ListBuilder> spec) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(320, 240)
+                .margin(DocumentInsets.of(12))
+                .create()) {
+            session.pageFlow().name("Root").addList(spec).build();
+            return session.layoutGraph().fragments().stream()
+                    .filter(f -> f.payload() instanceof ParagraphFragmentPayload)
+                    .flatMap(f -> ((ParagraphFragmentPayload) f.payload()).lines().stream())
+                    .map(line -> line.text())
+                    .toList();
         }
     }
 

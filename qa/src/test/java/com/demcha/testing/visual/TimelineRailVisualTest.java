@@ -3,6 +3,7 @@ package com.demcha.testing.visual;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentSession;
 import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.EllipseNode;
 import com.demcha.compose.document.style.DocumentColor;
 import com.demcha.compose.document.style.DocumentInsets;
@@ -12,21 +13,21 @@ import com.demcha.compose.testing.visual.PdfVisualRegression;
 import org.junit.jupiter.api.Test;
 
 /**
- * Pixel baseline for the timeline DSL, ahead of the rail rework.
+ * What a timeline looks like: the finished visual model, one baseline per scene.
  *
- * <p>The layout snapshots pin where things land; this pins what they look like. The two
- * catch different regressions: a rail drawn in the wrong colour, drawn on top of its
- * markers instead of under them, or not drawn at all, moves no geometry and passes every
- * snapshot.</p>
+ * <p>The first of these was recorded before the rail rework, to catch what a coordinate
+ * cannot: a rail drawn in the wrong colour, drawn over its markers instead of under them,
+ * or not drawn at all moves no geometry and passes every snapshot. It has not changed since,
+ * which is the compatibility claim of the whole rework and the reason it is still here.</p>
  *
- * <p>Deliberately a small page. A full-A4 baseline drifts across platforms by more than
- * the signal it carries; a tight page keeps the comparison meaningful.</p>
+ * <p>The rest are the scenes the rework made possible or made ambiguous — markers strung on
+ * the line rather than beside it, a rail trimmed to the outer markers, a rail crossing pages,
+ * a ring the line disappears behind. Each is paired with an assertion in
+ * {@code TimelineVisualScenarioGeometryTest} that says in numbers what the picture shows, and
+ * the two extents are drawn on one identical scene so the pair can be read as a diff.</p>
  *
- * <p>The marker sizes differ on purpose — 6, 14 and 9 pt. Keeping the rail aligned under
- * markers of different sizes is a stated goal of the rework, and today the marker centre
- * is {@code margin + gutter + size/2} while the rail sits at the section edge, so this
- * baseline records a rail the markers do <em>not</em> sit on. That is the behaviour being
- * preserved or deliberately changed, and either way it should be visible in a diff.</p>
+ * <p>Deliberately small pages. A full-A4 baseline drifts across platforms by more than the
+ * signal it carries; a tight page keeps the comparison meaningful.</p>
  */
 class TimelineRailVisualTest {
 
@@ -159,6 +160,141 @@ class TimelineRailVisualTest {
 
             VISUAL.assertMatchesBaseline("timeline-dsl/marker-on-rail", session);
         }
+    }
+
+    @Test
+    void markersOfEverySizeSitOnOneRailWithNoDateColumnToHelp() throws Exception {
+        // The same three sizes as the scene above, with the date column taken away. Two
+        // pictures rather than one because a leading column is the first thing suspected
+        // when a line bends, and here there is none to suspect: 6, 14 and 24pt on one axis.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 200)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(12)
+                            .markerOnRail()
+                            .axisWidth(28)
+                            .entry(TimelineMarker.dot(6, INK), e -> e
+                                    .title("Small").body("Six points across."))
+                            .entry(TimelineMarker.numbered(2, 14, INK, DocumentColor.WHITE), e -> e
+                                    .title("Medium").body("Fourteen, and numbered."))
+                            .entry(TimelineMarker.square(24, INK), e -> e
+                                    .title("Large").body("Twenty-four, and square.")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/marker-on-rail-sizes", session);
+        }
+    }
+
+    @Test
+    void entryBoundsRunsThroughEveryEntryAndOverTheSpacingBetweenThem() throws Exception {
+        // Half of a pair: this scene and the next differ by one argument and nothing else.
+        // Entries of deliberately different heights, 16pt apart — and the line covers the
+        // gaps, because an entry's spacing is padding inside its own box rather than a hole
+        // between two boxes. That is the default every existing timeline draws.
+        try (DocumentSession session = extentScene(TimelineRailExtent.ENTRY_BOUNDS)) {
+            VISUAL.assertMatchesBaseline("timeline-dsl/entry-bounds", session);
+        }
+    }
+
+    @Test
+    void markerToMarkerStopsAtTheOuterMarkersOnTheVerySameScene() throws Exception {
+        // The other half. Same page, same entries, same rail — and now the line begins at
+        // the first marker and ends at the last, with the tall entry's body hanging below
+        // it. Read against its twin, the diff is the two ends and nothing else.
+        try (DocumentSession session = extentScene(TimelineRailExtent.MARKER_TO_MARKER)) {
+            VISUAL.assertMatchesBaseline("timeline-dsl/marker-to-marker", session);
+        }
+    }
+
+    @Test
+    void aPaginatedTimelineDrawsItsRailOnEveryPageItReaches() throws Exception {
+        // Three pages out of two entries, and the only scene here that a single page cannot
+        // show at all: the line starts at the first marker, runs the full band of the page
+        // that holds nothing but the first entry's body, and stops at the second marker on
+        // the last. Three fragments of one logical rail, each bounded by its own page.
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 150)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(14)
+                            .markerOnRail()
+                            .axisWidth(24)
+                            .rail(rail -> rail.extent(TimelineRailExtent.MARKER_TO_MARKER))
+                            .entry(TimelineMarker.dot(10, INK), e -> e
+                                    .title("Runs on").body(longBody()))
+                            .entry(TimelineMarker.dot(10, INK), e -> e
+                                    .title("And ends here")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/paginated-marker-to-marker", session);
+        }
+    }
+
+    @Test
+    void aHollowMarkerBreaksTheRailCleanlyBecauseTheRailIsUnderIt() throws Exception {
+        // TimelineMarker.circle(size, fill, stroke) with the page's own colour as the fill:
+        // where the line passes through a ring it is covered, so it reads as broken at each
+        // stop instead of crossing three of them. Pure paint order — the geometry is
+        // identical either way — which is why only a picture can be the evidence.
+        DocumentStroke ring = DocumentStroke.of(INK, 1.2);
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(300, 210)
+                .margin(DocumentInsets.of(18))
+                .create()) {
+            session.pageFlow()
+                    .addTimeline(t -> t
+                            .connector(RAIL, 1.5)
+                            .spacing(12)
+                            .markerOnRail()
+                            .axisWidth(26)
+                            .entry(TimelineMarker.circle(10, DocumentColor.WHITE, ring), e -> e
+                                    .title("Hollow").body("The line stops inside the ring."))
+                            .entry(TimelineMarker.circle(14, DocumentColor.WHITE, ring), e -> e
+                                    .title("Hollow, larger").body("And starts again below it."))
+                            .entry(TimelineMarker.circle(20, DocumentColor.WHITE, ring), e -> e
+                                    .title("Hollow, larger still").body("Whatever the diameter.")))
+                    .build();
+
+            VISUAL.assertMatchesBaseline("timeline-dsl/outlined-marker", session);
+        }
+    }
+
+    /** The scene both extent baselines draw; they differ by this argument and nothing else. */
+    private static DocumentSession extentScene(TimelineRailExtent extent) throws Exception {
+        DocumentSession session = GraphCompose.document()
+                .pageSize(300, 250)
+                .margin(DocumentInsets.of(18))
+                .create();
+        session.pageFlow()
+                .addTimeline(t -> t
+                        .connector(RAIL, 1.5)
+                        .spacing(16)
+                        .rail(rail -> rail.extent(extent))
+                        .entry(TimelineMarker.dot(9, INK), e -> e
+                                .title("Tall entry").meta("2023 - Present")
+                                .body("A body long enough to run to three lines on a page this "
+                                      + "narrow, so that this entry is plainly the tallest here."))
+                        .entry(TimelineMarker.dot(9, INK), e -> e.title("One line only"))
+                        .entry(TimelineMarker.dot(9, INK), e -> e
+                                .title("Middling").body("Two lines, more or less.")))
+                .build();
+        return session;
+    }
+
+    /** Long enough to take the first entry across two page breaks on a 150pt page. */
+    private static String longBody() {
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < 40; i++) {
+            body.append("Sentence ").append(i).append(" of a body that keeps going. ");
+        }
+        return body.toString();
     }
 
     private static EllipseNode circle(double size, DocumentColor fill) {

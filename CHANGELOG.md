@@ -344,6 +344,23 @@ follow semantic versioning; release dates are ISO 8601.
   alike — a wrapper handled in one and missed in the other loses a subtree just as
   completely. PDF and PPTX were never affected; they draw what the layout produced.
 
+### Tests
+
+- **The timeline's finished visual model is pinned scene by scene.** Ten scenarios, each
+  given the instrument that can decide it: a coordinate where the claim is a coordinate,
+  a picture where the claim is a shape or a paint order, and neither where the other
+  already says it. Five new baselines — three marker sizes on one axis, the two extents
+  drawn on one identical scene so the pair reads as a diff, a rail crossing three pages,
+  and a ring the line disappears behind — with nine assertions for the invariants that
+  only exist once the parts are assembled: one x for a whole timeline however many pages
+  it crosses, a date of any length leaving the axis alone, no fragment reaching outside
+  its own page's band, and a marker of three shapes railing exactly as a plain one of the
+  same declared box.
+
+  No layout snapshot was added, and that is measured rather than preferred: a snapshot
+  records nodes, the rail is a fragment, and neither committed timeline snapshot contains
+  the word. The four baselines recorded before the rework are byte-identical.
+
 ### Documentation
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a

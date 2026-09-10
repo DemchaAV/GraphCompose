@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 1111
+Types: 235 · methods: 2088 · constants: 233 · compiler-generated members: 1114
 
 ## com.demcha.compose
 
@@ -1122,18 +1122,26 @@ Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 111
 
 ### TimelineBuilder (class)
 - `TimelineBuilder connector(DocumentColor color, double width)`
+- `TimelineBuilder rail(Consumer<TimelineRailBuilder> spec)`
+- `TimelineBuilder markerOnRail()`
 - `TimelineBuilder gutter(double gutter)`
 - `TimelineBuilder markerGap(double gap)`
 - `TimelineBuilder markerColumnWeight(double weight)`
+- `TimelineBuilder axisWidth(double points)`
+- `TimelineBuilder leadingColumn(DocumentRowColumn column)`
 - `TimelineBuilder spacing(double spacing)`
 - `TimelineBuilder titleStyle(DocumentTextStyle style)`
 - `TimelineBuilder metaStyle(DocumentTextStyle style)`
 - `TimelineBuilder bodyStyle(DocumentTextStyle style)`
 - `TimelineBuilder entry(TimelineMarker marker, Consumer<TimelineEntryBuilder> content)`
+- `TimelineBuilder entry(Consumer<TimelineEntryBuilder> entry)`
 - `TimelineBuilder keepTogether()`
 - `TimelineBuilder keepEntriesTogether()`
 
 ### TimelineEntryBuilder (class)
+- `TimelineEntryBuilder marker(TimelineMarker marker)`
+- `TimelineEntryBuilder content(Consumer<SectionBuilder> content)`
+- `TimelineEntryBuilder leading(Consumer<SectionBuilder> leading)`
 - `TimelineEntryBuilder title(String title)`
 - `TimelineEntryBuilder title(String title, DocumentTextStyle style)`
 - `TimelineEntryBuilder titleStyle(DocumentTextStyle style)`
@@ -1150,6 +1158,14 @@ Types: 233 · methods: 2077 · constants: 230 · compiler-generated members: 111
 - `TimelineMarker circle(double size, DocumentColor fill, DocumentStroke stroke)`
 - `TimelineMarker numbered(int number, double size, DocumentColor fill, DocumentColor textColor)`
 - `TimelineMarker square(double size, DocumentColor fill)`
+- `TimelineMarker custom(double width, double height, Consumer<SectionBuilder> recipe)`
+
+### TimelineRailBuilder (class)
+- `TimelineRailBuilder stroke(DocumentStroke stroke)`
+- `TimelineRailBuilder extent(TimelineRailExtent extent)`
+
+### TimelineRailExtent (enum)
+- constants: `MARKER_TO_MARKER`, `ENTRY_BOUNDS`, `TIMELINE_BOUNDS`
 
 ### TocBuilder (class)
 - `new TocBuilder()`

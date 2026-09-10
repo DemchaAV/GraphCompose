@@ -303,7 +303,8 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             writeList(document, list);
         } else if (node instanceof ContainerNode || node instanceof SectionNode
                    || node instanceof com.demcha.compose.document.node.LayerStackNode
-                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode) {
+                   || node instanceof com.demcha.compose.document.node.CanvasLayerNode
+                   || isSemanticallyTransparent(node)) {
             // Overlay/positioned wrappers have no DOCX analogue for their
             // geometry, but their children can be semantic (text, images) —
             // render them sequentially rather than dropping the subtree.
@@ -972,6 +973,24 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * <p>A wrapper contributes nothing of its own to a Word cell, so its children are
      * written in its place rather than the wrapper being dropped with them inside.</p>
      */
+    /**
+     * Whether a node exists only to say something about geometry, and so has nothing of its
+     * own to write here.
+     *
+     * <p>A layout anchor reports where its child landed and an alignment says where in the
+     * available width to put it. Word lays text out itself, so neither has an analogue —
+     * but both have exactly one child, and dropping a wrapper takes the content with it.
+     * The two walkers below ask this rather than each keeping its own list, because a
+     * wrapper missing from one of them loses a subtree the other would have kept.</p>
+     *
+     * @param node the node being written
+     * @return true when the node itself writes nothing and its children should be written
+     */
+    private static boolean isSemanticallyTransparent(DocumentNode node) {
+        return node instanceof com.demcha.compose.document.layout.LayoutAnchorNode
+               || node instanceof com.demcha.compose.document.node.AlignNode;
+    }
+
     private void writeCellNode(XWPFTableCell cell, DocumentNode child) throws Exception {
         if (child instanceof ParagraphNode paragraph) {
             // Same walk as writeParagraph, all of it: a cell paragraph keeps per-run
@@ -987,6 +1006,10 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             }
         } else if (child instanceof SectionNode section) {
             for (DocumentNode grandChild : section.children()) {
+                writeCellNode(cell, grandChild);
+            }
+        } else if (isSemanticallyTransparent(child)) {
+            for (DocumentNode grandChild : child.children()) {
                 writeCellNode(cell, grandChild);
             }
         } else if (child instanceof SpacerNode) {

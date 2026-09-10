@@ -23,7 +23,7 @@ authoring API; public application code should not import
 | [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |
 | [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline SVG icons, emoji shortcodes, inline shapes and checkboxes |
 | [Lists](recipes/lists.md) | `addList`: quick bulleted lists, marker customisation, nested lists with per-depth markers, spacing and styled items |
-| [Timelines](recipes/timelines.md) | `addTimeline`: markers (dot / circle / numbered / square) on a connector rail, geometry and text-style controls, pagination opt-ins |
+| [Timelines](recipes/timelines.md) | `addTimeline`: the leading / axis / content model, markers (dot / circle / numbered / square / custom), leading column, axis sizing, `markerOnRail()`, rail extent, pagination, backends |
 | [Barcodes](recipes/barcodes.md) | QR / Code 128 / Code 39 / EAN / UPC / PDF417 / DataMatrix, tinting, quiet zone, card centring |
 | [Images](recipes/images.md) | Sources (bytes/path), sizing precedence, STRETCH/CONTAIN/COVER fit modes, images in rows and cards |
 | [PDF chrome](recipes/pdf-chrome.md) | Metadata, watermarks, running header/footer with `{page}/{pages}/{date}`, protection, links and outline bookmarks |

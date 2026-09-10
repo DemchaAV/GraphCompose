@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 233,
-    "methods": 2077,
-    "constants": 230,
-    "generated": 1111
+    "types": 235,
+    "methods": 2088,
+    "constants": 233,
+    "generated": 1114
   },
   "packages": [
     {
@@ -15029,6 +15029,29 @@
             },
             {
               "kind": "method",
+              "name": "rail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineRailBuilder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "markerOnRail",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "gutter",
               "static": false,
               "origin": "source",
@@ -15066,6 +15089,34 @@
                 {
                   "type": "double",
                   "name": "weight"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "axisWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "points"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leadingColumn",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "DocumentRowColumn",
+                  "name": "column"
                 }
               ]
             },
@@ -15145,6 +15196,20 @@
             },
             {
               "kind": "method",
+              "name": "entry",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "Consumer<TimelineEntryBuilder>",
+                  "name": "entry"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "keepTogether",
               "static": false,
               "origin": "source",
@@ -15172,6 +15237,48 @@
           ],
           "artifact": "graph-compose-core",
           "members": [
+            {
+              "kind": "method",
+              "name": "marker",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "TimelineMarker",
+                  "name": "marker"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "content",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leading",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineEntryBuilder",
+              "params": [
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "leading"
+                }
+              ]
+            },
             {
               "kind": "method",
               "name": "title",
@@ -15418,6 +15525,99 @@
                   "name": "fill"
                 }
               ]
+            },
+            {
+              "kind": "method",
+              "name": "custom",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineMarker",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "width"
+                },
+                {
+                  "type": "double",
+                  "name": "height"
+                },
+                {
+                  "type": "Consumer<SectionBuilder>",
+                  "name": "recipe"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailBuilder",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailBuilder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "method",
+              "name": "stroke",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "DocumentStroke",
+                  "name": "stroke"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "extent",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineRailBuilder",
+              "params": [
+                {
+                  "type": "TimelineRailExtent",
+                  "name": "extent"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "TimelineRailExtent",
+          "binaryName": "com.demcha.compose.document.dsl.TimelineRailExtent",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-core",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "MARKER_TO_MARKER",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "ENTRY_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
+            },
+            {
+              "kind": "constant",
+              "name": "TIMELINE_BOUNDS",
+              "static": true,
+              "origin": "generated",
+              "type": "TimelineRailExtent"
             }
           ]
         },

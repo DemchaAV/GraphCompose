@@ -7,6 +7,101 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **A timeline's rail is one line, drawn from where its markers landed.**
+  It was a left border repeated on every entry section, which is why it sat at the entry's
+  edge whatever the markers did, could not stop short of them, and had no way to be
+  anything but the full height of the entries. It is now computed after layout from the
+  markers' and entries' resolved positions, and contributed as one fragment per page —
+  one logical rail, however many pages it crosses, bounded on each by that page alone.
+
+  Two independent choices, and they stay independent. `TimelineRailExtent` says how far the
+  rail runs: `ENTRY_BOUNDS`, the default and what every existing timeline already draws, or
+  `MARKER_TO_MARKER`, which starts at the first marker and stops at the last.
+  `markerOnRail()` says where it runs: it aligns every marker's declared anchor with the
+  timeline axis. With the current centre anchor, markers of different sizes are centred
+  within the axis column and share one continuous rail — a 6pt dot, a 14pt numbered disc
+  and a 24pt square all sit on the same line rather than on the same left edge. An entry's
+  body moves with them into the content column beside the marker, so the line is left with
+  only markers to cross — see *Fixed* below. A timeline that does not call it keeps the
+  left-edge anchor and the placement it has always had.
+  A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather than a line
+  of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the same line
+  as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
+
+  **A leading column sits to the left of the timeline axis; it does not move the rail to
+  the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to
+  the axis.
+
+  Existing timelines lay out where they always did — the rail's geometry matches the border
+  it replaces to 0.000000 in x and at both ends, on every page, and page counts are
+  unchanged. It is not pixel-identical, and the difference is worth knowing: two pixels in a
+  three-entry timeline and one in a two-entry one, at the rows where two entry borders used
+  to abut. Each drew its own antialiased end there, so the seam came out *lighter* than the
+  rail's own colour; one continuous line has no seams and paints the colour asked for.
+
+- **A timeline's rail is one configuration.**
+  `TimelineBuilder.rail(Consumer<TimelineRailBuilder>)` takes a `DocumentStroke`, and
+  `connector(colour, width)` is now the shorthand that normalizes into exactly the same
+  rail — one rendering system rather than an old spelling and a new one, which is what
+  lets the rail grow later without a second path growing beside it. Saying it both ways
+  throws, naming both calls; saying it twice the same way still works, because
+  `connector(colour, 0)` followed by `connector(null, width)` has always been a way to set
+  the two halves separately and code doing that must not start failing.
+
+- **A timeline marker can be anything you can draw.**
+  `TimelineMarker.custom(width, height, recipe)` takes a declared box and a recipe that
+  fills it, so a marker made of three stacked shapes, a bordered pill or an icon needs no
+  change to `TimelineBuilder` — the four built-in factories now go through the same door.
+  The box is declared rather than measured, and it does not have to be square; a marker
+  drawn as several fragments has one box exactly as a marker drawn as one does, which is
+  what keeps the geometry around it independent of how the marker was built.
+
+  Fixed along the way: `TimelineMarker`'s documentation said the marker's size laid out the
+  rail column. It never did — the column's width comes from `markerColumnWeight(...)` or
+  `axisWidth(...)`, and the field the sentence pointed at was read by nothing.
+
+- **A timeline's marker column can be given a width in points.**
+  `TimelineBuilder.axisWidth(double)` is the peer of `markerColumnWeight(double)`: points
+  rather than a share of the row. Reach for it when the markers should sit the same
+  distance from the edge on every page width — a weight is a share of what the row has
+  left, so it moves when the page or the columns beside it do.
+
+  Declare one or the other, not both; a timeline that asks for both throws, naming both
+  calls. There is no conversion between them that does not need a row width neither the
+  builder nor the caller has, and a conversion done anyway is right on exactly one page:
+  the default `markerColumnWeight(0.10)` resolves to 24pt on a 320pt page and to 38.5pt on
+  a 480pt one. Nothing converts; the row resolves whichever it was handed. Timelines that
+  set neither are unchanged.
+
+- **A timeline can put a column before its markers — the `DATE` of `DATE | ● | CONTENT`.**
+  `TimelineBuilder.leadingColumn(DocumentRowColumn)` declares the width once for the whole
+  timeline and `TimelineEntryBuilder.leading(Consumer<SectionBuilder>)` fills it per entry.
+  Every entry gets the column, including entries that put nothing in it, because the point
+  of the column is that the markers after it start at the same x whatever the dates say.
+  Nothing is styled for you inside it, as with `content(...)`.
+
+  `auto()` is rejected at the call, with the reason. An auto column is measured from its
+  own row's content, so a timeline whose dates read `2023` and `September 2024 - present`
+  would put those two markers 131pt apart — measured, which is why this is an exception
+  rather than a documented caveat. `fixed(points)` and `weight(share)` are decided by the
+  row and both align exactly. Leading content without a declared column throws too, naming
+  the call to add, rather than inventing a width per entry.
+
+- **A timeline entry can fill its own content column.**
+  `TimelineBuilder.entry(Consumer<TimelineEntryBuilder>)` is a longer form of the existing
+  `entry(marker, ...)` that takes its marker from `TimelineEntryBuilder.marker(...)` inside
+  the lambda, and `TimelineEntryBuilder.content(Consumer<SectionBuilder>)` hands that
+  entry's content column over whole. An entry that needs a table, a chart or a nested row
+  beside its marker no longer has to express it as a title plus an `add(...)` block below
+  the body.
+
+  The two ways of describing an entry do not mix. `title`/`meta`/`body`/`add` and their
+  style overrides describe slots the timeline styles and arranges for you; `content(...)`
+  says it should arrange nothing. Calling both on one entry throws at authoring time, in
+  either order, rather than quietly letting one win — a mistake that would otherwise
+  surface only in the rendered document. `entry(marker, ...)` and `entry(e -> e.marker(...))`
+  build the same entry, and declaring a marker both ways throws for the same reason.
+
 - **A vertical flow can pin its width and still grow with its content.**
   `AbstractFlowBuilder.fixedWidth(double)` — so `addSection(s -> s.fixedWidth(240))`,
   `module(m -> m.fixedWidth(240))` and `pageFlow(page -> page.fixedWidth(200))` —
@@ -98,6 +193,16 @@ follow semantic versioning; release dates are ISO 8601.
   middle — while horizontal margins come off every slice as before. **An anchor whose
   content fits on one page is unchanged**, which is every anchor that exists today.
 
+- **A timeline's markers now report where they landed, and the marker column gains a
+  level in the node tree.** Each marker is wrapped so the finished layout carries one
+  resolved anchor per marker — one box however many shapes the marker drew, on the page
+  the marker is actually on — which is what the rail will be computed from instead of a
+  per-entry section border. Nothing is drawn for it and nothing moves: every existing
+  timeline renders pixel for pixel as it did, and every box that was in the layout graph is
+  still there at the same coordinates. What changes is the *paths*: the marker's column now
+  holds a wrapper holding the marker, so a **committed layout snapshot that includes a
+  timeline needs re-recording** — check that the diff is only added wrapper entries and
+  renamed paths before approving it, as the three snapshots in this repository were.
 
 - **A built-in feature can now draw from geometry the layout has already resolved.**
   Some things cannot be drawn while laying out because they depend on where other things
@@ -227,7 +332,121 @@ follow semantic versioning; release dates are ISO 8601.
   zero — and no layout snapshot, pixel baseline or committed preview moves:
   every composed cell in the templates and the examples uses zero margins.
 
+### Fixed
+
+- **`markerOnRail()` no longer draws the rail through the entry's text.**
+  Putting the markers on the rail moves the line into the middle of the axis column, and an
+  entry's body spanned the whole entry — so the line was drawn straight through ordinary
+  body text. It now starts where the title starts:
+
+  ```
+  LEADING | AXIS | CONTENT
+          |  ●   | title
+          |  │   | body line 1
+          |  │   | body line 2
+          |  ●   | next entry
+  ```
+
+  The body uses the content column the entry's own header row resolved, so a column given in
+  points and a column given as a share of the row behave identically — neither is recomputed
+  — and it stays a vertical block, so an entry longer than a page still splits across pages
+  with its text at the same x on every one.
+
+  A timeline that does not call `markerOnRail()` is untouched: the rail stays beside the
+  axis, the body still spans the entry and clears the line by the gutter, and every baseline
+  and layout snapshot of one is byte-identical. What changed is a narrower body under
+  `markerOnRail()`, which wraps into more lines — so those timelines can take more pages than
+  they did while the text was running under the line.
+
+- **A timeline marker is the box it declared.**
+  `TimelineMarker.custom(width, height, recipe)` took a box and then ignored it: the
+  timeline measured whatever the recipe happened to draw, so the two numbers a caller wrote
+  reserved nothing and the class documentation — "the box is declared, not measured" — was
+  describing an intention rather than the code. A recipe drawing a 10pt dot inside a
+  declared 30pt box resolved to 10, and everything derived from the marker followed the ink
+  instead of the declaration.
+
+  The recipe is now handed a canvas of exactly the declared size and draws from its origin.
+  Smaller content leaves the rest of the box empty; larger content overflows visibly rather
+  than growing it, and the declaration outranks even the axis column, because the rail is
+  derived from this box and a clamped one would put the line where nothing asked for it. The
+  four built-in factories draw exactly what they declare, so none of them moved — every
+  pixel baseline is unchanged, and the layout snapshots gained one node per marker and not
+  one changed coordinate.
+
+- **A timeline inside a card keeps its rail.**
+  A rail is drawn under the body, and "the body" was taken to be the document's: the
+  fragment went to the front of the list, before everything. Everything includes the fill of
+  whatever the timeline sits inside, so a timeline in a panel had its rail painted first and
+  covered a moment later — present in the geometry, absent from the page, and invisible to
+  any assertion that reads coordinates. The feature catalogue is exactly that shape, and its
+  timeline lost its line.
+
+  Under-body now means under the contributing feature's own content: the fragment is spliced
+  immediately before the first fragment that feature drew on that page. A pass that anchored
+  nothing on a page still goes to the front, which is what a page-wide backdrop wants.
+
+- **A DOCX export no longer loses the content of a wrapper it cannot draw.**
+  The semantic backend writes the nodes it recognises and skips the rest, and skipping a
+  wrapper took its whole subtree with it. Two were unknown to it: `AlignNode`, which says
+  where in the available width to place its child, and the internal anchor a feature uses
+  to learn where its child landed. Word lays text out itself, so neither survives as
+  geometry — but each has exactly one child, and that child is the document. An aligned
+  section exported as a well-formed file with its text missing: no exception, no warning,
+  nothing to read.
+
+  Both are transparent to the export now, in the document walk and the row-cell walk
+  alike — a wrapper handled in one and missed in the other loses a subtree just as
+  completely. PDF and PPTX were never affected; they draw what the layout produced.
+
+### Tests
+
+- **The timeline's finished visual model is pinned scene by scene.** Ten scenarios, each
+  given the instrument that can decide it: a coordinate where the claim is a coordinate,
+  a picture where the claim is a shape or a paint order, and neither where the other
+  already says it. Five new baselines — three marker sizes on one axis, the two extents
+  drawn on one identical scene so the pair reads as a diff, a rail crossing three pages,
+  and a ring the line disappears behind — with nine assertions for the invariants that
+  only exist once the parts are assembled: one x for a whole timeline however many pages
+  it crosses, a date of any length leaving the axis alone, no fragment reaching outside
+  its own page's band, and a marker of three shapes railing exactly as a plain one of the
+  same declared box.
+
+  No layout snapshot was added, and that is measured rather than preferred: a snapshot
+  records nodes, the rail is a fragment, and neither committed timeline snapshot contains
+  the word. The four baselines recorded before the rework are byte-identical.
+
+- **A timeline written before the rail moved is guarded against moving.** Eleven documents
+  using nothing but the builder as it shipped — every marker factory, every knob, a body
+  across a page break, an entry taller than four pages, a timeline started near the bottom
+  of one, one inside a padded section, two on a page — hold every placed box and every page
+  count they had, and the per-entry borders they used to draw are covered by the rail that
+  replaced them to within 1.4e-14 across sixteen page-instances. No member left the public
+  surface: 2540 before, 2556 after, all sixteen of the difference new.
+
+  What can be re-checked on one branch is a test: every method the old builder had, called
+  in one expression; the default anchor still packing markers left; the page counts; one
+  rail on each page the entries occupy and on no other; the two extents moving nothing but
+  the rail; a padded section, a margin and a card each carrying the timeline with them; five
+  constructions of one 16pt marker; an outline of any thickness; and the rail painted before
+  the text and not only before the markers.
+
 ### Documentation
+
+- **The timeline recipe describes the finished model.** `LEADING | AXIS | CONTENT`, what the
+  rail belongs to and what cannot move it, both ways to fill an entry, the leading column and
+  why `auto()` is refused, the two axis sizings, what a declared marker box means, what
+  `markerOnRail()` does to markers *and* to the body, the two supported extents and the one
+  that is not, pagination, and what each backend does with a rail. The old sentence calling
+  the rail "a left accent border on each entry" is gone; it stopped being true when the rail
+  became one line resolved after layout.
+
+- **Two engine seams are written down, and so is the difference between them.**
+  `docs/architecture/resolved-layout-seams.md`: a resolved-layout pass reads geometry that is
+  already settled and can only draw, while a resolved horizontal band is read during the same
+  compile and therefore changes what is measured after it. The note ends with the paint order
+  in one block, including what "under the body" means — under the contributing feature's own
+  content, which is not the same as the front of the page's fragment list.
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a
   signature cannot say now have a page and a proof. A row with no `columns(...)`, no

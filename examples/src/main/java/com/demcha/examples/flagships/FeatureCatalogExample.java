@@ -184,6 +184,40 @@ public final class FeatureCatalogExample {
                             .entry(com.demcha.compose.document.dsl.TimelineMarker.dot(8, GOLD),
                                     e -> e.title("Beta").meta("Mar 2026").body("First external users."))));
 
+            feature(flow, "Timeline — dates beside the axis, markers on the rail", """
+                    section.addTimeline(t -> t
+                        .markerOnRail()                                 // markers centred on the line
+                        .axisWidth(26)
+                        .leadingColumn(DocumentRowColumn.fixed(56))     // DATE | AXIS | CONTENT
+                        .entry(e -> e.marker(TimelineMarker.dot(6, TEAL))
+                               .leading(d -> d.addParagraph("2024"))
+                               .title("Discovery").body("The body stays in the content column ..."))
+                        .entry(e -> e.marker(TimelineMarker.circle(16, WHITE, DocumentStroke.of(TEAL, 1.2)))
+                               .leading(d -> d.addParagraph("2025"))
+                               .title("Build").body("An outlined marker breaks the line ..."))
+                        .entry(e -> e.marker(TimelineMarker.square(22, GOLD))
+                               .leading(d -> d.addParagraph("2026"))
+                               .title("Launch").body("Markers of any size share one rail.")))""",
+                    demo -> demo.addTimeline(t -> t
+                            .markerOnRail()
+                            .axisWidth(26)
+                            .leadingColumn(com.demcha.compose.document.style.DocumentRowColumn.fixed(56))
+                            .entry(e -> e.marker(com.demcha.compose.document.dsl.TimelineMarker.dot(6, TEAL))
+                                    .leading(d -> d.addParagraph("2024"))
+                                    .title("Discovery")
+                                    .body("The body stays in the content column, so the rail never runs "
+                                          + "through the text."))
+                            .entry(e -> e.marker(com.demcha.compose.document.dsl.TimelineMarker.circle(
+                                            16, DocumentColor.WHITE, DocumentStroke.of(TEAL, 1.2)))
+                                    .leading(d -> d.addParagraph("2025"))
+                                    .title("Build")
+                                    .body("An outlined marker filled with the page colour breaks the line "
+                                          + "cleanly — the rail is drawn beneath it."))
+                            .entry(e -> e.marker(com.demcha.compose.document.dsl.TimelineMarker.square(22, GOLD))
+                                    .leading(d -> d.addParagraph("2026"))
+                                    .title("Launch")
+                                    .body("A 6pt dot, a 16pt ring and a 22pt square share one rail x."))));
+
             feature(flow, "Tables — zebra rows and a totals row", """
                     section.addTable(t -> t
                         .columns(DocumentTableColumn.auto(), DocumentTableColumn.auto(), DocumentTableColumn.auto())

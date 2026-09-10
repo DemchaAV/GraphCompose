@@ -3,7 +3,7 @@
   "verifiedAgainst": "2.4.0-SNAPSHOT",
   "generator": "knowledge/tools/api-surface/extract-api.mjs",
   "note": "Public types and members deliberately kept out of every surface. An exclusion nobody can see is indistinguishable from a bug, so each one records why.",
-  "count": 173,
+  "count": 180,
   "excluded": [
     {
       "binaryName": "com.demcha.compose.document.backend.fixed.pptx.handlers.PptxChromeRenderer",
@@ -95,6 +95,20 @@
       "kind": "class",
       "artifact": "graph-compose-core",
       "reason": "package `document.dsl.internal` is implementation detail but carries no package-level @Internal; excluded by name until the annotation is added"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.dsl.TimelineAxisSize$Fixed",
+      "package": "com.demcha.compose.document.dsl",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.dsl.TimelineAxisSize$Weight",
+      "package": "com.demcha.compose.document.dsl",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "nested type no admitted signature mentions"
     },
     {
       "binaryName": "com.demcha.compose.document.emoji.EmojiLibrary",
@@ -189,6 +203,20 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.definitions.EllipseDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.HorizontalBandContentDefinition",
+      "package": "com.demcha.compose.document.layout.definitions",
+      "kind": "class",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout.definitions)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.definitions.HorizontalBandsDefinition",
       "package": "com.demcha.compose.document.layout.definitions",
       "kind": "class",
       "artifact": "graph-compose-core",
@@ -357,6 +385,20 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.FragmentPlacement",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.HorizontalBandContentNode",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.HorizontalBandsNode",
       "package": "com.demcha.compose.document.layout",
       "kind": "record",
       "artifact": "graph-compose-core",
@@ -742,6 +784,13 @@
     },
     {
       "binaryName": "com.demcha.compose.document.layout.PreparedSplitResult",
+      "package": "com.demcha.compose.document.layout",
+      "kind": "record",
+      "artifact": "graph-compose-core",
+      "reason": "package @Internal (com.demcha.compose.document.layout)"
+    },
+    {
+      "binaryName": "com.demcha.compose.document.layout.ResolvedHorizontalBand",
       "package": "com.demcha.compose.document.layout",
       "kind": "record",
       "artifact": "graph-compose-core",

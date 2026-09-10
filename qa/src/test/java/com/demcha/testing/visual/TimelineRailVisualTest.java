@@ -16,9 +16,13 @@ import org.junit.jupiter.api.Test;
  * What a timeline looks like: the finished visual model, one baseline per scene.
  *
  * <p>The first of these was recorded before the rail rework, to catch what a coordinate
- * cannot: a rail drawn in the wrong colour, drawn over its markers instead of under them,
- * or not drawn at all moves no geometry and passes every snapshot. It has not changed since,
- * which is the compatibility claim of the whole rework and the reason it is still here.</p>
+ * cannot: a rail in the wrong colour, or not drawn at all, moves no geometry and passes every
+ * snapshot. It has not changed since, which is the compatibility claim of the whole rework and
+ * the reason it is still here.</p>
+ *
+ * <p>These images are a coarse net, deliberately — see the budget below. The sharp claims
+ * about paint order live where a platform cannot blur them: on the fragment list, and in a
+ * render that counts rail-coloured pixels rather than comparing two pictures.</p>
  *
  * <p>The rest are the scenes the rework made possible or made ambiguous — markers strung on
  * the line rather than beside it, a rail trimmed to the outer markers, a rail crossing pages,
@@ -33,7 +37,32 @@ class TimelineRailVisualTest {
 
     private static final DocumentColor RAIL = DocumentColor.rgb(150, 158, 172);
     private static final DocumentColor INK = DocumentColor.rgb(20, 40, 70);
-    private static final PdfVisualRegression VISUAL = PdfVisualRegression.standard();
+
+    // The baselines are committed as Windows-rendered PNGs and compared on Linux CI, where
+    // PDFBox text rasterisation drifts: measured on these very scenes, 716 to 2 539 pixels of
+    // a structurally identical page, worst per-channel delta 202. A budget is therefore not
+    // optional, and the same one ShapeContainerVisualRegressionTest arrived at for the same
+    // reason is the right order of magnitude.
+    //
+    // Be clear about what that costs. A paint-order flip on these scenes moves 129 to 178
+    // pixels — an order of magnitude *below* the drift — so these images cannot be the guard
+    // for it, and they are not: whether the rail is painted under the markers and under the
+    // text is asserted on the fragment list itself (TimelineRailGeometryTest,
+    // TimelineVisualScenarioGeometryTest), and whether it survives an opaque panel is asserted
+    // by counting rail-coloured pixels on a rendered page (TimelineCompatibilityTest), which
+    // asks a question no platform difference can answer wrongly. What these baselines catch is
+    // gross visual change: a rail not drawn at all, a marker missing, content moving column,
+    // a colour swapped, a scene reflowing.
+    private static final PdfVisualRegression VISUAL = PdfVisualRegression.standard()
+            .perPixelTolerance(6)
+            .mismatchedPixelBudget(3_000);
+
+    // The paginated scene is a wall of body text on a small page, so text — the part that
+    // drifts — is most of the image: 6 598 pixels of 45 000 on the same comparison. Kept
+    // separate rather than loosening every scene to the worst one.
+    private static final PdfVisualRegression VISUAL_TEXT_DENSE = PdfVisualRegression.standard()
+            .perPixelTolerance(6)
+            .mismatchedPixelBudget(8_000);
 
     @Test
     void classicTimelineLooksTheWayItDoesToday() throws Exception {
@@ -233,7 +262,7 @@ class TimelineRailVisualTest {
                                     .title("And ends here")))
                     .build();
 
-            VISUAL.assertMatchesBaseline("timeline-dsl/paginated-marker-to-marker", session);
+            VISUAL_TEXT_DENSE.assertMatchesBaseline("timeline-dsl/paginated-marker-to-marker", session);
         }
     }
 

@@ -166,8 +166,14 @@ public final class TimelineBuilder {
      * <p>It moves the markers too, because that is what putting them on the rail means:
      * each is placed inside the axis column so that its anchor point lands on the axis,
      * which for the centre anchor is the middle of that column. Markers of different sizes
-     * therefore share one line instead of one left edge. Nothing outside the axis column
-     * moves — the leading column, the content and the entries stay where they were.</p>
+     * therefore share one line instead of one left edge.</p>
+     *
+     * <p>An entry's body moves as well, into the content column beside the marker. With the
+     * rail beside the axis a body spanning the entry clears the line by the gutter; with the
+     * rail inside the axis that same body would be drawn through, so the body starts where
+     * the title starts. It stays a vertical block — an entry longer than a page still splits,
+     * with its text at the same x on every page — and the column it uses is the one the
+     * entry's own header row resolved, so a fixed axis and a weighted one behave alike.</p>
      *
      * <p>A timeline that does not call this keeps the left-edge anchor and the placement it
      * has always had: markers packed to the left of the axis column, rail one gutter

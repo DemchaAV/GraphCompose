@@ -20,8 +20,10 @@ follow semantic versioning; release dates are ISO 8601.
   `markerOnRail()` says where it runs: it aligns every marker's declared anchor with the
   timeline axis. With the current centre anchor, markers of different sizes are centred
   within the axis column and share one continuous rail — a 6pt dot, a 14pt numbered disc
-  and a 24pt square all sit on the same line rather than on the same left edge. A timeline
-  that does not call it keeps the left-edge anchor and the placement it has always had.
+  and a 24pt square all sit on the same line rather than on the same left edge. An entry's
+  body moves with them into the content column beside the marker, so the line is left with
+  only markers to cross — see *Fixed* below. A timeline that does not call it keeps the
+  left-edge anchor and the placement it has always had.
   A timeline with one entry and `MARKER_TO_MARKER` emits no rail at all rather than a line
   of no length. `TIMELINE_BOUNDS` is named and rejected — on one page it is the same line
   as `ENTRY_BOUNDS`, and across pages there is nothing to measure it against.
@@ -30,11 +32,12 @@ follow semantic versioning; release dates are ISO 8601.
   the entry boundary.** The layout is `LEADING | AXIS | CONTENT`, and the rail belongs to
   the axis.
 
-  Existing timelines render as they did, and that was measured rather than asserted: the
-  rail's geometry matches the border it replaces exactly, to 0.000000 in x and in both
-  ends, on every page. Two pixels differ in a three-entry timeline and one in a two-entry
-  one — the rows where two entry borders used to abut and each drew its own antialiased
-  end, so the seam came out slightly darker. One continuous line has no seams.
+  Existing timelines lay out where they always did — the rail's geometry matches the border
+  it replaces to 0.000000 in x and at both ends, on every page, and page counts are
+  unchanged. It is not pixel-identical, and the difference is worth knowing: two pixels in a
+  three-entry timeline and one in a two-entry one, at the rows where two entry borders used
+  to abut. Each drew its own antialiased end there, so the seam came out *lighter* than the
+  rail's own colour; one continuous line has no seams and paints the colour asked for.
 
 - **A timeline's rail is one configuration.**
   `TimelineBuilder.rail(Consumer<TimelineRailBuilder>)` takes a `DocumentStroke`, and
@@ -413,24 +416,37 @@ follow semantic versioning; release dates are ISO 8601.
   records nodes, the rail is a fragment, and neither committed timeline snapshot contains
   the word. The four baselines recorded before the rework are byte-identical.
 
-- **A timeline written before the rail moved lays out where it always did, and that was
-  measured rather than argued.** Eleven documents using nothing but the builder as it
-  shipped — every marker factory, every knob, a body across a page break, an entry taller
-  than four pages, a timeline started near the bottom of one, one inside a padded section,
-  two on a page — laid out on both branches and diffed. Every placed node matched; every
-  page count matched; the 31 per-entry borders became 16 rail fragments covering the same
-  span at the same x, worst |Δx| 0 and worst |Δy| 1.4e-14 over sixteen page-instances.
-  Nothing left the public surface either: 2540 members before, 2556 after, all sixteen of
-  the difference new.
+- **A timeline written before the rail moved is guarded against moving.** Eleven documents
+  using nothing but the builder as it shipped — every marker factory, every knob, a body
+  across a page break, an entry taller than four pages, a timeline started near the bottom
+  of one, one inside a padded section, two on a page — hold every placed box and every page
+  count they had, and the per-entry borders they used to draw are covered by the rail that
+  replaced them to within 1.4e-14 across sixteen page-instances. No member left the public
+  surface: 2540 before, 2556 after, all sixteen of the difference new.
 
-  The half of that which can be re-checked on one branch is now a test — every method the
-  old builder had, called in one expression; the default anchor still packing markers left;
-  the page counts; one rail on each page the entries occupy and on no other; the two
-  extents moving nothing but the rail; a padded section, a margin and a card each carrying
-  the timeline with them; five constructions of one 16pt marker; an outline of any
-  thickness; and the rail painted before the text and not only before the markers.
+  What can be re-checked on one branch is a test: every method the old builder had, called
+  in one expression; the default anchor still packing markers left; the page counts; one
+  rail on each page the entries occupy and on no other; the two extents moving nothing but
+  the rail; a padded section, a margin and a card each carrying the timeline with them; five
+  constructions of one 16pt marker; an outline of any thickness; and the rail painted before
+  the text and not only before the markers.
 
 ### Documentation
+
+- **The timeline recipe describes the finished model.** `LEADING | AXIS | CONTENT`, what the
+  rail belongs to and what cannot move it, both ways to fill an entry, the leading column and
+  why `auto()` is refused, the two axis sizings, what a declared marker box means, what
+  `markerOnRail()` does to markers *and* to the body, the two supported extents and the one
+  that is not, pagination, and what each backend does with a rail. The old sentence calling
+  the rail "a left accent border on each entry" is gone; it stopped being true when the rail
+  became one line resolved after layout.
+
+- **Two engine seams are written down, and so is the difference between them.**
+  `docs/architecture/resolved-layout-seams.md`: a resolved-layout pass reads geometry that is
+  already settled and can only draw, while a resolved horizontal band is read during the same
+  compile and therefore changes what is measured after it. The note ends with the paint order
+  in one block, including what "under the body" means — under the contributing feature's own
+  content, which is not the same as the front of the page's fragment list.
 
 - **A row's width rule, and what `fill()` does when there is no slot.** Two things a
   signature cannot say now have a page and a proof. A row with no `columns(...)`, no

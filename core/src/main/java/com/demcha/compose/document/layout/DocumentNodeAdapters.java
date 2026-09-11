@@ -63,7 +63,73 @@ final class DocumentNodeAdapters {
                 // is the only place that knows the font size and the unit at
                 // the same time, so it is the only place that can resolve one
                 // against the other.
-                textStyle.letterSpacing().resolve(textStyle.size()));
+                toFixedLayoutTracking(textStyle.letterSpacing().resolve(textStyle.size())));
+    }
+
+    /**
+     * The largest tracking a fixed-layout document can carry, in points.
+     *
+     * <p>Set by DrawingML, the least capacious of the fixed backends: {@code spc}
+     * is {@code ST_TextPoint}, whose numeric member is bounded at
+     * &plusmn;400000 hundredths. Measured, not read &mdash; the schema validates
+     * {@code 400000} and rejects {@code 400001}.</p>
+     */
+    static final double MAX_FIXED_LAYOUT_TRACKING_POINTS = 4000.0;
+
+    /**
+     * Tracking as fixed layout can actually express it: quantised to hundredths
+     * of a point.
+     *
+     * <p>This exists because the engine's measurement and the file's declared
+     * spacing have to be the <em>same number</em>, and PPTX can only declare
+     * hundredths. Left unquantised, a {@code points(1.0/3.0)} style measured at
+     * {@code 0.33333…} per code point while the deck said {@code spc="33"} —
+     * {@code 0.33} — so the width the layout reserved, wrapped against, aligned
+     * to and sized its frames from was a width the deck would never draw. The
+     * residue is small per code point and accumulates with the string: a third
+     * of a point is {@code 0.0033} out per code point, {@code 0.13pt} over a
+     * forty-character line. Quantising here makes the engine measure the value
+     * every fixed backend will actually use, so PDF's {@code Tc} and PPTX's
+     * {@code spc} are two spellings of one number.</p>
+     *
+     * <p>It is done once, here, rather than in each backend: this is the single
+     * seam where the public value becomes engine points, so it is the only place
+     * that can make the measurement and every renderer agree by construction.
+     * The public {@link DocumentTextStyle} is untouched &mdash; it still carries
+     * exactly what the author wrote, and {@code DocumentLetterSpacing} still
+     * resolves to exactly what the author asked for. The quantisation is a
+     * property of fixed layout, not of the value.</p>
+     *
+     * <p>The semantic DOCX export does not come through here. It resolves the
+     * public value itself and rounds to Word's twentieths, which is a coarser
+     * grid again &mdash; and correctly so, because Word owns that layout and
+     * owes the PDF no coordinate.</p>
+     *
+     * <p>Out of range is refused rather than clamped or wrapped. {@code spc} is
+     * written as an {@code int} of hundredths, and a large enough value silently
+     * changes sign on the cast &mdash; {@code 2.2e7} points becomes
+     * {@code -2094967296}, turning wide tracking into tight. A document asking
+     * for more than the format can hold is a mistake worth hearing about.</p>
+     *
+     * @param points resolved tracking in points
+     * @return the same tracking on the grid fixed layout can express
+     * @throws IllegalArgumentException if the tracking exceeds
+     *         {@link #MAX_FIXED_LAYOUT_TRACKING_POINTS}
+     */
+    private static double toFixedLayoutTracking(double points) {
+        if (points == 0.0) {
+            // Short-circuited so an untracked style keeps the identical double,
+            // and never depends on the rounding below behaving at zero.
+            return 0.0;
+        }
+        if (Math.abs(points) > MAX_FIXED_LAYOUT_TRACKING_POINTS) {
+            throw new IllegalArgumentException(
+                    "Letter spacing resolves to " + points + "pt, beyond the "
+                            + MAX_FIXED_LAYOUT_TRACKING_POINTS
+                            + "pt a fixed-layout document can express (DrawingML spc is "
+                            + "hundredths of a point, bounded at +/-400000).");
+        }
+        return Math.round(points * 100.0) / 100.0;
     }
 
     static TextIndentStrategy toIndentStrategy(DocumentTextIndent indent) {

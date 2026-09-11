@@ -1081,14 +1081,32 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      *
      * <p>No tracking writes no element, so a document that never asks for it
      * carries exactly the run properties it carried before.</p>
+     *
+     * <p>Out of range is refused rather than wrapped. The value goes out as an
+     * {@code int} of twentieths, and a large enough tracking changes sign on the
+     * cast &mdash; {@code 1e9} points becomes {@code -1474836480}, turning wide
+     * tracking into tight. The limit is Word's, not the fixed backends': a
+     * semantic document is not held to what DrawingML can spell.</p>
      */
     private static void applyLetterSpacing(XWPFRun run, DocumentTextStyle style) {
         double points = style.letterSpacing().resolve(style.size());
         if (points == 0.0) {
             return;
         }
+        if (Math.abs(points) > MAX_TRACKING_POINTS) {
+            throw new IllegalArgumentException(
+                    "Letter spacing resolves to " + points + "pt, beyond the "
+                            + MAX_TRACKING_POINTS + "pt a Word run can express "
+                            + "(w:spacing is twentieths of a point, written as an int).");
+        }
         run.setCharacterSpacing((int) Math.round(points * 20.0));
     }
+
+    /**
+     * The largest tracking a Word run can carry, in points &mdash; the point at
+     * which twentieths stop fitting in the {@code int} the value is written as.
+     */
+    private static final double MAX_TRACKING_POINTS = Integer.MAX_VALUE / 20.0;
 
     private void applyStyle(XWPFRun run, DocumentTextStyle style) {
         if (style == null) {

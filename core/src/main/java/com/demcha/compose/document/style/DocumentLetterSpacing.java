@@ -26,6 +26,35 @@ package com.demcha.compose.document.style;
  * {@code 0} and leaves measurement and rendering exactly as they were.
  * Instances are immutable and thread-safe.</p>
  *
+ * <h2>What survives into a file</h2>
+ *
+ * <p>This value keeps exactly what it was given: {@link #resolve(double)}
+ * returns the amount asked for, to the last bit, and nothing rewrites it. The
+ * <em>file formats</em> are what quantise, and they do it differently:</p>
+ *
+ * <ul>
+ *   <li><strong>PDF and PPTX &mdash; 0.01pt.</strong> DrawingML states spacing
+ *       in hundredths of a point, so that is the finest distinction the two
+ *       fixed-layout formats can both make. The engine measures on that grid,
+ *       which is what keeps the width it reserves and wraps against equal to
+ *       the width the file draws. Ask for a third of a point and both get
+ *       {@code 0.33}.</li>
+ *   <li><strong>DOCX &mdash; 0.05pt.</strong> Word states spacing in twentieths
+ *       of a point, and the export rounds this value to that grid on its own.
+ *       Word owns its layout, so it is not held to the hundredth the fixed
+ *       backends settled on.</li>
+ * </ul>
+ *
+ * <p>So an arbitrary {@code double} does not survive all three formats exactly,
+ * and no amount of care here would make it. What is guaranteed is that within
+ * fixed layout there is one number: what was measured, what the PDF states and
+ * what the deck states are the same value.</p>
+ *
+ * <p>Tracking larger than a format can state is refused when the document is
+ * rendered, rather than wrapped into a negative &mdash; fixed layout tops out at
+ * &plusmn;4000pt, DrawingML's own bound. The limits belong to the formats; this
+ * value accepts any finite number.</p>
+ *
  * {@snippet :
  * DocumentTextStyle headline = DocumentTextStyle.builder()
  *         .size(24)

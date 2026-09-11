@@ -35,10 +35,22 @@ follow semantic versioning; release dates are ISO 8601.
   a point, DOCX writes Word's run-level `w:spacing` in twentieths, and neither pads the
   text. The units and the advance rule were measured rather than read off the
   specification: probe files were exported to PDF by PowerPoint and Word themselves and the
-  glyph positions read back. Both applications spend the spacing exactly the way PDF's `Tc`
-  does — one unit per code point, the trailing one included, an ordinary space counted like
-  any other character — so a line laid out against the engine's measurement arrives at the
-  width it was given in every format.
+  glyph positions read back. Both applications spend the spacing the way PDF's `Tc` does —
+  one unit per code point, the trailing one included, an ordinary space counted like any
+  other character.
+
+  **Tracking has a granularity, and it is 0.01pt in a fixed-layout document.** DrawingML can
+  only state hundredths of a point, so that is the finest distinction a PDF and a deck can
+  both make. The engine measures on that grid rather than on the raw value, which is what
+  keeps the width it reserves, wraps against and aligns to the width the file will actually
+  draw: ask for a third of a point and every fixed backend, and the measurement behind them,
+  uses 0.33. Word's own grid is coarser still at 0.05pt, and the DOCX export rounds the
+  authored value to it independently — a semantic document owes the fixed backends no
+  coordinate. The authored `DocumentLetterSpacing` is never rewritten; it keeps the value
+  and the unit it was given, and reports them back unchanged.
+
+  A tracking too large for a format to state is refused rather than silently wrapped —
+  beyond ±4000pt for fixed layout, which is where DrawingML's own bound sits.
 
   Asking for no tracking writes nothing at all: no `spc` attribute, no `w:spacing` element,
   no `Tc` operator. Every existing document is byte-for-byte what it was.

@@ -196,12 +196,21 @@ final class PptxTextFrames {
      * line laid out against the PDF measurement arrives on a slide at the width
      * it was given.</p>
      *
+     * <p>The conversion is exact, not a rounding: the engine quantises tracking
+     * to hundredths before it reaches any fixed backend, precisely so the number
+     * measured and the number declared here are the same one. Rounding again
+     * costs nothing and keeps this readable as the unit conversion it is. The
+     * bound the schema puts on {@code spc} &mdash; {@code ST_TextPoint} accepts
+     * {@code 400000} and rejects {@code 400001} &mdash; is enforced at that same
+     * engine seam, so a value that would wrap its sign on the cast below is
+     * refused before it ever arrives.</p>
+     *
      * <p>Zero writes nothing at all. The attribute's absence is the default, so
      * a deck with no tracking in it is byte-identical to one produced before
      * this existed.</p>
      *
      * @param run           the run being styled
-     * @param letterSpacing tracking in points, already resolved by the engine
+     * @param letterSpacing tracking in points, already resolved and quantised
      */
     private static void applyLetterSpacing(XSLFTextRun run, double letterSpacing) {
         if (letterSpacing == 0.0) {

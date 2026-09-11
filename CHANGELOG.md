@@ -16,10 +16,24 @@ follow semantic versioning; release dates are ISO 8601.
   The default is `DocumentLetterSpacing.NONE`, which resolves to zero at every font size, so
   a document that never asks for tracking renders exactly as it did.
 
-  This step adds the value and carries it to the engine; nothing measures or draws with it
-  yet. When it does, it will be real tracking rather than spaces inserted between letters:
-  the string handed to the backend stays the author's string, so a spaced-caps headline
-  still reads as `JANE DOE` to search, copy/paste, text extraction and ATS parsers.
+  **PDF honours it natively.** The advance comes from the PDF `Tc` operator, not from spaces
+  pushed into the string, so a spaced-caps headline still reads as `JANE DOE` to search,
+  copy/paste, text extraction and ATS parsers — one glyph per character, the original text.
+  Tracked runs also state their own text via `ActualText`, because an extractor decides
+  where words are by how far apart glyphs sit and tracking is the act of moving them apart;
+  without that statement a widely tracked line comes back as `J A N E  D O E` from a file
+  that is otherwise perfectly correct.
+
+  Measurement and drawing use one rule, measured off PDFBox rather than assumed: one spacing
+  unit per Unicode **code point** of the string actually drawn, the trailing unit included.
+  Wrapping, `CENTER`/`RIGHT` alignment, underline and strike rules, link rectangles and
+  table cells all consume that one measured width, so they follow without special cases.
+  Negative tracking tightens, and the measured width is not clamped — the pen really does
+  move backwards, and a measurement that refused to would simply stop matching the page.
+
+  **PPTX and DOCX do not carry tracking yet.** Both are next; until then a document that
+  asks for tracking and renders to those formats lays out to the tracked width but draws
+  untracked text. Untracked documents — every existing one — are unaffected.
 
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so

@@ -196,6 +196,16 @@ public final class PdfTableRowFragmentRenderHandler
             PdfAlphaSupport.applyFillAlpha(environment, stream, cell.style().textStyle().color());
             stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
             stream.setNonStrokingColor(cell.style().textStyle().color());
+            double letterSpacing = cell.style().textStyle().letterSpacing();
+            if (letterSpacing != 0.0) {
+                // One style for the whole cell, so Tc is set once here. Emitted
+                // only when there is tracking to apply: this q..Q block starts at
+                // the page default of zero, so writing "0 Tc" would add a byte to
+                // every table ever rendered and change nothing about any of them.
+                // The enclosing restoreGraphicsState puts Tc back, so a tracked
+                // cell cannot spread the next one.
+                stream.setCharacterSpacing((float) letterSpacing);
+            }
             List<PdfTextDecorations.Segment> decorations = null;
             for (ResolvedTextLine line : lines) {
                 if (line.text().isEmpty()) {
@@ -281,8 +291,13 @@ public final class PdfTableRowFragmentRenderHandler
             };
             double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
+            // Tracked glyphs need the same statement of intent a reordered line
+            // needs, for a different reason: an extractor puts word breaks where
+            // it sees wide gaps, and tracking is the act of widening them. The
+            // cell states its own text so a reader takes that instead.
+            boolean states = reordered || cell.style().textStyle().letterSpacing() != 0.0;
             resolved.add(new ResolvedTextLine(drawn,
-                    reordered ? PdfActualText.writtenTextOf(logical) : null,
+                    states ? PdfActualText.writtenTextOf(logical) : null,
                     lineX, baselineY));
         }
 

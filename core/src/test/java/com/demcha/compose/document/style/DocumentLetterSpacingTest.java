@@ -90,9 +90,10 @@ class DocumentLetterSpacingTest {
     }
 
     @Test
-    void aNonFiniteFontSizeResolvesToZeroRatherThanPoisoningEveryWidth() {
-        // A NaN advance would spread through wrapping, alignment and pagination
-        // and surface far from here, so it is stopped at the seam.
+    void aNonFiniteFontSizeMakesTheTrackingTermZeroNotNaN() {
+        // Bounds this term only. The rest of the measurement still multiplies
+        // glyph widths by the same bad font size, so this does not claim to
+        // make the resulting text width finite.
         assertThat(DocumentLetterSpacing.ofFontSize(0.12).resolve(Double.NaN)).isZero();
         assertThat(DocumentLetterSpacing.ofFontSize(0.12).resolve(Double.POSITIVE_INFINITY)).isZero();
     }

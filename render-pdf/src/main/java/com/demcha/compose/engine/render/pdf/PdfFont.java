@@ -106,6 +106,12 @@ public class PdfFont extends FontBase<PDFont> {
      * drifting when input contains characters outside the font's coverage
      * (arrows, dots, emoji, custom unicode).</p>
      *
+     * <p>The style's tracking is included, on the same string, by the rule the
+     * PDF {@code Tc} operator was measured to follow &mdash; see
+     * {@link #trackingAdvance(TextStyle, String)}. Width and pen advance are the
+     * same number or every span after the first on a line is drawn somewhere
+     * other than where the layout thinks it is.</p>
+     *
      * @param style style selecting the concrete font variant
      * @param text raw text from the document model
      * @return rendered width in points
@@ -124,11 +130,52 @@ public class PdfFont extends FontBase<PDFont> {
             String measured = whitespaceOnly ? text : sanitizeForRender(style, text);
 
             double width = fontType(style.decoration()).getStringWidth(measured) / 1000d * size;
-            return width;
+            return width + trackingAdvance(style, measured);
         } catch (Exception e) {
             log.error("Error while getting text width {}", e.getMessage(), e);
             return 0;
         }
+    }
+
+    /**
+     * The advance a style's tracking adds to {@code measured}, in points.
+     *
+     * <p><strong>One unit per code point, trailing unit included</strong> —
+     * measured against PDFBox 3.0.8 rather than read off the specification or
+     * borrowed from CSS. Drawing a string at {@code Tc = 5} and reading where
+     * the pen actually landed: {@code "JANE"} advances 20pt further (4 code
+     * points), {@code "JANE DOE"} 40pt (8 — the space is a code point like any
+     * other), a single {@code "J"} 5pt, and the empty string not at all. The
+     * trailing unit is real: the pen sits one full unit past the last glyph's
+     * ink, which is why this counts N and not N-1.
+     * {@code PdfCharacterSpacingContractTest} re-measures this and fails if
+     * PDFBox ever changes it.</p>
+     *
+     * <p>Counted in <em>code points</em> of the string that is actually drawn,
+     * never in {@code char}s: {@code Tc} is applied once per glyph, and a
+     * supplementary code point is one glyph out of two {@code char}s. (With the
+     * bundled faces the distinction is currently unobservable — none of them can
+     * encode a supplementary code point, so {@code sanitizeForRender} folds one
+     * to {@code '?'} before it ever reaches here. Counting code points is what
+     * stays correct on the day a face that can encode one is added.)</p>
+     *
+     * <p>The result is not clamped. Negative tracking is allowed, and the pen in
+     * a reader genuinely moves backwards by it; clamping the measurement while
+     * being unable to clamp the reader is how the two stop agreeing.</p>
+     *
+     * @param style    the style whose tracking to apply, already resolved to points
+     * @param measured the exact string handed to {@code showText}
+     * @return the extra advance in points, {@code 0} when there is no tracking
+     */
+    private static double trackingAdvance(TextStyle style, String measured) {
+        double spacing = style.letterSpacing();
+        if (spacing == 0.0 || measured == null || measured.isEmpty()) {
+            // Short-circuited rather than added as a zero, so an untracked
+            // style returns the identical double it returned before tracking
+            // existed.
+            return 0.0;
+        }
+        return measured.codePointCount(0, measured.length()) * spacing;
     }
 
     /**
@@ -224,12 +271,26 @@ public class PdfFont extends FontBase<PDFont> {
                 fontType(style.decoration()), textSanitizer(text));
     }
 
+    /**
+     * Measures {@code text} exactly as given, for a caller that has already
+     * sanitised it.
+     *
+     * <p>Tracking is applied here too, by the same rule and on the same string,
+     * so the two entry points cannot disagree about the width of one run. There
+     * is no double application: this does not delegate to
+     * {@link #getTextWidth(TextStyle, String)}, and that one does not delegate
+     * here &mdash; each adds the tracking once, to the string it measured.</p>
+     *
+     * @param style style selecting the concrete font variant
+     * @param text  already-sanitised text
+     * @return rendered width in points
+     */
     public double getTextWidthNoSanitize(TextStyle style, String text) {
         double size = style.size();
         try {
             float width = fontType(style.decoration()).getStringWidth(text) / 1000 * (float) size;
             log.debug("Getting text width: " + width);
-            return width;
+            return width + trackingAdvance(style, text);
         } catch (Exception e) {
             e.printStackTrace();
             log.error("Error while getting text width {}", e.getMessage(), e);

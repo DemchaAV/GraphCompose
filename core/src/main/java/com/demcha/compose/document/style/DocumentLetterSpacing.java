@@ -99,10 +99,11 @@ public record DocumentLetterSpacing(Type type, double value) {
     /**
      * Resolves this tracking to points against a concrete font size.
      *
-     * <p>A non-finite {@code fontSize} resolves to {@code 0} rather than
-     * propagating {@code NaN}: every text width in the engine is measured
-     * through this value, and a {@code NaN} advance would poison wrapping,
-     * alignment and pagination far from where it originated.</p>
+     * <p>A non-finite {@code fontSize} makes the tracking contribution
+     * {@code 0} instead of {@code NaN}. That bounds this term only — it says
+     * nothing about the rest of the measurement, which still multiplies glyph
+     * widths by that same font size. A non-finite font size remains a bad font
+     * size, and it is not this type's job to make it finite.</p>
      *
      * @param fontSize the font size the text is set at, in points
      * @return the extra advance per code point, in points

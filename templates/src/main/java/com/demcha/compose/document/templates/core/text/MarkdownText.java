@@ -134,6 +134,11 @@ public final class MarkdownText {
                 .size(base.size())
                 .decoration(target)
                 .color(base.color())
+                // Emphasis changes the face, not the typography around it.
+                // Omitting this rebuilt the style from four of its five parts, so
+                // a bolded word inside a tracked heading came out at a different
+                // tracking from the words either side of it.
+                .letterSpacing(base.letterSpacing())
                 .build();
     }
 }

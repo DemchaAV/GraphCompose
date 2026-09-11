@@ -27,7 +27,7 @@ public class MarkDownParser {
                 // 1) List items: add your own prefix (since '-' is not Text)
                 new VisitHandler<>(ListItem.class, node -> {
                     TextStyle prefixStyle = new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT,
-                            style.color());
+                            style.color(), style.letterSpacing());
 
                     // New line before each list item (optional; helps readability)
                     // resultList.add(new TextDataBody("\n", prefixStyle));
@@ -43,10 +43,12 @@ public class MarkDownParser {
                 // 2) Preserve line breaks
                 new VisitHandler<>(SoftLineBreak.class,
                         br -> resultList.add(new TextDataBody(" ",
-                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))),
+                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color(),
+                                        style.letterSpacing())))),
                 new VisitHandler<>(HardLineBreak.class,
                         br -> resultList.add(new TextDataBody(" ",
-                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color())))),
+                                new TextStyle(style.fontName(), style.size(), TextDecoration.DEFAULT, style.color(),
+                                        style.letterSpacing())))),
 
                 // 3) Headers
                 new VisitHandler<>(Heading.class, node -> {
@@ -59,7 +61,18 @@ public class MarkDownParser {
                     };
                     double newSize = style.size() * scale;
                     TextStyle headerStyle = new TextStyle(style.fontName(), newSize, TextDecoration.BOLD,
-                            style.color());
+                            // Tracking is carried across unchanged, deliberately.
+                            // Scaling it with the heading breaks two things: the
+                            // value arrives already quantised to the hundredth of a
+                            // point that DrawingML can state, and 0.33 x 1.5 is
+                            // 0.495 — which the engine would measure and PPTX would
+                            // have to round back to 0.50, reopening the very gap
+                            // between measurement and file the quantisation exists
+                            // to close. It would also scale an absolute points(1.2)
+                            // that was never meant to follow the font size, and by
+                            // here the unit is gone, so the two cannot be told
+                            // apart.
+                            style.color(), style.letterSpacing());
 
                     // Add newline before header for better separation
                     // resultList.add(new TextDataBody("\n",
@@ -102,7 +115,8 @@ public class MarkDownParser {
                 // 4) Text nodes (your current logic)
                 new VisitHandler<>(Text.class, textNode -> {
                     TextDecoration decoration = determineStyle(textNode);
-                    TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color());
+                    TextStyle newTextStyle = new TextStyle(style.fontName(), style.size(), decoration, style.color(),
+                            style.letterSpacing());
 
                     String rawText = textNode.getChars().toString();
                     splitKeepingWhitespace(rawText).stream()

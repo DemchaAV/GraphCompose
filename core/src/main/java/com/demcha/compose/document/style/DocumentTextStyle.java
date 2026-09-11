@@ -18,13 +18,17 @@ import java.util.Objects;
  * @param size       font size in points
  * @param decoration text decoration
  * @param color      text color
+ * @param letterSpacing typographic tracking; {@link DocumentLetterSpacing#NONE}
+ *                   (the default) leaves glyph advances exactly as they were
  * @author Artem Demchyshyn
+ * @see DocumentLetterSpacing
  */
 public record DocumentTextStyle(
         FontName fontName,
         double size,
         DocumentTextDecoration decoration,
-        DocumentColor color
+        DocumentColor color,
+        DocumentLetterSpacing letterSpacing
 ) {
     public static final DocumentTextStyle DEFAULT = builder().build();
 
@@ -36,6 +40,27 @@ public record DocumentTextStyle(
         size = size <= 0 ? 14 : size;
         decoration = decoration == null ? DocumentTextDecoration.DEFAULT : decoration;
         color = color == null ? DocumentColor.BLACK : color;
+        letterSpacing = letterSpacing == null ? DocumentLetterSpacing.NONE : letterSpacing;
+    }
+
+    /**
+     * Creates a normalized text style without tracking.
+     *
+     * <p>The signature this type carried before {@code letterSpacing} was
+     * added. It stays so code compiled against the 2.0.0 surface keeps
+     * linking, and so the binary-compatibility gate still finds the
+     * constructor it has always found.</p>
+     *
+     * @param fontName   font family name
+     * @param size       font size in points
+     * @param decoration text decoration
+     * @param color      text color
+     */
+    public DocumentTextStyle(FontName fontName,
+                             double size,
+                             DocumentTextDecoration decoration,
+                             DocumentColor color) {
+        this(fontName, size, decoration, color, DocumentLetterSpacing.NONE);
     }
 
     /**
@@ -54,7 +79,7 @@ public record DocumentTextStyle(
      * @return updated text style
      */
     public DocumentTextStyle withSize(double size) {
-        return new DocumentTextStyle(fontName, size, decoration, color);
+        return new DocumentTextStyle(fontName, size, decoration, color, letterSpacing);
     }
 
     /**
@@ -64,7 +89,19 @@ public record DocumentTextStyle(
      * @return updated text style
      */
     public DocumentTextStyle withColor(DocumentColor color) {
-        return new DocumentTextStyle(fontName, size, decoration, color);
+        return new DocumentTextStyle(fontName, size, decoration, color, letterSpacing);
+    }
+
+    /**
+     * Creates a copy with different tracking.
+     *
+     * @param letterSpacing tracking to apply; {@code null} means
+     *                      {@link DocumentLetterSpacing#NONE}
+     * @return updated text style
+     * @since 2.4.0
+     */
+    public DocumentTextStyle withLetterSpacing(DocumentLetterSpacing letterSpacing) {
+        return new DocumentTextStyle(fontName, size, decoration, color, letterSpacing);
     }
 
     /**
@@ -75,6 +112,7 @@ public record DocumentTextStyle(
         private double size = 14;
         private DocumentTextDecoration decoration = DocumentTextDecoration.DEFAULT;
         private DocumentColor color = DocumentColor.BLACK;
+        private DocumentLetterSpacing letterSpacing = DocumentLetterSpacing.NONE;
 
         private Builder() {
         }
@@ -124,12 +162,32 @@ public record DocumentTextStyle(
         }
 
         /**
+         * Sets the typographic tracking &mdash; extra advance after every
+         * rendered code point.
+         *
+         * <p>Real tracking, not inserted spaces: the text handed to the
+         * backend stays the author's string, so search, copy/paste and text
+         * extraction still read it as written.</p>
+         *
+         * @param letterSpacing tracking to apply, e.g.
+         *                      {@code DocumentLetterSpacing.ofFontSize(0.12)};
+         *                      {@code null} means
+         *                      {@link DocumentLetterSpacing#NONE}
+         * @return this builder
+         * @since 2.4.0
+         */
+        public Builder letterSpacing(DocumentLetterSpacing letterSpacing) {
+            this.letterSpacing = Objects.requireNonNullElse(letterSpacing, DocumentLetterSpacing.NONE);
+            return this;
+        }
+
+        /**
          * Builds an immutable style value.
          *
          * @return text style
          */
         public DocumentTextStyle build() {
-            return new DocumentTextStyle(fontName, size, decoration, color);
+            return new DocumentTextStyle(fontName, size, decoration, color, letterSpacing);
         }
     }
 }

@@ -317,17 +317,19 @@ public final class ClassicSerif {
 
             private void addCenteredTitle(SectionBuilder host, String title) {
                 host.addParagraph(paragraph -> paragraph
-                        .text(TextOrnaments.spacedUpper(title))
+                        .text(TextOrnaments.upper(title))
                         .textStyle(titleStyle())
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
             }
 
+            /** Spaced caps: both section-title shapes of this preset use it. */
             private DocumentTextStyle titleStyle() {
                 return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeBanner(),
                         DocumentTextDecoration.BOLD,
-                        ACCENT);
+                        ACCENT)
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
             private DocumentTextStyle contactMetaStyle() {

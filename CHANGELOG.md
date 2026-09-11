@@ -7,6 +7,80 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Public API
 
+- **Text style carries typographic tracking.** `DocumentTextStyle.builder().letterSpacing(...)`
+  takes a `DocumentLetterSpacing` — either `ofFontSize(0.12)`, a share of the font size, or
+  `points(1.2)`, an absolute amount. Negative values tighten. The unit lives in the value
+  rather than in a bare `double`, because `0.12` and `1.2` are both plausible-looking
+  numbers and a call site passing one has no way to say which it meant.
+
+  The default is `DocumentLetterSpacing.NONE`, which resolves to zero at every font size, so
+  a document that never asks for tracking renders exactly as it did.
+
+  **PDF honours it natively.** The advance comes from the PDF `Tc` operator, not from spaces
+  pushed into the string, so a spaced-caps headline still reads as `JANE DOE` to search,
+  copy/paste, text extraction and ATS parsers — one glyph per character, the original text.
+  Tracked runs also state their own text via `ActualText`, because an extractor decides
+  where words are by how far apart glyphs sit and tracking is the act of moving them apart;
+  without that statement a widely tracked line comes back as `J A N E  D O E` from a file
+  that is otherwise perfectly correct.
+
+  Measurement and drawing use one rule, measured off PDFBox rather than assumed: one spacing
+  unit per Unicode **code point** of the string actually drawn, the trailing unit included.
+  Wrapping, `CENTER`/`RIGHT` alignment, underline and strike rules, link rectangles and
+  table cells all consume that one measured width, so they follow without special cases.
+  Negative tracking tightens, and the measured width is not clamped — the pen really does
+  move backwards, and a measurement that refused to would simply stop matching the page.
+
+  **All three backends carry it natively.** PPTX writes DrawingML's `spc` in hundredths of
+  a point, DOCX writes Word's run-level `w:spacing` in twentieths, and neither pads the
+  text. The units and the advance rule were measured rather than read off the
+  specification: probe files were exported to PDF by PowerPoint and Word themselves and the
+  glyph positions read back. Both applications spend the spacing the way PDF's `Tc` does —
+  one unit per code point, the trailing one included, an ordinary space counted like any
+  other character.
+
+  **Tracking has a granularity, and it is 0.01pt in a fixed-layout document.** DrawingML can
+  only state hundredths of a point, so that is the finest distinction a PDF and a deck can
+  both make. The engine measures on that grid rather than on the raw value, which is what
+  keeps the width it reserves, wraps against and aligns to the width the file will actually
+  draw: ask for a third of a point and every fixed backend, and the measurement behind them,
+  uses 0.33. Word's own grid is coarser still at 0.05pt, and the DOCX export rounds the
+  authored value to it independently — a semantic document owes the fixed backends no
+  coordinate. The authored `DocumentLetterSpacing` is never rewritten; it keeps the value
+  and the unit it was given, and reports them back unchanged.
+
+  A tracking too large for a format to state is refused rather than silently wrapped —
+  beyond ±4000pt for fixed layout, which is where DrawingML's own bound sits.
+
+  Asking for no tracking writes nothing at all: no `spc` attribute, no `w:spacing` element,
+  no `Tc` operator. Every existing document is byte-for-byte what it was.
+
+- **The built-in CV and cover-letter presets now use real tracking, so their text is
+  readable again.** Spaced caps in those presets were drawn by rewriting the string with a
+  space between every pair of letters. The page looked right and the file did not: an
+  applicant's name was stored as `J A N E   D O E`, which is the one field a CV is searched
+  and parsed by. All 33 call sites are migrated — the name, the job title, section banners,
+  skill labels, education headings — and the text in the file is now the text that was
+  typed, in PDF, PPTX and DOCX alike.
+
+  **Headings also stop breaking mid-word.** Padding every letter out made each letter its
+  own word to the line breaker, so a heading wrapped wherever it ran out of room:
+  `EDUCATION & CERT` / `IFICATIONS`, `ORACLE JAVA CERTIFICAT` / `ION`. Words are whole
+  again, so they wrap between words.
+
+  The tracking is `ofFontSize(0.18)`, one value for every preset, chosen by measuring what
+  the old transform produced: a space glyph between letters is 0.232–0.278 em in the faces
+  these presets use, and matching the old *total* width — real tracking adds a unit after
+  the last glyph and to the word space as well — puts the equivalent at 0.174–0.209 em.
+  Headings therefore occupy close to the width they did. Expect small visual differences on
+  the presets that use spaced caps; nine of the sixteen CV presets move, all by under 2% of
+  the page.
+
+  No built-in preset calls `TextOrnaments.spacedUpper` any more, and the two private copies
+  of it that had grown in `SidebarPortrait` and `TimelineMinimal` are gone. The public
+  method itself stays, unchanged, and is deprecated — see **Deprecations** below.
+  `TextOrnaments.upper` is the replacement and does only what its name says.
+
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
   every visual line of it starts at one horizontal position — the first line, the lines it
@@ -468,6 +542,23 @@ follow semantic versioning; release dates are ISO 8601.
   the rail; a padded section, a margin and a card each carrying the timeline with them; five
   constructions of one 16pt marker; an outline of any thickness; and the rail painted before
   the text and not only before the markers.
+
+### Deprecations
+
+- **`TextOrnaments.spacedUpper(String)`** is `@Deprecated(since = "2.4.0", forRemoval = true)`.
+  It is not removed, and its behaviour has not changed by a single character — code written
+  against 2.3.0 keeps compiling and keeps getting the same strings back. What changed is that
+  no built-in preset calls it: they set `TextOrnaments.SPACED_CAPS` on the style instead, so
+  the letters are spread by the typography rather than by rewriting the text.
+
+  New code should do the same — `TextOrnaments.upper(...)` for the text, and `SPACED_CAPS`
+  or any `DocumentLetterSpacing` on the style. The reason to migrate is not tidiness: padding
+  the string is what stored a name in the file as `J A N E   D O E`, which is how it reached
+  search, copy/paste, screen readers and applicant-tracking parsers. Expect the same look at a
+  slightly different width — a whole space glyph per gap is wider than editorial tracking.
+
+  Per [`docs/api-stability.md`](docs/api-stability.md) § 3 it is Stable-tier, so it is removed
+  no earlier than 3.0 and not before a full minor has shipped with the deprecation in place.
 
 ### Documentation
 

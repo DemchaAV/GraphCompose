@@ -359,7 +359,7 @@ public final class MintEditorialLetter {
                     .build();
             ParagraphNode name = new ParagraphBuilder()
                     .name("CoverLetterV2MintEditorialHeaderName")
-                    .text(TextOrnaments.spacedUpper(identity.name().full()))
+                    .text(TextOrnaments.upper(identity.name().full()))
                     .textStyle(mastheadNameStyle())
                     .align(TextAlign.CENTER)
                     .build();
@@ -367,7 +367,7 @@ public final class MintEditorialLetter {
             ParagraphNode tagline = jobTitle != null && !jobTitle.isBlank()
                     ? new ParagraphBuilder()
                     .name("CoverLetterV2MintEditorialHeaderTagline")
-                    .text(TextOrnaments.spacedUpper(jobTitle))
+                    .text(TextOrnaments.upper(jobTitle))
                     .textStyle(taglineStyle())
                     .align(TextAlign.CENTER)
                     .build()
@@ -387,16 +387,20 @@ public final class MintEditorialLetter {
             });
         }
 
+        /** Spaced caps: only the masthead name uses this. */
         private DocumentTextStyle mastheadNameStyle() {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.DEFAULT, nameColor);
+                    DocumentTextDecoration.DEFAULT, nameColor)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
+        /** Spaced caps: only the tagline uses this. */
         private DocumentTextStyle taglineStyle() {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeContact(),
-                    DocumentTextDecoration.BOLD, accent);
+                    DocumentTextDecoration.BOLD, accent)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
     }
 }

@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
+Types: 161 · methods: 954 · constants: 118 · compiler-generated members: 403
 
 ## com.demcha.compose.document.templates.api
 
@@ -134,8 +134,10 @@ Types: 161 · methods: 953 · constants: 117 · compiler-generated members: 402
 - `void render(SectionBuilder host, String text, DocumentTextStyle style, double lineSpacing, DocumentInsets margin, TextAlign align)`
 
 ### TextOrnaments (class)
+- `String upper(String value)`
 - `String spacedUpper(String value)`
 - `String joinPipe(String... parts)`
+- constants: `SPACED_CAPS`
 
 ### TextStyles (class)
 - `DocumentTextStyle of(FontName font, double size, DocumentTextDecoration decoration, DocumentColor color)`

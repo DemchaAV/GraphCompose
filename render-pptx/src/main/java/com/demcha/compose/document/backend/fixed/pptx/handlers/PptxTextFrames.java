@@ -18,6 +18,7 @@ import org.openxmlformats.schemas.presentationml.x2006.main.CTConnector;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import java.awt.Color;
+import java.util.Optional;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
@@ -157,6 +158,7 @@ final class PptxTextFrames {
         run.setUnderlined(PptxFontMapping.isUnderline(style));
         run.setStrikethrough(PptxFontMapping.isStrikethrough(style));
         disableKerning(run);
+        applyLetterSpacing(run, style.letterSpacing());
     }
 
     /** Stamps the shape's non-visual name so tests and users can identify frames. */
@@ -175,10 +177,54 @@ final class PptxTextFrames {
      * kerning entirely.
      */
     private static void disableKerning(XSLFTextRun run) {
-        if (run.getXmlObject() instanceof CTRegularTextRun ctRun) {
-            CTTextCharacterProperties properties =
-                    ctRun.isSetRPr() ? ctRun.getRPr() : ctRun.addNewRPr();
-            properties.setKern(0);
+        characterProperties(run).ifPresent(properties -> properties.setKern(0));
+    }
+
+    /**
+     * Writes tracking as DrawingML's own {@code spc}, never as spaces pushed
+     * into the text.
+     *
+     * <p>The unit is hundredths of a point, and PowerPoint spends it the same
+     * way the PDF {@code Tc} operator does. Measured rather than assumed:
+     * exporting a probe deck through PowerPoint itself and reading the glyph
+     * positions out of the PDF it wrote, {@code spc="500"} widened every step of
+     * {@code "JANE"} by 5.0pt — including the step onto a <em>following
+     * untracked run</em>, which is the trailing unit — and {@code spc="-150"}
+     * narrowed each by 1.5pt. A single {@code "J"} gained a full unit, and an
+     * ordinary space was spaced like any other character. One unit per code
+     * point, trailing included: the same N rule the engine measures with, so a
+     * line laid out against the PDF measurement arrives on a slide at the width
+     * it was given.</p>
+     *
+     * <p>The conversion is exact, not a rounding: the engine quantises tracking
+     * to hundredths before it reaches any fixed backend, precisely so the number
+     * measured and the number declared here are the same one. Rounding again
+     * costs nothing and keeps this readable as the unit conversion it is. The
+     * bound the schema puts on {@code spc} &mdash; {@code ST_TextPoint} accepts
+     * {@code 400000} and rejects {@code 400001} &mdash; is enforced at that same
+     * engine seam, so a value that would wrap its sign on the cast below is
+     * refused before it ever arrives.</p>
+     *
+     * <p>Zero writes nothing at all. The attribute's absence is the default, so
+     * a deck with no tracking in it is byte-identical to one produced before
+     * this existed.</p>
+     *
+     * @param run           the run being styled
+     * @param letterSpacing tracking in points, already resolved and quantised
+     */
+    private static void applyLetterSpacing(XSLFTextRun run, double letterSpacing) {
+        if (letterSpacing == 0.0) {
+            return;
         }
+        characterProperties(run).ifPresent(properties ->
+                properties.setSpc((int) Math.round(letterSpacing * 100.0)));
+    }
+
+    /** The run's character properties, created if the run has none yet. */
+    private static Optional<CTTextCharacterProperties> characterProperties(XSLFTextRun run) {
+        if (run.getXmlObject() instanceof CTRegularTextRun ctRun) {
+            return Optional.of(ctRun.isSetRPr() ? ctRun.getRPr() : ctRun.addNewRPr());
+        }
+        return Optional.empty();
     }
 }

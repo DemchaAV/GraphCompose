@@ -22,6 +22,7 @@ authoring API; public application code should not import
 | [Tables](recipes/tables.md) | Row span, zebra rows, totals row, repeated header on page break |
 | [Text direction](recipes/text-direction.md) | `TextDirection` — right-to-left paragraphs, `AUTO` resolved from the text, mixed lines, and the bundled Hebrew / Arabic families |
 | [Rich text](recipes/rich-text.md) | `RichText` mixed-style runs in one paragraph: bold/accent/styled segments, inline links, inline images, inline SVG icons, emoji shortcodes, inline shapes and checkboxes |
+| [Letter spacing](recipes/letter-spacing.md) | `DocumentLetterSpacing` — real typographic tracking for spaced caps, declared natively in PDF / PPTX / DOCX so the text layer still holds the word |
 | [Lists](recipes/lists.md) | `addList`: quick bulleted lists, marker customisation, nested lists with per-depth markers, spacing and styled items |
 | [Timelines](recipes/timelines.md) | `addTimeline`: the leading / axis / content model, markers (dot / circle / numbered / square / custom), leading column, axis sizing, `markerOnRail()`, rail extent, pagination, backends |
 | [Barcodes](recipes/barcodes.md) | QR / Code 128 / Code 39 / EAN / UPC / PDF417 / DataMatrix, tinting, quiet zone, card centring |

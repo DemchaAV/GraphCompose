@@ -196,6 +196,16 @@ public final class PdfTableRowFragmentRenderHandler
             PdfAlphaSupport.applyFillAlpha(environment, stream, cell.style().textStyle().color());
             stream.setFont(font.fontType(cell.style().textStyle().decoration()), (float) cell.style().textStyle().size());
             stream.setNonStrokingColor(cell.style().textStyle().color());
+            double letterSpacing = cell.style().textStyle().letterSpacing();
+            if (letterSpacing != 0.0) {
+                // One style for the whole cell, so Tc is set once here. Emitted
+                // only when there is tracking to apply: this q..Q block starts at
+                // the page default of zero, so writing "0 Tc" would add a byte to
+                // every table ever rendered and change nothing about any of them.
+                // The enclosing restoreGraphicsState puts Tc back, so a tracked
+                // cell cannot spread the next one.
+                stream.setCharacterSpacing((float) letterSpacing);
+            }
             List<PdfTextDecorations.Segment> decorations = null;
             for (ResolvedTextLine line : lines) {
                 if (line.text().isEmpty()) {
@@ -210,6 +220,12 @@ public final class PdfTableRowFragmentRenderHandler
                 if (line.written() != null) {
                     stream.beginMarkedContent(PdfActualText.tag(),
                             PdfActualText.properties(line.written()));
+                }
+                if (line.reordered()) {
+                    // Only a reordered line needs it: the correction it turns on
+                    // rewrites shaped-glyph ToUnicode and costs a second pass over
+                    // the whole document. A tracked Latin cell states its text for
+                    // the extractor's benefit and has nothing reordered.
                     environment.markReorderedText();
                 }
                 stream.beginText();
@@ -281,9 +297,14 @@ public final class PdfTableRowFragmentRenderHandler
             };
             double lineBoxY = blockY + lineHeight * (safeLines.size() - lineIndex - 1);
             double baselineY = lineBoxY + metrics.baselineOffsetFromBottom();
+            // Tracked glyphs need the same statement of intent a reordered line
+            // needs, for a different reason: an extractor puts word breaks where
+            // it sees wide gaps, and tracking is the act of widening them. The
+            // cell states its own text so a reader takes that instead.
+            boolean states = reordered || cell.style().textStyle().letterSpacing() != 0.0;
             resolved.add(new ResolvedTextLine(drawn,
-                    reordered ? PdfActualText.writtenTextOf(logical) : null,
-                    lineX, baselineY));
+                    states ? PdfActualText.writtenTextOf(logical) : null,
+                    reordered, lineX, baselineY));
         }
 
         return List.copyOf(resolved);
@@ -329,6 +350,17 @@ public final class PdfTableRowFragmentRenderHandler
      * @param written  the same line as the author typed it, or {@code null} when the two
      *                 are the same line and nothing needs stating
      */
-    private record ResolvedTextLine(String text, String written, double x, double baselineY) {
+    /**
+     * One drawn line of a cell.
+     *
+     * <p>{@code written} and {@code reordered} are not the same question, which is
+     * why both are carried. A line states its own text when the glyphs and the
+     * meaning have come apart for <em>any</em> reason — reordering, or tracking
+     * wide enough that an extractor invents word breaks. Only reordering needs
+     * the shaped-glyph ToUnicode correction, and that correction costs a second
+     * serialization pass over the whole document.</p>
+     */
+    private record ResolvedTextLine(String text, String written, boolean reordered,
+                                    double x, double baselineY) {
     }
 }

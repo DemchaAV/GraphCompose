@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 161,
-    "methods": 953,
+    "methods": 954,
     "constants": 118,
     "generated": 403
   },
@@ -1446,6 +1446,20 @@
             {
               "kind": "method",
               "name": "upper",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "spacedUpper",
               "static": true,
               "origin": "source",
               "typeParameters": null,

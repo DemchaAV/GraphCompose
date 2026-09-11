@@ -76,9 +76,10 @@ follow semantic versioning; release dates are ISO 8601.
   the presets that use spaced caps; nine of the sixteen CV presets move, all by under 2% of
   the page.
 
-  `TextOrnaments.spacedUpper` is gone, along with the two private copies that had grown in
-  `SidebarPortrait` and `TimelineMinimal`. `TextOrnaments.upper` replaces it and does only
-  what its name says.
+  No built-in preset calls `TextOrnaments.spacedUpper` any more, and the two private copies
+  of it that had grown in `SidebarPortrait` and `TimelineMinimal` are gone. The public
+  method itself stays, unchanged, and is deprecated — see **Deprecations** below.
+  `TextOrnaments.upper` is the replacement and does only what its name says.
 
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
@@ -541,6 +542,23 @@ follow semantic versioning; release dates are ISO 8601.
   the rail; a padded section, a margin and a card each carrying the timeline with them; five
   constructions of one 16pt marker; an outline of any thickness; and the rail painted before
   the text and not only before the markers.
+
+### Deprecations
+
+- **`TextOrnaments.spacedUpper(String)`** is `@Deprecated(since = "2.4.0", forRemoval = true)`.
+  It is not removed, and its behaviour has not changed by a single character — code written
+  against 2.3.0 keeps compiling and keeps getting the same strings back. What changed is that
+  no built-in preset calls it: they set `TextOrnaments.SPACED_CAPS` on the style instead, so
+  the letters are spread by the typography rather than by rewriting the text.
+
+  New code should do the same — `TextOrnaments.upper(...)` for the text, and `SPACED_CAPS`
+  or any `DocumentLetterSpacing` on the style. The reason to migrate is not tidiness: padding
+  the string is what stored a name in the file as `J A N E   D O E`, which is how it reached
+  search, copy/paste, screen readers and applicant-tracking parsers. Expect the same look at a
+  slightly different width — a whole space glyph per gap is wider than editorial tracking.
+
+  Per [`docs/api-stability.md`](docs/api-stability.md) § 3 it is Stable-tier, so it is removed
+  no earlier than 3.0 and not before a full minor has shipped with the deprecation in place.
 
 ### Documentation
 

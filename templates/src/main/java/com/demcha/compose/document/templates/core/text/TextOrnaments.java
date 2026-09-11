@@ -9,13 +9,17 @@ import java.util.Locale;
  * normalisation for the document headline and section banners, and the
  * pipe-joining used for contact lines.
  *
- * <p>The spaced-caps <em>look</em> is no longer built here. It used to
- * be: the text was rewritten with a space between every pair of
+ * <p>The spaced-caps <em>look</em> is no longer <em>built</em> here. It
+ * used to be: the text was rewritten with a space between every pair of
  * letters, which drew the right picture and wrecked the text layer —
  * a name came back out of the file as {@code "J A N E   D O E"} to
  * search, copy/paste, a screen reader and an applicant-tracking
  * parser. Spacing is typography, so it now lives on the style as
  * {@link #SPACED_CAPS}, and the text stays the text.</p>
+ *
+ * <p>{@link #spacedUpper(String)} is still here and still does exactly
+ * what it always did, for callers compiled against 2.3.0 and earlier.
+ * It is deprecated, and nothing inside GraphCompose calls it.</p>
  */
 public final class TextOrnaments {
 
@@ -64,6 +68,50 @@ public final class TextOrnaments {
             return "";
         }
         return value.toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * Letter-spaced uppercase rendering (e.g.
+     * {@code spacedUpper("Jane Doe") -> "J A N E   D O E"}).
+     *
+     * <p>Unchanged from 2.3.0, character for character, and kept so
+     * that code written against it keeps compiling and keeps producing
+     * the same strings. No built-in preset calls it any more.</p>
+     *
+     * @param value source text (null tolerated, returned as empty)
+     * @return spaced-caps representation
+     * @deprecated since 2.4.0; removed in 3.0. Use {@link #upper(String)}
+     *             for the text and carry the spacing on the style instead
+     *             &mdash; {@link #SPACED_CAPS}, or any
+     *             {@link DocumentLetterSpacing} you prefer. The reason is
+     *             not style: padding the string is what stored a name as
+     *             {@code "J A N E   D O E"}, so the one field a CV is
+     *             searched and parsed by came back out of the file
+     *             unreadable. The replacement draws spaced caps and leaves
+     *             the text alone. It does not reproduce this method's
+     *             metrics exactly &mdash; a whole space glyph per gap is
+     *             wider than editorial tracking &mdash; so expect the same
+     *             look at a slightly different width.
+     */
+    @Deprecated(since = "2.4.0", forRemoval = true)
+    public static String spacedUpper(String value) {
+        if (value == null) {
+            return "";
+        }
+        String upper = value.toUpperCase(Locale.ROOT);
+        StringBuilder out = new StringBuilder(upper.length() * 2);
+        for (int i = 0; i < upper.length(); i++) {
+            char current = upper.charAt(i);
+            out.append(current);
+            if (Character.isLetterOrDigit(current)
+                && i + 1 < upper.length()
+                && Character.isLetterOrDigit(upper.charAt(i + 1))) {
+                out.append(' ');
+            } else if (Character.isWhitespace(current)) {
+                out.append("  ");
+            }
+        }
+        return out.toString();
     }
 
     /**

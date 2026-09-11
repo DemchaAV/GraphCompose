@@ -81,6 +81,32 @@ spaced-caps blocks, exposed as
 `TextOrnaments.SPACED_CAPS`. Reach for the same constant if you are
 writing a preset that should match them.
 
+### Coming from `TextOrnaments.spacedUpper`
+
+`spacedUpper(...)` drew spaced caps by rewriting the string with a space
+between every pair of letters. It still exists and still behaves exactly
+as it always did, but it is deprecated as of 2.4.0 and no built-in preset
+calls it any longer. Put the text through `TextOrnaments.upper(...)` and
+carry the spacing on the style instead — `SPACED_CAPS`, or any
+`DocumentLetterSpacing` you prefer:
+
+```java
+// before — the spacing is in the string
+String text = TextOrnaments.spacedUpper(name);
+
+// after — the spacing is in the style
+String text = TextOrnaments.upper(name);
+DocumentTextStyle resolved = style.withLetterSpacing(TextOrnaments.SPACED_CAPS);
+```
+
+The reason to move is the text layer, not the look: padding the string is
+what stored a name in the file as `J A N E   D O E`, so that is what
+search, copy/paste, screen readers and applicant-tracking parsers saw.
+
+The two do not render at identical widths. A whole space glyph per gap is
+wider than editorial tracking, which is why `0.18` was chosen to match the
+old *total* width rather than the old per-gap width.
+
 Runnable showcase:
 [LetterSpacingExample](../../examples/src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java)
 — renders the same name at four trackings and prints what each of the

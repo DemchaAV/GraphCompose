@@ -76,8 +76,8 @@ public final class SectionHeader {
                         theme.spacing().bannerInnerPadding())
                 .margin(theme.spacing().bannerMargin())
                 .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
-                        .textStyle(theme.bannerStyle())
+                        .text(TextOrnaments.upper(title))
+                        .textStyle(theme.bannerStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
@@ -118,8 +118,8 @@ public final class SectionHeader {
                         0, theme.spacing().bannerInnerPadding(), 0))
                 .margin(theme.spacing().bannerMargin())
                 .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
-                        .textStyle(titleStyle)
+                        .text(TextOrnaments.upper(title))
+                        .textStyle(titleStyle.withLetterSpacing(TextOrnaments.SPACED_CAPS))
                         .align(TextAlign.CENTER)
                         .margin(DocumentInsets.zero()));
     }
@@ -138,8 +138,8 @@ public final class SectionHeader {
                         theme.spacing().accentRuleWidth())
                 .padding(new DocumentInsets(8, 0, 2, 0))
                 .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
-                        .textStyle(titleStyle)
+                        .text(TextOrnaments.upper(title))
+                        .textStyle(titleStyle.withLetterSpacing(TextOrnaments.SPACED_CAPS))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));
     }
@@ -175,7 +175,7 @@ public final class SectionHeader {
      * Small left-aligned spaced-caps bold title in a given colour. No
      * panel, no rule — flat like {@link #flat} but typographically
      * quieter: body font, body-sized, transformed to letter-spaced
-     * uppercase via {@link TextOrnaments#spacedUpper(String)}. Visual
+     * uppercase with {@link TextOrnaments#SPACED_CAPS} tracking. Visual
      * signature of {@code CenteredHeadline}.
      *
      * <p>If the {@code titleStyle} parameter is {@code null} the widget
@@ -206,8 +206,8 @@ public final class SectionHeader {
                 .build();
         host.padding(new DocumentInsets(0, 0, 0, 0))
                 .addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(title))
-                        .textStyle(resolved)
+                        .text(TextOrnaments.upper(title))
+                        .textStyle(resolved.withLetterSpacing(TextOrnaments.SPACED_CAPS))
                         .align(TextAlign.LEFT)
                         .margin(DocumentInsets.zero()));
     }

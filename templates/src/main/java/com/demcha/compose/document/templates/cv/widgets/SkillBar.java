@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * <ol>
  *   <li>the skill name in letter-spaced uppercase (bold, ink), via
- *       {@link TextOrnaments#spacedUpper(String)};</li>
+ *       {@link TextOrnaments#SPACED_CAPS} tracking;</li>
  *   <li>a horizontal track line spanning {@code trackWidth} in the theme
  *       rule colour, overlaid with a short vertical marker (ink) whose
  *       left offset is {@code level * trackWidth} — so a higher
@@ -118,8 +118,8 @@ public final class SkillBar {
         // little breathing room below to match the rhythm of a barred entry.
         double labelBottom = levelled ? LABEL_TO_TRACK_GAP : BAR_BOTTOM_GAP;
         host.addParagraph(paragraph -> paragraph
-                .text(TextOrnaments.spacedUpper(skill.name()))
-                .textStyle(labelStyle)
+                .text(TextOrnaments.upper(skill.name()))
+                .textStyle(labelStyle.withLetterSpacing(TextOrnaments.SPACED_CAPS))
                 .align(TextAlign.LEFT)
                 .margin(DocumentInsets.bottom(labelBottom)));
 

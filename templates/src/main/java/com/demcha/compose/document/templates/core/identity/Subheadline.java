@@ -40,26 +40,27 @@ public final class Subheadline {
     }
 
     /**
-     * Centred letter-spaced uppercase subheadline. Text is transformed
-     * through {@link TextOrnaments#spacedUpper(String)} — pass the raw
-     * caption ({@code "Professional Title"}) and the widget handles the
-     * spacing.
+     * Centred spaced-caps subheadline. Pass the raw caption
+     * ({@code "Professional Title"}); the widget upper-cases it and puts
+     * {@link TextOrnaments#SPACED_CAPS} tracking on the style, so what
+     * reaches the file is the caption and not a padded copy of it.
      *
      * @param host  host section (typically the same section that
      *              hosts the main {@link Headline})
-     * @param text  caption text to render, before the spaced-caps
+     * @param text  caption text to render, before the uppercase
      *              transform
      * @param style explicit text style — the subheadline has no
      *              dedicated theme slot, so the caller composes
      *              {@code font + size + decoration + colour} and hands
      *              it in. Centralise the style in the preset, not at
-     *              each call site.
+     *              each call site. Tracking is added here, to a copy, so
+     *              a style shared with ordinary text keeps its own.
      */
     public static void centeredSpacedCaps(SectionBuilder host, String text,
                                           DocumentTextStyle style) {
         host.addParagraph(p -> p
-                .text(TextOrnaments.spacedUpper(text))
-                .textStyle(style)
+                .text(TextOrnaments.upper(text))
+                .textStyle(style.withLetterSpacing(TextOrnaments.SPACED_CAPS))
                 .align(TextAlign.CENTER)
                 .margin(DocumentInsets.top(1)));
     }

@@ -197,7 +197,7 @@ public final class MonogramSidebarLetter {
                             ? DocumentInsets.zero()
                             : DocumentInsets.bottom(6);
                     section.addParagraph(paragraph -> paragraph
-                            .text(TextOrnaments.spacedUpper(part))
+                            .text(TextOrnaments.upper(part))
                             .textStyle(nameStyle)
                             .align(TextAlign.CENTER)
                             .lineSpacing(1.0)
@@ -206,23 +206,27 @@ public final class MonogramSidebarLetter {
                 String jobTitle = identity.jobTitle();
                 if (jobTitle != null && !jobTitle.isBlank()) {
                     section.addParagraph(paragraph -> paragraph
-                            .text(TextOrnaments.spacedUpper(jobTitle))
+                            .text(TextOrnaments.upper(jobTitle))
                             .textStyle(titleStyle)
                             .align(TextAlign.CENTER)
                             .margin(new DocumentInsets(12, 0, 18, 0)));
                 }
             }
 
+            /** Spaced caps: only the monogram name lines use this. */
             private DocumentTextStyle nameStyle() {
                 return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
-                        DocumentTextDecoration.DEFAULT, theme.palette().ink());
+                        DocumentTextDecoration.DEFAULT, theme.palette().ink())
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
+            /** Spaced caps: only the job-title subtitle uses this. */
             private DocumentTextStyle subtitleStyle() {
                 return TextStyles.of(theme.typography().bodyFont(),
                         theme.typography().sizeContact(),
-                        DocumentTextDecoration.BOLD, ACCENT);
+                        DocumentTextDecoration.BOLD, ACCENT)
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
             private DocumentTextStyle contactMetaStyle() {

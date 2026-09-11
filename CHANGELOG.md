@@ -55,6 +55,31 @@ follow semantic versioning; release dates are ISO 8601.
   Asking for no tracking writes nothing at all: no `spc` attribute, no `w:spacing` element,
   no `Tc` operator. Every existing document is byte-for-byte what it was.
 
+- **The built-in CV and cover-letter presets now use real tracking, so their text is
+  readable again.** Spaced caps in those presets were drawn by rewriting the string with a
+  space between every pair of letters. The page looked right and the file did not: an
+  applicant's name was stored as `J A N E   D O E`, which is the one field a CV is searched
+  and parsed by. All 33 call sites are migrated — the name, the job title, section banners,
+  skill labels, education headings — and the text in the file is now the text that was
+  typed, in PDF, PPTX and DOCX alike.
+
+  **Headings also stop breaking mid-word.** Padding every letter out made each letter its
+  own word to the line breaker, so a heading wrapped wherever it ran out of room:
+  `EDUCATION & CERT` / `IFICATIONS`, `ORACLE JAVA CERTIFICAT` / `ION`. Words are whole
+  again, so they wrap between words.
+
+  The tracking is `ofFontSize(0.18)`, one value for every preset, chosen by measuring what
+  the old transform produced: a space glyph between letters is 0.232–0.278 em in the faces
+  these presets use, and matching the old *total* width — real tracking adds a unit after
+  the last glyph and to the word space as well — puts the equivalent at 0.174–0.209 em.
+  Headings therefore occupy close to the width they did. Expect small visual differences on
+  the presets that use spaced caps; nine of the sixteen CV presets move, all by under 2% of
+  the page.
+
+  `TextOrnaments.spacedUpper` is gone, along with the two private copies that had grown in
+  `SidebarPortrait` and `TimelineMinimal`. `TextOrnaments.upper` replaces it and does only
+  what its name says.
+
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so
   every visual line of it starts at one horizontal position — the first line, the lines it

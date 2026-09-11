@@ -98,8 +98,12 @@ public record DocumentLetterSpacing(Type type, double value) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException("Letter spacing must be a finite number, got: " + value);
         }
-        // -0.0 renders identically to +0.0 but would compare unequal to NONE and
-        // hash differently. Fold it so one behaviour has one value.
+        // -0.0 renders identically to +0.0 but would compare unequal to it and
+        // hash differently, so it is folded. Note this does not make zero a
+        // single value: the factories return NONE for it, but
+        // new DocumentLetterSpacing(FONT_SIZE, 0.0) is still constructible and
+        // is not equal(NONE) — same behaviour, different unit, and the unit is
+        // the caller's to state.
         value = value == 0.0 ? 0.0 : value;
     }
 

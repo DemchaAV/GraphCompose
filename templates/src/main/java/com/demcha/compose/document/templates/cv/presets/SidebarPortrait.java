@@ -14,6 +14,7 @@ import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.svg.SvgIcon;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.ProjectLabel;
@@ -515,7 +516,7 @@ public final class SidebarPortrait {
                     .thickness(0.75)
                     .margin(new DocumentInsets(12, 0, 7, 0)));
             section.addParagraph(paragraph -> paragraph
-                    .text(spacedUpper(title))
+                    .text(TextOrnaments.upper(title))
                     .textStyle(sidebarHeaderStyle())
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.zero()));
@@ -634,7 +635,7 @@ public final class SidebarPortrait {
                             .lineSpacing(1.0)
                             .margin(DocumentInsets.zero()))
                     .addParagraph(paragraph -> paragraph
-                            .text(spacedUpper(subline))
+                            .text(TextOrnaments.upper(subline))
                             .textStyle(subtitleStyle())
                             .align(TextAlign.CENTER)
                             .margin(DocumentInsets.zero())));
@@ -673,7 +674,7 @@ public final class SidebarPortrait {
                 return;
             }
             section.addParagraph(paragraph -> paragraph
-                    .text(spacedUpper(title))
+                    .text(TextOrnaments.upper(title))
                     .textStyle(mainHeaderStyle())
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.top(8)));
@@ -820,7 +821,8 @@ public final class SidebarPortrait {
             return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryDate(),
                     DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle contactStyle() {
@@ -834,7 +836,8 @@ public final class SidebarPortrait {
             return TextStyles.of(theme.typography().bodyFont(),
                     10.8,
                     DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle sidebarEntryTitleStyle() {
@@ -876,7 +879,8 @@ public final class SidebarPortrait {
             return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeBanner(),
                     DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle mainBodyStyle() {
@@ -1051,23 +1055,6 @@ public final class SidebarPortrait {
             }
         }
         return result;
-    }
-
-    private static String spacedUpper(String value) {
-        String upper = (value == null ? "" : value).toUpperCase(Locale.ROOT);
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < upper.length(); i++) {
-            char current = upper.charAt(i);
-            builder.append(current);
-            if (Character.isLetterOrDigit(current)
-                && i + 1 < upper.length()
-                && Character.isLetterOrDigit(upper.charAt(i + 1))) {
-                builder.append(' ');
-            } else if (Character.isWhitespace(current)) {
-                builder.append("  ");
-            }
-        }
-        return builder.toString();
     }
 
     private record ContactItem(String iconFile, String text,

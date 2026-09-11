@@ -14,10 +14,14 @@ import com.demcha.compose.document.templates.core.theme.BrandTheme;
  * <h2>Variants</h2>
  *
  * <ul>
- *   <li>{@link #spacedCentered} — centred letter-spaced uppercase
- *       (e.g. {@code J A N E   D O E}). Used by classic /
- *       editorial presets where the name is the page's visual
- *       focal point.</li>
+ *   <li>{@link #spacedCentered} — centred uppercase with
+ *       {@link com.demcha.compose.document.templates.core.text.TextOrnaments#SPACED_CAPS}
+ *       tracking. The text stays {@code JANE DOE}; only the type is
+ *       spread. (It used to be spread by rewriting the string to
+ *       {@code J A N E   D O E}, which drew the same picture and left
+ *       that in the file for search and copy/paste to find.) Used by
+ *       classic / editorial presets where the name is the page's
+ *       visual focal point.</li>
  *   <li>{@link #uppercaseCentered} — centred uppercase without
  *       extra letter spacing (e.g. {@code JANE DOE}). Used by
  *       compact editorial presets.</li>
@@ -189,11 +193,15 @@ public final class Headline {
         DocumentTextStyle style = styleOverride != null
                 ? styleOverride
                 : theme.headlineStyle();
-        String text = spacedCaps
-                ? TextOrnaments.spacedUpper(name)
-                : name;
+        // Spaced caps are a property of the type, not of the string. The
+        // tracking goes onto a copy of whatever style the caller handed in, so
+        // a style also used for ordinary text is not tracked behind its back.
+        String text = spacedCaps ? TextOrnaments.upper(name) : name;
+        DocumentTextStyle resolved = spacedCaps
+                ? style.withLetterSpacing(TextOrnaments.SPACED_CAPS)
+                : style;
 
-        renderText(host, text, theme, alignment, style);
+        renderText(host, text, theme, alignment, resolved);
     }
 
     private static void renderText(SectionBuilder host, String text, BrandTheme theme,

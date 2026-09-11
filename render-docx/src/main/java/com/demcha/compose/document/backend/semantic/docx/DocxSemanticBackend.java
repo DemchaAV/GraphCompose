@@ -1103,8 +1103,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
     }
 
     /**
-     * The largest tracking a Word run can carry, in points &mdash; the point at
-     * which twentieths stop fitting in the {@code int} the value is written as.
+     * The largest tracking that survives the conversion, in points &mdash; the
+     * point at which twentieths stop fitting in the {@code int} the value is
+     * written as. Not a typographic limit: Word renders nothing remotely near
+     * it, and this exists only so an absurd value fails loudly instead of
+     * wrapping into a negative.
      */
     private static final double MAX_TRACKING_POINTS = Integer.MAX_VALUE / 20.0;
 

@@ -61,7 +61,12 @@ public class MarkDownParser {
                     };
                     double newSize = style.size() * scale;
                     TextStyle headerStyle = new TextStyle(style.fontName(), newSize, TextDecoration.BOLD,
-                            style.color(), style.letterSpacing());
+                            // Scaled with the size. The engine is handed tracking
+                            // already resolved to points, so carrying it across
+                            // unchanged would set a 2x heading at the body's
+                            // tracking — a share of the font size that stops being
+                            // a share the moment the size changes.
+                            style.color(), style.letterSpacing() * scale);
 
                     // Add newline before header for better separation
                     // resultList.add(new TextDataBody("\n",

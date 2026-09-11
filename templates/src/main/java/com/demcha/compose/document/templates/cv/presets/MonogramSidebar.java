@@ -463,7 +463,7 @@ public final class MonogramSidebar {
                 return;
             }
             section.addParagraph(paragraph -> paragraph
-                    .text(TextOrnaments.spacedUpper(title))
+                    .text(TextOrnaments.upper(title))
                     .textStyle(sidebarHeaderStyle())
                     .align(TextAlign.CENTER)
                     .lineSpacing(1.2)
@@ -677,14 +677,14 @@ public final class MonogramSidebar {
                         ? DocumentInsets.zero()
                         : DocumentInsets.bottom(6);
                 section.addParagraph(paragraph -> paragraph
-                        .text(TextOrnaments.spacedUpper(part))
+                        .text(TextOrnaments.upper(part))
                         .textStyle(nameStyle)
                         .align(TextAlign.CENTER)
                         .lineSpacing(1.0)
                         .margin(margin));
             }
             section.addParagraph(paragraph -> paragraph
-                    .text(TextOrnaments.spacedUpper(subline))
+                    .text(TextOrnaments.upper(subline))
                     .textStyle(titleStyle)
                     .align(TextAlign.CENTER)
                     .margin(new DocumentInsets(12, 0, 22, 0)));
@@ -695,7 +695,7 @@ public final class MonogramSidebar {
                 return;
             }
             section.addParagraph(paragraph -> paragraph
-                    .text(TextOrnaments.spacedUpper(title))
+                    .text(TextOrnaments.upper(title))
                     .textStyle(mainHeaderStyle())
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.top(6)));
@@ -731,7 +731,7 @@ public final class MonogramSidebar {
             }
             DocumentTextStyle positionStyle = mainEntryTitleStyle();
             DocumentTextStyle employerStyle = theme.entrySubtitleStyle();
-            DocumentTextStyle dateStyle = mainEntryDateStyle();
+            DocumentTextStyle dateStyle = mainEntryDateStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS);
             DocumentTextStyle bodyStyle = mainBodyStyle();
 
             List<CvEntry> list = entries.entries();
@@ -756,7 +756,7 @@ public final class MonogramSidebar {
                 }
                 if (!entry.date().isBlank()) {
                     section.addParagraph(paragraph -> paragraph
-                            .text(TextOrnaments.spacedUpper(
+                            .text(TextOrnaments.upper(
                                     MarkdownInline.plainText(entry.date())))
                             .textStyle(dateStyle)
                             .align(TextAlign.LEFT)
@@ -781,21 +781,24 @@ public final class MonogramSidebar {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
                     DocumentTextDecoration.DEFAULT,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle subtitleStyle() {
             return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeContact(),
                     DocumentTextDecoration.BOLD,
-                    accent);
+                    accent)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle sidebarHeaderStyle() {
             return TextStyles.of(theme.typography().bodyFont(),
                     8.0,
                     DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle sidebarBodyStyle() {
@@ -837,7 +840,8 @@ public final class MonogramSidebar {
             return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeBanner(),
                     DocumentTextDecoration.BOLD,
-                    theme.palette().ink());
+                    theme.palette().ink())
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle mainBodyStyle() {

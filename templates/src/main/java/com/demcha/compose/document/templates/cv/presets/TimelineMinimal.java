@@ -15,6 +15,7 @@ import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.templates.api.DocumentTemplate;
+import com.demcha.compose.document.templates.core.text.TextOrnaments;
 import com.demcha.compose.document.templates.core.text.TextStyles;
 import com.demcha.compose.document.templates.core.text.MarkdownInline;
 import com.demcha.compose.document.templates.cv.components.SectionAllocation;
@@ -329,7 +330,7 @@ public final class TimelineMinimal {
             private void addNameBlock(SectionBuilder section, CvIdentity identity) {
                 section.spacing(NAME_BLOCK_GAP)
                         .addParagraph(paragraph -> paragraph
-                                .text(spacedUpper(identity.name().full()))
+                                .text(TextOrnaments.upper(identity.name().full()))
                                 .textStyle(nameStyle())
                                 .margin(DocumentInsets.zero()));
                 String jobTitle = identity.jobTitle();
@@ -556,11 +557,13 @@ public final class TimelineMinimal {
 
             // -- style factories ---------------------------------------------
 
+            /** Spaced caps: only the name block uses this. */
             private DocumentTextStyle nameStyle() {
                 return TextStyles.of(theme.typography().headlineFont(),
                         theme.typography().sizeHeadline(),
                         DocumentTextDecoration.DEFAULT,
-                        theme.palette().ink());
+                        theme.palette().ink())
+                        .withLetterSpacing(TextOrnaments.SPACED_CAPS);
             }
 
             private DocumentTextStyle jobTitleStyle() {
@@ -740,23 +743,6 @@ public final class TimelineMinimal {
             return "GH";
         }
         return "@";
-    }
-
-    private static String spacedUpper(String value) {
-        String upper = safe(value).toUpperCase(Locale.ROOT);
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < upper.length(); i++) {
-            char current = upper.charAt(i);
-            builder.append(current);
-            if (Character.isWhitespace(current)) {
-                builder.append("  ");
-            }
-            if (Character.isLetter(current) && i + 1 < upper.length()
-                && Character.isLetter(upper.charAt(i + 1))) {
-                builder.append(' ');
-            }
-        }
-        return builder.toString();
     }
 
     private static String safe(String value) {

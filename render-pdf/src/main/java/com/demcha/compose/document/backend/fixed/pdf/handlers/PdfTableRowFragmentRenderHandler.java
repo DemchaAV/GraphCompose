@@ -220,6 +220,12 @@ public final class PdfTableRowFragmentRenderHandler
                 if (line.written() != null) {
                     stream.beginMarkedContent(PdfActualText.tag(),
                             PdfActualText.properties(line.written()));
+                }
+                if (line.reordered()) {
+                    // Only a reordered line needs it: the correction it turns on
+                    // rewrites shaped-glyph ToUnicode and costs a second pass over
+                    // the whole document. A tracked Latin cell states its text for
+                    // the extractor's benefit and has nothing reordered.
                     environment.markReorderedText();
                 }
                 stream.beginText();
@@ -298,7 +304,7 @@ public final class PdfTableRowFragmentRenderHandler
             boolean states = reordered || cell.style().textStyle().letterSpacing() != 0.0;
             resolved.add(new ResolvedTextLine(drawn,
                     states ? PdfActualText.writtenTextOf(logical) : null,
-                    lineX, baselineY));
+                    reordered, lineX, baselineY));
         }
 
         return List.copyOf(resolved);
@@ -344,6 +350,17 @@ public final class PdfTableRowFragmentRenderHandler
      * @param written  the same line as the author typed it, or {@code null} when the two
      *                 are the same line and nothing needs stating
      */
-    private record ResolvedTextLine(String text, String written, double x, double baselineY) {
+    /**
+     * One drawn line of a cell.
+     *
+     * <p>{@code written} and {@code reordered} are not the same question, which is
+     * why both are carried. A line states its own text when the glyphs and the
+     * meaning have come apart for <em>any</em> reason — reordering, or tracking
+     * wide enough that an extractor invents word breaks. Only reordering needs
+     * the shaped-glyph ToUnicode correction, and that correction costs a second
+     * serialization pass over the whole document.</p>
+     */
+    private record ResolvedTextLine(String text, String written, boolean reordered,
+                                    double x, double baselineY) {
     }
 }

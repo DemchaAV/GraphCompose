@@ -306,8 +306,13 @@ public class PdfFont extends FontBase<PDFont> {
         // measures against the input as written. The collapse therefore
         // shrank the rendered string under measurement, drifting
         // link annotations away from their glyphs and visually merging
-        // author-spaced strings like `spacedUpper("ARTEM DEMCHYSHYN")`
-        // (which inserts deliberate triple-spaces between words).
+        // any text whose author put more than one space in it on purpose.
+        // (The case that first showed this was the templates' old
+        // spaced-caps transform, which padded a name out to
+        // "A R T E M   D E M C H Y S H Y N". That is gone — tracking is a
+        // style now — but the rule it exposed is not about that transform:
+        // a run of author spaces is content, and measurement and drawing
+        // have to agree on how wide it is.)
         // Newlines / NBSP / non-tab control chars still resolve to a
         // single space each \u2014 they no longer collapse adjacent author
         // spaces.

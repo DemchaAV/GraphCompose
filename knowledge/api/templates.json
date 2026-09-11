@@ -24,8 +24,8 @@
   "counts": {
     "types": 161,
     "methods": 953,
-    "constants": 117,
-    "generated": 402
+    "constants": 118,
+    "generated": 403
   },
   "packages": [
     {
@@ -1437,8 +1437,15 @@
           "artifact": "graph-compose-templates",
           "members": [
             {
+              "kind": "constant",
+              "name": "SPACED_CAPS",
+              "static": true,
+              "origin": "generated",
+              "type": "DocumentLetterSpacing"
+            },
+            {
               "kind": "method",
-              "name": "spacedUpper",
+              "name": "upper",
               "static": true,
               "origin": "source",
               "typeParameters": null,

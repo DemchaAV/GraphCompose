@@ -31,6 +31,7 @@ import com.demcha.examples.features.text.EmojiGalleryExample;
 import com.demcha.examples.features.text.EmojiShortcodeExample;
 import com.demcha.examples.features.text.EmojiSvgVsPngExample;
 import com.demcha.examples.features.text.EmojiClipPathReportExample;
+import com.demcha.examples.features.text.LetterSpacingExample;
 import com.demcha.examples.features.text.InlineShapesExample;
 import com.demcha.examples.features.text.ArabicArticleExample;
 import com.demcha.examples.features.text.HebrewInvoiceExample;
@@ -197,6 +198,7 @@ public final class GenerateAllExamples {
 
         // Text + sections
         System.out.println("Generated: " + InlineShapesExample.generate());
+        System.out.println("Generated: " + LetterSpacingExample.generate());
         System.out.println("Generated: " + TextDirectionExample.generate());
         System.out.println("Generated: " + ArabicArticleExample.generate());
         System.out.println("Generated: " + HebrewInvoiceExample.generate());

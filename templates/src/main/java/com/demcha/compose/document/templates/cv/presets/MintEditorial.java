@@ -650,7 +650,7 @@ public final class MintEditorial {
                     .build();
             ParagraphNode name = new ParagraphBuilder()
                     .name("CvV2MintEditorialHeaderName")
-                    .text(TextOrnaments.spacedUpper(identity.name().full()))
+                    .text(TextOrnaments.upper(identity.name().full()))
                     .textStyle(mastheadNameStyle())
                     .align(TextAlign.CENTER)
                     .build();
@@ -659,7 +659,7 @@ public final class MintEditorial {
             ParagraphNode tagline = hasTagline
                     ? new ParagraphBuilder()
                     .name("CvV2MintEditorialHeaderTagline")
-                    .text(TextOrnaments.spacedUpper(jobTitle))
+                    .text(TextOrnaments.upper(jobTitle))
                     .textStyle(taglineStyle())
                     .align(TextAlign.CENTER)
                     .build()
@@ -749,7 +749,7 @@ public final class MintEditorial {
             section.addSection("CvV2MintEditorialEducation", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
                 addBlockHeading(block, education.title());
-                DocumentTextStyle degreeStyle = labelStyle();
+                DocumentTextStyle degreeStyle = labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS);
                 DocumentTextStyle metaStyle = smallStyle();
                 for (CvEntry entry : entries) {
                     block.addParagraph(p -> p
@@ -757,7 +757,7 @@ public final class MintEditorial {
                             .align(TextAlign.LEFT)
                             .margin(DocumentInsets.bottom(5))
                             .rich(rich -> MarkdownInline.appendTransformed(rich, entry.title(),
-                                    degreeStyle, TextOrnaments::spacedUpper)));
+                                    degreeStyle, TextOrnaments::upper)));
                     if (!entry.subtitle().isBlank()) {
                         block.addParagraph(p -> p
                                 .textStyle(metaStyle)
@@ -904,7 +904,7 @@ public final class MintEditorial {
             section.addSection("CvV2MintEditorialExperience", block -> {
                 block.spacing(0).padding(DocumentInsets.zero());
                 addBlockHeading(block, title);
-                DocumentTextStyle titleStyle = labelStyle();
+                DocumentTextStyle titleStyle = labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS);
                 DocumentTextStyle metaStyle = smallStyle();
                 DocumentTextStyle bodyStyle = bodyStyle();
                 for (CvEntry entry : entries) {
@@ -913,7 +913,7 @@ public final class MintEditorial {
                             .align(TextAlign.LEFT)
                             .margin(DocumentInsets.bottom(5))
                             .rich(rich -> MarkdownInline.appendTransformed(rich, entry.title(),
-                                    titleStyle, TextOrnaments::spacedUpper)));
+                                    titleStyle, TextOrnaments::upper)));
                     String meta = composeMeta(entry);
                     if (!meta.isBlank()) {
                         block.addParagraph(p -> p
@@ -958,8 +958,8 @@ public final class MintEditorial {
                 return;
             }
             List<CvRow> entries = rows.rows();
-            DocumentTableStyle nameLeft = cellStyle(labelStyle(), 4, GRID_COLUMN_GAP);
-            DocumentTableStyle nameRight = cellStyle(labelStyle(), 4, 0);
+            DocumentTableStyle nameLeft = cellStyle(labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS), 4, GRID_COLUMN_GAP);
+            DocumentTableStyle nameRight = cellStyle(labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS), 4, 0);
             DocumentTableStyle metaLeft = cellStyle(smallStyle(), 18, GRID_COLUMN_GAP);
             DocumentTableStyle metaRight = cellStyle(smallStyle(), 18, 0);
             DocumentTableStyle metaLeftLast = cellStyle(smallStyle(), 0, GRID_COLUMN_GAP);
@@ -982,9 +982,9 @@ public final class MintEditorial {
                                 : null;
                         boolean lastPair = pairIndex == pairs - 1;
                         table.rowCells(
-                                gridCell(TextOrnaments.spacedUpper(
+                                gridCell(TextOrnaments.upper(
                                         MarkdownInline.plainText(left.label())), nameLeft),
-                                gridCell(right == null ? "" : TextOrnaments.spacedUpper(
+                                gridCell(right == null ? "" : TextOrnaments.upper(
                                         MarkdownInline.plainText(right.label())), nameRight));
                         table.rowCells(
                                 gridCell(MarkdownInline.plainText(left.body()),
@@ -1004,8 +1004,8 @@ public final class MintEditorial {
                 return;
             }
             List<CvRow> entries = rows.rows();
-            DocumentTableStyle nameLeft = cellStyle(labelStyle(), 4, GRID_COLUMN_GAP);
-            DocumentTableStyle nameRight = cellStyle(labelStyle(), 4, 0);
+            DocumentTableStyle nameLeft = cellStyle(labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS), 4, GRID_COLUMN_GAP);
+            DocumentTableStyle nameRight = cellStyle(labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS), 4, 0);
             DocumentTableStyle subLeft = cellStyle(smallStyle(), 3, GRID_COLUMN_GAP);
             DocumentTableStyle subRight = cellStyle(smallStyle(), 3, 0);
             DocumentTableStyle lastLeft = cellStyle(smallStyle(), 18, GRID_COLUMN_GAP);
@@ -1031,9 +1031,9 @@ public final class MintEditorial {
                         boolean lastPair = pairIndex == pairs - 1;
                         // Name row (spaced-caps bold).
                         table.rowCells(
-                                gridCell(TextOrnaments.spacedUpper(
+                                gridCell(TextOrnaments.upper(
                                         MarkdownInline.plainText(left.label())), nameLeft),
-                                gridCell(right == null ? "" : TextOrnaments.spacedUpper(
+                                gridCell(right == null ? "" : TextOrnaments.upper(
                                         MarkdownInline.plainText(right.label())), nameRight));
                         // One table row per body line (Company / "P: phone" /
                         // email). The email line becomes a clickable mailto via
@@ -1110,7 +1110,7 @@ public final class MintEditorial {
                 return;
             }
             block.addParagraph(p -> p
-                    .text(TextOrnaments.spacedUpper(title))
+                    .text(TextOrnaments.upper(title))
                     .textStyle(headingStyle())
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.bottom(18)));
@@ -1121,8 +1121,8 @@ public final class MintEditorial {
                 return;
             }
             section.addParagraph(p -> p
-                    .text(TextOrnaments.spacedUpper(text))
-                    .textStyle(labelStyle())
+                    .text(TextOrnaments.upper(text))
+                    .textStyle(labelStyle().withLetterSpacing(TextOrnaments.SPACED_CAPS))
                     .align(TextAlign.LEFT)
                     .margin(DocumentInsets.bottom(14)));
         }
@@ -1142,21 +1142,30 @@ public final class MintEditorial {
         private DocumentTextStyle mastheadNameStyle() {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeHeadline(),
-                    DocumentTextDecoration.DEFAULT, nameColor);
+                    DocumentTextDecoration.DEFAULT, nameColor)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle taglineStyle() {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeContact(),
-                    DocumentTextDecoration.BOLD, accent);
+                    DocumentTextDecoration.BOLD, accent)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
         private DocumentTextStyle headingStyle() {
             return TextStyles.of(theme.typography().headlineFont(),
                     theme.typography().sizeBanner(),
-                    DocumentTextDecoration.BOLD, accent);
+                    DocumentTextDecoration.BOLD, accent)
+                    .withLetterSpacing(TextOrnaments.SPACED_CAPS);
         }
 
+        /**
+         * Deliberately <em>untracked</em>. Most of its users are spaced caps and
+         * ask for {@link TextOrnaments#SPACED_CAPS} themselves, but the
+         * social-link row renders ordinary label text with it — tracking it here
+         * would space out text nobody asked to space.
+         */
         private DocumentTextStyle labelStyle() {
             return TextStyles.of(theme.typography().bodyFont(),
                     theme.typography().sizeEntryTitle(),

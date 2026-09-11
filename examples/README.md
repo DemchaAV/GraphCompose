@@ -119,6 +119,7 @@ are with the canonical DSL, then jump to its detailed section below.
 | [World scripts](#world-scripts) | One card per bundled script — Arabic, Hebrew, Georgian, Armenian, Korean — each set in its own `FontName` family | [PDF](../assets/readme/examples/world-scripts.pdf) · [Source](src/main/java/com/demcha/examples/features/text/WorldScriptsExample.java) |
 | [Inline shapes](#inline-shapes) | `InlineShapeRun` — dots, arrows, chevrons, diamonds, stars, checkmarks and checkboxes drawn as geometry on the text baseline | [PDF](../assets/readme/examples/inline-shapes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineShapesExample.java) |
 | [Inline highlight chips](#inline-highlight-chips) | `RichText.code(text)` / `chip(text, fg, bg)` / `highlight(text, style, bg, radius, padding)` — text on a rounded padded fill (inline code + status badges), wrapping across lines | [PDF](../assets/readme/examples/inline-highlight-chips.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java) |
+| [Letter spacing](#letter-spacing) | `DocumentTextStyle.builder().letterSpacing(DocumentLetterSpacing.ofFontSize(0.18))` — real typographic tracking through PDF `Tc`, DrawingML `spc` and Word `w:spacing`, so wide caps still copy and search as the word they are | [Source](src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java) |
 | [Inline SVG icons](#inline-svg-icons) | `RichText.svgIcon(icon, size)` — a parsed multi-colour `SvgIcon` on the text baseline, crisp at any zoom and carrying its own colours | [PDF](../assets/readme/examples/inline-svg-icons.pdf) · [Source](src/main/java/com/demcha/examples/features/text/InlineSvgIconExample.java) |
 | [Colour emoji](#colour-emoji) | `RichText.emoji(":star:", size)` — GitHub-style shortcodes resolve to inline vector glyphs via the `graph-compose-emoji` artifact; unknown codes fall back to literal text | [PDF](../assets/readme/examples/emoji-shortcodes.pdf) · [Source](src/main/java/com/demcha/examples/features/text/EmojiShortcodeExample.java) |
 | [Section presets](#section-presets) | `pageBackground`, `band`, `softPanel`, `accentLeft / Right / Top / Bottom`, per-corner `DocumentCornerRadius` | [PDF](../assets/readme/examples/section-presets.pdf) · [Source](src/main/java/com/demcha/examples/features/text/SectionPresetsExample.java) |
@@ -783,6 +784,26 @@ across lines, painting one continuous rounded fill per visual fragment. On
 
 [📄 View PDF](../assets/readme/examples/inline-highlight-chips.pdf) ·
 [📜 Full source](src/main/java/com/demcha/examples/features/text/InlineHighlightExample.java)
+
+### Letter spacing
+
+`DocumentTextStyle.builder().letterSpacing(...)` (`@since 2.4.0`) takes a
+`DocumentLetterSpacing` — `ofFontSize(0.18)` for a share of the type that scales
+with it, or `points(1.2)` for an absolute amount; negative values tighten. The
+advance is the format's own (PDF `Tc`, DrawingML `spc`, Word `w:spacing`), so the
+string in the file stays the string that was typed: a headline set in wide caps
+still copies, searches and parses as `JANE DOE` rather than `J A N E   D O E`.
+The example prints back what each of the three formats says its text is.
+
+<!-- doc-example-ignore: quotes a runnable example; the source it is taken from is compiled and executed by the examples module -->
+```java
+.textStyle(DocumentTextStyle.builder()
+        .fontName(FontName.LATO).size(22)
+        .letterSpacing(DocumentLetterSpacing.ofFontSize(0.18))
+        .build())
+```
+
+[📜 Full source](src/main/java/com/demcha/examples/features/text/LetterSpacingExample.java)
 
 ### Inline SVG icons
 

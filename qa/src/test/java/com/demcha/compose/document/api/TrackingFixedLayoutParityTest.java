@@ -148,6 +148,32 @@ class TrackingFixedLayoutParityTest {
     }
 
     @Test
+    void anUntrackedDocumentIsTheSameBytesItWouldHaveBeenWithoutTheFeature() throws Exception {
+        // The CHANGELOG says every existing document is byte-for-byte what it
+        // was. That is a claim about output, so it is asserted against output:
+        // a style that never mentions tracking and one that explicitly asks for
+        // NONE must produce the identical file.
+        DocumentTextStyle silent = DocumentTextStyle.builder()
+                .fontName(FontName.LATO).size(20).build();
+        DocumentTextStyle explicitNone = style(DocumentLetterSpacing.NONE);
+
+        // PDF embeds a creation date and a document ID, so whole-file equality
+        // is only a meaningful question in deterministic mode. It is the right
+        // question, though — it covers the content stream and every dictionary.
+        assertThat(render(explicitNone, s -> s.render(
+                PdfFixedLayoutBackend.builder().deterministic(true).build())))
+                .isEqualTo(render(silent, s -> s.render(
+                        PdfFixedLayoutBackend.builder().deterministic(true).build())));
+
+        // The OOXML pair carry timestamps of their own, so they are compared on
+        // the run properties — which is where a stray zero would have shown up.
+        assertThat(pptxRunXml(render(explicitNone, s -> s.render(new PptxFixedLayoutBackend()))))
+                .isEqualTo(pptxRunXml(render(silent, s -> s.render(new PptxFixedLayoutBackend()))));
+        assertThat(docxRunXml(render(explicitNone, s -> s.export(new DocxSemanticBackend()))))
+                .isEqualTo(docxRunXml(render(silent, s -> s.export(new DocxSemanticBackend()))));
+    }
+
+    @Test
     void theAuthoredValueItselfIsNeverRewritten() {
         // Quantisation is a property of fixed layout, not of the value. What the
         // author wrote is what the style still says.
@@ -278,6 +304,19 @@ class TrackingFixedLayoutParityTest {
             }
         }
         throw new AssertionError("no spc written");
+    }
+
+    /** Every run's properties as the document spells them, in order. */
+    private static List<String> docxRunXml(byte[] docx) throws Exception {
+        List<String> xml = new ArrayList<>();
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            for (XWPFParagraph paragraph : document.getParagraphs()) {
+                for (XWPFRun run : paragraph.getRuns()) {
+                    xml.add(run.getCTR().xmlText());
+                }
+            }
+        }
+        return xml;
     }
 
     private static int wSpacingOf(byte[] docx) throws Exception {

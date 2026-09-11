@@ -61,12 +61,18 @@ public class MarkDownParser {
                     };
                     double newSize = style.size() * scale;
                     TextStyle headerStyle = new TextStyle(style.fontName(), newSize, TextDecoration.BOLD,
-                            // Scaled with the size. The engine is handed tracking
-                            // already resolved to points, so carrying it across
-                            // unchanged would set a 2x heading at the body's
-                            // tracking — a share of the font size that stops being
-                            // a share the moment the size changes.
-                            style.color(), style.letterSpacing() * scale);
+                            // Tracking is carried across unchanged, deliberately.
+                            // Scaling it with the heading breaks two things: the
+                            // value arrives already quantised to the hundredth of a
+                            // point that DrawingML can state, and 0.33 x 1.5 is
+                            // 0.495 — which the engine would measure and PPTX would
+                            // have to round back to 0.50, reopening the very gap
+                            // between measurement and file the quantisation exists
+                            // to close. It would also scale an absolute points(1.2)
+                            // that was never meant to follow the font size, and by
+                            // here the unit is gone, so the two cannot be told
+                            // apart.
+                            style.color(), style.letterSpacing());
 
                     // Add newline before header for better separation
                     // resultList.add(new TextDataBody("\n",

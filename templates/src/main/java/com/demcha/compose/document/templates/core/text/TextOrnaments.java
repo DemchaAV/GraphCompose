@@ -19,7 +19,8 @@ import java.util.Locale;
  *
  * <p>{@link #spacedUpper(String)} is still here and still does exactly
  * what it always did, for callers compiled against 2.3.0 and earlier.
- * It is deprecated, and nothing inside GraphCompose calls it.</p>
+ * It is deprecated, and no GraphCompose component or preset calls it —
+ * only the test that pins its output does.</p>
  */
 public final class TextOrnaments {
 

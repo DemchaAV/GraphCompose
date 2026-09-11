@@ -95,7 +95,7 @@ public final class SvgGlyph {
      * @return the recolorable glyph
      * @throws IllegalStateException if the file does not exist
      * @throws UncheckedIOException  if the file cannot be read
-     * @since 2.1.2
+     * @since 2.4.0
      */
     public static SvgGlyph fromFile(Path file) {
         Objects.requireNonNull(file, "file");

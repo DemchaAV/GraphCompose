@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
+Types: 266 · methods: 1474 · constants: 200 · compiler-generated members: 806
 
 ## com.demcha.compose.document.templates.api
 
@@ -120,6 +120,7 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 
 ### SvgGlyph (class)
 - `SvgGlyph fromResource(String resourcePath)`
+- `SvgGlyph fromFile(Path file)`
 - `ShapeOutline outline(double width)`
 - `double aspectRatio()`
 
@@ -170,6 +171,7 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 - `BrandTheme mintEditorial()`
 - `BrandTheme invoiceModern()`
 - `BrandTheme proposalModern()`
+- `BrandTheme receiptModern()`
 - `DocumentTextStyle headlineStyle()`
 - `DocumentTextStyle bannerStyle()`
 - `DocumentTextStyle contactStyle()`
@@ -211,6 +213,7 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 - `Palette executive()`
 - `Palette mintEditorial()`
 - `Palette invoiceModern()`
+- `Palette receiptModern()`
 - `DocumentColor ink()`
 - `DocumentColor muted()`
 - `DocumentColor rule()`
@@ -236,6 +239,7 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 - `Spacing executive()`
 - `Spacing mintEditorial()`
 - `Spacing invoiceModern()`
+- `Spacing receiptModern()`
 - `double pageFlowSpacing()`
 - `double sectionBodySpacing()`
 - `DocumentInsets sectionBodyPadding()`
@@ -270,6 +274,7 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 - `Typography mintEditorial()`
 - `Typography invoiceModern()`
 - `Typography proposalModern()`
+- `Typography receiptModern()`
 - `FontName headlineFont()`
 - `FontName bodyFont()`
 - `double sizeHeadline()`
@@ -1623,6 +1628,112 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 - `StructuredProposalDocumentSpec from(StructuredProposalData proposal)`
 - `StructuredProposalData proposal()`
 
+## com.demcha.compose.document.templates.data.receipt
+
+### ReceiptData (record)
+- `new ReceiptData(String, String, String, String, String, String, String, ReceiptStatus, List<ReceiptField>, String, ReceiptParty, String, ReceiptParty, List<ReceiptFieldGroup>, List<ReceiptEvent>, List<String>, String, String, List<String>, String)`
+- `boolean hasPayer()`
+- `boolean hasBeneficiary()`
+- `ReceiptData.Builder builder()`
+- `String documentTitle()`
+- `String issuerName()`
+- `String generatedOn()`
+- `String reference()`
+- `String amountLabel()`
+- `String amount()`
+- `String amountCaption()`
+- `ReceiptStatus status()`
+- `List<ReceiptField> summaryFields()`
+- `String payerLabel()`
+- `ReceiptParty payer()`
+- `String beneficiaryLabel()`
+- `ReceiptParty beneficiary()`
+- `List<ReceiptFieldGroup> detailGroups()`
+- `List<ReceiptEvent> timeline()`
+- `List<String> notes()`
+- `String verificationUrl()`
+- `String verificationText()`
+- `List<String> supportLines()`
+- `String legalNote()`
+
+### ReceiptData.Builder (class)
+- `ReceiptData.Builder documentTitle(String documentTitle)`
+- `ReceiptData.Builder issuerName(String issuerName)`
+- `ReceiptData.Builder generatedOn(String generatedOn)`
+- `ReceiptData.Builder reference(String reference)`
+- `ReceiptData.Builder amount(String label, String amount)`
+- `ReceiptData.Builder amountCaption(String amountCaption)`
+- `ReceiptData.Builder status(ReceiptStatus status)`
+- `ReceiptData.Builder status(String label, ReceiptStatusTone tone)`
+- `ReceiptData.Builder summaryField(String label, String value)`
+- `ReceiptData.Builder payer(String label, Consumer<ReceiptParty.Builder> spec)`
+- `ReceiptData.Builder beneficiary(String label, Consumer<ReceiptParty.Builder> spec)`
+- `ReceiptData.Builder detailGroup(String title, Consumer<ReceiptFieldGroup.Builder> spec)`
+- `ReceiptData.Builder addDetailGroup(ReceiptFieldGroup group)`
+- `ReceiptData.Builder event(String label, String timestamp, String detail)`
+- `ReceiptData.Builder note(String note)`
+- `ReceiptData.Builder verification(String url, String text)`
+- `ReceiptData.Builder supportLine(String line)`
+- `ReceiptData.Builder legalNote(String legalNote)`
+- `ReceiptData build()`
+
+### ReceiptDocumentSpec (record)
+- `new ReceiptDocumentSpec(ReceiptData)`
+- `ReceiptDocumentSpec from(ReceiptData receipt)`
+- `ReceiptDocumentSpec of(Consumer<ReceiptData.Builder> spec)`
+- `ReceiptData receipt()`
+
+### ReceiptEvent (record)
+- `new ReceiptEvent(String, String, String)`
+- `ReceiptEvent of(String label, String timestamp)`
+- `String label()`
+- `String timestamp()`
+- `String detail()`
+
+### ReceiptField (record)
+- `new ReceiptField(String, String, boolean)`
+- `ReceiptField of(String label, String value)`
+- `ReceiptField emphasized(String label, String value)`
+- `String label()`
+- `String value()`
+- `boolean emphasized()`
+
+### ReceiptFieldGroup (record)
+- `new ReceiptFieldGroup(String, List<ReceiptField>)`
+- `ReceiptFieldGroup.Builder builder(String title)`
+- `String title()`
+- `List<ReceiptField> fields()`
+
+### ReceiptFieldGroup.Builder (class)
+- `ReceiptFieldGroup.Builder field(String label, String value)`
+- `ReceiptFieldGroup.Builder emphasized(String label, String value)`
+- `ReceiptFieldGroup.Builder add(ReceiptField field)`
+- `ReceiptFieldGroup build()`
+
+### ReceiptParty (record)
+- `new ReceiptParty(String, List<String>, List<ReceiptField>)`
+- `ReceiptParty.Builder builder()`
+- `String name()`
+- `List<String> addressLines()`
+- `List<ReceiptField> fields()`
+
+### ReceiptParty.Builder (class)
+- `ReceiptParty.Builder name(String name)`
+- `ReceiptParty.Builder addressLines(String... lines)`
+- `ReceiptParty.Builder field(String label, String value)`
+- `ReceiptParty build()`
+
+### ReceiptStatus (record)
+- `new ReceiptStatus(String, ReceiptStatusTone)`
+- `ReceiptStatus settled(String label)`
+- `ReceiptStatus inProgress(String label)`
+- `boolean hasLabel()`
+- `String label()`
+- `ReceiptStatusTone tone()`
+
+### ReceiptStatusTone (enum)
+- constants: `SETTLED`, `IN_PROGRESS`, `ATTENTION`, `FAILED`
+
 ## com.demcha.compose.document.templates.data.rota
 
 ### RotaCovers (record)
@@ -1967,6 +2078,73 @@ Types: 244 · methods: 1351 · constants: 191 · compiler-generated members: 750
 ### NorthlineProposal (class)
 - `DocumentTemplate<StructuredProposalDocumentSpec> create()`
 - constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+## com.demcha.compose.document.templates.receipt.components
+
+### FieldRowRenderer (class)
+- `void renderAll(SectionBuilder host, List<ReceiptField> fields, BrandTheme theme)`
+- `void renderInline(SectionBuilder host, List<ReceiptField> fields, TextAlign align, BrandTheme theme)`
+- `void render(SectionBuilder host, ReceiptField field, BrandTheme theme)`
+
+### ReceiptStyles (class)
+- `DocumentTextStyle eyebrow(BrandTheme theme)`
+- `DocumentTextStyle groupTitle(BrandTheme theme)`
+- `DocumentTextStyle title(BrandTheme theme)`
+- `DocumentTextStyle caption(BrandTheme theme)`
+- `DocumentTextStyle label(BrandTheme theme)`
+- `DocumentTextStyle value(BrandTheme theme)`
+- `DocumentTextStyle valueStrong(BrandTheme theme)`
+- `DocumentTextStyle amount(BrandTheme theme)`
+- `DocumentTextStyle partyName(BrandTheme theme)`
+- `DocumentTextStyle body(BrandTheme theme)`
+- `DocumentTextStyle smallPrint(BrandTheme theme)`
+- `DocumentTextStyle pill(BrandTheme theme, DocumentColor color)`
+
+### StatusPill (class)
+- `void render(SectionBuilder host, ReceiptStatus status, DocumentColor accent, TextAlign align, BrandTheme theme)`
+
+## com.demcha.compose.document.templates.receipt.presets
+
+### ModernReceipt (class)
+- `DocumentTemplate<ReceiptDocumentSpec> create()`
+- `DocumentTemplate<ReceiptDocumentSpec> create(BrandTheme theme)`
+- `DocumentTemplate<ReceiptDocumentSpec> create(BrandTheme theme, ModernReceipt.Options options)`
+- constants: `ID`, `DISPLAY_NAME`, `RECOMMENDED_MARGIN`
+
+### ModernReceipt.Options (record)
+- `new Options(SvgGlyph, double, DocumentColor, DocumentColor, String)`
+- `ModernReceipt.Options defaults()`
+- `ModernReceipt.Options branded(SvgGlyph logo, DocumentColor accent)`
+- `ModernReceipt.Options withLogoWidth(double width)`
+- `ModernReceipt.Options withLogoColor(DocumentColor color)`
+- `ModernReceipt.Options withTimelineTitle(String title)`
+- `SvgGlyph logo()`
+- `double logoWidth()`
+- `DocumentColor logoColor()`
+- `DocumentColor accent()`
+- `String timelineTitle()`
+- constants: `DEFAULT_LOGO_WIDTH`, `DEFAULT_TIMELINE_TITLE`
+
+## com.demcha.compose.document.templates.receipt.widgets
+
+### AmountHero (class)
+- `void render(SectionBuilder host, ReceiptData data, DocumentColor accent, BrandTheme theme)`
+
+### DetailGroup (class)
+- `void render(SectionBuilder host, ReceiptFieldGroup group, BrandTheme theme)`
+
+### PartyPair (class)
+- `void render(SectionBuilder host, ReceiptData data, DocumentColor accent, BrandTheme theme)`
+
+### ReceiptFooter (class)
+- `boolean hasContent(ReceiptData data)`
+- `void render(SectionBuilder host, ReceiptData data, BrandTheme theme)`
+
+### ReceiptMasthead (class)
+- `void render(SectionBuilder host, ReceiptData data, SvgGlyph logo, double logoWidth, DocumentColor logoColor, BrandTheme theme)`
+
+### StatusTrail (class)
+- `void render(SectionBuilder host, String title, List<ReceiptEvent> events, DocumentColor accent, BrandTheme theme)`
 
 ## com.demcha.compose.document.templates.rota.presets
 

@@ -22,10 +22,10 @@
     "graph-compose-testing:sources"
   ],
   "counts": {
-    "types": 244,
-    "methods": 1351,
-    "constants": 191,
-    "generated": 750
+    "types": 266,
+    "methods": 1474,
+    "constants": 200,
+    "generated": 806
   },
   "packages": [
     {
@@ -1221,6 +1221,20 @@
             },
             {
               "kind": "method",
+              "name": "fromFile",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "SvgGlyph",
+              "params": [
+                {
+                  "type": "Path",
+                  "name": "file"
+                }
+              ]
+            },
+            {
+              "kind": "method",
               "name": "outline",
               "static": false,
               "origin": "source",
@@ -1815,6 +1829,15 @@
             },
             {
               "kind": "method",
+              "name": "receiptModern",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "BrandTheme",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "headlineStyle",
               "static": false,
               "origin": "source",
@@ -2221,6 +2244,15 @@
             },
             {
               "kind": "method",
+              "name": "receiptModern",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Palette",
+              "params": []
+            },
+            {
+              "kind": "method",
               "name": "ink",
               "static": false,
               "origin": "generated",
@@ -2541,6 +2573,15 @@
             {
               "kind": "method",
               "name": "invoiceModern",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Spacing",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "receiptModern",
               "static": true,
               "origin": "source",
               "typeParameters": null,
@@ -2881,6 +2922,15 @@
             {
               "kind": "method",
               "name": "proposalModern",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "Typography",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "receiptModern",
               "static": true,
               "origin": "source",
               "typeParameters": null,
@@ -19273,6 +19323,1252 @@
       ]
     },
     {
+      "name": "com.demcha.compose.document.templates.data.receipt",
+      "types": [
+        {
+          "name": "ReceiptData",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptData",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptData",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ReceiptStatus",
+                  "name": null
+                },
+                {
+                  "type": "List<ReceiptField>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ReceiptParty",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ReceiptParty",
+                  "name": null
+                },
+                {
+                  "type": "List<ReceiptFieldGroup>",
+                  "name": null
+                },
+                {
+                  "type": "List<ReceiptEvent>",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hasPayer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "hasBeneficiary",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "documentTitle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "issuerName",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "generatedOn",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "reference",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amountLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "amountCaption",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "status",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ReceiptStatus",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "summaryFields",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ReceiptField>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payerLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "payer",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ReceiptParty",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "beneficiaryLabel",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "beneficiary",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ReceiptParty",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "detailGroups",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ReceiptFieldGroup>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "timeline",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ReceiptEvent>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "notes",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "verificationUrl",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "verificationText",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "supportLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "legalNote",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptData.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptData$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "documentTitle",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "documentTitle"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "issuerName",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "issuerName"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "generatedOn",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "generatedOn"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "reference",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "reference"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "amount"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "amountCaption",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "amountCaption"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "status",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "ReceiptStatus",
+                  "name": "status"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "status",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "ReceiptStatusTone",
+                  "name": "tone"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "summaryField",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "payer",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "Consumer<ReceiptParty.Builder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "beneficiary",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "Consumer<ReceiptParty.Builder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "detailGroup",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "Consumer<ReceiptFieldGroup.Builder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "addDetailGroup",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "ReceiptFieldGroup",
+                  "name": "group"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "event",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "timestamp"
+                },
+                {
+                  "type": "String",
+                  "name": "detail"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "note",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "note"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "verification",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "url"
+                },
+                {
+                  "type": "String",
+                  "name": "text"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "supportLine",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "line"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "legalNote",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "legalNote"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptData",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptDocumentSpec",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptDocumentSpec",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptDocumentSpec",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "ReceiptData",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "from",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptDocumentSpec",
+              "params": [
+                {
+                  "type": "ReceiptData",
+                  "name": "receipt"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptDocumentSpec",
+              "params": [
+                {
+                  "type": "Consumer<ReceiptData.Builder>",
+                  "name": "spec"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "receipt",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ReceiptData",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptEvent",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptEvent",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptEvent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptEvent",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "timestamp"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "timestamp",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "detail",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptField",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptField",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptField",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "boolean",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "of",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptField",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "emphasized",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptField",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "emphasized",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptFieldGroup",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptFieldGroup",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptFieldGroup",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<ReceiptField>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptFieldGroup.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fields",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ReceiptField>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptFieldGroup.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptFieldGroup$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "field",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptFieldGroup.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "emphasized",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptFieldGroup.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "add",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptFieldGroup.Builder",
+              "params": [
+                {
+                  "type": "ReceiptField",
+                  "name": "field"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptFieldGroup",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptParty",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptParty",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptParty",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "List<String>",
+                  "name": null
+                },
+                {
+                  "type": "List<ReceiptField>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "builder",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptParty.Builder",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<String>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "fields",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<ReceiptField>",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptParty.Builder",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptParty$Builder",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "name",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptParty.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "name"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "addressLines",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptParty.Builder",
+              "params": [
+                {
+                  "type": "String...",
+                  "name": "lines"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "field",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptParty.Builder",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "String",
+                  "name": "value"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "build",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptParty",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptStatus",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptStatus",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constructor",
+              "name": "ReceiptStatus",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": null
+                },
+                {
+                  "type": "ReceiptStatusTone",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "settled",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptStatus",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "inProgress",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ReceiptStatus",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "hasLabel",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "tone",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "ReceiptStatusTone",
+              "params": []
+            }
+          ]
+        },
+        {
+          "name": "ReceiptStatusTone",
+          "binaryName": "com.demcha.compose.document.templates.data.receipt.ReceiptStatusTone",
+          "kind": "enum",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "SETTLED",
+              "static": true,
+              "origin": "generated",
+              "type": "ReceiptStatusTone"
+            },
+            {
+              "kind": "constant",
+              "name": "IN_PROGRESS",
+              "static": true,
+              "origin": "generated",
+              "type": "ReceiptStatusTone"
+            },
+            {
+              "kind": "constant",
+              "name": "ATTENTION",
+              "static": true,
+              "origin": "generated",
+              "type": "ReceiptStatusTone"
+            },
+            {
+              "kind": "constant",
+              "name": "FAILED",
+              "static": true,
+              "origin": "generated",
+              "type": "ReceiptStatusTone"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "com.demcha.compose.document.templates.data.rota",
       "types": [
         {
@@ -23233,6 +24529,808 @@
               "typeParameters": null,
               "returns": "DocumentTemplate<StructuredProposalDocumentSpec>",
               "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.templates.receipt.components",
+      "types": [
+        {
+          "name": "FieldRowRenderer",
+          "binaryName": "com.demcha.compose.document.templates.receipt.components.FieldRowRenderer",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "renderAll",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "List<ReceiptField>",
+                  "name": "fields"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "renderInline",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "List<ReceiptField>",
+                  "name": "fields"
+                },
+                {
+                  "type": "TextAlign",
+                  "name": "align"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptField",
+                  "name": "field"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ReceiptStyles",
+          "binaryName": "com.demcha.compose.document.templates.receipt.components.ReceiptStyles",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "eyebrow",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "groupTitle",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "title",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "caption",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "label",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "value",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "valueStrong",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "amount",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "partyName",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "body",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "smallPrint",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "pill",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTextStyle",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "color"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatusPill",
+          "binaryName": "com.demcha.compose.document.templates.receipt.components.StatusPill",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptStatus",
+                  "name": "status"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "accent"
+                },
+                {
+                  "type": "TextAlign",
+                  "name": "align"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.templates.receipt.presets",
+      "types": [
+        {
+          "name": "ModernReceipt",
+          "binaryName": "com.demcha.compose.document.templates.receipt.presets.ModernReceipt",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "ID",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "DISPLAY_NAME",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constant",
+              "name": "RECOMMENDED_MARGIN",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<ReceiptDocumentSpec>",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<ReceiptDocumentSpec>",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "create",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "DocumentTemplate<ReceiptDocumentSpec>",
+              "params": [
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                },
+                {
+                  "type": "ModernReceipt.Options",
+                  "name": "options"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ModernReceipt.Options",
+          "binaryName": "com.demcha.compose.document.templates.receipt.presets.ModernReceipt$Options",
+          "kind": "record",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "constant",
+              "name": "DEFAULT_LOGO_WIDTH",
+              "static": true,
+              "origin": "generated",
+              "type": "double"
+            },
+            {
+              "kind": "constant",
+              "name": "DEFAULT_TIMELINE_TITLE",
+              "static": true,
+              "origin": "generated",
+              "type": "String"
+            },
+            {
+              "kind": "constructor",
+              "name": "Options",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "SvgGlyph",
+                  "name": null
+                },
+                {
+                  "type": "double",
+                  "name": null
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": null
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": null
+                },
+                {
+                  "type": "String",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "defaults",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ModernReceipt.Options",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "branded",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ModernReceipt.Options",
+              "params": [
+                {
+                  "type": "SvgGlyph",
+                  "name": "logo"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "accent"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "withLogoWidth",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ModernReceipt.Options",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "width"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "withLogoColor",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ModernReceipt.Options",
+              "params": [
+                {
+                  "type": "DocumentColor",
+                  "name": "color"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "withTimelineTitle",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ModernReceipt.Options",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "title"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "logo",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "SvgGlyph",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "logoWidth",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "double",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "logoColor",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentColor",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "accent",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "DocumentColor",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "timelineTitle",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "com.demcha.compose.document.templates.receipt.widgets",
+      "types": [
+        {
+          "name": "AmountHero",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.AmountHero",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptData",
+                  "name": "data"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "accent"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "DetailGroup",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.DetailGroup",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptFieldGroup",
+                  "name": "group"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PartyPair",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.PartyPair",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptData",
+                  "name": "data"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "accent"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ReceiptFooter",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.ReceiptFooter",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "hasContent",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": [
+                {
+                  "type": "ReceiptData",
+                  "name": "data"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptData",
+                  "name": "data"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ReceiptMasthead",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.ReceiptMasthead",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "ReceiptData",
+                  "name": "data"
+                },
+                {
+                  "type": "SvgGlyph",
+                  "name": "logo"
+                },
+                {
+                  "type": "double",
+                  "name": "logoWidth"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "logoColor"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "StatusTrail",
+          "binaryName": "com.demcha.compose.document.templates.receipt.widgets.StatusTrail",
+          "kind": "class",
+          "modifiers": [
+            "final"
+          ],
+          "artifact": "graph-compose-templates",
+          "members": [
+            {
+              "kind": "method",
+              "name": "render",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "void",
+              "params": [
+                {
+                  "type": "SectionBuilder",
+                  "name": "host"
+                },
+                {
+                  "type": "String",
+                  "name": "title"
+                },
+                {
+                  "type": "List<ReceiptEvent>",
+                  "name": "events"
+                },
+                {
+                  "type": "DocumentColor",
+                  "name": "accent"
+                },
+                {
+                  "type": "BrandTheme",
+                  "name": "theme"
+                }
+              ]
             }
           ]
         }

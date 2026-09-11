@@ -3,16 +3,7 @@ package com.demcha.compose.document.templates;
 import com.demcha.compose.GraphCompose;
 import com.demcha.compose.document.api.DocumentPageSize;
 import com.demcha.compose.document.api.DocumentSession;
-import com.demcha.compose.document.templates.data.invoice.InvoiceData;
-import com.demcha.compose.document.templates.data.invoice.InvoiceDocumentSpec;
-import com.demcha.compose.document.templates.data.proposal.ProposalData;
-import com.demcha.compose.document.templates.data.proposal.ProposalDocumentSpec;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleData;
-import com.demcha.compose.document.templates.data.schedule.WeeklyScheduleDocumentSpec;
 import com.demcha.compose.font.FontName;
-import com.demcha.mock.InvoiceDataFixtures;
-import com.demcha.mock.ProposalDataFixtures;
-import com.demcha.mock.WeeklyScheduleDataFixtures;
 import org.apache.pdfbox.contentstream.operator.Operator;
 import org.apache.pdfbox.cos.COSNumber;
 import org.apache.pdfbox.Loader;
@@ -33,6 +24,18 @@ import com.demcha.compose.testing.layout.LayoutSnapshotAssertions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Shared plumbing for the canonical template gates.
+ *
+ * <p>{@link #assertCanonicalSnapshot} owns the
+ * {@code layout-snapshots/canonical-templates} baseline root, which is
+ * partitioned per template family — {@code cv-v2}, {@code coverletter-v2},
+ * {@code invoice}, {@code proposal}. The per-family
+ * {@code *PresetLayoutSnapshotTest} classes are its callers; any new
+ * family should follow the same shape (a {@code *PresetFixtures} holding
+ * the roster + canonical document, read by both the structural and the
+ * pixel gate) so a folder here cannot outlive the test that writes it.</p>
+ */
 public final class TemplateTestSupport {
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
     private static final Color GUIDE_BOX_COLOR = new Color(150, 150, 150);
@@ -45,42 +48,6 @@ public final class TemplateTestSupport {
             "target", "visual-tests", "layout-snapshots", "canonical-templates");
 
     private TemplateTestSupport() {
-    }
-
-    public static InvoiceData canonicalInvoiceData() {
-        return InvoiceDataFixtures.standardInvoice();
-    }
-
-    public static InvoiceDocumentSpec canonicalInvoice() {
-        return InvoiceDocumentSpec.from(canonicalInvoiceData());
-    }
-
-    public static ProposalData canonicalProposalData() {
-        return ProposalDataFixtures.longProposal();
-    }
-
-    public static ProposalDocumentSpec canonicalProposal() {
-        return ProposalDocumentSpec.from(canonicalProposalData());
-    }
-
-    public static WeeklyScheduleData canonicalWeeklyScheduleData() {
-        return WeeklyScheduleDataFixtures.standardSchedule();
-    }
-
-    public static WeeklyScheduleDocumentSpec canonicalWeeklySchedule() {
-        return WeeklyScheduleDocumentSpec.from(canonicalWeeklyScheduleData());
-    }
-
-    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithoutMetricsOrFooter() {
-        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withoutMetricsOrFooter());
-    }
-
-    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithAdditionalPerson() {
-        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withAdditionalPerson());
-    }
-
-    public static WeeklyScheduleDocumentSpec canonicalWeeklyScheduleWithChangedCategoryCatalog() {
-        return WeeklyScheduleDocumentSpec.from(WeeklyScheduleDataFixtures.withAddedAndRemovedCategory());
     }
 
     public static String snapshotSlug(FontName fontName) {

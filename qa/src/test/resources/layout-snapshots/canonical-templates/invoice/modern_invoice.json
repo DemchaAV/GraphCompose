@@ -1,0 +1,707 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 539.276,
+    "innerHeight" : 785.89,
+    "margin" : {
+      "top" : 28.0,
+      "right" : 28.0,
+      "bottom" : 28.0,
+      "left" : 28.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "InvoiceV2ModernRoot[0]",
+    "entityName" : "InvoiceV2ModernRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 302.215,
+    "placementX" : 28.0,
+    "placementY" : 302.215,
+    "placementWidth" : 539.276,
+    "placementHeight" : 511.675,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 511.675,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceHero[0]",
+    "entityName" : "InvoiceHero",
+    "entityKind" : "SectionNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 741.04,
+    "placementX" : 28.0,
+    "placementY" : 741.04,
+    "placementWidth" : 538.468,
+    "placementHeight" : 72.85,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 538.468,
+    "contentHeight" : 72.85,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 14.0,
+      "right" : 14.0,
+      "bottom" : 14.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceHero[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceHero[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 42.0,
+    "computedY" : 773.99,
+    "placementX" : 42.0,
+    "placementY" : 773.99,
+    "placementWidth" : 96.488,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 96.488,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceHero[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceHero[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 42.0,
+    "computedY" : 755.04,
+    "placementX" : 42.0,
+    "placementY" : 755.04,
+    "placementWidth" : 510.468,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 510.468,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]",
+    "entityName" : "InvoiceParties",
+    "entityKind" : "RowNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 635.14,
+    "placementX" : 28.0,
+    "placementY" : 635.14,
+    "placementWidth" : 539.276,
+    "placementHeight" : 91.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 91.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]",
+    "entityName" : "InvoiceFromParty",
+    "entityKind" : "SectionNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 635.14,
+    "placementX" : 28.0,
+    "placementY" : 635.14,
+    "placementWidth" : 132.825,
+    "placementHeight" : 91.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.825,
+    "contentHeight" : 91.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 716.865,
+    "placementX" : 28.0,
+    "placementY" : 716.865,
+    "placementWidth" : 32.384,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 32.384,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 704.69,
+    "placementX" : 28.0,
+    "placementY" : 704.69,
+    "placementWidth" : 119.79,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.79,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceFromParty[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 635.14,
+    "placementX" : 28.0,
+    "placementY" : 635.14,
+    "placementWidth" : 132.825,
+    "placementHeight" : 67.55,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.825,
+    "contentHeight" : 67.55,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]",
+    "entityName" : "InvoiceBillToParty",
+    "entityKind" : "SectionNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.638,
+    "computedY" : 635.14,
+    "placementX" : 306.638,
+    "placementY" : 635.14,
+    "placementWidth" : 115.709,
+    "placementHeight" : 91.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.709,
+    "contentHeight" : 91.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 716.865,
+    "placementX" : 306.638,
+    "placementY" : 716.865,
+    "placementWidth" : 42.779,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.779,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 704.69,
+    "placementX" : 306.638,
+    "placementY" : 704.69,
+    "placementWidth" : 102.685,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 102.685,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceParties[1]/InvoiceBillToParty[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 635.14,
+    "placementX" : 306.638,
+    "placementY" : 635.14,
+    "placementWidth" : 115.709,
+    "placementHeight" : 67.55,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 115.709,
+    "contentHeight" : 67.55,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceLineItems[2]",
+    "entityName" : "InvoiceLineItems",
+    "entityKind" : "TableNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 407.09,
+    "placementX" : 28.0,
+    "placementY" : 407.09,
+    "placementWidth" : 400.84,
+    "placementHeight" : 214.05,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 400.84,
+    "contentHeight" : 214.05,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]",
+    "entityName" : "InvoiceFooterRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]",
+    "childIndex" : 3,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 302.215,
+    "placementX" : 28.0,
+    "placementY" : 302.215,
+    "placementWidth" : 539.276,
+    "placementHeight" : 90.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 90.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoiceNotes[0]",
+    "entityName" : "InvoiceNotes",
+    "entityKind" : "SectionNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 315.165,
+    "placementX" : 28.0,
+    "placementY" : 315.165,
+    "placementWidth" : 249.458,
+    "placementHeight" : 77.925,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 249.458,
+    "contentHeight" : 77.925,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoiceNotes[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoiceNotes[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 36.0,
+    "computedY" : 382.915,
+    "placementX" : 36.0,
+    "placementY" : 382.915,
+    "placementWidth" : 30.558,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 30.558,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoiceNotes[0]/ListNode[1]",
+    "entityName" : null,
+    "entityKind" : "ListNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoiceNotes[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 36.0,
+    "computedY" : 315.165,
+    "placementX" : 36.0,
+    "placementY" : 315.165,
+    "placementWidth" : 241.458,
+    "placementHeight" : 64.75,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 241.458,
+    "contentHeight" : 64.75,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoicePaymentTerms[1]",
+    "entityName" : "InvoicePaymentTerms",
+    "entityKind" : "SectionNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.638,
+    "computedY" : 302.215,
+    "placementX" : 306.638,
+    "placementY" : 302.215,
+    "placementWidth" : 253.35,
+    "placementHeight" : 90.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 253.35,
+    "contentHeight" : 90.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoicePaymentTerms[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoicePaymentTerms[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 314.638,
+    "computedY" : 382.915,
+    "placementX" : 314.638,
+    "placementY" : 382.915,
+    "placementWidth" : 78.859,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 78.859,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoicePaymentTerms[1]/ListNode[1]",
+    "entityName" : null,
+    "entityKind" : "ListNode",
+    "parentPath" : "InvoiceV2ModernRoot[0]/InvoiceFooterRow[3]/InvoicePaymentTerms[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 314.638,
+    "computedY" : 302.215,
+    "placementX" : 314.638,
+    "placementY" : 302.215,
+    "placementWidth" : 245.35,
+    "placementHeight" : 77.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 245.35,
+    "contentHeight" : 77.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernFooter[1]",
+    "entityName" : "InvoiceV2ModernFooter",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 1,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 278.965,
+    "placementX" : 28.0,
+    "placementY" : 278.965,
+    "placementWidth" : 335.71,
+    "placementHeight" : 23.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 335.71,
+    "contentHeight" : 23.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "InvoiceV2ModernFooter[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "InvoiceV2ModernFooter[1]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 278.965,
+    "placementX" : 28.0,
+    "placementY" : 278.965,
+    "placementWidth" : 335.71,
+    "placementHeight" : 9.25,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 335.71,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 14.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

@@ -1,0 +1,1307 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 539.276,
+    "innerHeight" : 785.89,
+    "margin" : {
+      "top" : 28.0,
+      "right" : 28.0,
+      "bottom" : 28.0,
+      "left" : 28.0
+    }
+  },
+  "totalPages" : 2,
+  "nodes" : [ {
+    "path" : "ProposalV2ModernRoot[0]",
+    "entityName" : "ProposalV2ModernRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 543.24,
+    "placementX" : 28.0,
+    "placementY" : 543.24,
+    "placementWidth" : 539.276,
+    "placementHeight" : 270.65,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 270.65,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalHero[0]",
+    "entityName" : "ProposalHero",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalV2ModernRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 723.015,
+    "placementX" : 28.0,
+    "placementY" : 723.015,
+    "placementWidth" : 500.332,
+    "placementHeight" : 90.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 500.332,
+    "contentHeight" : 90.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 14.0,
+      "right" : 14.0,
+      "bottom" : 14.0,
+      "left" : 14.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalHero[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalHero[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 42.0,
+    "computedY" : 773.99,
+    "placementX" : 42.0,
+    "placementY" : 773.99,
+    "placementWidth" : 119.812,
+    "placementHeight" : 25.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.812,
+    "contentHeight" : 25.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalHero[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalHero[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 42.0,
+    "computedY" : 755.965,
+    "placementX" : 42.0,
+    "placementY" : 755.965,
+    "placementWidth" : 207.298,
+    "placementHeight" : 12.025,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 207.298,
+    "contentHeight" : 12.025,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalHero[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalHero[0]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 42.0,
+    "computedY" : 737.015,
+    "placementX" : 42.0,
+    "placementY" : 737.015,
+    "placementWidth" : 472.332,
+    "placementHeight" : 12.95,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 472.332,
+    "contentHeight" : 12.95,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalExecutiveSummary[1]",
+    "entityName" : "ProposalExecutiveSummary",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalV2ModernRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 649.14,
+    "placementX" : 28.0,
+    "placementY" : 649.14,
+    "placementWidth" : 494.778,
+    "placementHeight" : 59.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 494.778,
+    "contentHeight" : 59.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 12.0,
+      "right" : 12.0,
+      "bottom" : 12.0,
+      "left" : 12.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalExecutiveSummary[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalExecutiveSummary[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 40.0,
+    "computedY" : 686.84,
+    "placementX" : 40.0,
+    "placementY" : 686.84,
+    "placementWidth" : 103.323,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 103.323,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalExecutiveSummary[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalExecutiveSummary[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 40.0,
+    "computedY" : 661.14,
+    "placementX" : 40.0,
+    "placementY" : 661.14,
+    "placementWidth" : 470.778,
+    "placementHeight" : 21.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 470.778,
+    "contentHeight" : 21.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]",
+    "entityName" : "ProposalParties",
+    "entityKind" : "RowNode",
+    "parentPath" : "ProposalV2ModernRoot[0]",
+    "childIndex" : 2,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 543.24,
+    "placementX" : 28.0,
+    "placementY" : 543.24,
+    "placementWidth" : 539.276,
+    "placementHeight" : 91.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 539.276,
+    "contentHeight" : 91.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]",
+    "entityName" : "ProposalSender",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 543.24,
+    "placementX" : 28.0,
+    "placementY" : 543.24,
+    "placementWidth" : 127.941,
+    "placementHeight" : 91.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 127.941,
+    "contentHeight" : 91.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 624.965,
+    "placementX" : 28.0,
+    "placementY" : 624.965,
+    "placementWidth" : 32.384,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 32.384,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 612.79,
+    "placementX" : 28.0,
+    "placementY" : 612.79,
+    "placementWidth" : 119.79,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 119.79,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalSender[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 28.0,
+    "computedY" : 543.24,
+    "placementX" : 28.0,
+    "placementY" : 543.24,
+    "placementWidth" : 127.941,
+    "placementHeight" : 67.55,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 127.941,
+    "contentHeight" : 67.55,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]",
+    "entityName" : "ProposalRecipient",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 306.638,
+    "computedY" : 554.715,
+    "placementX" : 306.638,
+    "placementY" : 554.715,
+    "placementWidth" : 165.22,
+    "placementHeight" : 80.425,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 165.22,
+    "contentHeight" : 80.425,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 624.965,
+    "placementX" : 306.638,
+    "placementY" : 624.965,
+    "placementWidth" : 15.279,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 15.279,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 612.79,
+    "placementX" : 306.638,
+    "placementY" : 612.79,
+    "placementWidth" : 102.685,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 102.685,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernRoot[0]/ProposalParties[2]/ProposalRecipient[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 306.638,
+    "computedY" : 554.715,
+    "placementX" : 306.638,
+    "placementY" : 554.715,
+    "placementWidth" : 165.22,
+    "placementHeight" : 56.075,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 165.22,
+    "contentHeight" : 56.075,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]",
+    "entityName" : "ProposalSectionGroup",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 1,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 475.64,
+    "placementX" : 28.0,
+    "placementY" : 475.64,
+    "placementWidth" : 523.974,
+    "placementHeight" : 67.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 523.974,
+    "contentHeight" : 67.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]/ProposalSectionTitle[0]",
+    "entityName" : "ProposalSectionTitle",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalSectionGroup[1]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 511.515,
+    "placementX" : 28.0,
+    "placementY" : 511.515,
+    "placementWidth" : 116.195,
+    "placementHeight" : 31.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.195,
+    "contentHeight" : 31.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]/ProposalSectionTitle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalSectionGroup[1]/ProposalSectionTitle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 515.515,
+    "placementX" : 28.0,
+    "placementY" : 515.515,
+    "placementWidth" : 116.195,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.195,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]/ProposalSectionBody[1]",
+    "entityName" : "ProposalSectionBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalSectionGroup[1]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 475.64,
+    "placementX" : 28.0,
+    "placementY" : 475.64,
+    "placementWidth" : 523.974,
+    "placementHeight" : 31.875,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 523.974,
+    "contentHeight" : 31.875,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]/ProposalSectionBody[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalSectionGroup[1]/ProposalSectionBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 485.815,
+    "placementX" : 28.0,
+    "placementY" : 485.815,
+    "placementWidth" : 523.974,
+    "placementHeight" : 21.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 523.974,
+    "contentHeight" : 21.7,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[1]/ProposalSectionBody[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalSectionGroup[1]/ProposalSectionBody[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 475.64,
+    "placementX" : 28.0,
+    "placementY" : 475.64,
+    "placementWidth" : 349.085,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 349.085,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[2]",
+    "entityName" : "ProposalSectionGroup",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 2,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 429.74,
+    "placementX" : 28.0,
+    "placementY" : 429.74,
+    "placementWidth" : 530.024,
+    "placementHeight" : 45.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 530.024,
+    "contentHeight" : 45.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[2]/ProposalSectionTitle[0]",
+    "entityName" : "ProposalSectionTitle",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalSectionGroup[2]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 443.915,
+    "placementX" : 28.0,
+    "placementY" : 443.915,
+    "placementWidth" : 79.339,
+    "placementHeight" : 31.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 79.339,
+    "contentHeight" : 31.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[2]/ProposalSectionTitle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalSectionGroup[2]/ProposalSectionTitle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 447.915,
+    "placementX" : 28.0,
+    "placementY" : 447.915,
+    "placementWidth" : 79.339,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 79.339,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[2]/ProposalSectionBody[1]",
+    "entityName" : "ProposalSectionBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalSectionGroup[2]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 429.74,
+    "placementX" : 28.0,
+    "placementY" : 429.74,
+    "placementWidth" : 530.024,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 530.024,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalSectionGroup[2]/ProposalSectionBody[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalSectionGroup[2]/ProposalSectionBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 429.74,
+    "placementX" : 28.0,
+    "placementY" : 429.74,
+    "placementWidth" : 530.024,
+    "placementHeight" : 10.175,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 530.024,
+    "contentHeight" : 10.175,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalTimelineGroup[3]",
+    "entityName" : "ProposalTimelineGroup",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 3,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 286.99,
+    "placementX" : 28.0,
+    "placementY" : 286.99,
+    "placementWidth" : 447.95,
+    "placementHeight" : 142.75,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 447.95,
+    "contentHeight" : 142.75,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalTimelineGroup[3]/ProposalTimelineTitle[0]",
+    "entityName" : "ProposalTimelineTitle",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalTimelineGroup[3]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 398.015,
+    "placementX" : 28.0,
+    "placementY" : 398.015,
+    "placementWidth" : 68.969,
+    "placementHeight" : 31.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 68.969,
+    "contentHeight" : 31.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalTimelineGroup[3]/ProposalTimelineTitle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalTimelineGroup[3]/ProposalTimelineTitle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 402.015,
+    "placementX" : 28.0,
+    "placementY" : 402.015,
+    "placementWidth" : 68.969,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 68.969,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalTimelineGroup[3]/ProposalTimeline[1]",
+    "entityName" : "ProposalTimeline",
+    "entityKind" : "TableNode",
+    "parentPath" : "ProposalTimelineGroup[3]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 286.99,
+    "placementX" : 28.0,
+    "placementY" : 286.99,
+    "placementWidth" : 447.95,
+    "placementHeight" : 107.025,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 447.95,
+    "contentHeight" : 107.025,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalPricingGroup[4]",
+    "entityName" : "ProposalPricingGroup",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 4,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 118.065,
+    "placementX" : 28.0,
+    "placementY" : 118.065,
+    "placementWidth" : 402.124,
+    "placementHeight" : 168.925,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 402.124,
+    "contentHeight" : 168.925,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalPricingGroup[4]/ProposalPricingTitle[0]",
+    "entityName" : "ProposalPricingTitle",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalPricingGroup[4]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 255.265,
+    "placementX" : 28.0,
+    "placementY" : 255.265,
+    "placementWidth" : 89.743,
+    "placementHeight" : 31.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 89.743,
+    "contentHeight" : 31.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalPricingGroup[4]/ProposalPricingTitle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalPricingGroup[4]/ProposalPricingTitle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 259.265,
+    "placementX" : 28.0,
+    "placementY" : 259.265,
+    "placementWidth" : 89.743,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 89.743,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalPricingGroup[4]/ProposalPricing[1]",
+    "entityName" : "ProposalPricing",
+    "entityKind" : "TableNode",
+    "parentPath" : "ProposalPricingGroup[4]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 118.065,
+    "placementX" : 28.0,
+    "placementY" : 118.065,
+    "placementWidth" : 402.124,
+    "placementHeight" : 133.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 402.124,
+    "contentHeight" : 133.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalAcceptanceGroup[5]",
+    "entityName" : "ProposalAcceptanceGroup",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 5,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 43.49,
+    "placementX" : 28.0,
+    "placementY" : 43.49,
+    "placementWidth" : 394.218,
+    "placementHeight" : 74.575,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 394.218,
+    "contentHeight" : 74.575,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceTitle[0]",
+    "entityName" : "ProposalAcceptanceTitle",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalAcceptanceGroup[5]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 86.34,
+    "placementX" : 28.0,
+    "placementY" : 86.34,
+    "placementWidth" : 146.438,
+    "placementHeight" : 31.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.438,
+    "contentHeight" : 31.725,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceTitle[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceTitle[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 28.0,
+    "computedY" : 90.34,
+    "placementX" : 28.0,
+    "placementY" : 90.34,
+    "placementWidth" : 146.438,
+    "placementHeight" : 15.725,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 146.438,
+    "contentHeight" : 15.725,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceBody[1]",
+    "entityName" : "ProposalAcceptanceBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProposalAcceptanceGroup[5]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 43.49,
+    "placementX" : 28.0,
+    "placementY" : 43.49,
+    "placementWidth" : 394.218,
+    "placementHeight" : 38.85,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 394.218,
+    "contentHeight" : 38.85,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceBody[1]/ListNode[0]",
+    "entityName" : null,
+    "entityKind" : "ListNode",
+    "parentPath" : "ProposalAcceptanceGroup[5]/ProposalAcceptanceBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 36.0,
+    "computedY" : 43.49,
+    "placementX" : 36.0,
+    "placementY" : 43.49,
+    "placementWidth" : 386.218,
+    "placementHeight" : 38.85,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 386.218,
+    "contentHeight" : 38.85,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernFooter[6]",
+    "entityName" : "ProposalV2ModernFooter",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 6,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 28.0,
+    "computedY" : 20.24,
+    "placementX" : 28.0,
+    "placementY" : 20.24,
+    "placementWidth" : 313.46,
+    "placementHeight" : 23.25,
+    "startPage" : 0,
+    "endPage" : 1,
+    "contentWidth" : 313.46,
+    "contentHeight" : 23.25,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProposalV2ModernFooter[6]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "ProposalV2ModernFooter[6]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 28.0,
+    "computedY" : 790.64,
+    "placementX" : 28.0,
+    "placementY" : 790.64,
+    "placementWidth" : 313.46,
+    "placementHeight" : 9.25,
+    "startPage" : 1,
+    "endPage" : 1,
+    "contentWidth" : 313.46,
+    "contentHeight" : 9.25,
+    "margin" : {
+      "top" : 14.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

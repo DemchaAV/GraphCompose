@@ -1,0 +1,1817 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 555.276,
+    "innerHeight" : 801.89,
+    "margin" : {
+      "top" : 20.0,
+      "right" : 20.0,
+      "bottom" : 20.0,
+      "left" : 20.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CvV2EngineeringResumeRoot[0]",
+    "entityName" : "CvV2EngineeringResumeRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 20.0,
+    "computedY" : 346.37,
+    "placementX" : 20.0,
+    "placementY" : 346.37,
+    "placementWidth" : 555.276,
+    "placementHeight" : 475.52,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 475.52,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]",
+    "entityName" : "CvV2EngineeringResumeHeader",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 744.69,
+    "placementX" : 20.0,
+    "placementY" : 744.69,
+    "placementWidth" : 555.276,
+    "placementHeight" : 77.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 77.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 13.0,
+      "right" : 15.0,
+      "bottom" : 13.0,
+      "left" : 15.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]",
+    "entityName" : "CvV2EngineeringResumeHeaderRow",
+    "entityKind" : "RowNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 35.0,
+    "computedY" : 757.69,
+    "placementX" : 35.0,
+    "placementY" : 757.69,
+    "placementWidth" : 525.276,
+    "placementHeight" : 51.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 525.276,
+    "contentHeight" : 51.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeIdentity[0]",
+    "entityName" : "CvV2EngineeringResumeIdentity",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 35.0,
+    "computedY" : 767.37,
+    "placementX" : 35.0,
+    "placementY" : 767.37,
+    "placementWidth" : 179.83,
+    "placementHeight" : 41.52,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 179.83,
+    "contentHeight" : 41.52,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeIdentity[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeIdentity[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 35.0,
+    "computedY" : 779.49,
+    "placementX" : 35.0,
+    "placementY" : 779.49,
+    "placementWidth" : 179.83,
+    "placementHeight" : 29.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 179.83,
+    "contentHeight" : 29.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeIdentity[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeIdentity[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 35.0,
+    "computedY" : 767.37,
+    "placementX" : 35.0,
+    "placementY" : 767.37,
+    "placementWidth" : 80.347,
+    "placementHeight" : 9.12,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 80.347,
+    "contentHeight" : 9.12,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "entityName" : "CvV2EngineeringResumeContact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 342.133,
+    "computedY" : 757.69,
+    "placementX" : 342.133,
+    "placementY" : 757.69,
+    "placementWidth" : 218.142,
+    "placementHeight" : 51.2,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 51.2,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 342.133,
+    "computedY" : 800.25,
+    "placementX" : 342.133,
+    "placementY" : 800.25,
+    "placementWidth" : 218.142,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 342.133,
+    "computedY" : 789.61,
+    "placementX" : 342.133,
+    "placementY" : 789.61,
+    "placementWidth" : 218.142,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 342.133,
+    "computedY" : 778.97,
+    "placementX" : 342.133,
+    "placementY" : 778.97,
+    "placementWidth" : 218.142,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 342.133,
+    "computedY" : 768.33,
+    "placementX" : 342.133,
+    "placementY" : 768.33,
+    "placementWidth" : 218.142,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeHeader[0]/CvV2EngineeringResumeHeaderRow[0]/CvV2EngineeringResumeContact[1]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 342.133,
+    "computedY" : 757.69,
+    "placementX" : 342.133,
+    "placementY" : 757.69,
+    "placementWidth" : 218.142,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 218.142,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]",
+    "entityName" : "CvV2EngineeringResumeBody",
+    "entityKind" : "RowNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 20.0,
+    "computedY" : 346.37,
+    "placementX" : 20.0,
+    "placementY" : 346.37,
+    "placementWidth" : 555.276,
+    "placementHeight" : 390.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 555.276,
+    "contentHeight" : 390.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]",
+    "entityName" : "CvV2EngineeringResumeRail",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 20.0,
+    "computedY" : 406.27,
+    "placementX" : 20.0,
+    "placementY" : 406.27,
+    "placementWidth" : 168.661,
+    "placementHeight" : 330.42,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 168.661,
+    "contentHeight" : 330.42,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 10.0,
+      "right" : 10.0,
+      "bottom" : 11.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "entityName" : "CvV2EngineeringResumeSkills",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 30.0,
+    "computedY" : 548.91,
+    "placementX" : 30.0,
+    "placementY" : 548.91,
+    "placementWidth" : 148.661,
+    "placementHeight" : 177.78,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 148.661,
+    "contentHeight" : 177.78,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 717.81,
+    "placementX" : 30.0,
+    "placementY" : 717.81,
+    "placementWidth" : 42.269,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.269,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/LineNode[1]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 713.81,
+    "placementX" : 30.0,
+    "placementY" : 713.81,
+    "placementWidth" : 82.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 700.47,
+    "placementX" : 30.0,
+    "placementY" : 700.47,
+    "placementWidth" : 148.661,
+    "placementHeight" : 8.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 148.661,
+    "contentHeight" : 8.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 668.65,
+    "placementX" : 30.0,
+    "placementY" : 668.65,
+    "placementWidth" : 132.272,
+    "placementHeight" : 27.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 132.272,
+    "contentHeight" : 27.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 636.83,
+    "placementX" : 30.0,
+    "placementY" : 636.83,
+    "placementWidth" : 145.575,
+    "placementHeight" : 27.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 145.575,
+    "contentHeight" : 27.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[5]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 614.35,
+    "placementX" : 30.0,
+    "placementY" : 614.35,
+    "placementWidth" : 140.89,
+    "placementHeight" : 17.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.89,
+    "contentHeight" : 17.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[6]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 6,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 582.53,
+    "placementX" : 30.0,
+    "placementY" : 582.53,
+    "placementWidth" : 139.577,
+    "placementHeight" : 27.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 139.577,
+    "contentHeight" : 27.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]/ParagraphNode[7]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeSkills[0]",
+    "childIndex" : 7,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 550.71,
+    "placementX" : 30.0,
+    "placementY" : 550.71,
+    "placementWidth" : 144.087,
+    "placementHeight" : 27.02,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 144.087,
+    "contentHeight" : 27.02,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "entityName" : "CvV2EngineeringResumeEducation",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 30.0,
+    "computedY" : 485.11,
+    "placementX" : 30.0,
+    "placementY" : 485.11,
+    "placementWidth" : 120.11,
+    "placementHeight" : 55.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.11,
+    "contentHeight" : 55.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 532.03,
+    "placementX" : 30.0,
+    "placementY" : 532.03,
+    "placementWidth" : 34.38,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 34.38,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]/LineNode[1]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 528.03,
+    "placementX" : 30.0,
+    "placementY" : 528.03,
+    "placementWidth" : 82.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 514.69,
+    "placementX" : 30.0,
+    "placementY" : 514.69,
+    "placementWidth" : 111.951,
+    "placementHeight" : 8.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 111.951,
+    "contentHeight" : 8.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.3,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 501.05,
+    "placementX" : 30.0,
+    "placementY" : 501.05,
+    "placementWidth" : 120.11,
+    "placementHeight" : 8.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 120.11,
+    "contentHeight" : 8.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.3,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeEducation[1]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 487.41,
+    "placementX" : 30.0,
+    "placementY" : 487.41,
+    "placementWidth" : 116.329,
+    "placementHeight" : 8.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 116.329,
+    "contentHeight" : 8.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.3,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]",
+    "entityName" : "CvV2EngineeringResumeAdditional",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 30.0,
+    "computedY" : 417.27,
+    "placementX" : 30.0,
+    "placementY" : 417.27,
+    "placementWidth" : 140.974,
+    "placementHeight" : 59.84,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.974,
+    "contentHeight" : 59.84,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 468.23,
+    "placementX" : 30.0,
+    "placementY" : 468.23,
+    "placementWidth" : 28.771,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 28.771,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]/LineNode[1]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 464.23,
+    "placementX" : 30.0,
+    "placementY" : 464.23,
+    "placementWidth" : 82.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 82.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 441.55,
+    "placementX" : 30.0,
+    "placementY" : 441.55,
+    "placementWidth" : 110.039,
+    "placementHeight" : 17.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 110.039,
+    "contentHeight" : 17.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeRail[0]/CvV2EngineeringResumeAdditional[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 30.0,
+    "computedY" : 419.07,
+    "placementX" : 30.0,
+    "placementY" : 419.07,
+    "placementWidth" : 140.974,
+    "placementHeight" : 17.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 140.974,
+    "contentHeight" : 17.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.8,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]",
+    "entityName" : "CvV2EngineeringResumeMain",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 205.404,
+    "computedY" : 346.37,
+    "placementX" : 205.404,
+    "placementY" : 346.37,
+    "placementWidth" : 369.235,
+    "placementHeight" : 390.32,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 369.235,
+    "contentHeight" : 390.32,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProfile[0]",
+    "entityName" : "CvV2EngineeringResumeProfile",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.404,
+    "computedY" : 676.79,
+    "placementX" : 205.404,
+    "placementY" : 676.79,
+    "placementWidth" : 368.68,
+    "placementHeight" : 59.9,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 368.68,
+    "contentHeight" : 59.9,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 8.0,
+      "right" : 10.0,
+      "bottom" : 8.0,
+      "left" : 10.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProfile[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProfile[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 215.404,
+    "computedY" : 719.09,
+    "placementX" : 215.404,
+    "placementY" : 719.09,
+    "placementWidth" : 80.976,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 80.976,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProfile[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProfile[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 215.404,
+    "computedY" : 684.79,
+    "placementX" : 215.404,
+    "placementY" : 684.79,
+    "placementWidth" : 348.68,
+    "placementHeight" : 30.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 348.68,
+    "contentHeight" : 30.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]",
+    "entityName" : "CvV2EngineeringResumeExperience",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.404,
+    "computedY" : 513.91,
+    "placementX" : 205.404,
+    "placementY" : 513.91,
+    "placementWidth" : 369.235,
+    "placementHeight" : 154.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 369.235,
+    "contentHeight" : 154.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 659.43,
+    "placementX" : 205.404,
+    "placementY" : 659.43,
+    "placementWidth" : 90.792,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 90.792,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/LineNode[1]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 653.43,
+    "placementX" : 205.404,
+    "placementY" : 653.43,
+    "placementWidth" : 176.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 176.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]",
+    "entityName" : "CvV2EngineeringResumeRoleCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 583.17,
+    "placementX" : 205.404,
+    "placementY" : 583.17,
+    "placementWidth" : 369.235,
+    "placementHeight" : 64.26,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 369.235,
+    "contentHeight" : 64.26,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.0,
+      "right" : 8.0,
+      "bottom" : 6.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 631.83,
+    "placementX" : 213.404,
+    "placementY" : 631.83,
+    "placementWidth" : 139.507,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 139.507,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 620.43,
+    "placementX" : 213.404,
+    "placementY" : 620.43,
+    "placementWidth" : 60.529,
+    "placementHeight" : 8.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 60.529,
+    "contentHeight" : 8.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[2]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 589.17,
+    "placementX" : 213.404,
+    "placementY" : 589.17,
+    "placementWidth" : 353.235,
+    "placementHeight" : 28.26,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 353.235,
+    "contentHeight" : 28.26,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]",
+    "entityName" : "CvV2EngineeringResumeRoleCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 513.91,
+    "placementX" : 205.404,
+    "placementY" : 513.91,
+    "placementWidth" : 360.179,
+    "placementHeight" : 64.26,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.179,
+    "contentHeight" : 64.26,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 6.0,
+      "right" : 8.0,
+      "bottom" : 6.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 562.57,
+    "placementX" : 213.404,
+    "placementY" : 562.57,
+    "placementWidth" : 108.288,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 108.288,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 551.17,
+    "placementX" : 213.404,
+    "placementY" : 551.17,
+    "placementWidth" : 47.866,
+    "placementHeight" : 8.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.866,
+    "contentHeight" : 8.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeExperience[1]/CvV2EngineeringResumeRoleCard[3]",
+    "childIndex" : 2,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 519.91,
+    "placementX" : 213.404,
+    "placementY" : 519.91,
+    "placementWidth" : 344.179,
+    "placementHeight" : 28.26,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 344.179,
+    "contentHeight" : 28.26,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "entityName" : "CvV2EngineeringResumeProjects",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 205.404,
+    "computedY" : 346.37,
+    "placementX" : 205.404,
+    "placementY" : 346.37,
+    "placementWidth" : 366.597,
+    "placementHeight" : 159.54,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 366.597,
+    "contentHeight" : 159.54,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 496.55,
+    "placementX" : 205.404,
+    "placementY" : 496.55,
+    "placementWidth" : 77.314,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 77.314,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/LineNode[1]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 490.55,
+    "placementX" : 205.404,
+    "placementY" : 490.55,
+    "placementWidth" : 176.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 176.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 1.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[2]",
+    "entityName" : "CvV2EngineeringResumeProjectCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 2,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 446.57,
+    "placementX" : 205.404,
+    "placementY" : 446.57,
+    "placementWidth" : 364.603,
+    "placementHeight" : 37.98,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 364.603,
+    "contentHeight" : 37.98,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 5.0,
+      "right" : 8.0,
+      "bottom" : 5.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[2]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[2]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 451.57,
+    "placementX" : 213.404,
+    "placementY" : 451.57,
+    "placementWidth" : 348.603,
+    "placementHeight" : 27.98,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 348.603,
+    "contentHeight" : 27.98,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[3]",
+    "entityName" : "CvV2EngineeringResumeProjectCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 3,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 413.17,
+    "placementX" : 205.404,
+    "placementY" : 413.17,
+    "placementWidth" : 354.258,
+    "placementHeight" : 28.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 354.258,
+    "contentHeight" : 28.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 5.0,
+      "right" : 8.0,
+      "bottom" : 5.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[3]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[3]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 418.17,
+    "placementX" : 213.404,
+    "placementY" : 418.17,
+    "placementWidth" : 338.258,
+    "placementHeight" : 18.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 338.258,
+    "contentHeight" : 18.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[4]",
+    "entityName" : "CvV2EngineeringResumeProjectCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 4,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 379.77,
+    "placementX" : 205.404,
+    "placementY" : 379.77,
+    "placementWidth" : 366.597,
+    "placementHeight" : 28.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 366.597,
+    "contentHeight" : 28.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 5.0,
+      "right" : 8.0,
+      "bottom" : 5.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[4]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[4]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 384.77,
+    "placementX" : 213.404,
+    "placementY" : 384.77,
+    "placementWidth" : 350.597,
+    "placementHeight" : 18.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 350.597,
+    "contentHeight" : 18.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[5]",
+    "entityName" : "CvV2EngineeringResumeProjectCard",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]",
+    "childIndex" : 5,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 205.404,
+    "computedY" : 346.37,
+    "placementX" : 205.404,
+    "placementY" : 346.37,
+    "placementWidth" : 321.028,
+    "placementHeight" : 28.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 321.028,
+    "contentHeight" : 28.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 5.0,
+      "right" : 8.0,
+      "bottom" : 5.0,
+      "left" : 8.0
+    }
+  }, {
+    "path" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[5]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2EngineeringResumeRoot[0]/CvV2EngineeringResumeBody[1]/CvV2EngineeringResumeMain[1]/CvV2EngineeringResumeProjects[2]/CvV2EngineeringResumeProjectCard[5]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 213.404,
+    "computedY" : 351.37,
+    "placementX" : 213.404,
+    "placementY" : 351.37,
+    "placementWidth" : 305.028,
+    "placementHeight" : 18.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 305.028,
+    "contentHeight" : 18.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

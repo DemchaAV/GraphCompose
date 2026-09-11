@@ -1,0 +1,587 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 499.276,
+    "innerHeight" : 745.89,
+    "margin" : {
+      "top" : 48.0,
+      "right" : 48.0,
+      "bottom" : 48.0,
+      "left" : 48.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CoverLetterV2NordicCleanRoot[0]",
+    "entityName" : "CoverLetterV2NordicCleanRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 48.0,
+    "computedY" : 613.09,
+    "placementX" : 48.0,
+    "placementY" : 613.09,
+    "placementWidth" : 499.276,
+    "placementHeight" : 180.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 180.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]",
+    "entityName" : "CoverLetterV2NordicCleanHeader",
+    "entityKind" : "RowNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 740.49,
+    "placementX" : 48.0,
+    "placementY" : 740.49,
+    "placementWidth" : 499.276,
+    "placementHeight" : 53.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 499.276,
+    "contentHeight" : 53.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]",
+    "entityName" : "Identity",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 742.65,
+    "placementX" : 48.0,
+    "placementY" : 742.65,
+    "placementWidth" : 198.18,
+    "placementHeight" : 51.24,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 198.18,
+    "contentHeight" : 51.24,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 2.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 48.0,
+    "computedY" : 760.49,
+    "placementX" : 48.0,
+    "placementY" : 760.49,
+    "placementWidth" : 198.18,
+    "placementHeight" : 32.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 198.18,
+    "contentHeight" : 32.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]/CoverLetterV2NordicCleanNameAccent[1]",
+    "entityName" : "CoverLetterV2NordicCleanNameAccent",
+    "entityKind" : "ShapeNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 48.0,
+    "computedY" : 755.89,
+    "placementX" : 48.0,
+    "placementY" : 755.89,
+    "placementWidth" : 64.0,
+    "placementHeight" : 2.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 64.0,
+    "contentHeight" : 2.6,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Identity[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 48.0,
+    "computedY" : 744.65,
+    "placementX" : 48.0,
+    "placementY" : 744.65,
+    "placementWidth" : 81.404,
+    "placementHeight" : 9.24,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 81.404,
+    "contentHeight" : 9.24,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "entityName" : "Contact",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 353.165,
+    "computedY" : 740.49,
+    "placementX" : 353.165,
+    "placementY" : 740.49,
+    "placementWidth" : 194.11,
+    "placementHeight" : 53.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 53.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 3.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 353.165,
+    "computedY" : 782.01,
+    "placementX" : 353.165,
+    "placementY" : 782.01,
+    "placementWidth" : 194.11,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 353.165,
+    "computedY" : 771.63,
+    "placementX" : 353.165,
+    "placementY" : 771.63,
+    "placementWidth" : 194.11,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 353.165,
+    "computedY" : 761.25,
+    "placementX" : 353.165,
+    "placementY" : 761.25,
+    "placementWidth" : 194.11,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 353.165,
+    "computedY" : 750.87,
+    "placementX" : 353.165,
+    "placementY" : 750.87,
+    "placementWidth" : 194.11,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanHeader[0]/Contact[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 353.165,
+    "computedY" : 740.49,
+    "placementX" : 353.165,
+    "placementY" : 740.49,
+    "placementWidth" : 194.11,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 194.11,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "entityName" : "CoverLetterV2NordicCleanBody",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]",
+    "childIndex" : 1,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 48.0,
+    "computedY" : 613.09,
+    "placementX" : 48.0,
+    "placementY" : 613.09,
+    "placementWidth" : 493.369,
+    "placementHeight" : 120.4,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 493.369,
+    "contentHeight" : 120.4,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 718.14,
+    "placementX" : 48.0,
+    "placementY" : 718.14,
+    "placementWidth" : 135.367,
+    "placementHeight" : 8.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 135.367,
+    "contentHeight" : 8.94,
+    "margin" : {
+      "top" : 6.41,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 689.827,
+    "placementX" : 48.0,
+    "placementY" : 689.827,
+    "placementWidth" : 492.743,
+    "placementHeight" : 19.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 492.743,
+    "contentHeight" : 19.0,
+    "margin" : {
+      "top" : 9.313,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 2,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 661.515,
+    "placementX" : 48.0,
+    "placementY" : 661.515,
+    "placementWidth" : 493.369,
+    "placementHeight" : 19.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 493.369,
+    "contentHeight" : 19.0,
+    "margin" : {
+      "top" : 9.313,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 3,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 643.262,
+    "placementX" : 48.0,
+    "placementY" : 643.262,
+    "placementWidth" : 398.188,
+    "placementHeight" : 8.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 398.188,
+    "contentHeight" : 8.94,
+    "margin" : {
+      "top" : 9.313,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 4,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 625.01,
+    "placementX" : 48.0,
+    "placementY" : 625.01,
+    "placementWidth" : 31.424,
+    "placementHeight" : 8.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 31.424,
+    "contentHeight" : 8.94,
+    "margin" : {
+      "top" : 9.313,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]/ParagraphNode[5]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CoverLetterV2NordicCleanRoot[0]/CoverLetterV2NordicCleanBody[1]",
+    "childIndex" : 5,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 48.0,
+    "computedY" : 613.09,
+    "placementX" : 48.0,
+    "placementY" : 613.09,
+    "placementWidth" : 42.398,
+    "placementHeight" : 8.94,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 42.398,
+    "contentHeight" : 8.94,
+    "margin" : {
+      "top" : 2.98,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

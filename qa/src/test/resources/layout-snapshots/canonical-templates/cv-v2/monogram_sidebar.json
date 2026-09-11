@@ -1,0 +1,1877 @@
+{
+  "formatVersion" : "2.0",
+  "canvas" : {
+    "pageWidth" : 595.276,
+    "pageHeight" : 841.89,
+    "innerWidth" : 595.276,
+    "innerHeight" : 841.89,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  },
+  "totalPages" : 1,
+  "nodes" : [ {
+    "path" : "CvV2MonogramSidebarRoot[0]",
+    "entityName" : "CvV2MonogramSidebarRoot",
+    "entityKind" : "ContainerNode",
+    "parentPath" : null,
+    "childIndex" : 0,
+    "depth" : 1,
+    "layer" : 1,
+    "computedX" : 0.0,
+    "computedY" : 42.25,
+    "placementX" : 0.0,
+    "placementY" : 42.25,
+    "placementWidth" : 595.276,
+    "placementHeight" : 799.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 799.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]",
+    "entityName" : "CvV2MonogramSidebarFrame",
+    "entityKind" : "RowNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]",
+    "childIndex" : 0,
+    "depth" : 2,
+    "layer" : 2,
+    "computedX" : 0.0,
+    "computedY" : 42.25,
+    "placementX" : 0.0,
+    "placementY" : 42.25,
+    "placementWidth" : 595.276,
+    "placementHeight" : 799.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 595.276,
+    "contentHeight" : 799.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "entityName" : "CvV2MonogramSidebarSidebar",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]",
+    "childIndex" : 0,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 0.0,
+    "computedY" : 42.25,
+    "placementX" : 0.0,
+    "placementY" : 42.25,
+    "placementWidth" : 196.441,
+    "placementHeight" : 799.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 196.441,
+    "contentHeight" : 799.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 36.0,
+      "right" : 13.0,
+      "bottom" : 0.0,
+      "left" : 13.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]",
+    "entityName" : "CvV2MonogramSidebarFrame",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 683.89,
+    "placementX" : 13.0,
+    "placementY" : 683.89,
+    "placementWidth" : 170.441,
+    "placementHeight" : 122.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 122.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 42.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSpace[0]",
+    "entityName" : "CvV2MonogramSidebarSpace",
+    "entityKind" : "SpacerNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]",
+    "childIndex" : 0,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 13.0,
+    "computedY" : 683.89,
+    "placementX" : 13.0,
+    "placementY" : 683.89,
+    "placementWidth" : 170.441,
+    "placementHeight" : 122.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 122.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarBadge[1]",
+    "entityName" : "CvV2MonogramSidebarBadge",
+    "entityKind" : "LayerStackNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]",
+    "childIndex" : 1,
+    "depth" : 5,
+    "layer" : 5,
+    "computedX" : 37.22,
+    "computedY" : 683.89,
+    "placementX" : 37.22,
+    "placementY" : 683.89,
+    "placementWidth" : 122.0,
+    "placementHeight" : 122.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 122.0,
+    "contentHeight" : 122.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarBadge[1]/CvV2MonogramSidebarRing[0]",
+    "entityName" : "CvV2MonogramSidebarRing",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarBadge[1]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 37.22,
+    "computedY" : 683.89,
+    "placementX" : 37.22,
+    "placementY" : 683.89,
+    "placementWidth" : 122.0,
+    "placementHeight" : 122.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 122.0,
+    "contentHeight" : 122.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarBadge[1]/CvV2MonogramSidebarInitials[1]",
+    "entityName" : "CvV2MonogramSidebarInitials",
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarBadge[1]",
+    "childIndex" : 1,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 74.856,
+    "computedY" : 715.74,
+    "placementX" : 74.856,
+    "placementY" : 715.74,
+    "placementWidth" : 46.728,
+    "placementHeight" : 58.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 46.728,
+    "contentHeight" : 58.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 618.29,
+    "placementX" : 13.0,
+    "placementY" : 618.29,
+    "placementWidth" : 170.441,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/LineNode[2]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.22,
+    "computedY" : 608.29,
+    "placementX" : 39.22,
+    "placementY" : 608.29,
+    "placementWidth" : 118.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 26.22,
+      "bottom" : 2.0,
+      "left" : 26.22
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 572.29,
+    "placementX" : 13.0,
+    "placementY" : 572.29,
+    "placementWidth" : 170.441,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[4]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 555.41,
+    "placementX" : 13.0,
+    "placementY" : 555.41,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[5]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 521.41,
+    "placementX" : 13.0,
+    "placementY" : 521.41,
+    "placementWidth" : 170.441,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[6]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 504.53,
+    "placementX" : 13.0,
+    "placementY" : 504.53,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[7]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 470.53,
+    "placementX" : 13.0,
+    "placementY" : 470.53,
+    "placementWidth" : 170.441,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[8]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 453.65,
+    "placementX" : 13.0,
+    "placementY" : 453.65,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[9]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 9,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 419.65,
+    "placementX" : 13.0,
+    "placementY" : 419.65,
+    "placementWidth" : 170.441,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[10]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 10,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 402.77,
+    "placementX" : 13.0,
+    "placementY" : 402.77,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[11]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 11,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 368.77,
+    "placementX" : 13.0,
+    "placementY" : 368.77,
+    "placementWidth" : 170.441,
+    "placementHeight" : 22.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 22.0,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[12]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 12,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 351.89,
+    "placementX" : 13.0,
+    "placementY" : 351.89,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[13]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 13,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 328.29,
+    "placementX" : 13.0,
+    "placementY" : 328.29,
+    "placementWidth" : 170.441,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/LineNode[14]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 14,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.22,
+    "computedY" : 318.29,
+    "placementX" : 39.22,
+    "placementY" : 318.29,
+    "placementWidth" : 118.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 26.22,
+      "bottom" : 2.0,
+      "left" : 26.22
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[15]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 15,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 293.17,
+    "placementX" : 13.0,
+    "placementY" : 293.17,
+    "placementWidth" : 170.441,
+    "placementHeight" : 9.12,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 9.12,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[16]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 16,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 276.29,
+    "placementX" : 13.0,
+    "placementY" : 276.29,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[17]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 17,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 259.65,
+    "placementX" : 13.0,
+    "placementY" : 259.65,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[18]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 18,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 236.53,
+    "placementX" : 13.0,
+    "placementY" : 236.53,
+    "placementWidth" : 170.441,
+    "placementHeight" : 9.12,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 9.12,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[19]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 19,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 219.65,
+    "placementX" : 13.0,
+    "placementY" : 219.65,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[20]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 20,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 203.01,
+    "placementX" : 13.0,
+    "placementY" : 203.01,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.64,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.64,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[21]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 21,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 179.41,
+    "placementX" : 13.0,
+    "placementY" : 179.41,
+    "placementWidth" : 170.441,
+    "placementHeight" : 9.6,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 9.6,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/LineNode[22]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 22,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 39.22,
+    "computedY" : 169.41,
+    "placementX" : 39.22,
+    "placementY" : 169.41,
+    "placementWidth" : 118.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 118.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 26.22,
+      "bottom" : 2.0,
+      "left" : 26.22
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[23]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 23,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 149.53,
+    "placementX" : 13.0,
+    "placementY" : 149.53,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[24]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 24,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 131.65,
+    "placementX" : 13.0,
+    "placementY" : 131.65,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[25]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 25,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 113.77,
+    "placementX" : 13.0,
+    "placementY" : 113.77,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[26]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 26,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 95.89,
+    "placementX" : 13.0,
+    "placementY" : 95.89,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[27]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 27,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 78.01,
+    "placementX" : 13.0,
+    "placementY" : 78.01,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[28]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 28,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 60.13,
+    "placementX" : 13.0,
+    "placementY" : 60.13,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]/ParagraphNode[29]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarSidebar[0]",
+    "childIndex" : 29,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 13.0,
+    "computedY" : 42.25,
+    "placementX" : 13.0,
+    "placementY" : 42.25,
+    "placementWidth" : 170.441,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.441,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "entityName" : "CvV2MonogramSidebarMain",
+    "entityKind" : "SectionNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]",
+    "childIndex" : 1,
+    "depth" : 3,
+    "layer" : 3,
+    "computedX" : 196.441,
+    "computedY" : 174.681,
+    "placementX" : 196.441,
+    "placementY" : 174.681,
+    "placementWidth" : 398.835,
+    "placementHeight" : 667.208,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 398.835,
+    "contentHeight" : 667.208,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 38.0,
+      "right" : 20.0,
+      "bottom" : 24.0,
+      "left" : 18.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[0]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 0,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 764.896,
+    "placementX" : 214.441,
+    "placementY" : 764.896,
+    "placementWidth" : 360.835,
+    "placementHeight" : 38.994,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.835,
+    "contentHeight" : 38.994,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 6.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[1]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 1,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 714.901,
+    "placementX" : 214.441,
+    "placementY" : 714.901,
+    "placementWidth" : 360.835,
+    "placementHeight" : 38.994,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.835,
+    "contentHeight" : 38.994,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[2]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 2,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 689.021,
+    "placementX" : 214.441,
+    "placementY" : 689.021,
+    "placementWidth" : 360.835,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 360.835,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 12.0,
+      "right" : 0.0,
+      "bottom" : 22.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[3]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 3,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 645.221,
+    "placementX" : 214.441,
+    "placementY" : 645.221,
+    "placementWidth" : 156.852,
+    "placementHeight" : 10.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 156.852,
+    "contentHeight" : 10.8,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/LineNode[4]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 4,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 638.221,
+    "placementX" : 214.441,
+    "placementY" : 638.221,
+    "placementWidth" : 355.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 355.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[5]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 5,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 595.521,
+    "placementX" : 214.441,
+    "placementY" : 595.521,
+    "placementWidth" : 355.935,
+    "placementHeight" : 29.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 355.935,
+    "contentHeight" : 29.7,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 12.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[6]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 6,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 561.721,
+    "placementX" : 214.441,
+    "placementY" : 561.721,
+    "placementWidth" : 170.568,
+    "placementHeight" : 10.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 170.568,
+    "contentHeight" : 10.8,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/LineNode[7]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 7,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 554.721,
+    "placementX" : 214.441,
+    "placementY" : 554.721,
+    "placementWidth" : 355.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 355.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[8]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 8,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 531.361,
+    "placementX" : 214.441,
+    "placementY" : 531.361,
+    "placementWidth" : 112.772,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 112.772,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 5.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[9]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 9,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 517.481,
+    "placementX" : 214.441,
+    "placementY" : 517.481,
+    "placementWidth" : 68.169,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 68.169,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[10]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 10,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 481.781,
+    "placementX" : 214.441,
+    "placementY" : 481.781,
+    "placementWidth" : 351.99,
+    "placementHeight" : 29.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 351.99,
+    "contentHeight" : 29.7,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[11]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 11,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 462.421,
+    "placementX" : 214.441,
+    "placementY" : 462.421,
+    "placementWidth" : 83.171,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 83.171,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 5.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[12]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 12,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 448.541,
+    "placementX" : 214.441,
+    "placementY" : 448.541,
+    "placementWidth" : 47.885,
+    "placementHeight" : 8.88,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 47.885,
+    "contentHeight" : 8.88,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[13]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 13,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 412.841,
+    "placementX" : 214.441,
+    "placementY" : 412.841,
+    "placementWidth" : 356.948,
+    "placementHeight" : 29.7,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 356.948,
+    "contentHeight" : 29.7,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[14]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 14,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 391.041,
+    "placementX" : 214.441,
+    "placementY" : 391.041,
+    "placementWidth" : 59.283,
+    "placementHeight" : 10.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 59.283,
+    "contentHeight" : 10.8,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/LineNode[15]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 15,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 384.041,
+    "placementX" : 214.441,
+    "placementY" : 384.041,
+    "placementWidth" : 355.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 355.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[16]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 16,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 340.981,
+    "placementX" : 214.441,
+    "placementY" : 340.981,
+    "placementWidth" : 352.057,
+    "placementHeight" : 30.06,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 352.057,
+    "contentHeight" : 30.06,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[17]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 17,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 312.271,
+    "placementX" : 214.441,
+    "placementY" : 312.271,
+    "placementWidth" : 348.807,
+    "placementHeight" : 19.71,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 348.807,
+    "contentHeight" : 19.71,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[18]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 18,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 283.561,
+    "placementX" : 214.441,
+    "placementY" : 283.561,
+    "placementWidth" : 353.991,
+    "placementHeight" : 19.71,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 353.991,
+    "contentHeight" : 19.71,
+    "margin" : {
+      "top" : 4.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[19]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 19,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 261.761,
+    "placementX" : 214.441,
+    "placementY" : 261.761,
+    "placementWidth" : 168.768,
+    "placementHeight" : 10.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 168.768,
+    "contentHeight" : 10.8,
+    "margin" : {
+      "top" : 6.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/LineNode[20]",
+    "entityName" : null,
+    "entityKind" : "LineNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 20,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 254.761,
+    "placementX" : 214.441,
+    "placementY" : 254.761,
+    "placementWidth" : 355.0,
+    "placementHeight" : 1.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 355.0,
+    "contentHeight" : 1.0,
+    "margin" : {
+      "top" : 1.0,
+      "right" : 0.0,
+      "bottom" : 4.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[21]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 21,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 233.401,
+    "placementX" : 214.441,
+    "placementY" : 233.401,
+    "placementWidth" : 221.101,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 221.101,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 3.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[22]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 22,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 216.041,
+    "placementX" : 214.441,
+    "placementY" : 216.041,
+    "placementWidth" : 180.103,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 180.103,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 3.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]/ParagraphNode[23]",
+    "entityName" : null,
+    "entityKind" : "ParagraphNode",
+    "parentPath" : "CvV2MonogramSidebarRoot[0]/CvV2MonogramSidebarFrame[0]/CvV2MonogramSidebarMain[1]",
+    "childIndex" : 23,
+    "depth" : 4,
+    "layer" : 4,
+    "computedX" : 214.441,
+    "computedY" : 198.681,
+    "placementX" : 214.441,
+    "placementY" : 198.681,
+    "placementWidth" : 293.896,
+    "placementHeight" : 9.36,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 293.896,
+    "contentHeight" : 9.36,
+    "margin" : {
+      "top" : 3.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  } ]
+}

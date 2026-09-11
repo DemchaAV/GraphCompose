@@ -357,6 +357,25 @@ public record BrandTheme(Palette palette,
                 Spacing.invoiceModern(),
                 Decoration.classic());
     }
+
+    /**
+     * The "Modern Receipt" look — a fintech statement: Helvetica on a white
+     * page, near-black ink, one grey for every label, hairline rules between
+     * field rows, and a barely-tinted panel behind a very large amount.
+     *
+     * <p>Deliberately carries no brand colour of its own. An issuer's accent
+     * is supplied per document through {@code ModernReceipt.Options}, so one
+     * theme serves every bank rather than one theme per bank.</p>
+     *
+     * @return a {@code BrandTheme} for the "Modern Receipt" look
+     */
+    public static BrandTheme receiptModern() {
+        return new BrandTheme(
+                Palette.receiptModern(),
+                Typography.receiptModern(),
+                Spacing.receiptModern(),
+                Decoration.classic());
+    }
     // -- pre-built text-style helpers ------------------------------------
     // Renderers ask the theme for an already-composed DocumentTextStyle
     // instead of re-assembling font + size + decoration + colour every

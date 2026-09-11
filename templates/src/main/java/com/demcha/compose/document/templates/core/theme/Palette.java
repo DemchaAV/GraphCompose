@@ -319,4 +319,26 @@ public record Palette(DocumentColor ink,
                 DocumentColor.rgb(244, 238, 228),  // banner — soft-tan hero panel / zebra (modern surfaceMuted)
                 DocumentColor.rgb(252, 248, 240)); // mainFill — cream surface + page background (modern surface)
     }
+
+    /**
+     * Modern Receipt palette: near-black ink on a white page, one grey for
+     * metadata, a hairline rule that reads as a separator rather than as a
+     * border, and a barely-there panel fill behind the hero amount.
+     *
+     * <p>The restraint is the point. A statement is read for its numbers, so
+     * everything that is not a number is pushed down the contrast ladder —
+     * and it leaves the accent colour, which each issuer supplies through
+     * {@code ModernReceipt.Options}, the only saturated thing on the
+     * page.</p>
+     *
+     * @return a {@code Palette} for the Modern Receipt flavour
+     */
+    public static Palette receiptModern() {
+        return new Palette(
+                DocumentColor.rgb(13, 15, 20),     // ink — amount, values, titles
+                DocumentColor.rgb(122, 127, 138),  // muted — labels, captions, small print
+                DocumentColor.rgb(228, 231, 236),  // rule — hairlines between field rows
+                DocumentColor.rgb(246, 247, 249),  // banner — hero panel and party cards
+                DocumentColor.WHITE);              // mainFill — the page
+    }
 }

@@ -528,4 +528,35 @@ public record Spacing(
                 0.45,                                    // entryDateWeight
                 3.0);                                    // entrySeparation
     }
+
+    /**
+     * Modern Receipt spacing: roomy blocks, tight rows.
+     *
+     * <p>Two tokens carry a receipt-specific reading. {@code accentRuleWidth}
+     * is the hairline under each field row rather than a wide accent strip —
+     * on this layout the rule separates rows, it does not decorate a panel.
+     * {@code entryTitleWeight} and {@code entryDateWeight} split each field
+     * row into its label and value columns, and they are equal because a
+     * receipt's values (account numbers, transaction ids) run as long as its
+     * labels.</p>
+     *
+     * @return a {@code Spacing} scale for the Modern Receipt preset
+     */
+    public static Spacing receiptModern() {
+        return new Spacing(
+                16,                                      // pageFlowSpacing (gap between blocks)
+                5,                                       // sectionBodySpacing
+                DocumentInsets.zero(),                   // sectionBodyPadding
+                DocumentInsets.zero(),                   // headlinePadding
+                DocumentInsets.zero(),                   // contactPadding
+                12.0,                                    // bannerCornerRadius (hero panel + party cards)
+                16.0,                                    // bannerInnerPadding (hero panel padding)
+                DocumentInsets.zero(),                   // bannerMargin
+                0.6,                                     // accentRuleWidth (field-row hairline)
+                2.0,                                     // paragraphMarginTop
+                12.0,                                    // entryHeaderRowSpacing (label/value column gap)
+                1.0,                                     // entryTitleWeight (label column)
+                1.0,                                     // entryDateWeight (value column)
+                6.0);                                    // entrySeparation
+    }
 }

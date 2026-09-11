@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -72,32 +75,71 @@ public final class SvgGlyph {
         return CACHE.computeIfAbsent(resourcePath, SvgGlyph::load);
     }
 
+    /**
+     * Loads the flattened glyph for an SVG file on disk.
+     *
+     * <p>The classpath variant covers glyphs a template ships with. This one
+     * covers the glyph a template is <em>given</em> — a receipt's issuer mark,
+     * a report's client logo — which arrives as a file next to the running
+     * application rather than repackaged into its jar.</p>
+     *
+     * <p><strong>Not cached</strong>, unlike {@link #fromResource(String)}. A
+     * classpath entry cannot change while the JVM runs and the key space is the
+     * jar's; a file can be replaced, and the key space is whatever paths a
+     * caller passes — a service rendering for a hundred issuers would hold a
+     * hundred glyphs for its lifetime and keep serving the logo each one had
+     * when it started. Callers that load the same mark per document should hold
+     * the returned glyph themselves; it is immutable and safe to share.</p>
+     *
+     * @param file path to the SVG file
+     * @return the recolorable glyph
+     * @throws IllegalStateException if the file does not exist
+     * @throws UncheckedIOException  if the file cannot be read
+     * @since 2.1.2
+     */
+    public static SvgGlyph fromFile(Path file) {
+        Objects.requireNonNull(file, "file");
+        if (!Files.isRegularFile(file)) {
+            throw new IllegalStateException("Missing glyph file: " + file);
+        }
+        try {
+            return flatten(SvgIcon.parse(Files.readString(file, StandardCharsets.UTF_8)),
+                    file.toString());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read glyph file: " + file, e);
+        }
+    }
+
     private static SvgGlyph load(String resourcePath) {
         try (InputStream input = SvgGlyph.class.getResourceAsStream(resourcePath)) {
             if (input == null) {
                 throw new IllegalStateException("Missing CV glyph resource: " + resourcePath);
             }
-            SvgIcon icon = SvgIcon.parse(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-            List<DocumentPathSegment> filled = new ArrayList<>();
-            for (SvgIcon.Layer layer : icon.layers()) {
-                if (isInkFill(layer.fill()) || layer.fillPaint() != null) {
-                    filled.addAll(layer.geometry().segments());
-                }
-            }
-            if (filled.isEmpty()) {
-                // Stroke-only / unfilled icon: keep every path so the glyph
-                // still renders as a filled silhouette rather than vanishing.
-                for (SvgIcon.Layer layer : icon.layers()) {
-                    filled.addAll(layer.geometry().segments());
-                }
-            }
-            if (filled.isEmpty()) {
-                throw new IllegalStateException("CV glyph has no drawable geometry: " + resourcePath);
-            }
-            return new SvgGlyph(List.copyOf(filled), icon.aspectRatio());
+            return flatten(SvgIcon.parse(new String(input.readAllBytes(), StandardCharsets.UTF_8)),
+                    resourcePath);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read CV glyph: " + resourcePath, e);
         }
+    }
+
+    private static SvgGlyph flatten(SvgIcon icon, String source) {
+        List<DocumentPathSegment> filled = new ArrayList<>();
+        for (SvgIcon.Layer layer : icon.layers()) {
+            if (isInkFill(layer.fill()) || layer.fillPaint() != null) {
+                filled.addAll(layer.geometry().segments());
+            }
+        }
+        if (filled.isEmpty()) {
+            // Stroke-only / unfilled icon: keep every path so the glyph
+            // still renders as a filled silhouette rather than vanishing.
+            for (SvgIcon.Layer layer : icon.layers()) {
+                filled.addAll(layer.geometry().segments());
+            }
+        }
+        if (filled.isEmpty()) {
+            throw new IllegalStateException("Glyph has no drawable geometry: " + source);
+        }
+        return new SvgGlyph(List.copyOf(filled), icon.aspectRatio());
     }
 
     /**

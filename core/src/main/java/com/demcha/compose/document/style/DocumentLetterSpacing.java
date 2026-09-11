@@ -55,12 +55,12 @@ package com.demcha.compose.document.style;
  * &plusmn;4000pt, DrawingML's own bound. The limits belong to the formats; this
  * value accepts any finite number.</p>
  *
- * {@snippet :
+ * <pre>{@code
  * DocumentTextStyle headline = DocumentTextStyle.builder()
  *         .size(24)
  *         .letterSpacing(DocumentLetterSpacing.ofFontSize(0.12)) // 12% of 24pt = 2.88pt
  *         .build();
- * }
+ * }</pre>
  *
  * @param type  whether {@code value} is read as points or as a fraction of the
  *              font size

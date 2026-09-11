@@ -54,7 +54,7 @@ class ReleaseAssetStepGuardTest {
      *
      * <p>{@code ExampleVersion} accepts a released {@code X.Y.Z} and rejects everything else, so
      * the property cannot ride along with the generic pom bump: the post-release step carries the
-     * train to {@code X.Y.(Z+1)-SNAPSHOT}, which would throw before a single preview was compared,
+     * train to {@code X.(Y+1).0-SNAPSHOT}, which would throw before a single preview was compared,
      * and a pre-release cut carries {@code X.Y.Z-rc.N}, whose qualifier-stripped form names a
      * release that does not exist yet — the previews would advertise it.</p>
      *

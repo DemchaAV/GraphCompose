@@ -229,7 +229,7 @@ function Update-AssetVersion($pomPath, $newVersion) {
     # compare like with like, and ExampleVersion accepts a released X.Y.Z and nothing
     # else, so this is deliberately NOT part of Update-PomVersion:
     #
-    #   * -PostReleaseOnly bumps the train to X.Y.(Z+1)-SNAPSHOT. Carrying the property
+    #   * -PostReleaseOnly bumps the train to X.(Y+1).0-SNAPSHOT. Carrying the property
     #     along would hand surefire a -SNAPSHOT display version, and the examples module
     #     would throw before comparing a single preview.
     #   * a pre-release cut sets X.Y.Z-rc.N, which the same check rejects — and whose
@@ -264,11 +264,13 @@ function Update-AssetVersion($pomPath, $newVersion) {
 }
 
 function Get-NextSnapshotVersion($version) {
-    # A final release X.Y.Z opens the next patch development line X.Y.(Z+1)-SNAPSHOT.
+    # The develop branch always opens the next minor line after a final release.
+    # Patch releases are cut from their own release line, so carrying X.Y.(Z+1)-SNAPSHOT
+    # on develop would advertise the wrong line to poms, @since tags, and the knowledge pack.
     # Pre-release versions (rc / beta / alpha) stay on their own cycle, so return
     # $null and let the caller skip the post-release SNAPSHOT bump for them.
     if ($version -match '^(\d+)\.(\d+)\.(\d+)$') {
-        return "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)-SNAPSHOT"
+        return "$($Matches[1]).$([int]$Matches[2] + 1).0-SNAPSHOT"
     }
     return $null
 }
@@ -546,13 +548,13 @@ function Update-ReadmeReleaseStatus($readmePath, $newVersion) {
     # The README 'Release status' blockquote carries two halves:
     #
     #   > 🟢 **Latest stable**: [vX.Y.Z](…/releases/tag/vX.Y.Z) — …
-    #   >  · 🟡 **In development**: vX.Y.(Z+1) on `develop` — …
+    #   >  · 🟡 **In development**: vX.(Y+1).0 on `develop` — …
     #
     # It used to be a maintainer pre-cut hand-edit, gated in Step 0. That forced a
     # false state: to leave `main` correct after the tag, `develop` had to advertise
     # an unpublished version as "latest stable" for the whole cycle, with a release
     # link that 404s. The script owns the block now — Step 1 promotes the in-development
-    # half to latest-stable and opens the next patch line — so `develop` stays truthful
+    # half to latest-stable and opens the next minor line — so `develop` stays truthful
     # between releases and the release commit still carries the right text to `main`.
     #
     # The prose moves with the version, because the sentence belongs to the release
@@ -1117,6 +1119,17 @@ function Render-ReadmeBanner {
     Note "banner: assets/readme/repository_showcase_render.png re-rendered"
 }
 
+function Assert-KnowledgeToolingAvailable {
+    if (-not (Test-Path (Join-Path $repoRoot 'knowledge/tools/api-surface/extract-api.mjs'))) {
+        Note "skip (no knowledge/ pack in this tree)"
+        return
+    }
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        throw "Node.js is required to regenerate and verify the knowledge pack before a version bump. Install Node.js and retry."
+    }
+    Note "knowledge tooling: Node.js available OK"
+}
+
 function Update-KnowledgeSurfaces {
     # Regenerates the tracked knowledge pack — knowledge/api/*.json|md plus
     # knowledge/manifest.json — from THIS tree's compiled classes, then holds the
@@ -1149,22 +1162,13 @@ function Update-KnowledgeSurfaces {
         Note "skip (no knowledge/ pack in this tree)"
         return
     }
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        # Skip rather than throw — a cut on a machine without Node is still a
-        # valid cut — but say it in red: the commit about to be created ships
-        # surfaces naming the PREVIOUS version, and the knowledge CI gate (on a
-        # tag, release.yml's --check) stays red until the regen lands.
-        Write-Host "    !! node not found on PATH — knowledge surfaces NOT regenerated." -ForegroundColor Red
-        Write-Host "    !! The tracked surfaces still name the pre-bump version, so the" -ForegroundColor Red
-        Write-Host "    !! knowledge CI gate (and, on a tag, release.yml) fails on this" -ForegroundColor Red
-        Write-Host "    !! commit. Stop before the push step (Ctrl+C, or -SkipPush on a" -ForegroundColor Red
-        Write-Host "    !! cut), install Node, then run and commit:" -ForegroundColor Red
-        Write-Host "    !!   node knowledge/tools/api-surface/extract-api.mjs --from-reactor" -ForegroundColor Red
-        return
-    }
+    # Defensive backstop for direct callers. Both release modes run this in Step 0,
+    # before any file mutation, so a normal cut never reaches this check late.
+    Assert-KnowledgeToolingAvailable
     Run "node knowledge/tools/api-surface/extract-api.mjs --from-reactor"
     Run "node knowledge/tools/claims/check-claims.mjs --check"
     Run "node knowledge/tools/routing/check-routes.mjs"
+    Run "node knowledge/tools/bundle/build-bundle.mjs --verify"
 }
 
 # ============================================================
@@ -1180,7 +1184,7 @@ if ($PostReleaseOnly) {
         Assert-BranchPreflight $Branch
 
         # The released version is whatever the train poms currently carry (a cut leaves
-        # them at the release version). Open the next patch development line from it. The
+        # them at the release version). Open the next minor development line from it. The
         # 2.0 module layout keeps the engine version in core/pom.xml; the legacy 1.x tree
         # has no core/ and retired post-release bumping, so read defensively and skip the
         # bump when it is absent (the showcase flip below still runs).
@@ -1189,6 +1193,12 @@ if ($PostReleaseOnly) {
         if (Test-Path $corePom) {
             $currentVersion = [regex]::Match((Get-Content $corePom -Raw), '<version>([\w\.\-]+)</version>').Groups[1].Value
             $nextSnapshot = Get-NextSnapshotVersion $currentVersion
+        }
+        # Require Node before Step 1 can write showcase files or Step 3 can rewrite the
+        # poms. An idempotent re-run on an existing SNAPSHOT performs no version bump and
+        # therefore does not require knowledge regeneration.
+        if ($nextSnapshot) {
+            Assert-KnowledgeToolingAvailable
         }
 
         Step 1 "Switch ShowcaseMetadata GH_BASE back to /blob/$Branch"
@@ -1201,7 +1211,7 @@ if ($PostReleaseOnly) {
         }
 
         # Post-release version bump: move the train off the release version onto the
-        # next patch -SNAPSHOT so develop builds are distinguishable from the release
+        # next minor -SNAPSHOT so develop builds are distinguishable from the release
         # AND the japicmp gate (baseline = the release) actually compares (it short-
         # circuits when the working version equals the baseline). The README / showcase
         # INSTALL SNIPPETS are deliberately NOT touched here: they keep advertising the
@@ -1352,6 +1362,7 @@ try {
 
     # Branch / clean-tree / origin-sync gate (shared with -PostReleaseOnly).
     Assert-BranchPreflight $Branch
+    Assert-KnowledgeToolingAvailable
 
     # The roadmap has to be able to describe this release before anything is rewritten.
     # Deciding it here rather than at the edit in Step 1 is the whole point: by Step 1

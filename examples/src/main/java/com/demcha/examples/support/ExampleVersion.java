@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  *
  * <p>The reactor is the default, not the only answer:
  * {@link #DISPLAY_VERSION_PROPERTY} overrides it. Between releases the reactor
- * sits on the next patch, so a render taken from a development branch names a
+ * sits on the next minor line, so a render taken from a development branch names a
  * version nobody can depend on yet — the override is how a published document
  * gets reproduced from a branch that has moved past it.</p>
  */
@@ -93,10 +93,10 @@ public final class ExampleVersion {
     /**
      * The version a render should display, when it is not the reactor's.
      *
-     * <p>Between cuts the reactor sits on the next patch — {@code 2.1.1-SNAPSHOT} while
+     * <p>Between cuts the reactor sits on the next minor — {@code 2.2.0-SNAPSHOT} while
      * {@code 2.1.0} is what people can depend on — so a render taken from {@code develop}
      * names a version that does not exist yet. Stripping the qualifier is not enough:
-     * the patch number itself has moved. Anything that needs to reproduce a published
+     * the development line itself has moved. Anything that needs to reproduce a published
      * document passes the published version here.</p>
      */
     public static final String DISPLAY_VERSION_PROPERTY = "graphcompose.examples.displayVersion";

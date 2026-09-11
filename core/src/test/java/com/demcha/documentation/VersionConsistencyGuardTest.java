@@ -307,19 +307,15 @@ class VersionConsistencyGuardTest {
      * The open {@code CHANGELOG.md} entry and the in-development pom version name the
      * same release line.
      *
-     * <p>The post-release step opens the next line by incrementing the patch
-     * unconditionally, so a GA of {@code X.Y.Z} always leaves the train on
-     * {@code X.Y.(Z+1)-SNAPSHOT}. When the next release turns out to be a minor, the
-     * poms and the CHANGELOG name different releases for the rest of the cycle, and an
-     * {@code @since} tag written meanwhile has two answers to choose between. It is a
-     * public API contract, so whichever the author picks outlives the cycle: the last
-     * time these two disagreed, tags were written against both — most against the
-     * CHANGELOG heading, the rest against the previous release, and the latter had to
-     * be retagged when the line was corrected.</p>
+     * <p>The post-release step opens the next minor line, so a GA of {@code X.Y.Z}
+     * leaves the train on {@code X.(Y+1).0-SNAPSHOT}. This guard keeps that development
+     * version joined to the open CHANGELOG entry: otherwise an {@code @since} tag written
+     * meanwhile has two answers to choose between. It is a public API contract, so
+     * whichever the author picks outlives the cycle.</p>
      *
-     * <p>What this pins is that correction. The real next version is recorded in the
-     * CHANGELOG heading first, because that is where the cycle's opening entry goes;
-     * from that commit on, the build stays red until the poms name the same line. What
+     * <p>The real next version is recorded in the CHANGELOG heading first, because that
+     * is where the cycle's opening entry goes; from that commit on, the build stays red
+     * until the poms name the same line. What
      * it cannot catch is a heading and a pom that are wrong <em>together</em> — both
      * states are internally consistent, and nothing in the tree distinguishes them.</p>
      *

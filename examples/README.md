@@ -54,7 +54,7 @@ rendering the PNG thumbnails and rewriting `web/examples.json`:
 ```
 
 The documents that print a version take it from the reactor, which between releases
-sits on the next patch. To reproduce a published document from a development branch,
+sits on the next minor line. To reproduce a published document from a development branch,
 name the published version:
 
 ```bash

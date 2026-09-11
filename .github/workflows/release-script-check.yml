@@ -4,8 +4,9 @@ name: Release Script Check
 # changes, so without this a break in the release tooling (a parse error, a bad
 # parameter set, a throw in the pre-flight / version bump / metadata gate) would ship
 # unnoticed and only surface mid-release. This runs the script's dry-runs — which
-# exercise every code path except the actual git/Maven mutations — plus a focused unit
-# check of the pure version helper. It creates no tag and touches no remote.
+# exercise every code path except the actual git/Maven mutations — plus focused unit
+# checks of the version policy and knowledge-tooling preflight. It creates no tag and
+# touches no remote.
 
 on:
   push:
@@ -170,13 +171,56 @@ jobs:
           if ($end -lt 0) { throw "could not find the function's closing brace" }
           Invoke-Expression (($lines[$start..$end]) -join "`n")
 
-          $cases = @{ '2.0.0' = '2.0.1-SNAPSHOT'; '2.3.9' = '2.3.10-SNAPSHOT'; '1.9.1' = '1.9.2-SNAPSHOT';
+          $cases = @{ '2.0.0' = '2.1.0-SNAPSHOT'; '2.3.9' = '2.4.0-SNAPSHOT'; '1.9.1' = '1.10.0-SNAPSHOT';
                       '2.0.0-rc.1' = $null; '2.0.1-SNAPSHOT' = $null }
           foreach ($k in $cases.Keys) {
             $got = Get-NextSnapshotVersion $k
             if ($got -ne $cases[$k]) { throw "Get-NextSnapshotVersion '$k' -> '$got', expected '$($cases[$k])'" }
           }
           Write-Host "Get-NextSnapshotVersion: all cases passed."
+
+      - name: Missing Node blocks both release paths before mutation
+        shell: pwsh
+        run: |
+          # Lift the real preflight helper, then shadow Get-Command so this stays
+          # deterministic even though the runner itself has Node installed.
+          $path = (Resolve-Path scripts/cut-release.ps1).Path
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $found = $ast.Find({
+              param($n)
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+                $n.Name -eq 'Assert-KnowledgeToolingAvailable'
+            }, $true)
+          if (-not $found) { throw "Assert-KnowledgeToolingAvailable not found" }
+          Invoke-Expression $found.Extent.Text
+
+          $repoRoot = (Get-Location).Path
+          function Note($m) { Write-Host "    $m" }
+          function Get-Command {
+            [CmdletBinding()]
+            param([Parameter(Position=0)][string]$Name)
+            if ($Name -eq 'node') { return $null }
+            Microsoft.PowerShell.Core\Get-Command $Name
+          }
+
+          $errorMessage = $null
+          try { Assert-KnowledgeToolingAvailable } catch { $errorMessage = $_.Exception.Message }
+          if ($errorMessage -notmatch '^Node\.js is required') {
+            throw "missing Node did not fail closed: $errorMessage"
+          }
+
+          # Both live modes must call the preflight before their first write. The
+          # shared helper then throws, so neither path can reach commit/tag/push.
+          $script = Get-Content scripts/cut-release.ps1 -Raw
+          $post = $script.IndexOf('# Mode: -PostReleaseOnly')
+          $postGate = $script.IndexOf('Assert-KnowledgeToolingAvailable', $post)
+          $postWrite = $script.IndexOf('$showcaseChanged = Update-ShowcaseGhBase', $post)
+          $full = $script.IndexOf('# Mode: full release cut')
+          $fullGate = $script.IndexOf('Assert-KnowledgeToolingAvailable', $full)
+          $fullWrite = $script.IndexOf('Update-PomVersion (Join-Path', $full)
+          if ($postGate -lt $post -or $postGate -gt $postWrite) { throw 'PostReleaseOnly checks Node after its first mutation' }
+          if ($fullGate -lt $full -or $fullGate -gt $fullWrite) { throw 'full release checks Node after its first mutation' }
+          Write-Host 'missing Node: both release paths fail before mutation.'
 
       - name: Unit-check Test-ReadmeLatestStable (real README)
         shell: pwsh
@@ -240,8 +284,8 @@ jobs:
             throw "the staged story did not move onto the latest-stable half:`n$after"
           }
           if ($after -match 'the \*\*previous\*\* release') { throw "the superseded headline survived the promotion:`n$after" }
-          if ($after -notmatch '\*\*In development\*\*: v1\.3\.1 on `develop` &mdash; see \[CHANGELOG\.md\]') {
-            throw "the lower half was not opened on the next patch with the changelog pointer:`n$after"
+          if ($after -notmatch '\*\*In development\*\*: v1\.4\.0 on `develop` &mdash; see \[CHANGELOG\.md\]') {
+            throw "the lower half was not opened on the next minor with the changelog pointer:`n$after"
           }
 
           # 2. Nothing staged — a patch on the same line has no new story, and its

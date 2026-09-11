@@ -1058,6 +1058,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         }
     }
 
+    /**
+     * Writes tracking as Word's own run-level {@code w:spacing}, never as spaces
+     * pushed into the text.
+     *
+     * <p>The unit is twentieths of a point. Measured rather than assumed:
+     * exporting a probe document through Word itself and reading the glyph
+     * positions out of the PDF it wrote, {@code w:spacing w:val="100"} widened
+     * every step of {@code "JANE"} by 5.0pt — including the step onto a
+     * following untracked run, which is the trailing unit — and {@code "-30"}
+     * narrowed each by 1.5pt, with an ordinary space spaced like any other
+     * character. Word spends the value the same way the PDF {@code Tc} operator
+     * does.</p>
+     *
+     * <p>This is the one place the backend resolves the public unit itself: a
+     * semantic export never passes through the engine's text style, which is
+     * where a fixed-layout backend would have had it resolved already. Word owns
+     * the layout here, so the contract is that the asked-for tracking arrives as
+     * the right native value — not that any x coordinate matches the PDF.
+     * Twentieths of a point quantise to 0.05pt, which is the format's own
+     * granularity and not something to work around.</p>
+     *
+     * <p>No tracking writes no element, so a document that never asks for it
+     * carries exactly the run properties it carried before.</p>
+     */
+    private static void applyLetterSpacing(XWPFRun run, DocumentTextStyle style) {
+        double points = style.letterSpacing().resolve(style.size());
+        if (points == 0.0) {
+            return;
+        }
+        run.setCharacterSpacing((int) Math.round(points * 20.0));
+    }
+
     private void applyStyle(XWPFRun run, DocumentTextStyle style) {
         if (style == null) {
             return;
@@ -1075,6 +1107,7 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
             // and everything else at Word's own default until this is written too.
             run.setComplexScriptFontSize(style.size());
         }
+        applyLetterSpacing(run, style);
         if (style.color() != null) {
             run.setColor(toHexColor(style.color().color()));
         }

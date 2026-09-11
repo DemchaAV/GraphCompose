@@ -31,9 +31,17 @@ follow semantic versioning; release dates are ISO 8601.
   Negative tracking tightens, and the measured width is not clamped — the pen really does
   move backwards, and a measurement that refused to would simply stop matching the page.
 
-  **PPTX and DOCX do not carry tracking yet.** Both are next; until then a document that
-  asks for tracking and renders to those formats lays out to the tracked width but draws
-  untracked text. Untracked documents — every existing one — are unaffected.
+  **All three backends carry it natively.** PPTX writes DrawingML's `spc` in hundredths of
+  a point, DOCX writes Word's run-level `w:spacing` in twentieths, and neither pads the
+  text. The units and the advance rule were measured rather than read off the
+  specification: probe files were exported to PDF by PowerPoint and Word themselves and the
+  glyph positions read back. Both applications spend the spacing exactly the way PDF's `Tc`
+  does — one unit per code point, the trailing one included, an ordinary space counted like
+  any other character — so a line laid out against the engine's measurement arrives at the
+  width it was given in every format.
+
+  Asking for no tracking writes nothing at all: no `spc` attribute, no `w:spacing` element,
+  no `Tc` operator. Every existing document is byte-for-byte what it was.
 
 - **A list can hang its wrapped lines under its own text instead of under its marker.**
   `ListBuilder.hangingIndent(true)` gives an item a marker column and a content column, so

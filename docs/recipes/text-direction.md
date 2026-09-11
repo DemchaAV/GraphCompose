@@ -91,13 +91,55 @@ is not. Shaping covers the base Arabic block (U+0621–U+064A) — the Persian a
 Urdu extensions render unjoined for now. Vowel points and direction marks sit between letters without breaking
 the join.
 
+## Tables
+
+A table cell says it the same way, through its style:
+
+<!-- doc-example: id=text-direction-table-cell mode=method imports=com.demcha.compose.document.node.TextDirection -->
+```java
+import com.demcha.compose.document.table.DocumentTableStyle;
+
+DocumentTableStyle.builder()
+        .direction(TextDirection.AUTO)
+        .build();
+```
+
+The builder's `direction(...)` takes the same `LTR`, `RTL` and `AUTO`, and
+follows the same cascade as the rest of a cell style — the table's
+`defaultCellStyle`, then `columnStyle(i, …)`, then `rowStyle(i, …)`, then the
+cell's own `withStyle(…)` — so one call on the table's default sets it for every
+cell. Give those cells a `textStyle` whose font covers the script, as a
+paragraph needs (see [Fonts](#fonts)). A cell whose content is a composed
+paragraph (`DocumentTableCell.node(...)`) is laid out as that paragraph, and
+takes its direction from the paragraph instead.
+
+The cell is the unit `AUTO` reads. Two cells side by side under one `AUTO`
+answer it separately, and a cell's second line does not run the other way from
+its first because it happens to open on Latin.
+
+A right-to-left cell sits at its right edge unless a `textAnchor` set anywhere
+in its cascade says where to put it — the rule alignment already follows in a
+paragraph. An anchor sets the horizontal side along with the vertical one, so a
+table-wide `TOP_LEFT` chosen only to top-align the cells also pins right-to-left
+ones to the left; give them `TOP_RIGHT`. Word output is the exception: the DOCX
+backend writes no alignment for a cell written as plain text, so Word places it
+by its own default — the right edge, for right-to-left text — and an explicit
+`textAnchor` does not reach it. An auto-width column is measured on the joined
+Arabic forms, so it is sized to the text that is drawn.
+
+A cell that declares nothing still draws its Hebrew and Arabic the right way
+round: a declaration settles which direction a line is *embedded* in, while a
+script runs the way it runs inside that.
+
 ## Where direction stops
 
-Direction is a property of a **paragraph**. Text inside a table cell goes through the
-table's own layout, which does not carry direction, so the same Hebrew string draws
-correctly in `addParagraph` and reversed in a cell, and Arabic in a cell is unjoined. Set
-right-to-left text as a paragraph where you can; inside a table the text is drawn in the
-order it is written.
+Only paragraphs and table cells declare a direction. A list carries none of its
+own: each item is laid out as a left-to-right paragraph, so
+`align(TextAlign.RIGHT)` sets the items against the right margin, but each
+bullet stays at the left end of its item.
+
+Column order is not mirrored. The first column of a right-to-left table is still
+the leftmost one — write the columns in the order they should appear.
 
 ## See also
 

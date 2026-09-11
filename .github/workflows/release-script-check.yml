@@ -12,10 +12,13 @@ on:
     paths:
       - 'scripts/cut-release.ps1'
       - '.github/workflows/release-script-check.yml'
+      # Carries the japicmp previous-release pin the script moves.
+      - 'templates/pom.xml'
   pull_request:
     paths:
       - 'scripts/cut-release.ps1'
       - '.github/workflows/release-script-check.yml'
+      - 'templates/pom.xml'
 
 permissions:
   contents: read
@@ -355,10 +358,8 @@ jobs:
       - name: Unit-check the japicmp previous-release baseline move
         shell: pwsh
         run: |
-          # graph-compose-templates is diffed against two published releases: the major
-          # floor, which never moves inside a major, and the previous release, which has
-          # to move onto the version just published at every cut. A pin left behind leaves
-          # everything added in that release freely removable with the gate green, so the
+          # The japicmp previous-release pin has to move onto the version just published
+          # at every cut (docs/api-stability.md, Binary-compatibility enforcement), so the
           # move is code that has to be exercised, not a step someone remembers. Lifted by
           # AST like the checks above, so the code under test is the code that ships.
           $path = (Resolve-Path scripts/cut-release.ps1).Path

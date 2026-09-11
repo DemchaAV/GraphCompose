@@ -568,13 +568,13 @@ follow semantic versioning; release dates are ISO 8601.
   the publish workflow and the release script, and diffs each build against two published
   releases: the 2.x floor (`2.0.0`), which holds the GA surface, and the latest release
   (`2.3.0` today), which holds everything added since. `cut-release.ps1 -PostReleaseOnly`
-  moves the second pin after each release. `VersionConsistencyGuardTest` fails the build when
-  a pin goes stale; `BinaryCompatibilityGateGuardTest` fails it when an execution goes
-  missing, when the templates gate is narrowed beyond the per-element `@Internal` marker, or
-  when the pull-request job, the release script or the publish workflow stops diffing the
-  module. Every `templates.*` package is Stable, so that marker is the only exclusion, and
-  nothing carries it. A baseline the gate cannot resolve fails the build; japicmp's default
-  would skip that diff with a warning and pass.
+  moves the second pin after each release. Every `templates.*` package is Stable, so the only
+  exclusion is the per-element `@Internal` marker, and nothing carries it. A baseline the gate
+  cannot resolve fails the build; japicmp's default would skip that diff with a warning and
+  pass. Each path that runs the gate then checks that every execution left its report, since
+  a skipped execution writes none and fails nothing. `VersionConsistencyGuardTest` holds the
+  pins to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the executions, their
+  settings, the trigger and those report checks in place.
 
 ### Documentation
 

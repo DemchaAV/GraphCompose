@@ -231,13 +231,11 @@ class VersionConsistencyGuardTest {
     /**
      * The two-baseline japicmp pins name the releases they have to.
      *
-     * <p>The major floor ({@code japicmp.baseline.floor}) is the first release of the
-     * working major and holds the GA surface. It cannot hold anything added later: a
-     * method first published in 2.2.0 is absent from 2.0.0 and from a 2.4.1 that
-     * deletes it, so that diff stays green while a caller compiled against 2.2.0 gets
-     * {@code NoSuchMethodError}. The previous-release pin
-     * ({@code japicmp.baseline.previous}) closes that hole — but only while it names
-     * the latest release actually published, and it is a literal that
+     * <p>The floor ({@code japicmp.baseline.floor}) must be the first release of the
+     * working major; why the gate also diffs against the latest release is set out in
+     * {@code docs/api-stability.md} (Binary-compatibility enforcement). That
+     * previous-release pin ({@code japicmp.baseline.previous}) only protects anything
+     * while it names the latest release actually published, and it is a literal that
      * {@code cut-release.ps1 -PostReleaseOnly} moves after each cut. A move that does
      * not happen leaves everything added in the release just shipped unprotected, with
      * the gate reporting green, so the pin is held to the CHANGELOG here: it must name

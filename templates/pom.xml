@@ -74,18 +74,12 @@
         <!-- See the engine pom: opted in via -Dgpg.skip=false on the publish workflow. -->
         <gpg.skip>true</gpg.skip>
 
-        <!-- Binary-compatibility baselines (japicmp profile). Same plugin version as
-             the engine pom (VersionConsistencyGuardTest holds the two in lockstep).
-             Two published graph-compose-templates releases, each diffed in its own
-             execution: the floor of the current major (2.0.0, the first
-             graph-compose-templates on Maven Central) holds the GA surface; the
-             previous release holds everything added since, which the floor alone
-             cannot protect: a method first published in 2.2.0 is absent from 2.0.0,
-             so a floor-only diff would let it be deleted. cut-release.ps1
-             -PostReleaseOnly moves the previous pin to the release just published, and
-             VersionConsistencyGuardTest derives both pins from the working version and
-             the CHANGELOG, so a pin that never moved fails the build.
-             docs/api-stability.md lists every templates.* package as Stable. -->
+        <!-- Binary-compatibility baselines for the japicmp profile below: the floor of
+             the current major and the latest release, each diffed in its own execution
+             (why both: docs/api-stability.md, Binary-compatibility enforcement).
+             cut-release.ps1 -PostReleaseOnly moves the previous pin after each release;
+             VersionConsistencyGuardTest derives both pins and holds japicmp.version to
+             the engine pom's. -->
         <japicmp.version>0.26.2</japicmp.version>
         <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
         <japicmp.baseline.previous>2.3.0</japicmp.baseline.previous>

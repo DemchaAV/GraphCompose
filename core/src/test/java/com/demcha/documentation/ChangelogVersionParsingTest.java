@@ -230,8 +230,10 @@ class ChangelogVersionParsingTest {
     @Test
     void openAndPreReleaseEntriesNeverBecomeThePreviousRelease() {
         // A -rc entry is dated but never published to Central; a Planned entry is
-        // undated. Neither is an artifact the gate could resolve.
-        assertThat(previousReleaseFor("2.2.0-rc.2")).contains("2.1.1");
+        // undated. Neither is an artifact the gate could resolve, even as the newest
+        // dated entry of the line.
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(
+                "## v2.3.0-rc.1 — 2026-09-01\n## v2.2.0 — 2026-08-15\n", "2.3.0-SNAPSHOT")).contains("2.2.0");
         assertThat(previousReleaseFor("2.4.0-SNAPSHOT")).contains("2.2.0");
     }
 

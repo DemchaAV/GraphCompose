@@ -11,8 +11,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -28,6 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * tidying, and none of those edits turns anything red — the job diffs less and still
  * reports success. Deleting a Stable method is caught by the diff; deleting the diff is
  * caught here.</p>
+ *
+ * <p>A list of forbidden edits is never complete, so the paths that run the gate carry
+ * their own proof: each ends by checking that every execution left its XML report, which
+ * a skipped execution never writes, whatever skipped it. This class holds those checks in
+ * place, together with the switches that would bypass them before they run.</p>
  *
  * <p>The gated modules are discovered, as every module pom that declares a
  * {@code japicmp} profile, so a module joining the gate is held to the same wiring the
@@ -48,6 +55,9 @@ class BinaryCompatibilityGateGuardTest {
     /** The per-element marker: the one exclusion the templates gate may carry. */
     private static final String INTERNAL_MARKER = "@com.demcha.compose.document.api.Internal";
 
+    /** The property japicmp reads its skip switch from. */
+    private static final String SKIP_PROPERTY = "japicmp.skip";
+
     /**
      * Each execution the gate relies on, per pom, with the baseline property its
      * {@code <oldVersion>} must read.
@@ -63,6 +73,9 @@ class BinaryCompatibilityGateGuardTest {
 
     /** A job-level {@code if:} — four-space indent, first line only. */
     private static final Pattern JOB_IF = Pattern.compile("(?m)^    if: (.*)$");
+
+    /** A job-level inline {@code needs: [a, b]} flow sequence. */
+    private static final Pattern JOB_NEEDS = Pattern.compile("(?m)^    needs: \\[([^]]*)]");
 
     /** A {@code changes} output that a job condition tests. */
     private static final Pattern CHANGE_OUTPUT =
@@ -82,9 +95,9 @@ class BinaryCompatibilityGateGuardTest {
 
     /**
      * An execution that is gone, unbound from {@code verify}, or pointed at another
-     * baseline stops a diff from running. A gate that reports a break without failing, or
-     * carries a skip switch, still runs and protects nothing. Every one of them leaves CI
-     * green.
+     * baseline stops a diff from running. A gate that reports a break without failing,
+     * carries a skip switch, or reclassifies a break as compatible still runs and protects
+     * nothing. Every one of them leaves CI green.
      */
     @Test
     void everyJapicmpExecutionTheGateReliesOnStillRuns() throws Exception {
@@ -120,6 +133,10 @@ class BinaryCompatibilityGateGuardTest {
                     .containsOnly("true");
             assertThat(descendantTexts(plugin, "skip"))
                     .describedAs("%s: the japicmp gate must carry no skip switch", where)
+                    .isEmpty();
+            assertThat(descendantTexts(plugin, "overrideCompatibilityChangeParameters"))
+                    .describedAs("%s: overrideCompatibilityChangeParameters can declare a binary break "
+                            + "compatible, which passes it", where)
                     .isEmpty();
         }
     }
@@ -170,13 +187,46 @@ class BinaryCompatibilityGateGuardTest {
     }
 
     /**
-     * The pull-request job diffs every gated module, and runs whenever one of them changes.
+     * Nothing the build reads sets japicmp's skip switch.
      *
-     * <p>Three edits each take a module off that path without failing anything: its
+     * <p>The plugin reads {@code skip} from the {@code japicmp.skip} property, so one line in
+     * a pom's {@code <properties>}, in {@code .mvn/maven.config}, or on a command line turns
+     * the executions off on every path that runs the gate. Those paths' report checks would
+     * still fail at run time; this names the cause before anything runs.</p>
+     */
+    @Test
+    void nothingTheBuildReadsSwitchesTheGateOff() throws Exception {
+        List<Path> readByTheBuild = new ArrayList<>(List.of(
+                PROJECT_ROOT.resolve("pom.xml"), CI, PUBLISH, RELEASE_SCRIPT));
+        for (String module : gatedModules()) {
+            readByTheBuild.add(PROJECT_ROOT.resolve(module + "/pom.xml"));
+        }
+        for (String config : List.of(".mvn/maven.config", ".mvn/jvm.config")) {
+            Path file = PROJECT_ROOT.resolve(config);
+            if (Files.isRegularFile(file)) {
+                readByTheBuild.add(file);
+            }
+        }
+
+        for (Path file : readByTheBuild) {
+            assertThat(read(file))
+                    .describedAs("%s must not mention %s: it switches japicmp's executions off, and a "
+                            + "skipped execution fails nothing", relative(file), SKIP_PROPERTY)
+                    .doesNotContain(SKIP_PROPERTY);
+        }
+    }
+
+    /**
+     * The pull-request job diffs every gated module, runs whenever one of them changes,
+     * and proves each diff ran.
+     *
+     * <p>Each of these takes a module off that path without failing anything: its
      * artifact dropped from the job's {@code -pl} list; its paths dropped from the filter
-     * the job's condition reads; or that filter not exported from the {@code changes}
-     * job — an output that is not declared reads as empty, so the condition is never true
-     * for the module, and a skipped job passes.</p>
+     * the job's condition reads; that filter not exported from the {@code changes} job, or
+     * {@code changes} dropped from the job's {@code needs} — an output the job cannot read
+     * is empty, so the condition is never true, and a skipped job passes; the job told to
+     * tolerate its own failure; or the report check that closes it removed, so an execution
+     * skipped for any other reason goes unnoticed.</p>
      */
     @Test
     void everyGatedModuleIsDiffedOnThePullRequestsThatTouchIt() throws Exception {
@@ -191,9 +241,25 @@ class BinaryCompatibilityGateGuardTest {
         Map<String, String> exported = exportedOutputs(changes);
         Map<String, List<String>> filters = pathFilters(changes);
 
+        assertThat(needsOf(job))
+                .describedAs("ci.yml job '%s' must need 'changes': without it every "
+                        + "needs.changes.outputs value reads empty, the condition is never true, and "
+                        + "a job that never runs never fails", PR_JOB)
+                .contains("changes");
+        assertThat(job)
+                .describedAs("ci.yml job '%s' must not tolerate its own failure", PR_JOB)
+                .doesNotContain("continue-on-error");
         assertThat(invocation)
-                .describedAs("ci.yml job '%s' must not switch the gate off", PR_JOB)
-                .doesNotContain("japicmp.skip");
+                .describedAs("ci.yml job '%s' must run verify, the phase the japicmp executions are "
+                        + "bound to", PR_JOB)
+                .contains(" verify");
+        for (String report : requiredReports()) {
+            assertThat(job)
+                    .describedAs("ci.yml job '%s' must prove %s was written — a skipped japicmp "
+                            + "execution writes no report and fails nothing", PR_JOB, report)
+                    .contains("test -s " + report);
+        }
+
         for (String module : gatedModules()) {
             String artifact = artifactIdOf(module);
             assertThat(invocation)
@@ -221,19 +287,34 @@ class BinaryCompatibilityGateGuardTest {
     /**
      * The release script diffs every gated module before the tag is cut, and the publish
      * workflow diffs each one on the tagged commit before it deploys — the two paths a
-     * direct push reaches without the pull-request job.
+     * direct push reaches without the pull-request job. Both run the profile at
+     * {@code verify}, and both end by proving every execution left its report.
      */
     @Test
     void everyGatedModuleIsDiffedBeforeTheTagAndBeforeThePublish() throws Exception {
-        String releaseArgs = firstGroup(read(RELEASE_SCRIPT), RELEASE_GATE_ARGS, "scripts/cut-release.ps1");
-        List<String> publishGates = allGroups(read(PUBLISH), GATE_RUN);
+        String script = read(RELEASE_SCRIPT);
+        String publish = read(PUBLISH);
+        String releaseArgs = firstGroup(script, RELEASE_GATE_ARGS, "scripts/cut-release.ps1");
+        List<String> publishGates = allGroups(publish, GATE_RUN);
+
         assertThat(publishGates)
-                .describedAs("publish.yml runs no japicmp gate before it deploys")
+                .describedAs("publish.yml must run the japicmp profile at verify, the phase its "
+                        + "executions are bound to, before it deploys")
                 .isNotEmpty()
-                .noneMatch(run -> run.contains("japicmp.skip"));
+                .allMatch(run -> run.contains(" verify"));
         assertThat(releaseArgs)
-                .describedAs("cut-release.ps1 Step 5b must not switch the gate off")
-                .doesNotContain("japicmp.skip");
+                .describedAs("cut-release.ps1 Step 5b must activate the japicmp profile and run "
+                        + "verify, the phase its executions are bound to")
+                .contains("'-P', 'japicmp'")
+                .contains("'verify'");
+        for (String report : requiredReports()) {
+            assertThat(script)
+                    .describedAs("cut-release.ps1 Step 5b must prove %s was written by its own run", report)
+                    .contains("'" + report + "'");
+            assertThat(publish)
+                    .describedAs("publish.yml must prove %s was written before it deploys", report)
+                    .contains("test -s " + report);
+        }
 
         for (String module : gatedModules()) {
             String artifact = artifactIdOf(module);
@@ -244,6 +325,18 @@ class BinaryCompatibilityGateGuardTest {
                     .describedAs("publish.yml must diff %s on the tagged commit before it deploys", artifact)
                     .anyMatch(run -> run.contains("-f " + module + "/pom.xml"));
         }
+    }
+
+    /** The XML report each required execution writes: {@code <module>/target/japicmp/<id>.xml}. */
+    private static List<String> requiredReports() {
+        List<String> reports = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> pom : REQUIRED_EXECUTIONS.entrySet()) {
+            String module = pom.getKey().substring(0, pom.getKey().indexOf('/'));
+            for (String execution : pom.getValue().keySet()) {
+                reports.add(module + "/target/japicmp/" + execution + ".xml");
+            }
+        }
+        return reports;
     }
 
     /** Every module directory whose pom declares a {@code japicmp} profile, sorted. */
@@ -314,6 +407,20 @@ class BinaryCompatibilityGateGuardTest {
         return textOf(directChild(parse(PROJECT_ROOT.resolve(module + "/pom.xml")), "artifactId"));
     }
 
+    /** The job ids an inline {@code needs: [...]} names; empty when there is none. */
+    private static Set<String> needsOf(String jobBlock) {
+        Set<String> ids = new LinkedHashSet<>();
+        Matcher needs = JOB_NEEDS.matcher(jobBlock);
+        if (needs.find()) {
+            for (String id : needs.group(1).split(",")) {
+                if (!id.isBlank()) {
+                    ids.add(id.trim());
+                }
+            }
+        }
+        return ids;
+    }
+
     /** Output name to the path filter it exports, from the {@code changes} job's {@code outputs:}. */
     private static Map<String, String> exportedOutputs(String changesJob) {
         Map<String, String> exported = new LinkedHashMap<>();
@@ -341,9 +448,14 @@ class BinaryCompatibilityGateGuardTest {
         return filters;
     }
 
-    /** Whether a change to {@code module}'s main sources, and one to its pom, both match a glob. */
+    /**
+     * Whether a change to a source file deep inside {@code module}'s main tree, and one to
+     * its pom, both match a glob. The probe sits in a package, as every real source does:
+     * a filter that only reaches the top of {@code src/main/java} would pass a shallow probe
+     * while missing every file that matters.
+     */
     private static boolean watches(List<String> globs, String module) {
-        return matchesAny(globs, module + "/src/main/java/Probe.java")
+        return matchesAny(globs, module + "/src/main/java/com/demcha/compose/Probe.java")
                 && matchesAny(globs, module + "/pom.xml");
     }
 

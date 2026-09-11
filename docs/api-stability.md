@@ -211,7 +211,7 @@ The Stable-tier promise (§ 1 — no binary breaks outside a major release) is e
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
 profile during `verify` on the engine module (`graph-compose-core`) and on
 `graph-compose-templates`. The render backends (`graph-compose-render-pdf`,
-`-render-docx`, `-render-pptx`) are not gated yet.
+`-render-docx`, `-render-pptx`) and `graph-compose-testing` are not gated yet.
 
 - **Baselines:** the published artifacts on Maven Central.
   - `graph-compose-core` is diffed against the `japicmp.baseline` property in
@@ -224,11 +224,9 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
     (`japicmp.baseline.previous`). The floor holds the GA surface; the previous release
     holds everything added since, which a floor-only diff cannot protect — a member
     first published in `2.2.0` is absent from `2.0.0`. `cut-release.ps1
-    -PostReleaseOnly` moves the previous pin to the release just published.
+    -PostReleaseOnly` moves the previous pin to the release just published, and
     `VersionConsistencyGuardTest` fails the build when a pin disagrees with the working
-    version and the CHANGELOG; `BinaryCompatibilityGateGuardTest` fails it when either
-    execution goes missing, or when the pull-request job, the release script or the
-    publish workflow stops diffing the module.
+    version and the CHANGELOG.
 - **What fails the build:** any binary-incompatible change to the public surface
   against a baseline — a removed or less-accessible public method/field/type or
   constructor, a changed signature, and so on. A deprecated element stays protected like
@@ -237,9 +235,12 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
   render-handoff payload records) are excluded; they carry no compatibility promise
   (§ 1). Every `templates.*` package is Stable (§ 4), so in `graph-compose-templates`
   only an element carrying the per-element `@Internal` marker is excluded — none does
-  today — and `BinaryCompatibilityGateGuardTest` fails the build if that gate is narrowed
-  any further. Source-only incompatibilities (e.g. adding a default method to an interface)
+  today. Source-only incompatibilities (e.g. adding a default method to an interface)
   are reported but do not fail, pending a finalized 2.x source-compatibility policy.
+- **Where it runs:** the pull-request `Binary Compatibility` job, `cut-release.ps1` Step 5b
+  and the publish workflow. Each ends by checking that every execution left its report —
+  a skipped execution writes none and fails nothing — and `BinaryCompatibilityGateGuardTest`
+  holds the executions, their settings, the job's trigger and those checks in place.
 - **Activity window:** the gate compares the working version against the baseline, so
   it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
   active for every `-SNAPSHOT` development cycle across the 2.x line that follows. A

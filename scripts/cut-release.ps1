@@ -224,19 +224,13 @@ function Update-PomVersion($pomPath, $newVersion) {
 }
 
 function Update-JapicmpPreviousBaseline($pomPath, $releasedVersion) {
-    # Moves the japicmp.baseline.previous property: the release the binary-
-    # compatibility gate diffs against alongside the major floor. The floor
-    # (japicmp.baseline.floor) holds the GA surface and only moves at a major; the
-    # previous pin holds every public element added SINCE the floor, and only while
-    # it names the release actually published last. Left behind, the gate keeps
-    # comparing against an older release, and everything added in the release just
-    # cut becomes freely removable with CI green.
-    #
-    # Runs in -PostReleaseOnly, next to the SNAPSHOT bump: on the release commit
-    # itself the just-cut version is not on Central yet, so the pin stays one release
-    # back until the publish workflow has uploaded it. Idempotent, and held to the
-    # CHANGELOG by VersionConsistencyGuardTest. A pom without the property (the
-    # engine pom, which gates against the floor alone) is left untouched.
+    # Moves the japicmp.baseline.previous property onto the release just published
+    # (why the gate needs it: docs/api-stability.md, Binary-compatibility
+    # enforcement). Runs in -PostReleaseOnly, next to the SNAPSHOT bump: on the
+    # release commit itself the just-cut version is not on Central yet, so the pin
+    # stays one release back until the publish workflow has uploaded it. Idempotent,
+    # and held to the CHANGELOG by VersionConsistencyGuardTest. A pom without the
+    # property (the engine pom, which gates against the floor alone) is left untouched.
     if (-not (Test-Path $pomPath)) {
         Note "skip (no file): $pomPath"
         return $false
@@ -1631,31 +1625,42 @@ try {
     }
 
     if (-not $SkipVerify) {
-        Step "5b" "Binary-compatibility gate (japicmp vs the published baseline)"
+        Step "5b" "Binary-compatibility gate (japicmp vs the published baselines)"
         # Confirm the graph-compose-core and graph-compose-templates public APIs stay
         # binary-compatible with their japicmp baselines BEFORE the tag is cut —
         # independent of the PR-time CI japicmp job, which a direct-to-branch push could
-        # bypass. One reactor run diffs both: core against japicmp.baseline in
-        # core/pom.xml, templates against japicmp.baseline.floor and
-        # japicmp.baseline.previous in templates/pom.xml. 2.0 module layout only (core/
-        # present); the legacy 1.x single-artifact tree has no such gate. Precondition:
-        # every baseline must already be on Central — so this gate is meaningful from
-        # 2.0.1 onward (vs the published 2.0.0), not on the first-of-a-major cut that
-        # publishes the baseline itself.
+        # bypass. One reactor run diffs both. 2.0 module layout only (core/ present); the
+        # legacy 1.x single-artifact tree has no such gate. Precondition: every baseline is
+        # already on Central. On the first cut of a new major the templates baselines
+        # (X.0.0) are not, so this gate — and publish.yml's — fails that cut until it is
+        # decided how the gate runs for it.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
             $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
+            # A skipped execution writes no report and fails nothing, so every execution
+            # the gate relies on must leave its report from THIS run.
+            $japicmpReports = @('core/target/japicmp/japicmp-against-baseline.xml',
+                'templates/target/japicmp/japicmp-against-major-floor.xml',
+                'templates/target/japicmp/japicmp-against-previous-release.xml')
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {
+                foreach ($report in $japicmpReports) {
+                    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $repoRoot $report)
+                }
                 & $mvnw @japicmpArgs 2>&1 | ForEach-Object {
                     if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR|incompatib') {
                         Write-Host "    $_" -ForegroundColor DarkGray
                     }
                 }
                 if ($LASTEXITCODE -ne 0) {
-                    throw "japicmp gate failed: the tagged code breaks binary compatibility with the published baseline."
+                    throw "japicmp gate failed: the tagged code breaks binary compatibility with the published baselines."
                 }
-                Note "japicmp: binary-compatible with the baseline OK"
+                foreach ($report in $japicmpReports) {
+                    if (-not (Test-Path (Join-Path $repoRoot $report))) {
+                        throw "japicmp gate did not run: $report is missing, and a skipped execution writes no report."
+                    }
+                }
+                Note "japicmp: binary-compatible with the baselines OK"
             }
         } else {
             Note "japicmp gate skipped (1.x single-artifact layout)"

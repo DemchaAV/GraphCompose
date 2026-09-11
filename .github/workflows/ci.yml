@@ -525,6 +525,18 @@ jobs:
         # surface. Source-incompatible changes are reported only (phased policy).
         run: ./mvnw -B -ntp -DskipTests -P japicmp verify -pl :graph-compose-core,:graph-compose-templates
 
+      - name: Prove every japicmp execution ran
+        # A japicmp execution that is skipped, unbound from the lifecycle or left
+        # out of the reactor writes no report and fails nothing, so the step above
+        # can pass having diffed nothing. Each execution the gate relies on must
+        # have left its XML report; BinaryCompatibilityGateGuardTest keeps this
+        # list in step with the poms.
+        run: |
+          ls -l core/target/japicmp templates/target/japicmp
+          test -s core/target/japicmp/japicmp-against-baseline.xml
+          test -s templates/target/japicmp/japicmp-against-major-floor.xml
+          test -s templates/target/japicmp/japicmp-against-previous-release.xml
+
       - name: Upload japicmp report
         if: always()
         uses: actions/upload-artifact@v7

@@ -143,14 +143,18 @@ jobs:
         run: ./mvnw -B -ntp -f core/pom.xml -P japicmp -Dmaven.test.skip=true verify
 
       - name: Verify templates binary compatibility against the published baselines
-        # The same defence for graph-compose-templates: its `japicmp` profile diffs
-        # the freshly built jar against both baselines pinned in templates/pom.xml
-        # (the 2.x floor and the previous release) and fails on any Stable-surface
-        # break. Every templates.* package is Stable per docs/api-stability.md, so
-        # only the per-element @Internal marker is excluded. Standalone pom: it
-        # resolves graph-compose-core from the local m2 the install step above
-        # seeded.
+        # The same defence for graph-compose-templates, against both baselines
+        # pinned in templates/pom.xml. Standalone pom: it resolves
+        # graph-compose-core from the local m2 the install step above seeded.
         run: ./mvnw -B -ntp -f templates/pom.xml -P japicmp -Dmaven.test.skip=true verify
+
+      - name: Prove every japicmp execution ran
+        # A skipped japicmp execution writes no report and fails nothing, so a
+        # missing report is the only sign the two steps above diffed nothing.
+        run: |
+          test -s core/target/japicmp/japicmp-against-baseline.xml
+          test -s templates/target/japicmp/japicmp-against-major-floor.xml
+          test -s templates/target/japicmp/japicmp-against-previous-release.xml
 
       - name: Plan the deploy set (start_at resume)
         id: plan

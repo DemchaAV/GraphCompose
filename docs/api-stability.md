@@ -209,24 +209,44 @@ window starts, and its `Status` flips to `deprecated 1.x`.
 
 The Stable-tier promise (§ 1 — no binary breaks outside a major release) is enforced
 mechanically by [japicmp](https://siom79.github.io/japicmp/), run in a `japicmp` Maven
-profile on the engine module during `verify`.
+profile during `verify` on the engine module (`graph-compose-core`) and on
+`graph-compose-templates`. The render backends (`graph-compose-render-pdf`,
+`-render-docx`, `-render-pptx`) are not gated yet.
 
-- **Baseline:** the published `graph-compose-core` on Maven Central, pinned by the
-  `japicmp.baseline` property in `core/pom.xml`. It is the current major's **floor** —
-  `2.0.0` for the whole 2.x line — and advances only at the next major. Holding it at
-  the floor (rather than the previous release) is what enforces the Stable promise:
-  every 2.x build must stay binary-compatible with the `2.0.0` public surface, not
-  merely with the last minor.
+- **Baselines:** the published artifacts on Maven Central.
+  - `graph-compose-core` is diffed against the `japicmp.baseline` property in
+    `core/pom.xml`: the current major's **floor**, `2.0.0` for the whole 2.x line,
+    advancing only at the next major. Holding it at the floor (rather than the previous
+    release) is what enforces the Stable promise: every 2.x build must stay
+    binary-compatible with the `2.0.0` public surface, not merely with the last minor.
+  - `graph-compose-templates` is diffed twice, one execution each: against the floor
+    (`japicmp.baseline.floor`, `2.0.0`) and against the latest published release
+    (`japicmp.baseline.previous`). The floor holds the GA surface; the previous release
+    holds everything added since, which a floor-only diff cannot protect — a member
+    first published in `2.2.0` is absent from `2.0.0`. `cut-release.ps1
+    -PostReleaseOnly` moves the previous pin to the release just published.
+    `VersionConsistencyGuardTest` fails the build when a pin disagrees with the working
+    version and the CHANGELOG; `BinaryCompatibilityGateGuardTest` fails it when either
+    execution goes missing, or when the pull-request job, the release script or the
+    publish workflow stops diffing the module.
 - **What fails the build:** any binary-incompatible change to the public surface
-  against the baseline — a removed or less-accessible public method/field/type, a
-  changed signature, and so on. `@Internal` packages (`com.demcha.compose.engine.*`,
-  `com.demcha.compose.document.layout.*` and its render-handoff payload records) are
-  excluded; they carry no compatibility promise (§ 1). Source-only incompatibilities
-  (e.g. adding a default method to an interface) are reported but do not fail, pending
-  a finalized 2.x source-compatibility policy.
+  against a baseline — a removed or less-accessible public method/field/type or
+  constructor, a changed signature, and so on. A deprecated element stays protected like
+  any other until a major release removes it (§ 3). `@Internal` packages
+  (`com.demcha.compose.engine.*`, `com.demcha.compose.document.layout.*` and its
+  render-handoff payload records) are excluded; they carry no compatibility promise
+  (§ 1). Every `templates.*` package is Stable (§ 4), so in `graph-compose-templates`
+  only an element carrying the per-element `@Internal` marker is excluded — none does
+  today — and `BinaryCompatibilityGateGuardTest` fails the build if that gate is narrowed
+  any further. Source-only incompatibilities (e.g. adding a default method to an interface)
+  are reported but do not fail, pending a finalized 2.x source-compatibility policy.
 - **Activity window:** the gate compares the working version against the baseline, so
   it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
-  active for every `-SNAPSHOT` development cycle across the 2.x line that follows.
+  active for every `-SNAPSHOT` development cycle across the 2.x line that follows. A
+  baseline `graph-compose-templates` cannot resolve fails the build rather than skipping
+  its diff (japicmp's default, which the engine gate still runs with, skips it with a
+  warning), so the first cycle of a new major, whose floor is unpublished until its
+  release, needs an explicit decision about how that gate runs.
 
 During the 2.0 major transition the gate ran report-only (the major intentionally
 broke 1.x binary compatibility); it enforces from the `2.0.0` baseline forward.

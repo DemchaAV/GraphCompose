@@ -560,6 +560,22 @@ follow semantic versioning; release dates are ISO 8601.
   Per [`docs/api-stability.md`](docs/api-stability.md) § 3 it is Stable-tier, so it is removed
   no earlier than 3.0 and not before a full minor has shipped with the deprecation in place.
 
+### Build
+
+- **`graph-compose-templates` is under the binary-compatibility gate.** japicmp used to diff
+  `graph-compose-core` alone, so a Stable templates method could be deleted in a minor with
+  every check green. The module now carries its own `japicmp` profile, run by the same CI job,
+  the publish workflow and the release script, and diffs each build against two published
+  releases: the 2.x floor (`2.0.0`), which holds the GA surface, and the latest release
+  (`2.3.0` today), which holds everything added since. `cut-release.ps1 -PostReleaseOnly`
+  moves the second pin after each release. `VersionConsistencyGuardTest` fails the build when
+  a pin goes stale; `BinaryCompatibilityGateGuardTest` fails it when an execution goes
+  missing, when the templates gate is narrowed beyond the per-element `@Internal` marker, or
+  when the pull-request job, the release script or the publish workflow stops diffing the
+  module. Every `templates.*` package is Stable, so that marker is the only exclusion, and
+  nothing carries it. A baseline the gate cannot resolve fails the build; japicmp's default
+  would skip that diff with a warning and pass.
+
 ### Documentation
 
 - **The timeline recipe describes the finished model.** `LEADING | AXIS | CONTENT`, what the

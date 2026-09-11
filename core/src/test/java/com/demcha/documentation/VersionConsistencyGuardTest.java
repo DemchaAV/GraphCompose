@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -199,6 +200,148 @@ class VersionConsistencyGuardTest {
         assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "jacoco.plugin.version"))
                 .describedAs("templates jacoco.plugin.version must match the engine pom's (%s)", core)
                 .isEqualTo(core);
+    }
+
+    /**
+     * The binary-compatibility gate runs the same japicmp plugin in every module
+     * that carries a {@code japicmp} profile — a version pinned as a literal in each
+     * standalone pom. Two literals of one version drift apart silently, and a
+     * plugin skew here means the two modules are judged by different
+     * compatibility rules. Only the plugin version is held in lockstep: the
+     * releases each module is diffed against are pinned per module, and
+     * {@link #japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease} holds the
+     * templates pins to the CHANGELOG.
+     */
+    @Test
+    void japicmpPluginVersionAgreesAcrossGatedModules() throws Exception {
+        String core = pinnedVersionProperty(PROJECT_ROOT.resolve("core/pom.xml"), "japicmp.version");
+
+        assertThat(pinnedVersionProperty(PROJECT_ROOT.resolve("templates/pom.xml"), "japicmp.version"))
+                .describedAs("templates japicmp.version must match the engine pom's (%s)", core)
+                .isEqualTo(core);
+    }
+
+    /**
+     * The poms whose {@code japicmp} profile diffs against two published releases: the
+     * floor of the working major and the release before the working version. The
+     * engine pom still diffs against its floor alone ({@code japicmp.baseline}).
+     */
+    private static final List<String> TWO_BASELINE_JAPICMP_POMS = List.of("templates/pom.xml");
+
+    /**
+     * The two-baseline japicmp pins name the releases they have to.
+     *
+     * <p>The major floor ({@code japicmp.baseline.floor}) is the first release of the
+     * working major and holds the GA surface. It cannot hold anything added later: a
+     * method first published in 2.2.0 is absent from 2.0.0 and from a 2.4.1 that
+     * deletes it, so that diff stays green while a caller compiled against 2.2.0 gets
+     * {@code NoSuchMethodError}. The previous-release pin
+     * ({@code japicmp.baseline.previous}) closes that hole — but only while it names
+     * the latest release actually published, and it is a literal that
+     * {@code cut-release.ps1 -PostReleaseOnly} moves after each cut. A move that does
+     * not happen leaves everything added in the release just shipped unprotected, with
+     * the gate reporting green, so the pin is held to the CHANGELOG here: it must name
+     * the newest dated final release <em>of the working major</em> strictly older than
+     * the working version. That reading is right on both sides of a cut — on the
+     * release commit (pom {@code 2.4.0}, CHANGELOG {@code ## v2.4.0 — <date>}) the
+     * newest release older than 2.4.0 is still 2.3.0, which is what the release must
+     * be diffed against; on the next {@code 2.4.1-SNAPSHOT} it is 2.4.0, so a bump
+     * commit that forgets the pin fails here, and {@code -PostReleaseOnly} runs this
+     * test before it commits.</p>
+     *
+     * <p>Both pins stay inside the working major. On {@code 3.0.0-SNAPSHOT} the floor
+     * is {@code 3.0.0} and the major has no release yet, so the previous pin falls back
+     * to the floor: both then name a version nobody has published, and the templates
+     * gate, set not to skip a baseline it cannot resolve, fails until 3.0.0 is on Central.
+     * Pinning across the boundary instead would fail it on every break the major is
+     * allowed to make. Either way, opening a major means deciding how the gate runs for
+     * that cycle; a gate that went quiet by itself at the boundary would go just as
+     * quiet if a pin broke for any other reason.</p>
+     */
+    @Test
+    void japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease() throws Exception {
+        String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
+
+        for (String pom : TWO_BASELINE_JAPICMP_POMS) {
+            Path path = PROJECT_ROOT.resolve(pom);
+            String working = effectiveVersion(path);
+            String floor = releaseLineOf(working).split("\\.")[0] + ".0.0";
+
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.floor"))
+                    .describedAs("%s japicmp.baseline.floor must be the first release of the working "
+                            + "major (%s for working version %s)", pom, floor, working)
+                    .isEqualTo(floor);
+
+            String expected = newestFinalReleaseInMajorBefore(changelog, working).orElse(floor);
+            assertThat(pinnedVersionProperty(path, "japicmp.baseline.previous"))
+                    .describedAs("%s japicmp.baseline.previous must be the newest dated CHANGELOG release "
+                            + "of the working major older than the working version %s (the floor itself "
+                            + "while the major has none) — cut-release.ps1 -PostReleaseOnly moves it to "
+                            + "the version just published; a stale pin leaves everything added in that "
+                            + "release unprotected by the japicmp gate", pom, working)
+                    .isEqualTo(expected);
+        }
+    }
+
+    /**
+     * The newest dated final release ({@code ## vX.Y.Z — YYYY-MM-DD}) in {@code changelog}
+     * that shares {@code version}'s major and is strictly older than its {@code X.Y.Z};
+     * empty when the major has none yet. Open ({@code — Planned}) and pre-release
+     * ({@code -rc.N}) entries never count: neither is a published Maven Central artifact
+     * a gate could resolve. Releases of an earlier major never count either — diffing
+     * across a major boundary would fail the build on breaks the major is allowed to make.
+     *
+     * <p>String-driven so {@code ChangelogVersionParsingTest} can hold the shapes: a
+     * snapshot cycle, the release commit (working version equal to the newest release),
+     * the opening of a new major, and a log with nothing older.</p>
+     */
+    static Optional<String> newestFinalReleaseInMajorBefore(String changelog, String version) {
+        String working = releaseLineOf(version);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
+        String newest = null;
+        while (released.find()) {
+            String candidate = released.group(1);
+            if (segment(candidate, 0).equals(segment(working, 0))
+                    && compareReleases(candidate, working) < 0
+                    && (newest == null || compareReleases(candidate, newest) > 0)) {
+                newest = candidate;
+            }
+        }
+        return Optional.ofNullable(newest);
+    }
+
+    /**
+     * Orders two {@code X.Y.Z} release lines, comparing each segment as a number.
+     *
+     * <p>Compared as digit strings rather than parsed: {@code Integer.parseInt} throws
+     * {@link NumberFormatException} on a segment wider than an {@code int}, which in a
+     * guard would surface as a stack trace instead of the assertion message that says
+     * which pin is wrong. Nothing here needs the numeric value — only the order — and
+     * a longer digit string is the larger number once leading zeros are gone.</p>
+     */
+    private static int compareReleases(String left, String right) {
+        for (int i = 0; i < 3; i++) {
+            String a = segment(left, i);
+            String b = segment(right, i);
+            int order = a.length() != b.length()
+                    ? Integer.compare(a.length(), b.length())
+                    : a.compareTo(b);
+            if (order != 0) {
+                return order;
+            }
+        }
+        return 0;
+    }
+
+    /** Segment {@code index} of an {@code X.Y.Z} version, leading zeros stripped. */
+    private static String segment(String version, int index) {
+        String[] parts = version.split("\\.");
+        String part = index < parts.length ? parts[index] : "0";
+        int firstSignificant = 0;
+        while (firstSignificant < part.length() - 1 && part.charAt(firstSignificant) == '0') {
+            firstSignificant++;
+        }
+        return part.substring(firstSignificant);
     }
 
     /**
@@ -798,17 +941,22 @@ class VersionConsistencyGuardTest {
      */
     private String latestPublishedRelease() throws Exception {
         String changelog = Files.readString(PROJECT_ROOT.resolve("CHANGELOG.md"));
-        // Only a FINAL semver header (## vX.Y.Z — YYYY-MM-DD) counts as published on
-        // Maven Central. A dated pre-release header (## vX.Y.Z-rc.N — …) must NOT be
-        // treated as the published version — pre-releases never ship to Central — so the
-        // version group is anchored to \d+\.\d+\.\d+ with no suffix.
-        Matcher released = Pattern.compile("^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE)
-                .matcher(changelog);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
         assertThat(released.find())
                 .describedAs("CHANGELOG.md must contain a dated final release entry (## vX.Y.Z — YYYY-MM-DD) to anchor the install snippets")
                 .isTrue();
         return released.group(1);
     }
+
+    /**
+     * A dated final release entry, {@code ## vX.Y.Z — YYYY-MM-DD}. Only a FINAL semver
+     * header counts as published on Maven Central. A dated pre-release header
+     * ({@code ## vX.Y.Z-rc.N — …}) must NOT be treated as a published version —
+     * pre-releases never ship to Central — so the version group is anchored to
+     * {@code X.Y.Z} with no suffix.
+     */
+    private static final Pattern DATED_FINAL_RELEASE = Pattern.compile(
+            "^## v(\\d+\\.\\d+\\.\\d+)\\s*[\\u2014\\-]\\s*\\d{4}-\\d{2}-\\d{2}", Pattern.MULTILINE);
 
     /**
      * One {@code ## vX.Y.Z — <marker>} entry: the release line it names, and whatever

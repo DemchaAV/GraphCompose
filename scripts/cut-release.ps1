@@ -223,6 +223,45 @@ function Update-PomVersion($pomPath, $newVersion) {
     }
 }
 
+function Update-JapicmpPreviousBaseline($pomPath, $releasedVersion) {
+    # Moves the japicmp.baseline.previous property: the release the binary-
+    # compatibility gate diffs against alongside the major floor. The floor
+    # (japicmp.baseline.floor) holds the GA surface and only moves at a major; the
+    # previous pin holds every public element added SINCE the floor, and only while
+    # it names the release actually published last. Left behind, the gate keeps
+    # comparing against an older release, and everything added in the release just
+    # cut becomes freely removable with CI green.
+    #
+    # Runs in -PostReleaseOnly, next to the SNAPSHOT bump: on the release commit
+    # itself the just-cut version is not on Central yet, so the pin stays one release
+    # back until the publish workflow has uploaded it. Idempotent, and held to the
+    # CHANGELOG by VersionConsistencyGuardTest. A pom without the property (the
+    # engine pom, which gates against the floor alone) is left untouched.
+    if (-not (Test-Path $pomPath)) {
+        Note "skip (no file): $pomPath"
+        return $false
+    }
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $previousRegex = [regex]'<japicmp\.baseline\.previous>[\w\.\-]+</japicmp\.baseline\.previous>'
+    $match = $previousRegex.Match($content)
+    if (-not $match.Success) {
+        Note "no japicmp.baseline.previous property in $pomPath, nothing to move"
+        return $false
+    }
+    $new = '<japicmp.baseline.previous>' + $releasedVersion + '</japicmp.baseline.previous>'
+    if ($match.Value -eq $new) {
+        Note "japicmp previous baseline already $releasedVersion in $pomPath"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] japicmp previous baseline: $pomPath to $releasedVersion" -ForegroundColor Yellow
+        return $true
+    }
+    [System.IO.File]::WriteAllText($pomPath, $previousRegex.Replace($content, $new, 1))
+    Note "japicmp previous baseline: $pomPath now $releasedVersion"
+    return $true
+}
+
 function Update-AssetVersion($pomPath, $newVersion) {
     # Moves <graphcompose.examples.assetVersion> — the version the committed previews
     # under assets/readme were rendered at. CommittedAssetDriftTest renders at it to
@@ -1227,6 +1266,7 @@ if ($PostReleaseOnly) {
         }
 
         $bumpedPoms = @()
+        $japicmpMoved = $false
         if ($nextSnapshot) {
             Step 3 "Open the next development line: bump train poms to $nextSnapshot"
             foreach ($pom in @('core/pom.xml', 'pom.xml', 'examples/pom.xml', 'benchmarks/pom.xml',
@@ -1237,8 +1277,22 @@ if ($PostReleaseOnly) {
                     $bumpedPoms += $pom
                 }
             }
+
+            # The release just cut is now the newest published one, so it becomes the
+            # japicmp previous-release baseline for the cycle that opens here. Only a
+            # pom that carries the pin is touched (graph-compose-templates today).
+            Step "3a" "Move the japicmp previous-release baseline to $currentVersion"
+            foreach ($pom in @('core/pom.xml', 'templates/pom.xml')) {
+                if (Update-JapicmpPreviousBaseline (Join-Path $repoRoot $pom) $currentVersion) {
+                    $japicmpMoved = $true
+                    if ($bumpedPoms -notcontains $pom) { $bumpedPoms += $pom }
+                }
+            }
         } else {
-            Step 3 "Skipped SNAPSHOT bump (no core/pom.xml, or the current version is not a final X.Y.Z release)"
+            # The same condition governs the japicmp previous-release pin: it may only
+            # move onto a final X.Y.Z, never onto a -SNAPSHOT or an -rc, since neither is
+            # on Central for the gate to resolve.
+            Step 3 "Skipped SNAPSHOT bump and japicmp baseline move (no core/pom.xml, or the current version is not a final X.Y.Z release)"
         }
 
         # Validate the bump BEFORE committing or pushing: a reactor `validate` resolves
@@ -1298,6 +1352,7 @@ if ($PostReleaseOnly) {
         if ($filesToCommit.Count -gt 0) {
             $parts = @()
             if ($bumpedPoms.Count -gt 0) { $parts += "open $nextSnapshot" }
+            if ($japicmpMoved) { $parts += "japicmp previous baseline $currentVersion" }
             if ($showcaseChanged -or $DryRun) { $parts += "restore /blob/$Branch showcase links" }
             $msg = "chore(release): " + ($parts -join ' + ')
             Step 4 "Commit"
@@ -1577,15 +1632,18 @@ try {
 
     if (-not $SkipVerify) {
         Step "5b" "Binary-compatibility gate (japicmp vs the published baseline)"
-        # Confirm the graph-compose-core public API stays binary-compatible with the
-        # japicmp baseline BEFORE the tag is cut — independent of the PR-time CI japicmp
-        # job, which a direct-to-branch push could bypass. 2.0 module layout only (core/
+        # Confirm the graph-compose-core and graph-compose-templates public APIs stay
+        # binary-compatible with their japicmp baselines BEFORE the tag is cut —
+        # independent of the PR-time CI japicmp job, which a direct-to-branch push could
+        # bypass. One reactor run diffs both: core against japicmp.baseline in
+        # core/pom.xml, templates against japicmp.baseline.floor and
+        # japicmp.baseline.previous in templates/pom.xml. 2.0 module layout only (core/
         # present); the legacy 1.x single-artifact tree has no such gate. Precondition:
-        # the baseline (japicmp.baseline in core/pom.xml) must already be on Central — so
-        # this gate is meaningful from 2.0.1 onward (vs the published 2.0.0), not on the
-        # first-of-a-major cut that publishes the baseline itself.
+        # every baseline must already be on Central — so this gate is meaningful from
+        # 2.0.1 onward (vs the published 2.0.0), not on the first-of-a-major cut that
+        # publishes the baseline itself.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
-            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core')
+            $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {

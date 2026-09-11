@@ -572,7 +572,8 @@ follow semantic versioning; release dates are ISO 8601.
   exclusion is the per-element `@Internal` marker, and nothing carries it. A baseline the gate
   cannot resolve fails the build; japicmp's default would skip that diff with a warning and
   pass. Each path that runs the gate then checks that every execution left its report, since
-  a skipped execution writes none and fails nothing. `VersionConsistencyGuardTest` holds the
+  one that does not run — switched off, unbound, or not selected — writes none and fails
+  nothing. `VersionConsistencyGuardTest` holds the
   pins to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the executions, their
   settings, the trigger and those report checks in place.
 

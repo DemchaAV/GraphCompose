@@ -32,9 +32,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * caught here.</p>
  *
  * <p>A list of forbidden edits is never complete, so the paths that run the gate carry
- * their own proof: each ends by checking that every execution left its XML report, which
- * a skipped execution never writes, whatever skipped it. This class holds those checks in
- * place, together with the switches that would bypass them before they run.</p>
+ * their own proof: each ends by checking that every execution left its XML report. An
+ * execution that does not run — switched off, unbound, or not selected — never writes
+ * one. A baseline japicmp cannot resolve is the exception: the plugin still writes a
+ * report for it, which is why the templates gate must fail on that case instead. This
+ * class holds those checks in place, together with the switches that would bypass them
+ * before they run.</p>
  *
  * <p>The gated modules are discovered, as every module pom that declares a
  * {@code japicmp} profile, so a module joining the gate is held to the same wiring the
@@ -57,6 +60,9 @@ class BinaryCompatibilityGateGuardTest {
 
     /** The property japicmp reads its skip switch from. */
     private static final String SKIP_PROPERTY = "japicmp.skip";
+
+    /** How {@code cut-release.ps1} Step 5b runs the gate. */
+    private static final String RELEASE_GATE_RUN = "& $mvnw @japicmpArgs";
 
     /**
      * Each execution the gate relies on, per pom, with the baseline property its
@@ -92,6 +98,14 @@ class BinaryCompatibilityGateGuardTest {
     /** The argument array {@code cut-release.ps1} Step 5b hands to Maven. */
     private static final Pattern RELEASE_GATE_ARGS =
             Pattern.compile("(?m)^\\s*\\$japicmpArgs = @\\((.*)\\)\\s*$");
+
+    /** Step 5b's loop deleting the reports, so none left by an earlier run can stand in. */
+    private static final Pattern REPORTS_CLEARED = Pattern.compile(
+            "(?m)^\\s*foreach \\(\\$report in \\$japicmpReports\\) \\{\\s*Remove-Item\\b");
+
+    /** Step 5b's loop that throws when a report is missing after the gate ran. */
+    private static final Pattern REPORTS_CHECKED = Pattern.compile(
+            "(?m)^\\s*foreach \\(\\$report in \\$japicmpReports\\) \\{\\s*if \\(-not \\(Test-Path\\b[^\\n]*\\n\\s*throw\\b");
 
     /**
      * An execution that is gone, unbound from {@code verify}, or pointed at another
@@ -146,8 +160,9 @@ class BinaryCompatibilityGateGuardTest {
      *
      * <p>japicmp defaults {@code ignoreMissingOldVersion} to {@code true}: a pin naming a
      * mistyped or unpublished version, or one the repository cannot serve, is logged as a
-     * warning, the diff is skipped, and the build passes having compared nothing. So the
-     * safe setting has to be present — its absence is the unsafe state — and
+     * warning, the diff is skipped, and the build passes having compared nothing — with a
+     * report written all the same, so the report checks cannot see it. So the safe
+     * setting has to be present — its absence is the unsafe state — and
      * {@code ignoreNonResolvableArtifacts}, which skips the same way, must not switch it
      * back.</p>
      */
@@ -210,8 +225,8 @@ class BinaryCompatibilityGateGuardTest {
 
         for (Path file : readByTheBuild) {
             assertThat(read(file))
-                    .describedAs("%s must not mention %s: it switches japicmp's executions off, and a "
-                            + "skipped execution fails nothing", relative(file), SKIP_PROPERTY)
+                    .describedAs("%s must not mention %s: it switches japicmp's executions off, and an "
+                            + "execution that does not run fails nothing", relative(file), SKIP_PROPERTY)
                     .doesNotContain(SKIP_PROPERTY);
         }
     }
@@ -225,8 +240,8 @@ class BinaryCompatibilityGateGuardTest {
      * the job's condition reads; that filter not exported from the {@code changes} job, or
      * {@code changes} dropped from the job's {@code needs} — an output the job cannot read
      * is empty, so the condition is never true, and a skipped job passes; the job told to
-     * tolerate its own failure; or the report check that closes it removed, so an execution
-     * skipped for any other reason goes unnoticed.</p>
+     * tolerate its own failure; or a report check removed or commented out, so an
+     * execution that does not run for any other reason goes unnoticed.</p>
      */
     @Test
     void everyGatedModuleIsDiffedOnThePullRequestsThatTouchIt() throws Exception {
@@ -254,10 +269,11 @@ class BinaryCompatibilityGateGuardTest {
                         + "bound to", PR_JOB)
                 .contains(" verify");
         for (String report : requiredReports()) {
-            assertThat(job)
-                    .describedAs("ci.yml job '%s' must prove %s was written — a skipped japicmp "
-                            + "execution writes no report and fails nothing", PR_JOB, report)
-                    .contains("test -s " + report);
+            assertThat(reportCheck(report).matcher(job).find())
+                    .describedAs("ci.yml job '%s' must prove %s was written, as a `test -s` line of its "
+                            + "own — an execution that does not run writes no report and fails nothing",
+                            PR_JOB, report)
+                    .isTrue();
         }
 
         for (String module : gatedModules()) {
@@ -288,7 +304,8 @@ class BinaryCompatibilityGateGuardTest {
      * The release script diffs every gated module before the tag is cut, and the publish
      * workflow diffs each one on the tagged commit before it deploys — the two paths a
      * direct push reaches without the pull-request job. Both run the profile at
-     * {@code verify}, and both end by proving every execution left its report.
+     * {@code verify}, and both end by proving every execution left its report; the script
+     * deletes the reports first, so one left by an earlier run cannot stand in.
      */
     @Test
     void everyGatedModuleIsDiffedBeforeTheTagAndBeforeThePublish() throws Exception {
@@ -309,12 +326,30 @@ class BinaryCompatibilityGateGuardTest {
                 .contains("'verify'");
         for (String report : requiredReports()) {
             assertThat(script)
-                    .describedAs("cut-release.ps1 Step 5b must prove %s was written by its own run", report)
+                    .describedAs("cut-release.ps1 Step 5b must list %s among the reports it checks", report)
                     .contains("'" + report + "'");
-            assertThat(publish)
-                    .describedAs("publish.yml must prove %s was written before it deploys", report)
-                    .contains("test -s " + report);
+            assertThat(reportCheck(report).matcher(publish).find())
+                    .describedAs("publish.yml must prove %s was written before it deploys, as a "
+                            + "`test -s` line of its own", report)
+                    .isTrue();
         }
+
+        int cleared = firstIndexOf(script, REPORTS_CLEARED);
+        int ran = script.indexOf(RELEASE_GATE_RUN);
+        int checked = firstIndexOf(script, REPORTS_CHECKED);
+        assertThat(cleared)
+                .describedAs("cut-release.ps1 Step 5b must delete the reports before the gate runs, "
+                        + "or one left by an earlier run stands in for this one")
+                .isNotNegative();
+        assertThat(checked)
+                .describedAs("cut-release.ps1 Step 5b must check the reports after the gate runs and "
+                        + "throw when one is missing")
+                .isNotNegative();
+        assertThat(ran)
+                .describedAs("cut-release.ps1 Step 5b must delete the reports, run the gate "
+                        + "(%s), then check them — in that order", RELEASE_GATE_RUN)
+                .isGreaterThan(cleared)
+                .isLessThan(checked);
 
         for (String module : gatedModules()) {
             String artifact = artifactIdOf(module);
@@ -337,6 +372,11 @@ class BinaryCompatibilityGateGuardTest {
             }
         }
         return reports;
+    }
+
+    /** An uncommented shell line that fails unless {@code report} exists and is not empty. */
+    private static Pattern reportCheck(String report) {
+        return Pattern.compile("(?m)^\\s+test -s " + Pattern.quote(report) + "\\s*$");
     }
 
     /** Every module directory whose pom declares a {@code japicmp} profile, sorted. */
@@ -501,6 +541,11 @@ class BinaryCompatibilityGateGuardTest {
             groups.add(matcher.group(1));
         }
         return groups;
+    }
+
+    private static int firstIndexOf(String text, Pattern pattern) {
+        Matcher matcher = pattern.matcher(text);
+        return matcher.find() ? matcher.start() : -1;
     }
 
     private static String read(Path file) throws IOException {

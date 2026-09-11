@@ -238,9 +238,12 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
   today. Source-only incompatibilities (e.g. adding a default method to an interface)
   are reported but do not fail, pending a finalized 2.x source-compatibility policy.
 - **Where it runs:** the pull-request `Binary Compatibility` job, `cut-release.ps1` Step 5b
-  and the publish workflow. Each ends by checking that every execution left its report —
-  a skipped execution writes none and fails nothing — and `BinaryCompatibilityGateGuardTest`
-  holds the executions, their settings, the job's trigger and those checks in place.
+  and the publish workflow. Each ends by checking that every execution left its report: an
+  execution that does not run — switched off, unbound, or not selected — writes none and
+  fails nothing. A baseline japicmp cannot resolve still leaves a report, so that case is
+  caught only where the gate fails on it — `graph-compose-templates`, as the next point
+  says. `BinaryCompatibilityGateGuardTest` holds the executions, their settings, the job's
+  trigger and those checks in place.
 - **Activity window:** the gate compares the working version against the baseline, so
   it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
   active for every `-SNAPSHOT` development cycle across the 2.x line that follows. A

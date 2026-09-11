@@ -1636,8 +1636,8 @@ try {
         # decided how the gate runs for it.
         if (Test-Path (Join-Path $repoRoot 'core/pom.xml')) {
             $japicmpArgs = @('-B', '-ntp', '-P', 'japicmp', '-Dmaven.test.skip=true', '-Djacoco.skip=true', 'verify', '-pl', ':graph-compose-core,:graph-compose-templates')
-            # A skipped execution writes no report and fails nothing, so every execution
-            # the gate relies on must leave its report from THIS run.
+            # An execution that does not run writes no report and fails nothing, so every
+            # execution the gate relies on must leave its report from THIS run.
             $japicmpReports = @('core/target/japicmp/japicmp-against-baseline.xml',
                 'templates/target/japicmp/japicmp-against-major-floor.xml',
                 'templates/target/japicmp/japicmp-against-previous-release.xml')
@@ -1657,7 +1657,7 @@ try {
                 }
                 foreach ($report in $japicmpReports) {
                     if (-not (Test-Path (Join-Path $repoRoot $report))) {
-                        throw "japicmp gate did not run: $report is missing, and a skipped execution writes no report."
+                        throw "japicmp gate incomplete: $report is missing, so that execution did not run."
                     }
                 }
                 Note "japicmp: binary-compatible with the baselines OK"

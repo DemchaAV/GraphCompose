@@ -229,32 +229,34 @@ class VersionConsistencyGuardTest {
     private static final List<String> TWO_BASELINE_JAPICMP_POMS = List.of("templates/pom.xml");
 
     /**
-     * The two-baseline japicmp pins name the releases they have to.
+     * The two-baseline japicmp pins name published releases, and never the one being built.
      *
-     * <p>The floor ({@code japicmp.baseline.floor}) must be the first release of the
-     * working major; why the gate also diffs against the latest release is set out in
-     * {@code docs/api-stability.md} (Binary-compatibility enforcement). That
-     * previous-release pin ({@code japicmp.baseline.previous}) only protects anything
-     * while it names the latest release actually published, and it is a literal that
-     * {@code cut-release.ps1 -PostReleaseOnly} moves after each cut. A move that does
-     * not happen leaves everything added in the release just shipped unprotected, with
-     * the gate reporting green, so the pin is held to the CHANGELOG here: it must name
-     * the newest dated final release <em>of the working major</em> strictly older than
-     * the working version. That reading is right on both sides of a cut — on the
-     * release commit (pom {@code 2.4.0}, CHANGELOG {@code ## v2.4.0 — <date>}) the
-     * newest release older than 2.4.0 is still 2.3.0, which is what the release must
-     * be diffed against; on the next {@code 2.4.1-SNAPSHOT} it is 2.4.0, so a bump
-     * commit that forgets the pin fails here, and {@code -PostReleaseOnly} runs this
-     * test before it commits.</p>
+     * <p>Inside a live major the floor ({@code japicmp.baseline.floor}) is that major's
+     * first release and the previous pin ({@code japicmp.baseline.previous}) the newest
+     * release below the working version; why the gate needs both is set out in
+     * {@code docs/api-stability.md} (Binary-compatibility enforcement). The previous pin
+     * only protects anything while it names the release actually published, and it is a
+     * literal that {@code cut-release.ps1 -PostReleaseOnly} moves after each cut, so it is
+     * derived from the CHANGELOG here rather than trusted. That reading is right on both
+     * sides of a cut — on the release commit (pom {@code 2.4.0}, CHANGELOG
+     * {@code ## v2.4.0 — <date>}) the newest release below 2.4.0 is still 2.3.0, which is
+     * what the release must be diffed against; on the next {@code 2.4.1-SNAPSHOT} it is
+     * 2.4.0, so a bump commit that forgets the pin fails here, and
+     * {@code -PostReleaseOnly} runs this test before it commits.</p>
      *
-     * <p>Both pins stay inside the working major. On {@code 3.0.0-SNAPSHOT} the floor
-     * is {@code 3.0.0} and the major has no release yet, so the previous pin falls back
-     * to the floor: both then name a version nobody has published, and the templates
-     * gate, set not to skip a baseline it cannot resolve, fails until 3.0.0 is on Central.
-     * Pinning across the boundary instead would fail it on every break the major is
-     * allowed to make. Either way, opening a major means deciding how the gate runs for
-     * that cycle; a gate that went quiet by itself at the boundary would go just as
-     * quiet if a pin broke for any other reason.</p>
+     * <p>A major with no release of its own — the cycle that opens it, and its own release
+     * commit — has nothing in-major to diff against. The pins then name the previous
+     * major's floor and its last release, and {@code japicmp.break.binary} is
+     * {@code false}: those diffs are reported rather than enforced, because a major is
+     * allowed to break. All three flip back on the first post-release bump, once the new
+     * major's first release is published and dated in the CHANGELOG.</p>
+     *
+     * <p>In both states every pin stays <em>strictly older</em> than the working version,
+     * which is what stops a build from checking itself. Measured on a simulated 3.0.0 cut
+     * with both pins at 3.0.0: japicmp resolved the module's own artifact and reported "No
+     * incompatible changes found while checking backward compatibility of version 3.0.0
+     * with the previous version 3.0.0" — from the reactor, and from a local repository the
+     * release had just been installed into, alike.</p>
      */
     @Test
     void japicmpBaselinesTrackTheWorkingMajorAndTheLatestRelease() throws Exception {
@@ -263,21 +265,40 @@ class VersionConsistencyGuardTest {
         for (String pom : TWO_BASELINE_JAPICMP_POMS) {
             Path path = PROJECT_ROOT.resolve(pom);
             String working = effectiveVersion(path);
-            String floor = releaseLineOf(working).split("\\.")[0] + ".0.0";
+            Optional<String> inMajor = newestFinalReleaseInMajorBefore(changelog, working);
+            String previous = inMajor.orElseGet(() -> newestFinalReleaseOlderThan(changelog, working)
+                    .orElseThrow(() -> new AssertionError(
+                            "CHANGELOG.md names no dated final release older than " + working + ", so "
+                                    + pom + " has no published release to use as a baseline")));
+            String floor = segment(previous, 0) + ".0.0";
+            String breakBinary = inMajor.isPresent() ? "true" : "false";
 
             assertThat(pinnedVersionProperty(path, "japicmp.baseline.floor"))
-                    .describedAs("%s japicmp.baseline.floor must be the first release of the working "
-                            + "major (%s for working version %s)", pom, floor, working)
+                    .describedAs("%s japicmp.baseline.floor must be %s: the first release of the major "
+                            + "the working version (%s) belongs to, or of the previous major while this "
+                            + "one has no release of its own", pom, floor, working)
                     .isEqualTo(floor);
-
-            String expected = newestFinalReleaseInMajorBefore(changelog, working).orElse(floor);
             assertThat(pinnedVersionProperty(path, "japicmp.baseline.previous"))
-                    .describedAs("%s japicmp.baseline.previous must be the newest dated CHANGELOG release "
-                            + "of the working major older than the working version %s (the floor itself "
-                            + "while the major has none) — cut-release.ps1 -PostReleaseOnly moves it to "
-                            + "the version just published; a stale pin leaves everything added in that "
-                            + "release unprotected by the japicmp gate", pom, working)
-                    .isEqualTo(expected);
+                    .describedAs("%s japicmp.baseline.previous must be %s: the newest dated CHANGELOG "
+                            + "release below the working version %s — cut-release.ps1 -PostReleaseOnly "
+                            + "moves it to the version just published; a stale pin leaves everything "
+                            + "added in that release unprotected by the japicmp gate", pom, previous, working)
+                    .isEqualTo(previous);
+            assertThat(pinnedVersionProperty(path, "japicmp.break.binary"))
+                    .describedAs("%s japicmp.break.binary must be %s: the gate breaks the build inside a "
+                            + "major, and only reports while the major that opens has no release of its "
+                            + "own to diff against", pom, breakBinary)
+                    .isEqualTo(breakBinary);
+
+            for (String pin : List.of("japicmp.baseline.floor", "japicmp.baseline.previous")) {
+                String pinned = pinnedVersionProperty(path, pin);
+                assertThat(compareReleases(pinned, releaseLineOf(working)))
+                        .describedAs("%s %s is %s, the version being built (%s). japicmp resolves such a "
+                                + "pin to this build's own artifact — from the reactor as readily as from "
+                                + "the local repository — and reports no differences, so the release would "
+                                + "check itself and pass", pom, pin, pinned, working)
+                        .isNegative();
+            }
         }
     }
 
@@ -301,6 +322,26 @@ class VersionConsistencyGuardTest {
             String candidate = released.group(1);
             if (segment(candidate, 0).equals(segment(working, 0))
                     && compareReleases(candidate, working) < 0
+                    && (newest == null || compareReleases(candidate, newest) > 0)) {
+                newest = candidate;
+            }
+        }
+        return Optional.ofNullable(newest);
+    }
+
+    /**
+     * The newest dated final release in {@code changelog} strictly older than
+     * {@code version}, whatever its major; empty when there is none. This is what a major
+     * with no release of its own falls back to: the previous major's last release. Never
+     * the working version itself, which japicmp would resolve to this build's own artifact.
+     */
+    static Optional<String> newestFinalReleaseOlderThan(String changelog, String version) {
+        String working = releaseLineOf(version);
+        Matcher released = DATED_FINAL_RELEASE.matcher(changelog);
+        String newest = null;
+        while (released.find()) {
+            String candidate = released.group(1);
+            if (compareReleases(candidate, working) < 0
                     && (newest == null || compareReleases(candidate, newest) > 0)) {
                 newest = candidate;
             }

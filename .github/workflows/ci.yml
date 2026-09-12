@@ -515,6 +515,15 @@ jobs:
       - name: Install graph-compose-emoji (resolved at test scope by core)
         run: ./mvnw -B -ntp -f emoji/pom.xml -DskipTests install
 
+      - name: Drop cached GraphCompose artifacts before the gate resolves
+        # The gate must diff against the PUBLISHED baselines. Anything of ours
+        # already in the runner's cached repository could stand in for one, so
+        # the pinned coordinates are fetched from Central for this run. The
+        # modules under test come from the reactor, never from the repository.
+        run: |
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-core
+          rm -rf ~/.m2/repository/io/github/demchaav/graph-compose-templates
+
       - name: Compare public API against baseline
         # Each module's `japicmp` profile resolves the published releases its
         # pom pins from Maven Central and diffs them against the freshly-built

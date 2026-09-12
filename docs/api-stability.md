@@ -244,16 +244,31 @@ profile during `verify` on the engine module (`graph-compose-core`) and on
   caught only where the gate fails on it — `graph-compose-templates`, as the next point
   says. `BinaryCompatibilityGateGuardTest` holds the executions, their settings, the job's
   trigger and those checks in place.
-- **Activity window:** the gate compares the working version against the baseline, so
-  it is a no-op only when the two are equal — the `2.0.0` release commit itself — and
-  active for every `-SNAPSHOT` development cycle across the 2.x line that follows. A
-  baseline `graph-compose-templates` cannot resolve fails the build rather than skipping
-  its diff (japicmp's default, which the engine gate still runs with, skips it with a
-  warning), so the first cycle of a new major, whose floor is unpublished until its
-  release, needs an explicit decision about how that gate runs.
-
-During the 2.0 major transition the gate ran report-only (the major intentionally
-broke 1.x binary compatibility); it enforces from the `2.0.0` baseline forward.
+- **Where a baseline comes from:** a published release, never this build. japicmp resolves
+  a pin equal to the module's own version to the artifact the build just produced —
+  measured on a simulated `3.0.0` cut, where it reported *"No incompatible changes found
+  while checking backward compatibility of version 3.0.0 with the previous version
+  3.0.0"*, from the reactor and from a local repository the release had been installed
+  into alike. So both pins are held **strictly older** than the working version
+  (`VersionConsistencyGuardTest`), every path drops our cached artifacts from the local
+  repository before it resolves, and the publish workflow runs the gate *before* the
+  `install` that seeds that repository with the release being published.
+- **Activity window:** active for every `-SNAPSHOT` cycle and every release commit of a
+  major that has a published release of its own; a `graph-compose-templates` baseline that
+  cannot be resolved fails the build rather than skipping its diff (japicmp's default,
+  which the engine gate still runs with, skips it with a warning).
+- **Opening a major:** while major `X` has no release of its own — the whole
+  `X.0.0-SNAPSHOT` cycle *and* the `X.0.0` release commit — there is nothing in-major to
+  diff against. `graph-compose-templates` then pins the **previous** major's floor and its
+  last release, and `japicmp.break.binary` is `false`: both diffs run and are reported, and
+  a break does not fail the build, because a major is allowed to break. That is the posture
+  the 2.0 transition ran under. The `X.0.0` publish workflow therefore checks those same two
+  diffs, report-only, against releases already on Central — it never waits for `X.0.0`
+  itself and never compares `X.0.0` with itself. The pins become `X.0.0` and
+  `japicmp.break.binary` returns to `true` at the first `-PostReleaseOnly` after `X.0.0` is
+  published and dated in the CHANGELOG, so strict same-major enforcement resumes with the
+  first `X.0.1-SNAPSHOT` build. `VersionConsistencyGuardTest` derives all three values from
+  the CHANGELOG and fails the build until the poms match them.
 
 ---
 

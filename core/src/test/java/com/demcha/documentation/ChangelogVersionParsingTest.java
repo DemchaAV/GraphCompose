@@ -289,6 +289,30 @@ class ChangelogVersionParsingTest {
                 "## v2.02.0 — 2026-08-15\n## v2.1.0 — 2026-07-01\n", "2.3.0-SNAPSHOT")).contains("2.02.0");
     }
 
+    // ── What a major with no release of its own falls back to ──────
+
+    @Test
+    void openingAMajorFallsBackToTheLastReleaseOfThePreviousOne() {
+        // 3.0.0-SNAPSHOT and the 3.0.0 release commit have no in-major release to diff
+        // against, so the pins name the previous major's last release and its floor.
+        assertThat(previousReleaseFor("3.0.0-SNAPSHOT")).isEmpty();
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseOlderThan(RELEASES, "3.0.0-SNAPSHOT"))
+                .contains("2.2.0");
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseOlderThan(RELEASES, "3.0.0"))
+                .contains("2.2.0");
+    }
+
+    @Test
+    void theFallbackNeverNamesTheVersionBeingBuilt() {
+        // A pin equal to the working version resolves the module's own artifact, so the
+        // build compares itself and passes. Even with 3.0.0 dated in the log, the
+        // fallback for a 3.0.0 build stays on the previous major.
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseOlderThan(
+                RELEASES + "\n## v3.0.0 — 2026-10-01\n", "3.0.0")).contains("2.2.0");
+        assertThat(VersionConsistencyGuardTest.newestFinalReleaseOlderThan(
+                "## v2.0.0 — 2026-07-01\n", "2.0.0")).isEmpty();
+    }
+
     private static Optional<String> previousReleaseFor(String pomVersion) {
         return VersionConsistencyGuardTest.newestFinalReleaseInMajorBefore(RELEASES, pomVersion);
     }

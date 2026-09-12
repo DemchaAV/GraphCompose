@@ -1641,11 +1641,24 @@ try {
             $japicmpReports = @('core/target/japicmp/japicmp-against-baseline.xml',
                 'templates/target/japicmp/japicmp-against-major-floor.xml',
                 'templates/target/japicmp/japicmp-against-previous-release.xml')
+            # Step 4 installed the just-bumped version into the local repository, so a
+            # baseline is dropped from there before the gate resolves it: the diff must
+            # be against the release on Central, never against what this cut built.
+            $corePomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'core/pom.xml'))
+            $templatesPomText = [System.IO.File]::ReadAllText((Join-Path $repoRoot 'templates/pom.xml'))
+            $japicmpBaselines = @(
+                'graph-compose-core/' + [regex]::Match($corePomText, '<japicmp\.baseline>([^<]+)<').Groups[1].Value,
+                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.floor>([^<]+)<').Groups[1].Value,
+                'graph-compose-templates/' + [regex]::Match($templatesPomText, '<japicmp\.baseline\.previous>([^<]+)<').Groups[1].Value)
             if ($DryRun) {
                 Write-Host "    [DRY RUN] $mvnw $($japicmpArgs -join ' ')" -ForegroundColor Yellow
             } else {
                 foreach ($report in $japicmpReports) {
                     Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $repoRoot $report)
+                }
+                foreach ($baseline in $japicmpBaselines) {
+                    $cached = Join-Path $env:USERPROFILE ('.m2/repository/io/github/demchaav/' + $baseline)
+                    Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $cached
                 }
                 & $mvnw @japicmpArgs 2>&1 | ForEach-Object {
                     if ($_ -match 'BUILD SUCCESS|BUILD FAILURE|ERROR|incompatib') {

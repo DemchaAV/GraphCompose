@@ -76,13 +76,21 @@
 
         <!-- Binary-compatibility baselines for the japicmp profile below: the floor of
              the current major and the latest release, each diffed in its own execution
-             (why both: docs/api-stability.md, Binary-compatibility enforcement).
+             (why both, and what runs while a new major has no release of its own:
+             docs/api-stability.md, Binary-compatibility enforcement).
              cut-release.ps1 -PostReleaseOnly moves the previous pin after each release;
-             VersionConsistencyGuardTest derives both pins and holds japicmp.version to
-             the engine pom's. -->
+             VersionConsistencyGuardTest derives both pins and japicmp.break.binary from
+             the working version and the CHANGELOG, and holds japicmp.version to the
+             engine pom's. Both pins name a published release STRICTLY OLDER than the
+             working version, so an artifact this build produces can never stand in for
+             a baseline. -->
         <japicmp.version>0.26.2</japicmp.version>
         <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>
         <japicmp.baseline.previous>2.3.0</japicmp.baseline.previous>
+        <!-- True while the working major has a published release of its own. False only
+             during the cycle that opens a major, where the diff against the previous
+             major is a report: a major is allowed to break. -->
+        <japicmp.break.binary>true</japicmp.break.binary>
     </properties>
 
     <dependencies>
@@ -338,7 +346,7 @@
                             </newVersion>
                             <parameter>
                                 <onlyModified>true</onlyModified>
-                                <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                                <breakBuildOnBinaryIncompatibleModifications>${japicmp.break.binary}</breakBuildOnBinaryIncompatibleModifications>
                                 <breakBuildOnSourceIncompatibleModifications>false</breakBuildOnSourceIncompatibleModifications>
                                 <includeSynthetic>false</includeSynthetic>
                                 <reportOnlyFilename>true</reportOnlyFilename>

@@ -35,9 +35,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * their own proof: each ends by checking that every execution left its XML report. An
  * execution that does not run — switched off, unbound, or not selected — never writes
  * one. A baseline japicmp cannot resolve is the exception: the plugin still writes a
- * report for it, which is why the templates gate must fail on that case instead. This
- * class holds those checks in place, together with the switches that would bypass them
- * before they run.</p>
+ * report for it, which is why the templates gate must fail on that case instead.</p>
+ *
+ * <p>The other half is where the baseline comes from. japicmp resolves a pin that equals
+ * the module's own version to the artifact this build just produced — measured, from the
+ * reactor and from the local repository alike — so the pins are held strictly older than
+ * the working version by {@code VersionConsistencyGuardTest}, every path drops our
+ * cached artifacts before it resolves, and the publish workflow runs the gate before it
+ * installs the release it is about to publish.</p>
  *
  * <p>The gated modules are discovered, as every module pom that declares a
  * {@code japicmp} profile, so a module joining the gate is held to the same wiring the
@@ -61,8 +66,15 @@ class BinaryCompatibilityGateGuardTest {
     /** The property japicmp reads its skip switch from. */
     private static final String SKIP_PROPERTY = "japicmp.skip";
 
+    /** The property the templates gate reads its break-the-build setting from. */
+    private static final String BREAK_PROPERTY = "${japicmp.break.binary}";
+
     /** How {@code cut-release.ps1} Step 5b runs the gate. */
     private static final String RELEASE_GATE_RUN = "& $mvnw @japicmpArgs";
+
+    /** The artifacts a gate path must drop from the local repository before it resolves. */
+    private static final List<String> CACHED_ARTIFACTS =
+            List.of("graph-compose-core", "graph-compose-templates");
 
     /**
      * Each execution the gate relies on, per pom, with the baseline property its
@@ -76,6 +88,10 @@ class BinaryCompatibilityGateGuardTest {
 
     /** A {@code run:} line that invokes the gate. */
     private static final Pattern GATE_RUN = Pattern.compile("(?m)^\\s+run: (.*-P japicmp.*)$");
+
+    /** The publish workflow's install step, which seeds the repository with this release. */
+    private static final Pattern PUBLISH_INSTALL =
+            Pattern.compile("(?m)^\\s+run: \\./mvnw .*clean install\\s*$");
 
     /** A job-level {@code if:} — four-space indent, first line only. */
     private static final Pattern JOB_IF = Pattern.compile("(?m)^    if: (.*)$");
@@ -106,6 +122,10 @@ class BinaryCompatibilityGateGuardTest {
     /** Step 5b's loop that throws when a report is missing after the gate ran. */
     private static final Pattern REPORTS_CHECKED = Pattern.compile(
             "(?m)^\\s*foreach \\(\\$report in \\$japicmpReports\\) \\{\\s*if \\(-not \\(Test-Path\\b[^\\n]*\\n\\s*throw\\b");
+
+    /** Step 5b's loop dropping the pinned baselines from the local repository. */
+    private static final Pattern BASELINES_DROPPED = Pattern.compile(
+            "(?m)^\\s*foreach \\(\\$baseline in \\$japicmpBaselines\\) \\{[^\\n]*\\n[^\\n]*\\n\\s*Remove-Item\\b");
 
     /**
      * An execution that is gone, unbound from {@code verify}, or pointed at another
@@ -141,10 +161,11 @@ class BinaryCompatibilityGateGuardTest {
             }
 
             assertThat(descendantTexts(plugin, "breakBuildOnBinaryIncompatibleModifications"))
-                    .describedAs("%s: the japicmp gate must fail the build on a binary break, "
-                            + "everywhere it is configured — reporting one protects nothing", where)
+                    .describedAs("%s: the japicmp gate must fail the build on a binary break — either "
+                            + "always (true) or through %s, whose value VersionConsistencyGuardTest "
+                            + "derives from the CHANGELOG. Reporting one protects nothing", where, BREAK_PROPERTY)
                     .isNotEmpty()
-                    .containsOnly("true");
+                    .allMatch(value -> value.equals("true") || value.equals(BREAK_PROPERTY));
             assertThat(descendantTexts(plugin, "skip"))
                     .describedAs("%s: the japicmp gate must carry no skip switch", where)
                     .isEmpty();
@@ -229,6 +250,65 @@ class BinaryCompatibilityGateGuardTest {
                             + "execution that does not run fails nothing", relative(file), SKIP_PROPERTY)
                     .doesNotContain(SKIP_PROPERTY);
         }
+    }
+
+    /**
+     * No path lets an artifact of ours stand in for a published baseline.
+     *
+     * <p>japicmp resolves a pin equal to the module's own version to the artifact the
+     * build just produced, from the reactor as readily as from the local repository, and
+     * then reports no differences. {@code VersionConsistencyGuardTest} keeps the pins
+     * strictly older than the working version, which is what makes that impossible; these
+     * are the second line. Every path drops our cached artifacts before it resolves, so a
+     * baseline comes from Central rather than from a copy sitting in the repository, and
+     * the publish workflow runs the gate <em>before</em> the install that seeds the
+     * repository with the release it is about to publish.</p>
+     */
+    @Test
+    void noPathLetsThisBuildSupplyItsOwnBaseline() throws Exception {
+        Map<String, String> jobs = CiGateCoverageGuardTest.jobBlocks(Files.readString(CI));
+        String job = jobs.get(PR_JOB);
+        assertThat(job).describedAs("ci.yml has no '%s' job", PR_JOB).isNotNull();
+        String publish = read(PUBLISH);
+        String script = read(RELEASE_SCRIPT);
+
+        for (String artifact : CACHED_ARTIFACTS) {
+            assertThat(dropsCached(artifact).matcher(job).find())
+                    .describedAs("ci.yml job '%s' must drop the cached %s before the gate resolves its "
+                            + "baselines, so a copy in the repository cannot stand in for the published "
+                            + "release", PR_JOB, artifact)
+                    .isTrue();
+            assertThat(dropsCached(artifact).matcher(publish).find())
+                    .describedAs("publish.yml must drop the cached %s before the gate resolves its "
+                            + "baselines", artifact)
+                    .isTrue();
+        }
+
+        int drops = firstIndexOf(job, dropsCached(CACHED_ARTIFACTS.get(0)));
+        int diffs = firstIndexOf(job, GATE_RUN);
+        assertThat(drops)
+                .describedAs("ci.yml job '%s' must drop the cached artifacts before it runs the gate, "
+                        + "not after", PR_JOB)
+                .isLessThan(diffs);
+
+        int publishDrops = firstIndexOf(publish, dropsCached(CACHED_ARTIFACTS.get(0)));
+        int publishDiffs = firstIndexOf(publish, GATE_RUN);
+        int publishInstalls = firstIndexOf(publish, PUBLISH_INSTALL);
+        assertThat(publishDiffs)
+                .describedAs("publish.yml must run the japicmp gate BEFORE `clean install`: that install "
+                        + "puts the release being published into the local repository, where a pin equal "
+                        + "to it would resolve, and the gate would compare the release with itself")
+                .isGreaterThan(publishDrops)
+                .isLessThan(publishInstalls);
+
+        int scriptDrops = firstIndexOf(script, BASELINES_DROPPED);
+        int scriptRuns = script.indexOf(RELEASE_GATE_RUN);
+        assertThat(scriptDrops)
+                .describedAs("cut-release.ps1 Step 5b must drop the pinned baselines from the local "
+                        + "repository before it runs the gate — Step 4 installed the just-bumped version "
+                        + "there")
+                .isNotNegative()
+                .isLessThan(scriptRuns);
     }
 
     /**
@@ -358,7 +438,7 @@ class BinaryCompatibilityGateGuardTest {
                     .contains(":" + artifact);
             assertThat(publishGates)
                     .describedAs("publish.yml must diff %s on the tagged commit before it deploys", artifact)
-                    .anyMatch(run -> run.contains("-f " + module + "/pom.xml"));
+                    .anyMatch(run -> run.contains(":" + artifact));
         }
     }
 
@@ -377,6 +457,11 @@ class BinaryCompatibilityGateGuardTest {
     /** An uncommented shell line that fails unless {@code report} exists and is not empty. */
     private static Pattern reportCheck(String report) {
         return Pattern.compile("(?m)^\\s+test -s " + Pattern.quote(report) + "\\s*$");
+    }
+
+    /** An uncommented shell line that deletes our cached {@code artifact} from the local repository. */
+    private static Pattern dropsCached(String artifact) {
+        return Pattern.compile("(?m)^\\s+rm -rf [^\\n]*/io/github/demchaav/" + Pattern.quote(artifact) + "\\s*$");
     }
 
     /** Every module directory whose pom declares a {@code japicmp} profile, sorted. */

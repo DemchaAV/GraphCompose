@@ -573,9 +573,15 @@ follow semantic versioning; release dates are ISO 8601.
   cannot resolve fails the build; japicmp's default would skip that diff with a warning and
   pass. Each path that runs the gate then checks that every execution left its report, since
   one that does not run — switched off, unbound, or not selected — writes none and fails
-  nothing. `VersionConsistencyGuardTest` holds the
-  pins to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the executions, their
-  settings, the trigger and those report checks in place.
+  nothing. A pin may never name the version being built: japicmp resolves such a pin to the
+  artifact the build just produced and reports no differences, so both pins stay strictly
+  older than the working version, every path drops our cached artifacts before it resolves,
+  and the publish workflow runs the gate before the `install` that seeds the repository.
+  While a major has no release of its own, the pins name the previous major's floor and last
+  release and `japicmp.break.binary` is `false` — those diffs are reported, not enforced —
+  until the first post-release bump after `X.0.0` ships. `VersionConsistencyGuardTest` holds
+  the pins and that switch to the CHANGELOG, and `BinaryCompatibilityGateGuardTest` holds the
+  executions, their settings, the trigger, the report checks and the publish ordering in place.
 
 ### Documentation
 

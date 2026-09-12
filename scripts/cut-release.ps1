@@ -256,6 +256,40 @@ function Update-JapicmpPreviousBaseline($pomPath, $releasedVersion) {
     return $true
 }
 
+function Update-JapicmpMajorBaseline($pomPath, $releasedVersion) {
+    # The release that OPENS a major (X.0.0) is the first artifact the new major can
+    # be diffed against, so it becomes the floor and the gate goes back to breaking
+    # the build. Until it shipped, both pins named the previous major and
+    # japicmp.break.binary was false (docs/api-stability.md, Opening a major). Only an
+    # X.0.0 release moves them, and only a pom that carries the properties.
+    if ($releasedVersion -notmatch '^\d+\.0\.0$') {
+        return $false
+    }
+    if (-not (Test-Path $pomPath)) {
+        Note "skip (no file): $pomPath"
+        return $false
+    }
+    $content = [System.IO.File]::ReadAllText($pomPath)
+    $floorRegex = [regex]'<japicmp\.baseline\.floor>[\w\.\-]+</japicmp\.baseline\.floor>'
+    $breakRegex = [regex]'<japicmp\.break\.binary>[\w]+</japicmp\.break\.binary>'
+    if (-not $floorRegex.IsMatch($content)) {
+        return $false
+    }
+    $updated = $floorRegex.Replace($content, '<japicmp.baseline.floor>' + $releasedVersion + '</japicmp.baseline.floor>', 1)
+    $updated = $breakRegex.Replace($updated, '<japicmp.break.binary>true</japicmp.break.binary>', 1)
+    if ($updated -eq $content) {
+        Note "japicmp floor already $releasedVersion in $pomPath"
+        return $false
+    }
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] japicmp floor: $pomPath to $releasedVersion, break.binary to true" -ForegroundColor Yellow
+        return $true
+    }
+    [System.IO.File]::WriteAllText($pomPath, $updated)
+    Note "japicmp floor: $pomPath now $releasedVersion, break.binary true"
+    return $true
+}
+
 function Update-AssetVersion($pomPath, $newVersion) {
     # Moves <graphcompose.examples.assetVersion> — the version the committed previews
     # under assets/readme were rendered at. CommittedAssetDriftTest renders at it to
@@ -1277,7 +1311,11 @@ if ($PostReleaseOnly) {
             # pom that carries the pin is touched (graph-compose-templates today).
             Step "3a" "Move the japicmp previous-release baseline to $currentVersion"
             foreach ($pom in @('core/pom.xml', 'templates/pom.xml')) {
-                if (Update-JapicmpPreviousBaseline (Join-Path $repoRoot $pom) $currentVersion) {
+                $japicmpPom = Join-Path $repoRoot $pom
+                $movedPrevious = Update-JapicmpPreviousBaseline $japicmpPom $currentVersion
+                # An X.0.0 release also ends the bootstrap: floor onto itself, break switch on.
+                $openedMajor = Update-JapicmpMajorBaseline $japicmpPom $currentVersion
+                if ($movedPrevious -or $openedMajor) {
                     $japicmpMoved = $true
                     if ($bumpedPoms -notcontains $pom) { $bumpedPoms += $pom }
                 }

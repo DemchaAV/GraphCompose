@@ -364,12 +364,14 @@ jobs:
           # AST like the checks above, so the code under test is the code that ships.
           $path = (Resolve-Path scripts/cut-release.ps1).Path
           $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+          $want = @('Update-JapicmpPreviousBaseline', 'Update-JapicmpMajorBaseline')
           $fn = $ast.FindAll({
               param($n)
-              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Update-JapicmpPreviousBaseline'
+              $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $want -contains $n.Name
             }, $true)
-          if (-not $fn) { throw 'cut-release.ps1 no longer defines Update-JapicmpPreviousBaseline' }
-          Invoke-Expression $fn[0].Extent.Text
+          $missing = $want | Where-Object { $_ -notin ($fn | ForEach-Object { $_.Name }) }
+          if ($missing) { throw "cut-release.ps1 no longer defines: $($missing -join ', ')" }
+          Invoke-Expression (($fn | ForEach-Object { $_.Extent.Text }) -join "`n")
           function Note($m) { Write-Host "    $m" }
           $DryRun = $false
 
@@ -391,6 +393,7 @@ jobs:
               '  <properties>',
               '    <japicmp.baseline.floor>2.0.0</japicmp.baseline.floor>',
               "    <japicmp.baseline.previous>$previous</japicmp.baseline.previous>",
+              '    <japicmp.break.binary>false</japicmp.break.binary>',
               '  </properties>',
               '</project>'
             ) -join "`n")
@@ -427,4 +430,19 @@ jobs:
                                        '<japicmp.baseline.previous>9.9.9</japicmp.baseline.previous>')
           if ((Get-Content $real -Raw) -ne $expected) { throw 'the real templates pom: the move changed more than the pin' }
 
-          Write-Host 'japicmp baseline: previous moves, floor stays, idempotent, the real pom moves, and the cut calls it.'
+          # Opening a major is the one release that moves the floor and turns the break
+          # switch back on; every other release leaves both alone (docs/api-stability.md,
+          # Opening a major). Until that release ships, the pins name the previous major.
+          $bootstrap = New-Pom '2.4.0'
+          if (-not (Update-JapicmpMajorBaseline $bootstrap '3.0.0')) { throw 'the X.0.0 release did not move the floor' }
+          $opened = Get-Content $bootstrap -Raw
+          if ($opened -notmatch '<japicmp\.baseline\.floor>3\.0\.0</japicmp\.baseline\.floor>') {
+            throw "the floor did not move onto the release that opened the major:`n$opened"
+          }
+          if ($opened -notmatch '<japicmp\.break\.binary>true</japicmp\.break\.binary>') {
+            throw "the break switch did not return to true:`n$opened"
+          }
+          if (Update-JapicmpMajorBaseline $bootstrap '3.0.0') { throw 'a second major move reported a change' }
+          if (Update-JapicmpMajorBaseline (New-Pom '2.4.0') '3.0.1') { throw 'a patch release must not move the floor' }
+
+          Write-Host 'japicmp baseline: previous moves, floor stays except at X.0.0, idempotent, the real pom moves, and the cut calls both.'

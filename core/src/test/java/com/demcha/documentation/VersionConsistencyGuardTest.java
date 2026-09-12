@@ -290,13 +290,38 @@ class VersionConsistencyGuardTest {
                             + "own to diff against", pom, breakBinary)
                     .isEqualTo(breakBinary);
 
-            for (String pin : List.of("japicmp.baseline.floor", "japicmp.baseline.previous")) {
+        }
+    }
+
+    /** Every japicmp baseline pin, per gated pom. The engine pom carries a single one. */
+    private static final Map<String, List<String>> JAPICMP_BASELINE_PINS = Map.of(
+            "core/pom.xml", List.of("japicmp.baseline"),
+            "templates/pom.xml", List.of("japicmp.baseline.floor", "japicmp.baseline.previous"));
+
+    /**
+     * No japicmp baseline names the version being built.
+     *
+     * <p>japicmp resolves such a pin to the artifact this build just produced — from the
+     * reactor as readily as from the local repository — and reports no differences:
+     * measured on a simulated 3.0.0 cut, where it announced "No incompatible changes found
+     * while checking backward compatibility of version 3.0.0 with the previous version
+     * 3.0.0" and passed, with the same jar as old and new archive. A gate comparing a
+     * release with itself protects nothing, and nothing else in the build can tell that
+     * apart from a real green, so the rule lives here rather than in a comment: in every
+     * gated pom, every pin names a release strictly older than the working version.</p>
+     */
+    @Test
+    void noJapicmpBaselineNamesTheVersionBeingBuilt() throws Exception {
+        for (Map.Entry<String, List<String>> pom : JAPICMP_BASELINE_PINS.entrySet()) {
+            Path path = PROJECT_ROOT.resolve(pom.getKey());
+            String working = releaseLineOf(effectiveVersion(path));
+            for (String pin : pom.getValue()) {
                 String pinned = pinnedVersionProperty(path, pin);
-                assertThat(compareReleases(pinned, releaseLineOf(working)))
-                        .describedAs("%s %s is %s, the version being built (%s). japicmp resolves such a "
-                                + "pin to this build's own artifact — from the reactor as readily as from "
-                                + "the local repository — and reports no differences, so the release would "
-                                + "check itself and pass", pom, pin, pinned, working)
+                assertThat(compareReleases(pinned, working))
+                        .describedAs("%s %s is %s and the version being built is %s. japicmp resolves a "
+                                + "baseline equal to it to this build's own artifact and reports no "
+                                + "differences, so the gate would pass having compared the release with "
+                                + "itself", pom.getKey(), pin, pinned, working)
                         .isNegative();
             }
         }

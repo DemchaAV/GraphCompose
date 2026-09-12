@@ -1936,26 +1936,26 @@
   }, {
     "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
     "entityName" : "EducationRail",
-    "entityKind" : "SectionNode",
+    "entityKind" : "LayerStackNode",
     "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]",
     "childIndex" : 2,
     "depth" : 6,
     "layer" : 6,
-    "computedX" : 20.6,
+    "computedX" : 17.8,
     "computedY" : 118.054,
-    "placementX" : 20.6,
+    "placementX" : 17.8,
     "placementY" : 118.054,
-    "placementWidth" : 104.656,
+    "placementWidth" : 107.456,
     "placementHeight" : 73.68,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 104.656,
+    "contentWidth" : 107.456,
     "contentHeight" : 73.68,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 2.8
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1964,22 +1964,202 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]",
-    "entityName" : "EducationHead_0",
-    "entityKind" : "ShapeContainerNode",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]",
+    "entityName" : "EducationRailHolder",
+    "entityKind" : "SectionNode",
     "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
     "childIndex" : 0,
     "depth" : 7,
     "layer" : 7,
-    "computedX" : 20.6,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 73.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 73.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.65
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 73.68,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 73.68,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 18.45,
+    "computedY" : 149.394,
+    "placementX" : 18.45,
+    "placementY" : 149.394,
+    "placementWidth" : 106.806,
+    "placementHeight" : 42.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 42.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 18.45,
+    "computedY" : 149.394,
+    "placementX" : 18.45,
+    "placementY" : 149.394,
+    "placementWidth" : 106.806,
+    "placementHeight" : 42.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 42.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 11.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 18.45,
+    "computedY" : 160.394,
+    "placementX" : 18.45,
+    "placementY" : 160.394,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 18.45,
+    "computedY" : 160.394,
+    "placementX" : 18.45,
+    "placementY" : 160.394,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 18.45,
     "computedY" : 182.434,
-    "placementX" : 20.6,
+    "placementX" : 18.45,
     "placementY" : 182.434,
-    "placementWidth" : 104.656,
+    "placementWidth" : 4.3,
     "placementHeight" : 9.3,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 104.656,
+    "contentWidth" : 4.3,
     "contentHeight" : 9.3,
     "margin" : {
       "top" : 0.0,
@@ -1994,53 +2174,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]/EducationRailMaskAboveFirstMarker[0]",
-    "entityName" : "EducationRailMaskAboveFirstMarker",
-    "entityKind" : "ShapeNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
     "childIndex" : 0,
-    "depth" : 8,
-    "layer" : 8,
-    "computedX" : 20.1,
-    "computedY" : 189.234,
-    "placementX" : 20.1,
-    "placementY" : 189.234,
-    "placementWidth" : 1.55,
-    "placementHeight" : 2.5,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 1.55,
-    "contentHeight" : 2.5,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]/EducationRailFromFirstMarker[1]",
-    "entityName" : "EducationRailFromFirstMarker",
-    "entityKind" : "ShapeNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]",
-    "childIndex" : 1,
-    "depth" : 8,
-    "layer" : 8,
-    "computedX" : 20.6,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 18.45,
     "computedY" : 182.434,
-    "placementX" : 20.6,
+    "placementX" : 18.45,
     "placementY" : 182.434,
-    "placementWidth" : 0.55,
-    "placementHeight" : 2.5,
+    "placementWidth" : 4.3,
+    "placementHeight" : 9.3,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 0.55,
-    "contentHeight" : 2.5,
+    "contentWidth" : 4.3,
+    "contentHeight" : 9.3,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -2054,13 +2204,103 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]/EducationMarker_0[2]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 18.45,
+    "computedY" : 182.434,
+    "placementX" : 18.45,
+    "placementY" : 182.434,
+    "placementWidth" : 4.3,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 18.45,
+    "computedY" : 182.434,
+    "placementX" : 18.45,
+    "placementY" : 182.434,
+    "placementWidth" : 4.3,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 17,
+    "layer" : 17,
+    "computedX" : 18.45,
+    "computedY" : 184.934,
+    "placementX" : 18.45,
+    "placementY" : 184.934,
+    "placementWidth" : 4.3,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/EducationMarker_0[0]",
     "entityName" : "EducationMarker_0",
     "entityKind" : "EllipseNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]",
-    "childIndex" : 2,
-    "depth" : 8,
-    "layer" : 8,
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 18,
+    "layer" : 18,
     "computedX" : 18.45,
     "computedY" : 184.934,
     "placementX" : 18.45,
@@ -2072,6 +2312,36 @@
     "contentWidth" : 4.3,
     "contentHeight" : 4.3,
     "margin" : {
+      "top" : 2.5,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 33.6,
+    "computedY" : 160.394,
+    "placementX" : 33.6,
+    "placementY" : 160.394,
+    "placementWidth" : 91.656,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.656,
+    "contentHeight" : 31.34,
+    "margin" : {
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
@@ -2084,13 +2354,43 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]/EducationDegree_0[3]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]",
+    "entityName" : "EducationHead_0",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 33.6,
+    "computedY" : 182.434,
+    "placementX" : 33.6,
+    "placementY" : 182.434,
+    "placementWidth" : 91.656,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.656,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]/EducationDegree_0[0]",
     "entityName" : "EducationDegree_0",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_0[0]",
-    "childIndex" : 3,
-    "depth" : 8,
-    "layer" : 8,
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_0[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
     "computedX" : 33.6,
     "computedY" : 182.704,
     "placementX" : 33.6,
@@ -2114,13 +2414,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationInstitution_0[1]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationInstitution_0[1]",
     "entityName" : "EducationInstitution_0",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 1,
-    "depth" : 7,
-    "layer" : 7,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 33.6,
     "computedY" : 171.414,
     "placementX" : 33.6,
@@ -2135,7 +2435,7 @@
       "top" : 2.5,
       "right" : 0.0,
       "bottom" : 2.5,
-      "left" : 13.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -2144,13 +2444,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationDates_0[2]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationDates_0[2]",
     "entityName" : "EducationDates_0",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 2,
-    "depth" : 7,
-    "layer" : 7,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 33.6,
     "computedY" : 160.394,
     "placementX" : 33.6,
@@ -2164,8 +2464,8 @@
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
-      "bottom" : 11.0,
-      "left" : 13.0
+      "bottom" : 0.0,
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -2174,22 +2474,142 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_1[3]",
-    "entityName" : "EducationHead_1",
-    "entityKind" : "ShapeContainerNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
-    "childIndex" : 3,
-    "depth" : 7,
-    "layer" : 7,
-    "computedX" : 20.6,
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]",
+    "childIndex" : 1,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 18.45,
+    "computedY" : 118.054,
+    "placementX" : 18.45,
+    "placementY" : 118.054,
+    "placementWidth" : 106.806,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 106.806,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 18.45,
     "computedY" : 140.094,
-    "placementX" : 20.6,
+    "placementX" : 18.45,
     "placementY" : 140.094,
-    "placementWidth" : 104.656,
+    "placementWidth" : 4.3,
     "placementHeight" : 9.3,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 104.656,
+    "contentWidth" : 4.3,
     "contentHeight" : 9.3,
     "margin" : {
       "top" : 0.0,
@@ -2204,23 +2624,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_1[3]/EducationMarker_1[0]",
-    "entityName" : "EducationMarker_1",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_1[3]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
     "childIndex" : 0,
-    "depth" : 8,
-    "layer" : 8,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 18.45,
-    "computedY" : 142.594,
+    "computedY" : 140.094,
     "placementX" : 18.45,
-    "placementY" : 142.594,
+    "placementY" : 140.094,
     "placementWidth" : 4.3,
-    "placementHeight" : 4.3,
+    "placementHeight" : 9.3,
     "startPage" : 0,
     "endPage" : 0,
     "contentWidth" : 4.3,
-    "contentHeight" : 4.3,
+    "contentHeight" : 9.3,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -2234,13 +2654,193 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_1[3]/EducationDegree_1[1]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 18.45,
+    "computedY" : 140.094,
+    "placementX" : 18.45,
+    "placementY" : 140.094,
+    "placementWidth" : 4.3,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 18.45,
+    "computedY" : 140.094,
+    "placementX" : 18.45,
+    "placementY" : 140.094,
+    "placementWidth" : 4.3,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 17,
+    "layer" : 17,
+    "computedX" : 18.45,
+    "computedY" : 142.594,
+    "placementX" : 18.45,
+    "placementY" : 142.594,
+    "placementWidth" : 4.3,
+    "placementHeight" : 6.8,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 6.8,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/EducationMarker_1[0]",
+    "entityName" : "EducationMarker_1",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 18,
+    "layer" : 18,
+    "computedX" : 18.45,
+    "computedY" : 142.594,
+    "placementX" : 18.45,
+    "placementY" : 142.594,
+    "placementWidth" : 4.3,
+    "placementHeight" : 4.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 4.3,
+    "contentHeight" : 4.3,
+    "margin" : {
+      "top" : 2.5,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 33.6,
+    "computedY" : 118.054,
+    "placementX" : 33.6,
+    "placementY" : 118.054,
+    "placementWidth" : 91.656,
+    "placementHeight" : 31.34,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.656,
+    "contentHeight" : 31.34,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]",
+    "entityName" : "EducationHead_1",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 33.6,
+    "computedY" : 140.094,
+    "placementX" : 33.6,
+    "placementY" : 140.094,
+    "placementWidth" : 91.656,
+    "placementHeight" : 9.3,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 91.656,
+    "contentHeight" : 9.3,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]/EducationDegree_1[0]",
     "entityName" : "EducationDegree_1",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationHead_1[3]",
-    "childIndex" : 1,
-    "depth" : 8,
-    "layer" : 8,
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationHead_1[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
     "computedX" : 33.6,
     "computedY" : 140.364,
     "placementX" : 33.6,
@@ -2264,13 +2864,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationInstitution_1[4]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationInstitution_1[1]",
     "entityName" : "EducationInstitution_1",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
-    "childIndex" : 4,
-    "depth" : 7,
-    "layer" : 7,
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 1,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 33.6,
     "computedY" : 129.074,
     "placementX" : 33.6,
@@ -2285,7 +2885,7 @@
       "top" : 2.5,
       "right" : 0.0,
       "bottom" : 2.5,
-      "left" : 13.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -2294,13 +2894,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationDates_1[5]",
+    "path" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EducationDates_1[2]",
     "entityName" : "EducationDates_1",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]",
-    "childIndex" : 5,
-    "depth" : 7,
-    "layer" : 7,
+    "parentPath" : "ProfessionalSidebarCv[0]/PageGrid[0]/Sidebar[0]/SidebarBody[1]/Education[4]/EducationRail[2]/EducationRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 2,
+    "depth" : 14,
+    "layer" : 14,
     "computedX" : 33.6,
     "computedY" : 118.054,
     "placementX" : 33.6,
@@ -2315,7 +2915,7 @@
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 13.0
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,

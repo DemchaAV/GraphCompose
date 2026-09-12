@@ -5,6 +5,8 @@ import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
 import com.demcha.compose.document.dsl.ShapeBuilder;
 import com.demcha.compose.document.dsl.ShapeContainerBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.image.DocumentImageData;
 import com.demcha.compose.document.node.DocumentLinkOptions;
 import com.demcha.compose.document.node.DocumentNode;
@@ -63,7 +65,6 @@ import static com.demcha.compose.document.templates.cv.presets.ProfessionalSideb
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.MONOGRAM_TRACKING_EM;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.RATING_MUTED;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.RULE_MUTED;
-import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_BACKGROUND;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_BODY_TOP;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_INNER_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.ProfessionalSidebarStyles.SIDEBAR_PAD_X;
@@ -297,77 +298,96 @@ final class ProfessionalSidebarAside {
      * The education rail: a hairline down the left of the block with a dot
      * on each entry's first line.
      *
-     * <p>The rail is the section's left accent, which runs the full height of
-     * the block. The first entry masks the stretch above its dot and redraws
-     * it below, so the rail begins at the first marker instead of at the top
-     * of the block.</p>
+     * <p>The rail spans the entries, which is what {@code ENTRY_BOUNDS} means and what the
+     * block has always drawn. It used to be the section's left accent, and the first entry
+     * filled its own head band with the sidebar colour, masked the rail's protruding edge
+     * above its dot and redrew the rail below it, meaning to start the line at the first
+     * marker. Measured against the render, that never happened: an accent draws above the
+     * fill and above the mask, so the rail stayed visible for the 2.5pt above the first dot
+     * and the only thing the construction achieved was drawing that stretch below the dot
+     * twice. The mask and the redraw are gone; the rail is the timeline's and says what it
+     * does.</p>
+     *
+     * <p>Starting the line at the first marker while still running it to the foot of the
+     * entries is not something the extent vocabulary can say today — see the follow-up
+     * table in the integration plan.</p>
      */
     private static void renderEducation(SectionBuilder section, EntriesSection education) {
         sidebarHeading(section, education.title(), EDUCATION_HEADING_TO_BODY);
-        section.addSection("EducationRail", rail -> {
-            rail.spacing(0);
-            rail.margin(new DocumentInsets(0, 0, 0, EDUCATION_RAIL_X));
-            rail.accentLeft(RULE_MUTED, EDUCATION_RAIL_WIDTH);
+        SectionBuilder holder = new SectionBuilder();
+        holder.name("EducationRailHolder");
+        holder.spacing(0);
+        // The axis column centres the rail on itself, so the timeline starts half a dot left
+        // of the column the accent drew on and the line lands back on it.
+        holder.margin(new DocumentInsets(0, 0, 0,
+                EDUCATION_RAIL_X - EDUCATION_MARKER_DIAMETER / 2.0));
+        holder.addTimeline(timeline -> {
+            timeline.markerOnRail()
+                    .rail(rail -> rail
+                            .stroke(DocumentStroke.of(RULE_MUTED, EDUCATION_RAIL_WIDTH))
+                            .extent(TimelineRailExtent.ENTRY_BOUNDS))
+                    .axisWidth(EDUCATION_MARKER_DIAMETER)
+                    .markerGap(EDUCATION_TEXT_X - EDUCATION_MARKER_DIAMETER / 2.0)
+                    .gutter(0)
+                    .spacing(EDUCATION_ENTRY_GAP);
             List<CvEntry> entries = education.entries();
             for (int i = 0; i < entries.size(); i++) {
                 int index = i;
                 CvEntry entry = entries.get(i);
-                renderEducationHead(rail, entry, index);
-                rail.addParagraph(p -> p
-                        .name("EducationInstitution_" + index)
-                        .text(entry.subtitle())
-                        .textStyle(style(BODY_FONT, BODY_SIZE, TEXT_MUTED,
-                                DocumentTextDecoration.ITALIC))
-                        .margin(new DocumentInsets(
-                                EDUCATION_LINE_GAP, 0, EDUCATION_LINE_GAP, EDUCATION_TEXT_X)));
-                double entryGap = i + 1 < entries.size() ? EDUCATION_ENTRY_GAP : 0;
-                rail.addParagraph(p -> p
-                        .name("EducationDates_" + index)
-                        .text(entry.date())
-                        .textStyle(body())
-                        .margin(new DocumentInsets(0, 0, entryGap, EDUCATION_TEXT_X)));
+                timeline.entry(educationMarker(index), e -> e.content(body -> {
+                    body.spacing(0);
+                    renderEducationHead(body, entry, index);
+                    body.addParagraph(p -> p
+                            .name("EducationInstitution_" + index)
+                            .text(entry.subtitle())
+                            .textStyle(style(BODY_FONT, BODY_SIZE, TEXT_MUTED,
+                                    DocumentTextDecoration.ITALIC))
+                            .margin(new DocumentInsets(
+                                    EDUCATION_LINE_GAP, 0, EDUCATION_LINE_GAP, 0)));
+                    body.addParagraph(p -> p
+                            .name("EducationDates_" + index)
+                            .text(entry.date())
+                            .textStyle(body())
+                            .margin(DocumentInsets.zero()));
+                }));
             }
         });
+        DocumentNode educationRail = holder.build();
+        section.addLayerStack(stack -> stack
+                .name("EducationRail")
+                .layer(educationRail, LayerAlign.TOP_LEFT, 0));
+    }
+
+    /**
+     * The accent dot that marks a degree, in a box as tall as the head band it rides.
+     *
+     * <p>The dot used to be centred in that band by the container positioning it; a timeline
+     * top-aligns its marker, so the band height is declared here and the dot carries the half
+     * band above it. Same box, same centre, and the rail still runs through it.</p>
+     */
+    private static TimelineMarker educationMarker(int index) {
+        double halfBand = (ENTRY_HEAD_HEIGHT - EDUCATION_MARKER_DIAMETER) / 2.0;
+        return TimelineMarker.custom(EDUCATION_MARKER_DIAMETER, ENTRY_HEAD_HEIGHT,
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name("EducationMarker_" + index)
+                        .circle(EDUCATION_MARKER_DIAMETER)
+                        .fillColor(ACCENT_PRIMARY)
+                        .margin(new DocumentInsets(halfBand, 0, 0, 0))));
     }
 
     private static void renderEducationHead(SectionBuilder rail, CvEntry entry, int index) {
-        DocumentNode marker = new EllipseBuilder()
-                .name("EducationMarker_" + index)
-                .circle(EDUCATION_MARKER_DIAMETER)
-                .fillColor(ACCENT_PRIMARY)
-                .build();
         DocumentNode degree = paragraph("EducationDegree_" + index, entry.title(),
                 style(BODY_FONT, EDUCATION_DEGREE_SIZE, TEXT_PRIMARY,
                         DocumentTextDecoration.BOLD),
                 TextAlign.LEFT);
-        rail.addContainer(head -> {
-            head.name("EducationHead_" + index)
-                    .rectangle(SIDEBAR_INNER_WIDTH - EDUCATION_RAIL_X, ENTRY_HEAD_HEIGHT)
-                    .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE);
-            if (index == 0) {
-                double halfBand = (ENTRY_HEAD_HEIGHT - EDUCATION_MARKER_DIAMETER) / 2.0;
-                DocumentNode maskAboveFirstMarker = new ShapeBuilder()
-                        .name("EducationRailMaskAboveFirstMarker")
-                        // One point wider than the rail, and pulled half a
-                        // point left, so the mask covers the rail's own edge
-                        // instead of leaving a hairline of it showing.
-                        .size(EDUCATION_RAIL_WIDTH + 1.0, halfBand)
-                        .fillColor(SIDEBAR_BACKGROUND)
-                        .build();
-                DocumentNode railFromFirstMarker = new ShapeBuilder()
-                        .name("EducationRailFromFirstMarker")
-                        .size(EDUCATION_RAIL_WIDTH, halfBand)
-                        .fillColor(RULE_MUTED)
-                        .build();
-                head.fillColor(SIDEBAR_BACKGROUND)
-                        .position(maskAboveFirstMarker, -0.5, 0, LayerAlign.TOP_LEFT)
-                        .position(railFromFirstMarker, 0,
-                                (ENTRY_HEAD_HEIGHT + EDUCATION_MARKER_DIAMETER) / 2.0,
-                                LayerAlign.TOP_LEFT);
-            }
-            head.position(marker, -EDUCATION_MARKER_DIAMETER / 2.0, 0, LayerAlign.CENTER_LEFT)
-                    .position(degree, EDUCATION_TEXT_X, 0, LayerAlign.CENTER_LEFT);
-        });
+        // The dot has left this band for the timeline's axis column, so the degree starts at
+        // the content column rather than walking in past the rail.
+        rail.addContainer(head -> head
+                .name("EducationHead_" + index)
+                .rectangle(SIDEBAR_INNER_WIDTH - EDUCATION_RAIL_X - EDUCATION_TEXT_X,
+                        ENTRY_HEAD_HEIGHT)
+                .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
+                .position(degree, 0, 0, LayerAlign.CENTER_LEFT));
     }
 
     // -- languages -------------------------------------------------------

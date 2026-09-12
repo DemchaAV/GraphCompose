@@ -23,7 +23,7 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2107,
+    "methods": 2108,
     "constants": 237,
     "generated": 1126
   },
@@ -15095,6 +15095,20 @@
             {
               "kind": "method",
               "name": "markerGap",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "TimelineBuilder",
+              "params": [
+                {
+                  "type": "double",
+                  "name": "gap"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "leadingGap",
               "static": false,
               "origin": "source",
               "typeParameters": null,

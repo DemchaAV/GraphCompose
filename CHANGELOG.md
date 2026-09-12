@@ -422,6 +422,26 @@ follow semantic versioning; release dates are ISO 8601.
   row and both align exactly. Leading content without a declared column throws too, naming
   the call to add, rather than inventing a width per entry.
 
+- **The gap before a timeline's marker is its own number.**
+  `TimelineBuilder.leadingGap(double)` sets the space between the leading column and the
+  marker, leaving `markerGap` to mean what it already says it means — the gap between the
+  marker and the content beside it.
+
+  With one number for both, a three-column timeline could not be asked for what it looks
+  like. A row spaces every pair of its columns equally, so writing `x0` for where the
+  columns start, `L` for the leading width and `A` for the axis, one gap `s` puts the rail
+  at `x0 + L + s + A/2` and the content at `x0 + L + 2s + A`. Subtract them and
+  `L = (rail − x0) − (s + A/2)`: the leading width is decided by where the rail and the
+  content sit, whatever `A` and `s` are given. A dated timeline states all three — where
+  the dates are, where the rail is, where the copy starts — and could have any two.
+  Measured on a real one, the date column came out 55.860pt against a longest date of
+  57.005 and broke `2022 - Present` across two lines; padding the column only narrows what
+  goes in it, and widening the axis re-pins the same number.
+
+  With the gaps separate the leading width is the caller's and the gap absorbs the
+  difference. Unset, `leadingGap` is `markerGap`, which is the single-gap layout exactly —
+  so a timeline that does not ask for it is laid out as before, snapshots included.
+
 - **A timeline entry can fill its own content column.**
   `TimelineBuilder.entry(Consumer<TimelineEntryBuilder>)` is a longer form of the existing
   `entry(marker, ...)` that takes its marker from `TimelineEntryBuilder.marker(...)` inside

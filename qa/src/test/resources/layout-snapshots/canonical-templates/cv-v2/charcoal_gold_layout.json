@@ -4251,6 +4251,36 @@
     "childIndex" : 1,
     "depth" : 12,
     "layer" : 12,
+    "computedX" : 272.588,
+    "computedY" : 566.59,
+    "placementX" : 272.588,
+    "placementY" : 566.59,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 2,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 285.488,
     "computedY" : 560.39,
     "placementX" : 285.488,
@@ -4274,10 +4304,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "entityName" : null,
     "entityKind" : "Align",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -4304,10 +4334,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "entityName" : null,
     "entityKind" : "LayoutAnchorNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "childIndex" : 0,
     "depth" : 14,
     "layer" : 14,
@@ -4334,10 +4364,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "entityName" : "marker",
     "entityKind" : "CanvasLayerNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "childIndex" : 0,
     "depth" : 15,
     "layer" : 15,
@@ -4364,10 +4394,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "entityName" : null,
     "entityKind" : "SectionNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "childIndex" : 0,
     "depth" : 16,
     "layer" : 16,
@@ -4394,10 +4424,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_0[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_0[0]",
     "entityName" : "MarkerRing_0",
     "entityKind" : "EllipseNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "childIndex" : 0,
     "depth" : 17,
     "layer" : 17,
@@ -4424,11 +4454,41 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[3]",
     "entityName" : null,
     "entityKind" : "SectionNode",
     "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
-    "childIndex" : 2,
+    "childIndex" : 3,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 291.688,
+    "computedY" : 566.59,
+    "placementX" : 291.688,
+    "placementY" : 566.59,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 4,
     "depth" : 12,
     "layer" : 12,
     "computedX" : 304.588,
@@ -4454,10 +4514,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Role_0[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Role_0[0]",
     "entityName" : "Role_0",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -4484,10 +4544,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Employer_0[1]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Employer_0[1]",
     "entityName" : "Employer_0",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 1,
     "depth" : 13,
     "layer" : 13,
@@ -4514,10 +4574,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Highlights_0[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Highlights_0[2]",
     "entityName" : "Highlights_0",
     "entityKind" : "ListNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 2,
     "depth" : 13,
     "layer" : 13,
@@ -4731,6 +4791,36 @@
     "childIndex" : 1,
     "depth" : 12,
     "layer" : 12,
+    "computedX" : 272.588,
+    "computedY" : 455.41,
+    "placementX" : 272.588,
+    "placementY" : 455.41,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 2,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 285.488,
     "computedY" : 449.21,
     "placementX" : 285.488,
@@ -4754,10 +4844,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "entityName" : null,
     "entityKind" : "Align",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -4784,10 +4874,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "entityName" : null,
     "entityKind" : "LayoutAnchorNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "childIndex" : 0,
     "depth" : 14,
     "layer" : 14,
@@ -4814,10 +4904,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "entityName" : "marker",
     "entityKind" : "CanvasLayerNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "childIndex" : 0,
     "depth" : 15,
     "layer" : 15,
@@ -4844,10 +4934,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "entityName" : null,
     "entityKind" : "SectionNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "childIndex" : 0,
     "depth" : 16,
     "layer" : 16,
@@ -4874,10 +4964,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_1[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_1[0]",
     "entityName" : "MarkerRing_1",
     "entityKind" : "EllipseNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "childIndex" : 0,
     "depth" : 17,
     "layer" : 17,
@@ -4904,11 +4994,41 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[3]",
     "entityName" : null,
     "entityKind" : "SectionNode",
     "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
-    "childIndex" : 2,
+    "childIndex" : 3,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 291.688,
+    "computedY" : 455.41,
+    "placementX" : 291.688,
+    "placementY" : 455.41,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 4,
     "depth" : 12,
     "layer" : 12,
     "computedX" : 304.588,
@@ -4934,10 +5054,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Role_1[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Role_1[0]",
     "entityName" : "Role_1",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -4964,10 +5084,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Employer_1[1]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Employer_1[1]",
     "entityName" : "Employer_1",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 1,
     "depth" : 13,
     "layer" : 13,
@@ -4994,10 +5114,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Highlights_1[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Highlights_1[2]",
     "entityName" : "Highlights_1",
     "entityKind" : "ListNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 2,
     "depth" : 13,
     "layer" : 13,
@@ -5211,6 +5331,36 @@
     "childIndex" : 1,
     "depth" : 12,
     "layer" : 12,
+    "computedX" : 272.588,
+    "computedY" : 355.01,
+    "placementX" : 272.588,
+    "placementY" : 355.01,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 2,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 285.488,
     "computedY" : 348.81,
     "placementX" : 285.488,
@@ -5234,10 +5384,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "entityName" : null,
     "entityKind" : "Align",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -5264,10 +5414,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "entityName" : null,
     "entityKind" : "LayoutAnchorNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]",
     "childIndex" : 0,
     "depth" : 14,
     "layer" : 14,
@@ -5294,10 +5444,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "entityName" : "marker",
     "entityKind" : "CanvasLayerNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]",
     "childIndex" : 0,
     "depth" : 15,
     "layer" : 15,
@@ -5324,10 +5474,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "entityName" : null,
     "entityKind" : "SectionNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]",
     "childIndex" : 0,
     "depth" : 16,
     "layer" : 16,
@@ -5354,10 +5504,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_2[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/MarkerRing_2[0]",
     "entityName" : "MarkerRing_2",
     "entityKind" : "EllipseNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
     "childIndex" : 0,
     "depth" : 17,
     "layer" : 17,
@@ -5384,11 +5534,41 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[3]",
     "entityName" : null,
     "entityKind" : "SectionNode",
     "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
-    "childIndex" : 2,
+    "childIndex" : 3,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 291.688,
+    "computedY" : 355.01,
+    "placementX" : 291.688,
+    "placementY" : 355.01,
+    "placementWidth" : 0.0,
+    "placementHeight" : 0.0,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 0.0,
+    "contentHeight" : 0.0,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 4,
     "depth" : 12,
     "layer" : 12,
     "computedX" : 304.588,
@@ -5414,10 +5594,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Role_2[0]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Role_2[0]",
     "entityName" : "Role_2",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 0,
     "depth" : 13,
     "layer" : 13,
@@ -5444,10 +5624,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Employer_2[1]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Employer_2[1]",
     "entityName" : "Employer_2",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 1,
     "depth" : 13,
     "layer" : 13,
@@ -5474,10 +5654,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]/Highlights_2[2]",
+    "path" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]/Highlights_2[2]",
     "entityName" : "Highlights_2",
     "entityKind" : "ListNode",
-    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[2]",
+    "parentPath" : "CharcoalGoldCv[0]/Body[0]/MainColumn[1]/Experience[2]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[4]",
     "childIndex" : 2,
     "depth" : 13,
     "layer" : 13,

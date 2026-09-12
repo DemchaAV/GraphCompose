@@ -65,6 +65,8 @@ public final class TimelineBuilder {
     private TimelineMarkerAnchor markerAnchor;
     private double gutter = 8.0;
     private double markerGap = 8.0;
+    /** Unset until asked for, because unset means "the same as the marker gap". */
+    private Double leadingGap;
     private TimelineAxisSize axis = new TimelineAxisSize.Weight(0.10);
     private String axisDeclaredBy;
     private DocumentRowColumn leadingColumn;
@@ -230,6 +232,34 @@ public final class TimelineBuilder {
     public TimelineBuilder markerGap(double gap) {
         if (gap >= 0) {
             this.markerGap = gap;
+        }
+        return this;
+    }
+
+    /**
+     * Sets the horizontal gap between the leading column and the marker.
+     *
+     * <p>Without this the gaps either side of the marker column are one number, and that
+     * over-constrains a three-column timeline. Writing {@code x0} for where the columns
+     * start, {@code L} for the leading width and {@code A} for the axis, one gap {@code s}
+     * puts the rail at {@code x0 + L + s + A/2} and the content at {@code x0 + L + 2s + A};
+     * subtract them and {@code L = (rail − x0) − (s + A/2)}. The leading width is then
+     * decided by where the rail and the content sit, whatever {@code A} and {@code s} are
+     * given — so a design stating all three, as a dated timeline does, cannot have them.
+     * Nor can it recover them by padding the leading column, which only narrows what goes
+     * inside it, or by widening the axis, which re-pins {@code L} to the same number.</p>
+     *
+     * <p>With the two gaps separate, {@code L} is the caller's and this absorbs the
+     * difference. Unset, it is {@link #markerGap(double)} — which is the single-gap layout
+     * exactly, so a timeline that does not ask for this is laid out as it was.</p>
+     *
+     * @param gap gap in points; negative values are ignored
+     * @return this builder
+     * @since 2.4.0
+     */
+    public TimelineBuilder leadingGap(double gap) {
+        if (gap >= 0) {
+            this.leadingGap = gap;
         }
         return this;
     }
@@ -483,9 +513,12 @@ public final class TimelineBuilder {
         // and it is the same model the opted-in one uses, not a branch beside it.
         TimelineMarkerAnchor anchor =
                 markerAnchor == null ? TimelineMarkerAnchor.atLeftEdge(gutter) : markerAnchor;
+        // Unset resolves to the marker gap, which is the single-gap layout the two columns
+        // either side of the axis have always shared.
+        double resolvedLeadingGap = leadingGap == null ? markerGap : leadingGap;
         return new TimelineSpec(new TimelineRailOwner(railSpec, railExtent, anchor),
-                railSpec, leadingColumn, gutter, markerGap, axis, anchor, entrySpacing,
-                keepTogether, keepEntriesTogether, List.copyOf(specs));
+                railSpec, leadingColumn, resolvedLeadingGap, gutter, markerGap, axis, anchor,
+                entrySpacing, keepTogether, keepEntriesTogether, List.copyOf(specs));
     }
 
     /**
@@ -502,7 +535,9 @@ public final class TimelineBuilder {
         // only when the rail moved into the axis; with the rail beside it the body spans the
         // entry as it always has, and the header row publishes nothing.
         boolean bodyClearsTheAxis = spec.markerAnchor().railRunsThroughTheAxis();
-        int contentColumn = spec.leadingColumn() == null ? 1 : 2;
+        // [axis][content] with no leading column; [leading][gap][axis][gap][content] with
+        // one, because the two gaps are columns rather than one row spacing.
+        int contentColumn = spec.leadingColumn() == null ? 1 : 4;
         List<TimelineEntrySpec> entries = spec.entries();
         for (int i = 0; i < entries.size(); i++) {
             TimelineEntrySpec entry = entries.get(i);
@@ -524,7 +559,6 @@ public final class TimelineBuilder {
                         .padding(new DocumentInsets(0, 0, bottom, spec.gutter()))
                         .spacing(4);
                 Consumer<RowBuilder> headerSpec = header -> {
-                    header.spacing(spec.markerGap());
                     DocumentRowColumn axis = column(spec.axis());
                     if (spec.leadingColumn() == null && spec.axis() instanceof TimelineAxisSize.Weight weight) {
                         // The same two columns either way — columns(weight, weight) resolves
@@ -532,17 +566,35 @@ public final class TimelineBuilder {
                         // weights(...) is what a timeline has always put on its RowNode, and
                         // RowNode.weights() is public; spelling it the other way empties that
                         // list for every timeline that exists. Sugar where the sugar applies.
+                        header.spacing(spec.markerGap());
                         header.weights(weight.weight(), 1.0);
                     } else if (spec.leadingColumn() == null) {
+                        header.spacing(spec.markerGap());
                         header.columns(axis, DocumentRowColumn.weight(1.0));
                     } else {
-                        header.columns(spec.leadingColumn(), axis, DocumentRowColumn.weight(1.0));
+                        // Three columns need two gaps, and a row spaces every pair of its
+                        // columns by one number — which is what tied the leading width to
+                        // the rail and content positions. So the gaps are columns of their
+                        // own and the row spaces nothing. With leadingGap defaulting to
+                        // markerGap this resolves to the same widths the single spacing
+                        // gave: fixed columns take their width either way, and the weighted
+                        // remainder is the same subtraction in a different order.
+                        header.spacing(0.0);
+                        header.columns(spec.leadingColumn(),
+                                DocumentRowColumn.fixed(spec.leadingGap()),
+                                axis,
+                                DocumentRowColumn.fixed(spec.markerGap()),
+                                DocumentRowColumn.weight(1.0));
                         // Present even when this entry put nothing in it: the column is the
                         // timeline's, not the entry's, and an entry that skipped it must
                         // still start its marker where every other entry starts one.
                         header.addSection(entry.leading() == null ? column -> { } : entry.leading());
+                        header.addSection(column -> { });
                     }
                     header.addSection(anchoredMarker(spec, entry, index));
+                    if (spec.leadingColumn() != null) {
+                        header.addSection(column -> { });
+                    }
                     header.addSection(entry.beside());
                 };
 

@@ -547,7 +547,7 @@ class TimelineBuilderTest {
     // --- the leading column --------------------------------------------------
 
     @Test
-    void aLeadingColumnPutsAThirdColumnBeforeTheMarker() {
+    void aLeadingColumnPutsTheLeadingContentBeforeTheMarker() {
         SectionNode timeline = timelineOf(t -> t
                 .leadingColumn(DocumentRowColumn.fixed(48))
                 .entry(e -> e
@@ -555,15 +555,24 @@ class TimelineBuilderTest {
                         .leading(date -> date.addParagraph("2023"))
                         .title("Senior Engineer")));
 
+        // Five columns, because each gap beside the marker is a column of its own: a row
+        // spaces every pair of its columns by one number, and two gaps that have to differ
+        // cannot both be that number. Indices 1 and 3 are those gaps and hold nothing.
         RowNode header = header(entry(timeline, 0));
-        assertThat(header.children()).hasSize(3);
+        assertThat(header.children()).hasSize(5);
         assertThat(paragraphTexts(header.children().get(0)))
                 .as("leading first, before the marker")
                 .containsExactly("2023");
-        assertThat(markerContent(header.children().get(1)))
-                .as("then the marker")
+        assertThat(markerContent(header.children().get(2)))
+                .as("then the marker, a gap after the leading")
                 .isInstanceOf(EllipseNode.class);
-        assertThat(paragraphTexts(header.children().get(2))).containsExactly("Senior Engineer");
+        assertThat(paragraphTexts(header.children().get(4)))
+                .as("and the content, a gap after the marker")
+                .containsExactly("Senior Engineer");
+        assertThat(paragraphTexts(header.children().get(1)))
+                .as("the gaps carry nothing")
+                .isEmpty();
+        assertThat(paragraphTexts(header.children().get(3))).isEmpty();
     }
 
     @Test
@@ -576,15 +585,16 @@ class TimelineBuilderTest {
                         .leading(date -> date.addParagraph("2023")).title("With"))
                 .entry(e -> e.marker(TimelineMarker.dot(8, NAVY)).title("Without")));
 
+        RowNode withLeading = header(entry(timeline, 0));
         RowNode withoutLeading = header(entry(timeline, 1));
         assertThat(withoutLeading.children())
-                .as("three columns either way")
-                .hasSize(3);
+                .as("the same columns either way")
+                .hasSameSizeAs(withLeading.children());
         assertThat(paragraphTexts(withoutLeading.children().get(0)))
-                .as("the first is simply empty")
+                .as("the leading one is simply empty")
                 .isEmpty();
-        assertThat(markerContent(withoutLeading.children().get(1)))
-                .as("so the marker is still the second column, as in the entry above")
+        assertThat(markerContent(withoutLeading.children().get(2)))
+                .as("so the marker is in the column it is in above, and they line up")
                 .isInstanceOf(EllipseNode.class);
     }
 

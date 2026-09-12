@@ -1562,6 +1562,68 @@ follow semantic versioning; release dates are ISO 8601.
   its budget is a fraction of the sibling presets', and a third test counts the ink of
   each status colour directly. Removing a chip's fill turns that one red by name.
 
+- **The rails seven CV presets drew by hand are timelines.** Midnight Navy, Charcoal Gold,
+  Navy Sidebar, Serif Headline, Slate Orange, Terracotta Rail and Professional Sidebar each
+  stood their entry rail up as a left accent border repeated per entry and withheld from the
+  last one, so the line would appear to stop at the final marker. `addTimeline` with a
+  `rail(...)` extent says that directly, so it says it: `MARKER_TO_MARKER` where the line
+  runs between the marks, `ENTRY_BOUNDS` where it spans the entries.
+  <br><br>
+  What a reader sees change is that a rail now meets its markers instead of stopping at the
+  edge of the line box a marker sits in — a few points, at the two ends only, and each
+  preset's own figure is recorded with its migration. Markers, date columns and content
+  columns hold their x, no preset gains or loses a page, and node accounting is exact either
+  side of every one.
+  <br><br>
+  Professional Sidebar's education rail loses 56 lines with it. It filled the first entry's
+  head band with the sidebar colour, painted a shape over the rail above the first dot, and
+  redrew the line below — to make the rail begin at that dot. Scanned in the rail column of
+  its own baseline, it never did: an accent draws above both the fill and the mask, so the
+  masked stretch stayed visible and the construction's only effect was drawing 2.5pt of rail
+  twice, a shade darker than the rest of the line.
+  <br><br>
+  **Violet Grid keeps its hand-built rail**, deliberately. It is the one of these presets
+  whose timeline crosses a page, and two things the rail API cannot express turn up there and
+  only there. A rail's extent on a page that is not the last comes from that page's content
+  band rather than from the entries on it, which would run this rail 55.25pt past its final
+  role to the bottom margin. And a timeline's leading column width is fixed by where the rail
+  and the content sit, which pins this design's date column at 55.860pt against a longest
+  date of 57.005 and wraps a line that has never wrapped. Both are measured against an
+  overflow fixture written for the purpose, and both are recorded as gaps rather than
+  approximated.
+
+- **Serif Headline's bullet gap is a measurement rather than a space.** Its highlight lists
+  asked for the air after the dot by writing the marker `"•  "`. A list marker's authored
+  trailing whitespace is stripped and a single space re-appended, so the second one never
+  reached the page and the gap has always been one space: 2.067pt. It is `markerGap` now, at
+  0.256 em — the body face's real space advance — with `hangingIndent(true)`. Every dot and
+  every first line holds its position to 0.001pt. What moves is the wrapped lines, which used
+  to resume 1.518pt *past* the text they belong to, because the legacy indent pads a
+  continuation in whole spaces and cannot land on anything finer; they start on it now.
+
+- **A Timeline Minimal marker that never drew is gone.** Its module body lines set
+  `bulletOffset("-")` and rendered no dash: a bullet prefix reaches the page only under an
+  indent strategy that asks for it, and the site set none, so the prefix was built, measured
+  for the continuation indent, and applied to no line. The call is removed rather than made
+  to work — plain lines are what the design has always shown — and the render is unchanged to
+  the pixel.
+
+- **The receipt and both structured proposals stop padding their spaced caps.** Eight labels
+  across `ModernReceipt`, `EditorialProposal` and `NorthlineProposal` built the look by
+  rewriting the string with a space between every letter, so the canonical receipt's text
+  layer read `N O R T H W I N D P A Y`, `A M O U N T C O L L E C T E D`, `T R A N S F E R D
+  E T A I L S`. The tracking moves onto the style — `TextOrnaments.SPACED_CAPS`, on
+  `ReceiptStyles.eyebrow` and `.groupTitle` and on each proposal's `DOC_LABEL`, which is what
+  those styles' own javadoc already said they were — and the text is the text. This is what
+  makes the note under **Public API** true of every built-in family rather than of the CV and
+  cover-letter ones alone.
+  <br><br>
+  The receipt's labels narrow by 5–9% and nothing re-flows: one page, 130 nodes, and the nine
+  that change are all width and none position. Each proposal's label is right-aligned inside
+  its own section, so its node does not move at all and the change shows only in pixels and
+  on the text layer. Both families carry a new assertion on that text layer, because it is
+  the reason for the change and no pixel or geometry gate can see it.
+
 ### Tests
 
 - **The schedule fixtures no longer carry a real venue's staff.** The weekly-schedule

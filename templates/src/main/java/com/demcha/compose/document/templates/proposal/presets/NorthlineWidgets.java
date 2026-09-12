@@ -85,7 +85,7 @@ final class NorthlineWidgets {
             row.addSection("DocumentLabel", label -> {
                 label.spacing(0);
                 label.addParagraph(p -> p
-                        .text(TextOrnaments.spacedUpper(brand.documentLabel()))
+                        .text(TextOrnaments.upper(brand.documentLabel()))
                         .textStyle(DOC_LABEL)
                         .align(TextAlign.RIGHT));
                 // addAligned, not addLine: a section stacks children at the

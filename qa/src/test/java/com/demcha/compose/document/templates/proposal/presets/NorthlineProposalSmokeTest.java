@@ -83,6 +83,16 @@ class NorthlineProposalSmokeTest {
                 .contains("2 weeks")
                 .contains("TOTAL INVESTMENT")
                 .contains("£19,250");
+
+        // The masthead label used to be padded out with a space between every
+        // letter, so the file stored "P R O P O S A L". Its tracking is on the
+        // style now. Whitespace collapses first because an extractor
+        // synthesises spaces from the gaps it sees and real tracking widens the
+        // word space too — which makes the negative stricter, not weaker.
+        String words = text.replaceAll("\\s+", " ");
+        assertThat(words).as("the label, as written").contains("PROPOSAL");
+        assertThat(words).as("and not padded out letter by letter")
+                .doesNotContain("P R O P O S A L");
     }
 
     @Test

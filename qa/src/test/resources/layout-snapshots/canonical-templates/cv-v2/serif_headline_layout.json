@@ -886,26 +886,26 @@
   }, {
     "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
     "entityName" : "ExperienceRail",
-    "entityKind" : "SectionNode",
+    "entityKind" : "LayerStackNode",
     "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]",
     "childIndex" : 1,
     "depth" : 4,
     "layer" : 4,
-    "computedX" : 36.275,
-    "computedY" : 381.894,
-    "placementX" : 36.275,
-    "placementY" : 381.894,
-    "placementWidth" : 338.384,
-    "placementHeight" : 256.75,
+    "computedX" : 31.682,
+    "computedY" : 321.477,
+    "placementX" : 31.682,
+    "placementY" : 321.477,
+    "placementWidth" : 342.976,
+    "placementHeight" : 335.917,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
-    "contentHeight" : 256.75,
+    "contentWidth" : 342.976,
+    "contentHeight" : 335.917,
     "margin" : {
-      "top" : 18.75,
+      "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 4.592
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -914,23 +914,53 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]",
-    "entityName" : "EntryHead_SeniorSoftwareEngineer",
-    "entityKind" : "ShapeContainerNode",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]",
+    "entityName" : "ExperienceRailHolder",
+    "entityKind" : "SectionNode",
     "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
-    "computedX" : 36.275,
-    "computedY" : 632.249,
-    "placementX" : 36.275,
-    "placementY" : 632.249,
-    "placementWidth" : 338.384,
-    "placementHeight" : 6.395,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 317.167,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
-    "contentHeight" : 6.395,
+    "contentWidth" : 341.581,
+    "contentHeight" : 317.167,
+    "margin" : {
+      "top" : 18.75,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 1.395
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]",
+    "childIndex" : 0,
+    "depth" : 6,
+    "layer" : 6,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 317.167,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 317.167,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -944,13 +974,133 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]/Marker_SeniorSoftwareEngineer[0]",
-    "entityName" : "Marker_SeniorSoftwareEngineer",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
     "childIndex" : 0,
-    "depth" : 6,
-    "layer" : 6,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 33.077,
+    "computedY" : 502.561,
+    "placementX" : 33.077,
+    "placementY" : 502.561,
+    "placementWidth" : 341.581,
+    "placementHeight" : 136.083,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 136.083,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 33.077,
+    "computedY" : 502.561,
+    "placementX" : 33.077,
+    "placementY" : 502.561,
+    "placementWidth" : 341.581,
+    "placementHeight" : 136.083,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 136.083,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 33.077,
+    "computedY" : 502.561,
+    "placementX" : 33.077,
+    "placementY" : 502.561,
+    "placementWidth" : 341.581,
+    "placementHeight" : 136.083,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 136.083,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 33.077,
+    "computedY" : 502.561,
+    "placementX" : 33.077,
+    "placementY" : 502.561,
+    "placementWidth" : 341.581,
+    "placementHeight" : 136.083,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 136.083,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
     "computedX" : 33.077,
     "computedY" : 632.249,
     "placementX" : 33.077,
@@ -974,13 +1124,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]/JobTitle_SeniorSoftwareEngineer[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 33.077,
+    "computedY" : 632.249,
+    "placementX" : 33.077,
+    "placementY" : 632.249,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 33.077,
+    "computedY" : 632.249,
+    "placementX" : 33.077,
+    "placementY" : 632.249,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 33.077,
+    "computedY" : 632.249,
+    "placementX" : 33.077,
+    "placementY" : 632.249,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 33.077,
+    "computedY" : 632.249,
+    "placementX" : 33.077,
+    "placementY" : 632.249,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_SeniorSoftwareEngineer[0]",
+    "entityName" : "Marker_SeniorSoftwareEngineer",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 33.077,
+    "computedY" : 632.249,
+    "placementX" : 33.077,
+    "placementY" : 632.249,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 60.748,
+    "computedY" : 502.561,
+    "placementX" : 60.748,
+    "placementY" : 502.561,
+    "placementWidth" : 313.91,
+    "placementHeight" : 136.083,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 136.083,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SeniorSoftwareEngineer[0]",
+    "entityName" : "EntryHead_SeniorSoftwareEngineer",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 60.748,
+    "computedY" : 632.249,
+    "placementX" : 60.748,
+    "placementY" : 632.249,
+    "placementWidth" : 313.91,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SeniorSoftwareEngineer[0]/JobTitle_SeniorSoftwareEngineer[0]",
     "entityName" : "JobTitle_SeniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]",
-    "childIndex" : 1,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SeniorSoftwareEngineer[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 60.748,
     "computedY" : 630.118,
     "placementX" : 60.748,
@@ -1004,22 +1364,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]/JobDates_SeniorSoftwareEngineer[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SeniorSoftwareEngineer[0]/JobDates_SeniorSoftwareEngineer[1]",
     "entityName" : "JobDates_SeniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SeniorSoftwareEngineer[0]",
-    "childIndex" : 2,
-    "depth" : 6,
-    "layer" : 6,
-    "computedX" : 36.275,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SeniorSoftwareEngineer[0]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 60.748,
     "computedY" : 631.006,
-    "placementX" : 36.275,
+    "placementX" : 60.748,
     "placementY" : 631.006,
-    "placementWidth" : 338.384,
+    "placementWidth" : 313.91,
     "placementHeight" : 9.689,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
+    "contentWidth" : 313.91,
     "contentHeight" : 9.689,
     "margin" : {
       "top" : 0.0,
@@ -1034,13 +1394,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/Employer_SeniorSoftwareEngineer[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_SeniorSoftwareEngineer[1]",
     "entityName" : "Employer_SeniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 1,
-    "depth" : 5,
-    "layer" : 5,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 613.964,
     "placementX" : 60.748,
@@ -1055,7 +1415,7 @@
       "top" : 10.001,
       "right" : 0.0,
       "bottom" : 8.153,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1064,13 +1424,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/Highlights_SeniorSoftwareEngineer[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_SeniorSoftwareEngineer[2]",
     "entityName" : "Highlights_SeniorSoftwareEngineer",
     "entityKind" : "ListNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 2,
-    "depth" : 5,
-    "layer" : 5,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 537.877,
     "placementX" : 60.748,
@@ -1085,7 +1445,7 @@
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1094,13 +1454,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntrySeparator_SeniorSoftwareEngineer[3]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntrySeparator_SeniorSoftwareEngineer[3]",
     "entityName" : "EntrySeparator_SeniorSoftwareEngineer",
     "entityKind" : "LineNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[0]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
     "childIndex" : 3,
-    "depth" : 5,
-    "layer" : 5,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 521.38,
     "placementX" : 60.748,
@@ -1115,7 +1475,7 @@
       "top" : 15.497,
       "right" : 0.0,
       "bottom" : 18.819,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1124,23 +1484,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]",
-    "entityName" : "EntryHead_SoftwareEngineer",
-    "entityKind" : "ShapeContainerNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
-    "childIndex" : 4,
-    "depth" : 5,
-    "layer" : 5,
-    "computedX" : 36.275,
-    "computedY" : 496.166,
-    "placementX" : 36.275,
-    "placementY" : 496.166,
-    "placementWidth" : 338.384,
-    "placementHeight" : 6.395,
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "childIndex" : 1,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 33.077,
+    "computedY" : 388.288,
+    "placementX" : 33.077,
+    "placementY" : 388.288,
+    "placementWidth" : 341.581,
+    "placementHeight" : 114.272,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
-    "contentHeight" : 6.395,
+    "contentWidth" : 341.581,
+    "contentHeight" : 114.272,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -1154,13 +1514,103 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]/Marker_SoftwareEngineer[0]",
-    "entityName" : "Marker_SoftwareEngineer",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]",
     "childIndex" : 0,
-    "depth" : 6,
-    "layer" : 6,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 33.077,
+    "computedY" : 388.288,
+    "placementX" : 33.077,
+    "placementY" : 388.288,
+    "placementWidth" : 341.581,
+    "placementHeight" : 114.272,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 114.272,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 33.077,
+    "computedY" : 388.288,
+    "placementX" : 33.077,
+    "placementY" : 388.288,
+    "placementWidth" : 341.581,
+    "placementHeight" : 114.272,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 114.272,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 33.077,
+    "computedY" : 388.288,
+    "placementX" : 33.077,
+    "placementY" : 388.288,
+    "placementWidth" : 341.581,
+    "placementHeight" : 114.272,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 114.272,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
     "computedX" : 33.077,
     "computedY" : 496.166,
     "placementX" : 33.077,
@@ -1184,13 +1634,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]/JobTitle_SoftwareEngineer[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 33.077,
+    "computedY" : 496.166,
+    "placementX" : 33.077,
+    "placementY" : 496.166,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 33.077,
+    "computedY" : 496.166,
+    "placementX" : 33.077,
+    "placementY" : 496.166,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 33.077,
+    "computedY" : 496.166,
+    "placementX" : 33.077,
+    "placementY" : 496.166,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 33.077,
+    "computedY" : 496.166,
+    "placementX" : 33.077,
+    "placementY" : 496.166,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_SoftwareEngineer[0]",
+    "entityName" : "Marker_SoftwareEngineer",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 33.077,
+    "computedY" : 496.166,
+    "placementX" : 33.077,
+    "placementY" : 496.166,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 60.748,
+    "computedY" : 388.288,
+    "placementX" : 60.748,
+    "placementY" : 388.288,
+    "placementWidth" : 313.91,
+    "placementHeight" : 114.272,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 114.272,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SoftwareEngineer[0]",
+    "entityName" : "EntryHead_SoftwareEngineer",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 60.748,
+    "computedY" : 496.166,
+    "placementX" : 60.748,
+    "placementY" : 496.166,
+    "placementWidth" : 313.91,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SoftwareEngineer[0]/JobTitle_SoftwareEngineer[0]",
     "entityName" : "JobTitle_SoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]",
-    "childIndex" : 1,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SoftwareEngineer[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 60.748,
     "computedY" : 494.034,
     "placementX" : 60.748,
@@ -1214,22 +1874,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]/JobDates_SoftwareEngineer[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SoftwareEngineer[0]/JobDates_SoftwareEngineer[1]",
     "entityName" : "JobDates_SoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_SoftwareEngineer[4]",
-    "childIndex" : 2,
-    "depth" : 6,
-    "layer" : 6,
-    "computedX" : 36.275,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_SoftwareEngineer[0]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 60.748,
     "computedY" : 494.923,
-    "placementX" : 36.275,
+    "placementX" : 60.748,
     "placementY" : 494.923,
-    "placementWidth" : 338.384,
+    "placementWidth" : 313.91,
     "placementHeight" : 9.689,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
+    "contentWidth" : 313.91,
     "contentHeight" : 9.689,
     "margin" : {
       "top" : 0.0,
@@ -1244,13 +1904,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/Employer_SoftwareEngineer[5]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_SoftwareEngineer[1]",
     "entityName" : "Employer_SoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
-    "childIndex" : 5,
-    "depth" : 5,
-    "layer" : 5,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 1,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 477.881,
     "placementX" : 60.748,
@@ -1265,7 +1925,7 @@
       "top" : 10.001,
       "right" : 0.0,
       "bottom" : 8.153,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1274,13 +1934,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/Highlights_SoftwareEngineer[6]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_SoftwareEngineer[2]",
     "entityName" : "Highlights_SoftwareEngineer",
     "entityKind" : "ListNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
-    "childIndex" : 6,
-    "depth" : 5,
-    "layer" : 5,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 2,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 423.605,
     "placementX" : 60.748,
@@ -1295,7 +1955,7 @@
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1304,13 +1964,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntrySeparator_SoftwareEngineer[7]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntrySeparator_SoftwareEngineer[3]",
     "entityName" : "EntrySeparator_SoftwareEngineer",
     "entityKind" : "LineNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
-    "childIndex" : 7,
-    "depth" : 5,
-    "layer" : 5,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[1]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 3,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 407.108,
     "placementX" : 60.748,
@@ -1325,7 +1985,7 @@
       "top" : 15.497,
       "right" : 0.0,
       "bottom" : 18.819,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1334,23 +1994,23 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]",
-    "entityName" : "EntryHead_JuniorSoftwareEngineer",
-    "entityKind" : "ShapeContainerNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]",
-    "childIndex" : 8,
-    "depth" : 5,
-    "layer" : 5,
-    "computedX" : 36.275,
-    "computedY" : 381.894,
-    "placementX" : 36.275,
-    "placementY" : 381.894,
-    "placementWidth" : 338.384,
-    "placementHeight" : 6.395,
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]",
+    "childIndex" : 2,
+    "depth" : 7,
+    "layer" : 7,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 66.811,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
-    "contentHeight" : 6.395,
+    "contentWidth" : 341.581,
+    "contentHeight" : 66.811,
     "margin" : {
       "top" : 0.0,
       "right" : 0.0,
@@ -1364,13 +2024,103 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]/Marker_JuniorSoftwareEngineer[0]",
-    "entityName" : "Marker_JuniorSoftwareEngineer",
-    "entityKind" : "EllipseNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]",
     "childIndex" : 0,
-    "depth" : 6,
-    "layer" : 6,
+    "depth" : 8,
+    "layer" : 8,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 66.811,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 66.811,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]",
+    "entityName" : null,
+    "entityKind" : "HorizontalBandsNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 9,
+    "layer" : 9,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 66.811,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 66.811,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "entityName" : null,
+    "entityKind" : "RowNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]",
+    "childIndex" : 0,
+    "depth" : 10,
+    "layer" : 10,
+    "computedX" : 33.077,
+    "computedY" : 321.477,
+    "placementX" : 33.077,
+    "placementY" : 321.477,
+    "placementWidth" : 341.581,
+    "placementHeight" : 66.811,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 341.581,
+    "contentHeight" : 66.811,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 0,
+    "depth" : 11,
+    "layer" : 11,
     "computedX" : 33.077,
     "computedY" : 381.894,
     "placementX" : 33.077,
@@ -1394,13 +2144,223 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]/JobTitle_JuniorSoftwareEngineer[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "entityName" : null,
+    "entityKind" : "Align",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 33.077,
+    "computedY" : 381.894,
+    "placementX" : 33.077,
+    "placementY" : 381.894,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "entityName" : null,
+    "entityKind" : "LayoutAnchorNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 33.077,
+    "computedY" : 381.894,
+    "placementX" : 33.077,
+    "placementY" : 381.894,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "entityName" : "marker",
+    "entityKind" : "CanvasLayerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]",
+    "childIndex" : 0,
+    "depth" : 14,
+    "layer" : 14,
+    "computedX" : 33.077,
+    "computedY" : 381.894,
+    "placementX" : 33.077,
+    "placementY" : 381.894,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]",
+    "childIndex" : 0,
+    "depth" : 15,
+    "layer" : 15,
+    "computedX" : 33.077,
+    "computedY" : 381.894,
+    "placementX" : 33.077,
+    "placementY" : 381.894,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]/Marker_JuniorSoftwareEngineer[0]",
+    "entityName" : "Marker_JuniorSoftwareEngineer",
+    "entityKind" : "EllipseNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[0]/Align[0]/LayoutAnchorNode[0]/marker[0]/SectionNode[0]",
+    "childIndex" : 0,
+    "depth" : 16,
+    "layer" : 16,
+    "computedX" : 33.077,
+    "computedY" : 381.894,
+    "placementX" : 33.077,
+    "placementY" : 381.894,
+    "placementWidth" : 6.395,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 6.395,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "entityName" : null,
+    "entityKind" : "SectionNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]",
+    "childIndex" : 1,
+    "depth" : 11,
+    "layer" : 11,
+    "computedX" : 60.748,
+    "computedY" : 321.477,
+    "placementX" : 60.748,
+    "placementY" : 321.477,
+    "placementWidth" : 313.91,
+    "placementHeight" : 66.811,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 66.811,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_JuniorSoftwareEngineer[0]",
+    "entityName" : "EntryHead_JuniorSoftwareEngineer",
+    "entityKind" : "ShapeContainerNode",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 0,
+    "depth" : 12,
+    "layer" : 12,
+    "computedX" : 60.748,
+    "computedY" : 381.894,
+    "placementX" : 60.748,
+    "placementY" : 381.894,
+    "placementWidth" : 313.91,
+    "placementHeight" : 6.395,
+    "startPage" : 0,
+    "endPage" : 0,
+    "contentWidth" : 313.91,
+    "contentHeight" : 6.395,
+    "margin" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    },
+    "padding" : {
+      "top" : 0.0,
+      "right" : 0.0,
+      "bottom" : 0.0,
+      "left" : 0.0
+    }
+  }, {
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_JuniorSoftwareEngineer[0]/JobTitle_JuniorSoftwareEngineer[0]",
     "entityName" : "JobTitle_JuniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]",
-    "childIndex" : 1,
-    "depth" : 6,
-    "layer" : 6,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_JuniorSoftwareEngineer[0]",
+    "childIndex" : 0,
+    "depth" : 13,
+    "layer" : 13,
     "computedX" : 60.748,
     "computedY" : 379.762,
     "placementX" : 60.748,
@@ -1424,22 +2384,22 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]/JobDates_JuniorSoftwareEngineer[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_JuniorSoftwareEngineer[0]/JobDates_JuniorSoftwareEngineer[1]",
     "entityName" : "JobDates_JuniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/EntryHead_JuniorSoftwareEngineer[8]",
-    "childIndex" : 2,
-    "depth" : 6,
-    "layer" : 6,
-    "computedX" : 36.275,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/EntryHead_JuniorSoftwareEngineer[0]",
+    "childIndex" : 1,
+    "depth" : 13,
+    "layer" : 13,
+    "computedX" : 60.748,
     "computedY" : 380.65,
-    "placementX" : 36.275,
+    "placementX" : 60.748,
     "placementY" : 380.65,
-    "placementWidth" : 338.384,
+    "placementWidth" : 313.91,
     "placementHeight" : 9.689,
     "startPage" : 0,
     "endPage" : 0,
-    "contentWidth" : 338.384,
+    "contentWidth" : 313.91,
     "contentHeight" : 9.689,
     "margin" : {
       "top" : 0.0,
@@ -1454,43 +2414,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceTail[2]",
-    "entityName" : "ExperienceTail",
-    "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]",
-    "childIndex" : 2,
-    "depth" : 4,
-    "layer" : 4,
-    "computedX" : 36.275,
-    "computedY" : 321.477,
-    "placementX" : 36.275,
-    "placementY" : 321.477,
-    "placementWidth" : 278.351,
-    "placementHeight" : 60.417,
-    "startPage" : 0,
-    "endPage" : 0,
-    "contentWidth" : 278.351,
-    "contentHeight" : 60.417,
-    "margin" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 4.592
-    },
-    "padding" : {
-      "top" : 0.0,
-      "right" : 0.0,
-      "bottom" : 0.0,
-      "left" : 0.0
-    }
-  }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceTail[2]/Employer_JuniorSoftwareEngineer[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Employer_JuniorSoftwareEngineer[1]",
     "entityName" : "Employer_JuniorSoftwareEngineer",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceTail[2]",
-    "childIndex" : 0,
-    "depth" : 5,
-    "layer" : 5,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 1,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 363.608,
     "placementX" : 60.748,
@@ -1505,7 +2435,7 @@
       "top" : 10.001,
       "right" : 0.0,
       "bottom" : 8.153,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1514,13 +2444,13 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceTail[2]/Highlights_JuniorSoftwareEngineer[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]/Highlights_JuniorSoftwareEngineer[2]",
     "entityName" : "Highlights_JuniorSoftwareEngineer",
     "entityKind" : "ListNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceTail[2]",
-    "childIndex" : 1,
-    "depth" : 5,
-    "layer" : 5,
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ExperienceRail[1]/ExperienceRailHolder[0]/SectionNode[0]/LayoutAnchorNode[2]/SectionNode[0]/HorizontalBandsNode[0]/RowNode[0]/SectionNode[1]",
+    "childIndex" : 2,
+    "depth" : 12,
+    "layer" : 12,
     "computedX" : 60.748,
     "computedY" : 321.477,
     "placementX" : 60.748,
@@ -1535,7 +2465,7 @@
       "top" : 0.0,
       "right" : 0.0,
       "bottom" : 0.0,
-      "left" : 24.474
+      "left" : 0.0
     },
     "padding" : {
       "top" : 0.0,
@@ -1544,11 +2474,11 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]",
     "entityName" : "SectionHeading_Projects",
     "entityKind" : "ShapeContainerNode",
     "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]",
-    "childIndex" : 3,
+    "childIndex" : 2,
     "depth" : 4,
     "layer" : 4,
     "computedX" : 31.682,
@@ -1574,10 +2504,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]/HeadingDash_Projects[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]/HeadingDash_Projects[0]",
     "entityName" : "HeadingDash_Projects",
     "entityKind" : "LineNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
@@ -1604,10 +2534,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]/SectionTitle_Projects[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]/SectionTitle_Projects[1]",
     "entityName" : "SectionTitle_Projects",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
@@ -1634,10 +2564,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]/HeadingTail_Projects[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]/HeadingTail_Projects[2]",
     "entityName" : "HeadingTail_Projects",
     "entityKind" : "LineNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[3]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/SectionHeading_Projects[2]",
     "childIndex" : 2,
     "depth" : 5,
     "layer" : 5,
@@ -1664,11 +2594,11 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "entityName" : "ProjectsBand",
     "entityKind" : "LayerStackNode",
     "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]",
-    "childIndex" : 4,
+    "childIndex" : 3,
     "depth" : 4,
     "layer" : 4,
     "computedX" : 31.682,
@@ -1694,10 +2624,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]",
     "entityName" : "ProjectCard_ECommercePlatform",
     "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "childIndex" : 0,
     "depth" : 5,
     "layer" : 5,
@@ -1724,10 +2654,10 @@
       "left" : 33.135
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]/ProjectTitle_ECommercePlatform[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]/ProjectTitle_ECommercePlatform[0]",
     "entityName" : "ProjectTitle_ECommercePlatform",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
@@ -1754,10 +2684,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]/ProjectStack_ECommercePlatform[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]/ProjectStack_ECommercePlatform[1]",
     "entityName" : "ProjectStack_ECommercePlatform",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]",
     "childIndex" : 1,
     "depth" : 6,
     "layer" : 6,
@@ -1784,10 +2714,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]/ProjectBody_ECommercePlatform[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]/ProjectBody_ECommercePlatform[2]",
     "entityName" : "ProjectBody_ECommercePlatform",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_ECommercePlatform[0]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_ECommercePlatform[0]",
     "childIndex" : 2,
     "depth" : 6,
     "layer" : 6,
@@ -1814,10 +2744,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]",
     "entityName" : "ProjectCard_TaskManagementAPI",
     "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "childIndex" : 1,
     "depth" : 5,
     "layer" : 5,
@@ -1844,10 +2774,10 @@
       "left" : 41.274
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]/ProjectTitle_TaskManagementAPI[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]/ProjectTitle_TaskManagementAPI[0]",
     "entityName" : "ProjectTitle_TaskManagementAPI",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
@@ -1874,10 +2804,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]/ProjectStack_TaskManagementAPI[1]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]/ProjectStack_TaskManagementAPI[1]",
     "entityName" : "ProjectStack_TaskManagementAPI",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]",
     "childIndex" : 1,
     "depth" : 6,
     "layer" : 6,
@@ -1904,10 +2834,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]/ProjectBody_TaskManagementAPI[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]/ProjectBody_TaskManagementAPI[2]",
     "entityName" : "ProjectBody_TaskManagementAPI",
     "entityKind" : "ParagraphNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectCard_TaskManagementAPI[1]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectCard_TaskManagementAPI[1]",
     "childIndex" : 2,
     "depth" : 6,
     "layer" : 6,
@@ -1934,10 +2864,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_0[2]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_0[2]",
     "entityName" : "ProjectsGlyph_0",
     "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "childIndex" : 2,
     "depth" : 5,
     "layer" : 5,
@@ -1964,10 +2894,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]",
     "entityName" : "ProjectPlate_ECommercePlatform",
     "entityKind" : "ShapeContainerNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_0[2]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_0[2]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
@@ -1994,10 +2924,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]/ProjectPlate_ECommercePlatformGlyph[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]/ProjectPlate_ECommercePlatformGlyph[0]",
     "entityName" : "ProjectPlate_ECommercePlatformGlyph",
     "entityKind" : "ImageNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_0[2]/ProjectPlate_ECommercePlatform[0]",
     "childIndex" : 0,
     "depth" : 7,
     "layer" : 7,
@@ -2024,10 +2954,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_1[3]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_1[3]",
     "entityName" : "ProjectsGlyph_1",
     "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "childIndex" : 3,
     "depth" : 5,
     "layer" : 5,
@@ -2054,10 +2984,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]",
     "entityName" : "ProjectPlate_TaskManagementAPI",
     "entityKind" : "ShapeContainerNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_1[3]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_1[3]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,
@@ -2084,10 +3014,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]/ProjectPlate_TaskManagementAPIGlyph[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]/ProjectPlate_TaskManagementAPIGlyph[0]",
     "entityName" : "ProjectPlate_TaskManagementAPIGlyph",
     "entityKind" : "ImageNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsGlyph_1[3]/ProjectPlate_TaskManagementAPI[0]",
     "childIndex" : 0,
     "depth" : 7,
     "layer" : 7,
@@ -2114,10 +3044,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsSeparator_1[4]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsSeparator_1[4]",
     "entityName" : "ProjectsSeparator_1",
     "entityKind" : "SectionNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]",
     "childIndex" : 4,
     "depth" : 5,
     "layer" : 5,
@@ -2144,10 +3074,10 @@
       "left" : 0.0
     }
   }, {
-    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsSeparator_1[4]/ProjectsSeparatorLine_1[0]",
+    "path" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsSeparator_1[4]/ProjectsSeparatorLine_1[0]",
     "entityName" : "ProjectsSeparatorLine_1",
     "entityKind" : "LineNode",
-    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[4]/ProjectsSeparator_1[4]",
+    "parentPath" : "SerifHeadlineCv[0]/BodyColumns[3]/MainColumn[0]/ProjectsBand[3]/ProjectsSeparator_1[4]",
     "childIndex" : 0,
     "depth" : 6,
     "layer" : 6,

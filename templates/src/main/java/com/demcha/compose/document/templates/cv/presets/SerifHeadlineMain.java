@@ -1,13 +1,15 @@
 package com.demcha.compose.document.templates.cv.presets;
 
-import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
+import com.demcha.compose.document.dsl.TimelineRailExtent;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.TextAlign;
 import com.demcha.compose.document.style.ClipPolicy;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentStroke;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
@@ -92,32 +94,62 @@ final class SerifHeadlineMain {
      * The roles held, strung on a vertical rail with a filled marker at each
      * one.
      *
-     * <p>The rail is the section's left accent, which runs the full height of
-     * what the section holds — so the last role's body is composed in a
-     * second section outside the rail, and the line stops at the last marker
-     * instead of running past it to the foot of the block.</p>
+     * <p>The rail stops at the last marker, which is what {@code MARKER_TO_MARKER} means. It
+     * used to be the section's left accent, and an accent runs the full height of what its
+     * section holds — so the last role's body was composed in a second section outside the
+     * rail to keep the line from running on to the foot of the block. The extent says it
+     * directly now, and that sibling section is gone.</p>
+     *
+     * <p>Wrapped in a layer because a row nested in a row cell is refused and this sheet's
+     * main column is one.</p>
      */
     private static void renderExperience(SectionBuilder section, EntriesSection experience) {
         List<CvEntry> entries = experience.entries();
         int last = entries.size() - 1;
-        section.addSection("ExperienceRail", rail -> {
-            rail.spacing(0).padding(DocumentInsets.zero());
-            rail.margin(new DocumentInsets(
-                    HEADING_TO_ENTRY + TITLE_OVERFLOW, 0, 0, RAIL_MARGIN_LEFT));
-            rail.accentLeft(DIVIDER, RAIL_THICKNESS);
+        SectionBuilder holder = new SectionBuilder();
+        holder.name("ExperienceRailHolder");
+        holder.spacing(0).padding(DocumentInsets.zero());
+        // The axis column centres the rail on itself, so the timeline starts half a marker
+        // further left than the accent did and the line lands back where it was.
+        holder.margin(new DocumentInsets(HEADING_TO_ENTRY + TITLE_OVERFLOW, 0, 0,
+                RAIL_MARGIN_LEFT - MARKER_DIAMETER / 2.0));
+        holder.addTimeline(timeline -> {
+            timeline.markerOnRail()
+                    .rail(rail -> rail
+                            .stroke(DocumentStroke.of(DIVIDER, RAIL_THICKNESS))
+                            .extent(TimelineRailExtent.MARKER_TO_MARKER))
+                    .axisWidth(MARKER_DIAMETER)
+                    .markerGap(ENTRY_TEXT_INSET - MARKER_DIAMETER / 2.0)
+                    .gutter(0)
+                    // The rhythm between roles is the separator's own margins, as before.
+                    .spacing(0);
             for (int i = 0; i < entries.size(); i++) {
-                renderEntryHead(rail, entries.get(i));
-                if (i < last) {
-                    renderEntryBody(rail, entries.get(i));
-                    renderEntrySeparator(rail, entries.get(i));
-                }
+                CvEntry entry = entries.get(i);
+                boolean separated = i < last;
+                timeline.entry(entryMarker(entry), e -> e.content(body -> {
+                    body.spacing(0);
+                    renderEntryHead(body, entry);
+                    renderEntryBody(body, entry);
+                    if (separated) {
+                        renderEntrySeparator(body, entry);
+                    }
+                }));
             }
         });
-        section.addSection("ExperienceTail", tail -> {
-            tail.spacing(0).padding(DocumentInsets.zero());
-            tail.margin(new DocumentInsets(0, 0, 0, RAIL_MARGIN_LEFT));
-            renderEntryBody(tail, entries.get(last));
-        });
+        DocumentNode node = holder.build();
+        section.addLayerStack(stack -> stack
+                .name("ExperienceRail")
+                .layer(node, LayerAlign.TOP_LEFT, 0));
+    }
+
+    /** The filled disc that marks a role, in a box as tall as the head band it rides. */
+    private static TimelineMarker entryMarker(CvEntry entry) {
+        return TimelineMarker.custom(MARKER_DIAMETER, ENTRY_HEAD_BAND_HEIGHT,
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name("Marker_" + compact(entry.title()))
+                        .circle(MARKER_DIAMETER)
+                        .fillColor(INK)
+                        .margin(DocumentInsets.zero())));
     }
 
     /**
@@ -126,12 +158,6 @@ final class SerifHeadlineMain {
      * by half their own overhang to centre on it.
      */
     private static void renderEntryHead(SectionBuilder rail, CvEntry entry) {
-        DocumentNode marker = new EllipseBuilder()
-                .name("Marker_" + compact(entry.title()))
-                .circle(MARKER_DIAMETER)
-                .fillColor(INK)
-                .margin(DocumentInsets.zero())
-                .build();
         ParagraphBuilder titleText = new ParagraphBuilder()
                 .name("JobTitle_" + compact(entry.title()))
                 .textStyle(style(JOB_TITLE_SIZE, INK, DocumentTextDecoration.BOLD))
@@ -147,13 +173,14 @@ final class SerifHeadlineMain {
                 .lineSpacing(TIGHT_LEADING)
                 .margin(DocumentInsets.zero())
                 .build();
+        // The marker has left the band for the timeline's axis column, so the band starts at
+        // the content column and the title no longer walks in past the rail.
         rail.addContainer(head -> head
                 .name("EntryHead_" + compact(entry.title()))
-                .rectangle(ENTRY_WIDTH, ENTRY_HEAD_BAND_HEIGHT)
+                .rectangle(ENTRY_WIDTH - ENTRY_TEXT_INSET, ENTRY_HEAD_BAND_HEIGHT)
                 .clipPolicy(ClipPolicy.OVERFLOW_VISIBLE)
                 .padding(DocumentInsets.zero())
-                .position(marker, -MARKER_DIAMETER / 2.0, 0, LayerAlign.CENTER_LEFT)
-                .position(title, ENTRY_TEXT_INSET, -TITLE_OVERFLOW, LayerAlign.CENTER_LEFT)
+                .position(title, 0, -TITLE_OVERFLOW, LayerAlign.CENTER_LEFT)
                 .position(dates, 0, -DATE_OVERFLOW, LayerAlign.CENTER_RIGHT));
     }
 
@@ -175,7 +202,7 @@ final class SerifHeadlineMain {
             p.lineSpacing(TIGHT_LEADING)
                     .margin(new DocumentInsets(
                             TITLE_TO_EMPLOYER + TITLE_OVERFLOW, 0,
-                            EMPLOYER_TO_BULLETS, ENTRY_TEXT_INSET));
+                            EMPLOYER_TO_BULLETS, 0));
         });
         List<String> highlights = SerifHeadlineText.lines(entry.body());
         if (!highlights.isEmpty()) {
@@ -189,7 +216,7 @@ final class SerifHeadlineMain {
                     .textStyle(body())
                     .lineSpacing(BULLET_LEADING)
                     .itemSpacing(BULLET_ITEM_GAP)
-                    .margin(new DocumentInsets(0, 0, 0, ENTRY_TEXT_INSET)));
+                    .margin(DocumentInsets.zero()));
         }
     }
 
@@ -201,7 +228,7 @@ final class SerifHeadlineMain {
                 .color(RULE)
                 .margin(new DocumentInsets(
                         BULLETS_TO_SEPARATOR, 0,
-                        SEPARATOR_TO_ENTRY + TITLE_OVERFLOW, ENTRY_TEXT_INSET)));
+                        SEPARATOR_TO_ENTRY + TITLE_OVERFLOW, 0)));
     }
 
     // -- projects --------------------------------------------------------

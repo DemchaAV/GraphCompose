@@ -1,9 +1,11 @@
 package com.demcha.compose.document.templates.cv.presets;
 
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.style.DocumentInsets;
+import com.demcha.compose.document.style.DocumentRowColumn;
 import com.demcha.compose.document.templates.cv.components.SectionLookup;
 import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.CvIdentity;
@@ -20,16 +22,15 @@ import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyle
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.EMPLOYER_TO_HIGHLIGHTS;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.ENTRY_GAP;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.ENTRY_INDENT;
-import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.ENTRY_WEIGHT;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.EXPERIENCE_TO_ENTRIES;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.HIGHLIGHT_ITEM_GAP;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.HIGHLIGHT_LEADING;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.INK;
+import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MAIN_CONTENT_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MAIN_PAD_LEFT;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MAIN_PAD_RIGHT;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MAIN_PAD_TOP;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MARKER_DIAMETER;
-import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MARKER_WEIGHT;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MASTHEAD_RULE_THICKNESS;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MASTHEAD_RULE_WIDTH;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.MASTHEAD_TO_TITLE;
@@ -47,9 +48,7 @@ import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyle
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.TITLE_TO_RULE;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.textStyle;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldStyles.tracked;
-import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldWidgets.layeredRow;
 import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldWidgets.mainHeading;
-import static com.demcha.compose.document.templates.cv.presets.CharcoalGoldWidgets.marker;
 
 /**
  * The paper right column: the two-tone name over its tracked role, the
@@ -148,40 +147,63 @@ final class CharcoalGoldMain {
             block.margin((float) SUMMARY_TO_EXPERIENCE, 0f, 0f, 0f);
             block.keepTogether();
             mainHeading(block, experience.title());
-            List<CvEntry> entries = experience.entries();
-            for (int i = 0; i < entries.size(); i++) {
-                CvEntry entry = entries.get(i);
-                boolean first = i == 0;
-                boolean last = i == entries.size() - 1;
-                int index = i;
-                layeredRow(block, "ExperienceEntry_" + index,
-                        first ? EXPERIENCE_TO_ENTRIES : 0.0, 0.0,
-                        row -> {
-                            row.spacing(0);
-                            // Two cells, not three. Giving the marker a column
-                            // of its own would put it in a different node from
-                            // the rail, leaving the rail free to paint straight
-                            // through it; the date column carries that width
-                            // instead, so the body's left border lands in
-                            // exactly the same place.
-                            row.weights(DATE_WEIGHT + MARKER_WEIGHT, ENTRY_WEIGHT);
-                            row.addParagraph(p -> p
-                                    .name("Period_" + index)
-                                    .text(entry.date())
-                                    .textStyle(textStyle(DETAIL_SIZE, ACCENT, false)));
-                            row.addSection("EntryBody_" + index, body ->
-                                    renderEntryBody(body, entry, index, last));
-                        });
-            }
+            renderExperienceTimeline(block, experience.entries());
         });
     }
 
-    private static void renderEntryBody(SectionBuilder body, CvEntry entry,
-                                        int index, boolean last) {
+    /**
+     * The roles, on one rail.
+     *
+     * <p>Three columns now, where the row had two: the marker has a column of its own and the
+     * rail runs through its centre, so it can no longer be painted through. The leading column
+     * carries the date plus the half marker the old date cell lent it, which is what keeps the
+     * rail on the same line the body's border drew.</p>
+     *
+     * <p>Wrapped in a layer because a row nested in a row cell is refused and this sheet's main
+     * column is one — the same wrapper the entries already went through.</p>
+     */
+    private static void renderExperienceTimeline(SectionBuilder block, List<CvEntry> entries) {
+        SectionBuilder holder = new SectionBuilder();
+        holder.name("ExperienceRailHolder");
+        holder.spacing(0);
+        holder.margin(new DocumentInsets(EXPERIENCE_TO_ENTRIES, 0, 0, 0));
+        holder.addTimeline(timeline -> {
+            timeline.markerOnRail()
+                    .connector(RULE, RULE_THICKNESS)
+                    // The old date cell, less the indent the marker gap now supplies: a row
+                    // spaces every pair of columns, so the gap is paid once before the axis
+                    // and once after it.
+                    .leadingColumn(DocumentRowColumn.fixed(
+                            DATE_WEIGHT * MAIN_CONTENT_WIDTH + MARKER_DIAMETER - ENTRY_INDENT))
+                    .axisWidth(MARKER_DIAMETER)
+                    .markerGap(ENTRY_INDENT - MARKER_DIAMETER / 2.0)
+                    .gutter(0)
+                    .spacing(ENTRY_GAP);
+            for (int i = 0; i < entries.size(); i++) {
+                CvEntry entry = entries.get(i);
+                int index = i;
+                timeline.entry(CharcoalGoldWidgets.ringMarker(index), e -> e
+                        .leading(date -> date.addParagraph(p -> p
+                                .name("Period_" + index)
+                                .text(entry.date())
+                                .textStyle(textStyle(DETAIL_SIZE, ACCENT, false))))
+                        .content(body -> renderEntryBody(body, entry, index)));
+            }
+        });
+        DocumentNode node = holder.build();
+        block.addLayerStack(stack -> stack
+                .name("ExperienceRail")
+                .layer(node, LayerAlign.TOP_LEFT, 0));
+    }
+
+    private static void renderEntryBody(SectionBuilder body, CvEntry entry, int index) {
         body.spacing(0);
-        body.accentLeft(RULE, RULE_THICKNESS);
-        body.padding(0f, 0f, last ? 0f : (float) ENTRY_GAP, (float) ENTRY_INDENT);
-        renderRoleWithMarker(body, entry, index);
+        body.addParagraph(p -> {
+            p.name("Role_" + index);
+            p.textStyle(textStyle(ROLE_SIZE, INK, true));
+            p.margin(new DocumentInsets(0, 0, ROLE_TO_EMPLOYER, 0));
+            CharcoalGoldText.title(p, entry, textStyle(ROLE_SIZE, INK, true));
+        });
         body.addParagraph(p -> p
                 .name("Employer_" + index)
                 .text(employerLine(entry))
@@ -214,20 +236,4 @@ final class CharcoalGoldMain {
      * measures — and half its diameter left of the body's border, which puts
      * the ring centred on the rail.</p>
      */
-    private static void renderRoleWithMarker(SectionBuilder body, CvEntry entry, int index) {
-        SectionBuilder titleLayer = new SectionBuilder();
-        titleLayer.name("RoleLayer_" + index);
-        titleLayer.spacing(0);
-        titleLayer.addParagraph(p -> {
-            p.name("Role_" + index).textStyle(textStyle(ROLE_SIZE, INK, true));
-            CharcoalGoldText.title(p, entry, textStyle(ROLE_SIZE, INK, true));
-        });
-        body.addLayerStack(stack -> stack
-                .name("MarkerCap_" + index)
-                .margin(new DocumentInsets(0, 0, ROLE_TO_EMPLOYER, 0))
-                .layer(titleLayer.build(), LayerAlign.TOP_LEFT, 0)
-                .position(marker(index),
-                        -(ENTRY_INDENT + MARKER_DIAMETER / 2.0), 0.0,
-                        LayerAlign.TOP_LEFT, 1));
-    }
 }

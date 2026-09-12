@@ -4,6 +4,7 @@ import com.demcha.compose.document.dsl.EllipseBuilder;
 import com.demcha.compose.document.dsl.ParagraphBuilder;
 import com.demcha.compose.document.dsl.RowBuilder;
 import com.demcha.compose.document.dsl.SectionBuilder;
+import com.demcha.compose.document.dsl.TimelineMarker;
 import com.demcha.compose.document.node.DocumentNode;
 import com.demcha.compose.document.node.LayerAlign;
 import com.demcha.compose.document.node.RowVerticalAlign;
@@ -118,14 +119,19 @@ final class CharcoalGoldWidgets {
                 .layer(layer.build(), LayerAlign.TOP_LEFT, 0));
     }
 
-    /** The hollow ring that caps a role on the experience rail. */
-    static DocumentNode marker(int index) {
-        return new EllipseBuilder()
-                .name("MarkerRing_" + index)
-                .circle(MARKER_DIAMETER)
-                .fillColor(PAPER)
-                .stroke(DocumentStroke.of(INK, 0.8))
-                .build();
+    /**
+     * The hollow ring that caps a role on the experience rail, as a timeline marker.
+     *
+     * <p>Declared rather than drawn with {@link com.demcha.compose.document.dsl.TimelineMarker#circle}
+     * so the ring keeps the node name the gates read it by.</p>
+     */
+    static TimelineMarker ringMarker(int index) {
+        return TimelineMarker.custom(MARKER_DIAMETER, MARKER_DIAMETER,
+                column -> column.addEllipse(ellipse -> ellipse
+                        .name("MarkerRing_" + index)
+                        .circle(MARKER_DIAMETER)
+                        .fillColor(PAPER)
+                        .stroke(DocumentStroke.of(INK, 0.8))));
     }
 
     /** The two spaces this design leaves between a mark and the text after it. */

@@ -17,6 +17,7 @@ import com.demcha.compose.document.templates.cv.data.CvEntry;
 import com.demcha.compose.document.templates.cv.data.EntriesSection;
 import com.demcha.compose.document.templates.cv.data.ParagraphSection;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.ACCENT_DEEP;
@@ -51,7 +52,7 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.T
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.compact;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.style;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.columnHeader;
-import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.dottedLine;
+import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.dottedList;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.icon;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.tracked;
 
@@ -155,13 +156,11 @@ final class TealPulseClosing {
         }
         column.add(columnHeader(section.title(), TealPulseIcons.CERTIFICATIONS,
                 BAND_COL2_WIDTH));
-        column.addSection("CertificationItems", items -> {
-            items.spacing(CERT_ITEM_GAP);
-            for (CvEntry entry : section.entries()) {
-                items.add(dottedLine("Certification_" + compact(entry.title()), entry.title(),
-                        BAND_BODY_SIZE, 1.0));
-            }
-        });
+        List<String> titles = new ArrayList<>();
+        for (CvEntry entry : section.entries()) {
+            titles.add(entry.title());
+        }
+        dottedList(column, "CertificationItems", titles, BAND_BODY_SIZE, 1.0, CERT_ITEM_GAP);
     }
 
     /**

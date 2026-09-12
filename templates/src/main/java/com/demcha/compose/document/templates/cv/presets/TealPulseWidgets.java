@@ -12,6 +12,8 @@ import com.demcha.compose.document.style.DocumentInsets;
 import com.demcha.compose.document.style.DocumentTextDecoration;
 import com.demcha.compose.document.style.DocumentTextStyle;
 
+import java.util.List;
+
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.ACCENT;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.ACCENT_DEEP;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.BADGE_BAND;
@@ -131,23 +133,41 @@ final class TealPulseWidgets {
     // -- lines -------------------------------------------------------------
 
     /**
-     * A teal dot leading a near-black label.
+     * A list of near-black labels, each led by a teal dot.
      *
-     * <p>Not a list: a list marker takes its item's own text colour, and here
-     * the dot and the label are deliberately different colours.</p>
+     * <p>A real list, marker column and all: the dot is the marker and
+     * {@link TealPulseStyles#DOT_GAP} is the gap after it, in points. That is
+     * what {@code DOT_GAP} always meant and never got. Written as a paragraph
+     * per label — a dot run, then spaces standing in for the gap, then the text
+     * — the gap was a whole number of spaces measured at each label's own type
+     * size, so this sheet rendered its one declared 9.175pt as 9.308 beside the
+     * competencies and 8.356 beside the highlights. Wrapped labels were the
+     * larger cost: with no marker column to hang under, every line after the
+     * first returned to the label's own left edge.</p>
+     *
+     * <p>Markers are left un-normalized because the labels are the document's
+     * own words and nothing is prefixing them with one; stripping a leading
+     * {@code "- "} here would edit the data.</p>
      */
-    static DocumentNode dottedLine(String name, String text, double size, double leading) {
+    static void dottedList(SectionBuilder host, String name, List<String> labels,
+                           double size, double leading, double itemGap) {
         DocumentTextStyle textStyle =
                 style(BODY_FONT, size, BODY_TEXT, DocumentTextDecoration.DEFAULT);
-        return new ParagraphBuilder()
-                .name(name)
-                .textStyle(textStyle)
-                .align(TextAlign.LEFT)
-                .lineSpacing(leading)
-                .dot(DOT_DIAMETER, ACCENT)
-                .inlineText(gapRun(DOT_GAP, size) + text, textStyle)
-                .margin(DocumentInsets.zero())
-                .build();
+        host.addList(list -> {
+            list.name(name)
+                    .textStyle(textStyle)
+                    .align(TextAlign.LEFT)
+                    .lineSpacing(leading)
+                    .marker(marker -> marker.dot(DOT_DIAMETER, ACCENT))
+                    .hangingIndent(true)
+                    .markerGap(DOT_GAP)
+                    .itemSpacing(itemGap)
+                    .normalizeMarkers(false)
+                    .margin(DocumentInsets.zero());
+            for (String label : labels) {
+                list.addItem(label);
+            }
+        });
     }
 
     // -- heading bars ------------------------------------------------------

@@ -898,6 +898,31 @@ follow semantic versioning; release dates are ISO 8601.
 
 ### Templates
 
+- **Teal Pulse's dotted lines are a real list, so its one declared gap is the gap it
+  draws.** The sheet's competencies, experience highlights and certifications were a
+  paragraph per label: a teal dot, then a run of spaces standing in for the gap, then the
+  text. `TealPulseStyles.DOT_GAP` declares that gap as `px(17)` = 9.175pt, and the spaces
+  could not deliver it — the count is rounded to a whole number of them and then measured at
+  each label's own type size, so one constant rendered as **9.308pt** beside the
+  competencies, **8.356pt** beside the highlights and **8.806pt** in the closing band.
+  Wrapped labels were the larger cost: with no marker column to hang under, every line after
+  the first returned to the label's own left edge.
+
+  Each block is now one list with the dot as its marker and `DOT_GAP` as `markerGap`, so the
+  gap is that number everywhere and every line of a wrapped label starts where its first
+  line's text does. Measured: **7 named nodes moved and every one is a `placementWidth`** —
+  the sidebar 0.133pt narrower, the three highlight blocks 0.819pt wider, the certifications
+  column 0.369pt wider, each exactly its own gap correction. No x, no y, no page ownership,
+  still one page; the blocks are content-sized boxes, so the correction is all that moves
+  them. 22 883 pixels of 457 555 change at zero tolerance (maxDelta 192), inside the 50 000
+  budget the gate already allowed; the baseline and the committed preview are re-recorded for
+  it, and all 126 baselines were hashed either side to prove only Teal Pulse's moved.
+
+  The rows are one list node per block rather than one paragraph node per label, so the
+  layout snapshot has 96 named nodes where it had 121, and the per-label names
+  (`Competency_*`, `Highlight_*`, `Certification_*`) are gone with the paragraphs that
+  carried them.
+
 - **New `receipt` family — payment confirmations.** The fifth family on the layered
   architecture, for the document a bank sends after money moves: a transfer
   confirmation, a direct debit advice, a card receipt. `ReceiptDocumentSpec` carries

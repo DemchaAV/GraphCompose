@@ -57,7 +57,7 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.S
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.SUMMARY_TO_EXPERIENCE;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.compact;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.style;
-import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.dottedLine;
+import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.dottedList;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.sectionHeader;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.tracked;
 
@@ -122,15 +122,13 @@ final class TealPulseBody {
         tracked(heading, competencies.title(), headingStyle, SIDEBAR_HEADING_TRACKING_EM);
         section.add(heading.margin(new DocumentInsets(0, 0, HEADING_TO_ITEMS, 0)).build());
 
-        section.addSection("CompetencyItems", items -> {
-            items.spacing(COMPETENCY_GAP);
-            for (SkillGroup group : competencies.groups()) {
-                for (CvSkill skill : group.entries()) {
-                    items.add(dottedLine("Competency_" + compact(skill.name()), skill.name(),
-                            COMPETENCY_SIZE, 1.0));
-                }
+        List<String> names = new ArrayList<>();
+        for (SkillGroup group : competencies.groups()) {
+            for (CvSkill skill : group.entries()) {
+                names.add(skill.name());
             }
-        });
+        }
+        dottedList(section, "CompetencyItems", names, COMPETENCY_SIZE, 1.0, COMPETENCY_GAP);
         section.addLine(line -> line
                 .name("CompetenciesClosingRule")
                 .horizontal(SIDEBAR_CLOSING_RULE_WIDTH)
@@ -199,12 +197,9 @@ final class TealPulseBody {
                         .margin(new DocumentInsets(0, 0, ENTRY_TO_BULLETS, 0));
             });
             main.addSection("ExperienceHighlights_" + index, highlights -> {
-                highlights.spacing(BULLET_GAP);
-                for (String item : lines(entry.body())) {
-                    highlights.add(dottedLine(
-                            "Highlight_" + index + "_" + compact(item), item,
-                            BULLET_SIZE, BULLET_LEADING));
-                }
+                highlights.spacing(0);
+                dottedList(highlights, "Highlights_" + index, lines(entry.body()),
+                        BULLET_SIZE, BULLET_LEADING, BULLET_GAP);
                 highlights.margin(new DocumentInsets(0, 0, last ? 0 : ENTRY_GAP, 0));
             });
         }

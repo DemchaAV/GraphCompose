@@ -28,7 +28,7 @@ note: "Generated from the pinned artifact's class files. Authoritative closed se
 
 **GraphCompose version:** 2.4.0-SNAPSHOT
 
-Types: 237 · methods: 2109 · constants: 236 · compiler-generated members: 1125
+Types: 237 · methods: 2118 · constants: 236 · compiler-generated members: 1128
 
 ## com.demcha.compose
 
@@ -751,6 +751,8 @@ Types: 237 · methods: 2109 · constants: 236 · compiler-generated members: 112
 - `ListBuilder items(List<String> items)`
 - `ListBuilder addItem(String item)`
 - `ListBuilder addItem(String label, Consumer<ListBuilder> body)`
+- `ListBuilder addItem(Consumer<RichText> content)`
+- `ListBuilder addItem(Consumer<RichText> content, Consumer<ListBuilder> body)`
 - `ListBuilder markerFor(int depth, ListMarker marker)`
 - `ListBuilder marker(ListMarker marker)`
 - `ListBuilder marker(String marker)`
@@ -1404,6 +1406,8 @@ Types: 237 · methods: 2109 · constants: 236 · compiler-generated members: 112
 - `DocumentLinkTarget linkTarget()`
 
 ### InlineRun (interface)
+- `String plainText(List<InlineRun>)`
+- `List<InlineTextRun> textRuns(List<InlineRun>)`
 
 ### InlineShapeRun (record)
 - `new InlineShapeRun(List<ShapeLayer>, InlineImageAlignment, double, DocumentLinkTarget)`
@@ -1500,11 +1504,16 @@ Types: 237 · methods: 2109 · constants: 236 · compiler-generated members: 112
 - `boolean keepWithNext()`
 
 ### ListItem (record)
-- `new ListItem(String, ListMarker, List<ListItem>)`
+- `new ListItem(String, List<InlineRun>, ListMarker, List<ListItem>)`
+- `new ListItem(String label, ListMarker marker, List<ListItem> children)`
+- `ListItem ofRuns(List<InlineRun> runs)`
+- `ListItem ofRuns(String label, List<InlineRun> runs)`
+- `boolean isRich()`
 - `ListItem of(String label)`
 - `ListItem of(String label, List<ListItem> children)`
 - `boolean isLeaf()`
 - `String label()`
+- `List<InlineRun> runs()`
 - `ListMarker marker()`
 - `List<ListItem> children()`
 

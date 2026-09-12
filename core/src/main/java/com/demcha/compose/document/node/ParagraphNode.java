@@ -60,15 +60,8 @@ public record ParagraphNode(
         inlineRuns = normalizeInlineRuns(inlineRuns);
         text = Objects.requireNonNullElse(text, "");
         if (text.isBlank() && !inlineRuns.isEmpty()) {
-            StringBuilder concatenated = new StringBuilder();
-            for (InlineRun run : inlineRuns) {
-                if (run instanceof InlineTextRun textRun) {
-                    concatenated.append(textRun.text());
-                } else if (run instanceof InlineHighlightRun highlight) {
-                    concatenated.append(highlight.text());
-                }
-            }
-            text = concatenated.toString();
+            // One reduction, shared with a rich list item: see InlineRun.plainText.
+            text = InlineRun.plainText(inlineRuns);
         }
         textStyle = textStyle == null ? DocumentTextStyle.DEFAULT : textStyle;
         align = align == null ? TextAlign.LEFT : align;
@@ -338,21 +331,8 @@ public record ParagraphNode(
      * @return inline text runs in source order
      */
     public List<InlineTextRun> inlineTextRuns() {
-        if (inlineRuns.isEmpty()) {
-            return List.of();
-        }
-        List<InlineTextRun> textRuns = new java.util.ArrayList<>(inlineRuns.size());
-        for (InlineRun run : inlineRuns) {
-            if (run instanceof InlineTextRun textRun) {
-                textRuns.add(textRun);
-            } else if (run instanceof InlineHighlightRun highlight) {
-                // Collapse newlines to spaces to match how the PDF tokenizer
-                // lowers a chip (it stays one line), so both text surfaces agree.
-                String chipText = highlight.text().replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
-                textRuns.add(new InlineTextRun(chipText, highlight.textStyle(), highlight.linkTarget()));
-            }
-        }
-        return List.copyOf(textRuns);
+        // One reduction, shared with a rich list item: see InlineRun.textRuns.
+        return InlineRun.textRuns(inlineRuns);
     }
 
 }

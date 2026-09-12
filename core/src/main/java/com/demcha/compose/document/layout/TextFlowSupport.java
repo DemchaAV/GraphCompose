@@ -238,7 +238,26 @@ public final class TextFlowSupport {
 
         List<PreparedListItemLayout> items = new ArrayList<>(geometry.size());
         for (MarkerContentItem item : geometry) {
-            ParagraphNode content = new ParagraphNode(
+            // A rich item's content is its runs, wrapped by the same inline
+            // algorithm a paragraph uses. That is the point of expressing it as
+            // runs rather than as a second rich-text model: the marker column,
+            // the gap and contentX resolve for it exactly as for a plain item,
+            // and the wrapping inside that width is the paragraph's own.
+            ParagraphNode content = item.spec().isRich()
+                    ? new ParagraphNode(
+                            "",
+                            item.content(),
+                            item.spec().runs(),
+                            node.textStyle(),
+                            node.align(),
+                            node.lineSpacing(),
+                            "",
+                            DocumentTextIndent.NONE,
+                            null,
+                            null,
+                            DocumentInsets.zero(),
+                            DocumentInsets.zero())
+                    : new ParagraphNode(
                     "",
                     item.content(),
                     node.textStyle(),
@@ -320,6 +339,20 @@ public final class TextFlowSupport {
 
     private static void flattenNestedItems(List<ListItem> items, int depth, List<String> output) {
         for (ListItem item : items) {
+            // A rich item's content is a sequence of independently styled runs and
+            // a label is a single string: there is no flattening of one into the
+            // other that keeps what the author asked for. Rendering the plain
+            // reading instead would silently drop every style, icon and chip,
+            // which is a worse answer than saying so. This is the only walk a rich
+            // item can reach the legacy layout through, so the check belongs here
+            // rather than in a second pass over the tree.
+            if (item.isRich()) {
+                throw new IllegalStateException(
+                        "a list item made of inline runs needs marker/content geometry: call "
+                        + "hangingIndent(true) on the list. The legacy layout makes an item's "
+                        + "marker part of its text and so carries one style for the whole item, "
+                        + "which cannot hold the runs of \"" + item.label() + "\"");
+            }
             ListMarker marker = item.marker() != null ? item.marker() : ListMarker.defaultForDepth(depth);
             StringBuilder prefix = new StringBuilder(NESTED_LIST_INDENT_UNIT.repeat(depth));
             if (marker.isVisible()) {

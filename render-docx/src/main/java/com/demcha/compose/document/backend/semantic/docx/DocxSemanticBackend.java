@@ -338,7 +338,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
      * no signal at all, weaker than the block-level drop path.
      */
     private void warnDroppedInlineRuns(ParagraphNode node) {
-        for (InlineRun run : node.inlineRuns()) {
+        warnDroppedInlineRuns(node.inlineRuns());
+    }
+
+    private void warnDroppedInlineRuns(List<InlineRun> runs) {
+        for (InlineRun run : runs) {
             if (run instanceof InlineTextRun || run instanceof InlineHighlightRun) {
                 continue;
             }
@@ -389,7 +393,11 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
                 item.marker() != null
                         ? item.marker()
                         : com.demcha.compose.document.node.ListMarker.defaultForDepth(depth);
-        writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+        if (item.isRich()) {
+            writeRichListLine(document, list.textStyle(), marker.prefix(), item, depth);
+        } else {
+            writeListLine(document, list.textStyle(), marker.prefix() + item.label(), depth);
+        }
         for (com.demcha.compose.document.node.ListItem child : item.children()) {
             writeNestedItem(document, list, child, depth + 1);
         }
@@ -401,6 +409,38 @@ public final class DocxSemanticBackend implements SemanticBackend<byte[]> {
         XWPFRun run = para.createRun();
         applyStyle(run, style);
         run.setText("  ".repeat(depth) + text);
+    }
+
+    /**
+     * Writes a rich item as one Word run per inline run, the way
+     * {@link #writeParagraphRuns} writes a rich paragraph.
+     *
+     * <p>This is the one part of the opt-in marker/content list the semantic
+     * export can reproduce, and it reproduces it exactly. The geometry — the
+     * measured marker column, the gap, the shared content origin — is
+     * unavailable here for the reason {@code hangingIndent} documents. Which
+     * piece of an item is bold is not geometry: Word carries a style per run
+     * inside a paragraph, so writing the item's plain reading in one face would
+     * be dropping something Word can hold.</p>
+     *
+     * <p>The indent and the marker stay one leading run in the item's own style,
+     * unchanged from the plain path, so a list of mixed plain and rich items
+     * writes the same markers down its whole length.</p>
+     */
+    private void writeRichListLine(XWPFDocument document, DocumentTextStyle style,
+                                   String markerPrefix,
+                                   com.demcha.compose.document.node.ListItem item,
+                                   int depth) {
+        warnDroppedInlineRuns(item.runs());
+        XWPFParagraph para = document.createParagraph();
+        XWPFRun leading = para.createRun();
+        applyStyle(leading, style);
+        leading.setText("  ".repeat(depth) + markerPrefix);
+        for (InlineTextRun run : com.demcha.compose.document.node.InlineRun.textRuns(item.runs())) {
+            XWPFRun docRun = para.createRun();
+            applyStyle(docRun, run.textStyle() == null ? style : run.textStyle());
+            docRun.setText(run.text() == null ? "" : run.text());
+        }
     }
 
     /**

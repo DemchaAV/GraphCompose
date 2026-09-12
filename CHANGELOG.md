@@ -342,6 +342,45 @@ follow semantic versioning; release dates are ISO 8601.
   it was measured and rejected: a reserved-column approximation renders a gap that is not
   the one you asked for, and misaligns outright for a marker wider than the column.
 
+- **A list item can be styled in pieces.** `ListBuilder.addItem(Consumer<RichText>)` takes
+  the same inline runs a paragraph is made of, so `"Status: pending"` with the label bold
+  is one list item; `addItem(Consumer<RichText>, Consumer<ListBuilder>)` lets a styled label
+  head a sub-tree. `addItem("plain string")` is unchanged and remains the short form.
+
+  An item was a string in one style, so a design that emphasises the opening words of each
+  bullet had to be built as a two-column row per item — which stops being a list. The
+  marker becomes a table cell, the wrapped lines are the column's business rather than the
+  item's, and nothing about it paginates as one thing.
+
+  Runs, not a second rich-text model: the same `RichText` builder `ParagraphBuilder.rich`
+  takes, so a chip, an icon, a link or a coloured span inside an item is whatever it already
+  is inside a paragraph. An item is content whatever its runs draw, which is why a row of an
+  icon and no text is still a row — it reads as the empty string, exactly as an item that
+  draws nothing does, and the runs are what separate the two.
+  `InlineRun.plainText(runs)` is that reading and `InlineRun.textRuns(runs)` its styled
+  form; a paragraph's own `text()` and `inlineTextRuns()` now come from those two, so which
+  kinds of run read as text is stated once instead of once per surface.
+
+  The geometry is the marker column's, unchanged: the marker is measured, `markerGap`
+  applies, and the first line, the lines it wraps onto and the lines that continue on the
+  next page all start at one x, with the marker drawn once. Which means `hangingIndent(true)`
+  is required — the older layout makes the marker part of the item's text and so carries one
+  style for the whole item, and rendering the plain reading instead would drop silently
+  every style, icon and chip the author asked for. A rich item in a list that has not opted
+  in says so, and names the call.
+
+  A rich item does not change what its list's marker is. Runs do not fit a list of labels,
+  so the list carries an item tree instead — and that is a change of representation, not of
+  markers: a dashed flat list still dashes at its top level when one of its items needs
+  styling. A list whose author declared depth is unaffected and still resolves every level
+  from the per-depth cascade and `markerFor(...)`.
+
+  **The semantic DOCX export carries this one**, unlike the geometry above it: Word holds a
+  style per run inside a paragraph, so a rich item writes one Word run per authored run —
+  the marker leading in the list's own style — and image, shape and SVG runs drop with the
+  same one-per-kind warning a rich paragraph's do. Because the semantic export lays nothing
+  out, it is indifferent to `hangingIndent` and needs no opt-in to carry the runs.
+
 - **A timeline's rail is one line, drawn from where its markers landed.**
   It was a left border repeated on every entry section, which is why it sat at the entry's
   edge whatever the markers did, could not stop short of them, and had no way to be

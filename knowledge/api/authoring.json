@@ -23,9 +23,9 @@
   ],
   "counts": {
     "types": 237,
-    "methods": 2109,
+    "methods": 2118,
     "constants": 236,
-    "generated": 1125
+    "generated": 1128
   },
   "packages": [
     {
@@ -9214,6 +9214,38 @@
                 {
                   "type": "String",
                   "name": "label"
+                },
+                {
+                  "type": "Consumer<ListBuilder>",
+                  "name": "body"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "addItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
+                  "name": "content"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "addItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListBuilder",
+              "params": [
+                {
+                  "type": "Consumer<RichText>",
+                  "name": "content"
                 },
                 {
                   "type": "Consumer<ListBuilder>",
@@ -18698,7 +18730,36 @@
           "kind": "interface",
           "modifiers": [],
           "artifact": "graph-compose-core",
-          "members": []
+          "members": [
+            {
+              "kind": "method",
+              "name": "plainText",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "String",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "textRuns",
+              "static": true,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineTextRun>",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": null
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "InlineShapeRun",
@@ -20354,6 +20415,10 @@
                   "name": null
                 },
                 {
+                  "type": "List<InlineRun>",
+                  "name": null
+                },
+                {
                   "type": "ListMarker",
                   "name": null
                 },
@@ -20362,6 +20427,69 @@
                   "name": null
                 }
               ]
+            },
+            {
+              "kind": "constructor",
+              "name": "ListItem",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": null,
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "ListMarker",
+                  "name": "marker"
+                },
+                {
+                  "type": "List<ListItem>",
+                  "name": "children"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListItem",
+              "params": [
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "ofRuns",
+              "static": true,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "ListItem",
+              "params": [
+                {
+                  "type": "String",
+                  "name": "label"
+                },
+                {
+                  "type": "List<InlineRun>",
+                  "name": "runs"
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "isRich",
+              "static": false,
+              "origin": "source",
+              "typeParameters": null,
+              "returns": "boolean",
+              "params": []
             },
             {
               "kind": "method",
@@ -20411,6 +20539,15 @@
               "origin": "generated",
               "typeParameters": null,
               "returns": "String",
+              "params": []
+            },
+            {
+              "kind": "method",
+              "name": "runs",
+              "static": false,
+              "origin": "generated",
+              "typeParameters": null,
+              "returns": "List<InlineRun>",
               "params": []
             },
             {

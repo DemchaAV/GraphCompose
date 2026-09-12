@@ -13,6 +13,7 @@ import com.demcha.compose.document.style.DocumentTextStyle;
 import com.demcha.compose.document.table.DocumentTableColumn;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.junit.jupiter.api.Test;
 
@@ -139,6 +140,66 @@ class DocxSemanticBackendTest {
             assertThat(texts).contains(
                     "• Root",
                     "  ‣ Child");
+        }
+    }
+
+    @Test
+    void aRichListItemKeepsOneWordRunPerAuthoredRun() throws Exception {
+        try (XWPFDocument document = new XWPFDocument(
+                new ByteArrayInputStream(richListDocx(true)))) {
+            List<XWPFParagraph> paragraphs = document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .toList();
+            assertThat(paragraphs).hasSize(2);
+
+            // The marker still reads the same down the whole list, and the
+            // item's text is all there. The geometry hangingIndent(true) asks
+            // for has no Word analogue; which piece of an item is bold does.
+            assertThat(paragraphs.get(0).getText()).isEqualTo("- Plain item");
+            XWPFParagraph rich = paragraphs.get(1);
+            assertThat(rich.getText()).isEqualTo("- Status: pending");
+            assertThat(rich.getRuns().stream().map(XWPFRun::text).toList())
+                    .as("the marker leads in the list's own style, then one run each")
+                    .containsExactly("- ", "Status: ", "pending");
+            assertThat(rich.getRuns().stream().map(XWPFRun::isBold).toList())
+                    .as("and only the bold run is bold")
+                    .containsExactly(false, true, false);
+        }
+    }
+
+    @Test
+    void aRichListItemExportsTheSameWhetherOrNotTheListOptedIntoMarkerGeometry() throws Exception {
+        // hangingIndent is fixed-layout geometry, and the semantic export lays
+        // nothing out — so unlike the PDF path, which needs the opt-in before it
+        // can carry runs at all, this one is indifferent to it. Word owns the
+        // layout here and can hold a run's style either way.
+        assertThat(runStructure(richListDocx(false)))
+                .isEqualTo(runStructure(richListDocx(true)));
+    }
+
+    private static byte[] richListDocx(boolean hangingIndent) throws Exception {
+        try (DocumentSession session = GraphCompose.document()
+                .pageSize(595, 842)
+                .margin(DocumentInsets.of(36))
+                .create()) {
+            session.dsl().pageFlow().name("Flow")
+                    .addList(list -> list
+                            .dash()
+                            .hangingIndent(hangingIndent)
+                            .addItem("Plain item")
+                            .addItem(t -> t.bold("Status: ").plain("pending")))
+                    .build();
+            return session.export(new DocxSemanticBackend());
+        }
+    }
+
+    private static List<String> runStructure(byte[] docxBytes) throws Exception {
+        try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
+            return document.getParagraphs().stream()
+                    .filter(p -> !p.getText().isBlank())
+                    .flatMap(p -> p.getRuns().stream())
+                    .map(run -> run.text() + "|bold=" + run.isBold())
+                    .toList();
         }
     }
 

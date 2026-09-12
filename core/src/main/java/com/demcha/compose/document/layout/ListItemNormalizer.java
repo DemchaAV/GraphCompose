@@ -77,9 +77,12 @@ final class ListItemNormalizer {
                     ? item.marker()
                     : ListMarker.defaultForDepth(depth);
             String content = ListMarker.normalizeItemText(item.label(), node.normalizeMarkers());
-            boolean rendered = rendersSomething(marker, content);
+            // A rich item renders whatever its runs draw, which its label — their
+            // plain-text reading — need not describe: runs of an icon and a chip
+            // carry no text at all and are still content.
+            boolean rendered = item.isRich() || rendersSomething(marker, content);
             if (rendered) {
-                out.add(new ListItemSpec(depth, marker, content));
+                out.add(new ListItemSpec(depth, marker, content, item.runs()));
             }
             // Children are walked either way: an item that draws nothing is a
             // reason to skip that one row, never a reason to lose the sub-tree

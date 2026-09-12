@@ -1,5 +1,6 @@
 package com.demcha.compose.document.dsl;
 
+import com.demcha.compose.document.node.InlineRun;
 import com.demcha.compose.document.node.ListItem;
 import com.demcha.compose.document.node.ListMarker;
 import com.demcha.compose.document.node.ListNode;
@@ -19,7 +20,21 @@ public final class ListBuilder {
     private final List<ListItem> items = new ArrayList<>();
     private final Map<Integer, ListMarker> markerOverrides = new LinkedHashMap<>();
     private String name = "";
-    private boolean usedNestedAuthoring = false;
+    /**
+     * Whether the items still fit the flat {@code List<String>} shape a list had
+     * before it could nest. Nesting is one reason they do not; a rich item, whose
+     * content is runs rather than a label, is the other — it has to reach the
+     * layout as a {@link ListItem}, and the flat path carries only labels.
+     */
+    private boolean needsItemTree = false;
+    /**
+     * Whether the author declared depth. Kept apart from {@link #needsItemTree}
+     * because the two answer different questions, and only this one decides
+     * whose marker depth 0 takes: a nested list resolves every level from the
+     * per-depth cascade and {@link #markerFor(int, ListMarker)}, while a flat
+     * list's marker is its own — and a list of rich items is still flat.
+     */
+    private boolean declaredDepth = false;
     private ListMarker marker = ListMarker.bullet();
     private DocumentTextStyle textStyle = DocumentTextStyle.DEFAULT;
     private TextAlign align = TextAlign.LEFT;
@@ -50,7 +65,7 @@ public final class ListBuilder {
                     ? item.marker()
                     : overrides.get(depth);
             List<ListItem> resolvedChildren = applyMarkerOverrides(item.children(), depth + 1, overrides);
-            out.add(new ListItem(item.label(), effective, resolvedChildren));
+            out.add(new ListItem(item.label(), item.runs(), effective, resolvedChildren));
         }
         return List.copyOf(out);
     }
@@ -129,10 +144,74 @@ public final class ListBuilder {
      */
     public ListBuilder addItem(String label, Consumer<ListBuilder> body) {
         Objects.requireNonNull(body, "body");
-        this.usedNestedAuthoring = true;
+        this.needsItemTree = true;
+        this.declaredDepth = true;
         ListBuilder childScope = new ListBuilder();
         body.accept(childScope);
         this.items.add(new ListItem(label, null, childScope.snapshotItems()));
+        return this;
+    }
+
+    /**
+     * Appends one list item whose content is styled in pieces.
+     *
+     * <p>{@code "Bold label: normal description"} becomes one item rather than a
+     * row of two columns pretending to be one. The content is a {@link RichText}
+     * — the same inline runs a paragraph is made of, taken by the same builder
+     * {@link ParagraphBuilder#rich(Consumer)} takes — so the library has one
+     * rich-text model and not a second one for lists.</p>
+     *
+     * <p>The item lays out on the measured marker geometry:
+     * {@link #hangingIndent(boolean)} is required, and the layout says so if it
+     * is missing. The marker is measured, {@link #markerGap(double)} applies, and
+     * every visual line of the content — the first, the ones it wraps onto, the
+     * ones that continue on the next page — starts at one x. A rich item is
+     * content whatever its runs draw, so runs of an icon and no text are still a
+     * row.</p>
+     *
+     * <p>Seed the supplied builder with {@link RichText#plain(String)} — not
+     * {@code t.text(...)}: {@link RichText#text(String)} is a static factory, so
+     * that call compiles but builds a separate, discarded {@code RichText} and
+     * leaves this item empty.</p>
+     *
+     * @param content callback that appends this item's inline runs
+     * @return this builder
+     * @throws NullPointerException if {@code content} is null
+     * @since 2.4.0
+     */
+    public ListBuilder addItem(Consumer<RichText> content) {
+        Objects.requireNonNull(content, "content");
+        RichText rich = RichText.empty();
+        content.accept(rich);
+        this.needsItemTree = true;
+        this.items.add(ListItem.ofRuns(rich.runs()));
+        return this;
+    }
+
+    /**
+     * Appends one nested list item whose own content is styled in pieces.
+     *
+     * <p>{@link #addItem(Consumer)} with children, so a styled label can head a
+     * sub-tree.</p>
+     *
+     * @param content callback that appends this item's inline runs
+     * @param body    callback that adds children of this item
+     * @return this builder
+     * @throws NullPointerException if either callback is null
+     * @since 2.4.0
+     */
+    public ListBuilder addItem(Consumer<RichText> content, Consumer<ListBuilder> body) {
+        Objects.requireNonNull(content, "content");
+        Objects.requireNonNull(body, "body");
+        this.needsItemTree = true;
+        this.declaredDepth = true;
+        RichText rich = RichText.empty();
+        content.accept(rich);
+        ListBuilder childScope = new ListBuilder();
+        body.accept(childScope);
+        List<InlineRun> runs = rich.runs();
+        this.items.add(new ListItem(InlineRun.plainText(runs), runs, null,
+                childScope.snapshotItems()));
         return this;
     }
 
@@ -404,18 +483,19 @@ public final class ListBuilder {
      * Builds the semantic list node.
      *
      * <p>When only {@link #addItem(String)} was used the result is a
-     * flat list (back-compat with v1.4 / v1.5). As soon as
-     * {@link #addItem(String, Consumer)} is called at least once the
-     * result is a nested list — flat items added before the first
-     * nested call become depth-0 leaves alongside the nested entries,
-     * preserving source order. Per-depth marker overrides set via
-     * {@link #markerFor(int, ListMarker)} are baked into each item's
-     * resolved marker before the node is sealed.</p>
+     * flat list (back-compat with v1.4 / v1.5). As soon as something is
+     * added that a list of labels cannot hold — a nested item via
+     * {@link #addItem(String, Consumer)}, or a rich item via
+     * {@link #addItem(Consumer)}, either of them once — the result is an
+     * item tree; flat items added before that become depth-0 leaves
+     * alongside the rest, preserving source order. Per-depth marker
+     * overrides set via {@link #markerFor(int, ListMarker)} are baked
+     * into each item's resolved marker before the node is sealed.</p>
      *
      * @return list node
      */
     public ListNode build() {
-        if (!usedNestedAuthoring) {
+        if (!needsItemTree) {
             // Back-compat flat path. node.items() carries the labels
             // and node.nestedItems() is empty; rendering matches the
             // v1.4 / v1.5 flat-list behaviour exactly.
@@ -441,7 +521,17 @@ public final class ListBuilder {
         }
         // Nested path. Source order across flat and nested entries is
         // preserved because both flow through the unified `items` list.
-        List<ListItem> resolved = applyMarkerOverrides(items, 0, markerOverrides);
+        // A flat list's marker is its own, whether its items are strings or
+        // runs. Only a list whose author declared depth hands depth 0 to the
+        // per-depth cascade — that is the nested contract, and markerFor(0, …)
+        // is how it is overridden. Without this a dashed list would render one
+        // bullet the moment one of its items needed styling.
+        Map<Integer, ListMarker> effectiveOverrides = markerOverrides;
+        if (!declaredDepth) {
+            effectiveOverrides = new LinkedHashMap<>(markerOverrides);
+            effectiveOverrides.putIfAbsent(0, marker);
+        }
+        List<ListItem> resolved = applyMarkerOverrides(items, 0, effectiveOverrides);
         return new ListNode(
                 name,
                 List.of(),

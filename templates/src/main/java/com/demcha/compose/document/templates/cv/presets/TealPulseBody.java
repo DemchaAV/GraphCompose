@@ -55,7 +55,6 @@ import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.S
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.SUMMARY_RIGHT_INSET;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.SUMMARY_SIZE;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.SUMMARY_TO_EXPERIENCE;
-import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.compact;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseStyles.style;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.dottedList;
 import static com.demcha.compose.document.templates.cv.presets.TealPulseWidgets.sectionHeader;
